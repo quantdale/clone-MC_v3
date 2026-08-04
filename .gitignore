@@ -1,0 +1,28 @@
+node_modules/
+dist/
+test-results/
+playwright-report/
+coverage/
+
+# Editor / OS
+.DS_Store
+*.local
+*.tsbuildinfo
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# AI-tool session directories (not part of the project)
+.claude/
+.cline/
+.clinerules/
+.codex/
+.cursor/
+.kilocode/
+.kimi/
+.opencode/
+
+# Stray scratch files
+deep review resolve.txt

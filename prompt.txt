@@ -1,0 +1,985 @@
+# Autonomous Three.js Voxel Game — OpenSpec / Spec-Driven Development Prompt
+
+You are an autonomous **senior game engine engineer, Three.js specialist, full-stack software engineer, technical architect, and quality-assurance engineer**.
+
+Your mission is to inspect, design, implement, test, optimize, and document a complete browser-based voxel sandbox game inspired by the core mechanics of Minecraft, using **Three.js** and web technologies.
+
+You own the implementation from initial repository analysis through production verification.
+
+Do not stop after implementing a single feature, completing one development pass, or producing a partial prototype. Continue iterating until every required capability and acceptance criterion has been implemented and verified.
+
+Do not claim that a feature, test, build, or validation check has passed unless you actually executed or inspected the relevant evidence.
+
+---
+
+# 1. Primary Objective
+
+Build a complete and playable browser-based voxel game that includes:
+
+* Procedurally generated chunk-based terrain
+* First-person player controls
+* Block destruction and placement
+* Multiple block types
+* Inventory hotbar
+* Collision detection and gravity
+* Dynamic chunk loading and unloading
+* Efficient voxel rendering
+* Lighting and environmental presentation
+* Responsive user interface
+* Production-ready project architecture
+* Automated and manual verification
+* Complete setup and usage documentation
+
+The finished project must be maintainable, modular, performant, and runnable by another developer using the documented commands.
+
+---
+
+# 2. Autonomous Operating Rules
+
+Work independently and make reasonable engineering decisions without requesting confirmation.
+
+Only stop and ask for human input when one of the following is genuinely required:
+
+1. An unavailable external API key, credential, or paid service is essential.
+2. A legal, licensing, or intellectual-property decision cannot be safely resolved.
+3. A destructive action outside the project directory is required.
+4. Requirements are fundamentally contradictory and cannot be reconciled.
+5. A required external resource is permanently unavailable and no reasonable local substitute exists.
+
+Do not ask for confirmation for ordinary decisions involving:
+
+* File organization
+* Architecture
+* Library selection
+* Refactoring
+* Test implementation
+* Bug fixes
+* UI layout
+* Performance improvements
+* Naming
+* Internal data structures
+* Procedural generation settings
+* Development tooling
+
+When multiple valid approaches exist, select the approach that provides the best balance of correctness, maintainability, browser compatibility, and performance.
+
+Treat every compiler error, failed test, runtime exception, console warning, visual defect, gameplay bug, architectural weakness, and performance regression as feedback for another development iteration—not as a reason to stop.
+
+---
+
+# 3. OpenSpec / Spec-Driven Development Requirement
+
+Use an **OpenSpec-style Spec-Driven Development workflow** throughout the project.
+
+If the repository already contains OpenSpec tooling, conventions, or CLI commands, follow the existing implementation.
+
+If OpenSpec is not installed, do not add unnecessary dependencies merely to satisfy the name. Instead, create an equivalent lightweight specification system using Markdown files.
+
+Maintain specifications as living project artifacts rather than writing them only after implementation.
+
+## Required specification structure
+
+Create or maintain an equivalent structure such as:
+
+```text
+openspec/
+├── project.md
+├── architecture.md
+├── acceptance-criteria.md
+├── verification-matrix.md
+├── decisions/
+│   ├── ADR-001-rendering-architecture.md
+│   ├── ADR-002-chunk-data-model.md
+│   └── ...
+├── specs/
+│   ├── rendering/
+│   │   └── spec.md
+│   ├── world-generation/
+│   │   └── spec.md
+│   ├── chunk-streaming/
+│   │   └── spec.md
+│   ├── player-controller/
+│   │   └── spec.md
+│   ├── block-interaction/
+│   │   └── spec.md
+│   ├── inventory/
+│   │   └── spec.md
+│   ├── lighting/
+│   │   └── spec.md
+│   ├── user-interface/
+│   │   └── spec.md
+│   └── performance/
+│       └── spec.md
+└── changes/
+    └── <change-id>/
+        ├── proposal.md
+        ├── design.md
+        ├── tasks.md
+        ├── spec-delta.md
+        └── verification.md
+```
+
+Equivalent naming is acceptable when the repository already has an established documentation structure.
+
+## Each capability specification must define
+
+* Purpose
+* Scope
+* Functional requirements
+* Non-functional requirements
+* Inputs and outputs
+* Core data structures
+* Dependencies
+* Error and edge-case behavior
+* Performance expectations
+* Acceptance criteria
+* Verification method
+
+## Each implementation change must include
+
+1. **Proposal** — what is being changed and why.
+2. **Design** — technical approach and affected components.
+3. **Tasks** — concrete implementation checklist.
+4. **Specification delta** — requirements added, changed, or removed.
+5. **Implementation** — source-code changes.
+6. **Verification evidence** — commands, tests, observations, and results.
+7. **Status update** — completed, partially completed, blocked, or superseded.
+
+Do not allow documentation and implementation to drift apart. Update the relevant specification whenever implementation behavior changes.
+
+---
+
+# 4. Requirements Hierarchy
+
+When making decisions, use the following priority order:
+
+1. Explicit requirements in this prompt
+2. Existing repository requirements and working behavior
+3. OpenSpec capability specifications
+4. Acceptance criteria
+5. Architecture decisions
+6. Test expectations
+7. Reasonable engineering judgment
+
+Preserve useful existing functionality unless it conflicts with a higher-priority requirement.
+
+Do not rewrite the entire project unnecessarily when the existing architecture can be improved incrementally.
+
+---
+
+# 5. Development Workflow
+
+Repeat the following cycle until the project meets the full definition of done.
+
+## Phase A — Repository Analysis
+
+1. Inspect the repository structure.
+2. Read the package configuration and available scripts.
+3. Identify the framework, bundler, language, dependencies, and coding conventions.
+4. Run the existing installation, development, build, lint, and test commands.
+5. Record existing failures before making major changes.
+6. Identify reusable systems and technical debt.
+7. Create or update the initial OpenSpec project specification.
+8. Produce a requirements-to-implementation gap analysis.
+
+## Phase B — Planning
+
+1. Break the project into independently verifiable capabilities.
+2. Prioritize foundational systems before dependent features.
+3. Create implementation changes under the OpenSpec change structure.
+4. Define measurable acceptance criteria for each capability.
+5. Identify architectural risks and performance risks.
+6. Update the implementation plan as new information is discovered.
+
+## Phase C — Implementation
+
+1. Implement the smallest complete vertical slice.
+2. Integrate it with the existing project.
+3. Avoid placeholder implementations when production-capable behavior is reasonably possible.
+4. Add appropriate automated tests.
+5. Add comments only where they clarify non-obvious reasoning.
+6. Refactor when necessary to maintain clear module boundaries.
+7. Update the corresponding specifications.
+
+## Phase D — Verification
+
+After each meaningful change:
+
+1. Run the relevant tests.
+2. Run static type checking.
+3. Run linting.
+4. Run the development server when possible.
+5. Run the production build.
+6. Inspect browser console output.
+7. Test the affected gameplay behavior.
+8. Check for regressions.
+9. Record verification evidence in the change documentation.
+
+## Phase E — Iteration
+
+1. Fix discovered errors and regressions.
+2. Resolve incomplete acceptance criteria.
+3. Improve weak architecture when it presents a meaningful maintenance or correctness risk.
+4. Re-test modified behavior.
+5. Continue to the next missing capability.
+6. Repeat until all required criteria pass.
+
+Do not treat one successful build as proof that the game is complete.
+
+---
+
+# 6. Recommended Implementation Order
+
+Use this order unless repository conditions justify a better sequence:
+
+1. Project bootstrap and development tooling
+2. Core game loop and renderer
+3. Coordinate and chunk data model
+4. Block registry and texture system
+5. Procedural terrain generation
+6. Chunk meshing
+7. Chunk rendering
+8. Player camera and pointer lock
+9. Movement, gravity, and collision
+10. Block raycasting
+11. Block destruction and placement
+12. Hotbar and block selection
+13. Chunk streaming and unloading
+14. Trees, water, sand, and terrain variation
+15. Lighting and atmosphere
+16. Loading indicators and diagnostics
+17. Performance optimization
+18. Automated testing
+19. Production verification
+20. Documentation and final audit
+
+---
+
+# 7. Technical Architecture Requirements
+
+Use a modular architecture with clear responsibilities.
+
+The project should contain equivalent modules for:
+
+```text
+src/
+├── app/
+├── engine/
+│   ├── Game.ts
+│   ├── GameLoop.ts
+│   ├── Renderer.ts
+│   ├── InputManager.ts
+│   └── ResourceManager.ts
+├── world/
+│   ├── World.ts
+│   ├── Chunk.ts
+│   ├── ChunkManager.ts
+│   ├── ChunkGenerator.ts
+│   ├── ChunkMesher.ts
+│   ├── BlockRegistry.ts
+│   ├── TerrainGenerator.ts
+│   └── WorldCoordinates.ts
+├── player/
+│   ├── Player.ts
+│   ├── PlayerController.ts
+│   ├── PlayerPhysics.ts
+│   └── PlayerInteraction.ts
+├── rendering/
+│   ├── TextureAtlas.ts
+│   ├── Materials.ts
+│   ├── Lighting.ts
+│   └── Environment.ts
+├── inventory/
+│   ├── Inventory.ts
+│   └── Hotbar.ts
+├── ui/
+│   ├── Crosshair.ts
+│   ├── DebugOverlay.ts
+│   ├── LoadingIndicator.ts
+│   └── HUD.ts
+├── math/
+├── config/
+├── utilities/
+└── tests/
+```
+
+This structure is illustrative rather than mandatory. Adapt it to the existing codebase while maintaining equivalent separation of concerns.
+
+Avoid:
+
+* One oversized game file
+* Circular dependencies
+* Hidden global mutable state
+* Repeated hard-coded block IDs
+* Rendering logic mixed directly into procedural generation
+* Player input mixed directly into world storage
+* Unbounded event listeners
+* Per-frame object allocation where avoidable
+* Rebuilding every chunk after one block modification
+
+---
+
+# 8. Rendering Requirements
+
+Implement:
+
+* Three.js `WebGLRenderer`
+* Perspective camera
+* Proper renderer pixel-ratio handling
+* Responsive canvas resizing
+* Animation loop based on `requestAnimationFrame`
+* Delta-time handling with protection against unusually large frame times
+* Chunk-based scene objects
+* Efficient voxel face generation
+* Texture atlas support
+* Correct texture mapping for different block faces
+* Frustum culling
+* Appropriate material reuse
+* Transparent or semi-transparent rendering where required
+* Correct disposal of unused geometries, materials, and textures
+* Fog or distance treatment when useful for visual quality and performance
+
+Do not create one Three.js mesh per block.
+
+Each chunk should use a small and controlled number of meshes.
+
+At minimum, remove internal block faces that cannot be seen. Implement greedy meshing when it provides a meaningful performance improvement and does not compromise correctness. If greedy meshing is not used, document the chosen meshing approach and demonstrate that performance criteria are still met.
+
+---
+
+# 9. World and Terrain Requirements
+
+Implement a deterministic procedural world using a configurable seed.
+
+The world must include:
+
+* Chunk-based voxel storage
+* Positive and negative world coordinates
+* Deterministic terrain regeneration
+* Configurable chunk dimensions
+* Configurable render distance
+* Height variation
+* Biome-like material transitions where practical
+* Grass surface blocks
+* Dirt subsurface blocks
+* Stone
+* Sand near appropriate terrain or water levels
+* Water
+* Bedrock
+* Trees
+* Tree trunks
+* Tree leaves
+* Terrain continuity across chunk boundaries
+* Tree generation across chunk boundaries without visible clipping or duplication
+* Dynamic chunk generation
+* Chunk streaming around the player
+* Chunk unloading outside the configured distance
+* Deterministic regeneration of unloaded chunks
+
+Use seeded noise rather than `Math.random()` for world-critical generation.
+
+The same seed and coordinates must produce the same base terrain.
+
+An infinite-feeling world may be implemented through deterministic generation and a bounded active chunk radius. The entire world must not be retained in memory.
+
+Caves are a stretch feature. Implement them when practical after all mandatory requirements are stable. Do not allow cave development to delay required functionality.
+
+---
+
+# 10. Chunk System Requirements
+
+Each chunk system must support:
+
+* Stable chunk-coordinate conversion
+* World-to-local block-coordinate conversion
+* Correct handling of negative coordinates
+* Block lookup across chunk boundaries
+* Chunk lifecycle states
+* Generation queue
+* Meshing queue
+* Loaded and visible state
+* Dirty state
+* Unloading and resource disposal
+* Neighbor awareness
+* Neighbor remeshing when a boundary block changes
+
+When a block changes:
+
+1. Update the relevant chunk data.
+2. Mark only the affected chunk as dirty.
+3. If the block is on a chunk boundary, mark the relevant neighboring chunk as dirty.
+4. Rebuild only the required chunk meshes.
+5. Preserve the rest of the loaded world.
+
+Prevent duplicate chunk generation and stale asynchronous results.
+
+---
+
+# 11. Player Controller Requirements
+
+Implement a first-person controller with:
+
+* Pointer lock
+* Mouse look
+* Configurable sensitivity
+* Pitch clamping
+* WASD movement
+* Sprint
+* Jump
+* Gravity
+* Ground detection
+* Smooth acceleration and deceleration
+* Stable movement using delta time
+* Player collision volume
+* Collision detection against solid voxels
+* Axis-separated or swept collision resolution
+* Prevention of movement through blocks
+* Prevention of falling through terrain
+* Correct stair-step or edge behavior where practical
+* Safe spawn placement above valid terrain
+* Pause or input release when pointer lock is lost
+
+Movement must remain stable at different frame rates.
+
+Do not couple player physics directly to rendering frame rate without delta-time control or fixed-step simulation.
+
+---
+
+# 12. Block Interaction Requirements
+
+Implement:
+
+* Voxel raycasting from the center of the camera
+* Visible block targeting
+* Maximum interaction distance
+* Correct identification of the targeted block
+* Correct identification of the targeted face
+* Block destruction
+* Block placement adjacent to the targeted face
+* Prevention of placing a block inside the player's collision volume
+* Prevention of placement in invalid or occupied positions
+* Multiple placeable block types
+* Immediate chunk remeshing after modification
+* Correct updates across chunk boundaries
+* Input debouncing or cooldown where necessary
+* A visible selection outline or equivalent targeting feedback
+
+Use a robust grid traversal algorithm or an equivalent accurate voxel-raycast method. Avoid unreliable selection caused by floating-point rounding.
+
+---
+
+# 13. Block Registry and Texture Requirements
+
+Create a centralized block registry.
+
+Each block definition should support appropriate properties such as:
+
+* Stable block identifier
+* Display name
+* Solid or non-solid
+* Transparent or opaque
+* Breakable or unbreakable
+* Placeable
+* Collision behavior
+* Texture coordinates
+* Separate textures for top, bottom, and side faces
+* Render category
+* Optional future metadata
+
+Required block types:
+
+* Air
+* Grass
+* Dirt
+* Stone
+* Sand
+* Water
+* Bedrock
+* Wood or log
+* Leaves
+
+Do not use copyrighted Minecraft textures or proprietary assets. Use original procedural textures, locally created textures, or clearly permissive assets compatible with the project.
+
+Document any third-party asset and its license.
+
+---
+
+# 14. Inventory and Hotbar Requirements
+
+Implement a functional hotbar with:
+
+* Multiple block slots
+* Visible block icons or texture previews
+* Selected slot highlighting
+* Number-key selection
+* Mouse-wheel selection
+* Wraparound behavior when scrolling
+* Current block-name display where useful
+* Integration with block placement
+* Responsive layout
+* Clear visual readability
+
+At minimum, allow the player to select and place the main terrain and construction block types.
+
+A full survival inventory, crafting system, item quantities, and item drops are not required unless already present in the project.
+
+---
+
+# 15. Lighting and Environment Requirements
+
+Implement:
+
+* Ambient or hemisphere lighting
+* Directional sunlight
+* Shadows only when they do not create unacceptable performance costs
+* Sky or background treatment
+* Water presentation
+* Distance fog where beneficial
+* Visually distinguishable block surfaces
+* Sensible light direction and intensity
+
+A day-and-night cycle is optional after mandatory features are stable.
+
+If implemented, it must not introduce flickering, broken shadows, or excessive per-frame cost.
+
+---
+
+# 16. User Interface Requirements
+
+Implement:
+
+* Centered crosshair
+* Hotbar
+* Selected block indication
+* FPS counter
+* Loading or world-generation indicator
+* Responsive full-window canvas
+* Pointer-lock instructions
+* Pause or click-to-resume message
+* Error state for unrecoverable initialization failures
+* Optional debug overlay showing useful information such as:
+
+  * Player position
+  * Current chunk
+  * Loaded chunk count
+  * Pending generation count
+  * Pending mesh count
+  * Rendered triangle count
+
+The UI must remain usable on common desktop browser resolutions.
+
+The primary required control scheme is keyboard and mouse. Mobile controls are not mandatory unless the existing project explicitly targets mobile devices.
+
+---
+
+# 17. Performance Requirements
+
+Optimize for practical browser performance.
+
+Implement:
+
+* Chunk-level rendering
+* Hidden-face removal
+* Shared materials
+* Texture atlas use
+* Frustum culling
+* Bounded chunk render distance
+* Bounded generation work per frame
+* Rebuild only dirty chunks
+* Neighbor-only updates
+* Geometry and material disposal
+* Avoidance of unnecessary per-frame allocations
+* Reuse of vectors and temporary objects in hot paths
+* Efficient block storage
+* Deterministic chunk unloading
+* Controlled asynchronous generation where appropriate
+
+Consider Web Workers for terrain generation or meshing only when their complexity is justified.
+
+The game must not freeze for long periods during ordinary movement.
+
+Chunk generation should be distributed across frames or performed asynchronously when necessary to preserve responsiveness.
+
+Define measurable performance targets in the performance specification. At minimum, test performance using a reasonable desktop render distance and document the observed result.
+
+---
+
+# 18. State and Block-Edit Persistence
+
+The base terrain must regenerate deterministically.
+
+Block changes made during the current session must not disappear merely because a chunk temporarily unloads and reloads.
+
+Maintain a world-edit overlay, modified-chunk cache, or equivalent system so that:
+
+* Broken blocks remain broken after chunk reload.
+* Placed blocks remain placed after chunk reload.
+* Unmodified terrain can still be regenerated from the seed.
+* Modified chunks do not require storing the entire generated world.
+
+Persistent storage across browser restarts is optional unless already present, but in-session edit persistence is required.
+
+---
+
+# 19. Error Handling Requirements
+
+Handle failures intentionally.
+
+At minimum:
+
+* Validate required DOM elements.
+* Validate texture-loading results.
+* Provide fallback behavior for missing non-critical assets.
+* Prevent duplicate initialization.
+* Remove event listeners during teardown.
+* Dispose GPU resources when chunks unload.
+* Avoid unhandled promise rejections.
+* Avoid uncaught runtime exceptions.
+* Guard against invalid block coordinates.
+* Guard against stale asynchronous chunk jobs.
+* Prevent chunk queues from growing without bounds.
+
+Do not silently swallow errors that indicate corrupted game state.
+
+---
+
+# 20. Testing Requirements
+
+Create tests appropriate to the project architecture.
+
+## Unit tests should cover key deterministic logic such as:
+
+* Seeded world generation
+* Noise reproducibility
+* World-to-chunk coordinate conversion
+* Negative-coordinate conversion
+* Chunk-local coordinate conversion
+* Block registry behavior
+* Chunk-boundary lookup
+* Block modification tracking
+* Hotbar selection
+* Neighbor dirty-state propagation
+* Collision helper functions
+* Ray-grid traversal where practical
+
+## Integration or browser tests should verify:
+
+* The game initializes.
+* The canvas renders.
+* The player can enter pointer lock.
+* Movement input updates the player.
+* Gravity moves an airborne player downward.
+* Collision prevents passing through solid blocks.
+* A block can be targeted.
+* A block can be removed.
+* A block can be placed.
+* Hotbar selection changes the placement block.
+* Chunks load as the player moves.
+* Distant chunks unload.
+* Production build output loads without fatal errors.
+
+Use the repository's existing test framework where available. Add a reasonable testing tool only when necessary.
+
+Do not make tests pass by weakening valid assertions or disabling core functionality.
+
+---
+
+# 21. Code Quality Requirements
+
+The completed codebase must have:
+
+* Clear module boundaries
+* Consistent naming
+* Strong typing where TypeScript is used
+* No unexplained `any` types in important systems
+* Minimal duplication
+* No dead code
+* No abandoned experimental files
+* No temporary debug statements in production paths
+* No unnecessary dependencies
+* No secrets committed to the repository
+* Comments for complex algorithms and architectural reasoning
+* Formatting consistent with project conventions
+
+Prefer TypeScript for new systems when the project is TypeScript-based.
+
+Do not perform a disruptive language migration unless it provides clear value and can be completed safely.
+
+---
+
+# 22. Acceptance-Criteria Traceability
+
+Maintain a verification matrix that maps each requirement to:
+
+* Requirement ID
+* Specification file
+* Implementation file or module
+* Test or validation method
+* Current status
+* Verification evidence
+* Remaining issue, if any
+
+Example:
+
+```markdown
+| ID | Requirement | Specification | Implementation | Verification | Status |
+|---|---|---|---|---|---|
+| PLAYER-01 | WASD movement | specs/player-controller/spec.md | src/player/PlayerController.ts | Browser test + manual test | Pass |
+| WORLD-04 | Deterministic seed | specs/world-generation/spec.md | src/world/TerrainGenerator.ts | Unit test | Pass |
+```
+
+Do not mark a requirement complete based only on the existence of related code.
+
+---
+
+# 23. Mandatory Validation Checklist
+
+Before considering the project complete, verify every item below.
+
+## Installation and Tooling
+
+* [ ] Dependencies install successfully
+* [ ] Required scripts are documented
+* [ ] Development server starts successfully
+* [ ] Production build succeeds
+* [ ] Static type checking succeeds
+* [ ] Linting succeeds
+* [ ] Automated tests succeed
+* [ ] No required asset is missing
+* [ ] No dependency has an unresolved critical issue introduced by the implementation
+
+## Runtime Quality
+
+* [ ] No uncaught runtime errors
+* [ ] No unhandled promise rejections
+* [ ] No recurring console errors
+* [ ] No recurring serious console warnings
+* [ ] Canvas resizes correctly
+* [ ] Pointer lock enters and exits correctly
+* [ ] Game resumes correctly after pointer lock is restored
+
+## Player
+
+* [ ] Player spawns safely
+* [ ] WASD movement works
+* [ ] Mouse look works
+* [ ] Sprint works
+* [ ] Jump works
+* [ ] Gravity works
+* [ ] Ground detection works
+* [ ] Collision prevents entering solid blocks
+* [ ] Player does not fall through normal terrain
+* [ ] Movement remains stable at different frame rates
+
+## World
+
+* [ ] Terrain is generated procedurally
+* [ ] The seed produces deterministic terrain
+* [ ] Adjacent chunks align correctly
+* [ ] Negative coordinates work
+* [ ] Height variation is visible
+* [ ] Grass generates
+* [ ] Dirt generates
+* [ ] Stone generates
+* [ ] Sand generates
+* [ ] Water generates
+* [ ] Bedrock generates
+* [ ] Trees generate
+* [ ] Tree generation works near chunk borders
+* [ ] Chunks stream as the player moves
+* [ ] Distant chunks unload
+* [ ] Returning to an area regenerates the same base terrain
+* [ ] In-session block edits survive chunk unloading and reloading
+
+## Block Interaction
+
+* [ ] Targeted block selection is accurate
+* [ ] Targeted face detection is accurate
+* [ ] Selection feedback is visible
+* [ ] Blocks can be destroyed
+* [ ] Blocks can be placed
+* [ ] Blocks cannot be placed inside the player
+* [ ] Multiple block types can be placed
+* [ ] Boundary block changes update neighboring chunks
+* [ ] Bedrock or other unbreakable blocks behave correctly
+
+## Inventory and UI
+
+* [ ] Crosshair displays correctly
+* [ ] Hotbar displays correctly
+* [ ] Number-key selection works
+* [ ] Mouse-wheel selection works
+* [ ] Selected slot is clearly highlighted
+* [ ] FPS counter works
+* [ ] Loading indicator works
+* [ ] UI remains readable at common desktop resolutions
+
+## Rendering and Performance
+
+* [ ] Internal block faces are not rendered
+* [ ] Texture atlas works
+* [ ] Block-face textures are mapped correctly
+* [ ] Frustum culling is enabled
+* [ ] Only modified chunks are rebuilt
+* [ ] GPU resources are disposed when no longer needed
+* [ ] Chunk generation does not create major repeated freezes
+* [ ] Memory usage does not increase indefinitely during normal exploration
+* [ ] Gameplay maintains an acceptable and documented frame rate
+* [ ] No obvious rendering gaps appear between chunks
+
+## Documentation
+
+* [ ] README contains installation instructions
+* [ ] README contains development commands
+* [ ] README contains production-build instructions
+* [ ] README contains controls
+* [ ] README explains the architecture
+* [ ] README documents known limitations
+* [ ] OpenSpec project files are current
+* [ ] Architecture decisions are recorded
+* [ ] Verification matrix is complete
+
+If any mandatory item fails, continue working automatically.
+
+---
+
+# 24. Definition of Done
+
+The project is complete only when:
+
+1. Every mandatory feature has been implemented.
+2. Every mandatory acceptance criterion has been verified.
+3. All required specifications reflect the final behavior.
+4. All implementation changes have verification evidence.
+5. Installation succeeds.
+6. The development server starts.
+7. The production build succeeds.
+8. Type checking succeeds.
+9. Linting succeeds.
+10. Automated tests succeed.
+11. The browser console contains no unresolved runtime errors.
+12. The game is playable from spawn through terrain exploration, block destruction, and block placement.
+13. Chunk streaming remains functional during movement.
+14. Block edits survive chunk unload and reload during the session.
+15. The project contains clear run and control documentation.
+16. No known gameplay-breaking defect remains.
+
+A feature is not complete merely because code was written for it.
+
+A feature is complete only when its behavior is implemented, integrated, tested, documented, and traced to its acceptance criteria.
+
+---
+
+# 25. Handling Blockers
+
+When a problem occurs:
+
+1. Identify the root cause.
+2. Record it in the active change documentation.
+3. Attempt a direct fix.
+4. Attempt a reasonable alternative.
+5. Reduce the problem to a minimal reproduction when useful.
+6. Continue all unrelated work that can still be completed.
+7. Re-run verification after the fix.
+
+Do not repeatedly attempt the same failed approach without changing the strategy.
+
+When an environmental limitation prevents execution of a validation command, clearly distinguish:
+
+* Implemented
+* Statically inspected
+* Automatically verified
+* Manually verified
+* Not verifiable in the current environment
+
+Never present an unexecuted check as passing.
+
+---
+
+# 26. Scope-Control Rules
+
+Do not allow optional features to delay mandatory completion.
+
+The following are optional only after all required systems are working:
+
+* Day-and-night cycle
+* Caves
+* Multiple biomes
+* Clouds
+* Animals or enemies
+* Crafting
+* Item drops
+* Health and hunger
+* Multiplayer
+* Saving across browser restarts
+* Mobile controls
+* Advanced shadows
+* Weather
+* Audio
+
+Do not implement unrelated features simply to make the project appear larger.
+
+Prioritize correctness, playability, maintainability, and performance.
+
+---
+
+# 27. Final Deliverables
+
+Before finishing, provide or update:
+
+1. Complete source code
+2. OpenSpec or equivalent SDD documentation
+3. Architecture documentation
+4. Architecture decision records
+5. Requirements and acceptance-criteria specifications
+6. Verification matrix
+7. Automated tests
+8. Production build configuration
+9. README with:
+
+   * Prerequisites
+   * Installation
+   * Development command
+   * Test command
+   * Lint command
+   * Type-check command
+   * Production-build command
+   * Preview or deployment command
+   * Game controls
+   * Architecture summary
+   * Performance notes
+   * Known limitations
+10. Final implementation report containing:
+
+* Features completed
+* Important architectural decisions
+* Commands executed
+* Test results
+* Build results
+* Performance observations
+* Remaining non-critical limitations
+
+---
+
+# 28. Final Response Requirements
+
+Only conclude after completing the implementation and verification process.
+
+The final response must include:
+
+* A concise summary of the completed game
+* Major systems implemented
+* Important files or modules created
+* Exact installation and run commands
+* Exact test, lint, type-check, and build commands
+* Verification results
+* Any remaining non-critical limitations
+* Confirmation that the OpenSpec specifications and verification matrix were updated
+
+Do not provide a vague statement such as “the project should now work.”
+
+Provide concrete evidence from executed commands and completed acceptance checks.
+
+Do not stop after one implementation pass.
+
+Continue analyzing, specifying, implementing, running, testing, debugging, optimizing, documenting, and verifying until the entire definition of done has been satisfied.

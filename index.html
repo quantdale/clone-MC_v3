@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="A browser-based voxel sandbox game built with Three.js and TypeScript." />
+    <title>Voxel Game</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%234a7c2f'/></svg>" />
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="game-canvas" aria-label="Voxel game viewport"></canvas>
+
+      <!-- UI root elements -->
+      <div id="ui-root">
+        <div id="crosshair" class="ui hidden" aria-hidden="true"></div>
+        <div id="hud" class="ui hidden">
+          <div id="fps-counter" class="hud-chip">0 FPS</div>
+          <div id="selected-block-name" class="hud-chip"></div>
+        </div>
+        <div id="hotbar" class="ui hidden"></div>
+        <div id="loading" class="ui">
+          <div class="loading-panel">
+            <div class="loading-spinner" aria-hidden="true"></div>
+            <div class="loading-title">Generating world…</div>
+            <div class="loading-subtitle">Preparing spawn area</div>
+          </div>
+        </div>
+        <div id="overlay" class="ui hidden">
+          <div class="overlay-panel">
+            <h1 class="overlay-title">Voxel Game</h1>
+            <p class="overlay-text">Click to play</p>
+            <p class="overlay-controls">
+              <strong>WASD</strong> move &nbsp;·&nbsp; <strong>Space</strong> jump &nbsp;·&nbsp;
+              <strong>Shift</strong> sprint &nbsp;·&nbsp; <strong>Mouse</strong> look
+            </p>
+            <p class="overlay-controls">
+              <strong>Left click</strong> destroy &nbsp;·&nbsp; <strong>Right click</strong> place &nbsp;·&nbsp;
+              <strong>1–9</strong> / <strong>scroll</strong> select block
+            </p>
+            <p class="overlay-controls"><strong>Esc</strong> pause &nbsp;·&nbsp; <strong>F3</strong> debug overlay</p>
+          </div>
+        </div>
+        <div id="error" class="ui hidden" role="alert">
+          <div class="overlay-panel error-panel">
+            <h1 class="overlay-title">Unable to start</h1>
+            <p id="error-message" class="overlay-text"></p>
+          </div>
+        </div>
+        <div id="debug-overlay" class="ui debug hidden"></div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
