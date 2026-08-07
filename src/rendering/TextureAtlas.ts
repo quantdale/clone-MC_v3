@@ -58,7 +58,9 @@ export class TextureAtlas {
     this.texture = new THREE.CanvasTexture(this.canvas);
     this.texture.magFilter = THREE.NearestFilter;
     this.texture.minFilter = THREE.NearestFilter;
-    this.texture.generateMipmaps = true;
+    // Nearest-filtered pixel art should not use mipmaps; they cause shimmering
+    // when the GPU selects a lower-resolution mip level at oblique angles.
+    this.texture.generateMipmaps = false;
     this.texture.colorSpace = THREE.SRGBColorSpace;
   }
 

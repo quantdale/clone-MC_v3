@@ -84,4 +84,11 @@ export const CONFIG = {
   },
 } as const;
 
+// Freeze the config at runtime so accidental mutations are caught immediately.
+Object.freeze(CONFIG);
+Object.freeze(CONFIG.player);
+Object.freeze(CONFIG.budgets);
+Object.freeze(CONFIG.fog);
+Object.freeze(CONFIG.dayNight);
+
 export type GameConfig = typeof CONFIG;

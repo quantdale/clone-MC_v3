@@ -73,42 +73,54 @@ export class PlayerPhysics {
 
     player.position[axis] += disp;
 
-    const sign = Math.sign(disp);
-    const minX = player.position.x - player.radius;
-    const maxX = player.position.x + player.radius;
-    const minY = player.position.y;
-    const maxY = player.position.y + player.height;
-    const minZ = player.position.z - player.radius;
-    const maxZ = player.position.z + player.radius;
+    // Resolve all overlapping solid voxels, not just the first one. After
+    // resolving against one voxel the AABB may still intersect another (e.g.
+    // a tight corner), so loop until the axis is fully clear.
+    let safety = 0;
+    while (safety < 10) {
+      safety++;
+      const sign = Math.sign(disp);
+      const minX = player.position.x - player.radius;
+      const maxX = player.position.x + player.radius;
+      const minY = player.position.y;
+      const maxY = player.position.y + player.height;
+      const minZ = player.position.z - player.radius;
+      const maxZ = player.position.z + player.radius;
 
-    // Scan the voxel cells overlapped by the AABB.
-    const x0 = Math.floor(minX);
-    const x1 = Math.floor(maxX);
-    const y0 = Math.floor(minY);
-    const y1 = Math.floor(maxY);
-    const z0 = Math.floor(minZ);
-    const z1 = Math.floor(maxZ);
+      // Scan the voxel cells overlapped by the AABB.
+      const x0 = Math.floor(minX);
+      const x1 = Math.floor(maxX);
+      const y0 = Math.floor(minY);
+      const y1 = Math.floor(maxY);
+      const z0 = Math.floor(minZ);
+      const z1 = Math.floor(maxZ);
 
-    for (let z = z0; z <= z1; z++) {
-      for (let y = y0; y <= y1; y++) {
-        for (let x = x0; x <= x1; x++) {
-          if (!this.world.isSolid(x, y, z)) {
-            continue;
-          }
+      let hit = false;
+      for (let z = z0; z <= z1 && !hit; z++) {
+        for (let y = y0; y <= y1 && !hit; y++) {
+          for (let x = x0; x <= x1 && !hit; x++) {
+            if (!this.world.isSolid(x, y, z)) {
+              continue;
+            }
 
-          // Full 3D AABB overlap with the voxel cell.
-          if (
-            maxX > x &&
-            minX < x + 1 &&
-            maxY > y &&
-            minY < y + 1 &&
-            maxZ > z &&
-            minZ < z + 1
-          ) {
-            this.resolve(player, axis, sign, x, y, z);
-            return;
+            // Full 3D AABB overlap with the voxel cell.
+            if (
+              maxX > x &&
+              minX < x + 1 &&
+              maxY > y &&
+              minY < y + 1 &&
+              maxZ > z &&
+              minZ < z + 1
+            ) {
+              this.resolve(player, axis, sign, x, y, z);
+              hit = true;
+            }
           }
         }
+      }
+
+      if (!hit) {
+        break;
       }
     }
   }

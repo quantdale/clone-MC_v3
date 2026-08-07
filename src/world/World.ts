@@ -45,6 +45,9 @@ export class World implements WorldAccess {
 
   /** Player edits keyed by chunk key → local index → block id. Survives unload. */
   private readonly editOverlay = new Map<string, Map<number, number>>();
+  /** Maximum distinct chunks tracked in the edit overlay. Prevents unbounded
+   *  memory growth over very long sessions. */
+  private static readonly EDIT_OVERLAY_MAX_CHUNKS = 10_000;
 
   private genQueue: GenJob[] = [];
   private readonly genSet = new Set<string>();
@@ -122,6 +125,14 @@ export class World implements WorldAccess {
     if (!overlay) {
       overlay = new Map<number, number>();
       this.editOverlay.set(key, overlay);
+      // Enforce the overlay size cap by evicting the oldest entry when a new
+      // chunk key would exceed the limit.
+      if (this.editOverlay.size > World.EDIT_OVERLAY_MAX_CHUNKS) {
+        const oldestKey = this.editOverlay.keys().next().value;
+        if (oldestKey !== undefined) {
+          this.editOverlay.delete(oldestKey);
+        }
+      }
     }
     overlay.set(localIndex(lx, ly, lz), id);
 

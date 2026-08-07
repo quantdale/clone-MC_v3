@@ -45,8 +45,6 @@ export interface BlockDefinition {
   breakable: boolean;
   /** Whether the player can place it. */
   placeable: boolean;
-  /** Whether the block collides with the player (same as solid for now). */
-  collision: boolean;
   /** Render category (opaque vs transparent). */
   renderCategory: RenderCategory;
   /** Texture tile index for the top face. */
@@ -114,7 +112,6 @@ export function createDefaultRegistry(): BlockRegistry {
       opaque: false,
       breakable: false,
       placeable: false,
-      collision: false,
       renderCategory: RenderCategory.Opaque,
       topTile: 0,
       bottomTile: 0,
@@ -128,7 +125,6 @@ export function createDefaultRegistry(): BlockRegistry {
       opaque: true,
       breakable: true,
       placeable: true,
-      collision: true,
       renderCategory: RenderCategory.Opaque,
       topTile: 1,
       bottomTile: 2,
@@ -142,7 +138,6 @@ export function createDefaultRegistry(): BlockRegistry {
       opaque: true,
       breakable: true,
       placeable: true,
-      collision: true,
       renderCategory: RenderCategory.Opaque,
       topTile: 2,
       bottomTile: 2,
@@ -156,7 +151,6 @@ export function createDefaultRegistry(): BlockRegistry {
       opaque: true,
       breakable: true,
       placeable: true,
-      collision: true,
       renderCategory: RenderCategory.Opaque,
       topTile: 4,
       bottomTile: 4,
@@ -170,7 +164,6 @@ export function createDefaultRegistry(): BlockRegistry {
       opaque: true,
       breakable: true,
       placeable: true,
-      collision: true,
       renderCategory: RenderCategory.Opaque,
       topTile: 5,
       bottomTile: 5,
@@ -184,7 +177,6 @@ export function createDefaultRegistry(): BlockRegistry {
       opaque: false,
       breakable: false,
       placeable: true,
-      collision: false,
       renderCategory: RenderCategory.Transparent,
       topTile: 6,
       bottomTile: 6,
@@ -198,7 +190,6 @@ export function createDefaultRegistry(): BlockRegistry {
       opaque: true,
       breakable: false,
       placeable: false,
-      collision: true,
       renderCategory: RenderCategory.Opaque,
       topTile: 7,
       bottomTile: 7,
@@ -212,7 +203,6 @@ export function createDefaultRegistry(): BlockRegistry {
       opaque: true,
       breakable: true,
       placeable: true,
-      collision: true,
       renderCategory: RenderCategory.Opaque,
       topTile: 8,
       bottomTile: 8,
@@ -226,7 +216,6 @@ export function createDefaultRegistry(): BlockRegistry {
       opaque: false,
       breakable: true,
       placeable: true,
-      collision: true,
       renderCategory: RenderCategory.Opaque,
       topTile: 10,
       bottomTile: 10,

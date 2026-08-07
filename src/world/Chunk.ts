@@ -15,8 +15,6 @@ export const enum ChunkState {
   Meshing = 3,
   /** Mesh is built and attached to the scene. */
   Visible = 4,
-  /** Marked for unloading. */
-  Unloading = 5,
 }
 
 /**

@@ -24,7 +24,7 @@ export class Environment {
   }
 
   /** Placeholder for camera-driven updates; retained for future tuning. */
-  update(camera: THREE.PerspectiveCamera): void {
-    void camera;
+  update(_camera: THREE.PerspectiveCamera): void {
+    // Intentionally a no-op until camera-driven fog tuning is implemented.
   }
 }

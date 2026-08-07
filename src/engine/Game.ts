@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import { CONFIG } from '../config';
 import { GameLoop } from './GameLoop';
 import { Renderer } from './Renderer';
@@ -54,6 +55,9 @@ export class Game {
   private readonly overlayEl: HTMLElement;
   private readonly errorEl: HTMLElement;
   private readonly errorMessageEl: HTMLElement;
+
+  // The interaction target outline is scene-owned; track it for cleanup.
+  private readonly targetOutline: THREE.LineSegments | null;
 
   private lastSelection = -1;
   private fpsFrames = 0;
@@ -148,9 +152,9 @@ export class Game {
     );
 
     // Attach the target selection outline to the scene.
-    const outline = this.interaction.addTargetOutline();
-    if (outline) {
-      this.renderer.scene.add(outline);
+    this.targetOutline = this.interaction.addTargetOutline();
+    if (this.targetOutline) {
+      this.renderer.scene.add(this.targetOutline);
     }
 
     // Resize handling.
@@ -178,6 +182,10 @@ export class Game {
     this.loop.stop();
     this.input.dispose();
     window.removeEventListener('resize', this.onResize);
+    // Remove the scene-owned selection outline before disposing resources.
+    if (this.targetOutline) {
+      this.renderer.scene.remove(this.targetOutline);
+    }
     this.world.dispose();
     this.materials.dispose();
     this.atlas.dispose();
