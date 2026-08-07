@@ -28,16 +28,18 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      # Playwright's webServer serves the `dist/` output via `npm run preview`,
-      # so the production build must succeed before the e2e suite runs.
-      - name: Build
-        run: npm run build
-
       - name: Unit tests
         run: npm test
 
+      # Playwright's webServer runs `vite` dev server (see playwright.config.ts).
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       - name: E2E tests
         run: npm run test:e2e

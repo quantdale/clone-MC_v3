@@ -45,6 +45,10 @@ export class World implements WorldAccess {
 
   /** Player edits keyed by chunk key → local index → block id. Survives unload. */
   private readonly editOverlay = new Map<string, Map<number, number>>();
+  /** Edit overlay chunk keys ordered least- to most-recently used. Drives LRU
+   *  eviction so a chunk the player keeps returning to is never dropped in
+   *  favour of one that was edited later but never touched again. */
+  private readonly editOverlayAccessOrder: string[] = [];
   /** Maximum distinct chunks tracked in the edit overlay. Prevents unbounded
    *  memory growth over very long sessions. */
   private static readonly EDIT_OVERLAY_MAX_CHUNKS = 10_000;
@@ -53,6 +57,10 @@ export class World implements WorldAccess {
   private readonly genSet = new Set<string>();
   private meshQueue: MeshJob[] = [];
   private readonly meshSet = new Set<string>();
+  /** Set when an item is pushed onto a queue; the queue is reordered only once
+   *  in the next update, avoiding a sort every frame. */
+  private genQueueDirty = false;
+  private meshQueueDirty = false;
   /** Mesh jobs dropped while the mesh queue was at capacity, retried once it drains. */
   private readonly retryMeshQueue: MeshJob[] = [];
   private readonly retryMeshSet = new Set<string>();
@@ -125,15 +133,8 @@ export class World implements WorldAccess {
     if (!overlay) {
       overlay = new Map<number, number>();
       this.editOverlay.set(key, overlay);
-      // Enforce the overlay size cap by evicting the oldest entry when a new
-      // chunk key would exceed the limit.
-      if (this.editOverlay.size > World.EDIT_OVERLAY_MAX_CHUNKS) {
-        const oldestKey = this.editOverlay.keys().next().value;
-        if (oldestKey !== undefined) {
-          this.editOverlay.delete(oldestKey);
-        }
-      }
     }
+    this.touchEditOverlay(key);
     overlay.set(localIndex(lx, ly, lz), id);
 
     if (!chunk) {
@@ -177,9 +178,16 @@ export class World implements WorldAccess {
   update(_dt: number, playerChunkX: number, playerChunkZ: number): void {
     this.ensureChunks(playerChunkX, playerChunkZ);
     // Prioritize the queue by distance to the player so the nearest chunks
-    // (and the player's own chunk) generate and mesh first.
-    this.prioritizeQueue(this.genQueue, playerChunkX, playerChunkZ);
-    this.prioritizeQueue(this.meshQueue, playerChunkX, playerChunkZ);
+    // (and the player's own chunk) generate and mesh first. Only re-sort when
+    // something was added since the last sort.
+    if (this.genQueueDirty) {
+      this.prioritizeQueue(this.genQueue, playerChunkX, playerChunkZ);
+      this.genQueueDirty = false;
+    }
+    if (this.meshQueueDirty) {
+      this.prioritizeQueue(this.meshQueue, playerChunkX, playerChunkZ);
+      this.meshQueueDirty = false;
+    }
     this.processGeneration();
     this.processMeshing();
     this.unloadChunks(playerChunkX, playerChunkZ);
@@ -326,11 +334,22 @@ export class World implements WorldAccess {
       }
       this.chunkVoxelCounts.delete(key);
 
-      // Drop any pending jobs for this chunk.
-      this.genQueue = this.genQueue.filter((j) => j.key !== key);
-      this.genSet.delete(key);
-      this.meshQueue = this.meshQueue.filter((j) => j.key !== key);
-      this.meshSet.delete(key);
+      // Drop any pending jobs for this chunk. Each set mirrors its queue, so an
+      // O(1) miss skips the scan entirely and no queue is ever reallocated.
+      if (this.genSet.delete(key)) {
+        for (let i = this.genQueue.length - 1; i >= 0; i--) {
+          if (this.genQueue[i]?.key === key) {
+            this.genQueue.splice(i, 1);
+          }
+        }
+      }
+      if (this.meshSet.delete(key)) {
+        for (let i = this.meshQueue.length - 1; i >= 0; i--) {
+          if (this.meshQueue[i]?.key === key) {
+            this.meshQueue.splice(i, 1);
+          }
+        }
+      }
       // In-place filter on the readonly retry queue (no reassignment).
       for (let i = this.retryMeshQueue.length - 1; i >= 0; i--) {
         const job = this.retryMeshQueue[i];
@@ -357,6 +376,7 @@ export class World implements WorldAccess {
       return; // Drop beyond the bound.
     }
     this.genQueue.push({ key, cx: chunk.cx, cy: chunk.cy, cz: chunk.cz });
+    this.genQueueDirty = true;
     this.genSet.add(key);
     chunk.state = ChunkState.Generating;
   }
@@ -376,6 +396,7 @@ export class World implements WorldAccess {
       return false; // Queue is at capacity; caller may retry later.
     }
     this.meshQueue.push({ key, cx: chunk.cx, cy: chunk.cy, cz: chunk.cz, version: chunk.meshVersion });
+    this.meshQueueDirty = true;
     this.meshSet.add(key);
     chunk.state = ChunkState.Meshing;
     return true;
@@ -383,12 +404,36 @@ export class World implements WorldAccess {
 
   /** Re-apply the player's edits for a chunk after regeneration. */
   private applyEditOverlay(chunk: Chunk): void {
-    const overlay = this.editOverlay.get(chunkKey(chunk.cx, chunk.cy, chunk.cz));
+    const key = chunkKey(chunk.cx, chunk.cy, chunk.cz);
+    const overlay = this.editOverlay.get(key);
     if (!overlay) {
       return;
     }
+    // Reading the overlay counts as a use: a chunk that keeps reloading around
+    // the player must not be evicted before chunks edited once and abandoned.
+    this.touchEditOverlay(key);
     for (const [index, id] of overlay) {
       chunk.blocks[index] = id;
+    }
+  }
+
+  /**
+   * Mark an edit-overlay chunk key as most-recently used and enforce the size
+   * cap by evicting least-recently-used keys.
+   */
+  private touchEditOverlay(key: string): void {
+    const index = this.editOverlayAccessOrder.indexOf(key);
+    if (index !== -1) {
+      this.editOverlayAccessOrder.splice(index, 1);
+    }
+    this.editOverlayAccessOrder.push(key);
+
+    while (this.editOverlay.size > World.EDIT_OVERLAY_MAX_CHUNKS) {
+      const lruKey = this.editOverlayAccessOrder.shift();
+      if (lruKey === undefined) {
+        break; // Access order exhausted; nothing left to evict.
+      }
+      this.editOverlay.delete(lruKey);
     }
   }
 
@@ -542,6 +587,7 @@ export class World implements WorldAccess {
     this.chunkTriangles.clear();
     this.chunkVoxelCounts.clear();
     this.editOverlay.clear();
+    this.editOverlayAccessOrder.length = 0;
     this.triangles = 0;
     this.voxels = 0;
   }

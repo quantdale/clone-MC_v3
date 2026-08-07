@@ -76,7 +76,11 @@ export class Game {
     this.registry = createDefaultRegistry();
     this.atlas = new TextureAtlas();
     this.materials = new Materials(this.atlas);
-    this.renderer = new Renderer(canvas);
+    this.renderer = new Renderer(
+      canvas,
+      () => this.onContextLost(),
+      () => this.onContextRestored(),
+    );
     this.resources = new ResourceManager();
     this.resources.track(this.renderer);
 
@@ -107,7 +111,11 @@ export class Game {
     );
     this.world.preloadChunks(spawnChunkX, spawnChunkZ, 3);
 
-    this.input = new InputManager(canvas, (locked) => this.onLockChange(locked));
+    this.input = new InputManager(
+      canvas,
+      (locked) => this.onLockChange(locked),
+      (message) => this.showError(message),
+    );
     this.controller = new PlayerController(this.player, this.input);
     this.physics = new PlayerPhysics(this.world, this.registry);
     this.inventory = new Inventory();
@@ -182,6 +190,10 @@ export class Game {
     this.loop.stop();
     this.input.dispose();
     window.removeEventListener('resize', this.onResize);
+    if (this.resizeTimer !== null) {
+      clearTimeout(this.resizeTimer);
+      this.resizeTimer = null;
+    }
     // Remove the scene-owned selection outline before disposing resources.
     if (this.targetOutline) {
       this.renderer.scene.remove(this.targetOutline);
@@ -355,12 +367,38 @@ export class Game {
     }
   }
 
+  /** Invoked when the WebGL context is lost. */
+  private onContextLost(): void {
+    if (this.renderer.rendererCreated) {
+      return;
+    }
+    this.showError('The graphics context was lost. Please reload the page to continue.');
+  }
+
+  /** Invoked when the WebGL context is restored after a loss. */
+  private onContextRestored(): void {
+    // Clear the context-loss error and return to the pause overlay so the
+    // player can click the canvas to re-lock the pointer and resume.
+    this.errorEl.classList.add('hidden');
+    this.showOverlay();
+  }
+
   private showOverlay(): void {
     this.overlayEl.classList.remove('hidden');
   }
 
+  private resizeTimer: ReturnType<typeof setTimeout> | null = null;
+
   private readonly onResize = (): void => {
-    this.renderer.resize();
+    // Debounce resize events to avoid hammering the renderer during rapid
+    // window resizing (e.g. dragging a corner).
+    if (this.resizeTimer !== null) {
+      clearTimeout(this.resizeTimer);
+    }
+    this.resizeTimer = setTimeout(() => {
+      this.resizeTimer = null;
+      this.renderer.resize();
+    }, 100);
   };
 
   private resolveSeed(): number {

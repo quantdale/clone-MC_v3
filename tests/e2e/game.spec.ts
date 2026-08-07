@@ -3,15 +3,15 @@ import { test, expect, type Page } from '@playwright/test';
 /**
  * Playwright browser tests for the voxel game.
  *
- * These run against the production build served by `vite preview` (see
- * playwright.config.ts). The game must be built first (`npm run build`).
+ * These run against the dev server served by `vite` (see
+ * playwright.config.ts). The dev build exposes `window.__voxelGame` for
+ * test hooks.
  */
 
 /** Wait for the game to boot and the loading indicator to clear. */
 async function waitForGame(page: Page): Promise<void> {
-  // `?e2e=1` enables the window.__voxelGame test hook in the production build
-  // (see src/main.ts); without it the hook is not exposed.
-  await page.goto('/?e2e=1');
+  // Dev builds expose window.__voxelGame for test hooks (see src/main.ts).
+  await page.goto('/');
   // The loading panel is visible on boot; wait for it to be hidden (world ready).
   // `#loading` becomes `display:none` via the `hidden` class, so use the 'hidden'
   // state rather than 'visible'.

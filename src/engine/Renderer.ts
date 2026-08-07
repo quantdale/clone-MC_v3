@@ -7,16 +7,31 @@ import { CONFIG } from '../config';
  * The renderer construction is wrapped in a try/catch so that an environment
  * without WebGL support can be detected (rendererCreated === false) and the
  * game can enter its init-error state instead of crashing.
+ *
+ * WebGL context loss/restoration events are handled so the game can pause on
+ * loss and transparently rebuild the renderer on restoration.
  */
 export class Renderer {
   readonly scene: THREE.Scene;
   readonly camera: THREE.PerspectiveCamera;
-  readonly renderer: THREE.WebGLRenderer | null;
+  renderer: THREE.WebGLRenderer | null;
 
   /** Whether the WebGL renderer was successfully created. */
   rendererCreated: boolean;
 
-  constructor(canvas: HTMLCanvasElement) {
+  private readonly canvas: HTMLCanvasElement;
+  private readonly onContextLostCallback?: () => void;
+  private readonly onContextRestoredCallback?: () => void;
+
+  constructor(
+    canvas: HTMLCanvasElement,
+    onContextLost?: () => void,
+    onContextRestored?: () => void,
+  ) {
+    this.canvas = canvas;
+    this.onContextLostCallback = onContextLost;
+    this.onContextRestoredCallback = onContextRestored;
+
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(CONFIG.fog.color);
 
@@ -41,6 +56,9 @@ export class Renderer {
       this.applyPixelRatio();
       this.renderer.setSize(window.innerWidth, window.innerHeight);
     }
+
+    canvas.addEventListener('webglcontextlost', this.handleContextLost);
+    canvas.addEventListener('webglcontextrestored', this.handleContextRestored);
   }
 
   /** Re-applies the pixel-ratio cap (e.g. after moving to a different-DPI monitor). */
@@ -73,6 +91,35 @@ export class Renderer {
 
   /** Releases the WebGL renderer and its GPU resources. */
   dispose(): void {
+    this.canvas.removeEventListener('webglcontextlost', this.handleContextLost);
+    this.canvas.removeEventListener('webglcontextrestored', this.handleContextRestored);
     this.renderer?.dispose();
   }
+
+  private readonly handleContextLost = (event: Event): void => {
+    event.preventDefault();
+    this.rendererCreated = false;
+    this.onContextLostCallback?.();
+  };
+
+  private readonly handleContextRestored = (): void => {
+    if (this.renderer) {
+      this.renderer.dispose();
+    }
+    let renderer: THREE.WebGLRenderer | null = null;
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true });
+    } catch {
+      // Restoration failed — leave rendererCreated false.
+    }
+    this.renderer = renderer;
+    this.rendererCreated = renderer !== null;
+
+    if (this.renderer) {
+      this.applyPixelRatio();
+      this.renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    this.onContextRestoredCallback?.();
+  };
 }

@@ -36,12 +36,9 @@ function bootstrap(): void {
   // F3 toggles the debug overlay.
   game.start();
 
-  // Test/debug hook: exposes the running game instance so e2e tests can verify
-  // world state (block reads) and drive the camera deterministically. It is
-  // only enabled in dev builds or when the `?e2e=1` query flag is present, so
-  // normal production visitors never get a script-accessible game handle.
-  const e2eRequested = new URLSearchParams(window.location.search).has('e2e');
-  if (import.meta.env.DEV || e2eRequested) {
+  // Dev-only hook: exposes the running game instance so local dev tooling can
+  // inspect world state. It is never set in production builds.
+  if (import.meta.env.DEV) {
     (window as unknown as { __voxelGame?: Game }).__voxelGame = game;
   }
 }

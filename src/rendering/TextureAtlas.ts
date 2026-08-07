@@ -43,6 +43,7 @@ export class TextureAtlas {
   readonly canvas: HTMLCanvasElement;
   readonly texture: THREE.CanvasTexture;
   private readonly ctx: CanvasRenderingContext2D;
+  private readonly uvCache: Map<number, { u0: number; v0: number; u1: number; v1: number }>;
 
   constructor() {
     this.canvas = document.createElement('canvas');
@@ -62,6 +63,14 @@ export class TextureAtlas {
     // when the GPU selects a lower-resolution mip level at oblique angles.
     this.texture.generateMipmaps = false;
     this.texture.colorSpace = THREE.SRGBColorSpace;
+
+    // Pre-compute UV rectangles once at atlas construction time so that the
+    // per-face meshing loop can reuse cached objects instead of allocating a
+    // fresh {u0,v0,u1,v1} per face (AUDIT-009).
+    this.uvCache = new Map();
+    for (const tile of Object.values(TILE_INDEX)) {
+      this.uvCache.set(tile, tileUV(tile));
+    }
   }
 
   /** Draw a single tile onto the canvas at the given tile index. */
@@ -210,9 +219,9 @@ export class TextureAtlas {
     });
   }
 
-  /** Get the UV rectangle for a tile index. */
+  /** Get the UV rectangle for a tile index (cached, no per-call allocation). */
   uv(tile: number): { u0: number; v0: number; u1: number; v1: number } {
-    return tileUV(tile);
+    return this.uvCache.get(tile) ?? tileUV(tile);
   }
 
   dispose(): void {

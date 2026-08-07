@@ -58,16 +58,25 @@ export interface BlockDefinition {
 export class BlockRegistry {
   private readonly byId = new Map<number, BlockDefinition>();
   private readonly byKey = new Map<string, BlockDefinition>();
+  /** Mirrors Map entries for O(1) indexed access in the hot path. */
+  private readonly fastLookup: (BlockDefinition | undefined)[] = [];
 
   constructor(definitions: BlockDefinition[]) {
     for (const def of definitions) {
       this.byId.set(def.id, def);
       this.byKey.set(def.key, def);
+      this.fastLookup[def.id] = def;
     }
   }
 
   /** Look up a block by numeric id. Throws for unknown ids to catch bugs. */
   get(id: number): BlockDefinition {
+    if (id >= 0 && id < this.fastLookup.length) {
+      const def = this.fastLookup[id];
+      if (def) {
+        return def;
+      }
+    }
     const def = this.byId.get(id);
     if (!def) {
       throw new Error(`Unknown block id: ${id}`);

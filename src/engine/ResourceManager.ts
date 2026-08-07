@@ -20,7 +20,11 @@ export class ResourceManager {
     // double-dispose the already-released resources.
     const pending = this.disposables.splice(0);
     for (const obj of pending) {
-      obj.dispose();
+      try {
+        obj.dispose();
+      } catch (err) {
+        console.error('ResourceManager: failed to dispose a tracked resource', err);
+      }
     }
   }
 }

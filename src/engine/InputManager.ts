@@ -32,6 +32,7 @@ export class InputManager implements InputState {
   constructor(
     private readonly canvas: HTMLCanvasElement,
     private readonly onLockChange?: (locked: boolean) => void,
+    private readonly onError?: (message: string) => void,
   ) {
     canvas.addEventListener('click', this.onCanvasClick);
     canvas.addEventListener('contextmenu', this.onContextMenu);
@@ -130,6 +131,7 @@ export class InputManager implements InputState {
     // Mirror the movement release on lock loss: a failed re-lock must not leave
     // stale movement flags driving the player.
     this.resetMovement();
+    this.onError?.('Pointer lock failed. Click the canvas to try again.');
   };
 
   private readonly onMouseMove = (event: MouseEvent): void => {
