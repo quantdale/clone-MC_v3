@@ -1,20 +1,41 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  Repository: quantdale/clone-MC_v3
+  Product direction: evolve the existing Three.js/TypeScript/Vite voxel game toward behavioral and systems parity with modern Minecraft while using original code and assets.
+  Canonical long-range source: MINECRAFT_PARITY_MASTER_PLAN.md.
+  Runtime stack: TypeScript, Three.js, Vite, Vitest, Playwright, ESLint. Preserve strict TypeScript and deterministic simulation/generation discipline.
+  Development model: ordered, dependency-safe OpenSpec changes under openspec/changes/. Every new parity change directory begins with a zero-padded numeric prefix. Lower-numbered incomplete changes block higher-numbered implementation.
+  Agent model: work may continue across context compaction and completely fresh CLI sessions. Durable repository state, not chat memory, is authoritative. Read AGENTS.md, openspec/AUTONOMOUS_GOAL.md, openspec/PROGRAM_STATE.md, openspec/program-state.json, and openspec/CHANGE_SEQUENCE.md before implementation.
+  Operation mode: headless/autonomous unless a task is truly impossible without an external credential, destructive user choice, proprietary asset, or unavailable service.
+  Quality policy: target 100% completion and verification of the active change before advancing. 90% is the absolute minimum completion threshold, and advancement at 90-99% is allowed only when every omitted item is explicitly non-blocking, documented with evidence and risk, and the change still satisfies every MUST/SHALL requirement. Below 90%, or with any failed mandatory requirement, advancing is forbidden.
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+rules:
+  proposal:
+    - State the exact problem, user/system value, scope boundary, dependencies, migration impact, and measurable exit gate.
+    - Include explicit Goals, Non-goals, Preconditions, Dependencies, Risks, Rollback/compatibility notes, and Definition of Done.
+    - Keep one change focused on one architectural primitive or one tightly coupled behavior. Split work rather than allowing a broad change.
+    - Name the change directory with a zero-padded numeric prefix such as 002-resource-id-foundation.
+  design:
+    - Describe current state, target state, invariants, data structures, APIs, control/data flow, failure modes, compatibility strategy, migration plan, testing seams, observability, and performance constraints.
+    - Record rejected alternatives and why they were rejected.
+    - Specify deterministic behavior where simulation, generation, persistence, or networking is involved.
+    - Identify every existing subsystem/file expected to change and every downstream change that depends on the design.
+  tasks:
+    - Tasks must be independently checkable and small enough to complete and validate without requiring the entire future roadmap.
+    - Every implementation task must have an associated validation task or direct acceptance evidence.
+    - Number every task. Use markdown checkboxes. Do not mark a task complete until its implementation and required tests/evidence exist.
+    - Include dedicated regression, edge-case, failure-path, documentation/state-update, and final full-gate tasks.
+    - The final task must reconcile the spec, run all mandatory gates, update verification evidence, update program state, and confirm advancement eligibility.
+  specs:
+    - Use normative MUST/SHALL/MUST NOT language for mandatory behavior and SHOULD only for explicitly non-blocking goals.
+    - Include Contract, Definitions, Invariants, Requirements, Scenarios, Error/Failure Behavior, Performance/Resource Bounds, Compatibility/Migration, Security/Integrity where applicable, Observability, and Verification Mapping.
+    - Specify edge cases and adversarial scenarios, not only the happy path.
+    - Every requirement must map to one or more deterministic unit/integration/E2E/property tests or a justified inspection method.
+    - Do not leave ambiguous placeholders such as 'handle edge cases' or 'support errors'. Name the cases and expected behavior.
+  verification:
+    - Record actual commands, test names, results, relevant metrics, manual/headless evidence, known deviations, and completion percentage.
+    - A change is VERIFIED only when all MUST/SHALL requirements pass and no unresolved blocker remains.
+    - 100% completion is expected. Advancement at 90-99% requires an explicit Advancement Exception section proving omitted tasks are non-blocking and do not violate mandatory requirements.
+    - Below 90% completion, any failed mandatory requirement, failing required test, unresolved data-loss/corruption risk, or regression in the repository baseline MUST set advancement_allowed=false.
+    - Never fabricate evidence. If a command cannot run, record the exact blocker and keep the change blocked when that command is mandatory.
