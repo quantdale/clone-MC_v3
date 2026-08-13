@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "program": "minecraft-parity",
+  "status": "ACTIVE",
+  "currentChange": "002-resource-id-foundation",
+  "currentChangeStatus": "ACTIVE",
+  "lastCompletedChange": "001-autonomous-program-control",
+  "nextChange": "003-generic-registry-core",
+  "completedTasks": 0,
+  "totalTasks": 0,
+  "completionPercentage": 0,
+  "targetCompletionPercentage": 100,
+  "minimumCompletionPercentage": 90,
+  "mandatoryRequirementsPass": false,
+  "requiredTestsPass": false,
+  "advancementAllowed": false,
+  "exceptionUsed": false,
+  "lastKnownHead": "",
+  "lastCompletedTask": "",
+  "nextExactAction": "Read the active change artifacts, validate baseline, then implement the first unchecked task.",
+  "blockers": [],
+  "validationResults": []
+}
