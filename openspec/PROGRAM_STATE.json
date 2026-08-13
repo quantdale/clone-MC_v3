@@ -3,21 +3,44 @@
   "program": "minecraft-parity",
   "status": "ACTIVE",
   "currentChange": "002-resource-id-foundation",
-  "currentChangeStatus": "ACTIVE",
+  "currentChangeStatus": "BLOCKED",
   "lastCompletedChange": "001-autonomous-program-control",
   "nextChange": "003-generic-registry-core",
-  "completedTasks": 0,
-  "totalTasks": 0,
-  "completionPercentage": 0,
+  "completedTasks": 38,
+  "totalTasks": 40,
+  "completionPercentage": 95,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
-  "mandatoryRequirementsPass": false,
+  "mandatoryRequirementsPass": true,
   "requiredTestsPass": false,
   "advancementAllowed": false,
   "exceptionUsed": false,
-  "lastKnownHead": "",
-  "lastCompletedTask": "",
-  "nextExactAction": "Read the active change artifacts, validate baseline, then implement the first unchecked task.",
-  "blockers": [],
-  "validationResults": []
+  "sessionStartHead": "390824a7c0f3260ec03274428209f6e9e7bde2b9",
+  "lastValidatedHead": "9ae68c82ead5e392ea65b8dd36eadcc3ff213e25",
+  "lastKnownHead": "9ae68c82ead5e392ea65b8dd36eadcc3ff213e25",
+  "lastCompletedTask": "5.10 Update program state and human checkpoint without activating 003.",
+  "nextExactAction": "Do not start 003. Resolve the pre-existing break/place E2E baseline under explicitly authorized scope, then run the standalone focused ResourceId test and rerun the full 002 regression gate.",
+  "blockers": [
+    "Required E2E gate fails 2 of 19 tests at both the session-start baseline and the 002 implementation head: player can target and break a block; player can place a block from the hotbar.",
+    "Task 5.2 standalone focused ResourceId invocation remains incomplete; the 27 ResourceId tests pass within the full unit CI suite."
+  ],
+  "validationResults": [
+    {
+      "head": "390824a7c0f3260ec03274428209f6e9e7bde2b9",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 114/114",
+      "build": "PASS via Playwright production webServer",
+      "e2e": "FAIL 17/19: pre-existing break/place failures"
+    },
+    {
+      "head": "9ae68c82ead5e392ea65b8dd36eadcc3ff213e25",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 141/141; ResourceId 27/27",
+      "build": "PASS via Playwright production webServer",
+      "e2e": "FAIL 17/19: exact same pre-existing break/place failures",
+      "productionAudit": "PASS 0 vulnerabilities"
+    }
+  ]
 }

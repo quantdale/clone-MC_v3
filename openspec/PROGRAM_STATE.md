@@ -4,76 +4,72 @@
 
 - Program: **ACTIVE**
 - Last completed change: **001-autonomous-program-control — VERIFIED 100%**
-- Active implementation change: **002-resource-id-foundation**
-- Next change: **003-generic-registry-core**
-- 002 task ledger: **40 total tasks, 0 completed**
-- 002 completion: **0%**
+- Active implementation change: **002-resource-id-foundation — BLOCKED**
+- Next change: **003-generic-registry-core — NOT ACTIVE**
+- 002 task ledger: **40 total tasks, 38 completed**
+- 002 completion: **95%**
+- 002 mandatory ResourceId requirements: **PASS**
+- 002 required-test gate: **FAIL because of two pre-existing gameplay E2E failures**
 - 002 advancement allowed: **No**
-- 002 implementation/tests: **not started by the initial spec-authoring pass**
-- Next exact action: read all 002 artifacts, confirm 001, inspect actual Git/code state, then execute the baseline/characterization tasks before implementing ResourceId.
+- Session-start head: `390824a7c0f3260ec03274428209f6e9e7bde2b9`
+- Validated implementation head: `9ae68c82ead5e392ea65b8dd36eadcc3ff213e25`
+- Next exact action: **Do not start 003. Resolve the pre-existing break/place E2E baseline under explicitly authorized scope, then run the standalone focused ResourceId invocation and rerun the full 002 gate.**
 
-## Machine-state reconciliation note
+## What 002 implemented
 
-`openspec/PROGRAM_STATE.json` correctly identifies 002 as active but its initial task counters may still show zero total tasks because a later counter-update write was not accepted. The active `002-resource-id-foundation/tasks.md` is authoritative for checkbox counting and contains 40 tasks. On the next `/goal` session, reconcile the JSON counters to `completedTasks=0`, `totalTasks=40`, and `currentTask=1.1` before or alongside the first checkpoint update.
+Change 002 added only:
 
-This discrepancy does **not** authorize advancement. Use the more conservative state: 002 remains ACTIVE, unimplemented, and blocked from advancing.
+- `src/data/ResourceId.ts`
+- `tests/unit/ResourceId.test.ts`
 
-## Read order
+It did not migrate `BlockId`, block keys, recipes, saves, dependencies, or gameplay systems.
 
-1. `AGENTS.md`
-2. `openspec/AUTONOMOUS_GOAL.md`
-3. `openspec/PROGRAM_STATE.json`
-4. this file
-5. `openspec/CHANGE_SEQUENCE.md`
-6. `openspec/CHANGE_SEQUENCE_OVERRIDES.md`
-7. all active-change artifacts
-8. `openspec/SPEC_AUTHORING_PROTOCOL.md` when a future package is incomplete
+The ResourceId primitive now provides strict namespaced/path validation, explicit-default parsing, immutable values, canonical serialization, exact equality, deterministic non-locale ordering, structured validation reasons, and validation-only try-parse behavior.
 
-Actual repository/test state overrides stale optimistic checkpoint information.
+## Validation evidence
 
-## Pre-authored coverage
+### Session-start baseline
 
-The initial authoring pass created the ordered program through change 250 and pre-authored OpenSpec artifacts through the early data foundation (up to 012) with several explicitly recorded future-package gaps.
+At `390824a7c0f3260ec03274428209f6e9e7bde2b9`:
 
-Read `openspec/CHANGE_SEQUENCE_OVERRIDES.md` for:
+- typecheck: PASS
+- lint: PASS
+- unit: PASS, 114/114
+- production dependency audit: PASS, 0 vulnerabilities
+- production build: PASS as the Playwright webServer prerequisite
+- E2E: **FAIL, 17/19**
+  - break-block test expected Air 0, received 1
+  - place-block test expected Stone 3, received Air 0
 
-- canonical directory-name overrides for 008 and 009;
-- future missing artifacts that MUST be repaired before those changes can become ACTIVE.
+### 002 implementation
 
-A missing artifact is a hard spec-quality block, never implicit completion.
+At `9ae68c82ead5e392ea65b8dd36eadcc3ff213e25`:
 
-## Completion arithmetic
+- typecheck: PASS
+- lint: PASS
+- unit: PASS, 141/141
+- ResourceId tests within full suite: PASS, 27/27
+- production dependency audit: PASS, 0 vulnerabilities
+- production build: PASS as the Playwright webServer prerequisite
+- E2E: **FAIL, 17/19 with the exact same two baseline failures and values**
 
-For the active change:
+The exact start-to-implementation diff contains only the two 002 files above. Therefore the browser-test failures are demonstrated pre-existing baseline defects, not regressions introduced by ResourceId.
 
-```text
-completion = completed task checkboxes / total task checkboxes * 100
-```
+## Remaining 002 tasks
 
-Partial tasks remain unchecked.
+Two tasks remain incomplete:
 
-## Advancement rules
+1. `5.2` — execute the ResourceId test file as a standalone focused command and record the independent result. The tests already pass 27/27 inside full CI; a local standalone attempt was blocked because the execution environment could not resolve GitHub to clone the repository.
+2. `5.7` — obtain a passing full E2E regression run. Current result remains 17/19 because of the pre-existing break/place failures.
 
-- Target: **100%** tasks plus every MUST/SHALL requirement and required check passing.
-- Below **90%**: advancement forbidden.
-- 90-99.99%: only an explicit documented non-blocking Advancement Exception can permit advancement.
-- Any failed/unverified mandatory requirement or required check blocks advancement regardless of percentage.
+## Advancement decision
 
-## Checkpoint requirements
+Change 002 is **not VERIFIED** despite 95% task completion. The program policy forbids advancement whenever a required test fails, and no exception can override that gate.
 
-At meaningful progress, blocker/failure discovery, successful verification, change transition, session end, or expected compaction, persist:
+**Change 003 MUST NOT begin.**
 
-- active change/task;
-- last completed task;
-- exact completion percentage;
-- focused/full validation results;
-- Git HEAD when known;
-- changed files when known;
-- blockers;
-- next exact action.
-
-Update `PROGRAM_STATE.json`, active `tasks.md`, active `verification.md`, and this summary when materially changed.
+Fixing the break/place gameplay defects was not performed here because the user explicitly limited this session to one change and those defects are outside the ResourceId foundation scope.
 
 ## Resume rule
 
-Never assume the previous session completed its intended last action. Inspect code/Git/tests, rerun the active resume checks, repair stale state, then continue the first unchecked task.
+A future session must first inspect current `origin/main`, this state, and 002 verification. It must not reinterpret the identical baseline/post-change E2E failure as 002 completion. Resolve the required-test blocker under appropriate scope, then finish the two remaining 002 tasks before activating 003.
