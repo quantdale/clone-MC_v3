@@ -1,0 +1,8 @@
+{
+  "canonicalFile": "openspec/PROGRAM_STATE.json",
+  "note": "Compatibility alias for older instructions. Read and update PROGRAM_STATE.json as the authoritative state file.",
+  "current_change": "002-resource-id-foundation",
+  "current_change_status": "ACTIVE",
+  "last_completed_change": "001-autonomous-program-control",
+  "advancement_allowed": false
+}
