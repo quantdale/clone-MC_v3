@@ -10,31 +10,34 @@ This file defines the durable `/goal` loop. It is intentionally self-contained s
 
 Repeat until the parity program is complete:
 
-1. Read `openspec/program-state.json`.
-2. Identify `current_change` and verify that no lower-numbered change is incomplete.
-3. Read all artifacts in the active change directory:
+1. Read the durable program-control files listed by `AGENTS.md`, including `openspec/REVIEW_HANDOFF.md`.
+2. At session start, synchronize safely with current `origin/main` and record `session_start_head` before modifying repository files.
+3. Read `openspec/PROGRAM_STATE.json` and identify the active numbered change.
+4. Verify that no lower-numbered change is incomplete.
+5. Read all artifacts in the active change directory:
    - `proposal.md`
    - `design.md`
    - `tasks.md`
    - all `specs/**/spec.md`
    - `verification.md`
-4. Reconstruct current work from:
+6. Reconstruct current work from:
    - task checkboxes;
    - verification evidence;
    - program state;
-   - Git status and HEAD when available.
-5. Re-run the active change's resume checks before editing code.
-6. Execute the first unchecked, unblocked task.
-7. Add/adjust tests in the same task or immediately adjacent validation task.
-8. Run the narrowest relevant validation after each logical unit.
-9. Update task checkboxes only after evidence exists.
-10. Periodically checkpoint state files so context loss cannot erase progress.
-11. When implementation tasks are complete, set the change to `VERIFYING` and perform the full verification contract.
-12. Reconcile implementation against every normative requirement and scenario.
-13. Compute task completion exactly: completed checkboxes / total checkboxes × 100.
-14. Apply the advancement gate.
-15. If verified, update state and activate the next numbered change.
-16. If blocked, record the blocker precisely and stop only when no safe independent work inside the active change remains.
+   - actual Git and repository state.
+7. Re-run the active change's resume checks before editing code.
+8. Execute the first unchecked, unblocked task.
+9. Add or adjust tests in the same task or immediately adjacent validation task.
+10. Run the narrowest relevant validation after each logical unit.
+11. Update task checkboxes only after evidence exists.
+12. Periodically checkpoint state files so context loss cannot erase progress.
+13. When implementation tasks are complete, set the change to `VERIFYING` and perform the full verification contract.
+14. Reconcile implementation against every normative requirement and scenario.
+15. Compute task completion exactly: completed checkboxes / total checkboxes × 100.
+16. Apply the advancement gate.
+17. If verified, update state and activate the next numbered change. If blocked, record the blocker precisely and stop only when no safe independent work inside the active change remains.
+18. Before the final session response, reconcile OpenSpec state, inspect the intended diff, commit the coherent session checkpoint, publish it directly to `origin/main`, verify the remote head, and record `published_head` as required by `openspec/REVIEW_HANDOFF.md`.
+19. Final session output must include the starting and published SHAs, active change/status, task completion, validation results, blockers, and next exact action.
 
 ## Advancement algorithm
 
@@ -83,6 +86,7 @@ Update durable state at minimum:
 - after a failed mandatory validation;
 - after a successful full validation;
 - before switching changes;
+- before publishing the session checkpoint;
 - before ending a session;
 - before an expected context compaction.
 
@@ -90,11 +94,23 @@ Update durable state at minimum:
 
 On resume, never assume the previous session successfully committed or completed its last intended action. Verify from repository and test state.
 
-If `program-state.json` and `tasks.md` disagree, treat the more conservative state as authoritative until reconciled. For example, a checked task with missing implementation must be reopened.
+If `PROGRAM_STATE.json` and `tasks.md` disagree, treat the more conservative state as authoritative until reconciled. For example, a checked task with missing implementation must be reopened.
+
+The previous session's prose result is not authoritative. For a published session, recover the actual state from `origin/main` and the reported commit SHAs.
 
 ## Change ordering
 
-The canonical order is `openspec/CHANGE_SEQUENCE.md`. A higher-numbered change may be prepared/documented in advance, but implementation MUST NOT begin until the current change's `advancement_allowed` is true and the state file activates the next change.
+The canonical order is `openspec/CHANGE_SEQUENCE.md`. Resolve any directory-name exception through `openspec/CHANGE_SEQUENCE_OVERRIDES.md`.
+
+A higher-numbered change may be prepared/documented in advance, but implementation MUST NOT begin until the current change's advancement gate is satisfied and the state file activates the next change.
+
+## Publication and external review
+
+The repository uses `origin/main` as the handoff point for review.
+
+A changed session is not fully handed off until its intended work is committed and visible on `origin/main`. Publication does not itself make a change `VERIFIED`; the normal OpenSpec advancement rules still apply.
+
+The session final result must provide enough information for an external reviewer to compare the exact Git range. The reviewer is expected to inspect GitHub directly rather than trusting the prose summary alone.
 
 ## Program completion
 
@@ -105,4 +121,5 @@ The program is complete only when:
 - no unresolved mandatory requirement remains;
 - regression and performance suites pass;
 - the parity matrix accurately records supported behavior and known differences;
-- durable state is marked `COMPLETE`.
+- durable state is marked `COMPLETE`;
+- the final state is published to `origin/main` and independently reviewable from GitHub.
