@@ -11,9 +11,10 @@ Every development session MUST read, in order:
 3. `openspec/PROGRAM_STATE.json`
 4. `openspec/PROGRAM_STATE.md`
 5. `openspec/CHANGE_SEQUENCE.md`
-6. all files in the active numbered change
-7. `openspec/SPEC_AUTHORING_PROTOCOL.md` if the next numbered change is not fully specified
-8. `MINECRAFT_PARITY_MASTER_PLAN.md` only when broader rationale is needed
+6. `openspec/CHANGE_SEQUENCE_OVERRIDES.md`
+7. all files in the active numbered change
+8. `openspec/SPEC_AUTHORING_PROTOCOL.md` if the next numbered change is not fully specified
+9. `MINECRAFT_PARITY_MASTER_PLAN.md` only when broader rationale is needed
 
 Repository state is authoritative. Previous chat/session memory is not.
 
@@ -23,6 +24,7 @@ When told `/goal`, `continue`, or `continue development until done`:
 
 - read the sources above;
 - recover `currentChange` from `PROGRAM_STATE.json`;
+- resolve any numbered-directory rename through `CHANGE_SEQUENCE_OVERRIDES.md`;
 - inspect actual Git/code state;
 - rerun the active change's resume checks;
 - continue the first unchecked, unblocked task;
