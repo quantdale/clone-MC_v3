@@ -12,9 +12,10 @@ Every development session MUST read, in order:
 4. `openspec/PROGRAM_STATE.md`
 5. `openspec/CHANGE_SEQUENCE.md`
 6. `openspec/CHANGE_SEQUENCE_OVERRIDES.md`
-7. all files in the active numbered change
-8. `openspec/SPEC_AUTHORING_PROTOCOL.md` if the next numbered change is not fully specified
-9. `MINECRAFT_PARITY_MASTER_PLAN.md` only when broader rationale is needed
+7. `openspec/REVIEW_HANDOFF.md`
+8. all files in the active numbered change
+9. `openspec/SPEC_AUTHORING_PROTOCOL.md` if the next numbered change is not fully specified
+10. `MINECRAFT_PARITY_MASTER_PLAN.md` only when broader rationale is needed
 
 Repository state is authoritative. Previous chat/session memory is not.
 
@@ -32,7 +33,8 @@ When told `/goal`, `continue`, or `continue development until done`:
 - never implement a higher-numbered change while a lower-numbered change is incomplete;
 - keep code, tests, specs, tasks, verification, and state synchronized;
 - if the next change lacks full artifacts, author and validate them using `SPEC_AUTHORING_PROTOCOL.md` before touching production code;
-- checkpoint durable state before ending or before expected context compaction.
+- checkpoint durable state before ending or before expected context compaction;
+- obey `openspec/REVIEW_HANDOFF.md` for session start, publication to `origin/main`, and the final review handoff.
 
 ## One active change
 
@@ -79,6 +81,25 @@ After meaningful task groups, failures/blockers, successful verification, before
 5. record active task, last completed task, completion %, validations, Git HEAD when known, modified files when known, blockers, and the next exact action.
 
 A fresh agent must be able to resume from repository files alone.
+
+## GitHub review handoff
+
+`origin/main` is the canonical review boundary for this repository.
+
+Every autonomous development session must:
+
+- begin from the current remote `main` and record `session_start_head`;
+- keep its checkpoint internally coherent and validated for the state it claims;
+- commit intended repository changes before its final response;
+- publish those commits directly to `origin/main` with a normal history-preserving push;
+- verify the remote `main` head after publication and report it as `published_head`;
+- include the active change, task completion, validations, blockers, and next exact action in the final session report.
+
+If no repository files changed, do not manufacture an empty commit, but still verify and report current `origin/main`.
+
+Do not end a changed session with implementation that exists only locally. Do not rewrite or discard published remote history merely to complete a handoff. If publication cannot be completed safely, checkpoint and report the exact blocker.
+
+When a later reviewer is given the session result, GitHub state and the `session_start_head...published_head` range are the review source of truth. See `openspec/REVIEW_HANDOFF.md`.
 
 ## Scope discipline
 
