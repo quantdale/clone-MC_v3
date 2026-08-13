@@ -1,84 +1,60 @@
 # Autonomous Development Protocol
 
-This repository is designed to support long-running autonomous development across context compaction and completely fresh CLI sessions.
+This repository supports long-running autonomous development across context compaction and fresh CLI sessions.
 
-## Authoritative sources
+## Read first
 
-At the start of every development session, read these files in order:
+Every development session MUST read, in order:
 
 1. `AGENTS.md`
 2. `openspec/AUTONOMOUS_GOAL.md`
-3. `openspec/program-state.json`
+3. `openspec/PROGRAM_STATE.json`
 4. `openspec/PROGRAM_STATE.md`
 5. `openspec/CHANGE_SEQUENCE.md`
-6. The active change under `openspec/changes/<number>-*/`
-7. `MINECRAFT_PARITY_MASTER_PLAN.md` only when broader rationale is required.
+6. all files in the active numbered change
+7. `openspec/SPEC_AUTHORING_PROTOCOL.md` if the next numbered change is not fully specified
+8. `MINECRAFT_PARITY_MASTER_PLAN.md` only when broader rationale is needed
 
-Repository files are authoritative. Never rely on previous chat/session memory when repository state disagrees with it.
+Repository state is authoritative. Previous chat/session memory is not.
 
-## `/goal` continuation semantics
+## `/goal` behavior
 
-When instructed with `/goal`, `continue`, `continue development until done`, or equivalent:
+When told `/goal`, `continue`, or `continue development until done`:
 
-1. Load the authoritative sources above.
-2. Determine `current_change` from `openspec/program-state.json`.
-3. Inspect Git status / current HEAD when a local checkout is available.
-4. Re-run the active change's resume validation before modifying code.
-5. Continue the first unchecked, unblocked task in the active change.
-6. Work headlessly. Do not ask routine confirmation questions.
-7. Do not implement a higher-numbered change while a lower-numbered change is active or blocked.
-8. Keep implementation, tests, specs, verification evidence, and program state synchronized.
-9. Before context compaction or ending a session, checkpoint durable state as described below.
-10. When a change passes its gate, mark it VERIFIED, update the state files, then proceed to the next numbered change.
+- read the sources above;
+- recover `currentChange` from `PROGRAM_STATE.json`;
+- inspect actual Git/code state;
+- rerun the active change's resume checks;
+- continue the first unchecked, unblocked task;
+- work headlessly and do not ask routine confirmation questions;
+- never implement a higher-numbered change while a lower-numbered change is incomplete;
+- keep code, tests, specs, tasks, verification, and state synchronized;
+- if the next change lacks full artifacts, author and validate them using `SPEC_AUTHORING_PROTOCOL.md` before touching production code;
+- checkpoint durable state before ending or before expected context compaction.
 
-## One-active-change rule
+## One active change
 
-Exactly one numbered parity change may be `ACTIVE` at a time.
+Exactly one numbered parity change may be `ACTIVE`. Normal lifecycle:
 
-Allowed statuses:
+`PLANNED -> ACTIVE -> IMPLEMENTED -> VERIFYING -> VERIFIED`
 
-- `PLANNED`
-- `ACTIVE`
-- `BLOCKED`
-- `IMPLEMENTED`
-- `VERIFYING`
-- `VERIFIED`
-- `DEFERRED`
-
-`VERIFIED` is the only normal status that permits automatic advancement.
+`BLOCKED` may interrupt that flow. `VERIFIED` is the normal prerequisite for advancing.
 
 ## Advancement gate
 
-Target: **100% of the active change's tasks completed and all mandatory requirements verified.**
+Target **100%** task completion plus all mandatory requirements and tests passing.
 
-Absolute minimum: **90% task completion**, but 90-99% does NOT automatically permit advancement. An advancement exception is valid only when:
+The absolute floor is **90%**, but 90-99.99% may advance only through an explicit `Advancement Exception` in `verification.md` proving every incomplete task is non-blocking and implements/verifies no MUST/SHALL requirement. Required tests must pass and no unresolved data-loss, corruption, determinism, compatibility, security, or regression blocker may remain.
 
-- every incomplete task is explicitly listed in `verification.md`;
-- every incomplete task is proven non-blocking;
-- no incomplete task implements or verifies a MUST/SHALL requirement;
-- no required test is failing;
-- no data-loss, corruption, security, determinism, compatibility, or regression risk remains unresolved;
-- `advancement_allowed` is explicitly set to `true` with rationale in both `verification.md` and `program-state.json`.
+Below 90%, or with any failed/unverified MUST/SHALL requirement, advancement is forbidden.
 
-Below 90%, advancement is forbidden.
+## Checkbox rule
 
-Any failed MUST/SHALL requirement blocks advancement regardless of percentage.
+Mark a task `[x]` only when its implementation exists, required tests/evidence pass, edge/failure behavior required by the spec is covered, and no known regression invalidates it. Partial work receives no checkbox credit.
 
-## Task completion rules
+## Baseline verification
 
-A checkbox may be changed to `[x]` only when:
-
-- the corresponding implementation exists;
-- required tests exist and pass, or the task is itself documentation-only;
-- edge/failure behavior required by the spec is covered;
-- no known regression invalidates the result;
-- evidence can be cited in `verification.md`.
-
-Do not count partially completed tasks as completed.
-
-## Mandatory validation discipline
-
-For every change, run the change-specific checks plus the repository baseline defined by its `verification.md`. Unless a change explicitly justifies a narrower gate, the final gate should include:
+Unless the active change explicitly and validly requires more, the final gate includes:
 
 ```bash
 npm run typecheck
@@ -88,53 +64,26 @@ npm run build
 npm run test:e2e
 ```
 
-If a required command cannot run because of an external blocker, record the exact command, error, dependency, and impact. Do not fabricate a pass.
+Never fabricate evidence. Record exact blockers when a mandatory command cannot run.
 
-## Durable checkpoint protocol
+## Durable checkpoint
 
-Before ending a session, before intentional context compaction, and after every meaningful milestone:
+After meaningful task groups, failures/blockers, successful verification, before changing numbered changes, and before ending/compaction:
 
-1. Update `openspec/program-state.json`.
-2. Update the active change `tasks.md` checkboxes.
-3. Append/reconcile `verification.md` with actual evidence.
-4. Update `openspec/PROGRAM_STATE.md` if the human-readable summary changed materially.
-5. Record:
-   - active change;
-   - active task;
-   - exact last completed task;
-   - current completion percentage;
-   - last validation commands/results;
-   - current Git HEAD when known;
-   - modified/uncommitted files when known;
-   - blockers;
-   - next exact action.
-6. Prefer a coherent Git commit/checkpoint when the environment permits it.
+1. update `openspec/PROGRAM_STATE.json`;
+2. update active `tasks.md`;
+3. update active `verification.md` with actual evidence;
+4. update `openspec/PROGRAM_STATE.md` when the human summary changes;
+5. record active task, last completed task, completion %, validations, Git HEAD when known, modified files when known, blockers, and the next exact action.
 
-A fresh agent must be able to resume without knowing anything about the prior session.
-
-## Headless behavior
-
-Operate without interactive UI where possible:
-
-- use deterministic unit/integration tests;
-- use Playwright headlessly;
-- use generated fixtures and snapshots;
-- inspect screenshots/artifacts only when necessary;
-- do not wait for manual QA when automated evidence can establish the requirement.
-
-Manual intervention is appropriate only for genuinely external constraints such as credentials, unavailable services, proprietary assets, or destructive user decisions.
+A fresh agent must be able to resume from repository files alone.
 
 ## Scope discipline
 
-The parity roadmap is intentionally decomposed into small changes. Do not opportunistically implement later roadmap features while working on an earlier primitive unless required to satisfy the active change's tests. If an unrelated defect is discovered:
+Do not opportunistically implement later roadmap features. Fix unrelated work only when it blocks the active change or is an urgent correctness/integrity issue; otherwise track it for the appropriate later change.
 
-- fix it immediately only if it blocks the active change or presents a critical correctness/data-loss/security issue;
-- otherwise record it as follow-up debt without expanding active scope.
+If implementation shows the active spec is wrong, amend the active proposal/design/spec first and explain the reason. Never silently diverge from normative requirements.
 
-## Spec synchronization
+## Original implementation
 
-If implementation reveals that an active spec is incorrect or impossible, update the active proposal/design/spec first, explain the reason, and keep the change internally consistent. Never silently diverge from the normative spec.
-
-## Original implementation requirement
-
-Behavioral/system parity is the target. Do not copy Mojang/Microsoft source code, proprietary textures, sounds, music, branding, or other protected assets. Use independently authored code and original/procedural assets.
+Target behavior and systems parity using independently authored code and original/procedural assets. Do not copy proprietary source code or assets.
