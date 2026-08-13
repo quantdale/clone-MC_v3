@@ -176,4 +176,66 @@ describe('TerrainGenerator', () => {
     }
     expect(wood).toBeGreaterThan(0);
   });
+
+  it('exposes deterministic distant biome variety', () => {
+    const a = new TerrainGenerator(registry, 1234);
+    const b = new TerrainGenerator(registry, 1234);
+    const biomes = new Set<string>();
+    for (let x = -256; x <= 256; x += 8) {
+      for (let z = -256; z <= 256; z += 8) {
+        expect(a.getBiomeAt(x, z)).toBe(b.getBiomeAt(x, z));
+        biomes.add(a.getBiomeAt(x, z));
+      }
+    }
+    expect(biomes).toContain('plains');
+    expect(biomes.size).toBeGreaterThan(1);
+  });
+
+  it('carves deterministic caves away from the spawn ring', () => {
+    const a = new TerrainGenerator(registry, 1234);
+    const b = new TerrainGenerator(registry, 1234);
+    let found = false;
+    for (let x = -256; x <= 256 && !found; x += 4) {
+      for (let z = -256; z <= 256 && !found; z += 4) {
+        for (let y = 5; y < CONFIG.seaLevel - 2; y += 3) {
+          const height = a.getHeightAt(x, z);
+          if (a.isCaveAt(x, y, z, height)) {
+            expect(b.isCaveAt(x, y, z, height)).toBe(true);
+            found = true;
+            break;
+          }
+        }
+      }
+    }
+    expect(found).toBe(true);
+  });
+
+  it('embeds deterministic coal and iron ore in distant underground stone', () => {
+    const a = new TerrainGenerator(registry, 1234);
+    let coal = 0;
+    let iron = 0;
+    let lava = 0;
+    let firstOreChunk: Chunk | null = null;
+    for (let cx = -6; cx <= 6 && (coal === 0 || iron === 0 || lava === 0); cx++) {
+      for (let cz = -6; cz <= 6 && (coal === 0 || iron === 0 || lava === 0); cz++) {
+        const ca = makeChunk(cx, 0, cz);
+        a.generateChunk(ca);
+        for (const id of ca.blocks) {
+          if (id === BlockId.CoalOre) coal++;
+          if (id === BlockId.IronOre) iron++;
+          if (id === BlockId.Lava) lava++;
+        }
+        if (firstOreChunk === null && (coal > 0 || iron > 0)) {
+          firstOreChunk = ca;
+        }
+      }
+    }
+    expect(coal).toBeGreaterThan(0);
+    expect(iron).toBeGreaterThan(0);
+    expect(lava).toBeGreaterThan(0);
+    expect(firstOreChunk).not.toBeNull();
+    const check = makeChunk(firstOreChunk!.cx, 0, firstOreChunk!.cz);
+    new TerrainGenerator(registry, 1234).generateChunk(check);
+    expect(check.blocks).toEqual(firstOreChunk!.blocks);
+  });
 });

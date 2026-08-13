@@ -2,15 +2,15 @@
 
 ## Contract
 
-- **Purpose**: Provide scene lighting, sky, and distance fog that make block surfaces readable and mask the chunk-unload boundary, present water as a distinct semi-transparent liquid, and support a stable, optional day-night cycle.
+- **Purpose**: Provide scene lighting, sky, distance fog, and clouds that make block surfaces readable and mask the chunk-unload boundary, present water as a distinct semi-transparent liquid, and support a stable day-night cycle.
 - **Scope**: Owns hemisphere/ambient + directional sunlight, sky/background, fog tuning, water material/transparency, and the optional day-night cycle. Does not cover mesh generation (rendering) or the renderer/camera setup (rendering).
-- **Functional requirements**: Scene lighting; sky and fog; water presentation; optional day-night cycle.
+- **Functional requirements**: Scene lighting; sky, fog, and clouds; water presentation; day-night cycle.
 - **Non-functional requirements**: Block top and side faces are visually distinguishable; fog progressively obscures chunks at the render-distance edge; the day-night cycle (if enabled) introduces no flickering, broken shadows, or excessive per-frame cost.
-- **Inputs and outputs**: Inputs: render distance (for fog tuning), water block presence. Outputs: scene lights, sky/fog parameters, water material/transparency, optional day-night light state.
+- **Inputs and outputs**: Inputs: render distance (for fog tuning), water block presence, seed, daylight factor, sun direction. Outputs: scene lights, sky/fog/cloud parameters, water material/transparency, day-night light state.
 - **Core data structures**: `Lighting` (hemisphere + directional sun, `dayNight` config), `Environment` (sky/fog), water material, fog color/concentration.
 - **Dependencies**: rendering (Materials, TextureAtlas), config (fog near/far/color, `dayNight`), world (water block rendering).
-- **Error and edge-case behavior**: Fog is tuned to render distance so distant chunks are obscured rather than popping jarringly; water renders semi-transparent and tinted so it does not fully occlude blocks below; the day-night cycle is disabled by default and is only enabled after mandatory features are stable.
-- **Performance expectations**: Lighting is a fixed set of lights and fog with constant per-frame cost; shadows are included only when they do not cause unacceptable cost; day-night is off by default to avoid per-frame cost — see performance spec.
+- **Error and edge-case behavior**: Fog is tuned to render distance so distant chunks are obscured rather than popping jarringly; water renders semi-transparent and tinted so it does not fully occlude blocks below; the day-night cycle and cloud tint advance smoothly, while the headless tier disables clouds for predictable performance.
+- **Performance expectations**: Lighting is a fixed set of lights, fog, and a bounded cloud layer with constant per-frame cost; shadows are included only when they do not cause unacceptable cost; headless sessions use the conservative quality tier — see performance spec.
 - **Acceptance criteria**: The scenarios in "Scene lighting", "Sky and fog", "Water presentation", and "Optional day-night cycle" encode the pass/fail conditions.
 - **Verification method**: Pixel probes (lit faces, sky/fog, water) plus e2e `tests/e2e/game.spec.ts` and unit `tests/unit/ChunkMesher.test.ts`; verification matrix rows LIGHT-01 through LIGHT-04.
 

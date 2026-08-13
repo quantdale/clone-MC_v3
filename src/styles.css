@@ -6,8 +6,9 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #000;
+  background: #081421;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: dark;
 }
 
 #app {
@@ -20,6 +21,8 @@ body {
   display: block;
   width: 100%;
   height: 100%;
+  touch-action: none;
+  cursor: crosshair;
 }
 
 .ui {
@@ -29,6 +32,7 @@ body {
   width: 100%;
   height: 100%;
   pointer-events: none;
+  z-index: 2;
 }
 
 .ui.hidden {
@@ -41,6 +45,9 @@ body {
    truly hidden until the world is ready / on pause. */
 #crosshair.hidden,
 #hotbar.hidden,
+#crafting.hidden,
+#break-progress.hidden,
+#toast.hidden,
 #debug-overlay.hidden {
   display: none;
 }
@@ -55,8 +62,8 @@ body {
 #crosshair::after {
   content: '';
   position: absolute;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 0 0 1px rgba(9, 24, 36, 0.6), 0 0 7px rgba(255, 255, 255, 0.45);
 }
 #crosshair::before {
   width: 2px;
@@ -70,56 +77,88 @@ body {
 /* HUD chips */
 .hud-chip {
   position: absolute;
-  background: rgba(0, 0, 0, 0.55);
+  background: linear-gradient(135deg, rgba(7, 20, 31, 0.78), rgba(7, 20, 31, 0.46));
   color: #fff;
-  padding: 4px 10px;
-  border-radius: 4px;
+  padding: 6px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 7px;
   font-size: 13px;
   user-select: none;
+  backdrop-filter: blur(6px);
 }
 #fps-counter {
   top: 8px;
   left: 8px;
 }
+#survival-status {
+  top: 8px;
+  left: 92px;
+  display: flex;
+  gap: 10px;
+  color: #ffe4d6;
+  font-weight: 700;
+}
+#health-status {
+  color: #ff9e9e;
+}
+#hunger-status {
+  color: #ffd58a;
+}
+#world-time {
+  top: 8px;
+  right: 8px;
+  color: rgba(255, 239, 180, 0.92);
+  font-variant-numeric: tabular-nums;
+}
 #selected-block-name {
-  bottom: 96px;
+  bottom: 88px;
   left: 50%;
   transform: translateX(-50%);
   font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 /* Hotbar */
 #hotbar {
   position: absolute;
-  bottom: 12px;
+  bottom: max(12px, env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 4px;
-  padding: 5px;
-  background: rgba(0, 0, 0, 0.45);
-  border-radius: 6px;
+  gap: 5px;
+  padding: 7px;
+  background: linear-gradient(180deg, rgba(7, 17, 27, 0.78), rgba(7, 17, 27, 0.58));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 11px;
   user-select: none;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(8px);
   /* Override the .ui container defaults so bottom-centering works. */
   top: auto;
   right: auto;
   width: auto;
   height: auto;
+  pointer-events: auto;
 }
 .hotbar-slot {
-  width: 48px;
-  height: 48px;
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.35);
+  width: 46px;
+  height: 46px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 7px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.34));
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
 }
 .hotbar-slot.selected {
-  border-color: #fff;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+  border-color: #ffe08a;
+  box-shadow: 0 0 0 1px rgba(255, 224, 138, 0.35), 0 0 16px rgba(255, 196, 83, 0.48);
+  transform: translateY(-2px);
 }
 .hotbar-slot .slot-index {
   position: absolute;
@@ -132,6 +171,72 @@ body {
   image-rendering: pixelated;
   width: 32px;
   height: 32px;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.38));
+}
+
+#break-progress {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 76px;
+}
+.break-progress-track {
+  width: min(210px, 35vw);
+  height: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.42);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+.break-progress-bar {
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #ffe08a, #ff9f5b);
+  transition: width 55ms linear;
+}
+#toast {
+  top: auto;
+  bottom: 145px;
+  left: 50%;
+  width: max-content;
+  max-width: min(90vw, 420px);
+  height: auto;
+  transform: translateX(-50%);
+  padding: 8px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  color: #fff;
+  background: rgba(7, 20, 31, 0.86);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+  font-size: 13px;
+  font-weight: 650;
+  text-align: center;
+  backdrop-filter: blur(8px);
+}
+.hotbar-slot .slot-count {
+  position: absolute;
+  right: 4px;
+  bottom: 1px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  text-shadow: 0 1px 3px #000, 0 0 3px #000;
+}
+.hotbar-slot .slot-durability {
+  position: absolute;
+  left: 5px;
+  right: 5px;
+  bottom: 1px;
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #65d37e, #e7db63, #e56c5d);
+  transform-origin: left center;
+  opacity: 0;
+  transition: width 100ms linear, opacity 100ms linear;
+}
+.hotbar-slot .slot-durability.visible {
+  opacity: 1;
 }
 
 /* Loading panel */
@@ -142,6 +247,13 @@ body {
   transform: translate(-50%, -50%);
   text-align: center;
   color: #fff;
+  min-width: min(320px, 76vw);
+  padding: 28px 32px;
+  background: linear-gradient(145deg, rgba(9, 27, 42, 0.86), rgba(8, 18, 29, 0.72));
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(12px);
 }
 .loading-spinner {
   width: 48px;
@@ -171,6 +283,20 @@ body {
   opacity: 0.8;
   margin-top: 4px;
 }
+.loading-progress {
+  height: 5px;
+  margin-top: 18px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+}
+.loading-progress-bar {
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #71d5b1, #ffda83);
+  border-radius: inherit;
+  transition: width 120ms ease-out;
+}
 
 /* Overlay (start / pause) */
 .overlay-panel {
@@ -179,11 +305,14 @@ body {
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
-  background: rgba(0, 0, 0, 0.6);
-  padding: 32px 44px;
-  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(7, 22, 35, 0.88), rgba(7, 15, 25, 0.74));
+  padding: 34px 44px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 16px;
   color: #fff;
   max-width: 90vw;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(14px);
 }
 .overlay-title {
   margin: 0 0 12px;
@@ -193,6 +322,7 @@ body {
   margin: 0 0 16px;
   font-size: 18px;
   opacity: 0.95;
+  max-width: 34rem;
 }
 .overlay-controls {
   font-size: 14px;
@@ -201,6 +331,7 @@ body {
 }
 .error-panel {
   border: 2px solid #e05252;
+  pointer-events: auto;
 }
 .error-panel .overlay-title {
   color: #ff8a8a;
@@ -216,18 +347,175 @@ body {
   border-radius: 4px;
   font-size: 1rem;
   cursor: pointer;
+  pointer-events: auto;
   transition: background 0.15s;
 }
 .overlay-btn:hover {
   background: #5a9a3a;
 }
 
+/* Crafting screen */
+#crafting {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  background: rgba(3, 10, 17, 0.36);
+}
+.crafting-panel {
+  width: min(500px, 88vw);
+  max-height: min(620px, 88vh);
+  overflow: auto;
+  padding: 22px;
+  color: #fff;
+  background: linear-gradient(145deg, rgba(13, 32, 48, 0.96), rgba(8, 21, 33, 0.94));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 15px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.54);
+  backdrop-filter: blur(15px);
+}
+.crafting-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 16px;
+}
+.crafting-header h2 {
+  margin: 0;
+  font-size: 25px;
+}
+#crafting-summary {
+  margin: 7px 0 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.inventory-section {
+  margin: 0 0 17px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.16);
+}
+.inventory-section-title {
+  margin-bottom: 9px;
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: 5px;
+}
+.inventory-cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  aspect-ratio: 1;
+  padding: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  color: #fff;
+  background: rgba(7, 18, 28, 0.8);
+  cursor: default;
+}
+.inventory-cell:not(:disabled) {
+  cursor: pointer;
+}
+.inventory-cell:not(:disabled):hover,
+.inventory-cell.selected {
+  border-color: #ffe08a;
+  box-shadow: 0 0 0 1px rgba(255, 224, 138, 0.24);
+}
+.inventory-cell.empty {
+  background: rgba(255, 255, 255, 0.035);
+}
+.inventory-cell:disabled {
+  opacity: 0.82;
+}
+.inventory-cell-icon {
+  width: 75%;
+  height: 75%;
+  image-rendering: pixelated;
+}
+.inventory-cell-count {
+  position: absolute;
+  right: 3px;
+  bottom: 1px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: 0 1px 2px #000, 1px 0 1px #000;
+}
+.crafting-close {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 25px;
+  line-height: 1;
+  cursor: pointer;
+}
+.crafting-close:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+.crafting-recipes {
+  display: grid;
+  gap: 9px;
+}
+.crafting-recipe {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  padding: 12px 14px;
+  text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 9px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.07);
+  cursor: pointer;
+}
+.crafting-recipe:hover:not(:disabled) {
+  border-color: #ffe08a;
+  background: rgba(255, 224, 138, 0.12);
+}
+.crafting-recipe:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+.crafting-recipe-title {
+  font-size: 15px;
+  font-weight: 750;
+}
+.crafting-recipe-detail {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+}
+.crafting-hint {
+  margin: 17px 0 0;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 12px;
+  text-align: center;
+}
+.overlay-btn:focus-visible {
+  outline: 3px solid #ffe08a;
+  outline-offset: 3px;
+}
+
 /* Debug overlay */
 #debug-overlay {
   position: absolute;
-  top: 8px;
+  top: 48px;
   right: 8px;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(4, 15, 24, 0.78);
   color: #7ee787;
   font-family: 'Consolas', 'Menlo', monospace;
   font-size: 12px;
@@ -236,9 +524,35 @@ body {
   border-radius: 4px;
   white-space: pre;
   user-select: none;
+  border: 1px solid rgba(126, 231, 135, 0.18);
+  backdrop-filter: blur(6px);
   /* Override the .ui container defaults so top-right anchoring works. */
   left: auto;
   bottom: auto;
   width: auto;
   height: auto;
+}
+
+@media (max-width: 640px) {
+  .hotbar-slot {
+    width: 34px;
+    height: 34px;
+  }
+  .hotbar-slot canvas {
+    width: 25px;
+    height: 25px;
+  }
+  #hotbar {
+    gap: 2px;
+    padding: 5px;
+  }
+  .overlay-panel {
+    padding: 26px 22px;
+  }
+  .overlay-title {
+    font-size: 24px;
+  }
+  .overlay-controls {
+    font-size: 12px;
+  }
 }

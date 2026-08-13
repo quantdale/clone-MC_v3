@@ -10,18 +10,46 @@ import { CONFIG } from '../config';
  * flicker); otherwise update() is a no-op.
  */
 export class Lighting {
+  private readonly scene: THREE.Scene;
   private readonly hemisphere: THREE.HemisphereLight;
   private readonly sun: THREE.DirectionalLight;
   /** Fixed rotation axis for the day-night cycle (reused to avoid hot-path allocation). */
   private readonly dayNightAxis = new THREE.Vector3(0, 0, 1);
+  /** Direction from the shadow focus toward the sun. */
+  private readonly sunDirection = new THREE.Vector3(0.5, 1, 0.3).normalize();
+  /** Last focus position used to update the shadow camera. */
+  private readonly lastFocus = new THREE.Vector3(Number.NaN, Number.NaN, Number.NaN);
+  private readonly shadowFocus = new THREE.Vector3();
+  private readonly daySkyColor = new THREE.Color(0xbfe7ff);
+  private readonly nightSkyColor = new THREE.Color(0x294568);
+  private readonly dayGroundColor = new THREE.Color(0x5a4635);
+  private readonly nightGroundColor = new THREE.Color(0x171c2d);
+  private readonly daySunColor = new THREE.Color(0xfff2d2);
+  private readonly nightSunColor = new THREE.Color(0x6f86b3);
+  private daylightFactor = 1;
+  private worldSeconds = 0;
 
   constructor(scene: THREE.Scene) {
-    this.hemisphere = new THREE.HemisphereLight(0xffffff, 0x444444, 0.9);
+    this.scene = scene;
+    this.hemisphere = new THREE.HemisphereLight(this.daySkyColor, this.dayGroundColor, 1.0);
     this.hemisphere.position.set(0, 1, 0);
     scene.add(this.hemisphere);
 
-    this.sun = new THREE.DirectionalLight(0xffffff, 1.4);
-    this.sun.position.set(0.5, 1, 0.3).normalize();
+    this.sun = new THREE.DirectionalLight(this.daySunColor, 1.8);
+    this.sun.position.copy(this.sunDirection).multiplyScalar(CONFIG.rendering.shadowDistance);
+    scene.add(this.sun.target);
+    const headless = typeof navigator !== 'undefined' && navigator.webdriver;
+    this.sun.castShadow = CONFIG.rendering.shadows && !headless;
+    this.sun.shadow.mapSize.set(CONFIG.rendering.shadowMapSize, CONFIG.rendering.shadowMapSize);
+    this.sun.shadow.camera.near = 0.5;
+    this.sun.shadow.camera.far = CONFIG.rendering.shadowDistance * 2;
+    this.sun.shadow.camera.left = -CONFIG.rendering.shadowDistance;
+    this.sun.shadow.camera.right = CONFIG.rendering.shadowDistance;
+    this.sun.shadow.camera.top = CONFIG.rendering.shadowDistance;
+    this.sun.shadow.camera.bottom = -CONFIG.rendering.shadowDistance;
+    this.sun.shadow.camera.updateProjectionMatrix();
+    this.sun.shadow.bias = -0.0004;
+    this.sun.shadow.normalBias = 0.03;
     scene.add(this.sun);
   }
 
@@ -29,10 +57,58 @@ export class Lighting {
    * Advances the day-night cycle. When disabled, does nothing so the static
    * scene lighting is untouched.
    */
-  update(dt: number): void {
-    if (!CONFIG.dayNight.enabled) return;
+  update(dt: number, focus?: THREE.Vector3): void {
+    this.worldSeconds = (this.worldSeconds + Math.max(0, Math.min(dt, CONFIG.maxDeltaTime))) % CONFIG.dayNight.dayLength;
+    let directionChanged = false;
+    if (CONFIG.dayNight.enabled) {
+      const anglePerSecond = (Math.PI * 2) / CONFIG.dayNight.dayLength;
+      this.sunDirection.applyAxisAngle(this.dayNightAxis, -anglePerSecond * dt);
+      directionChanged = true;
+    }
 
-    const anglePerSecond = (Math.PI * 2) / CONFIG.dayNight.dayLength;
-    this.sun.position.applyAxisAngle(this.dayNightAxis, -anglePerSecond * dt);
+    this.daylightFactor = CONFIG.dayNight.enabled
+      ? THREE.MathUtils.clamp((this.sunDirection.y + 0.18) / 1.05, 0, 1)
+      : 1;
+    this.hemisphere.intensity = 0.28 + this.daylightFactor * 0.72;
+    this.sun.intensity = 0.12 + this.daylightFactor * 1.68;
+    this.hemisphere.color.lerpColors(this.nightSkyColor, this.daySkyColor, this.daylightFactor);
+    this.hemisphere.groundColor.lerpColors(this.nightGroundColor, this.dayGroundColor, this.daylightFactor);
+    this.sun.color.lerpColors(this.nightSunColor, this.daySunColor, this.daylightFactor);
+
+    if (focus) {
+      const moved =
+        !Number.isFinite(this.lastFocus.x) ||
+        this.lastFocus.distanceToSquared(focus) >= 0.25;
+      if (moved || directionChanged) {
+        this.shadowFocus.copy(focus);
+        this.lastFocus.copy(focus);
+        this.sun.target.position.copy(this.shadowFocus);
+        this.sun.position.copy(this.shadowFocus).addScaledVector(
+          this.sunDirection,
+          CONFIG.rendering.shadowDistance,
+        );
+        this.sun.target.updateMatrixWorld();
+      }
+    }
+  }
+
+  /** Current normalized brightness used to synchronize the sky shader. */
+  getDaylightFactor(): number {
+    return this.daylightFactor;
+  }
+
+  /** Current in-world clock hour, starting at noon when a session begins. */
+  getTimeOfDayHours(): number {
+    return (12 + (this.worldSeconds / CONFIG.dayNight.dayLength) * 24) % 24;
+  }
+
+  /** Copy the current sun direction into a caller-owned vector. */
+  getSunDirection(target: THREE.Vector3): THREE.Vector3 {
+    return target.copy(this.sunDirection);
+  }
+
+  /** Remove scene-owned lights during teardown. */
+  dispose(): void {
+    this.scene.remove(this.hemisphere, this.sun, this.sun.target);
   }
 }

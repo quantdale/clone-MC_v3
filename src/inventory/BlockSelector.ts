@@ -7,4 +7,13 @@
 export interface BlockSelector {
   /** The block id of the currently selected hotbar slot. */
   getSelectedBlockId(): number;
+  /** Optional stack count used by the interactive inventory implementation. */
+  getSlotCount?(index?: number): number;
+  /** Optional consumption hook used when placing a stackable block. */
+  consumeSelected?(): boolean;
+  /** Optional drop/pickup hook used when breaking a block. */
+  addItem?(id: number, amount: number): number;
+  /** Optional tool durability hooks used by efficient mining. */
+  getSelectedDurability?(maxDurability: number): number;
+  damageSelectedItem?(amount: number, maxDurability: number): boolean;
 }

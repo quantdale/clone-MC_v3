@@ -28,6 +28,12 @@ export class Player {
   pitch: number;
   /** Whether the player is currently standing on solid ground. */
   onGround: boolean;
+  /** Whether any part of the player's body is inside a water voxel. */
+  inWater: boolean;
+  /** Whether any part of the player's body is inside a lava voxel. */
+  inLava: boolean;
+  /** Downward distance accumulated since the last grounded landing. */
+  fallDistance: number;
   /** Full height of the player AABB in blocks. */
   height: number;
   /** Half-width of the player AABB in blocks. */
@@ -39,6 +45,9 @@ export class Player {
     this.yaw = opts.yaw ?? 0;
     this.pitch = opts.pitch ?? 0;
     this.onGround = false;
+    this.inWater = false;
+    this.inLava = false;
+    this.fallDistance = 0;
     this.height = CONFIG.player.height;
     this.radius = CONFIG.player.radius;
   }
@@ -59,5 +68,7 @@ export class Player {
   /** Cached eye vector; recomputed in {@link eyePosition} when the position changes. */
   private readonly _eye: THREE.Vector3 = new THREE.Vector3();
   /** Snapshot of the position the cached eye vector was computed from. */
-  private readonly _eyeBase: THREE.Vector3 = new THREE.Vector3();
+  // NaN forces the first getter call to populate the cache even when the
+  // player's initial position is the origin.
+  private readonly _eyeBase: THREE.Vector3 = new THREE.Vector3(Number.NaN, Number.NaN, Number.NaN);
 }

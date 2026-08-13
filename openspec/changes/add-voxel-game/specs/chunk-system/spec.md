@@ -4,7 +4,7 @@
 
 - **Purpose**: Provide fixed-size typed-array chunk storage with correct negative-coordinate conversion, automatic cross-chunk block lookup, explicit lifecycle states with bounded queues, and dirty/neighbor remeshing.
 - **Scope**: Owns chunk storage, world↔chunk↔local coordinate conversion, lifecycle state machine, generation/meshing queues, stale-job guards, dirty tracking, unload and disposal. Does not cover terrain content (world-generation) or spawning/streaming policy (chunk-streaming).
-- **Functional requirements**: Chunk storage and coordinate conversion; block lookup across boundaries; chunk lifecycle and queues; dirty state and neighbor remeshing; unload and disposal.
+- **Functional requirements**: Chunk storage and coordinate conversion; block lookup across boundaries; chunk lifecycle and queues; dirty state and neighbor remeshing; bounded granular-block settling; unload and disposal.
 - **Non-functional requirements**: Queues MUST NOT grow without bound (`maxQueueSize`); stale asynchronous job results MUST be discarded; coordinate conversion MUST be correct for negative coordinates.
 - **Inputs and outputs**: Inputs: world coordinates (block reads/writes, negative included), block edits, async generation/mesh job completions. Outputs: chunk+local coordinates, block ids, dirty state, unloaded/disposed chunks.
 - **Core data structures**: `Chunk` (flat `Uint8Array`, 16×64×16), `ChunkState` (Pending/Generating/Generated/Meshing/Visible/Unloading), `meshVersion`, `chunkKey` string keys, `WorldStats`, meshing queues.
@@ -12,7 +12,7 @@
 - **Error and edge-case behavior**: World x=-1 maps to chunk x=-1 with local x=15 (floor division/modulo); out-of-bounds local reads return air (`getLocalSafe`); a chunk requested twice before generation completes runs only one job; a stale job completing for an unloaded/re-queued chunk is discarded via version guards; boundary edits mark and remesh the adjacent neighbor chunk.
 - **Performance expectations**: Storage is a single `Uint8Array` per chunk; generation/mesh queues are bounded; only dirty chunks (plus boundary neighbors) are remeshed; unload releases storage and GPU resources — see performance spec.
 - **Acceptance criteria**: The scenarios in "Chunk storage and coordinate conversion", "Block lookup across boundaries", "Chunk lifecycle and queues", "Dirty state and neighbor remeshing", and "Unload and disposal" encode the pass/fail conditions.
-- **Verification method**: Unit tests `tests/unit/WorldCoordinates.test.ts` and `tests/unit/World.test.ts`; verification matrix rows CHUNK-01 through CHUNK-05.
+- **Verification method**: Unit tests `tests/unit/WorldCoordinates.test.ts` and `tests/unit/World.test.ts`; verification matrix rows CHUNK-01 through CHUNK-06.
 
 ## ADDED Requirements
 
@@ -62,3 +62,11 @@ Unloading a chunk SHALL remove its meshes from the scene, dispose GPU resources,
 #### Scenario: Unload releases resources
 - **WHEN** a chunk is unloaded
 - **THEN** it is absent from the loaded-chunk map and its geometry is disposed
+
+### Requirement: Granular block settling
+
+The world SHALL move unsupported sand and gravel downward through loaded air cells, process the work with a bounded per-update budget, and preserve the resulting edits through normal remeshing and persistence.
+
+#### Scenario: Unsupported block falls
+- **WHEN** a sand or gravel block has air directly below it in a loaded chunk
+- **THEN** it moves down one cell during a later world update and the source cell becomes air

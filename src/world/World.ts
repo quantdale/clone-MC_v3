@@ -26,6 +26,16 @@ interface MeshJob {
   version: number;
 }
 
+/** Portable representation of player edits for localStorage or a save file. */
+export interface WorldEditSnapshot {
+  version: 1;
+  seed: number;
+  edits: Array<{
+    chunk: [number, number, number];
+    changes: Array<[number, number]>;
+  }>;
+}
+
 /**
  * The chunked, streaming world. Owns chunk storage, the budgeted
  * generation/meshing pipeline, unloading, and the player-edit overlay that
@@ -37,6 +47,7 @@ export class World implements WorldAccess {
   private readonly scene: THREE.Scene;
   private readonly mesher: ChunkMesher;
   private readonly generator: TerrainGenerator;
+  private readonly seed: number;
   private readonly materials: {
     opaque: THREE.MeshLambertMaterial;
     transparent: THREE.MeshLambertMaterial;
@@ -64,6 +75,17 @@ export class World implements WorldAccess {
   /** Mesh jobs dropped while the mesh queue was at capacity, retried once it drains. */
   private readonly retryMeshQueue: MeshJob[] = [];
   private readonly retryMeshSet = new Set<string>();
+  /** Sand/gravel cells waiting to resolve after a supporting block changes. */
+  private readonly fallingQueue: Array<[number, number, number]> = [];
+  private readonly fallingSet = new Set<string>();
+
+  /** Last chunk center that was scanned for streaming work. */
+  private streamCenterX: number | null = null;
+  private streamCenterZ: number | null = null;
+  /** True while a bounded queue prevented the complete area scan. */
+  private needsEnsure = true;
+  /** True while budgeted unloading still has out-of-range chunks to remove. */
+  private needsUnload = false;
 
   /** Live scene meshes per chunk key (for disposal on unload / re-mesh). */
   private readonly meshGroups = new Map<string, THREE.Mesh[]>();
@@ -85,6 +107,7 @@ export class World implements WorldAccess {
     renderDistance?: number;
   }) {
     this.registry = opts.registry;
+    this.seed = opts.seed >>> 0;
     this.scene = opts.scene;
     this.mesher = opts.mesher;
     this.generator = opts.generator;
@@ -96,6 +119,9 @@ export class World implements WorldAccess {
   // ── WorldAccess ────────────────────────────────────────────────────────────
 
   getBlock(x: number, y: number, z: number): number {
+    if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(z)) {
+      return BlockId.Air;
+    }
     const [cx, cy, cz] = worldToChunk(x, y, z);
     const chunk = this.chunkManager.getChunk(cx, cy, cz);
     if (!chunk) {
@@ -110,10 +136,13 @@ export class World implements WorldAccess {
     // single vertical slab (cy === 0), so y must fall within the chunk height;
     // anything outside would write an overlay entry for a chunk that never
     // loads (unbounded dead entries), or read/write an invalid cell.
-    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) {
+    if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(z)) {
       return;
     }
     if (y < 0 || y >= CHUNK_DIMENSIONS.height) {
+      return;
+    }
+    if (!Number.isInteger(id) || !this.registry.has(id)) {
       return;
     }
 
@@ -161,7 +190,11 @@ export class World implements WorldAccess {
     if (lz === 0) this.markNeighborDirty(cx, cy, cz - 1);
     if (lz === CHUNK_DIMENSIONS.depth - 1) this.markNeighborDirty(cx, cy, cz + 1);
 
-    this.enqueueMesh(chunk);
+    this.enqueueMeshWithRetry(chunk);
+    if (id === BlockId.Sand || id === BlockId.Gravel) {
+      this.enqueueFalling(x, y, z);
+    }
+    this.enqueueFalling(x, y + 1, z);
   }
 
   isSolid(x: number, y: number, z: number): boolean {
@@ -171,6 +204,116 @@ export class World implements WorldAccess {
       return true;
     }
     return this.registry.isSolid(this.getBlock(x, y, z));
+  }
+
+  /** Export the sparse edit overlay as a versioned, JSON-safe snapshot. */
+  exportEdits(): WorldEditSnapshot {
+    const edits: WorldEditSnapshot['edits'] = [];
+    for (const [key, overlay] of this.editOverlay) {
+      const parts = key.split(',').map(Number);
+      if (parts.length !== 3 || parts.some((value) => !Number.isInteger(value))) {
+        continue;
+      }
+      const [cx, cy, cz] = parts as [number, number, number];
+      const changes: Array<[number, number]> = [];
+      for (const [index, id] of overlay) {
+        changes.push([index, id]);
+      }
+      if (changes.length > 0) {
+        edits.push({ chunk: [cx, cy, cz], changes });
+      }
+    }
+    return { version: 1, seed: this.seed, edits };
+  }
+
+  /**
+   * Import a validated edit snapshot. Invalid or foreign entries are ignored,
+   * so a corrupt browser save cannot poison chunk storage or the mesher.
+   * Returns the number of accepted cell edits.
+   */
+  importEdits(snapshot: unknown): number {
+    if (!this.isEditSnapshot(snapshot) || snapshot.seed !== this.seed) {
+      return 0;
+    }
+
+    let accepted = 0;
+    for (const entry of snapshot.edits) {
+      const [cx, cy, cz] = entry.chunk;
+      if (cy !== 0) {
+        continue;
+      }
+      const key = chunkKey(cx, cy, cz);
+      let overlay = this.editOverlay.get(key);
+      if (!overlay) {
+        overlay = new Map<number, number>();
+        this.editOverlay.set(key, overlay);
+      }
+
+      for (const [index, id] of entry.changes) {
+        if (
+          index < 0 ||
+          index >= CHUNK_DIMENSIONS.width * CHUNK_DIMENSIONS.height * CHUNK_DIMENSIONS.depth ||
+          !this.registry.has(id)
+        ) {
+          continue;
+        }
+        if (overlay.get(index) !== id) {
+          overlay.set(index, id);
+          accepted++;
+        }
+      }
+      if (overlay.size > 0) {
+        this.touchEditOverlay(key);
+        const chunk = this.chunkManager.getChunk(cx, cy, cz);
+        if (chunk?.generated) {
+          this.applyEditOverlay(chunk);
+          this.refreshChunkVoxelCount(chunk);
+          chunk.markDirty();
+          this.enqueueMeshWithRetry(chunk);
+        }
+      } else {
+        this.editOverlay.delete(key);
+      }
+    }
+    return accepted;
+  }
+
+  /** Number of sparse edit cells currently retained in memory. */
+  getEditCount(): number {
+    let count = 0;
+    for (const overlay of this.editOverlay.values()) {
+      count += overlay.size;
+    }
+    return count;
+  }
+
+  private isEditSnapshot(value: unknown): value is WorldEditSnapshot {
+    if (typeof value !== 'object' || value === null) {
+      return false;
+    }
+    const candidate = value as { version?: unknown; seed?: unknown; edits?: unknown };
+    if (candidate.version !== 1 || !Number.isInteger(candidate.seed) || !Array.isArray(candidate.edits)) {
+      return false;
+    }
+    return candidate.edits.every((entry: unknown) => {
+      if (typeof entry !== 'object' || entry === null) {
+        return false;
+      }
+      const edit = entry as { chunk?: unknown; changes?: unknown };
+      return (
+        Array.isArray(edit.chunk) &&
+        edit.chunk.length === 3 &&
+        edit.chunk.every((part: unknown) => Number.isInteger(part)) &&
+        Array.isArray(edit.changes) &&
+        edit.changes.every(
+          (change: unknown) =>
+            Array.isArray(change) &&
+            change.length === 2 &&
+            Number.isInteger(change[0]) &&
+            Number.isInteger(change[1]),
+        )
+      );
+    });
   }
 
   // ── Streaming ──────────────────────────────────────────────────────────────
@@ -190,7 +333,10 @@ export class World implements WorldAccess {
     }
     this.processGeneration();
     this.processMeshing();
-    this.unloadChunks(playerChunkX, playerChunkZ);
+    this.processFallingBlocks();
+    if (this.needsUnload) {
+      this.needsUnload = this.unloadChunks(playerChunkX, playerChunkZ);
+    }
   }
 
   /** Reorder a job queue by Chebyshev distance to the player chunk. */
@@ -206,8 +352,25 @@ export class World implements WorldAccess {
   }
 
   /** Create and queue generation for every missing chunk around the player. */
-  private ensureChunks(playerChunkX: number, playerChunkZ: number): void {
+  private ensureChunks(playerChunkX: number, playerChunkZ: number): boolean {
+    const centerChanged = this.streamCenterX !== playerChunkX || this.streamCenterZ !== playerChunkZ;
+    if (centerChanged) {
+      this.streamCenterX = playerChunkX;
+      this.streamCenterZ = playerChunkZ;
+      this.needsEnsure = true;
+      // A moving player changes the nearest chunk ordering even when no new job
+      // was added, so the next pass must re-prioritize existing work.
+      this.genQueueDirty = true;
+      this.meshQueueDirty = true;
+      this.needsUnload = true;
+    }
+    if (!centerChanged && !this.needsEnsure) {
+      return false;
+    }
+
     const rd = this.renderDistance;
+    let queueFull = false;
+    scan:
     for (let dx = -rd; dx <= rd; dx++) {
       for (let dz = -rd; dz <= rd; dz++) {
         const cx = playerChunkX + dx;
@@ -219,7 +382,8 @@ export class World implements WorldAccess {
             // it would sit in the manager forever as an un-generated void.
             // ensureChunks runs every frame, so the area is retried once the
             // queue drains.
-            return;
+            queueFull = true;
+            break scan;
           }
           const chunk = this.chunkManager.createChunk(cx, 0, cz);
           this.enqueueGeneration(chunk);
@@ -233,6 +397,8 @@ export class World implements WorldAccess {
         }
       }
     }
+    this.needsEnsure = queueFull;
+    return centerChanged;
   }
 
   private processGeneration(): void {
@@ -263,15 +429,9 @@ export class World implements WorldAccess {
       this.markNeighborDirty(cx, cy, cz - 1);
       this.markNeighborDirty(cx, cy, cz + 1);
 
-      // If the mesh queue is full, don't drop the job permanently — retry once
-      // it drains. Without this the chunk would stay generated-but-invisible.
-      if (!this.enqueueMesh(chunk)) {
-        const key = chunkKey(cx, cy, cz);
-        if (!this.retryMeshSet.has(key)) {
-          this.retryMeshSet.add(key);
-          this.retryMeshQueue.push({ key, cx, cy, cz, version: chunk.meshVersion });
-        }
-      }
+      // If the mesh queue is full, park the job and retry once it drains. This
+      // also covers edits and boundary-neighbor remeshes, not only generation.
+      this.enqueueMeshWithRetry(chunk);
       done++;
     }
   }
@@ -283,7 +443,7 @@ export class World implements WorldAccess {
       this.retryMeshSet.delete(job.key);
       const chunk = this.chunkManager.getChunk(job.cx, job.cy, job.cz);
       if (chunk) {
-        this.enqueueMesh(chunk);
+        this.enqueueMeshWithRetry(chunk);
       }
     }
 
@@ -310,7 +470,7 @@ export class World implements WorldAccess {
     }
   }
 
-  private unloadChunks(playerChunkX: number, playerChunkZ: number): void {
+  private unloadChunks(playerChunkX: number, playerChunkZ: number): boolean {
     const limit = this.renderDistance + 1;
     const candidates: Chunk[] = [];
     this.chunkManager.forEachChunk((chunk) => {
@@ -363,6 +523,46 @@ export class World implements WorldAccess {
       this.chunkManager.removeChunk(chunk.cx, chunk.cy, chunk.cz);
       unloaded++;
     }
+    return candidates.length > unloaded;
+  }
+
+  /** Resolve a bounded number of unsupported sand/gravel cells per frame. */
+  private processFallingBlocks(): void {
+    let processed = 0;
+    while (processed < 8 && this.fallingQueue.length > 0) {
+      const [x, y, z] = this.fallingQueue.shift()!;
+      this.fallingSet.delete(`${x},${y},${z}`);
+      if (
+        y <= CONFIG.bedrockY ||
+        !this.isLoadedAt(x, y, z) ||
+        !this.isLoadedAt(x, y - 1, z)
+      ) {
+        continue;
+      }
+      const id = this.getBlock(x, y, z);
+      if ((id !== BlockId.Sand && id !== BlockId.Gravel) || this.getBlock(x, y - 1, z) !== BlockId.Air) {
+        continue;
+      }
+      this.setBlock(x, y, z, BlockId.Air);
+      this.setBlock(x, y - 1, z, id);
+      processed++;
+    }
+  }
+
+  private enqueueFalling(x: number, y: number, z: number): void {
+    if (y <= CONFIG.bedrockY || y >= CHUNK_DIMENSIONS.height || !Number.isInteger(x) || !Number.isInteger(z)) {
+      return;
+    }
+    const key = `${x},${y},${z}`;
+    if (this.fallingSet.has(key)) return;
+    this.fallingSet.add(key);
+    this.fallingQueue.push([x, y, z]);
+  }
+
+  private isLoadedAt(x: number, y: number, z: number): boolean {
+    if (y < 0 || y >= CHUNK_DIMENSIONS.height) return false;
+    const [cx, cy, cz] = worldToChunk(x, y, z);
+    return this.chunkManager.getChunk(cx, cy, cz)?.generated === true;
   }
 
   // ── Queues ─────────────────────────────────────────────────────────────────
@@ -400,6 +600,34 @@ export class World implements WorldAccess {
     this.meshSet.add(key);
     chunk.state = ChunkState.Meshing;
     return true;
+  }
+
+  /** Queue a mesh job, retaining it when the active queue is temporarily full. */
+  private enqueueMeshWithRetry(chunk: Chunk): void {
+    const key = chunkKey(chunk.cx, chunk.cy, chunk.cz);
+    if (this.enqueueMesh(chunk)) {
+      // A later edit may have made a previously parked job active. Remove the
+      // stale parked copy so it cannot enqueue a duplicate mesh after this job.
+      if (this.retryMeshSet.delete(key)) {
+        for (let i = this.retryMeshQueue.length - 1; i >= 0; i--) {
+          if (this.retryMeshQueue[i]?.key === key) {
+            this.retryMeshQueue.splice(i, 1);
+          }
+        }
+      }
+      return;
+    }
+
+    const existing = this.retryMeshQueue.find((job) => job.key === key);
+    if (existing) {
+      existing.version = chunk.meshVersion;
+      return;
+    }
+    // The active mesh queue is bounded, and the retry queue is bounded by the
+    // loaded chunk set (which is itself bounded by render distance). Keeping a
+    // parked entry here guarantees that edits are never silently stranded.
+    this.retryMeshSet.add(key);
+    this.retryMeshQueue.push({ key, cx: chunk.cx, cy: chunk.cy, cz: chunk.cz, version: chunk.meshVersion });
   }
 
   /** Re-apply the player's edits for a chunk after regeneration. */
@@ -452,6 +680,8 @@ export class World implements WorldAccess {
     if (result.opaque) {
       const mesh = new THREE.Mesh(result.opaque, this.materials.opaque);
       mesh.position.set(px, py, pz);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
       this.scene.add(mesh);
       meshes.push(mesh);
       tris += this.triangleCount(result.opaque);
@@ -459,6 +689,8 @@ export class World implements WorldAccess {
     if (result.transparent) {
       const mesh = new THREE.Mesh(result.transparent, this.materials.transparent);
       mesh.position.set(px, py, pz);
+      mesh.renderOrder = 1;
+      mesh.receiveShadow = true;
       this.scene.add(mesh);
       meshes.push(mesh);
       tris += this.triangleCount(result.transparent);
@@ -499,7 +731,7 @@ export class World implements WorldAccess {
     const neighbor = this.chunkManager.getChunk(cx, cy, cz);
     if (neighbor) {
       neighbor.markDirty();
-      this.enqueueMesh(neighbor);
+      this.enqueueMeshWithRetry(neighbor);
     }
   }
 
@@ -517,61 +749,74 @@ export class World implements WorldAccess {
     this.chunkVoxelCounts.set(key, count);
   }
 
+  /** Reconcile stats after an edit snapshot is loaded into a live chunk. */
+  private refreshChunkVoxelCount(chunk: Chunk): void {
+    const key = chunkKey(chunk.cx, chunk.cy, chunk.cz);
+    let count = 0;
+    for (let i = 0; i < chunk.blocks.length; i++) {
+      if (chunk.blocks[i] !== BlockId.Air) {
+        count++;
+      }
+    }
+    this.voxels += count - (this.chunkVoxelCounts.get(key) ?? 0);
+    this.chunkVoxelCounts.set(key, count);
+  }
+
   getStats(): WorldStats {
     return {
       loadedChunks: this.chunkManager.size,
       pendingGeneration: this.genQueue.length,
-      pendingMesh: this.meshQueue.length,
+      pendingMesh: this.meshQueue.length + this.retryMeshQueue.length,
       triangles: this.triangles,
       voxels: this.voxels,
     };
   }
 
   isReady(playerChunkX = 0, playerChunkZ = 0): boolean {
-    const radius = 2;
+    return this.getReadyProgress(playerChunkX, playerChunkZ) >= 1;
+  }
+
+  /** Fraction of the safety ring that has generated and attached visible meshes. */
+  getReadyProgress(playerChunkX = 0, playerChunkZ = 0): number {
+    const radius = Math.min(2, this.renderDistance);
+    const diameter = radius * 2 + 1;
+    const total = diameter * diameter;
+    let ready = 0;
     for (let dx = -radius; dx <= radius; dx++) {
       for (let dz = -radius; dz <= radius; dz++) {
         const chunk = this.chunkManager.getChunk(playerChunkX + dx, 0, playerChunkZ + dz);
-        if (!chunk || chunk.state !== ChunkState.Visible) {
-          return false;
+        if (chunk?.state === ChunkState.Visible) {
+          ready++;
         }
       }
     }
-    return true;
+    return ready / total;
   }
 
   /**
-   * Synchronously generate, mesh, and attach the chunks within `radius` of the
-   * given player chunk. Called once at boot so the spawn area is guaranteed to
-   * be solid before the first frame — no falling through un-generated terrain.
+   * Queue the chunks around the spawn point for prioritized generation. Work is
+   * intentionally processed by the normal per-frame budgets so the loading UI
+   * can paint immediately and the main thread never stalls on a large preload.
    */
   preloadChunks(playerChunkX: number, playerChunkZ: number, radius = 3): void {
     for (let dx = -radius; dx <= radius; dx++) {
       for (let dz = -radius; dz <= radius; dz++) {
         const cx = playerChunkX + dx;
         const cz = playerChunkZ + dz;
-        const key = chunkKey(cx, 0, cz);
-        // Skip chunks already being generated/visible.
-        if (this.genSet.has(key) || this.meshSet.has(key)) {
-          continue;
-        }
         let chunk = this.chunkManager.getChunk(cx, 0, cz);
         if (!chunk) {
           chunk = this.chunkManager.createChunk(cx, 0, cz);
         }
         if (!chunk.generated) {
-          this.generator.generateChunk(chunk);
-          this.applyEditOverlay(chunk);
-          chunk.generated = true;
-          chunk.state = ChunkState.Generated;
-          this.countChunkVoxels(chunk);
+          this.enqueueGeneration(chunk);
+        } else if (chunk.state !== ChunkState.Visible) {
+          this.enqueueMeshWithRetry(chunk);
         }
-        const result = this.mesher.mesh(chunk, (ncx, ncy, ncz) => this.chunkManager.getChunk(ncx, ncy, ncz));
-        this.attach(chunk, result);
-        chunk.dirty = false;
-        chunk.state = ChunkState.Visible;
       }
     }
+    this.needsEnsure = true;
+    this.genQueueDirty = true;
+    this.meshQueueDirty = true;
   }
 
   dispose(): void {
@@ -583,11 +828,17 @@ export class World implements WorldAccess {
     this.meshSet.clear();
     this.retryMeshQueue.length = 0;
     this.retryMeshSet.clear();
+    this.fallingQueue.length = 0;
+    this.fallingSet.clear();
     this.meshGroups.clear();
     this.chunkTriangles.clear();
     this.chunkVoxelCounts.clear();
     this.editOverlay.clear();
     this.editOverlayAccessOrder.length = 0;
+    this.streamCenterX = null;
+    this.streamCenterZ = null;
+    this.needsEnsure = true;
+    this.needsUnload = false;
     this.triangles = 0;
     this.voxels = 0;
   }

@@ -28,6 +28,12 @@ export interface InputState {
   /** Returns true if a break action was requested since the last call. */
   consumeBreak(): boolean;
 
+  /** Whether the primary action button is still held. */
+  isBreakHeld(): boolean;
+
+  /** Whether a very short primary-button press completed since the last call. */
+  consumeBreakClick?(): boolean;
+
   /** Returns true if a place action was requested since the last call. */
   consumePlace(): boolean;
 
@@ -39,4 +45,10 @@ export interface InputState {
 
   /** Returns true if the debug overlay toggle was requested since the last call. */
   consumeDebugToggle(): boolean;
+
+  /** Returns true when the crafting screen toggle was requested. */
+  consumeCraftingToggle(): boolean;
+
+  /** Returns true when the food-use key was pressed. */
+  consumeEat(): boolean;
 }

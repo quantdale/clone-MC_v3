@@ -13,7 +13,7 @@ export class Hotbar {
   private readonly inventory: Inventory;
   private readonly atlas: TextureAtlas;
   private readonly registry: BlockRegistry;
-  private readonly slots: HTMLDivElement[] = [];
+  private readonly slots: HTMLButtonElement[] = [];
 
   constructor(container: HTMLElement, inventory: Inventory, atlas: TextureAtlas, registry: BlockRegistry) {
     this.container = container;
@@ -26,15 +26,34 @@ export class Hotbar {
 
   /** Build the slot DOM elements and their block previews. */
   private buildSlots(): void {
+    this.container.setAttribute('role', 'toolbar');
+    this.container.setAttribute('aria-label', 'Block hotbar');
     this.inventory.slots.forEach((blockId, index) => {
-      const slot = document.createElement('div');
+      const slot = document.createElement('button');
+      slot.type = 'button';
       slot.className = 'hotbar-slot';
       slot.dataset.index = String(index);
+      slot.setAttribute('aria-label', `${index + 1}: ${this.registry.get(blockId).name}`);
+      slot.setAttribute('aria-pressed', index === this.inventory.selected ? 'true' : 'false');
+      slot.addEventListener('click', () => {
+        this.inventory.select(index);
+        this.render();
+      });
 
       const indexLabel = document.createElement('span');
       indexLabel.className = 'slot-index';
       indexLabel.textContent = String(index + 1);
       slot.appendChild(indexLabel);
+
+      const countLabel = document.createElement('span');
+      countLabel.className = 'slot-count';
+      countLabel.dataset.count = String(index);
+      slot.appendChild(countLabel);
+
+      const durabilityBar = document.createElement('span');
+      durabilityBar.className = 'slot-durability';
+      durabilityBar.dataset.durability = String(index);
+      slot.appendChild(durabilityBar);
 
       const canvas = document.createElement('canvas');
       canvas.width = TILE_SIZE;
@@ -66,7 +85,29 @@ export class Hotbar {
   /** Re-sync the selected highlight to the inventory's current selection. */
   render(): void {
     this.slots.forEach((slot, index) => {
-      slot.classList.toggle('selected', index === this.inventory.selected);
+      const selected = index === this.inventory.selected;
+      slot.classList.toggle('selected', selected);
+      slot.setAttribute('aria-pressed', selected ? 'true' : 'false');
+      const countLabel = slot.querySelector<HTMLElement>('.slot-count');
+      const count = this.inventory.getSlotCount(index);
+      const definition = this.registry.get(this.inventory.slots[index] ?? 0);
+      if (countLabel) {
+        countLabel.textContent = count > 0 ? String(count) : '';
+      }
+      const durabilityBar = slot.querySelector<HTMLElement>('.slot-durability');
+      const maxDurability = definition.maxDurability ?? 0;
+      const durability = maxDurability > 0 && count > 0
+        ? this.inventory.getSlotDurability(index, maxDurability)
+        : 0;
+      if (durabilityBar) {
+        durabilityBar.classList.toggle('visible', durability > 0);
+        durabilityBar.style.width = maxDurability > 0 ? `${Math.max(0, Math.min(100, durability / maxDurability * 100))}%` : '0%';
+        durabilityBar.setAttribute('aria-label', maxDurability > 0 ? `${durability}/${maxDurability} durability` : '');
+      }
+      slot.setAttribute(
+        'aria-label',
+        `${index + 1}: ${definition.name}${count > 0 ? `, ${count}` : ', empty'}${durability > 0 ? `, ${durability}/${maxDurability} durability` : ''}`,
+      );
     });
   }
 

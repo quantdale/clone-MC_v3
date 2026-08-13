@@ -1,6 +1,6 @@
 # Voxel Game (Three.js)
 
-A browser-based voxel sandbox game inspired by the core mechanics of Minecraft, built with **Three.js**, **TypeScript**, and **Vite**. It features procedurally generated chunked terrain, first-person controls, block destruction/placement, a hotbar inventory, dynamic chunk streaming, collision, lighting, and a polished responsive UI.
+A browser-based voxel sandbox game inspired by the core mechanics of Minecraft, built with **Three.js**, **TypeScript**, and **Vite**. It features procedurally generated chunked terrain, first-person controls, block destruction/placement, a stackable survival inventory, crafting, dynamic chunk streaming, collision, lighting, audio feedback, ambient world life, and a polished responsive UI.
 
 Fully spec-driven: see [`openspec/`](openspec/) for the capability specs, change proposal, design, task list, and verification evidence.
 
@@ -8,14 +8,19 @@ Fully spec-driven: see [`openspec/`](openspec/) for the capability specs, change
 
 ## Features
 
-- **Procedural, deterministic world** — seeded terrain (grass, dirt, stone, sand, water, bedrock) with height variation and trees that cross chunk borders cleanly. Same seed + coordinates ⇒ identical terrain.
-- **Chunk streaming** — chunks generate, mesh, and unload around the player within a configurable render distance, with distance-prioritized queues and bounded per-frame work.
-- **First-person controls** — pointer lock, mouse look, WASD, sprint, jump, gravity, and AABB voxel collision (no falling through terrain).
-- **Block interaction** — destructive/placement with Amanatides & Woo voxel raycasting, accurate targeting, bedrock protection, placement validation, and a selection outline.
-- **Hotbar inventory** — 9 slots with block icons, number-key + mouse-wheel selection (wraparound), and placement integration.
-- **Lighting & environment** — hemisphere light, directional sun, sky, distance fog, and semi-transparent water.
+- **Procedural, deterministic world** — seeded terrain with grass, dirt, stone, sand, gravel, snow, water, lava pockets, bedrock, coal ore, iron ore, trees, distant biomes, and protected underground caves. Same seed + coordinates ⇒ identical terrain.
+- **Chunk streaming** — chunks generate, mesh, and unload around the player within a configurable render distance, with distance-prioritized queues, bounded per-frame work, and a non-blocking spawn preload.
+- **First-person controls** — pointer lock, mouse look, WASD, sprint, jump, swimming, lava slowdown, gravity, one-block steps, and AABB voxel collision (no falling through terrain).
+- **Block interaction** — destructive/placement with Amanatides & Woo voxel raycasting, accurate targeting, bedrock protection, placement validation, selection outline, stack consumption, hardness-based held mining progress, and distinct coal/raw-iron ore drops.
+- **Survival inventory** — 9-slot hotbar plus 27 storage slots, stack counts, collected block drops, apples from leaves, persistent inventory state, and a usable inventory screen.
+- **Crafting** — nine transactional recipes for planks, glass, gravel, cobblestone, bricks, sticks, and durable wooden/stone tools, with material checks, output-capacity checks, and a clickable inventory/crafting panel.
+- **Tools** — craftable wooden pickaxes, a stone pickaxe, and a wooden axe speed up preferred block types and wear down visibly with use.
+- **Survival loop** — health, hunger, saturation, sprint hunger drain, fall damage, drowning, lava damage, regeneration, death/respawn, and apples as food.
+- **World simulation** — unsupported sand and gravel settle downward with bounded updates, while a deterministic herd of passive low-poly critters adds ambient life around the player.
+- **Lighting & environment** — hemisphere light, shadowed directional sun, smooth day/night cycle with an in-game clock, procedural sky gradient, distance fog, drifting cloud layer, and semi-transparent water.
+- **Exploration polish** — automatic one-block step-up traversal, swimming, target outline feedback, focus-safe input release, camera bob, procedural action sounds, and player-centered shadow coverage.
 - **Responsive UI** — crosshair, FPS counter, loading indicator, start/pause overlay, debug overlay (F3), and a styled, professional hotbar.
-- **In-session edit persistence** — block edits survive chunk unload/reload via a modified-chunk overlay.
+- **Save persistence** — block edits, player pose, inventory stacks, health, hunger, and saturation survive chunk unload/reload and page refresh through validated, seed-scoped localStorage snapshots.
 - **Production tooling** — ESLint, strict TypeScript, Vitest unit tests, Playwright browser tests, and a production build.
 
 ---
@@ -48,16 +53,15 @@ Open the printed URL (default `http://localhost:5173`).
 | `npm run preview` | Serve the production build locally |
 | `npm test` | Run the Vitest unit test suite |
 | `npm run test:coverage` | Run the unit suite with coverage report |
-| `npm run test:e2e` | Run the Playwright browser test suite (needs a build) |
+| `npm run test:e2e` | Build and run the headless Playwright browser suite against the production preview |
 | `npm run lint` | Run ESLint |
 | `npm run typecheck` | Run `tsc --noEmit` |
 
 ### End-to-end tests
 
-The Playwright suite runs against the **production build** served by `vite preview`. Before running it, ensure a build exists:
+The Playwright suite automatically builds and runs the **production artifact** served by `vite preview` in headless Chromium. Its dedicated `VITE_E2E=true` build flag enables test inspection only for this local/CI process; ordinary production builds do not expose the game handle.
 
 ```bash
-npm run build
 npm run test:e2e
 ```
 
@@ -76,12 +80,15 @@ npx playwright install chromium
 | `Click` | Enter pointer lock / resume |
 | `W A S D` / arrow keys | Move |
 | `Space` | Jump |
+| `Space` while submerged | Swim upward |
 | `Shift` | Sprint |
 | `Mouse` | Look |
 | `Left click` | Destroy targeted block |
 | `Right click` | Place selected block |
 | `1–9` / `Mouse wheel` | Select hotbar slot |
 | `F3` | Toggle debug overlay |
+| `C` | Open/close inventory and crafting |
+| `R` | Eat an apple when hungry |
 | `Esc` | Release pointer lock (pause) |
 
 ---
@@ -95,11 +102,12 @@ src/
 ├── config/        # Central tunables (seed, chunk size, render distance, physics, budgets)
 ├── engine/        # Game, GameLoop, Renderer, InputManager, ResourceManager
 ├── world/         # World, Chunk, ChunkManager, ChunkMesher, TerrainGenerator,
-│                  # BlockRegistry, WorldCoordinates, WorldAccess
-├── player/        # Player, PlayerController, PlayerPhysics, PlayerInteraction
+│                  # BlockRegistry, WorldCoordinates, WorldAccess, WorldLife
+├── player/        # Player, PlayerController, PlayerPhysics, PlayerInteraction, SurvivalSystem
+├── audio/         # Procedural WebAudio action feedback
 ├── rendering/     # TextureAtlas, Materials, Lighting, Environment
-├── inventory/     # Inventory, Hotbar, BlockSelector
-├── ui/            # Crosshair, HUD, LoadingIndicator, DebugOverlay
+├── inventory/     # Inventory, Hotbar, BlockSelector, Crafting
+├── ui/            # Crosshair, HUD, LoadingIndicator, DebugOverlay, CraftingPanel
 ├── math/          # PRNG, Noise, DDA (voxel raycast)
 └── main.ts        # Bootstrap + init-error handling
 ```
@@ -107,27 +115,27 @@ src/
 Key design decisions:
 
 - **Chunk size 16×64×16**, stored as a `Uint8Array` (16 KB per chunk).
-- **Face-culled meshing** — one opaque and one transparent (water) mesh per chunk; shared materials and a single procedural texture atlas. Internal faces are removed.
+- **Face-culled meshing** — one opaque and one transparent (water/glass) mesh per chunk; shared materials and a single procedural texture atlas. Internal faces are removed.
 - **Seeded noise** (`mulberry32` PRNG + value noise) for deterministic world generation — no `Math.random()` in world-critical paths.
 - **Procedural textures** — all block art is generated at runtime into a canvas atlas (original, no copyrighted assets).
-- **Edit overlay** — `Map<chunkKey, Map<localIndex, blockId>>` preserves player edits across unload/reload without storing the whole world.
-- **Bounded streaming** — distance-prioritized generation/mesh queues with per-frame budgets and stale-job version guards.
+- **Edit overlay + save snapshot** — `Map<chunkKey, Map<localIndex, blockId>>` preserves edits across unload/reload, while separate versioned seed-scoped snapshots restore world edits and player state after refresh.
+- **Bounded streaming** — distance-prioritized generation/mesh queues with per-frame budgets, stale-job version guards, and player freeze until the local safety ring is visible.
+- **Runtime hardening** — rejected pointer-lock requests are recoverable, background/blur transitions clear transient input, and dirty remeshes are retained when a bounded queue is full.
 
 ## Performance Notes
 
-- Measured **~60 FPS** at render distance 8 on a typical desktop during ordinary exploration (headless Chromium with ANGLE, 1280×720).
-- Generation/meshing is budgeted per frame; sprint-streaming does not cause long freezes.
+- Rendering uses a capped device pixel ratio, color-managed output, soft directional shadows that follow the player, and a lightweight procedural sky.
+- Generation/meshing is budgeted per frame; the loading screen paints before spawn generation and sprint-streaming does not cause long synchronous freezes.
+- Automated/headless Chromium sessions automatically use a smaller render ring, a 1× pixel ratio, and no shadow map so browser tests remain responsive on software rendering.
 - Memory stays bounded during exploration (loaded chunk count is capped by render distance); unload releases GPU resources.
 - Chunk coordinates support positive and negative values (floor division).
 
 ## Known Limitations
 
 - **Greedy meshing** is not implemented; face-culled meshing is used and meets the performance target. This is a documented stretch goal.
-- **Day/night cycle** is optional and disabled by default (enabled via `CONFIG.dayNight`).
-- **Caves, biomes, clouds, mobs, crafting, and audio** are not implemented (out of scope).
-- **No cross-restart persistence** — block edits survive within a session only; the world is not saved to disk.
+- **Hostile AI and interactive mobs** are not implemented; deterministic passive critters are visual ambience only, while the current scope remains a polished single-player survival/building/exploration sandbox.
 - **Mobile/touch controls** are not supported (keyboard + mouse required).
-- **No step-up** — the player cannot automatically climb 1-block steps; jumping is required.
+- **Movement scope** — automatic one-block steps and swimming are supported; sprint-jumping, ladders, and slopes are not implemented.
 
 ---
 
@@ -135,8 +143,9 @@ Key design decisions:
 
 The project follows an OpenSpec-style workflow. Artifacts live in [`openspec/`](openspec/):
 
-- `openspec/changes/add-voxel-game/` — the change proposal, design, task list, and per-capability specs.
-- Capability specs: `rendering`, `world-generation`, `chunk-system`, `chunk-streaming`, `player-controller`, `block-interaction`, `block-registry`, `inventory-hotbar`, `lighting-environment`, `user-interface`, `performance`.
+- `openspec/changes/add-voxel-game/` — the original change proposal, design, task list, and capability specs.
+- `openspec/changes/hardening-polish/` — runtime hardening, movement polish, graphics-follow improvements, and current verification evidence.
+- Capability specs: `rendering`, `world-generation`, `chunk-system`, `chunk-streaming`, `player-controller`, `block-interaction`, `block-registry`, `inventory-hotbar`, `survival-system`, `world-simulation`, `lighting-environment`, `user-interface`, `performance`.
 
 The verification matrix maps each requirement to its implementation, tests, and status.
 

@@ -15,7 +15,7 @@ export const CONFIG = {
   },
 
   /** Number of chunks to load around the player in each horizontal direction. */
-  renderDistance: 8,
+  renderDistance: 6,
 
   /** Sea level (world Y) — water fills depressions below this. */
   seaLevel: 32,
@@ -25,6 +25,9 @@ export const CONFIG = {
 
   /** Player interaction reach in blocks. */
   reach: 5,
+
+  /** Maximum number of voxel cells traversed by one interaction ray. */
+  maxRaySteps: 512,
 
   /** Input cooldown between break/place actions, in seconds. */
   actionCooldown: 0.25,
@@ -48,6 +51,20 @@ export const CONFIG = {
     acceleration: 50.0,
     /** Horizontal damping (friction) applied per second. */
     damping: 12.0,
+    /** Maximum downward speed in blocks per second. */
+    terminalVelocity: 54.0,
+    /** Maximum distance integrated in one collision sub-step. */
+    maxSubstepDisplacement: 0.25,
+    /** Maximum vertical rise the controller can automatically step over. */
+    stepHeight: 1.0,
+    /** Reduced gravity while the player's body is submerged. */
+    waterGravity: 8.0,
+    /** Downward speed cap while swimming. */
+    waterTerminalVelocity: 10.0,
+    /** Horizontal movement multiplier while swimming. */
+    waterSpeedMultiplier: 0.6,
+    /** Upward impulse from the swim/jump control while submerged. */
+    swimUpVelocity: 5.5,
   },
 
   /** Maximum delta time per frame (seconds) to prevent physics explosions. */
@@ -63,11 +80,29 @@ export const CONFIG = {
     unloadPerFrame: 4,
   },
 
+  /** Chunks queued immediately around the spawn point before normal streaming. */
+  preloadRadius: 3,
+
   /** Maximum chunks kept in the generation/mesh queues (bounded). */
   maxQueueSize: 512,
 
   /** Renderer pixel-ratio cap. */
   maxPixelRatio: 2,
+
+  /** Optional high-quality rendering features. Headless browsers disable shadows automatically. */
+  rendering: {
+    shadows: true,
+    shadowMapSize: 1024,
+    shadowDistance: 96,
+    clouds: true,
+  },
+
+  /** Conservative quality defaults for automated/headless browser sessions. */
+  headless: {
+    renderDistance: 2,
+    maxPixelRatio: 1,
+    clouds: false,
+  },
 
   /** Fog tuning. */
   fog: {
@@ -76,9 +111,9 @@ export const CONFIG = {
     color: 0x87ceeb,
   },
 
-  /** Optional day-night cycle (enabled after mandatory features are stable). */
+  /** Smooth, deterministic day-night cycle. */
   dayNight: {
-    enabled: false,
+    enabled: true,
     /** Seconds for a full day. */
     dayLength: 600,
   },
@@ -89,6 +124,8 @@ Object.freeze(CONFIG);
 Object.freeze(CONFIG.player);
 Object.freeze(CONFIG.budgets);
 Object.freeze(CONFIG.fog);
+Object.freeze(CONFIG.rendering);
+Object.freeze(CONFIG.headless);
 Object.freeze(CONFIG.dayNight);
 
 export type GameConfig = typeof CONFIG;

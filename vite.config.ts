@@ -10,7 +10,9 @@ export default defineConfig({
     target: 'es2022',
     outDir: 'dist',
     sourcemap: false,
-    chunkSizeWarningLimit: 1500,
+    // Keep the warning meaningful: Three.js is intentionally isolated into its
+    // own cacheable vendor chunk, while game code should remain small.
+    chunkSizeWarningLimit: 500,
     rollupOptions: {
       output: {
         manualChunks: {

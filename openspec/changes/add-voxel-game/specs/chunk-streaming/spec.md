@@ -2,14 +2,14 @@
 
 ## Contract
 
-- **Purpose**: Load chunks within a configurable render distance around the player and unload them beyond it, distributing work across frames and preserving deterministic regeneration and in-session edits across unload/reload.
-- **Scope**: Owns the streaming policy around the player, frame-distributed work, deterministic regeneration on reload, and in-session edit persistence via an overlay. Does not cover chunk storage internals (chunk-system) or network/server streaming.
-- **Functional requirements**: Streaming around the player; frame-distributed work; deterministic regeneration; in-session edit persistence.
+- **Purpose**: Load chunks within a configurable render distance around the player and unload them beyond it, distributing work across frames and preserving deterministic regeneration, edits, and player survival state across unload/reload and browser refresh.
+- **Scope**: Owns the streaming policy around the player, frame-distributed work, deterministic regeneration on reload, sparse edit overlays, and validated seed-scoped browser snapshots. Does not cover chunk storage internals (chunk-system) or network/server streaming.
+- **Functional requirements**: Streaming around the player; frame-distributed work; deterministic regeneration; edit persistence; seed-scoped player-state persistence.
 - **Non-functional requirements**: Bounded work per frame so ordinary movement does not freeze; unloaded chunks regenerate to identical base terrain; edits survive unload/reload without storing the entire world.
-- **Inputs and outputs**: Inputs: player position, config render distance, block edits. Outputs: chunk load/unload decisions, per-frame generation/mesh/unload budgets, edit overlay applied on reload.
-- **Core data structures**: `World` chunk map, chunk queues, `WorldStats` (loaded/pending counts), `editOverlay` / `applyEditOverlay`, `ChunkState`.
+- **Inputs and outputs**: Inputs: player position, config render distance, block edits, player pose/inventory/survival state. Outputs: chunk load/unload decisions, per-frame generation/mesh/unload budgets, edit overlay applied on reload, validated player snapshot.
+- **Core data structures**: `World` chunk map, chunk queues, `WorldStats` (loaded/pending counts), `editOverlay` / `applyEditOverlay`, `WorldEditSnapshot`, `ChunkState`.
 - **Dependencies**: chunk-system (storage, lifecycle, queues), world-generation (deterministic base terrain), config (budgets, render distance), player-controller (player position).
-- **Error and edge-case behavior**: Fast movement that leaves many chunks to generate still respects the per-frame budget; a player returning to a previously unloaded area gets identical base terrain; broken/placed blocks persist via the overlay after unload/reload while the rest of the chunk matches seeded terrain.
+- **Error and edge-case behavior**: Fast movement that leaves many chunks to generate still respects the per-frame budget; a player returning to a previously unloaded area gets identical base terrain; malformed or foreign save snapshots are ignored; broken/placed blocks persist via the overlay after unload/reload and via the seed-scoped snapshot after refresh.
 - **Performance expectations**: Generation/mesh/unload work is budgeted per frame (`generatePerFrame`, `meshPerFrame`, `unloadPerFrame`); loaded chunk count stays bounded by render distance; memory stays flat — see performance spec.
 - **Acceptance criteria**: The scenarios in "Streaming around the player", "Frame-distributed work", "Deterministic regeneration", and "In-session edit persistence" encode the pass/fail conditions.
 - **Verification method**: e2e `tests/e2e/game.spec.ts` plus unit `tests/unit/World.test.ts`; verification matrix rows STREAM-01 through STREAM-04.
@@ -42,7 +42,7 @@ Unloaded chunks SHALL regenerate to the identical base terrain from the seed whe
 - **THEN** the regenerated base terrain is identical to the original
 
 ### Requirement: In-session edit persistence
-Block edits made during the session SHALL survive chunk unload/reload via a modified-chunk overlay (or equivalent), without storing the entire generated world. Cross-restart persistence is optional.
+Block edits SHALL survive chunk unload/reload via a modified-chunk overlay and SHOULD survive a browser refresh via a compact, versioned seed-scoped snapshot, without storing the entire generated world.
 
 #### Scenario: Broken block stays broken
 - **WHEN** a player breaks a block, walks away until the chunk unloads, and returns
@@ -51,3 +51,15 @@ Block edits made during the session SHALL survive chunk unload/reload via a modi
 #### Scenario: Placed block stays placed
 - **WHEN** a player places a block, the chunk unloads and reloads
 - **THEN** the placed block is present and the rest of the chunk matches seeded terrain
+
+#### Scenario: Refresh restores edits
+- **WHEN** the page is refreshed with the same world seed after an edit
+- **THEN** the saved block edit is restored, while malformed snapshots or a different seed are ignored
+
+### Requirement: Player state persistence
+
+The game SHALL save and restore player pose, stackable inventory, health, hunger, and saturation in a separate versioned snapshot scoped to the world seed.
+
+#### Scenario: Restore player state
+- **WHEN** the same seed is opened after a page refresh
+- **THEN** the saved player state is restored if all ids and numeric values validate; malformed state falls back safely

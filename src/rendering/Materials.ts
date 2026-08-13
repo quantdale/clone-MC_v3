@@ -6,7 +6,7 @@ import { TextureAtlas } from './TextureAtlas';
  *
  * Materials are created once and reused across all chunk meshes to minimize GPU
  * state changes and memory. The opaque material renders all opaque blocks;
- * the transparent material renders water.
+ * the transparent material renders water and glass.
  */
 export class Materials {
   readonly opaque: THREE.MeshLambertMaterial;

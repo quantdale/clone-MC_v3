@@ -97,6 +97,31 @@ describe('world dirty propagation and edits', () => {
     expect(world.getBlock(0, 0, 0)).toBe(BlockId.Air);
   });
 
+  it('queues preload work instead of generating synchronously', () => {
+    const world = makeWorld();
+
+    world.preloadChunks(0, 0, 0);
+
+    expect(world.getStats().pendingGeneration).toBe(1);
+    expect(world.getBlock(0, 8, 0)).toBe(BlockId.Air);
+
+    world.update(0.016, 0, 0);
+    expect(world.getBlock(0, 8, 0)).toBe(BlockId.Stone);
+  });
+
+  it('lets unsupported sand fall one block per world update', () => {
+    const world = makeWorld();
+    streamUntilGenerated(world, 0, 0);
+    world.setBlock(8, 10, 8, BlockId.Sand);
+    world.setBlock(8, 9, 8, BlockId.Air);
+    expect(world.getBlock(8, 10, 8)).toBe(BlockId.Sand);
+    for (let i = 0; i < 5 && world.getBlock(8, 9, 8) !== BlockId.Sand; i++) {
+      world.update(0.016, 0, 0);
+    }
+    expect(world.getBlock(8, 10, 8)).toBe(BlockId.Air);
+    expect(world.getBlock(8, 9, 8)).toBe(BlockId.Sand);
+  });
+
   it('setBlock records an edit that survives unload/reload', () => {
     const world = makeWorld();
     streamUntilGenerated(world, 0, 0);
@@ -104,6 +129,11 @@ describe('world dirty propagation and edits', () => {
 
     // Edit a block.
     world.setBlock(8, 8, 8, BlockId.Sand);
+    expect(world.getBlock(8, 8, 8)).toBe(BlockId.Sand);
+
+    // Invalid ids are rejected before they can corrupt the Uint8Array or make
+    // the mesher throw while resolving block properties.
+    world.setBlock(8, 8, 8, 255);
     expect(world.getBlock(8, 8, 8)).toBe(BlockId.Sand);
 
     // Unload the chunk by streaming far away (run many frames — unload is
@@ -173,4 +203,42 @@ describe('world dirty propagation and edits', () => {
     // renderDistance 2 → a 5×5 chunk area max; the queue must not grow beyond it.
     expect(stats.pendingGeneration).toBeLessThanOrEqual(5 * 5);
   });
+
+  it('exports and imports sparse edits for a matching seed', () => {
+    const source = makeWorld(77);
+    streamUntilGenerated(source, 0, 0);
+    source.setBlock(8, 8, 8, BlockId.Glass);
+    source.setBlock(9, 8, 8, BlockId.Air);
+
+    const snapshot = source.exportEdits();
+    expect(snapshot.version).toBe(1);
+    expect(snapshot.seed).toBe(77);
+    expect(snapshot.edits).toHaveLength(1);
+    expect(snapshot.edits[0]?.changes).toEqual(expect.arrayContaining([
+      [localIndexForTest(8, 8, 8), BlockId.Glass],
+      [localIndexForTest(9, 8, 8), BlockId.Air],
+    ]));
+
+    const restored = makeWorld(77);
+    expect(restored.importEdits(snapshot)).toBe(2);
+    streamUntilGenerated(restored, 0, 0);
+    expect(restored.getBlock(8, 8, 8)).toBe(BlockId.Glass);
+    expect(restored.getBlock(9, 8, 8)).toBe(BlockId.Air);
+  });
+
+  it('rejects malformed or foreign edit snapshots', () => {
+    const world = makeWorld(9);
+    expect(world.importEdits({ version: 1, seed: 10, edits: [] })).toBe(0);
+    expect(world.importEdits({ version: 2, seed: 9, edits: [] })).toBe(0);
+    expect(world.importEdits({
+      version: 1,
+      seed: 9,
+      edits: [{ chunk: [0, 0, 0], changes: [[999999, BlockId.Stone], [0, 999]] }],
+    })).toBe(0);
+    expect(world.getEditCount()).toBe(0);
+  });
 });
+
+function localIndexForTest(x: number, y: number, z: number): number {
+  return x + CONFIG.chunk.width * (z + CONFIG.chunk.depth * y);
+}

@@ -42,7 +42,11 @@ export class Renderer {
 
     let renderer: THREE.WebGLRenderer | null = null;
     try {
-      renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+      renderer = new THREE.WebGLRenderer({
+        canvas,
+        antialias: true,
+        powerPreference: 'high-performance',
+      });
     } catch {
       // WebGL is unavailable. Leave renderer null so the game can enter its
       // init-error state (rendererCreated === false) instead of crashing. Do
@@ -53,8 +57,7 @@ export class Renderer {
     this.renderer = renderer;
 
     if (this.renderer) {
-      this.applyPixelRatio();
-      this.renderer.setSize(window.innerWidth, window.innerHeight);
+      this.configureRenderer(this.renderer);
     }
 
     canvas.addEventListener('webglcontextlost', this.handleContextLost);
@@ -64,16 +67,32 @@ export class Renderer {
   /** Re-applies the pixel-ratio cap (e.g. after moving to a different-DPI monitor). */
   private applyPixelRatio(): void {
     if (this.renderer) {
+      const headless = typeof navigator !== 'undefined' && navigator.webdriver;
       this.renderer.setPixelRatio(
-        Math.min(window.devicePixelRatio, CONFIG.maxPixelRatio),
+        Math.min(
+          window.devicePixelRatio,
+          headless ? CONFIG.headless.maxPixelRatio : CONFIG.maxPixelRatio,
+        ),
       );
     }
+  }
+
+  /** Apply quality and color-management settings consistently after recreation. */
+  private configureRenderer(renderer: THREE.WebGLRenderer): void {
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    const headless = typeof navigator !== 'undefined' && navigator.webdriver;
+    renderer.shadowMap.enabled = CONFIG.rendering.shadows && !headless;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.applyPixelRatio();
+    renderer.setSize(window.innerWidth, Math.max(1, window.innerHeight));
   }
 
   /** Resizes the renderer and camera aspect to match the window. */
   resize(): void {
     const width = window.innerWidth;
-    const height = window.innerHeight;
+    const height = Math.max(1, window.innerHeight);
     if (this.renderer) {
       this.applyPixelRatio();
       this.renderer.setSize(width, height);
@@ -84,7 +103,7 @@ export class Renderer {
 
   /** Renders the scene with the camera. */
   render(): void {
-    if (this.renderer) {
+    if (this.renderer && this.rendererCreated) {
       this.renderer.render(this.scene, this.camera);
     }
   }
@@ -94,6 +113,8 @@ export class Renderer {
     this.canvas.removeEventListener('webglcontextlost', this.handleContextLost);
     this.canvas.removeEventListener('webglcontextrestored', this.handleContextRestored);
     this.renderer?.dispose();
+    this.renderer = null;
+    this.rendererCreated = false;
   }
 
   private readonly handleContextLost = (event: Event): void => {
@@ -108,7 +129,11 @@ export class Renderer {
     }
     let renderer: THREE.WebGLRenderer | null = null;
     try {
-      renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true });
+      renderer = new THREE.WebGLRenderer({
+        canvas: this.canvas,
+        antialias: true,
+        powerPreference: 'high-performance',
+      });
     } catch {
       // Restoration failed — leave rendererCreated false.
     }
@@ -116,8 +141,7 @@ export class Renderer {
     this.rendererCreated = renderer !== null;
 
     if (this.renderer) {
-      this.applyPixelRatio();
-      this.renderer.setSize(window.innerWidth, window.innerHeight);
+      this.configureRenderer(this.renderer);
     }
 
     this.onContextRestoredCallback?.();

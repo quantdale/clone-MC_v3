@@ -12,13 +12,19 @@ export default defineConfig({
   reporter: [['list']],
   use: {
     baseURL: 'http://localhost:4173',
+    headless: true,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
   webServer: {
-    command: 'npm run dev -- --port 4173 --strictPort',
+    // Build and serve the exact production artifact used for release. The
+    // test-only hook is enabled at build time, never through a URL parameter.
+    command: 'npm run build && npm run preview -- --host 127.0.0.1 --port 4173 --strictPort',
     port: 4173,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
+    env: {
+      VITE_E2E: 'true',
+    },
     timeout: 120_000,
   },
 });

@@ -134,10 +134,10 @@ Render Pipeline:
 ```
 
 ### Storage Model
-- **In-memory only** — No persistence across page refreshes
-- **Edit overlay:** `Map<chunkKey, Map<localIndex, blockId>>` survives chunk unload/reload
+- **Sparse browser save:** `WorldEditSnapshot` is validated and stored under a seed-scoped localStorage key
+- **Edit overlay:** `Map<chunkKey, Map<localIndex, blockId>>` survives chunk unload/reload and feeds the save snapshot
 - **Deterministic regeneration:** Seed-driven terrain allows re-generation without storage
-- **No database, no IndexedDB, no localStorage**
+- **No database or IndexedDB** — localStorage is intentionally sufficient for the compact single-player edit set
 
 ---
 
@@ -145,21 +145,21 @@ Render Pipeline:
 
 | Feature | Intended Behavior | Implementation Status | Main Components | Issues |
 |---------|-------------------|----------------------|-----------------|--------|
-| **Terrain Generation** | Seeded procedural terrain with trees | WORKING | TerrainGenerator, Noise, PRNG | None critical |
+| **Terrain Generation** | Seeded terrain with trees, distant biomes, and protected caves | WORKING | TerrainGenerator, Noise, PRNG | None critical |
 | **Chunk System** | 16×64×16 chunks with streaming | WORKING | World, Chunk, ChunkManager | Edit overlay FIFO eviction |
 | **Chunk Streaming** | Budgeted load/unload based on distance | WORKING | World.update() | Synchronous preload blocks thread |
-| **AABB Collision** | Physics with sub-stepping | WORKING | PlayerPhysics | Safety counter limit (10) may be insufficient |
+| **AABB Collision** | Physics with sub-stepping, step-up, and water buoyancy | WORKING | PlayerPhysics, PlayerController | Safety counter limit (10) may be insufficient |
 | **DDA Raycasting** | Block selection/break/place | WORKING | PlayerInteraction, DDA | None |
 | **Block Interaction** | Break/place with cooldown | WORKING | PlayerInteraction | No feedback for failed actions |
 | **Inventory/Hotbar** | 9-slot selection with cycling | WORKING | Inventory, Hotbar | None |
 | **HUD** | FPS counter, block name | WORKING | HUD | FPS smoothing could be improved |
 | **Debug Overlay** | F3 debug panel | WORKING | DebugOverlay | Limited metrics |
-| **Lighting** | Hemisphere + directional light | WORKING | Lighting | Day/night disabled by default |
+| **Lighting** | Hemisphere + directional light, synchronized day/night, sky/cloud layer | WORKING | Lighting, Environment | Desktop cloud layer is intentionally disabled in headless mode |
 | **Procedural Textures** | 256×256 canvas atlas | WORKING | TextureAtlas | None |
 | **Input Handling** | WASD + mouse + pointer lock | WORKING | InputManager | No gamepad/touch support |
 | **WebGL Rendering** | Three.js WebGLRenderer | WORKING | Renderer | No context loss handling |
 | **Error Handling** | GameLoop try/catch + error UI | PARTIALLY WORKING | Game, GameLoop | No runtime error logging |
-| **Persistence** | Session-only edit overlay | WORKING | World.editOverlay | FIFO eviction loses old edits |
+| **Persistence** | LRU edit overlay plus seed-scoped browser snapshot | WORKING | World, Game | LRU cap still bounds very long sessions |
 | **Security** | `?e2e` test hook | PARTIALLY WORKING | main.ts | Exposes game control in production |
 
 ---
@@ -651,7 +651,7 @@ it('preserves LRU edits when exceeding cap', () => {
 
 ### Security Assumptions
 - Single-player only (no multiplayer, no server)
-- No persistent storage (no localStorage/IndexedDB)
+- Client-local persistent storage only (validated localStorage snapshots; no IndexedDB/server save)
 - No network requests (pure client-side)
 - No user authentication
 
@@ -1102,7 +1102,7 @@ After the main audit, a final adversarial pass identified:
 
 2. **AUDIT-032: ResourceManager dispose order dependency** — If `Renderer.dispose()` fails, subsequent resources leak. Confirmed by Agent D. Added to AUDIT-011.
 
-3. **AUDIT-033: No `beforeunload` save** — Edit overlay lost on page close. Not a bug (documented limitation), but worth noting for future persistence work.
+3. **AUDIT-033: Page-close save coverage** — The edit snapshot now saves on `pagehide` and game teardown. Browser storage quota/private-mode failures remain intentionally non-fatal.
 
 ### False Positive Cleanup
 
@@ -1126,19 +1126,35 @@ This is a **well-engineered, complete implementation** of a Three.js voxel game.
 - Robust streaming pipeline with budget controls
 - Defensive programming (validation, bounds checks, error boundaries)
 
-**Weaknesses:**
-- Runtime resilience gaps (context loss, lock errors)
-- Performance bottlenecks in hot paths
-- Missing unit tests for core modules
-- No persistence layer
+**Known limitations:**
+- Greedy meshing remains deferred; face-culled chunk meshing meets the current performance contract.
+- Mobs/hostile AI, mobile controls, ladders, slopes, and weather remain outside the current desktop scope.
 - Limited deployment infrastructure
 
 **Overall assessment:** The repository is **production-ready for a single-player browser game** with minor fixes. The most critical issues (WebGL context loss, startup freeze) should be addressed before public release, but none represent fundamental architectural flaws.
 
-**Recommended next steps:**
-1. Implement Phase 0 fixes (WebGL resilience, security)
-2. Add unit tests for World, PlayerPhysics, PlayerInteraction
-3. Optimize hot paths (queue management, block lookup)
-4. Set up automated deployment (GitHub Pages/Netlify)
+### Follow-up implementation status (2026-08-13)
 
-The codebase is in excellent condition for its scope and represents high-quality engineering work.
+The current working tree has completed the previously recommended runtime hardening:
+progressive frame-budgeted spawn streaming, safe player gating until the local
+terrain ring is visible, recoverable pointer-lock messaging and promise rejection
+handling, focus/visibility input reset, production-preview headless E2E execution,
+CSP-safe retry handling, color-managed rendering, a procedural sky, a headless
+quality tier, retained dirty mesh retries, normalized DDA inputs, one-block step-up
+movement, visible target outlines, player-centered shadow focus, and teardown-safe
+lighting/bootstrap lifecycle handling.
+
+Current evidence is recorded in
+`openspec/changes/add-voxel-game/verification.md`: 114 unit tests across 14
+files, 19 production browser tests, clean typecheck/lint/build, zero production
+dependency vulnerabilities, and gameplay + inventory/crafting visual captures
+with no page or console errors. The normal production build does not expose
+`window.__voxelGame`; only the dedicated `VITE_E2E=true` test build does.
+
+The expanded pass now includes stackable inventory, 27 storage slots, nine-recipe
+crafting, durable wooden/stone tools, health/hunger/saturation, fall damage, drowning, lava damage,
+regeneration, apples, death/respawn, hardness-based mining progress, distinct
+coal/raw-iron item drops,
+deterministic ores and lava pockets, falling sand/gravel, passive world life,
+camera feedback, an in-game clock, and procedural action audio. The game remains
+production-ready for its current single-player desktop browser scope.

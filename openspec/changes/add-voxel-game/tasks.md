@@ -1,6 +1,6 @@
 # Tasks: add-voxel-game
 
-> Status: **100% complete** — all tasks implemented and verified. See `verification.md` for evidence.
+> Status: **Complete for the current desktop single-player scope** — the original voxel contract and the survival/world-simulation expansion are implemented and verified below.
 
 ## 1. Project Bootstrap and Tooling
 
@@ -36,7 +36,7 @@
 ## 4. Block Registry and Textures
 
 - [x] 4.1 Implement `src/world/BlockRegistry.ts` with definition type (id, name, solid, opaque, breakable, placeable, collision, render category, top/bottom/side UVs)
-- [x] 4.2 Register the nine required blocks (air, grass, dirt, stone, sand, water, bedrock, wood/log, leaves)
+- [x] 4.2 Register the nine core blocks plus glass, snow, gravel, planks, ores, masonry, lava, and apple
 - [x] 4.3 Implement `src/rendering/TextureAtlas.ts` generating procedural 16×16 tiles into a canvas atlas
 - [x] 4.4 Implement `src/rendering/Materials.ts` with shared opaque and transparent materials
 - [x] 4.5 Unit-test registry lookups, required-block presence, and per-face UV mapping
@@ -46,7 +46,7 @@
 - [x] 5.1 Implement seeded PRNG and value noise in `src/math/`
 - [x] 5.2 Unit-test noise reproducibility for a fixed seed
 - [x] 5.3 Implement `src/world/TerrainGenerator.ts` height function with height variation
-- [x] 5.4 Generate layered columns: grass/dirt/stone, sand near sea level, water fill, bedrock floor
+- [x] 5.4 Generate layered columns: grass/dirt/stone, biome surfaces, sand/gravel near sea level, water fill, bedrock floor, and protected caves
 - [x] 5.5 Implement deterministic tree placement (trunk + canopy) from world-space seed
 - [x] 5.6 Handle trees overhanging chunk borders (neighbor chunks compute same overhang, no duplication)
 - [x] 5.7 Unit-test determinism (same seed+coords → identical chunk), boundary continuity, negative coords, cross-border trees
@@ -55,7 +55,7 @@
 
 - [x] 6.1 Implement `src/world/ChunkMesher.ts` face-culled meshing (skip faces against opaque neighbors)
 - [x] 6.2 Emit per-face UVs from registry atlas coordinates (top/bottom/side)
-- [x] 6.3 Produce separate opaque and transparent (water) geometries per chunk
+- [x] 6.3 Produce separate opaque and transparent (water/glass) geometries per chunk
 - [x] 6.4 Query neighbor chunks for boundary-face culling
 - [x] 6.5 Unit-test hidden-face removal counts and water-only transparency grouping
 - [x] 6.6 Document meshing approach; greedy meshing deferred (perf target met via face-culled meshing)
@@ -74,9 +74,9 @@
 
 - [x] 8.1 Implement pointer lock acquisition/loss handling with input reset
 - [x] 8.2 Implement mouse look with configurable sensitivity and pitch clamp
-- [x] 8.3 Implement `src/player/PlayerController.ts` WASD + sprint + jump with delta-time integration
+- [x] 8.3 Implement `src/player/PlayerController.ts` WASD + sprint + jump/swimming with delta-time integration
 - [x] 8.4 Implement `src/player/PlayerPhysics.ts` gravity, ground detection, AABB vs voxel axis-separated collision
-- [x] 8.5 Implement safe spawn placement above valid terrain (flat, clear area + synchronous preload)
+- [x] 8.5 Implement safe spawn placement above valid terrain (flat, clear area + nonblocking preload and readiness gate)
 - [x] 8.6 Unit-test collision helpers (axis resolution, penetration blocking)
 - [x] 8.7 Browser-test movement, gravity, frame-rate stability, and pointer-lock pause/resume
 
@@ -107,7 +107,7 @@
 - [x] 11.2 Implement `src/rendering/Environment.ts` sky background and distance fog tuned to render distance
 - [x] 11.3 Polish water presentation (tint, transparency, surface readability)
 - [x] 11.4 Verify sand/water/height variation reads well visually
-- [x] 11.5 (Optional, after mandatory stable) day-night cycle with smooth transitions — implemented (disabled by default)
+- [x] 11.5 Add day-night cycle, synchronized sky tint, and bounded procedural clouds
 
 ## 12. UI, Loading, and Diagnostics
 
@@ -140,3 +140,21 @@
 - [x] 15.3 Record verification evidence (commands + results) in the change documentation
 - [x] 15.4 Final audit against prompt.txt mandatory validation checklist; fix any failures
 - [x] 15.5 Confirm specs match final behavior; update any drifted requirements
+
+## 16. Survival, Inventory, Crafting, and Feedback Expansion
+
+- [x] 16.1 Add stack counts, 27 storage stacks, item add/remove, consumption, and validated inventory snapshots
+- [x] 16.2 Add hardness metadata, held mining progress, collected block drops, leaves-to-apple drops, and stack-aware placement
+- [x] 16.3 Add nine deterministic recipes including planks, glass, gravel, masonry, sticks, and tools with transactional capacity checks
+- [x] 16.4 Add pause-safe inventory/crafting UI with 9 hotbar cells, 27 storage cells, icons, counts, and recipe buttons
+- [x] 16.5 Add health, hunger, saturation, fall damage, drowning, regeneration, apple food, death, respawn, and persistence
+- [x] 16.6 Add survival HUD, break progress, action toasts, camera bob, and procedural WebAudio cues
+- [x] 16.7 Add unit coverage for stacks, crafting, mining progress, fall telemetry, and survival rules
+- [x] 16.8 Run the expanded full suite, production build, browser suite, visual smoke, and update verification evidence
+- [x] 16.9 Add deterministic coal/iron ore generation, deep lava pockets, lava movement, and lava survival damage
+- [x] 16.10 Add bounded sand/gravel settling with edit/remesh persistence
+- [x] 16.11 Add deterministic passive world life with pause-safe movement and disposal
+- [x] 16.12 Add a synchronized in-game day/night clock to the HUD
+- [x] 16.13 Inspect gameplay and crafting captures, remove temporary visual smoke coverage, and record final evidence
+- [x] 16.14 Add durable wooden/stone tools, preferred-tool mining speed, break consumption, hotbar durability bars, and browser coverage
+- [x] 16.15 Add distinct coal/raw-iron ore drops and registry-backed material inventory items

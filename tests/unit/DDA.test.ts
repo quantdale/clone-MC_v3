@@ -91,4 +91,18 @@ describe('DDA voxel raycast', () => {
     expect(hit!.blockX).toBe(-3);
     expect(hit!.nx).toBe(1); // entered from the +X face
   });
+
+  it('normalizes non-unit directions before applying reach and distance', () => {
+    const sampler = makeSampler([[5, 0, 0]]);
+    const hit = raycastVoxel(sampler, 0.5, 0.5, 0.5, 10, 0, 0, 10);
+    expect(hit).not.toBeNull();
+    expect(hit!.blockX).toBe(5);
+    expect(hit!.distance).toBeCloseTo(4.5, 5);
+  });
+
+  it('rejects non-finite ray inputs', () => {
+    const sampler = makeSampler([[0, 0, 0]]);
+    expect(raycastVoxel(sampler, Number.NaN, 0, 0, 1, 0, 0, 10)).toBeNull();
+    expect(raycastVoxel(sampler, 0, 0, 0, 1, 0, 0, Number.NaN)).toBeNull();
+  });
 });

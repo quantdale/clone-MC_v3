@@ -87,7 +87,9 @@ export class ChunkMesher {
             // Faces are emitted only where the adjacent block does not hide them.
             let emit: boolean;
             if (isTransparent) {
-              // Water: emit only against a non-water, non-opaque neighbor (e.g. air).
+              // Transparent blocks: emit only against a non-transparent,
+              // non-opaque neighbor (e.g. air), keeping water/glass interiors
+              // from producing redundant faces.
               emit = !neighborDef.opaque && neighborDef.renderCategory !== RenderCategory.Transparent;
             } else {
               // Opaque solid blocks: emit anywhere the neighbor is not opaque.

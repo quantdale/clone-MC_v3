@@ -9,6 +9,15 @@ import { Game } from './engine/Game';
  * error path is shown as a visible message rather than an uncaught exception.
  */
 function bootstrap(): void {
+  const bootstrapWindow = window as Window & { __voxelBootstrapStarted?: boolean };
+  if (bootstrapWindow.__voxelBootstrapStarted) {
+    return;
+  }
+  bootstrapWindow.__voxelBootstrapStarted = true;
+
+  const retryButton = document.getElementById('error-retry');
+  retryButton?.addEventListener('click', () => window.location.reload());
+
   const canvas = document.getElementById('game-canvas');
   if (!canvas || !(canvas instanceof HTMLCanvasElement)) {
     showFatalError('The game canvas element is missing or invalid.');
@@ -36,9 +45,10 @@ function bootstrap(): void {
   // F3 toggles the debug overlay.
   game.start();
 
-  // Dev-only hook: exposes the running game instance so local dev tooling can
-  // inspect world state. It is never set in production builds.
-  if (import.meta.env.DEV) {
+  // Dev/test hook: the normal production build never exposes the live game.
+  // VITE_E2E is supplied only by the local/CI browser-test build and is not a
+  // URL-controlled switch that can be enabled by an end user.
+  if (import.meta.env.DEV || import.meta.env.VITE_E2E === 'true') {
     (window as unknown as { __voxelGame?: Game }).__voxelGame = game;
   }
 }

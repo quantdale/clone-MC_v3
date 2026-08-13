@@ -2,17 +2,17 @@
 
 ## Contract
 
-- **Purpose**: Produce deterministic, seamless voxel terrain from a configurable seed — layered ground with water and bedrock, plus trees — that is identical for identical seed and coordinates.
-- **Scope**: Owns seeded noise, terrain height and layer composition, water placement, trees, negative-coordinate continuity, and across-chunk-boundary consistency. Does not cover chunk storage/lifecycle (chunk-system) or background streaming (chunk-streaming).
-- **Functional requirements**: Seeded deterministic generation; terrain composition; trees; chunk-boundary continuity; negative coordinates.
+- **Purpose**: Produce deterministic, seamless voxel terrain from a configurable seed — layered ground with water, rare deep lava pockets, bedrock, distant biomes, protected caves, and trees — that is identical for identical seed and coordinates.
+- **Scope**: Owns seeded noise, terrain height and layer composition, biome/cave variation, water placement, trees, negative-coordinate continuity, and across-chunk-boundary consistency. Does not cover chunk storage/lifecycle (chunk-system) or background streaming (chunk-streaming).
+- **Functional requirements**: Seeded deterministic generation; terrain composition; coal/iron ore distribution; deep lava pockets; biomes and caves; trees; chunk-boundary continuity; negative coordinates.
 - **Non-functional requirements**: Correctness of determinism — world-critical generation MUST NOT use `Math.random()`; the same seed always yields the same base terrain.
 - **Inputs and outputs**: Inputs: seed, chunk coordinates (including negative), config (sea level, bedrock Y, chunk dimensions). Outputs: a full chunk's `Uint8Array` block data for the base terrain.
 - **Core data structures**: `Chunk` block data (`Uint8Array`), `BlockId`, seeded PRNG, noise height function.
 - **Dependencies**: math (PRNG, Noise), block-registry (block ids), config; consumed by chunk-streaming via `Chunk.generated`/`meshVersion`.
-- **Error and edge-case behavior**: Episodes at negative chunk coordinates remain continuous across the origin; terrain below sea level fills with water and uses sand near water; bedrock occupies the lowest layer (y=0); trees near a chunk border appear exactly once — the neighbor chunk contributes canopy blocks only, with no duplicate tree.
+- **Error and edge-case behavior**: Episodes at negative chunk coordinates remain continuous across the origin; terrain below sea level fills with water and uses sand/gravel near water; bedrock occupies the lowest layer (y=0); caves and lava pockets stay below the surface and outside the protected spawn ring; trees near a chunk border appear exactly once — the neighbor chunk contributes canopy blocks only, with no duplicate tree.
 - **Performance expectations**: Generation is fast and deterministic; per-frame generation work is bounded by the streaming budgets (`generatePerFrame`) — see performance spec.
 - **Acceptance criteria**: The scenarios in "Seeded deterministic generation", "Terrain composition", "Trees", "Chunk-boundary continuity", and "Negative coordinates" encode the pass/fail conditions.
-- **Verification method**: Unit tests `tests/unit/TerrainGenerator.test.ts` and `tests/unit/Noise.test.ts`; verification matrix rows WORLD-01 through WORLD-04.
+- **Verification method**: Unit tests `tests/unit/TerrainGenerator.test.ts` and `tests/unit/Noise.test.ts`; verification matrix rows WORLD-01 through WORLD-06.
 
 ## ADDED Requirements
 
@@ -44,6 +44,33 @@ The world SHALL generate trees with wood/log trunks and leaves, placed determini
 #### Scenario: Tree structure
 - **WHEN** a tree is generated
 - **THEN** it consists of a vertical log trunk topped by a leaves canopy
+
+### Requirement: Underground ores
+
+The generator SHOULD embed deterministic coal and iron ore clusters in underground stone outside the protected spawn ring.
+
+#### Scenario: Ore determinism
+- **WHEN** the same seed and distant chunk coordinates are generated twice
+- **THEN** coal and iron ore positions match exactly
+
+### Requirement: Deep lava pockets
+
+The generator SHOULD place rare deterministic lava pockets in deep underground stone outside the protected spawn ring, and lava cells SHALL remain available to the physics and survival systems.
+
+#### Scenario: Lava determinism
+- **WHEN** the same seed and distant chunk coordinates are generated twice
+- **THEN** the lava pocket positions match exactly and are not generated in the protected spawn ring
+
+### Requirement: Biomes and caves
+The world SHALL derive distant biome surfaces and subterranean cave pockets from the same deterministic seed/coordinate functions used by terrain generation. The spawn ring SHALL remain safe for initial traversal.
+
+#### Scenario: Distant biome variety
+- **WHEN** columns are sampled at increasing distances from spawn
+- **THEN** the same seed produces repeatable plains, forest, desert, or taiga regions with matching surface blocks
+
+#### Scenario: Protected cave carving
+- **WHEN** a subterranean column is generated outside the spawn safety ring
+- **THEN** deterministic cave air pockets may replace stone/dirt below the surface without carving through the surface layer
 
 ### Requirement: Chunk-boundary continuity
 Terrain SHALL be continuous across chunk boundaries, and trees crossing chunk borders SHALL appear exactly once with no clipping or duplication.

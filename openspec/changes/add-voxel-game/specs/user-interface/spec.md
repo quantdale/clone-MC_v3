@@ -2,17 +2,17 @@
 
 ## Contract
 
-- **Purpose**: Deliver the in-browser HUD — crosshair, FPS counter, loading indicator, pointer-lock messaging, error state, and debug overlay — over a responsive full-window canvas, usable at common desktop resolutions.
-- **Scope**: Owns HUD elements, loading/ready signaling, pointer-lock instructions and pause/click-to-resume flow, fatal init-error display, the debug overlay, and responsive layout. Does not cover the hotbar (inventory-hotbar) or world state (world/chunk systems).
-- **Functional requirements**: HUD basics; loading indicator; pointer-lock messaging; error state; debug overlay; desktop usability.
+- **Purpose**: Deliver the in-browser HUD — crosshair, FPS counter, world clock, loading indicator, survival status, mining feedback, action toasts, crafting/inventory modal, pointer-lock messaging, error state, and debug overlay — over a responsive full-window canvas.
+- **Scope**: Owns HUD elements, loading/ready signaling, pointer-lock instructions and pause/click-to-resume flow, survival display, break progress, toasts, crafting/inventory panel, fatal init-error display, the debug overlay, and responsive layout. Does not own inventory rules (inventory-hotbar) or world state (world/chunk systems).
+- **Functional requirements**: HUD basics; world clock; loading indicator; survival status; break progress; feedback toasts; inventory/crafting modal; tool durability feedback; pointer-lock messaging; error state; debug overlay; desktop usability.
 - **Non-functional requirements**: HUD elements remain unobstructed at 1920×1080 and 1366×768; init failures (missing DOM elements, WebGL unavailable) show a readable error with no uncaught exception escaping; debug stats update live.
-- **Inputs and outputs**: Inputs: frame rate samples, world readiness (spawn area loaded), pointer-lock state changes, init failures. Outputs: visible crosshair, FPS text, loading overlay, pause/resume messages, error overlay, debug stats (position, chunk, loaded/pending counts, triangles).
-- **Core data structures**: `Crosshair`, `HUD` (FPS counter), `LoadingIndicator`, `DebugOverlay`, `WorldStats` (read by debug overlay), index.html overlay elements, `showFatalError`.
+- **Inputs and outputs**: Inputs: frame rate samples, world readiness (spawn area loaded), pointer-lock state changes, world time, survival values, break progress, interaction/crafting events, init failures. Outputs: visible crosshair, FPS/time/survival text, loading overlay, pause/resume messages, progress bar, action toast, inventory/crafting modal, error overlay, debug stats (position, chunk, loaded/pending counts, triangles).
+- **Core data structures**: `Crosshair`, `HUD`, `LoadingIndicator`, `DebugOverlay`, `CraftingPanel`, `WorldStats` (read by debug overlay), index.html overlay elements, `showFatalError`.
 - **Dependencies**: engine (GameLoop for FPS, world readiness), world/chunk-streaming (`WorldStats`, loaded-chunk counts), player-controller (position for debug), main.ts bootstrap.
 - **Error and edge-case behavior**: WebGL init failure displays a readable error message rather than a blank page; pointer-lock loss shows a click-to-resume message and re-acquires lock on click; the loading indicator hides once the spawn area is ready; debug overlay toggles with F3 and updates live.
 - **Performance expectations**: HUD updates at most once per frame with no allocation in the loop; debug text rendering avoids per-frame DOM churn — see performance spec.
 - **Acceptance criteria**: The scenarios in "HUD basics", "Loading indicator", "Pointer-lock messaging", "Error state", "Debug overlay", and "Desktop usability" encode the pass/fail conditions.
-- **Verification method**: e2e `tests/e2e/game.spec.ts` plus static review of `src/main.ts` and `src/ui/*`; verification matrix rows UI-01 through UI-06.
+- **Verification method**: e2e `tests/e2e/game.spec.ts` plus static review of `src/main.ts` and `src/ui/*`; verification matrix rows UI-01 through UI-10.
 
 ## ADDED Requirements
 
@@ -26,6 +26,14 @@ The UI SHALL include a centered crosshair and an FPS counter, overlaid on a resp
 #### Scenario: FPS counter updates
 - **WHEN** the game runs
 - **THEN** the FPS counter reflects the measured frame rate, updating periodically
+
+### Requirement: World clock
+
+The HUD SHALL show a compact day/night clock synchronized with the active lighting cycle.
+
+#### Scenario: Clock advances
+- **WHEN** the simulation is active and world time advances
+- **THEN** the displayed clock changes consistently with the sky and lighting phase
 
 ### Requirement: Loading indicator
 The UI SHALL show a loading/world-generation indicator while initial chunks generate, and hide it once the world is ready.
@@ -61,3 +69,27 @@ The UI SHALL remain usable and readable at common desktop browser resolutions; k
 #### Scenario: Common resolutions
 - **WHEN** the game is viewed at 1920×1080 and 1366×768
 - **THEN** all HUD elements are visible and unobstructed
+
+### Requirement: Survival status
+
+The HUD SHALL show current health and hunger while the player is active.
+
+### Requirement: Interaction feedback
+
+The UI SHALL show hardness-based break progress while held mining and short-lived toasts for collection, placement, crafting, eating, and damage.
+
+### Requirement: Inventory and crafting modal
+
+The UI SHALL provide a pause-safe modal showing nine hotbar cells, 27 storage cells, stack counts, icons, selected state, recipe buttons, and a close action.
+
+#### Scenario: Crafting pause
+- **WHEN** the player presses C during play
+- **THEN** pointer lock is released, gameplay pauses, and the inventory/crafting modal is visible
+
+### Requirement: Tool durability feedback
+
+The UI SHALL display remaining durability for a selected tool in its hotbar cell and show a short toast when the tool breaks.
+
+#### Scenario: Tool breaks
+- **WHEN** a tool reaches zero durability after a block break
+- **THEN** its hotbar durability indicator disappears and a break toast is shown

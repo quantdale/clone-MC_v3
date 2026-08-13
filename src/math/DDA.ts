@@ -43,6 +43,29 @@ export function raycastVoxel(
   dirZ: number,
   maxDistance: number = CONFIG.reach,
 ): RaycastResult | null {
+  if (
+    !Number.isFinite(originX) ||
+    !Number.isFinite(originY) ||
+    !Number.isFinite(originZ) ||
+    !Number.isFinite(dirX) ||
+    !Number.isFinite(dirY) ||
+    !Number.isFinite(dirZ) ||
+    !Number.isFinite(maxDistance) ||
+    maxDistance < 0
+  ) {
+    return null;
+  }
+
+  // Normalize at the boundary so the reported distance and reach limit are
+  // measured in world blocks even when a caller supplies a non-unit vector.
+  const directionLength = Math.hypot(dirX, dirY, dirZ);
+  if (directionLength <= Number.EPSILON) {
+    return null;
+  }
+  dirX /= directionLength;
+  dirY /= directionLength;
+  dirZ /= directionLength;
+
   // Current cell.
   let x = Math.floor(originX);
   let y = Math.floor(originY);
@@ -68,18 +91,13 @@ export function raycastVoxel(
   let ny = 0;
   let nz = 0;
 
-  // Guard against zero-length direction (should not happen from a camera).
-  if (dirX === 0 && dirY === 0 && dirZ === 0) {
-    return null;
-  }
-
   // Check the starting cell first.
   if (sampler.isSolid(x, y, z)) {
     return { blockX: x, blockY: y, blockZ: z, nx: 0, ny: 0, nz: 0, distance: 0 };
   }
 
   // Prevent infinite loops for degenerate directions.
-  const maxSteps = 512;
+  const maxSteps = CONFIG.maxRaySteps;
   for (let i = 0; i < maxSteps; i++) {
     if (tMaxX < tMaxY && tMaxX < tMaxZ) {
       x += stepX;

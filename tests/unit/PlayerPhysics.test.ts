@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
 import { Player } from '../../src/player/Player';
 import { PlayerPhysics } from '../../src/player/PlayerPhysics';
-import { createDefaultRegistry } from '../../src/world/BlockRegistry';
+import { BlockId, createDefaultRegistry } from '../../src/world/BlockRegistry';
 import { CONFIG } from '../../src/config';
 
 /**
@@ -20,6 +20,21 @@ function makeFloorWorld(): import('../../src/world/WorldAccess').WorldAccess {
       if (y < 0) return true; // solid floor below y=0
       if (x >= 5 && y >= 0 && y <= 3) return true; // wall
       return false;
+    },
+  };
+}
+
+function makeStepWorld(): import('../../src/world/WorldAccess').WorldAccess {
+  return {
+    getBlock(): number {
+      return 0;
+    },
+    setBlock(): void {
+      /* no-op */
+    },
+    isSolid(x: number, y: number): boolean {
+      if (y < 0) return true;
+      return x >= 3 && x < 4 && y === 0;
     },
   };
 }
@@ -126,5 +141,99 @@ describe('player physics', () => {
     expect(player.position.x).toBeLessThan(5);
     expect(player.position.y).toBeCloseTo(0, 1); // never fell or floated
     expect(player.velocity.y).toBe(0);
+  });
+
+  it('steps over a one-block ledge while grounded', () => {
+    const world = makeStepWorld();
+    const physics = new PlayerPhysics(world, registry);
+    const player = new Player({ position: new THREE.Vector3(1, 0, 0.5) });
+    player.onGround = true;
+    player.velocity.x = CONFIG.player.walkSpeed;
+
+    let maxY = player.position.y;
+    for (let i = 0; i < 80; i++) {
+      physics.update(player, 0.016);
+      maxY = Math.max(maxY, player.position.y);
+    }
+
+    expect(player.position.x).toBeGreaterThan(4);
+    expect(maxY).toBeGreaterThanOrEqual(CONFIG.player.stepHeight);
+    expect(player.onGround).toBe(true);
+  });
+
+  it('does not step through a two-block wall', () => {
+    const world = {
+      ...makeStepWorld(),
+      isSolid(x: number, y: number): boolean {
+        if (y < 0) return true;
+        return x >= 3 && x < 4 && y >= 0 && y <= 1;
+      },
+    };
+    const physics = new PlayerPhysics(world, registry);
+    const player = new Player({ position: new THREE.Vector3(1, 0, 0.5) });
+    player.onGround = true;
+    player.velocity.x = CONFIG.player.walkSpeed;
+
+    for (let i = 0; i < 80; i++) {
+      physics.update(player, 0.016);
+    }
+
+    expect(player.position.x).toBeLessThan(3);
+    expect(player.velocity.x).toBe(0);
+  });
+
+  it('detects water and applies buoyant gravity', () => {
+    const world = {
+      getBlock(_x: number, y: number): number {
+        return y === 1 ? BlockId.Water : BlockId.Air;
+      },
+      setBlock(): void {
+        /* no-op */
+      },
+      isSolid(_x: number, y: number): boolean {
+        return y < 0;
+      },
+    };
+    const physics = new PlayerPhysics(world, registry);
+    const player = new Player({ position: new THREE.Vector3(2.5, 1.2, 2.5) });
+
+    physics.update(player, 0.016);
+
+    expect(player.inWater).toBe(true);
+    expect(player.velocity.y).toBeCloseTo(-CONFIG.player.waterGravity * 0.016, 5);
+  });
+
+  it('detects lava independently from water', () => {
+    const world = {
+      getBlock(_x: number, y: number): number {
+        return y === 1 ? BlockId.Lava : BlockId.Air;
+      },
+      setBlock(): void {
+        /* no-op */
+      },
+      isSolid(_x: number, y: number): boolean {
+        return y < 0;
+      },
+    };
+    const physics = new PlayerPhysics(world, registry);
+    const player = new Player({ position: new THREE.Vector3(2.5, 1.2, 2.5) });
+    physics.update(player, 0.016);
+    expect(player.inWater).toBe(false);
+    expect(player.inLava).toBe(true);
+  });
+
+  it('reports landing distance for survival fall damage', () => {
+    const physics = new PlayerPhysics(makeFloorWorld(), registry);
+    const player = new Player({ position: new THREE.Vector3(2, 12, 2) });
+    for (let i = 0; i < 120; i++) {
+      physics.update(player, 0.1);
+      const landing = physics.consumeLandingDistance();
+      if (landing > 0) {
+        expect(landing).toBeGreaterThan(3);
+        expect(player.onGround).toBe(true);
+        return;
+      }
+    }
+    throw new Error('player never landed');
   });
 });

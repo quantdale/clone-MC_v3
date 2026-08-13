@@ -3,13 +3,13 @@
 ## Contract
 
 - **Purpose**: Render the voxel world with a Three.js WebGL renderer and a delta-time game loop, producing chunk-based meshes with a texture atlas, culling, fog, and transparency, and releasing GPU resources on unload.
-- **Scope**: Owns the WebGL renderer, game loop, canvas resize, chunk meshing, texture atlas, materials, fog, water transparency, and GPU resource disposal. Does not cover audio, post-processing, or the day-night cycle (covered by lighting-environment).
+- **Scope**: Owns the WebGL renderer, game loop, canvas resize, chunk meshing, texture atlas, materials, fog, water/glass transparency, and GPU resource disposal. Does not cover audio, post-processing, or the day-night cycle (covered by lighting-environment).
 - **Functional requirements**: WebGL renderer and game loop; responsive canvas; chunk-based voxel meshes; texture atlas and material reuse; culling, fog, and transparency; GPU resource disposal.
 - **Non-functional requirements**: Non-stretched rendering at any window size; ≤2 meshes per chunk; no GPU resource leaks during normal exploration.
 - **Inputs and outputs**: Inputs: chunk block data, block-registry UV definitions, window resize events, `devicePixelRatio`. Outputs: `ChunkMeshResult` geometries (opaque/transparent), scene graph meshes, disposed GPU resources.
 - **Core data structures**: `ChunkMeshResult`, `ChunkState`, WebGLRenderer, `THREE.BufferGeometry`, `THREE.Material`, texture atlas.
 - **Dependencies**: chunk-system (block data), chunk-streaming (load/unload), block-registry (per-face UVs), math (coordinates), config.
-- **Error and edge-case behavior**: Chunk unload disposes its geometries and removes them from the scene; high-DPI pixel ratio is capped at `maxPixelRatio`; large frame times are clamped to `maxDeltaTime`; a chunk with no faces of a category yields a null geometry for that category.
+- **Error and edge-case behavior**: Chunk unload disposes its geometries and removes them from the scene; high-DPI pixel ratio is capped at `maxPixelRatio`; large frame times are clamped to `maxDeltaTime`; a chunk with no faces of a category yields a null geometry for that category; renderer context loss enters a visible recoverable/fatal state without silently continuing with invalid GPU resources.
 - **Performance expectations**: Mesh generation is bounded per chunk (never one mesh per block); hidden-face removal avoids emitting internal faces; resource disposal prevents unbounded GPU memory growth — see performance spec.
 - **Acceptance criteria**: The scenarios in "WebGL renderer and game loop", "Responsive canvas", "Chunk-based voxel meshes", "Texture atlas and material reuse", "Culling, fog, and transparency", and "GPU resource disposal" encode the pass/fail conditions.
 - **Verification method**: Unit tests `tests/unit/ChunkMesher.test.ts` plus e2e `tests/e2e/game.spec.ts`; verification matrix rows REND-01 through REND-06.
@@ -42,7 +42,7 @@ The system SHALL render voxel terrain as a small, controlled number of meshes pe
 - **THEN** faces between two opaque adjacent blocks are not emitted into the geometry
 
 #### Scenario: One mesh per render category
-- **WHEN** a chunk containing opaque blocks and water is meshed
+- **WHEN** a chunk containing opaque blocks and transparent water/glass is meshed
 - **THEN** it produces at most one opaque mesh and one transparent mesh
 
 ### Requirement: Texture atlas and material reuse

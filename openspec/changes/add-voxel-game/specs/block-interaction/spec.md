@@ -4,15 +4,15 @@
 
 - **Purpose**: Enable the player to target, destroy, and place blocks through a robust voxel raycast, with a visible selection outline, input cooldown, and immediate localized remeshing.
 - **Scope**: Owns raycast targeting (DDA), destroy/place actions, breakability enforcement, placement rejection rules, selection outline, action cooldown, and remesh triggering on modification. Does not cover movement (player-controller) or which block exists in the hotbar (inventory-hotbar).
-- **Functional requirements**: Voxel raycast targeting; block destruction; block placement; interaction feedback and pacing; remesh after modification.
+- **Functional requirements**: Voxel raycast targeting; block destruction; block placement; hardness-based held breaking; item drops; interaction feedback and pacing; remesh after modification.
 - **Non-functional requirements**: Targeted block and hit face are reported without floating-point selection errors; placement never intersects the player collision volume; bedrock cannot be destroyed.
-- **Inputs and outputs**: Inputs: camera position/direction, destroy/place input, max reach, player AABB, world block solidity. Outputs: `RaycastResult` (block position, face normal, distance) or null, block writes, cooldown state, selection outline mesh.
+- **Inputs and outputs**: Inputs: camera position/direction, destroy/place input, held-button state, max reach, player AABB, world block solidity. Outputs: `RaycastResult` (block position, face normal, distance) or null, block writes, collected item ids, break progress, cooldown state, selection outline mesh.
 - **Core data structures**: `RaycastResult`, `BlockSampler`, `DDA`/`raycastVoxel`, selection outline mesh, `actionCooldown`.
 - **Dependencies**: math (`DDA.ts`), world (`World.setBlock` → enqueueMesh + neighbor dirty), block-registry (breakable/placeable/solid flags), inventory-hotbar (selected block type), player-controller (camera, AABB).
-- **Error and edge-case behavior**: No solid block within `reach` reports no target; bedrock destroy is a no-op; placement into an occupied cell or the player's own AABB is rejected; holding the input repeats actions at most at `actionCooldown` rate; destroying a block on a chunk boundary remeshes both the owning and the adjacent chunk in the same update cycle.
+- **Error and edge-case behavior**: No solid block within `reach` reports no target; bedrock and non-breakable items are a no-op; placement into an occupied cell or the player's own AABB is rejected and does not consume a stack; holding the input advances hardness-based progress and repeats actions at most at `actionCooldown` rate; destroying a block on a chunk boundary remeshes both the owning and the adjacent chunk in the same update cycle.
 - **Performance expectations**: Raycast is bounded by the configured reach with a step cap; a zero-length direction returns null (no infinite loop); hot paths reuse scratch vectors to avoid per-frame allocation; remesh is limited to dirty chunks plus boundary neighbors — see performance spec.
 - **Acceptance criteria**: The scenarios in "Voxel raycast targeting", "Block destruction", "Block placement", "Interaction feedback and pacing", and "Remesh after modification" encode the pass/fail conditions.
-- **Verification method**: Unit tests `tests/unit/DDA.test.ts` (axial, diagonal, negatives, miss, reach) plus e2e `tests/e2e/game.spec.ts`; verification matrix rows BLOCK-01 through BLOCK-05.
+- **Verification method**: Unit tests `tests/unit/DDA.test.ts` and `tests/unit/PlayerInteraction.test.ts` plus e2e `tests/e2e/game.spec.ts`; verification matrix rows BLOCK-01 through BLOCK-07.
 
 ## ADDED Requirements
 
@@ -70,3 +70,27 @@ Block changes SHALL trigger immediate remeshing of the affected chunk, including
 #### Scenario: Boundary edit remesh
 - **WHEN** a block on a chunk boundary is destroyed
 - **THEN** both the owning chunk and the adjacent chunk remesh in the same update cycle
+
+### Requirement: Held mining progress
+
+The system SHALL expose break progress based on the targeted block's registry hardness while the primary button remains held.
+
+#### Scenario: Hard block takes longer
+- **WHEN** the player holds destroy on stone rather than dirt
+- **THEN** stone requires more accumulated break time before becoming air
+
+#### Scenario: Release cancels progress
+- **WHEN** the player releases destroy before completion or changes target
+- **THEN** progress resets to zero and the block remains unchanged
+
+### Requirement: Block drops
+
+The system SHALL collect one matching item for a destroyed breakable block and one apple opportunity from destroyed leaves.
+
+#### Scenario: Collect drop
+- **WHEN** a breakable block is destroyed
+- **THEN** the selected inventory receives the matching item through the item-add interface
+
+#### Scenario: Ore material drop
+- **WHEN** a coal or iron ore block is successfully broken
+- **THEN** the inventory receives its registry-defined coal or raw-iron material and the ore cell becomes air

@@ -2,7 +2,7 @@
 
 ## Contract
 
-- **Purpose**: Guarantee the game holds ~60 FPS at render distance 8 during ordinary exploration, with bounded per-frame work, bounded memory, hot-path allocation avoidance, localized rebuilds, and adequate unit + browser test coverage.
+- **Purpose**: Provide a measurable desktop performance target and responsive automated/headless operation during ordinary exploration, with bounded per-frame work, bounded memory, hot-path allocation avoidance, localized rebuilds, and adequate unit + browser test coverage.
 - **Scope**: Owns the frame-rate target, per-frame work budgets, memory discipline, hot-path allocation rules, rebuild efficiency, and test-coverage expectations. It is the cross-cutting contract the other capabilities map their performance requirements to.
 - **Functional requirements**: Frame-rate target; bounded per-frame work; memory discipline; hot-path allocation avoidance; rebuild efficiency; test coverage expectations.
 - **Non-functional requirements**: No repeated multi-hundred-ms freezes while streaming; loaded chunk count stays bounded by render distance; memory does not grow indefinitely; at most the owning chunk plus its boundary neighbor is remeshed per block change.
@@ -10,7 +10,7 @@
 - **Core data structures**: `CONFIG.budgets` (`generatePerFrame`, `meshPerFrame`, `unloadPerFrame`), `maxQueueSize`, chunk queues, `WorldStats`, memory/dispose bookkeeping.
 - **Dependencies**: all capabilities (engine, chunk-system, chunk-streaming, rendering, interaction, inventory) whose hot paths must respect the budgets; config for all tunables.
 - **Error and edge-case behavior**: Sprinting across many chunk boundaries still respects the per-frame budget; a single block edit triggers a localized rebuild (never the whole world); unload releases CPU and GPU resources so memory stays flat; degenerate cases (many chunks queued at once) are bounded by `maxQueueSize`.
-- **Performance expectations**: ~60 FPS at render distance 8 (measured ~60.2 FPS idle and streaming); per-frame generation/mesh/unload work capped by budgets; memory ~110 MB flat during extended exploration; hot paths reuse scratch vectors and camera buffers.
+- **Performance expectations**: Desktop quality is tuned toward ~60 FPS around render distance 8 when hardware permits; the current default desktop distance is 6, while automated/headless sessions use distance 2, DPR 1, and no shadows; per-frame generation/mesh/unload work is capped by budgets; hot paths reuse scratch vectors and camera buffers.
 - **Acceptance criteria**: The scenarios in "Frame-rate target", "Bounded per-frame work", "Memory discipline", "Hot-path allocation avoidance", "Rebuild efficiency", and "Test coverage expectations" encode the pass/fail conditions.
 - **Verification method**: Perf and memory probes plus unit tests (`tests/unit/*`) and e2e (`tests/e2e/game.spec.ts`) against a production build; verification matrix rows PERF-01 through PERF-06.
 

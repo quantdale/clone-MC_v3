@@ -55,13 +55,23 @@ export class PlayerController {
     const moveDirX = moveLen > 0 ? moveX / moveLen : 0;
     const moveDirZ = moveLen > 0 ? moveZ / moveLen : 0;
 
-    const targetSpeed = this.input.sprint ? CONFIG.player.sprintSpeed : CONFIG.player.walkSpeed;
+    const baseSpeed = this.input.sprint ? CONFIG.player.sprintSpeed : CONFIG.player.walkSpeed;
+    const targetSpeed = this.player.inWater
+      ? baseSpeed * CONFIG.player.waterSpeedMultiplier
+      : this.player.inLava
+        ? baseSpeed * 0.35
+        : baseSpeed;
     const targetVX = moveDirX * targetSpeed;
     const targetVZ = moveDirZ * targetSpeed;
 
     // Smooth acceleration toward the target velocity.
-    const accel = CONFIG.player.acceleration * d;
-    const damping = CONFIG.player.damping * d;
+    const fluidFactor = this.player.inWater
+      ? CONFIG.player.waterSpeedMultiplier
+      : this.player.inLava
+        ? 0.35
+        : 1;
+    const accel = CONFIG.player.acceleration * fluidFactor * d;
+    const damping = CONFIG.player.damping * fluidFactor * d;
 
     this.player.velocity.x = this.horizontalDamp(
       this.player.velocity.x,
@@ -77,8 +87,10 @@ export class PlayerController {
     );
 
     // Jump.
-    if (this.input.jump && this.player.onGround) {
-      this.player.velocity.y = CONFIG.player.jumpVelocity;
+    if (this.input.jump && (this.player.onGround || this.player.inWater)) {
+      this.player.velocity.y = this.player.inWater
+        ? CONFIG.player.swimUpVelocity
+        : CONFIG.player.jumpVelocity;
       this.player.onGround = false;
     }
   }

@@ -12,7 +12,11 @@ import { PRNG } from '../math/PRNG';
 
 export const TILE_SIZE = 16;
 export const TILES_PER_ROW = 16;
-export const ATLAS_SIZE = TILE_SIZE * TILES_PER_ROW; // 256
+export const ATLAS_ROWS = 4;
+export const ATLAS_WIDTH = TILE_SIZE * TILES_PER_ROW; // 256
+export const ATLAS_HEIGHT = TILE_SIZE * ATLAS_ROWS; // 64
+/** Backwards-compatible alias for the atlas width. */
+export const ATLAS_SIZE = ATLAS_WIDTH;
 
 /** Tile atlas indices used by the block registry. */
 export const TILE_INDEX = {
@@ -27,15 +31,31 @@ export const TILE_INDEX = {
   woodTop: 8,
   woodSide: 9,
   leaves: 10,
+  glass: 11,
+  snow: 12,
+  gravel: 13,
+  planks: 14,
+  apple: 15,
+  coalOre: 16,
+  ironOre: 17,
+  cobblestone: 18,
+  bricks: 19,
+  lava: 20,
+  stick: 21,
+  woodenPickaxe: 22,
+  stonePickaxe: 23,
+  woodenAxe: 24,
+  coal: 25,
+  rawIron: 26,
 } as const;
 
 export function tileUV(tile: number): { u0: number; v0: number; u1: number; v1: number } {
   const col = tile % TILES_PER_ROW;
   const row = Math.floor(tile / TILES_PER_ROW);
   const u0 = col / TILES_PER_ROW;
-  const v0 = 1 - (row + 1) / TILES_PER_ROW;
+  const v0 = 1 - (row + 1) / ATLAS_ROWS;
   const u1 = (col + 1) / TILES_PER_ROW;
-  const v1 = 1 - row / TILES_PER_ROW;
+  const v1 = 1 - row / ATLAS_ROWS;
   return { u0, v0, u1, v1 };
 }
 
@@ -47,8 +67,8 @@ export class TextureAtlas {
 
   constructor() {
     this.canvas = document.createElement('canvas');
-    this.canvas.width = ATLAS_SIZE;
-    this.canvas.height = ATLAS_SIZE;
+    this.canvas.width = ATLAS_WIDTH;
+    this.canvas.height = ATLAS_HEIGHT;
     const ctx = this.canvas.getContext('2d');
     if (!ctx) {
       throw new Error('Unable to create 2D canvas context for texture atlas');
@@ -216,6 +236,276 @@ export class TextureAtlas {
       for (let i = 0; i < 8; i++) {
         ctx.clearRect(rng.nextInt(TILE_SIZE), rng.nextInt(TILE_SIZE), 1, 1);
       }
+    });
+
+    // 11: glass — a cool, translucent pane with a strong diagonal highlight.
+    this.drawTile(TILE_INDEX.glass, (ctx) => {
+      ctx.globalAlpha = 0.38;
+      ctx.fillStyle = '#8bd7ef';
+      ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+      ctx.globalAlpha = 0.9;
+      ctx.strokeStyle = '#d9f7ff';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(2, 14);
+      ctx.lineTo(14, 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = 'rgba(30, 115, 160, 0.6)';
+      ctx.strokeRect(0.5, 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
+    });
+
+    // 12: snow — bright, cool white with subtle blue shadow pixels.
+    this.drawTile(TILE_INDEX.snow, (ctx, rng) => {
+      ctx.fillStyle = '#eef8ff';
+      ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+      for (let i = 0; i < 32; i++) {
+        ctx.fillStyle = rng.next() > 0.55 ? '#d3eaf6' : '#ffffff';
+        ctx.fillRect(rng.nextInt(TILE_SIZE), rng.nextInt(TILE_SIZE), 1, 1);
+      }
+    });
+
+    // 13: gravel — coarse gray stones with warm earth flecks.
+    this.drawTile(TILE_INDEX.gravel, (ctx, rng) => {
+      ctx.fillStyle = '#77766f';
+      ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+      for (let i = 0; i < 44; i++) {
+        const shade = Math.floor(rng.range(0.55, 1.2) * 180);
+        ctx.fillStyle = rng.next() > 0.78
+          ? `rgb(${shade}, ${Math.floor(shade * 0.82)}, ${Math.floor(shade * 0.62)})`
+          : `rgb(${shade}, ${shade}, ${shade})`;
+        ctx.fillRect(rng.nextInt(TILE_SIZE), rng.nextInt(TILE_SIZE), 1, 1);
+      }
+    });
+
+    // 14: planks — warm wood boards with simple dark seams.
+    this.drawTile(TILE_INDEX.planks, (ctx, rng) => {
+      ctx.fillStyle = '#b77a3c';
+      ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+      ctx.strokeStyle = '#80532c';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, 5.5);
+      ctx.lineTo(TILE_SIZE, 5.5);
+      ctx.moveTo(0, 11.5);
+      ctx.lineTo(TILE_SIZE, 11.5);
+      ctx.stroke();
+      for (let i = 0; i < 18; i++) {
+        ctx.fillStyle = rng.next() > 0.5 ? '#d29a58' : '#97602f';
+        ctx.fillRect(rng.nextInt(TILE_SIZE), rng.nextInt(TILE_SIZE), 1 + rng.nextInt(2), 1);
+      }
+    });
+
+    // 15: apple — a tiny warm-red food icon for the survival inventory.
+    this.drawTile(TILE_INDEX.apple, (ctx) => {
+      ctx.clearRect(0, 0, TILE_SIZE, TILE_SIZE);
+      ctx.fillStyle = '#c63c35';
+      ctx.beginPath();
+      ctx.arc(6, 9, 4.3, 0, Math.PI * 2);
+      ctx.arc(10, 9, 4.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#743026';
+      ctx.fillRect(7.5, 2, 1, 3);
+      ctx.fillStyle = '#63a344';
+      ctx.beginPath();
+      ctx.ellipse(10.5, 3.5, 3, 1.5, -0.35, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#f58a68';
+      ctx.fillRect(4, 7, 1, 2);
+    });
+
+    // 16: coal ore — charcoal mineral flecks embedded in stone.
+    this.drawTile(TILE_INDEX.coalOre, (ctx, rng) => {
+      ctx.fillStyle = '#777777';
+      ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+      for (let i = 0; i < 42; i++) {
+        const shade = Math.floor(rng.range(0.55, 1.15) * 150);
+        ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
+        ctx.fillRect(rng.nextInt(TILE_SIZE), rng.nextInt(TILE_SIZE), 1, 1);
+      }
+      for (let i = 0; i < 16; i++) {
+        ctx.fillStyle = '#20252a';
+        ctx.fillRect(rng.nextInt(TILE_SIZE), rng.nextInt(TILE_SIZE), 1 + rng.nextInt(2), 1);
+      }
+    });
+
+    // 17: iron ore — warm rust-colored mineral flecks in stone.
+    this.drawTile(TILE_INDEX.ironOre, (ctx, rng) => {
+      ctx.fillStyle = '#858585';
+      ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+      for (let i = 0; i < 42; i++) {
+        const shade = Math.floor(rng.range(0.55, 1.15) * 160);
+        ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
+        ctx.fillRect(rng.nextInt(TILE_SIZE), rng.nextInt(TILE_SIZE), 1, 1);
+      }
+      for (let i = 0; i < 14; i++) {
+        ctx.fillStyle = rng.next() > 0.5 ? '#b35d3e' : '#d08055';
+        ctx.fillRect(rng.nextInt(TILE_SIZE), rng.nextInt(TILE_SIZE), 1 + rng.nextInt(2), 1);
+      }
+    });
+
+    // 18: cobblestone — irregular pale stones with dark mortar lines.
+    this.drawTile(TILE_INDEX.cobblestone, (ctx, rng) => {
+      ctx.fillStyle = '#686a6c';
+      ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+      ctx.strokeStyle = '#3d4144';
+      ctx.lineWidth = 1;
+      for (let y = 1; y < TILE_SIZE; y += 5) {
+        ctx.beginPath();
+        ctx.moveTo(0, y + rng.range(-1, 1));
+        ctx.lineTo(TILE_SIZE, y + rng.range(-1, 1));
+        ctx.stroke();
+      }
+      for (let i = 0; i < 20; i++) {
+        ctx.fillStyle = rng.next() > 0.5 ? '#888b8c' : '#4f5356';
+        ctx.fillRect(rng.nextInt(TILE_SIZE), rng.nextInt(TILE_SIZE), 2, 1);
+      }
+    });
+
+    // 19: bricks — warm masonry with alternating mortar seams.
+    this.drawTile(TILE_INDEX.bricks, (ctx, rng) => {
+      ctx.fillStyle = '#a9553d';
+      ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+      ctx.strokeStyle = '#6d392f';
+      ctx.lineWidth = 1;
+      for (let y = 5; y < TILE_SIZE; y += 6) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(TILE_SIZE, y);
+        ctx.stroke();
+      }
+      ctx.beginPath();
+      ctx.moveTo(7.5, 0);
+      ctx.lineTo(7.5, 5);
+      ctx.moveTo(3.5, 5);
+      ctx.lineTo(3.5, 11);
+      ctx.moveTo(11.5, 5);
+      ctx.lineTo(11.5, 11);
+      ctx.moveTo(7.5, 11);
+      ctx.lineTo(7.5, TILE_SIZE);
+      ctx.stroke();
+      for (let i = 0; i < 16; i++) {
+        ctx.fillStyle = rng.next() > 0.5 ? '#c16b4b' : '#8f4637';
+        ctx.fillRect(rng.nextInt(TILE_SIZE), rng.nextInt(TILE_SIZE), 1, 1);
+      }
+    });
+
+    // 20: lava — a hot orange fluid tile with a dark molten pattern.
+    this.drawTile(TILE_INDEX.lava, (ctx, rng) => {
+      ctx.globalAlpha = 0.9;
+      ctx.fillStyle = '#d34b1f';
+      ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+      for (let i = 0; i < 24; i++) {
+        ctx.fillStyle = rng.next() > 0.45 ? '#ff9a2d' : '#8e2618';
+        ctx.fillRect(rng.nextInt(TILE_SIZE), rng.nextInt(TILE_SIZE), 1 + rng.nextInt(2), 1 + rng.nextInt(2));
+      }
+      ctx.globalAlpha = 1;
+    });
+
+    // 21: stick — a simple inventory icon with a warm wood grain.
+    this.drawTile(TILE_INDEX.stick, (ctx) => {
+      ctx.clearRect(0, 0, TILE_SIZE, TILE_SIZE);
+      ctx.strokeStyle = '#9b6939';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(4, 13);
+      ctx.lineTo(12, 3);
+      ctx.stroke();
+      ctx.strokeStyle = '#d1a064';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(5, 13);
+      ctx.lineTo(13, 3);
+      ctx.stroke();
+    });
+
+    // 22: wooden pickaxe — transparent icon for the hotbar and inventory.
+    this.drawTile(TILE_INDEX.woodenPickaxe, (ctx) => {
+      ctx.clearRect(0, 0, TILE_SIZE, TILE_SIZE);
+      ctx.strokeStyle = '#8e5b2e';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(5, 14);
+      ctx.lineTo(10, 6);
+      ctx.stroke();
+      ctx.strokeStyle = '#c48a4b';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(4, 5);
+      ctx.quadraticCurveTo(8, 1, 13, 5);
+      ctx.stroke();
+    });
+
+    // 23: stone pickaxe — dark handle and gray head.
+    this.drawTile(TILE_INDEX.stonePickaxe, (ctx) => {
+      ctx.clearRect(0, 0, TILE_SIZE, TILE_SIZE);
+      ctx.strokeStyle = '#80552f';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(5, 14);
+      ctx.lineTo(10, 6);
+      ctx.stroke();
+      ctx.strokeStyle = '#9ca5ad';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(4, 5);
+      ctx.quadraticCurveTo(8, 1, 13, 5);
+      ctx.stroke();
+    });
+
+    // 24: wooden axe — broad warm head and diagonal handle.
+    this.drawTile(TILE_INDEX.woodenAxe, (ctx) => {
+      ctx.clearRect(0, 0, TILE_SIZE, TILE_SIZE);
+      ctx.strokeStyle = '#8e5b2e';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(5, 14);
+      ctx.lineTo(10, 6);
+      ctx.stroke();
+      ctx.fillStyle = '#c48a4b';
+      ctx.beginPath();
+      ctx.moveTo(8, 2);
+      ctx.lineTo(14, 4);
+      ctx.lineTo(11, 9);
+      ctx.lineTo(8, 7);
+      ctx.closePath();
+      ctx.fill();
+    });
+
+    // 25: coal — a compact dark mineral inventory icon.
+    this.drawTile(TILE_INDEX.coal, (ctx) => {
+      ctx.clearRect(0, 0, TILE_SIZE, TILE_SIZE);
+      ctx.fillStyle = '#22272c';
+      ctx.beginPath();
+      ctx.moveTo(4, 11);
+      ctx.lineTo(5, 5);
+      ctx.lineTo(10, 3);
+      ctx.lineTo(13, 7);
+      ctx.lineTo(11, 13);
+      ctx.lineTo(6, 14);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#59616a';
+      ctx.fillRect(6, 5, 2, 2);
+      ctx.fillRect(9, 8, 2, 2);
+    });
+
+    // 26: raw iron — warm metallic nugget icon.
+    this.drawTile(TILE_INDEX.rawIron, (ctx) => {
+      ctx.clearRect(0, 0, TILE_SIZE, TILE_SIZE);
+      ctx.fillStyle = '#c47b58';
+      ctx.beginPath();
+      ctx.moveTo(3, 10);
+      ctx.lineTo(6, 4);
+      ctx.lineTo(12, 3);
+      ctx.lineTo(14, 8);
+      ctx.lineTo(10, 13);
+      ctx.lineTo(5, 13);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#f0aa79';
+      ctx.fillRect(6, 5, 3, 2);
+      ctx.fillRect(9, 9, 2, 2);
     });
   }
 

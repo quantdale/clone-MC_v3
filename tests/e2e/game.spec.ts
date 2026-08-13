@@ -3,14 +3,14 @@ import { test, expect, type Page } from '@playwright/test';
 /**
  * Playwright browser tests for the voxel game.
  *
- * These run against the dev server served by `vite` (see
- * playwright.config.ts). The dev build exposes `window.__voxelGame` for
- * test hooks.
+ * These run against a production build served by `vite preview` (see
+ * playwright.config.ts). The dedicated E2E build flag exposes
+ * `window.__voxelGame` for test hooks without enabling it in normal releases.
  */
 
 /** Wait for the game to boot and the loading indicator to clear. */
 async function waitForGame(page: Page): Promise<void> {
-  // Dev builds expose window.__voxelGame for test hooks (see src/main.ts).
+  // The E2E build exposes window.__voxelGame for test hooks (see src/main.ts).
   await page.goto('/');
   // The loading panel is visible on boot; wait for it to be hidden (world ready).
   // `#loading` becomes `display:none` via the `hidden` class, so use the 'hidden'
@@ -53,6 +53,39 @@ test.describe('voxel game', () => {
     await expect(page.locator('#overlay')).toBeVisible();
     await enterPointerLock(page);
     await expect(page.locator('#overlay')).toBeHidden();
+
+    // Explicitly release the lock as a deterministic equivalent of pressing
+    // Escape in headless Chromium, then verify the pause overlay and relock
+    // path both remain functional.
+    await page.evaluate(() => document.exitPointerLock());
+    await expect(page.locator('#overlay')).toBeVisible();
+    await expect(page.locator('#hotbar')).toBeHidden();
+    await enterPointerLock(page);
+    await expect(page.locator('#overlay')).toBeHidden();
+    await expect(page.locator('#hotbar')).toBeVisible();
+  });
+
+  test('keeps pointer-lock failures recoverable', async ({ page }) => {
+    await waitForGame(page);
+    await enterPointerLock(page);
+    await page.evaluate(() => document.dispatchEvent(new Event('pointerlockerror')));
+    await expect(page.locator('#overlay')).toBeVisible();
+    await expect(page.locator('#error')).toBeHidden();
+    await expect(page.locator('#overlay-message')).toContainText('Pointer lock failed');
+  });
+
+  test('clears movement when the page loses focus', async ({ page }) => {
+    await waitForGame(page);
+    await enterPointerLock(page);
+    await page.keyboard.down('KeyW');
+    await page.evaluate(() => window.dispatchEvent(new Event('blur')));
+    const movement = await page.evaluate(() => {
+      const game = (window as unknown as { __voxelGame?: { input?: { moveForward?: boolean } } }).__voxelGame;
+      return game?.input?.moveForward ?? true;
+    });
+    expect(movement).toBe(false);
+    await expect(page.locator('#overlay')).toBeVisible();
+    await page.keyboard.up('KeyW');
   });
 
   test('crosshair and hotbar are visible once the world is ready', async ({ page }) => {
@@ -84,6 +117,122 @@ test.describe('voxel game', () => {
     await expect(page.locator('.hotbar-slot.selected')).toHaveAttribute('data-index', '0');
     // The selected-block-name chip reflects the wrapped selection.
     await expect(page.locator('#selected-block-name')).not.toBeEmpty();
+  });
+
+  test('opens the inventory and crafts from the recipe book', async ({ page }) => {
+    await waitForGame(page);
+    await enterPointerLock(page);
+    await page.keyboard.press('KeyC');
+
+    await expect(page.locator('#crafting')).toBeVisible();
+    await expect(page.locator('#hotbar')).toBeHidden();
+    await expect(page.locator('.inventory-cell')).toHaveCount(36);
+    await expect(page.locator('.crafting-recipe')).toHaveCount(9);
+    await expect(page.locator('.crafting-recipe[data-recipe="planks"]')).toBeDisabled();
+
+    // Supply one log through the test-only game handle, then use the same DOM
+    // recipe button a player would use after gathering a tree.
+    await page.evaluate(() => {
+      const game = (window as unknown as {
+        __voxelGame?: {
+          inventory: { addItem(id: number, amount: number): number };
+          craftingPanel: { render(registry: unknown): void };
+          registry: unknown;
+        };
+      }).__voxelGame;
+      if (!game) throw new Error('test game handle missing');
+      game.inventory.addItem(7, 1);
+      game.craftingPanel.render(game.registry);
+    });
+    await expect(page.locator('.crafting-recipe[data-recipe="planks"]')).toBeEnabled();
+    await page.locator('.crafting-recipe[data-recipe="planks"]').click();
+    const planks = await page.evaluate(() => {
+      const game = (window as unknown as { __voxelGame?: { inventory: { getItemCount(id: number): number } } }).__voxelGame;
+      return game?.inventory.getItemCount(12) ?? 0;
+    });
+    expect(planks).toBe(4);
+
+    // Continue the material chain into a usable tool and verify the crafted
+    // item is placed into the player's quick-access inventory.
+    await page.evaluate(() => {
+      const game = (window as unknown as {
+        __voxelGame?: {
+          inventory: { addItem(id: number, amount: number): number };
+          craftingPanel: { render(registry: unknown): void };
+          registry: unknown;
+        };
+      }).__voxelGame;
+      if (!game) throw new Error('test game handle missing');
+      game.inventory.addItem(7, 2);
+      game.craftingPanel.render(game.registry);
+    });
+    await page.locator('.crafting-recipe[data-recipe="planks"]').click();
+    await page.locator('.crafting-recipe[data-recipe="sticks"]').click();
+    await page.locator('.crafting-recipe[data-recipe="wooden_pickaxe"]').click();
+    const tool = await page.evaluate(() => {
+      const game = (window as unknown as { __voxelGame?: { inventory: { getItemCount(id: number): number } } }).__voxelGame;
+      return game?.inventory.getItemCount(20) ?? 0;
+    });
+    expect(tool).toBe(1);
+    await page.locator('#crafting-close').click();
+    await enterPointerLock(page);
+    await expect(page.locator('.hotbar-slot')).toHaveCount(9);
+    await expect(page.locator('.hotbar-slot[aria-label*="Wooden Pickaxe"]')).toHaveCount(1);
+    await expect(page.locator('.hotbar-slot[aria-label*="Wooden Pickaxe"] .slot-durability.visible')).toHaveCount(1);
+  });
+
+  test('shows survival status and food in the hotbar', async ({ page }) => {
+    await waitForGame(page);
+    await enterPointerLock(page);
+    await expect(page.locator('#survival-status')).toBeVisible();
+    await expect(page.locator('#world-time')).toHaveText(/[☀☾] \d{2}:\d{2}/);
+    await expect(page.locator('#health-status')).toHaveText('♥ 20');
+    await expect(page.locator('#hunger-status')).toHaveText('🍗 20');
+    await expect(page.locator('.hotbar-slot')).toHaveCount(9);
+    await expect(page.locator('.hotbar-slot').nth(8)).toHaveAttribute('aria-label', /Apple/);
+
+    await page.evaluate(() => {
+      const game = (window as unknown as {
+        __voxelGame?: {
+          survival: { hunger: number; saturation: number };
+          inventory: { addItem(id: number, amount: number): number };
+          hotbar: { render(): void };
+        };
+      }).__voxelGame;
+      if (!game) throw new Error('test game handle missing');
+      game.survival.hunger = 10;
+      game.survival.saturation = 0;
+      game.inventory.addItem(13, 1);
+      game.hotbar.render();
+    });
+    await page.keyboard.press('KeyR');
+    await page.waitForTimeout(150);
+    const foodState = await page.evaluate(() => {
+      const game = (window as unknown as {
+        __voxelGame?: {
+          survival: { hunger: number };
+          inventory: { getItemCount(id: number): number };
+        };
+      }).__voxelGame;
+      return {
+        hunger: game?.survival.hunger ?? 0,
+        apples: game?.inventory.getItemCount(13) ?? -1,
+      };
+    });
+    expect(foodState.hunger).toBe(14);
+    expect(foodState.apples).toBe(0);
+  });
+
+  test('spawns deterministic passive world life near the player', async ({ page }) => {
+    await waitForGame(page);
+    await enterPointerLock(page);
+    const critters = await page.evaluate(() => {
+      const game = (window as unknown as {
+        __voxelGame?: { renderer: { scene: { children: Array<{ name: string }> } } };
+      }).__voxelGame;
+      return game?.renderer.scene.children.filter((child) => child.name === 'passive-critter').length ?? 0;
+    });
+    expect(critters).toBe(8);
   });
 
   test('FPS counter updates over time', async ({ page }) => {
