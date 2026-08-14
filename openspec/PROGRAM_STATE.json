@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "056-voxel-shape-core",
+  "currentChange": "057-shape-aware-player-collision",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "056-voxel-shape-core",
-  "nextChange": "057-shape-aware-player-collision",
+  "lastCompletedChange": "057-shape-aware-player-collision",
+  "nextChange": "058-shape-aware-raycast",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "9cc8f10d03ec61bdd40719539158a0db564c80d3",
-  "lastKnownHead": "9cc8f10d03ec61bdd40719539158a0db564c80d3",
-  "lastCompletedTask": "056: all 4 tasks complete; voxel-shape-core VERIFIED. New src/world/VoxelShape.ts (Aabb; VoxelShape of/EMPTY/FULL_CUBE/isEmpty/boxes/union/intersects/contains/maxY; copy-validate-freeze construction, boundary-inclusive queries, union without mutation); 7 unit tests; 681 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 057-shape-aware-player-collision. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (057 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement player collision queries against block collision shapes rather than full-cube assumptions, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "8f2b2aa3b1983beb6277b450fd0d2cde283eb6ea",
+  "lastKnownHead": "8f2b2aa3b1983beb6277b450fd0d2cde283eb6ea",
+  "lastCompletedTask": "057: all 4 tasks complete; shape-aware-player-collision VERIFIED. New src/world/CollisionResolver.ts (ShapeWorld/CollisionBox/MovementResult; move resolves X->Y->Z with swept-path face snapping and per-axis flags; collides boundary-inclusive; epsilon handling; deterministic); 7 unit tests; 688 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 058-shape-aware-raycast. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (058 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement selection/interactions raycasting against selection shapes, verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -561,6 +561,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "056 VERIFIED 4/4 (100%). New src/world/VoxelShape.ts (Aabb; VoxelShape of/EMPTY/FULL_CUBE/isEmpty/boxes/union/intersects/contains/maxY; copy-validate-freeze construction, boundary-inclusive queries, union without mutation); 7 unit tests; 681 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "8f2b2aa3b1983beb6277b450fd0d2cde283eb6ea",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 688/688; CollisionResolver 7/7",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "057 VERIFIED 4/4 (100%). New src/world/CollisionResolver.ts (ShapeWorld/CollisionBox/MovementResult; move resolves X->Y->Z with swept-path face snapping and per-axis flags; collides boundary-inclusive; epsilon handling; deterministic); 7 unit tests; 688 unit + 19 e2e pass, stable."
     }
   ]
 }
