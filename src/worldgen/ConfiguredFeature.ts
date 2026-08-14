@@ -1,13 +1,15 @@
 /**
  * Configured feature core (094). `ConfiguredFeature` pairs a key with a validated typed config;
  * the core vocabulary is `simpleBlock` (place one block) and `blockPatch` (scatter up to `tries`
- * blocks within `radiusXZ` × `radiusY`). `ConfiguredFeatureRegistry` stores only validated
+ * blocks within `radiusXZ` × `radiusY`); 096 added `ore` (tag-driven ore veins, see OreFeature).
+ * `ConfiguredFeatureRegistry` stores only validated
  * definitions with atomic rejection (003 pattern); `createDefaultConfiguredFeatures` provides
- * documented deterministic defaults. 096 ore and 097 tree features extend the config union.
+ * documented deterministic defaults. 097 tree features extend the config union further.
  */
 export type ConfiguredFeatureConfig =
   | { type: 'simpleBlock'; blockId: number }
-  | { type: 'blockPatch'; blockId: number; tries: number; radiusXZ: number; radiusY: number };
+  | { type: 'blockPatch'; blockId: number; tries: number; radiusXZ: number; radiusY: number }
+  | { type: 'ore'; blockId: number; size: number; discardChanceOnAirExposure: number; targetTags: string[] };
 
 /** A keyed, validated configured feature. */
 export interface ConfiguredFeature {
@@ -46,6 +48,24 @@ export function validateConfiguredFeatureConfig(input: unknown): ConfiguredFeatu
       assertPositive(r.tries, 'blockPatch.tries');
       assertPositive(r.radiusXZ, 'blockPatch.radiusXZ');
       assertPositive(r.radiusY, 'blockPatch.radiusY');
+      return input as ConfiguredFeatureConfig;
+    case 'ore':
+      assertBlockId(r.blockId, 'ore.blockId');
+      assertPositive(r.size, 'ore.size');
+      if (typeof r.discardChanceOnAirExposure !== 'number' || Number.isNaN(r.discardChanceOnAirExposure)) {
+        throw new Error(`ConfiguredFeature: ore.discardChanceOnAirExposure must be a number in [0, 1], got ${String(r.discardChanceOnAirExposure)}`);
+      }
+      if (r.discardChanceOnAirExposure < 0 || r.discardChanceOnAirExposure > 1) {
+        throw new Error(`ConfiguredFeature: ore.discardChanceOnAirExposure must be in [0, 1], got ${r.discardChanceOnAirExposure}`);
+      }
+      if (!Array.isArray(r.targetTags) || r.targetTags.length === 0) {
+        throw new Error('ConfiguredFeature: ore.targetTags must be a non-empty array');
+      }
+      for (const t of r.targetTags) {
+        if (typeof t !== 'string' || t.length === 0) {
+          throw new Error('ConfiguredFeature: ore.targetTags entries must be non-empty strings');
+        }
+      }
       return input as ConfiguredFeatureConfig;
     default:
       throw new Error(`ConfiguredFeature: unknown feature type: ${String(r.type)}`);

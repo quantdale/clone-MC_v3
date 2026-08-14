@@ -16,7 +16,7 @@ describe('validateConfiguredFeatureConfig', () => {
   });
 
   it('rejects unknown types and malformed fields naming the field', () => {
-    expect(() => validateConfiguredFeatureConfig({ type: 'ore' })).toThrow(/unknown feature type/i);
+    expect(() => validateConfiguredFeatureConfig({ type: 'portal' })).toThrow(/unknown feature type/i);
     expect(() => validateConfiguredFeatureConfig({ type: 'simpleBlock' })).toThrow(/blockId/i);
     expect(() => validateConfiguredFeatureConfig({ type: 'simpleBlock', blockId: -1 })).toThrow(/blockId/i);
     expect(() => validateConfiguredFeatureConfig({ type: 'blockPatch', blockId: 1, tries: 0, radiusXZ: 3, radiusY: 2 })).toThrow(/tries/i);
