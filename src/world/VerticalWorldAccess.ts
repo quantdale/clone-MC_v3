@@ -2,7 +2,7 @@ import { BlockId } from './BlockRegistry';
 import { BlockState, BlockStateId, BlockStateRegistry } from './BlockStateRegistry';
 import { ChunkColumn, SerializedChunkColumn } from './ChunkColumn';
 import { DimensionType } from '../data/DimensionType';
-import { sectionIndex, localCoord } from '../math/SectionCoordinate';
+import { sectionIndex, localCoord, SECTION_SIZE } from '../math/SectionCoordinate';
 
 /** Serialized form of a full {@link VerticalWorldAccess} column set. */
 export interface SerializedChunkColumns {
@@ -119,8 +119,46 @@ export class VerticalWorldAccess {
     if (!(state instanceof BlockState)) {
       return;
     }
-    const column = this.ensureColumn(sectionIndex(x), sectionIndex(z));
-    column.setBlockState(localCoord(x), y, localCoord(z), state);
+    const chunkX = sectionIndex(x);
+    const chunkZ = sectionIndex(z);
+    const localX = localCoord(x);
+    const localZ = localCoord(z);
+    const column = this.ensureColumn(chunkX, chunkZ);
+    column.setBlockState(localX, y, localZ, state);
+    this.markNeighborSectionsDirty(chunkX, chunkZ, localX, localZ, y);
+  }
+
+  /**
+   * Flag the neighbor sections sharing a face with the just-written block. Horizontal neighbors are the
+   * adjacent chunk's section at the same in-column `sy`; vertical neighbors are this column's `sy ± 1`.
+   * Only existing neighbor columns are touched (absent ones have no mesh to update).
+   */
+  private markNeighborSectionsDirty(
+    chunkX: number,
+    chunkZ: number,
+    localX: number,
+    localZ: number,
+    worldY: number,
+  ): void {
+    const sy = sectionIndex(worldY) - this.minSectionY;
+    const localY = localCoord(worldY);
+    if (localX === 0) this.markNeighborDirty(chunkX - 1, chunkZ, sy);
+    if (localX === SECTION_SIZE - 1) this.markNeighborDirty(chunkX + 1, chunkZ, sy);
+    if (localZ === 0) this.markNeighborDirty(chunkX, chunkZ - 1, sy);
+    if (localZ === SECTION_SIZE - 1) this.markNeighborDirty(chunkX, chunkZ + 1, sy);
+    if (localY === 0) this.markNeighborDirty(chunkX, chunkZ, sy - 1);
+    if (localY === SECTION_SIZE - 1) this.markNeighborDirty(chunkX, chunkZ, sy + 1);
+  }
+
+  private markNeighborDirty(nx: number, nz: number, nsy: number): void {
+    if (nsy < 0 || nsy >= this.sectionCount) {
+      return; // No neighbor section exists (e.g. top/bottom of the dimension).
+    }
+    const neighbor = this.getColumn(nx, nz);
+    if (neighbor === undefined) {
+      return; // Absent column has no mesh to update; do not materialize it.
+    }
+    neighbor.markSectionDirty(nsy);
   }
 
   /** True when any column has unsaved changes. */

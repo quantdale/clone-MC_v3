@@ -117,6 +117,16 @@ export class ChunkColumn {
     this.dirtySections.clear();
   }
 
+  /**
+   * Flag an in-range section as dirty without materializing it. Out-of-range indices are ignored so
+   * callers can propagate from a boundary without range-checking the neighbor.
+   */
+  markSectionDirty(sy: number): void {
+    if (sy >= 0 && sy < this.sectionCount) {
+      this.dirtySections.add(sy);
+    }
+  }
+
   serialize(): SerializedChunkColumn {
     const sections: Record<number, SerializedPalettedContainer> = {};
     for (const [sy, section] of this.sections) {
