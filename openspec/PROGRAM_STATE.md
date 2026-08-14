@@ -3,57 +3,65 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **033-vertical-streaming — VERIFIED 100%**
-- Active implementation change: **033-vertical-streaming — VERIFIED (advanced)**
-- Next change: **034-indexeddb-world-metadata — NOT YET ACTIVE (artifacts pending)**
-- 033 task ledger: **5 total tasks, 5 completed**
-- 033 completion: **100%**
-- 033 mandatory vertical-streaming requirements: **PASS**
-- 033 required-test gate: **PASS — unit 485/485, E2E 19/19**
-- 033 advancement allowed: **Yes**
+- Last completed change: **034-indexeddb-world-metadata — VERIFIED 100%**
+- Active implementation change: **034-indexeddb-world-metadata — VERIFIED (advanced)**
+- Next change: **035-indexeddb-chunk-section-store — NOT YET ACTIVE (artifacts pending)**
+- 034 task ledger: **5 total tasks, 5 completed**
+- 034 completion: **100%**
+- 034 mandatory indexeddb-world-metadata requirements: **PASS**
+- 034 required-test gate: **PASS — unit 499/499, E2E 19/19**
+- 034 advancement allowed: **Yes**
 - Session-start head: `7de37f6d70fdc3c5e3cca6e99a1232435628016c`
-- Validated head: `e9f49182d69bfe147f46d80747b79008396ddcff`
-- Next exact action: **Advance to 034-indexeddb-world-metadata. Author proposal/design/tasks/specs/indexeddb-world-metadata/spec.md/verification via SPEC_AUTHORING_PROTOCOL.md, validate, implement IndexedDB database/version/world metadata with a typed repository boundary, verify full gate, commit + push, advance program state.**
+- Validated head: `c3d986705e65aa571e2c5db886b5e71dcd976ea2`
+- Next exact action: **Advance to 035-indexeddb-chunk-section-store. Author proposal/design/tasks/specs/indexeddb-chunk-section-store/spec.md/verification via SPEC_AUTHORING_PROTOCOL.md, validate, implement a chunk-sections object store on the same WORLD_DB_NAME database (bump WORLD_DB_VERSION with an onupgradeneeded step), and a typed repository for persisting/reloading ChunkColumn section block-state data, verify full gate, commit + push, advance program state.**
 
-## What 033 implemented
+## What 034 implemented
 
-Change 033 removed the hardcoded `cy = 0` single-layer assumption from `World`'s streaming:
+Change 034 introduces the persistent-world storage foundation: a versioned IndexedDB database
+and a typed repository boundary for world-level metadata, with no browser-global dependency at
+construction time.
 
-- `src/world/World.ts` — accepts an optional `dimension?: DimensionType`; derives
-  `minChunkY = floor(dimension.minY / CHUNK_DIMENSIONS.height)` and
-  `chunkLayerCount = ceil(dimension.height / CHUNK_DIMENSIONS.height)` (defaulting to
-  `0`/`1` when no dimension is supplied). `ensureChunks`, `preloadChunks`, and
-  `getReadyProgress` iterate the full vertical window `[minChunkY, minChunkY + chunkLayerCount)`
-  instead of the literal `0`. New accessors `getMinChunkY()`/`getChunkLayerCount()` expose
-  the window. The default path is bit-for-bit identical to the prior single-layer world.
-- `tests/unit/VerticalStreaming.test.ts` — 7 tests (default single-layer parity, two-layer
-  window derivation, multi-layer `ensureChunks` column coverage + queue bound, per-layer
-  `preloadChunks`, and default readiness no-regression).
+- `src/storage/WorldMetadata.ts` — `WORLD_DB_NAME = 'voxel-world-db'`, `WORLD_DB_VERSION = 1`,
+  `WORLD_METADATA_STORE = 'world-metadata'` constants; the `WorldMetadata` interface
+  (`schemaVersion`, `worldId`, `seed`, `dimensionId`, `minY`, `height`, `createdAt`, `updatedAt`);
+  and `validateWorldMetadata(input)` which returns the narrowed record or throws a descriptive
+  `Error` on any malformed field (does not coerce types).
+- `src/storage/WorldMetadataRepository.ts` — `WorldMetadataRepository` with an injectable
+  `IDBFactory` (`opts.factory`), `open()` that creates the `world-metadata` store (keyPath
+  `worldId`) on `onupgradeneeded` and is idempotent, `putMetadata` (validates then stamps
+  `updatedAt`), `getMetadata` (returns `null` for absent keys), `listMetadata`, `deleteMetadata`,
+  and `close()`. `browserIdbFactory()` is the only place touching `globalThis.indexedDB`.
+- `tests/unit/IdbFactoryMock.ts` — in-memory `IDBFactoryLike` mock (fires `onupgradeneeded`
+  before `onsuccess`, shares data across transactions).
+- `tests/unit/WorldMetadataRepository.test.ts` — 14 tests covering validation rejection, store
+  creation, put/get round-trip, null-on-absent, list, delete, invalid-write rollback, and
+  idempotent open.
 
-## Validation evidence (033)
+## Validation evidence (034)
 
 - typecheck: PASS
 - lint: PASS
-- unit: PASS 485/485 (prior 478 + 7 new VerticalStreaming tests)
+- unit: PASS 499/499 (prior 485 + 14 new WorldMetadataRepository tests)
 - production build: PASS as the Playwright webServer prerequisite
 - E2E: PASS 19/19
 
 ## Advancement decision
 
-Change 033 is **VERIFIED** at 5/5 (100%). All gates are green: typecheck, lint, full unit
-suite (485/485), production build, and the required E2E suite (19/19). No advancement
-exception was needed. The default single-layer behavior is preserved, so the 478/19
-baseline is unchanged.
+Change 034 is **VERIFIED** at 5/5 (100%). All gates are green: typecheck, lint, full unit
+suite (499/499), production build, and the required E2E suite (19/19). No advancement
+exception was needed. The repository boundary is dependency-free and unit-tested against an
+injectable mock, leaving the browser `indexedDB` only in the `browserIdbFactory` adapter.
 
-## Next change: 034 (pending artifacts)
+## Next change: 035 (pending artifacts)
 
-`034-indexeddb-world-metadata` is named in `CHANGE_SEQUENCE.md` with scope "IndexedDB
-database/version/world metadata with typed repository boundary." Per `AGENTS.md`, a change
-lacking full artifacts is a hard pre-implementation block. Author and validate those
-artifacts via `SPEC_AUTHORING_PROTOCOL.md` before any production code.
+`035-indexeddb-chunk-section-store` is named in `CHANGE_SEQUENCE.md` with scope "Persist/reload
+chunk columns and section block-state data." It builds on 034 by adding a `chunk-sections` store
+to the same `voxel-world-db` database and bumping `WORLD_DB_VERSION` with a new `onupgradeneeded`
+step. Per `AGENTS.md`, a change lacking full artifacts is a hard pre-implementation block.
+Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md` before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 033
-verification. Change 034 is the next change; its artifacts must be authored and validated
+A future session must first inspect current `origin/main`, this state, and the 034
+verification. Change 035 is the next change; its artifacts must be authored and validated
 before implementation begins.
