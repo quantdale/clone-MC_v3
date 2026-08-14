@@ -1,53 +1,67 @@
 # Verification: 003-generic-registry-core
 
-Status: **PLANNED / NOT VERIFIED**
+Status: **VERIFIED**
 
-Completion: **0% until 003 becomes active and tasks are executed**
+Completion: **41 / 41 tasks = 100%**
 
-Advancement allowed: **false**
+Advancement allowed: **true**
 
-## Entry gate
+Advancement exception used: **false**
 
-003 implementation is forbidden until 002 is VERIFIED and `PROGRAM_STATE.json` activates 003.
+Validated implementation head: pending commit (see PROGRAM_STATE published head)
 
 ## Requirement evidence
 
 | Requirement | Evidence | Status |
 |---|---|---|
-| Registration/dense IDs | focused registry tests | PENDING |
-| Duplicate rejection/atomicity | focused tests | PENDING |
-| ResourceId strict/optional lookup | focused tests | PENDING |
-| Runtime-ID validation/lookup | focused tests | PENDING |
-| Reverse runtime identity | focused tests | PENDING |
-| Deterministic iteration | focused tests | PENDING |
-| Finalization/idempotency | focused tests | PENDING |
-| Failure atomicity | focused tests | PENDING |
-| Generic typing | compile/test fixture | PENDING |
-| Existing registry compatibility | diff + regression suite | PENDING |
+| Registration / dense IDs | `tests/unit/Registry.test.ts` first-entries + registration-order tests | PASS |
+| Duplicate rejection / atomicity | duplicate-then-new-entry test; size/entry unchanged after failure | PASS |
+| ResourceId strict / optional lookup | strict throws MISSING_ID; optional returns undefined | PASS |
+| Runtime-ID validation / lookup | rejects negative/fractional/NaN/Infinity/out-of-range; O(1) by array index | PASS |
+| Reverse runtime identity | getRuntimeId + getEntryByRuntimeId round trip | PASS |
+| Deterministic iteration | entries() in ascending runtime-id/registration order | PASS |
+| Finalization / idempotency | finalize then repeated finalize leaves state unchanged | PASS |
+| Failure atomicity | duplicate/missing/invalid-runtime/post-finalize do not mutate registry | PASS |
+| Generic typing | two distinct value types in compile/runtime fixtures | PASS |
+| Existing registry compatibility | diff inspection; `src/world/BlockRegistry.ts` untouched | PASS |
 
-## Required commands
+## Implementation evidence
 
-Record actual results only after activation:
+One new module added: `src/data/Registry.ts`. One new focused test file: `tests/unit/Registry.test.ts`.
 
-- focused generic registry test command;
-- `npm run typecheck`;
-- `npm run lint`;
-- `npm test`;
-- `npm run build`;
-- `npm run test:e2e`.
+No existing production file, `BlockRegistry`, numeric `BlockId` value, save payload, recipe, or gameplay behavior changed. 003 is additive registry mechanics only; domain migration begins in 004.
 
-## Adversarial cases
+The implementation provides:
 
-Pending tests must include duplicate-after-success, missing lookup, negative/fractional/non-finite/out-of-range runtime IDs, repeated finalize, registration after finalize, and confirmation that each failure leaves size/entries/next ID unchanged.
+- generic `Registry<T>` keyed by 002 `ResourceId`;
+- immutable frozen `RegistryEntry<T>` with `runtimeId`, `id`, `value`;
+- dense non-negative runtime IDs equal to registration index;
+- `Map<string, RegistryEntry<T>>` keyed by canonical ResourceId text + `RegistryEntry<T>[]` runtime-ID array;
+- strict `get`/`getRuntimeId`/`getByRuntimeId`/`getEntryByRuntimeId` that throw typed `RegistryError`;
+- `getOptional` returning undefined for missing IDs (the only undefined path);
+- one-way idempotent `finalize()`;
+- stable `RegistryErrorReason` categories: `DUPLICATE_ID`, `MISSING_ID`, `INVALID_RUNTIME_ID`, `FINALIZED`.
 
-## Compatibility
+## Final regression gate
 
-Pending diff inspection must prove 003 does not migrate current BlockRegistry, BlockId values, saves, recipes, or gameplay.
+| Gate | Status |
+|---|---|
+| Generic-registry normative requirements | PASS (13/13 focused tests) |
+| Typecheck | PASS |
+| Lint | PASS |
+| Full unit suite | PASS — 154/154 |
+| Production build | PASS |
+| Required E2E suite | PASS — 19/19 |
+| Scope/diff inspection | PASS — only `src/data/Registry.ts` + `tests/unit/Registry.test.ts` added |
+
+## Blocker analysis
+
+No blockers. All normative requirements are implemented and tested. The change is additive and isolated from gameplay.
 
 ## Advancement Exception
 
-No tasks are planned optional. Expected completion is 100%.
+Not used. `advancementAllowed` is true at 100% completion.
 
 ## Final decision
 
-**NOT ELIGIBLE TO ADVANCE.** 004 remains specification-only until 003 is fully verified.
+**VERIFIED.** Generic registry core is complete and all gates pass. Advance to Change 004.

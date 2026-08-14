@@ -5,18 +5,18 @@
 - Program: **ACTIVE**
 - Last completed change: **001-autonomous-program-control — VERIFIED 100%**
 - Last completed change: **002-resource-id-foundation — VERIFIED 100%**
-- Active implementation change: **003-generic-registry-core — PLANNED (not yet started)**
-- Next change: **004-block-item-registry-separation — NOT ACTIVE**
-- 002 task ledger: **40 total tasks, 40 completed**
-- 002 completion: **100%**
-- 002 mandatory ResourceId requirements: **PASS**
-- 002 required-test gate: **PASS — E2E 19/19**
-- 002 standalone focused ResourceId invocation: **PASS — 27/27**
-- 002 advancement allowed: **Yes**
-- Session-start head: `047d6eb9af9f7259916f585c717c177f7ea0dc90`
-- Validated head: `12899e16c2cbb0f551afc2612130275ad4a68b38`
-- Published head: `12899e16c2cbb0f551afc2612130275ad4a68b38`
-- Next exact action: **Begin Change 003 task 1.1: confirm 002 is VERIFIED and program state activates 003, then run the full pre-change repository baseline and re-read the 002 ResourceId API.**
+- Last completed change: **003-generic-registry-core — VERIFIED 100%**
+- Active implementation change: **004-block-item-registry-separation — PLANNED (not yet started)**
+- Next change: **005-tag-registry — NOT ACTIVE**
+- 003 task ledger: **41 total tasks, 41 completed**
+- 003 completion: **100%**
+- 003 mandatory generic-registry requirements: **PASS**
+- 003 required-test gate: **PASS — E2E 19/19**
+- 003 standalone focused Registry invocation: **PASS — 13/13**
+- 003 advancement allowed: **Yes**
+- Session-start head: `88b188038f3944e4533141b9b3b3b8bc361864d19a`
+- Validated head: `88b188038f3944e4533141b9b3b3b8bc361864d19a`
+- Next exact action: **Begin Change 004 task 1.1: confirm 003 VERIFIED and program state activates 004, then inventory numeric definitions (1.3) and run the full baseline (1.2).**
 
 ## What 002 implemented
 
@@ -79,10 +79,10 @@ All 40 tasks complete, including the two that were previously blocked:
 
 ## Advancement decision
 
-Change 002 is **VERIFIED** at 40/40 (100%). All gates are green: typecheck, lint, full unit suite (141/141), production build, standalone focused ResourceId invocation (27/27), and the required E2E suite (19/19). No advancement exception was needed.
+Change 003 is **VERIFIED** at 41/41 (100%). All gates are green: typecheck, lint, full unit suite (154/154, incl. 13 generic Registry tests), production build, and the required E2E suite (19/19). No advancement exception was needed. The generic registry core is additive and leaves `BlockRegistry` untouched.
 
-**Change 003 is authorized to begin.** It is fully specified (proposal, design, tasks, specs, verification) and may start once its entry gate (task 1.1) confirms this state.
+**Change 004 is authorized to begin.** It is fully specified (proposal, design, tasks, specs, verification) and may start once its entry gate (task 1.1) confirms this state.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 002 verification. Change 003 is the active change; begin at task 1.1 and do not migrate 004+ scope.
+A future session must first inspect current `origin/main`, this state, and the 003 verification. Change 004 is the active change; begin at task 1.1 and do not migrate 005+ scope.

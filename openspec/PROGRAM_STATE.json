@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "003-generic-registry-core",
+  "currentChange": "004-block-item-registry-separation",
   "currentChangeStatus": "PLANNED",
-  "lastCompletedChange": "002-resource-id-foundation",
-  "nextChange": "004-block-item-registry-separation",
+  "lastCompletedChange": "003-generic-registry-core",
+  "nextChange": "005-tag-registry",
   "completedTasks": 0,
-  "totalTasks": 41,
+  "totalTasks": 60,
   "completionPercentage": 0,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -15,39 +15,32 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "047d6eb9af9f7259916f585c717c177f7ea0dc90",
-  "lastValidatedHead": "12899e16c2cbb0f551afc2612130275ad4a68b38",
-  "lastKnownHead": "12899e16c2cbb0f551afc2612130275ad4a68b38",
-  "lastCompletedTask": "002.5.10 Update program state and human checkpoint; 002 VERIFIED 40/40 (100%) and advanced to 003.",
-  "nextExactAction": "Begin Change 003 task 1.1: confirm 002 is VERIFIED and program state activates 003, then run the full pre-change repository baseline (1.2) and re-read the 002 ResourceId API (1.3).",
+  "sessionStartHead": "88b188038f3944e4533141b9b3b8bc361864d19a",
+  "lastValidatedHead": "88b188038f3944e4533141b9b3b8bc361864d19a",
+  "lastKnownHead": "88b188038f3944e4533141b9b3b3b8bc361864d19a",
+  "lastCompletedTask": "003: all 41 tasks complete; generic registry core VERIFIED and advanced to 004.",
+  "nextExactAction": "Begin Change 004 task 1.1: confirm 003 VERIFIED and program state activates 004, then inventory numeric definitions (1.3) and run the full baseline (1.2).",
   "blockers": [],
   "validationResults": [
-    {
-      "head": "390824a7c0f3260ec03274428209f6e9e7bde2b9",
-      "typecheck": "PASS",
-      "lint": "PASS",
-      "unit": "PASS 114/114",
-      "build": "PASS via Playwright production webServer",
-      "e2e": "FAIL 17/19: pre-existing break/place failures"
-    },
-    {
-      "head": "9ae68c82ead5e392ea65b8dd36eadcc3ff213e25",
-      "typecheck": "PASS",
-      "lint": "PASS",
-      "unit": "PASS 141/141; ResourceId 27/27",
-      "build": "PASS via Playwright production webServer",
-      "e2e": "FAIL 17/19: exact same pre-existing break/place failures",
-      "productionAudit": "PASS 0 vulnerabilities"
-    },
     {
       "head": "047d6eb9af9f7259916f585c717c177f7ea0dc90",
       "typecheck": "PASS",
       "lint": "PASS",
-      "unit": "PASS 141/141; ResourceId 27/27 (standalone 27/27)",
+      "unit": "PASS 141/141; ResourceId 27/27",
       "build": "PASS via Playwright production webServer",
-      "e2e": "PASS 19/19: break/place tests hardened to poll for block state",
+      "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
-      "note": "002 VERIFIED 40/40 (100%). Break/place E2E failures resolved as environmental (stale vite preview on :4173 + low-FPS software-WebGL timing); tests hardened. Advance to 003."
+      "note": "002 VERIFIED 40/40 (100%)."
+    },
+    {
+      "head": "88b188038f3944e4533141b9b3b3b8bc361864d19a",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 154/154; generic Registry 13/13",
+      "build": "PASS via Playwright production webServer",
+      "e2e": "PASS 19/19: break/place hardened tests poll for block state",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "003 VERIFIED 41/41 (100%). Added src/data/Registry.ts + tests/unit/Registry.test.ts; BlockRegistry untouched."
     }
   ]
 }
