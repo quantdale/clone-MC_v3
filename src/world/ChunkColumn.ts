@@ -1,5 +1,6 @@
 import { BlockState, BlockStateId, BlockStateRegistry } from './BlockStateRegistry';
 import { BlockTypeRegistry } from './BlockRegistry';
+import { ChunkStatus, chunkStatusOrdinal } from './ChunkStatus';
 import { ChunkSection } from './ChunkSection';
 import { SerializedPalettedContainer } from '../data/PalettedContainer';
 import { sectionIndex, localCoord, SECTION_SIZE } from '../math/SectionCoordinate';
@@ -62,6 +63,8 @@ export class ChunkColumn {
   private readonly motionBlockingHeight: Int16Array;
   /** When false, the heightmaps are out of date and must be recomputed on the next read. */
   private heightmapsValid: boolean;
+  /** Generation lifecycle stage of this column, independent of mesh/dirty/heightmap state. Runtime-only. */
+  private status: ChunkStatus = ChunkStatus.Empty;
 
   constructor(options: ChunkColumnOptions) {
     this.chunkX = options.chunkX;
@@ -242,6 +245,26 @@ export class ChunkColumn {
       }
     }
     return this.minY - 1;
+  }
+
+  /** Current generation lifecycle stage of this column. Independent of mesh/dirty/heightmap state. */
+  getStatus(): ChunkStatus {
+    return this.status;
+  }
+
+  /** Assign the generation status directly (e.g. resetting to `Empty` after an unload/regen). */
+  setStatus(s: ChunkStatus): void {
+    this.status = s;
+  }
+
+  /**
+   * Advance the generation status to `s`, but never move it backward: if `s` is an earlier stage than the current
+   * status, the call is a no-op. Generation code calls this as each lifecycle stage completes.
+   */
+  advanceStatusTo(s: ChunkStatus): void {
+    if (chunkStatusOrdinal(s) > chunkStatusOrdinal(this.status)) {
+      this.status = s;
+    }
   }
 
   serialize(): SerializedChunkColumn {
