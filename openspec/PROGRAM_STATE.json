@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "050-block-behavior-dispatch",
+  "currentChange": "051-block-event-queue",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "050-block-behavior-dispatch",
-  "nextChange": "051-block-event-queue",
+  "lastCompletedChange": "051-block-event-queue",
+  "nextChange": "052-block-entity-framework",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "5a0a6ca31aa5d6678e3b735e77b2becb508908d4",
-  "lastKnownHead": "5a0a6ca31aa5d6678e3b735e77b2becb508908d4",
-  "lastCompletedTask": "050: all 4 tasks complete; block-behavior-dispatch VERIFIED. New src/simulation/BlockBehavior.ts (BlockWorldAccess; BlockBehaviorContext x/y/z/tick/world; BlockBehavior optional hooks onScheduledTick/onRandomTick/onNeighborChanged/onPlaced/onBroken; frozen DEFAULT_BLOCK_BEHAVIOR; BlockBehaviorRegistry register/getBehavior/hasBehavior/size/clear with validation + duplicate rejection); 5 unit tests; 638 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 051-block-event-queue. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (051 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement local block events with deterministic ordering and bounded propagation, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "982a0547ad0e6b89040b6cf1e84fe7f32421c688",
+  "lastKnownHead": "982a0547ad0e6b89040b6cf1e84fe7f32421c688",
+  "lastCompletedTask": "051: all 4 tasks complete; block-event-queue VERIFIED. New src/simulation/BlockEventQueue.ts (BlockEvent x/y/z/blockId/eventId/param; add with per-(position,eventId) dedupe and newest-param-wins, maxQueueSize cap with false return; drain FIFO bounded by maxPerDrain; size/clear); 6 unit tests; 644 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 052-block-entity-framework. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (052 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement tickable/non-tickable block-entity lifecycle wired to chunks, verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -501,6 +501,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "050 VERIFIED 4/4 (100%). New src/simulation/BlockBehavior.ts (BlockWorldAccess; BlockBehaviorContext x/y/z/tick/world; BlockBehavior optional hooks onScheduledTick/onRandomTick/onNeighborChanged/onPlaced/onBroken; frozen DEFAULT_BLOCK_BEHAVIOR; BlockBehaviorRegistry register/getBehavior/hasBehavior/size/clear with validation + duplicate rejection); 5 unit tests; 638 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "982a0547ad0e6b89040b6cf1e84fe7f32421c688",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 644/644; BlockEventQueue 6/6",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "051 VERIFIED 4/4 (100%). New src/simulation/BlockEventQueue.ts (BlockEvent x/y/z/blockId/eventId/param; add with per-(position,eventId) dedupe and newest-param-wins, maxQueueSize cap with false return; drain FIFO bounded by maxPerDrain; size/clear); 6 unit tests; 644 unit + 19 e2e pass, stable."
     }
   ]
 }
