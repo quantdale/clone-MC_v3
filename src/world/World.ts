@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { CONFIG } from '../config';
 import { BlockId, BlockRegistry } from './BlockRegistry';
+import { DimensionType } from '../data/DimensionType';
 import { Chunk, ChunkState } from './Chunk';
 import { ChunkManager } from './ChunkManager';
 import type { ChunkMesher } from './ChunkMesher';
@@ -57,6 +58,10 @@ export class World implements WorldAccess {
   private readonly simulationDistance: number;
   /** Classifier for the two independent radii; streaming stays on `renderDistance`. */
   private readonly rsd: RenderSimulationDistance;
+  /** Lowest streamed chunk-Y layer (derived from the dimension; 0 by default). */
+  private readonly minChunkY: number;
+  /** Number of vertical chunk layers streamed around the player (1 by default). */
+  private readonly chunkLayerCount: number;
 
   /** Player edits keyed by chunk key → local index → block id. Survives unload. */
   private readonly editOverlay = new Map<string, Map<number, number>>();
@@ -111,6 +116,8 @@ export class World implements WorldAccess {
     renderDistance?: number;
     /** Ticking/simulation radius; defaults to CONFIG.simulationDistance (== render by default). */
     simulationDistance?: number;
+    /** Active dimension; derives the streamed vertical chunk-layer window. Omit for single-layer. */
+    dimension?: DimensionType;
   }) {
     this.registry = opts.registry;
     this.seed = opts.seed >>> 0;
@@ -121,6 +128,9 @@ export class World implements WorldAccess {
     this.renderDistance = opts.renderDistance ?? CONFIG.renderDistance;
     this.simulationDistance = opts.simulationDistance ?? CONFIG.simulationDistance;
     this.rsd = new RenderSimulationDistance(this.renderDistance, this.simulationDistance);
+    // Vertical window: 64-block chunk layers derived from the dimension's block extent.
+    this.minChunkY = opts.dimension ? Math.floor(opts.dimension.minY / CHUNK_DIMENSIONS.height) : 0;
+    this.chunkLayerCount = opts.dimension ? Math.ceil(opts.dimension.height / CHUNK_DIMENSIONS.height) : 1;
     this.chunkManager = new ChunkManager(opts.registry);
   }
 
@@ -383,24 +393,27 @@ export class World implements WorldAccess {
       for (let dz = -rd; dz <= rd; dz++) {
         const cx = playerChunkX + dx;
         const cz = playerChunkZ + dz;
-        const existing = this.chunkManager.getChunk(cx, 0, cz);
-        if (!existing) {
-          if (this.genQueue.length >= CONFIG.maxQueueSize) {
-            // The queue is at capacity. Don't create a chunk we can't queue —
-            // it would sit in the manager forever as an un-generated void.
-            // ensureChunks runs every frame, so the area is retried once the
-            // queue drains.
-            queueFull = true;
-            break scan;
-          }
-          const chunk = this.chunkManager.createChunk(cx, 0, cz);
-          this.enqueueGeneration(chunk);
-        } else if (!existing.generated && !this.genSet.has(chunkKey(cx, 0, cz))) {
-          // A chunk was created earlier but its generation job was dropped
-          // (queue overflow). Re-queue it now that (or when) there is room, so
-          // it cannot be stranded.
-          if (this.genQueue.length < CONFIG.maxQueueSize) {
-            this.enqueueGeneration(existing);
+        for (let cy = this.minChunkY; cy < this.minChunkY + this.chunkLayerCount; cy++) {
+          const key = chunkKey(cx, cy, cz);
+          const existing = this.chunkManager.getChunk(cx, cy, cz);
+          if (!existing) {
+            if (this.genQueue.length >= CONFIG.maxQueueSize) {
+              // The queue is at capacity. Don't create a chunk we can't queue —
+              // it would sit in the manager forever as an un-generated void.
+              // ensureChunks runs every frame, so the area is retried once the
+              // queue drains.
+              queueFull = true;
+              break scan;
+            }
+            const chunk = this.chunkManager.createChunk(cx, cy, cz);
+            this.enqueueGeneration(chunk);
+          } else if (!existing.generated && !this.genSet.has(key)) {
+            // A chunk was created earlier but its generation job was dropped
+            // (queue overflow). Re-queue it now that (or when) there is room, so
+            // it cannot be stranded.
+            if (this.genQueue.length < CONFIG.maxQueueSize) {
+              this.enqueueGeneration(existing);
+            }
           }
         }
       }
@@ -780,6 +793,16 @@ export class World implements WorldAccess {
     return this.simulationDistance;
   }
 
+  /** Lowest streamed chunk-Y layer (0 for the default single-layer world). */
+  getMinChunkY(): number {
+    return this.minChunkY;
+  }
+
+  /** Number of vertical chunk layers streamed around the player (1 by default). */
+  getChunkLayerCount(): number {
+    return this.chunkLayerCount;
+  }
+
   /**
    * Whether chunk (cx,cz) is within the simulation/ticking radius of the current
    * streaming center. False before the first `update` sets a center.
@@ -811,7 +834,7 @@ export class World implements WorldAccess {
     let ready = 0;
     for (let dx = -radius; dx <= radius; dx++) {
       for (let dz = -radius; dz <= radius; dz++) {
-        const chunk = this.chunkManager.getChunk(playerChunkX + dx, 0, playerChunkZ + dz);
+        const chunk = this.chunkManager.getChunk(playerChunkX + dx, this.minChunkY, playerChunkZ + dz);
         if (chunk?.state === ChunkState.Visible) {
           ready++;
         }
@@ -830,14 +853,16 @@ export class World implements WorldAccess {
       for (let dz = -radius; dz <= radius; dz++) {
         const cx = playerChunkX + dx;
         const cz = playerChunkZ + dz;
-        let chunk = this.chunkManager.getChunk(cx, 0, cz);
-        if (!chunk) {
-          chunk = this.chunkManager.createChunk(cx, 0, cz);
-        }
-        if (!chunk.generated) {
-          this.enqueueGeneration(chunk);
-        } else if (chunk.state !== ChunkState.Visible) {
-          this.enqueueMeshWithRetry(chunk);
+        for (let cy = this.minChunkY; cy < this.minChunkY + this.chunkLayerCount; cy++) {
+          let chunk = this.chunkManager.getChunk(cx, cy, cz);
+          if (!chunk) {
+            chunk = this.chunkManager.createChunk(cx, cy, cz);
+          }
+          if (!chunk.generated) {
+            this.enqueueGeneration(chunk);
+          } else if (chunk.state !== ChunkState.Visible) {
+            this.enqueueMeshWithRetry(chunk);
+          }
         }
       }
     }
