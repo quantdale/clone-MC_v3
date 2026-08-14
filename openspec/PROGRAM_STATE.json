@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "052-block-entity-framework",
+  "currentChange": "053-game-event-framework",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "052-block-entity-framework",
-  "nextChange": "053-game-event-framework",
+  "lastCompletedChange": "053-game-event-framework",
+  "nextChange": "054-deterministic-rng-streams",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "a72fd716bf715a0a9b229b187239ffeac5420881",
-  "lastKnownHead": "a72fd716bf715a0a9b229b187239ffeac5420881",
-  "lastCompletedTask": "052: all 4 tasks complete; block-entity-framework VERIFIED. New src/simulation/BlockEntityManager.ts (BlockEntityInstance typeKey/x/y/z/tickable/onTick/data; BlockEntityManager add/remove/get/getForChunk/removeChunk/tickAll/serializeChunk/deserializeChunk/size/clear; one-per-position, insertion-order ticking, 036-envelope round-trip with validate-before-mutate incl. chunk membership); 7 unit tests; 651 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 053-game-event-framework. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (053 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement generic gameplay events for future sensors/AI/advancements without coupling systems, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "61a44fd109249d6d26630ee8e3cc25a5ce99063a",
+  "lastKnownHead": "61a44fd109249d6d26630ee8e3cc25a5ce99063a",
+  "lastCompletedTask": "053: all 4 tasks complete; game-event-framework VERIFIED. New src/simulation/GameEventBus.ts (GameEvent type/tick/position/data; emit typed-then-wildcard in subscription order with defensive isolation and shared in-flight queue for nested emits; on/once/clear); 7 unit tests; 658 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 054-deterministic-rng-streams. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (054 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement named seed-derived RNG streams for simulation subsystems, verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -521,6 +521,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "052 VERIFIED 4/4 (100%). New src/simulation/BlockEntityManager.ts (BlockEntityInstance typeKey/x/y/z/tickable/onTick/data; BlockEntityManager add/remove/get/getForChunk/removeChunk/tickAll/serializeChunk/deserializeChunk/size/clear; one-per-position, insertion-order ticking, 036-envelope round-trip with validate-before-mutate incl. chunk membership); 7 unit tests; 651 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "61a44fd109249d6d26630ee8e3cc25a5ce99063a",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 658/658; GameEventBus 7/7",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "053 VERIFIED 4/4 (100%). New src/simulation/GameEventBus.ts (GameEvent type/tick/position/data; emit typed-then-wildcard in subscription order with defensive isolation and shared in-flight queue for nested emits; on/once/clear); 7 unit tests; 658 unit + 19 e2e pass, stable."
     }
   ]
 }
