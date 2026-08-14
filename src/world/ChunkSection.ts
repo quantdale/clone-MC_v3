@@ -16,6 +16,8 @@ export class ChunkSection {
   private readonly registry: BlockStateRegistry;
   private readonly airId: BlockStateId;
   private storage: PalettedContainer<BlockStateId>;
+  /** Monotonic version bumped on every mutation; used to drop stale mesh jobs. */
+  private meshVersionInternal = 0;
 
   constructor(index: number, registry: BlockStateRegistry, airId?: BlockStateId) {
     this.index = index;
@@ -49,21 +51,29 @@ export class ChunkSection {
 
   set(localIndex: number, state: BlockState): void {
     this.storage.set(localIndex, state.id);
+    this.meshVersionInternal++;
+  }
+
+  /** Monotonic version; increments on every mutation so stale mesh jobs can be discarded. */
+  get meshVersion(): number {
+    return this.meshVersionInternal;
   }
 
   setStateId(localIndex: number, id: BlockStateId): void {
     this.storage.set(localIndex, id);
+    this.meshVersionInternal++;
   }
 
   setAt(localX: number, localY: number, localZ: number, state: BlockState): void {
     this.set(localIndex(localX, localY, localZ), state);
   }
 
-  /** Replace every slot with `state`. */
+  /** Replace every slot with `state`. Counts as a single logical mutation. */
   fill(state: BlockState): void {
     for (let i = 0; i < SECTION_VOLUME; i++) {
       this.storage.set(i, state.id);
     }
+    this.meshVersionInternal++;
   }
 
   /** True when every slot is air (single-entry palette). */

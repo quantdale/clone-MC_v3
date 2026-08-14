@@ -127,6 +127,16 @@ export class ChunkColumn {
     }
   }
 
+  /** Current mesh version of the section at in-column index `sy`; `0` for an untouched section. */
+  sectionMeshVersion(sy: number): number {
+    return this.sections.get(sy)?.meshVersion ?? 0;
+  }
+
+  /** True when the section's current mesh version differs from a version captured at mesh-job queue time. */
+  isSectionStale(sy: number, capturedVersion: number): boolean {
+    return this.sectionMeshVersion(sy) !== capturedVersion;
+  }
+
   serialize(): SerializedChunkColumn {
     const sections: Record<number, SerializedPalettedContainer> = {};
     for (const [sy, section] of this.sections) {
