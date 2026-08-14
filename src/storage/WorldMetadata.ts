@@ -9,7 +9,7 @@
 export const WORLD_DB_NAME = 'voxel-world-db';
 
 /** Schema version of the database; bump and add an `onupgradeneeded` step to migrate. */
-export const WORLD_DB_VERSION = 4;
+export const WORLD_DB_VERSION = 5;
 
 /** Object store holding one `WorldMetadata` record per `worldId`. */
 export const WORLD_METADATA_STORE = 'world-metadata';
@@ -22,6 +22,9 @@ export const WORLD_BLOCK_ENTITY_STORE = 'block-entities';
 
 /** Object store holding one `entities` chunk record per `worldId|chunkX|chunkZ`. Added in v4. */
 export const WORLD_ENTITY_STORE = 'entities';
+
+/** Object store holding one `player-state` record per `worldId`. Added in v5. */
+export const WORLD_PLAYER_STATE_STORE = 'player-state';
 
 /** A single world's persisted metadata header. */
 export interface WorldMetadata {
