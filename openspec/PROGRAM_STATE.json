@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "042-world-export-import",
+  "currentChange": "043-storage-quota-recovery",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "042-world-export-import",
-  "nextChange": "043-storage-quota-recovery",
-  "completedTasks": 5,
-  "totalTasks": 5,
+  "lastCompletedChange": "043-storage-quota-recovery",
+  "nextChange": "044-fixed-20tps-clock",
+  "completedTasks": 4,
+  "totalTasks": 4,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "776c5e8d2f874527627fed06a9077fa47f919cb1",
-  "lastKnownHead": "776c5e8d2f874527627fed06a9077fa47f919cb1",
-  "lastCompletedTask": "042: all 5 tasks complete; world-export-import VERIFIED. New src/storage/WorldArchive.ts (voxel-world v1 WorldArchive + BlockEntityChunkPayload/EntityChunkPayload + validateWorldArchive) and src/storage/WorldArchiver.ts (exportWorld read-only, importWorld validates-then-writes with playerState worldId normalization, WorldImportReport); 5 unit tests incl. export->import->export stability and atomic rejection; 585 unit + 19 e2e pass. No WORLD_DB_VERSION bump.",
-  "nextExactAction": "Advance to 043-storage-quota-recovery. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (043 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement quota/private-mode/storage failure detection, recovery, and user-safe behavior over the 034-042 world storage, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "d6dc95bac620e6dd700bbf3b6433b229acd59df1",
+  "lastKnownHead": "d6dc95bac620e6dd700bbf3b6433b229acd59df1",
+  "lastCompletedTask": "043: all 4 tasks complete; storage-quota-recovery VERIFIED. New src/storage/StorageHealth.ts (classifyStorageError by DOMException name/code; StorageHealthMonitor ok->degraded->failed on consecutive failures with canWrite gate, lastFailure, change listeners, reset; createWorldStorageProbe over the five repositories with reserved __probe__ record cleaned up in finally); 7 unit tests; 592 unit + 19 e2e pass. No WORLD_DB_VERSION bump.",
+  "nextExactAction": "Advance to 044-fixed-20tps-clock. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (044 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement the canonical deterministic 20 TPS simulation clock decoupled from render FPS, verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -421,6 +421,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "042 VERIFIED 5/5 (100%). New src/storage/WorldArchive.ts (voxel-world v1 WorldArchive + BlockEntityChunkPayload/EntityChunkPayload + validateWorldArchive) and src/storage/WorldArchiver.ts (exportWorld read-only; importWorld validates-then-writes with playerState worldId normalization; WorldImportReport); 5 unit tests incl. export->import->export stability and atomic rejection with all five stores empty; 585 unit + 19 e2e pass. No WORLD_DB_VERSION bump."
+    },
+    {
+      "head": "d6dc95bac620e6dd700bbf3b6433b229acd59df1",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 592/592; StorageHealth 7/7",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "043 VERIFIED 4/4 (100%). New src/storage/StorageHealth.ts (classifyStorageError by DOMException name/code; StorageHealthMonitor ok->degraded->failed on consecutive failures with canWrite gate, lastFailure, change listeners, reset; createWorldStorageProbe over the five repositories with reserved __probe__ record cleaned up in finally); 7 unit tests; 592 unit + 19 e2e pass. No WORLD_DB_VERSION bump."
     }
   ]
 }
