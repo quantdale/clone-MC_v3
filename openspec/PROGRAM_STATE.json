@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "041-save-schema-migrations",
+  "currentChange": "042-world-export-import",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "041-save-schema-migrations",
-  "nextChange": "042-world-export-import",
+  "lastCompletedChange": "042-world-export-import",
+  "nextChange": "043-storage-quota-recovery",
   "completedTasks": 5,
   "totalTasks": 5,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "dbe59066fe55dab7d59d6fcbd50ae83e3c02b697",
-  "lastKnownHead": "dbe59066fe55dab7d59d6fcbd50ae83e3c02b697",
-  "lastCompletedTask": "041: all 5 tasks complete; save-schema-migrations VERIFIED. New src/storage/DataMigration.ts (DataMigration<T>, DataMigrationError kinds GAP/DUPLICATE/DOWNGRADE/UNKNOWN_VERSION, DataMigrationChain<T> with register/migrate/needsMigration/currentVersion/steps; contiguous ordered application, purity) + typed chains WORLD_METADATA_MIGRATIONS/CHUNK_COLUMN_MIGRATIONS (base v1) and migrateWorldMetadata/migrateChunkColumn helpers; 10 unit tests; 580 unit + 19 e2e pass. No WORLD_DB_VERSION bump.",
-  "nextExactAction": "Advance to 042-world-export-import. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (042 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement original world archive export/import with validation over the 034-041 world database, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "776c5e8d2f874527627fed06a9077fa47f919cb1",
+  "lastKnownHead": "776c5e8d2f874527627fed06a9077fa47f919cb1",
+  "lastCompletedTask": "042: all 5 tasks complete; world-export-import VERIFIED. New src/storage/WorldArchive.ts (voxel-world v1 WorldArchive + BlockEntityChunkPayload/EntityChunkPayload + validateWorldArchive) and src/storage/WorldArchiver.ts (exportWorld read-only, importWorld validates-then-writes with playerState worldId normalization, WorldImportReport); 5 unit tests incl. export->import->export stability and atomic rejection; 585 unit + 19 e2e pass. No WORLD_DB_VERSION bump.",
+  "nextExactAction": "Advance to 043-storage-quota-recovery. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (043 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement quota/private-mode/storage failure detection, recovery, and user-safe behavior over the 034-042 world storage, verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -411,6 +411,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "041 VERIFIED 5/5 (100%). New src/storage/DataMigration.ts (DataMigration<T>, DataMigrationError kinds GAP/DUPLICATE/DOWNGRADE/UNKNOWN_VERSION, DataMigrationChain<T> register/migrate/needsMigration/currentVersion/steps; contiguous ordered application, purity) + typed chains WORLD_METADATA_MIGRATIONS/CHUNK_COLUMN_MIGRATIONS (base v1) and migrateWorldMetadata/migrateChunkColumn helpers; 10 unit tests; 580 unit + 19 e2e pass. No WORLD_DB_VERSION bump."
+    },
+    {
+      "head": "776c5e8d2f874527627fed06a9077fa47f919cb1",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 585/585; WorldArchiver 5/5",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "042 VERIFIED 5/5 (100%). New src/storage/WorldArchive.ts (voxel-world v1 WorldArchive + BlockEntityChunkPayload/EntityChunkPayload + validateWorldArchive) and src/storage/WorldArchiver.ts (exportWorld read-only; importWorld validates-then-writes with playerState worldId normalization; WorldImportReport); 5 unit tests incl. export->import->export stability and atomic rejection with all five stores empty; 585 unit + 19 e2e pass. No WORLD_DB_VERSION bump."
     }
   ]
 }
