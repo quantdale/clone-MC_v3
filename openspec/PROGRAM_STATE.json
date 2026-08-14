@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "066-voxel-light-storage",
+  "currentChange": "067-skylight-propagation",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "066-voxel-light-storage",
-  "nextChange": "067-skylight-propagation",
+  "lastCompletedChange": "067-skylight-propagation",
+  "nextChange": "068-blocklight-propagation",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "e046785324f54dd2fecc080e42d778749847e205",
-  "lastKnownHead": "e046785324f54dd2fecc080e42d778749847e205",
-  "lastCompletedTask": "066: all 4 tasks complete; voxel-light-storage VERIFIED. New src/rendering/LightStorage.ts (NibbleArray 4096 4-bit cells in 2048 bytes with bounds/value validation and byte-identical serialize/deserialize; SectionLightStorage sky/block accessors by local coord, fill, serialize, copy-on-construct); 8 unit tests; 744 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 067-skylight-propagation. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (067 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement deterministic skylight initialization/propagation across sections, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "169ac970d7b9611c1a75fa8afb6631bd1945189f",
+  "lastKnownHead": "169ac970d7b9611c1a75fa8afb6631bd1945189f",
+  "lastCompletedTask": "067: all 4 tasks complete; skylight-propagation VERIFIED. New src/rendering/SkyLightEngine.ts (SkyLightWorld; computeSkyLight with per-column 15->0 falloff initialization and FIFO BFS propagation with fixed neighbor order; opaque cells always 0; deterministic); 5 unit tests; 749 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 068-blocklight-propagation. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (068 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement luminance-source block-light propagation, verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -661,6 +661,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "066 VERIFIED 4/4 (100%). New src/rendering/LightStorage.ts (NibbleArray 4096 4-bit cells in 2048 bytes with bounds/value validation and byte-identical serialize/deserialize; SectionLightStorage sky/block accessors by local coord, fill, serialize, copy-on-construct); 8 unit tests; 744 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "169ac970d7b9611c1a75fa8afb6631bd1945189f",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 749/749; SkyLightEngine 5/5",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "067 VERIFIED 4/4 (100%). New src/rendering/SkyLightEngine.ts (SkyLightWorld; computeSkyLight with per-column 15->0 falloff initialization and FIFO BFS propagation with fixed neighbor order; opaque cells always 0; deterministic); 5 unit tests; 749 unit + 19 e2e pass, stable."
     }
   ]
 }
