@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "061-render-layer-model",
+  "currentChange": "062-greedy-opaque-meshing",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "061-render-layer-model",
-  "nextChange": "062-greedy-opaque-meshing",
+  "lastCompletedChange": "062-greedy-opaque-meshing",
+  "nextChange": "063-template-partial-block-meshing",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "e8eb69ed93523ae2b32f88aea8e874476bba8947",
-  "lastKnownHead": "e8eb69ed93523ae2b32f88aea8e874476bba8947",
-  "lastCompletedTask": "061: all 4 tasks complete; render-layer-model VERIFIED. New src/rendering/RenderLayer.ts (RenderLayer opaque/cutout/translucent/emissive; RENDER_LAYERS pinned order; isRenderLayer/parseRenderLayer/compareLayers; RenderLayerRegistry setLayer/getLayer/has/size/clear with default opaque and unknown-layer rejection); 6 unit tests; 711 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 062-greedy-opaque-meshing. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (062 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement greedy merge compatible opaque cube faces with regression equivalence tests, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "e4ec55eebf745070c46076f8aec94f8ed1cd416f",
+  "lastKnownHead": "e4ec55eebf745070c46076f8aec94f8ed1cd416f",
+  "lastCompletedTask": "062: all 4 tasks complete; greedy-opaque-meshing VERIFIED. New src/rendering/GreedyMesher.ts (OpaqueFaceQuad; greedyMergeOpaqueFaces with per-face/slice visibility grids and row-major maximal rectangles keyed by faceKey; enumerateOpaqueFacesNaive for equivalence; deterministic); 6 unit tests incl. equivalence matrix; 717 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 063-template-partial-block-meshing. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (063 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement meshing of slabs/stairs/panes/other model templates without full-cube assumptions, verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -611,6 +611,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "061 VERIFIED 4/4 (100%). New src/rendering/RenderLayer.ts (RenderLayer opaque/cutout/translucent/emissive; RENDER_LAYERS pinned order; isRenderLayer/parseRenderLayer/compareLayers; RenderLayerRegistry setLayer/getLayer/has/size/clear with default opaque and unknown-layer rejection); 6 unit tests; 711 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "e4ec55eebf745070c46076f8aec94f8ed1cd416f",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 717/717; GreedyMesher 6/6",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "062 VERIFIED 4/4 (100%). New src/rendering/GreedyMesher.ts (OpaqueFaceQuad; greedyMergeOpaqueFaces with per-face/slice visibility grids and row-major maximal rectangles keyed by faceKey; enumerateOpaqueFacesNaive for equivalence; deterministic); 6 unit tests incl. equivalence matrix; 717 unit + 19 e2e pass, stable."
     }
   ]
 }
