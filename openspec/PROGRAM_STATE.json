@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "025-dimension-type-height-model",
+  "currentChange": "026-vertical-world-access",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "025-dimension-type-height-model",
-  "nextChange": "026-vertical-world-access",
-  "completedTasks": 7,
-  "totalTasks": 7,
+  "lastCompletedChange": "026-vertical-world-access",
+  "nextChange": "027-vertical-neighbor-dirtying",
+  "completedTasks": 8,
+  "totalTasks": 8,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "7de37f6d70fdc3c5e3cca6e99a1232435628016c",
-  "lastValidatedHead": "f069c34a2cc9dce23512e456cfeb338c230041c4",
-  "lastKnownHead": "f069c34a2cc9dce23512e456cfeb338c230041c4",
-  "lastCompletedTask": "025: all 7 tasks complete; dimension-type-height-model VERIFIED. src/data/DimensionType.ts adds validated DimensionType (minY/height/logicalHeight/hasSkylight + derived minSectionY/sectionCount/maxSectionY/maxY + containsY/sectionIndexForY) and DimensionTypeRegistry (003-based) with overworld/minY -64/height 384, nether 0/128, end 0/256 defaults. 10 unit tests; 408 unit + 19 e2e pass.",
-  "nextExactAction": "Advance to 026-vertical-world-access. NOTE: the 026 directory does not yet exist (013-025 had to be created+authored). Author proposal/design/tasks/specs/vertical-world-access/spec.md/verification via SPEC_AUTHORING_PROTOCOL.md, validate them, then implement general world reads/writes across negative and high Y using 024 ChunkColumn + 025 DimensionType (derive sectionCount/minSectionY, worldToSectionLocal routing), removing the 0-63 slab restriction, verify full gate, commit + push, advance program state.",
+  "lastValidatedHead": "70fcd6706b5e69f40c7d1972d888cf9344e0a03b",
+  "lastKnownHead": "70fcd6706b5e69f40c7d1972d888cf9344e0a03b",
+  "lastCompletedTask": "026: all 8 tasks complete; vertical-world-access VERIFIED. src/world/VerticalWorldAccess.ts adds a gameplay-free facade over 024 ChunkColumn + 025 DimensionType that maps world (x,y,z) to (chunkX,chunkZ) columns, deriving minSectionY/sectionCount from the active dimension and removing the legacy 0-63 Y slab (accessible span is [dimension.minY, dimension.maxY]). Air defaults, lazy column creation, dirty aggregation, serialize/deserialize round-trip. 14 unit tests; 422 unit + 19 e2e pass.",
+  "nextExactAction": "Advance to 027-vertical-neighbor-dirtying. NOTE: the 027 directory does not yet exist (013-026 had to be created+authored). Author proposal/design/tasks/specs/vertical-neighbor-dirtying/spec.md/verification via SPEC_AUTHORING_PROTOCOL.md, validate them, then implement dirty propagation across all six section faces including vertical boundaries using 026 VerticalWorldAccess + 024 ChunkColumn dirty tracking, verify full gate, commit + push, advance program state.",
   "blockers": [],
   "validationResults": [
     {
@@ -251,6 +251,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "024 VERIFIED 9/9 (100%). ChunkColumn groups sectionCount ChunkSections by (chunkX,chunkZ) with lazy air-section allocation, 021-routed get/set + RangeError bounds, dirty-section Set tracking, and deterministic serialize/deserialize; 7 unit tests; 398 unit + 19 e2e pass."
+    },
+    {
+      "head": "70fcd6706b5e69f40c7d1972d888cf9344e0a03b",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 422/422; VerticalWorldAccess 14/14",
+      "build": "PASS via Playwright production webServer",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "026 VERIFIED 8/8 (100%). VerticalWorldAccess facade over ChunkColumn+DimensionType maps world (x,y,z) to columns, deriving minSectionY/sectionCount from the active dimension and removing the 0-63 Y slab; air defaults, lazy columns, dirty aggregation, serialize/deserialize; 14 unit tests; 422 unit + 19 e2e pass."
     }
   ]
 }
