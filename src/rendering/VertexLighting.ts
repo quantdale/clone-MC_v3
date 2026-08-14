@@ -23,7 +23,7 @@ export interface FaceLightContext {
 }
 
 /** In-plane axes for a face: first = u, second = v (matches 062/063 conventions). */
-function inPlaneAxes(axis: 0 | 1 | 2): [0 | 1 | 2, 0 | 1 | 2] {
+export function inPlaneAxes(axis: 0 | 1 | 2): [0 | 1 | 2, 0 | 1 | 2] {
   if (axis === 1) return [0, 2]; // up/down: u = x, v = z
   if (axis === 2) return [0, 1]; // north/south: u = x, v = y
   return [2, 1]; // east/west: u = z, v = y
@@ -37,7 +37,7 @@ function cellAxisCoord(ctx: FaceLightContext): number {
 }
 
 /** World coordinate along `axis` of the outward layer (one step from the face). */
-function outwardLayerCoord(ctx: FaceLightContext): number {
+export function outwardLayerCoord(ctx: FaceLightContext): number {
   if (Number.isInteger(ctx.planeCoord)) {
     return ctx.isMax ? ctx.planeCoord : ctx.planeCoord - 1;
   }

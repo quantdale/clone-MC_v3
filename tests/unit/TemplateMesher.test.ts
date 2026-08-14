@@ -174,6 +174,23 @@ describe('meshBlockModel', () => {
       { sky: 9, block: 0 },
       { sky: 9, block: 0 },
     ]);
+    // Nothing occludes the slab's up-face corners.
+    expect(up.vertexAO).toEqual([3, 3, 3, 3]);
+  });
+
+  it('darkens the corner beside an occluding block in the outward layer (071)', () => {
+    // Full cube at (0,0,0); an occluder at (0,1,1) lies in the up face's outward layer (y=1) as
+    // the side1 cell of corner (1,1) → AO 2 there; the other corners stay 3.
+    const light: LightSampler = {
+      inBounds: () => true,
+      isOpaque: (x, y, z) => x === 0 && y === 1 && z === 1,
+      getSkyLight: () => 0,
+      getBlockLight: () => 0,
+    };
+    const quads = meshBlockModel(fullCubeModel(), 1, 0, 0, 0, emptyNeighbors(), light);
+
+    const up = quads.find((q) => q.face === 'up')!;
+    expect(up.vertexAO).toEqual([3, 3, 3, 2]);
   });
 });
 

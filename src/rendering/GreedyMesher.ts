@@ -5,9 +5,11 @@
  * out-of-section neighbors count as exposed), and greedily extends rectangles row-major. Output is
  * deterministic. `enumerateOpaqueFacesNaive` emits one quad per exposed face for regression
  * equivalence testing. Since 070 every emitted quad also carries per-corner sky/block light sampled
- * from a caller-supplied `LightSampler` (see VertexLighting).
+ * from a caller-supplied `LightSampler` (see VertexLighting), and since 071 per-corner ambient
+ * occlusion (see AmbientOcclusion).
  */
 import type { ModelFace } from '../data/BlockModel';
+import { quadVertexAO } from './AmbientOcclusion';
 import { quadVertexLights, type FaceLightContext } from './VertexLighting';
 
 /** Sky/block light at one quad corner (0-15). */
@@ -16,11 +18,14 @@ export interface VertexLight {
   block: number;
 }
 
-/** Samples sky/block light and opacity at world cells (070 per-vertex lighting). */
+/** Per-corner ambient occlusion level (Minecraft scale: 3 = unoccluded, 0 = fully occluded). */
+export type AOLevel = 0 | 1 | 2 | 3;
+
+/** Samples sky/block light and opacity at world cells (070/071 vertex shading). */
 export interface LightSampler {
   /** Whether the world cell lies inside the sampled volume. */
   inBounds(x: number, y: number, z: number): boolean;
-  /** Whether the world cell is opaque (contributes 0 to corner averages). */
+  /** Whether the world cell is opaque (contributes 0 to corner averages; occludes AO). */
   isOpaque(x: number, y: number, z: number): boolean;
   getSkyLight(x: number, y: number, z: number): number;
   getBlockLight(x: number, y: number, z: number): number;
@@ -39,6 +44,8 @@ export interface OpaqueFaceQuad {
   blockId: number;
   /** Per-corner light, order `(minU,minV), (maxU,minV), (minU,maxV), (maxU,maxV)` (070). */
   vertexLights: [VertexLight, VertexLight, VertexLight, VertexLight];
+  /** Per-corner ambient occlusion, same corner order as `vertexLights` (071). */
+  vertexAO: [AOLevel, AOLevel, AOLevel, AOLevel];
 }
 
 /** Samples the block id at a world cell; `null` = not opaque/absent. */
@@ -157,8 +164,8 @@ function faceLightContext(plane: FacePlane, slice: number, x: number, y: number,
   return { axis: plane.axis, isMax: plane.offset === 1, planeCoord: slice + plane.offset, cellX, cellY, cellZ };
 }
 
-/** Attach per-corner light to a quad (070). */
-function withVertexLights(
+/** Attach per-corner light and AO to a quad (070/071). */
+function withVertexShading(
   light: LightSampler,
   plane: FacePlane,
   slice: number,
@@ -167,9 +174,13 @@ function withVertexLights(
   z: number,
   width: number,
   height: number,
-): [VertexLight, VertexLight, VertexLight, VertexLight] {
+): { vertexLights: OpaqueFaceQuad['vertexLights']; vertexAO: OpaqueFaceQuad['vertexAO'] } {
   const [minU, minV] = quadInPlaneMin(plane, x, y, z);
-  return quadVertexLights(light, faceLightContext(plane, slice, x, y, z), minU, minV, width, height);
+  const ctx = faceLightContext(plane, slice, x, y, z);
+  return {
+    vertexLights: quadVertexLights(light, ctx, minU, minV, width, height),
+    vertexAO: quadVertexAO(light, ctx, minU, minV, width, height),
+  };
 }
 
 /**
@@ -233,7 +244,7 @@ export function greedyMergeOpaqueFaces(
             width,
             height,
             blockId: cell.id,
-            vertexLights: withVertexLights(light, plane, slice, x, y, z, width, height),
+            ...withVertexShading(light, plane, slice, x, y, z, width, height),
           });
         }
       }
@@ -267,7 +278,7 @@ export function enumerateOpaqueFacesNaive(
             width: 1,
             height: 1,
             blockId: cell.id,
-            vertexLights: withVertexLights(light, plane, slice, x, y, z, 1, 1),
+            ...withVertexShading(light, plane, slice, x, y, z, 1, 1),
           });
         }
       }

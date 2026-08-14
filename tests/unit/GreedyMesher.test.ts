@@ -32,6 +32,16 @@ function gradientLight(): LightSampler {
   };
 }
 
+/** Opacity from a cells map (nonzero id = opaque); no light. */
+function cellOpaqueLight(cells: Record<string, number>): LightSampler {
+  return {
+    inBounds: (x, y, z) => x >= 0 && x < 16 && y >= 0 && y < 16 && z >= 0 && z < 16,
+    isOpaque: (x, y, z) => (cells[`${x},${y},${z}`] ?? 0) > 0,
+    getSkyLight: () => 0,
+    getBlockLight: () => 0,
+  };
+}
+
 const isOpaque = (id: number): boolean => id > 0;
 const faceKey = (id: number, face: ModelFace): string => `${id}:${face}`;
 
@@ -77,6 +87,7 @@ describe('greedyMergeOpaqueFaces', () => {
       expect(q.height).toBe(1);
       expect(q.blockId).toBe(1);
       expect(q.vertexLights).toHaveLength(4); // 070: every quad carries per-corner light
+      expect(q.vertexAO).toHaveLength(4); // 071: every quad carries per-corner AO
     }
     // Face planes.
     expect(byFace.get('down')!.y).toBe(0);
@@ -154,5 +165,24 @@ describe('greedyMergeOpaqueFaces', () => {
     // Corners (5,5), (7,5), (5,7), (7,7): x∈{4,5}→5, x∈{6,7}→7 (rounded averages).
     expect(up[0]!.vertexLights.map((l) => l.sky)).toEqual([5, 7, 5, 7]);
     expect(up[0]!.vertexLights.every((l) => l.block === 0)).toBe(true);
+    // Nothing occludes the up-face corners → full AO.
+    expect(up[0]!.vertexAO).toEqual([3, 3, 3, 3]);
+  });
+
+  it('darkens the corner next to an occluding block (071)', () => {
+    // A 2x2 block at (5..6, y=0, 5..6) plus an occluder at (4, 1, 5) — in the up face's outward
+    // layer (y=1), beside corner (5,5): side1 of that corner is opaque → AO 2; all other
+    // corners are unoccluded.
+    const cells: Record<string, number> = { '4,1,5': 1 };
+    for (let x = 5; x <= 6; x++) {
+      for (let z = 5; z <= 6; z++) {
+        cells[`${x},0,${z}`] = 1;
+      }
+    }
+    const quads = greedyMergeOpaqueFaces(sampler(cells), isOpaque, faceKey, cellOpaqueLight(cells));
+
+    const up = quads.filter((q) => q.face === 'up' && q.y === 1); // the 2x2 block's up face (the occluder at y=1 has its own up face at y=2)
+    expect(up).toHaveLength(1);
+    expect(up[0]!.vertexAO).toEqual([2, 3, 3, 3]);
   });
 });

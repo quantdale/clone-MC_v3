@@ -8,6 +8,7 @@
  */
 import type { BlockModel, ModelFace } from '../data/BlockModel';
 import type { OpaqueFaceQuad, LightSampler } from './GreedyMesher';
+import { quadVertexAO } from './AmbientOcclusion';
 import { quadVertexLights, type FaceLightContext } from './VertexLighting';
 
 /** Whether the cell at world coordinates is opaque (for culling). */
@@ -90,6 +91,8 @@ export function meshBlockModel(
         cellY: y,
         cellZ: z,
       };
+      const minU = cell[uAxis]! + uFrom;
+      const minV = cell[vAxis]! + vFrom;
 
       out.push({
         face: spec.face,
@@ -99,7 +102,8 @@ export function meshBlockModel(
         width,
         height,
         blockId,
-        vertexLights: quadVertexLights(light, ctx, cell[uAxis]! + uFrom, cell[vAxis]! + vFrom, width, height),
+        vertexLights: quadVertexLights(light, ctx, minU, minV, width, height),
+        vertexAO: quadVertexAO(light, ctx, minU, minV, width, height),
       });
     }
   }

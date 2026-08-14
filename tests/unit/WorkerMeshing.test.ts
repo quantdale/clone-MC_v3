@@ -93,17 +93,21 @@ describe('processMeshSectionRequest', () => {
   it('lights quads from the payload light arrays', () => {
     const payload = cubePayload(); // a single cube at cell (0, 0, 0)
     payload.skyLight[0 + 1 * SECTION] = 12; // sky 12 at (0, 1, 0), the air above the cube
+    payload.cells[1 + 1 * SECTION] = 1; // occluder at (1, 1, 0) in the up face's outward layer
     const result = processMeshSectionRequest(payload);
 
     const up = result.quads.find((q) => q.face === 'up')!;
     // Corner (0,0) samples only (0,1,0) (all other corner cells out of section); corner (1,0)
-    // averages (0,1,0)=12 with (1,1,0)=0; corner (1,1) averages four cells: 12/4 = 3.
+    // averages (0,1,0)=12 with the opaque (1,1,0)=0; corner (1,1) averages four cells: 12/4 = 3.
     expect(up.vertexLights).toEqual([
       { sky: 12, block: 0 },
       { sky: 6, block: 0 },
       { sky: 6, block: 0 },
       { sky: 3, block: 0 },
     ]);
+    // AO: the occluder at (1,1,0) is the side2 cell of corner (1,1) → 2; the front cells of the
+    // other corners are never consulted, and out-of-section cells never occlude.
+    expect(up.vertexAO).toEqual([3, 3, 3, 2]);
   });
 });
 
