@@ -13,8 +13,6 @@ The number, order, and scope are unchanged. Do not create a second implementatio
 
 The following missing files MUST be authored and pass `SPEC_AUTHORING_PROTOCOL.md` before their change becomes ACTIVE:
 
-- 011: missing `verification.md`.
-
 A missing artifact is a hard pre-implementation block, not completed work.
 
 > Resolved: 006, 007, 008, and 009 have all required artifacts present and are VERIFIED (006–009) or ahead of activation.
