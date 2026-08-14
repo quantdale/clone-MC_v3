@@ -3,56 +3,55 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **093-aquifer-system — VERIFIED 100%**
-- Active implementation change: **093-aquifer-system — VERIFIED**
-- Next change: **094-configured-feature-core — NOT YET ACTIVE (artifacts pending)**
-- 093 task ledger: **4 total tasks, 4 completed**
-- 093 completion: **100%**
-- 093 mandatory aquifer-system requirements: **PASS**
-- 093 required-test gate: **PASS — unit 1038/1038, E2E 19/19**
-- 093 advancement allowed: **Yes**
+- Last completed change: **094-configured-feature-core — VERIFIED 100%**
+- Active implementation change: **094-configured-feature-core — VERIFIED**
+- Next change: **095-placed-feature-core — NOT YET ACTIVE (artifacts pending)**
+- 094 task ledger: **4 total tasks, 4 completed**
+- 094 completion: **100%**
+- 094 mandatory configured-feature-core requirements: **PASS**
+- 094 required-test gate: **PASS — unit 1044/1044, E2E 19/19**
+- 094 advancement allowed: **Yes**
 - Session-start head: `d282bbb01b4eabbdc76daaa05e78ccff81f2d685`
-- Validated head: `55429cf080024b5ec2e7ad900b8711ed3a001936`
-- Next exact action: **Advance to 094-configured-feature-core. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (094 artifacts NOT yet present — authoring is a hard pre-implementation block), validate, implement data-driven worldgen feature definitions (deterministic; registry-backed, 003 patterns), verify full gate, commit + push, advance program state.**
+- Validated head: `e350281a70fa9560b4144543ffe4aacdbdfc4929`
+- Next exact action: **Advance to 095-placed-feature-core. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (095 artifacts NOT yet present — authoring is a hard pre-implementation block), validate, implement placement modifiers, counts, rarity, height, biome and survival filters (deterministic; 094 features + 054 RNG), verify full gate, commit + push, advance program state.**
 
-## What 093 implemented
+## What 094 implemented
 
-Change 093 adds underground water/lava aquifer decisions.
+Change 094 adds the data-driven configured-feature core.
 
-- `src/worldgen/AquiferSystem.ts` (NEW) — `AquiferDecision` (`WATER | LAVA | NONE`);
-  `AquiferConfig` (defaults: seaLevel 63, lavaLevel -54 exclusive, dryThreshold 0.4);
-  `AquiferBlockIds` (defaults water 8 / lava 10); `classifyAquifer(seed, x, y, z, config?)`:
-  above sea level → NONE; dryness fbm3 noise above the threshold → NONE; below `lavaLevel` →
-  LAVA; otherwise WATER; `applyAquifers(column, carved, seed, config?, ids?)`: pure fill of 092
-  carved cells with the fluid ids (dry/above-sea carved cells stay air), everything else
-  preserved. Strict config validation.
-- `tests/unit/AquiferSystem.test.ts` (NEW) — 8 tests: exact y-table with dryness forced off/on
-  (thresholds outside the fbm bound), default-config determinism and decision set, applyAquifers
-  fill/preserve/purity, config validation.
+- `src/worldgen/ConfiguredFeature.ts` (NEW) — `ConfiguredFeatureConfig` union
+  (`simpleBlock { blockId }`, `blockPatch { blockId; tries; radiusXZ; radiusY }` with strict
+  validation: non-negative block ids, positive integers elsewhere); `ConfiguredFeature`
+  (key + config); `validateConfiguredFeatureConfig`/`validateConfiguredFeature`;
+  `ConfiguredFeatureRegistry` (003 pattern: atomic duplicate/invalid rejection,
+  register/get/has/size/clear); `createDefaultConfiguredFeatures` (`overworld/dirt_patch`
+  blockPatch 3/64/4/3, `overworld/gravel_patch` 13/32/3/2).
+- `tests/unit/ConfiguredFeature.test.ts` (NEW) — 6 tests: validation matrix, registry lifecycle
+  and atomicity, defaults, determinism.
 
-## Validation evidence (093)
+## Validation evidence (094)
 
 - typecheck: PASS (`tsc --noEmit`)
 - lint: PASS (`eslint .`)
-- unit: PASS 1038/1038 (prior 1030 + 8 new), stable across repeated runs
+- unit: PASS 1044/1044 (prior 1038 + 6 new), stable across repeated runs
 - production build: PASS (`tsc --noEmit && vite build`)
 - E2E: PASS 19/19
 
 ## Advancement decision
 
-Change 093 is **VERIFIED** at 4/4 (100%). All gates are green: typecheck, lint, the new 093 suites,
-the full unit suite (1038/1038, stable), production build, and the required E2E suite (19/19). No
+Change 094 is **VERIFIED** at 4/4 (100%). All gates are green: typecheck, lint, the new 094 suites,
+the full unit suite (1044/1044, stable), production build, and the required E2E suite (19/19). No
 advancement exception was needed.
 
-## Next change: 094 (pending artifacts)
+## Next change: 095 (pending artifacts)
 
-`094-configured-feature-core` is named in `CHANGE_SEQUENCE.md` with scope "Data-driven worldgen
-feature definitions." Per `AGENTS.md`, a change lacking full artifacts is a hard
-pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md`
-before any production code.
+`095-placed-feature-core` is named in `CHANGE_SEQUENCE.md` with scope "Placement modifiers,
+counts, rarity, height, biome and survival filters." Per `AGENTS.md`, a change lacking full
+artifacts is a hard pre-implementation block. Author and validate those artifacts via
+`SPEC_AUTHORING_PROTOCOL.md` before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 093 verification.
-Change 094 is the next change; its artifacts must be authored and validated before implementation
+A future session must first inspect current `origin/main`, this state, and the 094 verification.
+Change 095 is the next change; its artifacts must be authored and validated before implementation
 begins.

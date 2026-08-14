@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "093-aquifer-system",
+  "currentChange": "094-configured-feature-core",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "093-aquifer-system",
-  "nextChange": "094-configured-feature-core",
+  "lastCompletedChange": "094-configured-feature-core",
+  "nextChange": "095-placed-feature-core",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "55429cf080024b5ec2e7ad900b8711ed3a001936",
-  "lastKnownHead": "55429cf080024b5ec2e7ad900b8711ed3a001936",
-  "lastCompletedTask": "093: all 4 tasks complete; aquifer-system VERIFIED. New src/worldgen/AquiferSystem.ts (AquiferDecision WATER/LAVA/NONE; AquiferConfig defaults seaLevel 63/lavaLevel -54 (exclusive)/dryThreshold 0.4; AquiferBlockIds defaults water 8/lava 10; classifyAquifer documented table with dryness fbm3 noise; applyAquifers pure fill of 092 carved cells; config validation); 8 new unit tests; 1038 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 094-configured-feature-core. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (094 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement data-driven worldgen feature definitions (deterministic; registry-backed, 003 patterns), verify full gate, commit + push, advance.",
+  "lastValidatedHead": "e350281a70fa9560b4144543ffe4aacdbdfc4929",
+  "lastKnownHead": "e350281a70fa9560b4144543ffe4aacdbdfc4929",
+  "lastCompletedTask": "094: all 4 tasks complete; configured-feature-core VERIFIED. New src/worldgen/ConfiguredFeature.ts (ConfiguredFeatureConfig union simpleBlock/blockPatch with strict validation; ConfiguredFeature key+config; ConfiguredFeatureRegistry atomic register/get/has/size/clear; createDefaultConfiguredFeatures: overworld/dirt_patch + overworld/gravel_patch); 6 new unit tests; 1044 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 095-placed-feature-core. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (095 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement placement modifiers, counts, rarity, height, biome and survival filters (deterministic; 094 features + 054 RNG), verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -931,6 +931,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "093 VERIFIED 4/4 (100%). Aquifer system: src/worldgen/AquiferSystem.ts (classifyAquifer y-table with dryness noise, exclusive lavaLevel; applyAquifers pure fill of carved cells with water/lava ids; config validation; deterministic); 8 new unit tests; 1038 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "e350281a70fa9560b4144543ffe4aacdbdfc4929",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 1044/1044; ConfiguredFeature 6/6",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "094 VERIFIED 4/4 (100%). Configured feature core: src/worldgen/ConfiguredFeature.ts (validated simpleBlock/blockPatch config union; registry with atomic rejection; deterministic defaults overworld/dirt_patch + overworld/gravel_patch); 6 new unit tests; 1044 unit + 19 e2e pass, stable."
     }
   ]
 }
