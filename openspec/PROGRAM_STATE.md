@@ -3,41 +3,41 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **014-status-effect-registry — VERIFIED 100%**
-- Active implementation change: **014-status-effect-registry — VERIFIED (advanced)**
-- Next change: **015-fluid-registry — NOT YET ACTIVE (artifacts missing)**
-- 014 task ledger: **17 total tasks, 17 completed**
-- 014 completion: **100%**
-- 014 mandatory status-effect requirements: **PASS**
-- 014 required-test gate: **PASS — unit 311/311, E2E 19/19**
-- 014 advancement allowed: **Yes**
+- Last completed change: **015-fluid-registry — VERIFIED 100%**
+- Active implementation change: **015-fluid-registry — VERIFIED (advanced)**
+- Next change: **016-biome-registry — NOT YET ACTIVE (artifacts missing)**
+- 015 task ledger: **11 total tasks, 11 completed**
+- 015 completion: **100%**
+- 015 mandatory fluid requirements: **PASS**
+- 015 required-test gate: **PASS — unit 318/318, E2E 19/19**
+- 015 advancement allowed: **Yes**
 - Session-start head: `7de37f6d70fdc3c5e3cca6e99a1232435628016c`
-- Validated head: `92ea0b9425e6282b407540add8cf077f98ee0e42`
-- Next exact action: **Advance to 015-fluid-registry. Its directory/artifacts do not yet exist; author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md, validate, then implement registry-backed fluid types (water/lava) separating them from blocks, verify full gate, commit + push, advance program state.**
+- Validated head: `f17841b4803c416dbc7006889674ed605801b60e`
+- Next exact action: **Advance to 016-biome-registry. Its directory/artifacts do not yet exist; author proposal/design/tasks/specs/biomes/spec.md/verification via SPEC_AUTHORING_PROTOCOL.md, validate, then implement registry-backed biome types (temperature/precipitation/grass/foliage colors, optional effects), verify full gate, commit + push, advance program state.**
 
-## What 014 implemented
+## What 015 implemented
 
-Change 014 introduced a gameplay-free status-effect data model:
+Change 015 introduced a gameplay-free fluid data model:
 
-- `src/data/StatusEffect.ts` — `StatusEffectCategory` (`BENEFICIAL`/`HARMFUL`/`NEUTRAL`), `StatusEffectFlag` (`BENEFICIAL`/`HARMFUL`/`INSTANT`/`DURATION_BASED`/`AMPLIFIER_SCALES`), and `StatusEffectTypeDefinition` (ResourceId id, key, name, category, flags, defaultDuration?, maxDuration?, maxAmplifier?). `StatusEffectTypeRegistry` builds on the 003 generic `Registry`, validates every definition (unique id, known flags/category, finite non-negative durations, amplifier bound, INSTANT-without-duration / DURATION_BASED-with-duration rules) and finalizes. `StatusEffectInstance` is a serializable occurrence (type, remaining duration, amplifier) with deterministic `tick`/expiry and `serialize`/`deserialize` (rejecting malformed or unregistered type ids). `createDefaultStatusEffectRegistry` provides 24 placeholder effect types with no gameplay behavior.
-- `tests/unit/StatusEffect.test.ts` — 13 tests covering registry validation/error paths, default registry contents, instance duration defaulting, amplifier clamping, ticking to expiry, and serialize/deserialize round-trip with rejection cases.
+- `src/data/Fluid.ts` — `FluidCategory` (`WATER`/`LAVA`), `FluidFlag` (`WATER`/`LAVA`/`SOURCE`/`FLOWING`/`LIGHT_EMITTING`/`DENSER`), and `FluidTypeDefinition` (ResourceId id, key, name, category, flags, lightLevel, density, isSource). `FluidRegistry` builds on the 003 generic `Registry`, validates every definition (bounded finite lightLevel 0..15, positive density, known flags only, category/flag consistency requiring the matching category flag, unique ids) and finalizes. `createDefaultFluidRegistry` provides four types — `water` (FLOWING), `water_source` (SOURCE), `lava` (DENSER), `lava_source` (SOURCE + LIGHT_EMITTING, light 15, density 2).
+- `tests/unit/Fluid.test.ts` — 7 tests covering registry validation/error paths (range, flag, consistency, duplicate id), default registry size + finalize, and default data (flags, lava light emission, source flag).
 
-## Validation evidence (014)
+## Validation evidence (015)
 
 - typecheck: PASS
 - lint: PASS
-- unit: PASS 311/311 (prior 298 + 13 new StatusEffect tests)
+- unit: PASS 318/318 (prior 311 + 7 new Fluid tests)
 - production build: PASS as the Playwright webServer prerequisite
 - E2E: PASS 19/19
 
 ## Advancement decision
 
-Change 014 is **VERIFIED** at 17/17 (100%). All gates are green: typecheck, lint, full unit suite (311/311), production build, and the required E2E suite (19/19). No advancement exception was needed. The model is additive and gameplay-free; no consumer was migrated.
+Change 015 is **VERIFIED** at 11/11 (100%). All gates are green: typecheck, lint, full unit suite (318/318), production build, and the required E2E suite (19/19). No advancement exception was needed. The model is additive and gameplay-free; no block was migrated.
 
-## Next change: 015 (blocked on missing artifacts)
+## Next change: 016 (blocked on missing artifacts)
 
-`015-fluid-registry` is named in `CHANGE_SEQUENCE.md` but its change directory does not yet exist, so it has no proposal/design/tasks/specs/verification. Per `AGENTS.md`, a change lacking full artifacts is a hard pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md` before any production code; scope is "registry-backed fluid types (water/lava) separating them from blocks."
+`016-biome-registry` is named in `CHANGE_SEQUENCE.md` but its change directory does not yet exist, so it has no proposal/design/tasks/specs/verification. Per `AGENTS.md`, a change lacking full artifacts is a hard pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md` before any production code; scope is "registry-backed biome types (temperature/precipitation/grass/foliage colors, optional effects)."
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 014 verification. Change 015 is the next change; its artifacts must be authored and validated before implementation begins.
+A future session must first inspect current `origin/main`, this state, and the 015 verification. Change 016 is the next change; its artifacts must be authored and validated before implementation begins.
