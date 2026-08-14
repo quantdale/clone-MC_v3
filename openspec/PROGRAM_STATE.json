@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "065-worker-section-meshing",
+  "currentChange": "066-voxel-light-storage",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "065-worker-section-meshing",
-  "nextChange": "066-voxel-light-storage",
+  "lastCompletedChange": "066-voxel-light-storage",
+  "nextChange": "067-skylight-propagation",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "b7ef2b7e708b7d641fb9cacf213938c617b5c8d1",
-  "lastKnownHead": "b7ef2b7e708b7d641fb9cacf213938c617b5c8d1",
-  "lastCompletedTask": "065: all 4 tasks complete; worker-section-meshing VERIFIED. New src/rendering/WorkerMeshing.ts (processMeshSectionRequest: pure structured-clone-safe 062-delegating job; MeshWorkerClient requestSection/handleMessage/cancel/pendingCount over the 064 protocol with per-job callbacks and stale rejection); 6 unit tests; 736 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 066-voxel-light-storage. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (066 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement section nibble arrays and light value accessors, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "e046785324f54dd2fecc080e42d778749847e205",
+  "lastKnownHead": "e046785324f54dd2fecc080e42d778749847e205",
+  "lastCompletedTask": "066: all 4 tasks complete; voxel-light-storage VERIFIED. New src/rendering/LightStorage.ts (NibbleArray 4096 4-bit cells in 2048 bytes with bounds/value validation and byte-identical serialize/deserialize; SectionLightStorage sky/block accessors by local coord, fill, serialize, copy-on-construct); 8 unit tests; 744 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 067-skylight-propagation. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (067 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement deterministic skylight initialization/propagation across sections, verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -651,6 +651,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "065 VERIFIED 4/4 (100%). New src/rendering/WorkerMeshing.ts (processMeshSectionRequest: pure structured-clone-safe 062-delegating job; MeshWorkerClient requestSection/handleMessage/cancel/pendingCount over the 064 protocol with per-job callbacks and stale rejection); 6 unit tests; 736 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "e046785324f54dd2fecc080e42d778749847e205",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 744/744; LightStorage 8/8",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "066 VERIFIED 4/4 (100%). New src/rendering/LightStorage.ts (NibbleArray 4096 4-bit cells in 2048 bytes with bounds/value validation and byte-identical serialize/deserialize; SectionLightStorage sky/block accessors by local coord, fill, serialize, copy-on-construct); 8 unit tests; 744 unit + 19 e2e pass, stable."
     }
   ]
 }
