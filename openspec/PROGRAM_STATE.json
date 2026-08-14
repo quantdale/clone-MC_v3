@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "098-vegetation-features",
+  "currentChange": "099-structure-template-format",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "098-vegetation-features",
-  "nextChange": "099-structure-template-format",
+  "lastCompletedChange": "099-structure-template-format",
+  "nextChange": "100-structure-placement-core",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "22add1909e7295da1a6c973ad571c29f59c8990d",
-  "lastKnownHead": "22add1909e7295da1a6c973ad571c29f59c8990d",
-  "lastCompletedTask": "098: all 4 tasks complete; vegetation-features VERIFIED. surfaceHeight modifier added to the 095 union (PlacementContext.surfaceY required; y = surfaceY(x, z), no rng draw; survival invariant extended to preceding heightRange OR surfaceHeight; 095 spec invariant amended); new src/worldgen/VegetationFeature.ts (VEGETATION_BLOCK_IDS 19-23 documented; createDefaultVegetationConfiguredFeatures: five blockPatch defaults short_grass 19/16/4/1, poppy 20/6/3/1, dandelion 21/6/3/1, red_mushroom 22/3/2/1, brown_mushroom 23/3/2/1; createDefaultVegetationPlacedFeatures: count(+rarity)+surfaceHeight+survivalFilter chains); 095 test helper updated mechanically; 9 new unit tests; 1095 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 099-structure-template-format. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (099 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement original structure template blocks/entities/connectors with transforms, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "a55ad8d1da19556ff5723ec591c40eb5b3e4c343",
+  "lastKnownHead": "a55ad8d1da19556ff5723ec591c40eb5b3e4c343",
+  "lastCompletedTask": "099: all 4 tasks complete; structure-template-format VERIFIED. New src/worldgen/StructureTemplate.ts (StructureTemplate key/size/sparse blocks/entities/connectors with strict validation: positive extents <= 64, in-bounds integer coords, unique block positions and connector keys, non-negative blockIds, non-empty entityKeys, six documented directions; StructureTransform rotation 0/90/180/270 + mirror none/x/z with validateStructureTransform; deterministic applyStructureTransform mirror-then-rotation about the origin corner with transposed footprints for 90/270 and facing rotation north->east->south->west, east<->west x-mirror, north<->south z-mirror; StructureTemplateRegistry atomic); 13 new unit tests; 1108 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 100-structure-placement-core. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (100 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement seeded spacing/separation/biome/terrain-aware placement of 099 templates, verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -981,6 +981,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "098 VERIFIED 4/4 (100%). Vegetation features: surfaceHeight modifier added to the 095 union (surfaceY required; no rng draw; survival invariant extended; 095 spec amended); src/worldgen/VegetationFeature.ts (documented ids 19-23; five blockPatch configured defaults; five count(+rarity)+surfaceHeight+survivalFilter placed defaults); 095 test helper updated; 9 new unit tests; 1095 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "a55ad8d1da19556ff5723ec591c40eb5b3e4c343",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 1108/1108; StructureTemplate 13/13",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "099 VERIFIED 4/4 (100%). Structure template format: src/worldgen/StructureTemplate.ts (key/size/sparse blocks/entities/connectors with strict validation incl. bounds, uniqueness, facings, extent cap 64; StructureTransform rotation 0/90/180/270 + mirror none/x/z; deterministic applyStructureTransform mirror-then-rotation with transposed footprints and facing rotation; StructureTemplateRegistry atomic); 13 new unit tests; 1108 unit + 19 e2e pass, stable."
     }
   ]
 }
