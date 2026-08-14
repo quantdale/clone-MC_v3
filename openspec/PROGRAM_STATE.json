@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "099-structure-template-format",
+  "currentChange": "100-structure-placement-core",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "099-structure-template-format",
-  "nextChange": "100-structure-placement-core",
+  "lastCompletedChange": "100-structure-placement-core",
+  "nextChange": "101-small-structure-baseline",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "a55ad8d1da19556ff5723ec591c40eb5b3e4c343",
-  "lastKnownHead": "a55ad8d1da19556ff5723ec591c40eb5b3e4c343",
-  "lastCompletedTask": "099: all 4 tasks complete; structure-template-format VERIFIED. New src/worldgen/StructureTemplate.ts (StructureTemplate key/size/sparse blocks/entities/connectors with strict validation: positive extents <= 64, in-bounds integer coords, unique block positions and connector keys, non-negative blockIds, non-empty entityKeys, six documented directions; StructureTransform rotation 0/90/180/270 + mirror none/x/z with validateStructureTransform; deterministic applyStructureTransform mirror-then-rotation about the origin corner with transposed footprints for 90/270 and facing rotation north->east->south->west, east<->west x-mirror, north<->south z-mirror; StructureTemplateRegistry atomic); 13 new unit tests; 1108 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 100-structure-placement-core. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (100 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement seeded spacing/separation/biome/terrain-aware placement of 099 templates, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "a63b599df35bed3a04e63ef8d76991996796905c",
+  "lastKnownHead": "a63b599df35bed3a04e63ef8d76991996796905c",
+  "lastCompletedTask": "100: all 4 tasks complete; structure-placement-core VERIFIED. New src/worldgen/StructurePlacement.ts (StructurePlacementConfig key/templateKey/spacing positive/separation in [0, spacing)/salt non-negative/biomeKeys non-empty/minSurfaceHeight integer with strict validation; StructurePlacementContext biomeKey/surfaceY; deterministic structureStartAtChunk: floor-division regions, SeedRng(hash3(regionX, salt, regionZ, seed)) with fixed draw order offsetX/offsetZ/rotation, biome gate and terrain gate at the start chunk center, StructureStart with rotation and mirror 'none'; StructurePlacementRegistry atomic); 11 new unit tests incl. exact region vectors (0,0)->(3,0)/180, (1,0)->(8,2)/90, (-1,-1)->(-4,-8)/270, (2,3)->(19,28)/0, separation and negative-region checks; 1119 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 101-small-structure-baseline. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (101 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement the first simple generated structure end-to-end using the template system (099 template + 100 placement; deterministic writing into chunks), verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -991,6 +991,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "099 VERIFIED 4/4 (100%). Structure template format: src/worldgen/StructureTemplate.ts (key/size/sparse blocks/entities/connectors with strict validation incl. bounds, uniqueness, facings, extent cap 64; StructureTransform rotation 0/90/180/270 + mirror none/x/z; deterministic applyStructureTransform mirror-then-rotation with transposed footprints and facing rotation; StructureTemplateRegistry atomic); 13 new unit tests; 1108 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "a63b599df35bed3a04e63ef8d76991996796905c",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 1119/1119; StructurePlacement 11/11",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "100 VERIFIED 4/4 (100%). Structure placement core: src/worldgen/StructurePlacement.ts (validated spacing/separation/salt/biomeKeys/minSurfaceHeight config; deterministic structureStartAtChunk with floor-division regions, region-seeded draws in fixed order, biome and terrain gates; StructurePlacementRegistry atomic); exact vectors for 4 regions; 11 new unit tests; 1119 unit + 19 e2e pass, stable."
     }
   ]
 }
