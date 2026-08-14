@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { CONFIG } from '../../src/config';
-import { BlockId, createDefaultRegistry } from '../../src/world/BlockRegistry';
+import { BlockId, createDefaultBlockRegistry } from '../../src/world/BlockRegistry';
 import { Chunk } from '../../src/world/Chunk';
 import { TerrainGenerator } from '../../src/world/TerrainGenerator';
 
-const registry = createDefaultRegistry();
+const registry = createDefaultBlockRegistry();
 
 function makeChunk(cx: number, cy: number, cz: number): Chunk {
   return new Chunk(cx, cy, cz);

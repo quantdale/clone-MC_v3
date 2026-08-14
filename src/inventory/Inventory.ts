@@ -1,5 +1,5 @@
 import type { BlockSelector } from './BlockSelector';
-import { BlockId } from '../world/BlockRegistry';
+import { ItemId } from './ItemRegistry';
 
 export interface ItemStack {
   id: number;
@@ -25,19 +25,19 @@ const MAX_STACK = 64;
  * currently selected slot. Implements {@link BlockSelector} so the interaction
  * system can query which block to place.
  *
- * Default slots use the stable BlockId values from the registry:
+ * Default slots use the stable ItemId values from the registry:
  * Grass / Dirt / Stone / Sand / Wood / Planks / Glass / Water / Apple.
  */
 const DEFAULT_SLOTS: number[] = [
-  BlockId.Grass,
-  BlockId.Dirt,
-  BlockId.Stone,
-  BlockId.Sand,
-  BlockId.Wood,
-  BlockId.Planks,
-  BlockId.Glass,
-  BlockId.Water,
-  BlockId.Apple,
+  ItemId.Grass,
+  ItemId.Dirt,
+  ItemId.Stone,
+  ItemId.Sand,
+  ItemId.Wood,
+  ItemId.Planks,
+  ItemId.Glass,
+  ItemId.Water,
+  ItemId.Apple,
 ];
 const DEFAULT_COUNTS = [32, 32, 64, 16, 0, 0, 0, 8, 0];
 
@@ -92,8 +92,8 @@ export class Inventory implements BlockSelector {
     this.selected = next;
   }
 
-  /** The block id of the currently selected slot. */
-  getSelectedBlockId(): number {
+  /** The item id of the currently selected slot. */
+  getSelectedItemId(): number {
     return this.slots[this.selected] ?? 0;
   }
 

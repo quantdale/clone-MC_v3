@@ -1,12 +1,17 @@
 /**
  * Centralized block registry.
  *
- * Maps stable numeric block ids to definitions. Gameplay code must resolve all
- * block properties through this registry — block ids are never hard-coded in
- * gameplay logic.
+ * Maps stable numeric block ids to world-block definitions. Inventory/tool item
+ * definitions live in a separate registry (see `inventory/ItemRegistry.ts`) as
+ * of change 004 — this registry owns only blocks that can exist in the world.
+ * Gameplay code must resolve all block properties through this registry; block
+ * ids are never hard-coded in gameplay logic.
  */
 
-/** Block ids are stable numeric identifiers. */
+import { type ResourceId, createResourceId, resourceIdToString } from '../data/ResourceId';
+import { RegistryError } from '../data/Registry';
+
+/** Block ids are stable numeric identifiers for world blocks only. */
 export const enum BlockId {
   Air = 0,
   Grass = 1,
@@ -21,18 +26,11 @@ export const enum BlockId {
   Snow = 10,
   Gravel = 11,
   Planks = 12,
-  Apple = 13,
   CoalOre = 14,
   IronOre = 15,
   Cobblestone = 16,
   Bricks = 17,
   Lava = 18,
-  Stick = 19,
-  WoodenPickaxe = 20,
-  StonePickaxe = 21,
-  WoodenAxe = 22,
-  Coal = 23,
-  RawIron = 24,
 }
 
 /** Tool families used for preferred-tool mining bonuses. */
@@ -48,14 +46,12 @@ export const enum RenderCategory {
   Transparent = 1,
 }
 
-export interface FaceUV {
-  /** Atlas tile index for a face. */
-  tile: number;
-}
-
-export interface BlockDefinition {
-  /** Stable numeric id. */
+/** A world-block definition. */
+export interface BlockTypeDefinition {
+  /** Stable numeric legacy id. This value is the current save identity. */
   id: number;
+  /** Stable resource id backing the legacy numeric id. */
+  resourceId: ResourceId;
   /** Stable string key. */
   key: string;
   /** Human-readable display name. */
@@ -66,8 +62,6 @@ export interface BlockDefinition {
   opaque: boolean;
   /** Whether the player can destroy it. */
   breakable: boolean;
-  /** Whether the player can place it. */
-  placeable: boolean;
   /** Render category (opaque vs transparent). */
   renderCategory: RenderCategory;
   /** Texture tile index for the top face. */
@@ -80,48 +74,75 @@ export interface BlockDefinition {
   hardness: number;
   /** Preferred tool family for efficient mining, when applicable. */
   preferredTool?: ToolKind;
-  /** Tool family for a non-placeable item. */
-  toolKind?: ToolKind;
-  /** Mining speed multiplier supplied by a tool. */
-  toolPower?: number;
-  /** Maximum durability for a non-placeable tool item. */
-  maxDurability?: number;
-  /** Inventory item emitted when this block is broken, when different from id. */
-  dropId?: BlockId;
+  /**
+   * Inventory item dropped when this block is broken, as a resource id. The
+   * referenced item MUST exist in the item registry (validated at init). Omitted
+   * for unbreakable blocks.
+   */
+  dropItem?: ResourceId;
 }
 
-export class BlockRegistry {
-  private readonly byId = new Map<number, BlockDefinition>();
-  private readonly byKey = new Map<string, BlockDefinition>();
+/**
+ * Typed registry of world-block definitions keyed by stable numeric id.
+ *
+ * Lookups are constant-time via a dense lookup array; resource-id and key maps
+ * support compatibility/validation lookups. The numeric `id` is the persistent
+ * save identity — generic runtime registry ids are intentionally absent.
+ */
+export class BlockTypeRegistry {
+  private readonly byId = new Map<number, BlockTypeDefinition>();
+  private readonly byKey = new Map<string, BlockTypeDefinition>();
+  private readonly byResourceId = new Map<string, BlockTypeDefinition>();
   /** Mirrors Map entries for O(1) indexed access in the hot path. */
-  private readonly fastLookup: (BlockDefinition | undefined)[] = [];
+  private readonly fastLookup: (BlockTypeDefinition | undefined)[] = [];
 
-  constructor(definitions: BlockDefinition[]) {
+  constructor(definitions: BlockTypeDefinition[]) {
     for (const def of definitions) {
+      if (this.byId.has(def.id)) {
+        throw new RegistryError(
+          'DUPLICATE_ID',
+          String(def.id),
+          `duplicate legacy block id: ${def.id}`,
+        );
+      }
       this.byId.set(def.id, def);
       this.byKey.set(def.key, def);
+      this.byResourceId.set(resourceIdToString(def.resourceId), def);
       this.fastLookup[def.id] = def;
     }
   }
 
   /** Look up a block by numeric id. Throws for unknown ids to catch bugs. */
-  get(id: number): BlockDefinition {
-    if (id >= 0 && id < this.fastLookup.length) {
-      const def = this.fastLookup[id];
-      if (def) {
-        return def;
-      }
-    }
-    const def = this.byId.get(id);
+  get(id: number): BlockTypeDefinition {
+    const def = this.getById(id);
     if (!def) {
-      throw new Error(`Unknown block id: ${id}`);
+      throw new RegistryError('MISSING_ID', String(id), `unknown block id: ${id}`);
+    }
+    return def;
+  }
+
+  /** Look up a block by numeric id, returning undefined when absent. */
+  getByLegacyId(id: number): BlockTypeDefinition | undefined {
+    return this.getById(id);
+  }
+
+  /** Look up a block by resource id. Throws for unknown ids. */
+  getByResourceId(rid: ResourceId): BlockTypeDefinition {
+    const def = this.byResourceId.get(resourceIdToString(rid));
+    if (!def) {
+      throw new RegistryError('MISSING_ID', resourceIdToString(rid), 'unknown block resource id');
     }
     return def;
   }
 
   /** Look up a block by key. Returns undefined for unknown keys. */
-  getByKey(key: string): BlockDefinition | undefined {
+  getByKey(key: string): BlockTypeDefinition | undefined {
     return this.byKey.get(key);
+  }
+
+  /** Whether a resource id is registered. */
+  hasByResourceId(rid: ResourceId): boolean {
+    return this.byResourceId.has(resourceIdToString(rid));
   }
 
   /** Whether a numeric id is registered. Useful for validating external writes. */
@@ -145,32 +166,34 @@ export class BlockRegistry {
   }
 
   /** All registered definitions. */
-  all(): BlockDefinition[] {
+  all(): BlockTypeDefinition[] {
     return [...this.byId.values()];
   }
 
-  private getById(id: number): BlockDefinition | undefined {
+  private getById(id: number): BlockTypeDefinition | undefined {
     if (Number.isInteger(id) && id >= 0 && id < this.fastLookup.length) {
-      const fast = this.fastLookup[id];
-      if (fast) {
-        return fast;
-      }
+      return this.fastLookup[id];
     }
     return this.byId.get(id);
   }
 }
 
+/** Backwards-compatible alias kept for world/consumer imports. */
+export type BlockRegistry = BlockTypeRegistry;
+
+const rid = (path: string): ResourceId => createResourceId('minecraft', path);
+
 /** Build the default block registry with the core and expanded block types. */
-export function createDefaultRegistry(): BlockRegistry {
-  const defs: BlockDefinition[] = [
+export function createDefaultBlockRegistry(): BlockTypeRegistry {
+  const defs: BlockTypeDefinition[] = [
     {
       id: BlockId.Air,
+      resourceId: rid('air'),
       key: 'air',
       name: 'Air',
       solid: false,
       opaque: false,
       breakable: false,
-      placeable: false,
       renderCategory: RenderCategory.Opaque,
       topTile: 0,
       bottomTile: 0,
@@ -179,86 +202,91 @@ export function createDefaultRegistry(): BlockRegistry {
     },
     {
       id: BlockId.Grass,
+      resourceId: rid('grass'),
       key: 'grass',
       name: 'Grass Block',
       solid: true,
       opaque: true,
       breakable: true,
-      placeable: true,
       renderCategory: RenderCategory.Opaque,
       topTile: 1,
       bottomTile: 2,
       sideTile: 3,
       hardness: 0.45,
       preferredTool: ToolKind.Shovel,
+      dropItem: rid('grass'),
     },
     {
       id: BlockId.Dirt,
+      resourceId: rid('dirt'),
       key: 'dirt',
       name: 'Dirt',
       solid: true,
       opaque: true,
       breakable: true,
-      placeable: true,
       renderCategory: RenderCategory.Opaque,
       topTile: 2,
       bottomTile: 2,
       sideTile: 2,
       hardness: 0.45,
       preferredTool: ToolKind.Shovel,
+      dropItem: rid('dirt'),
     },
     {
       id: BlockId.Stone,
+      resourceId: rid('stone'),
       key: 'stone',
       name: 'Stone',
       solid: true,
       opaque: true,
       breakable: true,
-      placeable: true,
       renderCategory: RenderCategory.Opaque,
       topTile: 4,
       bottomTile: 4,
       sideTile: 4,
       hardness: 1.5,
       preferredTool: ToolKind.Pickaxe,
+      dropItem: rid('stone'),
     },
     {
       id: BlockId.Sand,
+      resourceId: rid('sand'),
       key: 'sand',
       name: 'Sand',
       solid: true,
       opaque: true,
       breakable: true,
-      placeable: true,
       renderCategory: RenderCategory.Opaque,
       topTile: 5,
       bottomTile: 5,
       sideTile: 5,
       hardness: 0.5,
       preferredTool: ToolKind.Shovel,
+      dropItem: rid('sand'),
     },
     {
       id: BlockId.Water,
+      resourceId: rid('water'),
       key: 'water',
       name: 'Water',
       solid: false,
       opaque: false,
       breakable: false,
-      placeable: true,
       renderCategory: RenderCategory.Transparent,
       topTile: 6,
       bottomTile: 6,
       sideTile: 6,
       hardness: Infinity,
+      dropItem: rid('water'),
     },
     {
       id: BlockId.Bedrock,
+      resourceId: rid('bedrock'),
       key: 'bedrock',
       name: 'Bedrock',
       solid: true,
       opaque: true,
       breakable: false,
-      placeable: false,
       renderCategory: RenderCategory.Opaque,
       topTile: 7,
       bottomTile: 7,
@@ -267,276 +295,178 @@ export function createDefaultRegistry(): BlockRegistry {
     },
     {
       id: BlockId.Wood,
+      resourceId: rid('wood'),
       key: 'wood',
       name: 'Wood Log',
       solid: true,
       opaque: true,
       breakable: true,
-      placeable: true,
       renderCategory: RenderCategory.Opaque,
       topTile: 8,
       bottomTile: 8,
       sideTile: 9,
       hardness: 1.0,
       preferredTool: ToolKind.Axe,
+      dropItem: rid('wood'),
     },
     {
       id: BlockId.Leaves,
+      resourceId: rid('leaves'),
       key: 'leaves',
       name: 'Leaves',
       solid: true,
       opaque: false,
       breakable: true,
-      placeable: true,
       renderCategory: RenderCategory.Opaque,
       topTile: 10,
       bottomTile: 10,
       sideTile: 10,
       hardness: 0.2,
       preferredTool: ToolKind.Axe,
+      dropItem: rid('leaves'),
     },
     {
       id: BlockId.Glass,
+      resourceId: rid('glass'),
       key: 'glass',
       name: 'Glass',
       solid: true,
       opaque: false,
       breakable: true,
-      placeable: true,
       renderCategory: RenderCategory.Transparent,
       topTile: 11,
       bottomTile: 11,
       sideTile: 11,
       hardness: 0.3,
+      dropItem: rid('glass'),
     },
     {
       id: BlockId.Snow,
+      resourceId: rid('snow'),
       key: 'snow',
       name: 'Snow Block',
       solid: true,
       opaque: true,
       breakable: true,
-      placeable: true,
       renderCategory: RenderCategory.Opaque,
       topTile: 12,
       bottomTile: 12,
       sideTile: 12,
       hardness: 0.3,
       preferredTool: ToolKind.Shovel,
+      dropItem: rid('snow'),
     },
     {
       id: BlockId.Gravel,
+      resourceId: rid('gravel'),
       key: 'gravel',
       name: 'Gravel',
       solid: true,
       opaque: true,
       breakable: true,
-      placeable: true,
       renderCategory: RenderCategory.Opaque,
       topTile: 13,
       bottomTile: 13,
       sideTile: 13,
       hardness: 0.6,
       preferredTool: ToolKind.Shovel,
+      dropItem: rid('gravel'),
     },
     {
       id: BlockId.Planks,
+      resourceId: rid('planks'),
       key: 'planks',
       name: 'Oak Planks',
       solid: true,
       opaque: true,
       breakable: true,
-      placeable: true,
       renderCategory: RenderCategory.Opaque,
       topTile: 14,
       bottomTile: 14,
       sideTile: 14,
       hardness: 1.0,
       preferredTool: ToolKind.Axe,
-    },
-    {
-      id: BlockId.Apple,
-      key: 'apple',
-      name: 'Apple',
-      solid: false,
-      opaque: false,
-      breakable: false,
-      placeable: false,
-      renderCategory: RenderCategory.Opaque,
-      topTile: 15,
-      bottomTile: 15,
-      sideTile: 15,
-      hardness: Infinity,
+      dropItem: rid('planks'),
     },
     {
       id: BlockId.CoalOre,
+      resourceId: rid('coal_ore'),
       key: 'coal_ore',
       name: 'Coal Ore',
       solid: true,
       opaque: true,
       breakable: true,
-      placeable: true,
       renderCategory: RenderCategory.Opaque,
       topTile: 16,
       bottomTile: 16,
       sideTile: 16,
       hardness: 2.4,
       preferredTool: ToolKind.Pickaxe,
-      dropId: BlockId.Coal,
+      dropItem: rid('coal'),
     },
     {
       id: BlockId.IronOre,
+      resourceId: rid('iron_ore'),
       key: 'iron_ore',
       name: 'Iron Ore',
       solid: true,
       opaque: true,
       breakable: true,
-      placeable: true,
       renderCategory: RenderCategory.Opaque,
       topTile: 17,
       bottomTile: 17,
       sideTile: 17,
       hardness: 3.0,
       preferredTool: ToolKind.Pickaxe,
-      dropId: BlockId.RawIron,
+      dropItem: rid('raw_iron'),
     },
     {
       id: BlockId.Cobblestone,
+      resourceId: rid('cobblestone'),
       key: 'cobblestone',
       name: 'Cobblestone',
       solid: true,
       opaque: true,
       breakable: true,
-      placeable: true,
       renderCategory: RenderCategory.Opaque,
       topTile: 18,
       bottomTile: 18,
       sideTile: 18,
       hardness: 2.0,
       preferredTool: ToolKind.Pickaxe,
+      dropItem: rid('cobblestone'),
     },
     {
       id: BlockId.Bricks,
+      resourceId: rid('bricks'),
       key: 'bricks',
       name: 'Bricks',
       solid: true,
       opaque: true,
       breakable: true,
-      placeable: true,
       renderCategory: RenderCategory.Opaque,
       topTile: 19,
       bottomTile: 19,
       sideTile: 19,
       hardness: 2.0,
       preferredTool: ToolKind.Pickaxe,
+      dropItem: rid('bricks'),
     },
     {
       id: BlockId.Lava,
+      resourceId: rid('lava'),
       key: 'lava',
       name: 'Lava',
       solid: false,
       opaque: false,
       breakable: false,
-      placeable: true,
       renderCategory: RenderCategory.Transparent,
       topTile: 20,
       bottomTile: 20,
       sideTile: 20,
       hardness: Infinity,
-    },
-    {
-      id: BlockId.Stick,
-      key: 'stick',
-      name: 'Stick',
-      solid: false,
-      opaque: false,
-      breakable: false,
-      placeable: false,
-      renderCategory: RenderCategory.Opaque,
-      topTile: 21,
-      bottomTile: 21,
-      sideTile: 21,
-      hardness: Infinity,
-    },
-    {
-      id: BlockId.WoodenPickaxe,
-      key: 'wooden_pickaxe',
-      name: 'Wooden Pickaxe',
-      solid: false,
-      opaque: false,
-      breakable: false,
-      placeable: false,
-      renderCategory: RenderCategory.Opaque,
-      topTile: 22,
-      bottomTile: 22,
-      sideTile: 22,
-      hardness: Infinity,
-      toolKind: ToolKind.Pickaxe,
-      toolPower: 2.2,
-      maxDurability: 59,
-    },
-    {
-      id: BlockId.StonePickaxe,
-      key: 'stone_pickaxe',
-      name: 'Stone Pickaxe',
-      solid: false,
-      opaque: false,
-      breakable: false,
-      placeable: false,
-      renderCategory: RenderCategory.Opaque,
-      topTile: 23,
-      bottomTile: 23,
-      sideTile: 23,
-      hardness: Infinity,
-      toolKind: ToolKind.Pickaxe,
-      toolPower: 4,
-      maxDurability: 131,
-    },
-    {
-      id: BlockId.WoodenAxe,
-      key: 'wooden_axe',
-      name: 'Wooden Axe',
-      solid: false,
-      opaque: false,
-      breakable: false,
-      placeable: false,
-      renderCategory: RenderCategory.Opaque,
-      topTile: 24,
-      bottomTile: 24,
-      sideTile: 24,
-      hardness: Infinity,
-      toolKind: ToolKind.Axe,
-      toolPower: 2.4,
-      maxDurability: 59,
-    },
-    {
-      id: BlockId.Coal,
-      key: 'coal',
-      name: 'Coal',
-      solid: false,
-      opaque: false,
-      breakable: false,
-      placeable: false,
-      renderCategory: RenderCategory.Opaque,
-      topTile: 25,
-      bottomTile: 25,
-      sideTile: 25,
-      hardness: Infinity,
-    },
-    {
-      id: BlockId.RawIron,
-      key: 'raw_iron',
-      name: 'Raw Iron',
-      solid: false,
-      opaque: false,
-      breakable: false,
-      placeable: false,
-      renderCategory: RenderCategory.Opaque,
-      topTile: 26,
-      bottomTile: 26,
-      sideTile: 26,
-      hardness: Infinity,
+      dropItem: rid('lava'),
     },
   ];
-  return new BlockRegistry(defs);
+  return new BlockTypeRegistry(defs);
 }

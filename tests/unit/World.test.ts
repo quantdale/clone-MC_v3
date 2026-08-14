@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
 import { World } from '../../src/world/World';
-import { createDefaultRegistry, BlockId } from '../../src/world/BlockRegistry';
+import { createDefaultBlockRegistry, BlockId } from '../../src/world/BlockRegistry';
 import { Chunk } from '../../src/world/Chunk';
 import { CONFIG } from '../../src/config';
 
@@ -10,7 +10,7 @@ import { CONFIG } from '../../src/config';
  * and edit-overlay logic without a full renderer.
  */
 function makeWorld(seed = 1): World {
-  const registry = createDefaultRegistry();
+  const registry = createDefaultBlockRegistry();
   const scene = new THREE.Scene();
   const materials = {
     opaque: new THREE.MeshLambertMaterial(),
@@ -45,7 +45,7 @@ function makeWorld(seed = 1): World {
  * tests can assert that boundary edits propagate to neighbouring chunks.
  */
 function makeRecordingWorld(seed = 1): { world: World; meshedKeys: string[] } {
-  const registry = createDefaultRegistry();
+  const registry = createDefaultBlockRegistry();
   const scene = new THREE.Scene();
   const materials = {
     opaque: new THREE.MeshLambertMaterial(),

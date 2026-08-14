@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { Inventory } from '../../src/inventory/Inventory';
-import { BlockId } from '../../src/world/BlockRegistry';
+import { ItemId } from '../../src/inventory/ItemRegistry';
 
 describe('inventory hotbar selection', () => {
   it('defaults to the first slot selected', () => {
     const inv = new Inventory();
     expect(inv.selected).toBe(0);
-    expect(inv.getSelectedBlockId()).toBe(inv.slots[0]);
+    expect(inv.getSelectedItemId()).toBe(inv.slots[0]);
   });
 
   it('selects a slot by index', () => {
@@ -45,31 +45,31 @@ describe('inventory hotbar selection', () => {
   });
 
   it('returns the selected block id', () => {
-    const inv = new Inventory([BlockId.Grass, BlockId.Stone, BlockId.Sand]);
+    const inv = new Inventory([ItemId.Grass, ItemId.Stone, ItemId.Sand]);
     inv.select(1);
-    expect(inv.getSelectedBlockId()).toBe(BlockId.Stone);
+    expect(inv.getSelectedItemId()).toBe(ItemId.Stone);
   });
 
   it('falls back to default slots when constructed empty', () => {
     const inv = new Inventory([]);
     expect(inv.slots.length).toBeGreaterThan(0);
     inv.select(0);
-    expect(inv.getSelectedBlockId()).toBe(inv.slots[0]);
+    expect(inv.getSelectedItemId()).toBe(inv.slots[0]);
   });
 
   it('default slots match the documented block order', () => {
     // Grass / Dirt / Stone / Sand / Wood / Planks / Glass / Water / Apple.
     const inv = new Inventory();
     expect(inv.slots).toEqual([
-      BlockId.Grass,
-      BlockId.Dirt,
-      BlockId.Stone,
-      BlockId.Sand,
-      BlockId.Wood,
-      BlockId.Planks,
-      BlockId.Glass,
-      BlockId.Water,
-      BlockId.Apple,
+      ItemId.Grass,
+      ItemId.Dirt,
+      ItemId.Stone,
+      ItemId.Sand,
+      ItemId.Wood,
+      ItemId.Planks,
+      ItemId.Glass,
+      ItemId.Water,
+      ItemId.Apple,
     ]);
     expect(inv.counts).toEqual([32, 32, 64, 16, 0, 0, 0, 8, 0]);
   });
@@ -92,23 +92,23 @@ describe('inventory hotbar selection', () => {
   });
 
   it('stacks items and spills overflow into main inventory', () => {
-    const inv = new Inventory([BlockId.Stone], [60]);
-    expect(inv.addItem(BlockId.Stone, 8)).toBe(0);
+    const inv = new Inventory([ItemId.Stone], [60]);
+    expect(inv.addItem(ItemId.Stone, 8)).toBe(0);
     expect(inv.counts[0]).toBe(64);
-    expect(inv.storage).toEqual([{ id: BlockId.Stone, count: 4 }]);
-    expect(inv.getItemCount(BlockId.Stone)).toBe(68);
+    expect(inv.storage).toEqual([{ id: ItemId.Stone, count: 4 }]);
+    expect(inv.getItemCount(ItemId.Stone)).toBe(68);
   });
 
   it('removes items across hotbar and storage transactionally', () => {
-    const inv = new Inventory([BlockId.Sand], [2], [{ id: BlockId.Sand, count: 5 }]);
-    expect(inv.removeItem(BlockId.Sand, 6)).toBe(true);
-    expect(inv.getItemCount(BlockId.Sand)).toBe(1);
-    expect(inv.removeItem(BlockId.Sand, 2)).toBe(false);
-    expect(inv.getItemCount(BlockId.Sand)).toBe(1);
+    const inv = new Inventory([ItemId.Sand], [2], [{ id: ItemId.Sand, count: 5 }]);
+    expect(inv.removeItem(ItemId.Sand, 6)).toBe(true);
+    expect(inv.getItemCount(ItemId.Sand)).toBe(1);
+    expect(inv.removeItem(ItemId.Sand, 2)).toBe(false);
+    expect(inv.getItemCount(ItemId.Sand)).toBe(1);
   });
 
   it('consumes only the selected hotbar stack', () => {
-    const inv = new Inventory([BlockId.Stone, BlockId.Dirt], [1, 4]);
+    const inv = new Inventory([ItemId.Stone, ItemId.Dirt], [1, 4]);
     expect(inv.consumeSelected()).toBe(true);
     expect(inv.getSlotCount(0)).toBe(0);
     inv.select(1);
@@ -117,7 +117,7 @@ describe('inventory hotbar selection', () => {
   });
 
   it('round-trips a validated snapshot', () => {
-    const source = new Inventory([BlockId.Wood, BlockId.Planks], [2, 3], [{ id: BlockId.Sand, count: 4 }]);
+    const source = new Inventory([ItemId.Wood, ItemId.Planks], [2, 3], [{ id: ItemId.Sand, count: 4 }]);
     source.select(1);
     const restored = new Inventory();
     expect(restored.restore(source.snapshot())).toBe(true);
@@ -126,14 +126,14 @@ describe('inventory hotbar selection', () => {
     expect(restored.storage).toEqual(source.storage);
     expect(restored.selected).toBe(1);
     expect(restored.restore({ version: 2 })).toBe(false);
-    expect(restored.restore(source.snapshot(), (id) => id !== BlockId.Wood)).toBe(false);
+    expect(restored.restore(source.snapshot(), (id) => id !== ItemId.Wood)).toBe(false);
     const malformed = source.snapshot();
     malformed.durability = [99, 0];
-    expect(restored.restore(malformed, () => true, (id) => id === BlockId.Wood ? 10 : 0)).toBe(false);
+    expect(restored.restore(malformed, () => true, (id) => id === ItemId.Wood ? 10 : 0)).toBe(false);
   });
 
   it('tracks tool durability and breaks the selected tool at zero', () => {
-    const inv = new Inventory([BlockId.WoodenPickaxe], [1]);
+    const inv = new Inventory([ItemId.WoodenPickaxe], [1]);
     expect(inv.getSelectedDurability(3)).toBe(3);
     expect(inv.damageSelectedItem(1, 3)).toBe(false);
     expect(inv.getSelectedDurability(3)).toBe(2);

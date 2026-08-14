@@ -3,7 +3,7 @@ import { CraftingSystem } from '../inventory/Crafting';
 import { Inventory } from '../inventory/Inventory';
 import type { TextureAtlas } from '../rendering/TextureAtlas';
 import { TILE_SIZE, TILES_PER_ROW } from '../rendering/TextureAtlas';
-import { BlockRegistry } from '../world/BlockRegistry';
+import type { ItemTypeRegistry } from '../inventory/ItemRegistry';
 
 /** DOM controller for the compact Minecraft-style recipe panel. */
 export class CraftingPanel {
@@ -19,7 +19,7 @@ export class CraftingPanel {
   constructor(
     el: HTMLElement,
     inventory: Inventory,
-    registry: BlockRegistry,
+    registry: ItemTypeRegistry,
     atlas: TextureAtlas,
     onCraft: (recipe: CraftingRecipe) => void,
     onClose: () => void,
@@ -50,7 +50,7 @@ export class CraftingPanel {
       title.textContent = recipe.name;
       const detail = document.createElement('span');
       detail.className = 'crafting-recipe-detail';
-      detail.textContent = `${recipe.description} → ${registry.get(recipe.output).name}`;
+      detail.textContent = `${recipe.description} → ${registry.getByLegacyId(recipe.output)?.name ?? ''}`;
       button.append(title, detail);
       this.recipesEl.appendChild(button);
       this.buttons.set(recipe.id, button);
@@ -73,7 +73,7 @@ export class CraftingPanel {
     return !this.el.classList.contains('hidden');
   }
 
-  render(registry: BlockRegistry): void {
+  render(registry: ItemTypeRegistry): void {
     const carried = registry.all()
       .filter((definition) => this.system.recipes.some((recipe) => recipe.ingredients.some(([id]) => id === definition.id)))
       .map((definition) => `${definition.name}: ${this.systemInventoryCount(definition.id)}`)
@@ -88,7 +88,7 @@ export class CraftingPanel {
     }
   }
 
-  private renderInventory(registry: BlockRegistry): void {
+  private renderInventory(registry: ItemTypeRegistry): void {
     this.inventoryGridEl.textContent = '';
     for (let index = 0; index < this.inventory.slots.length; index++) {
       const id = this.inventory.slots[index] ?? 0;
@@ -108,7 +108,7 @@ export class CraftingPanel {
         registry,
         stack?.id ?? 0,
         stack?.count ?? 0,
-        stack ? registry.get(stack.id).name : 'empty inventory slot',
+        stack ? `${registry.getByLegacyId(stack.id)?.name ?? ''} (inventory)` : 'empty inventory slot',
         false,
       );
       this.inventoryGridEl.appendChild(cell);
@@ -116,7 +116,7 @@ export class CraftingPanel {
   }
 
   private createCell(
-    registry: BlockRegistry,
+    registry: ItemTypeRegistry,
     id: number,
     count: number,
     label: string,
@@ -126,12 +126,12 @@ export class CraftingPanel {
     cell.type = 'button';
     cell.className = 'inventory-cell';
     cell.disabled = !interactive;
-    cell.setAttribute('aria-label', `${label}: ${count > 0 ? `${registry.get(id).name}, ${count}` : 'empty'}`);
+    cell.setAttribute('aria-label', `${label}: ${count > 0 ? `${registry.getByLegacyId(id)?.name ?? ''}, ${count}` : 'empty'}`);
     if (count === 0) {
       cell.classList.add('empty');
     }
     if (count > 0) {
-      const tile = registry.get(id).topTile;
+      const tile = registry.getByLegacyId(id)?.iconTile ?? 0;
       const canvas = document.createElement('canvas');
       canvas.width = TILE_SIZE;
       canvas.height = TILE_SIZE;

@@ -4,6 +4,7 @@ import { Player } from './Player';
 import { InputState } from '../engine/InputTypes';
 import { WorldAccess } from '../world/WorldAccess';
 import { BlockRegistry, BlockId } from '../world/BlockRegistry';
+import { ItemTypeRegistry, ItemId } from '../inventory/ItemRegistry';
 import { BlockSelector } from '../inventory/BlockSelector';
 import { raycastVoxel, RaycastResult } from '../math/DDA';
 
@@ -22,6 +23,7 @@ export type InteractionAction = 'break' | 'place' | 'blocked' | 'empty';
 export class PlayerInteraction {
   private readonly world: WorldAccess;
   private readonly registry: BlockRegistry;
+  private readonly itemRegistry: ItemTypeRegistry;
   private readonly selector: BlockSelector;
   private readonly player: Player;
   private readonly camera: THREE.Camera;
@@ -46,6 +48,7 @@ export class PlayerInteraction {
   constructor(opts: {
     world: WorldAccess;
     registry: BlockRegistry;
+    itemRegistry: ItemTypeRegistry;
     selector: BlockSelector;
     player: Player;
     camera: THREE.Camera;
@@ -56,6 +59,7 @@ export class PlayerInteraction {
   }) {
     this.world = opts.world;
     this.registry = opts.registry;
+    this.itemRegistry = opts.itemRegistry;
     this.selector = opts.selector;
     this.player = opts.player;
     this.camera = opts.camera;
@@ -214,19 +218,20 @@ export class PlayerInteraction {
 
   private finishBreak(blockId: number): void {
     if (!this.target) return;
-    const selectedTool = this.registry.get(this.selector.getSelectedBlockId());
+    const selectedTool = this.itemRegistry.getByLegacyId(this.selector.getSelectedItemId());
     this.world.setBlock(this.target.blockX, this.target.blockY, this.target.blockZ, BlockId.Air);
-    const dropId = this.registry.get(blockId).dropId ?? blockId;
-    this.selector.addItem?.(dropId, 1);
+    const dropRid = this.registry.get(blockId).dropItem ?? this.registry.get(blockId).resourceId;
+    const dropItemId = this.itemRegistry.getByResourceId(dropRid).id;
+    this.selector.addItem?.(dropItemId, 1);
     if (blockId === BlockId.Leaves) {
-      this.selector.addItem?.(BlockId.Apple, 1);
+      this.selector.addItem?.(ItemId.Apple, 1);
     }
-    if (selectedTool.maxDurability !== undefined && this.selector.damageSelectedItem) {
+    if (selectedTool?.maxDurability !== undefined && this.selector.damageSelectedItem) {
       if (this.selector.damageSelectedItem(1, selectedTool.maxDurability)) {
         this.onToolBreak?.();
       }
     }
-    this.onAction?.('break', dropId);
+    this.onAction?.('break', dropItemId);
     this.lastActionTime = this.elapsed;
     this.resetBreakProgress();
   }
@@ -234,11 +239,11 @@ export class PlayerInteraction {
   /** Resolve the effective break duration, applying the selected tool bonus. */
   private getBreakDuration(def: { hardness: number; preferredTool?: number }): number {
     let duration = def.hardness;
-    const tool = this.registry.get(this.selector.getSelectedBlockId());
+    const tool = this.itemRegistry.getByLegacyId(this.selector.getSelectedItemId());
     if (
       def.preferredTool !== undefined &&
-      tool.toolKind === def.preferredTool &&
-      tool.toolPower !== undefined &&
+      tool?.toolKind === def.preferredTool &&
+      tool?.toolPower !== undefined &&
       (this.selector.getSlotCount?.() ?? 1) > 0
     ) {
       duration /= tool.toolPower;
@@ -256,9 +261,9 @@ export class PlayerInteraction {
     if (!this.target) {
       return false;
     }
-    const selectedId = this.selector.getSelectedBlockId();
-    const selected = this.registry.get(selectedId);
-    if (!selected.placeable) {
+    const selectedId = this.selector.getSelectedItemId();
+    const selected = this.itemRegistry.getByLegacyId(selectedId);
+    if (!selected || !selected.placeBlock) {
       this.onAction?.('blocked', selectedId);
       return false;
     }
@@ -293,8 +298,9 @@ export class PlayerInteraction {
     if (this.selector.consumeSelected && !this.selector.consumeSelected()) {
       return false;
     }
-    this.world.setBlock(bx, by, bz, selectedId);
-    if (this.world.getBlock(bx, by, bz) !== selectedId) {
+    const targetBlockId = this.registry.getByResourceId(selected.placeBlock).id;
+    this.world.setBlock(bx, by, bz, targetBlockId);
+    if (this.world.getBlock(bx, by, bz) !== targetBlockId) {
       this.selector.addItem?.(selectedId, 1);
       this.onAction?.('blocked', selectedId);
       return false;

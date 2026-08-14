@@ -1,21 +1,21 @@
 import type { Inventory } from './Inventory';
 import type { TextureAtlas } from '../rendering/TextureAtlas';
 import { TILE_SIZE, TILES_PER_ROW } from '../rendering/TextureAtlas';
-import type { BlockRegistry } from '../world/BlockRegistry';
+import type { ItemTypeRegistry } from './ItemRegistry';
 
 /**
  * Renders the hotbar UI: one {@link .hotbar-slot} per inventory slot, each with
- * a slot-index label and a canvas preview of the slot's block tile texture.
- * The currently selected slot is highlighted with the `selected` class.
+ * a slot-index label and a canvas preview of the slot's item icon texture. The
+ * currently selected slot is highlighted with the `selected` class.
  */
 export class Hotbar {
   private readonly container: HTMLElement;
   private readonly inventory: Inventory;
   private readonly atlas: TextureAtlas;
-  private readonly registry: BlockRegistry;
+  private readonly registry: ItemTypeRegistry;
   private readonly slots: HTMLButtonElement[] = [];
 
-  constructor(container: HTMLElement, inventory: Inventory, atlas: TextureAtlas, registry: BlockRegistry) {
+  constructor(container: HTMLElement, inventory: Inventory, atlas: TextureAtlas, registry: ItemTypeRegistry) {
     this.container = container;
     this.inventory = inventory;
     this.atlas = atlas;
@@ -24,16 +24,17 @@ export class Hotbar {
     this.render();
   }
 
-  /** Build the slot DOM elements and their block previews. */
+  /** Build the slot DOM elements and their item previews. */
   private buildSlots(): void {
     this.container.setAttribute('role', 'toolbar');
-    this.container.setAttribute('aria-label', 'Block hotbar');
-    this.inventory.slots.forEach((blockId, index) => {
+    this.container.setAttribute('aria-label', 'Item hotbar');
+    this.inventory.slots.forEach((itemId, index) => {
+      const def = this.registry.getByLegacyId(itemId);
       const slot = document.createElement('button');
       slot.type = 'button';
       slot.className = 'hotbar-slot';
       slot.dataset.index = String(index);
-      slot.setAttribute('aria-label', `${index + 1}: ${this.registry.get(blockId).name}`);
+      slot.setAttribute('aria-label', `${index + 1}: ${def?.name ?? 'empty'}`);
       slot.setAttribute('aria-pressed', index === this.inventory.selected ? 'true' : 'false');
       slot.addEventListener('click', () => {
         this.inventory.select(index);
@@ -60,21 +61,20 @@ export class Hotbar {
       canvas.height = TILE_SIZE;
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        this.drawBlockPreview(ctx, blockId);
+        this.drawItemPreview(ctx, itemId);
       }
       slot.appendChild(canvas);
 
-      const def = this.registry.get(blockId);
-      slot.title = def.name;
+      slot.title = def?.name ?? 'empty';
 
       this.container.appendChild(slot);
       this.slots.push(slot);
     });
   }
 
-  /** Draw a single block's tile texture onto the given canvas context. */
-  private drawBlockPreview(ctx: CanvasRenderingContext2D, blockId: number): void {
-    const tile = this.registry.get(blockId).topTile;
+  /** Draw a single item's icon tile onto the given canvas context. */
+  private drawItemPreview(ctx: CanvasRenderingContext2D, itemId: number): void {
+    const tile = this.registry.getByLegacyId(itemId)?.iconTile ?? 0;
     const col = tile % TILES_PER_ROW;
     const row = Math.floor(tile / TILES_PER_ROW);
     const tileX = col * TILE_SIZE;
@@ -90,12 +90,12 @@ export class Hotbar {
       slot.setAttribute('aria-pressed', selected ? 'true' : 'false');
       const countLabel = slot.querySelector<HTMLElement>('.slot-count');
       const count = this.inventory.getSlotCount(index);
-      const definition = this.registry.get(this.inventory.slots[index] ?? 0);
+      const definition = this.registry.getByLegacyId(this.inventory.slots[index] ?? 0);
       if (countLabel) {
         countLabel.textContent = count > 0 ? String(count) : '';
       }
       const durabilityBar = slot.querySelector<HTMLElement>('.slot-durability');
-      const maxDurability = definition.maxDurability ?? 0;
+      const maxDurability = definition?.maxDurability ?? 0;
       const durability = maxDurability > 0 && count > 0
         ? this.inventory.getSlotDurability(index, maxDurability)
         : 0;
@@ -106,7 +106,7 @@ export class Hotbar {
       }
       slot.setAttribute(
         'aria-label',
-        `${index + 1}: ${definition.name}${count > 0 ? `, ${count}` : ', empty'}${durability > 0 ? `, ${durability}/${maxDurability} durability` : ''}`,
+        `${index + 1}: ${definition?.name ?? 'empty'}${count > 0 ? `, ${count}` : ', empty'}${durability > 0 ? `, ${durability}/${maxDurability} durability` : ''}`,
       );
     });
   }

@@ -8,7 +8,13 @@ import { Lighting } from '../rendering/Lighting';
 import { Environment } from '../rendering/Environment';
 import { TextureAtlas } from '../rendering/TextureAtlas';
 import { Materials } from '../rendering/Materials';
-import { BlockId, BlockRegistry, createDefaultRegistry } from '../world/BlockRegistry';
+import { BlockId, BlockRegistry, createDefaultBlockRegistry } from '../world/BlockRegistry';
+import {
+  ItemTypeRegistry,
+  ItemId,
+  createDefaultItemRegistry,
+  validateItemBlockCrossReferences,
+} from '../inventory/ItemRegistry';
 import { TerrainGenerator } from '../world/TerrainGenerator';
 import { ChunkMesher } from '../world/ChunkMesher';
 import { World } from '../world/World';
@@ -49,7 +55,10 @@ interface GameSaveSnapshot {
  * the main loop. Owns the app lifecycle and disposes all resources on stop.
  */
 export class Game {
-  private readonly registry: BlockRegistry;
+  private readonly blockRegistry: BlockRegistry;
+  private readonly itemRegistry: ItemTypeRegistry;
+  /** Test hook: the inventory item registry (used by E2E hooks). */
+  readonly registry: ItemTypeRegistry;
   private readonly atlas: TextureAtlas;
   private readonly materials: Materials;
   private readonly renderer: Renderer;
@@ -109,7 +118,10 @@ export class Game {
   constructor(canvas: HTMLCanvasElement, seed?: number) {
     this.seed = seed ?? this.resolveSeed();
 
-    this.registry = createDefaultRegistry();
+    this.blockRegistry = createDefaultBlockRegistry();
+    this.itemRegistry = createDefaultItemRegistry();
+    this.registry = this.itemRegistry;
+    validateItemBlockCrossReferences(this.blockRegistry, this.itemRegistry);
     this.atlas = new TextureAtlas();
     this.materials = new Materials(this.atlas);
     this.renderer = new Renderer(
@@ -128,12 +140,12 @@ export class Game {
     this.audio = new GameAudio();
     this.resources.track(this.audio);
 
-    const mesher = new ChunkMesher({ registry: this.registry, atlas: this.atlas });
-    const generator = new TerrainGenerator(this.registry, this.seed);
+    const mesher = new ChunkMesher({ registry: this.blockRegistry, atlas: this.atlas });
+    const generator = new TerrainGenerator(this.blockRegistry, this.seed);
     this.worldLife = new WorldLife(this.renderer.scene, generator, this.seed);
     this.resources.track(this.worldLife);
     this.world = new World({
-      registry: this.registry,
+      registry: this.blockRegistry,
       seed: this.seed,
       scene: this.renderer.scene,
       mesher,
@@ -170,10 +182,11 @@ export class Game {
       (message) => this.showInputError(message),
     );
     this.controller = new PlayerController(this.player, this.input);
-    this.physics = new PlayerPhysics(this.world, this.registry);
+    this.physics = new PlayerPhysics(this.world, this.blockRegistry);
     this.interaction = new PlayerInteraction({
       world: this.world,
-      registry: this.registry,
+      registry: this.blockRegistry,
+      itemRegistry: this.itemRegistry,
       selector: this.inventory,
       player: this.player,
       camera: this.renderer.camera,
@@ -209,11 +222,11 @@ export class Game {
     if (!hotbarEl) {
       throw new Error('Hotbar element missing');
     }
-    this.hotbar = new Hotbar(hotbarEl, this.inventory, this.atlas, this.registry);
+    this.hotbar = new Hotbar(hotbarEl, this.inventory, this.atlas, this.itemRegistry);
     this.craftingPanel = new CraftingPanel(
       craftingEl,
       this.inventory,
-      this.registry,
+      this.itemRegistry,
       this.atlas,
       (recipe) => this.onCrafted(recipe),
       () => this.closeCrafting(),
@@ -340,10 +353,10 @@ export class Game {
       });
       if (
         this.input.consumeEat() &&
-        this.inventory.getItemCount(BlockId.Apple) > 0 &&
+        this.inventory.getItemCount(ItemId.Apple) > 0 &&
         this.survival.eat({ hunger: 4, saturation: 2 })
       ) {
-        this.inventory.removeItem(BlockId.Apple, 1);
+        this.inventory.removeItem(ItemId.Apple, 1);
         this.hotbar.render();
         this.audio.play('eat');
         this.showToast('Ate an apple');
@@ -482,8 +495,8 @@ export class Game {
     if (this.inventory.selected !== this.lastSelection) {
       this.lastSelection = this.inventory.selected;
       this.hotbar.render();
-      const id = this.inventory.getSelectedBlockId();
-      this.hud.setSelectedName(this.registry.get(id).name);
+      const id = this.inventory.getSelectedItemId();
+      this.hud.setSelectedName(this.itemRegistry.getByLegacyId(id)?.name ?? '');
     }
   }
 
@@ -584,7 +597,7 @@ export class Game {
     this.hud.hide();
     this.hotbar.hide();
     this.craftingPanel.show();
-    this.craftingPanel.render(this.registry);
+    this.craftingPanel.render(this.itemRegistry);
   }
 
   private closeCrafting(): void {
@@ -601,7 +614,7 @@ export class Game {
     this.hud.setSelectedName(`Crafted ${recipe.name}`);
     this.hotbar.render();
     this.audio.play('craft');
-    this.craftingPanel.render(this.registry);
+    this.craftingPanel.render(this.itemRegistry);
   }
 
   /** Show a recoverable input notice without trapping the player in the fatal error UI. */
@@ -615,8 +628,8 @@ export class Game {
   }
 
   private onInteractionAction(action: InteractionAction, blockId?: number): void {
-    const name = blockId !== undefined && this.registry.has(blockId)
-      ? this.registry.get(blockId).name
+    const name = blockId !== undefined
+      ? (this.itemRegistry.getByLegacyId(blockId)?.name ?? this.blockRegistry.getByLegacyId(blockId)?.name ?? 'block')
       : 'block';
     switch (action) {
       case 'break':
@@ -687,8 +700,8 @@ export class Game {
       this.player.pitch = snapshot.player.pitch;
       this.inventory.restore(
         snapshot.inventory,
-        (id) => this.registry.has(id),
-        (id) => this.registry.get(id).maxDurability ?? 0,
+        (id) => this.itemRegistry.has(id),
+        (id) => this.itemRegistry.getByLegacyId(id)?.maxDurability ?? 0,
       );
       this.survival.restore(snapshot.survival);
     } catch {

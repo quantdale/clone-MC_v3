@@ -3,7 +3,8 @@ import * as THREE from 'three';
 import { Player } from '../../src/player/Player';
 import { PlayerInteraction } from '../../src/player/PlayerInteraction';
 import type { InputState } from '../../src/engine/InputTypes';
-import { BlockId, createDefaultRegistry } from '../../src/world/BlockRegistry';
+import { BlockId, createDefaultBlockRegistry } from '../../src/world/BlockRegistry';
+import { ItemId, createDefaultItemRegistry } from '../../src/inventory/ItemRegistry';
 
 function makeWorld(): import('../../src/world/WorldAccess').WorldAccess {
   return {
@@ -70,8 +71,9 @@ describe('player interaction selection', () => {
 
     const interaction = new PlayerInteraction({
       world: makeWorld(),
-      registry: createDefaultRegistry(),
-      selector: { getSelectedBlockId: () => 3 },
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
+      selector: { getSelectedItemId: () => 3 },
       player,
       camera,
     });
@@ -104,7 +106,7 @@ describe('player interaction selection', () => {
     camera.updateMatrixWorld(true);
     const world = makeMutableWorld();
     const selector = {
-      getSelectedBlockId: () => BlockId.Stone,
+      getSelectedItemId: () => BlockId.Stone,
       getSlotCount: () => 2,
       consumeSelected: () => true,
       addItem: () => 0,
@@ -112,13 +114,14 @@ describe('player interaction selection', () => {
     let collected = 0;
     const interaction = new PlayerInteraction({
       world,
-      registry: createDefaultRegistry(),
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
       selector,
       player,
       camera,
       input: makeInput({ breakRequested: true, held: false }),
       onAction: (action, id) => {
-        if (action === 'break' && id === BlockId.Stone) collected++;
+        if (action === 'break' && id === ItemId.Stone) collected++;
       },
     });
 
@@ -139,9 +142,10 @@ describe('player interaction selection', () => {
     const drops: number[] = [];
     const interaction = new PlayerInteraction({
       world,
-      registry: createDefaultRegistry(),
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
       selector: {
-        getSelectedBlockId: () => BlockId.Stone,
+        getSelectedItemId: () => BlockId.Stone,
         getSlotCount: () => 1,
         addItem: (id) => {
           drops.push(id);
@@ -154,7 +158,7 @@ describe('player interaction selection', () => {
     });
 
     interaction.update(0.016);
-    expect(drops).toEqual([BlockId.Coal]);
+    expect(drops).toEqual([ItemId.Coal]);
     interaction.dispose();
   });
 
@@ -169,8 +173,9 @@ describe('player interaction selection', () => {
     const progress: number[] = [];
     const interaction = new PlayerInteraction({
       world,
-      registry: createDefaultRegistry(),
-      selector: { getSelectedBlockId: () => BlockId.Stone },
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
+      selector: { getSelectedItemId: () => BlockId.Stone },
       player,
       camera,
       input: makeInput(state),
@@ -206,9 +211,10 @@ describe('player interaction selection', () => {
     let toolBreaks = 0;
     const interaction = new PlayerInteraction({
       world,
-      registry: createDefaultRegistry(),
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
       selector: {
-        getSelectedBlockId: () => BlockId.WoodenPickaxe,
+        getSelectedItemId: () => ItemId.WoodenPickaxe,
         getSlotCount: () => 1,
         damageSelectedItem: () => {
           durability--;

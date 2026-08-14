@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
 import { ChunkMesher } from '../../src/world/ChunkMesher';
 import { Chunk } from '../../src/world/Chunk';
-import { BlockId, createDefaultRegistry } from '../../src/world/BlockRegistry';
+import { BlockId, createDefaultBlockRegistry } from '../../src/world/BlockRegistry';
 import { tileUV } from '../../src/rendering/TextureAtlas';
 import type { TextureAtlas } from '../../src/rendering/TextureAtlas';
 
@@ -19,7 +19,7 @@ function countTriangles(geometry: THREE.BufferGeometry): number {
 const fakeAtlas = { uv: (tile: number) => tileUV(tile) } as unknown as TextureAtlas;
 
 describe('ChunkMesher', () => {
-  const registry = createDefaultRegistry();
+  const registry = createDefaultBlockRegistry();
 
   it('produces zero faces for a solid stone block fully surrounded by stone', () => {
     const chunk = new Chunk(0, 0, 0);

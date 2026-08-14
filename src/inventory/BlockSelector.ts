@@ -5,8 +5,8 @@
  * determine which block to place.
  */
 export interface BlockSelector {
-  /** The block id of the currently selected hotbar slot. */
-  getSelectedBlockId(): number;
+  /** The item id of the currently selected hotbar slot. */
+  getSelectedItemId(): number;
   /** Optional stack count used by the interactive inventory implementation. */
   getSlotCount?(index?: number): number;
   /** Optional consumption hook used when placing a stackable block. */

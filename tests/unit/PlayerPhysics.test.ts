@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
 import { Player } from '../../src/player/Player';
 import { PlayerPhysics } from '../../src/player/PlayerPhysics';
-import { BlockId, createDefaultRegistry } from '../../src/world/BlockRegistry';
+import { BlockId, createDefaultBlockRegistry } from '../../src/world/BlockRegistry';
 import { CONFIG } from '../../src/config';
 
 /**
@@ -40,7 +40,7 @@ function makeStepWorld(): import('../../src/world/WorldAccess').WorldAccess {
 }
 
 describe('player physics', () => {
-  const registry = createDefaultRegistry();
+  const registry = createDefaultBlockRegistry();
 
   it('applies gravity to an airborne player', () => {
     const world = makeFloorWorld();
