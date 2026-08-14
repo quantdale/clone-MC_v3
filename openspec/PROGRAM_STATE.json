@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "082-fluid-collision-movement",
+  "currentChange": "083-fluid-surface-meshing",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "082-fluid-collision-movement",
-  "nextChange": "083-fluid-surface-meshing",
+  "lastCompletedChange": "083-fluid-surface-meshing",
+  "nextChange": "084-fluid-regression-suite",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "216ae5f32e5c154fee65c67146f65ee7ffb7ee99",
-  "lastKnownHead": "216ae5f32e5c154fee65c67146f65ee7ffb7ee99",
-  "lastCompletedTask": "082: all 4 tasks complete; fluid-collision-movement VERIFIED. New src/simulation/FluidMovement.ts (FluidMovementWorld; fluidDragFactor clamp(1.1-0.3d) water 0.8/lava 0.5; applyFluidDrag factor^tickDelta input-untouched; buoyancyAcceleration g*max(0, 1-ed/fd); eyeFluid; fluidHeightAt topmost fluid top in window (falling counts); submergedFraction clamped; isFullySubmerged; immersion report; invalid density/tickDelta throw); 19 new unit tests; 935 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 083-fluid-surface-meshing. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (083 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement level-aware fluid surface geometry and side heights (deterministic; 076 levels + 062/070/071 quad pipeline), verify full gate, commit + push, advance.",
+  "lastValidatedHead": "430c49a387edcc5dcf9eb444d38060c4cc399f57",
+  "lastKnownHead": "430c49a387edcc5dcf9eb444d38060c4cc399f57",
+  "lastCompletedTask": "083: all 4 tasks complete; fluid-surface-meshing VERIFIED. New src/rendering/FluidSurfaceMesher.ts (FluidSurfaceWorld; meshFluidSurface/meshFluidSurfaces: top face at 076 surface height when uncovered, side faces full-depth vs air/block/different fluid and step vs lower same-fluid, equal/higher same-fluid none, zero-height skip, fixed order up + -x,+x,-z,+z; 062-shaped quads with blockId = fluidId and 070/071 corner data); 10 new unit tests; 945 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 084-fluid-regression-suite. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (084 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement deterministic fixtures for fluid flow, boundaries, unload/reload, and performance (integration-level over 076-083), verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -821,6 +821,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "082 VERIFIED 4/4 (100%). Fluid collision/movement: src/simulation/FluidMovement.ts (drag factor clamp(1.1-0.3d) water 0.8/lava 0.5; applyFluidDrag factor^tickDelta; buoyancyAcceleration g*max(0,1-ed/fd); eyeFluid; fluidHeightAt; submergedFraction/isFullySubmerged/immersion; all derived from 015 density data; invalid inputs throw); 19 new unit tests; 935 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "430c49a387edcc5dcf9eb444d38060c4cc399f57",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 945/945; FluidSurfaceMesher 10/10",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "083 VERIFIED 4/4 (100%). Level-aware fluid surfaces: src/rendering/FluidSurfaceMesher.ts (top face at 076 surface height when uncovered; full-depth sides vs air/block/different fluid; step sides vs lower same-fluid; equal/higher none; zero-height skip; fixed order; 062 quads with fluidId blockId + 070/071 corner data); 10 new unit tests; 945 unit + 19 e2e pass, stable."
     }
   ]
 }
