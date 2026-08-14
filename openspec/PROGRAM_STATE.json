@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "048-random-tick-system",
+  "currentChange": "049-neighbor-update-queue",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "048-random-tick-system",
-  "nextChange": "049-neighbor-update-queue",
+  "lastCompletedChange": "049-neighbor-update-queue",
+  "nextChange": "050-block-behavior-dispatch",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "48f1c07edb0eab37fab49ad59543e4f19ba3bebb",
-  "lastKnownHead": "48f1c07edb0eab37fab49ad59543e4f19ba3bebb",
-  "lastCompletedTask": "048: all 4 tasks complete; random-tick-system VERIFIED. New src/simulation/RandomTickSelector.ts (RANDOM_TICKS_PER_SUB_CHUNK 3; FNV-1a hash32; selectForSection -> local indices in [0,4096), with-replacement sampling; selectEligible -> world positions with bounded attempts); 8 unit tests; 627 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 049-neighbor-update-queue. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (049 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement an ordered bounded neighbor update queue with recursion/overflow protection, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "86149ae286d06cd0f5d6d0db04bec037e8bb10af",
+  "lastKnownHead": "86149ae286d06cd0f5d6d0db04bec037e8bb10af",
+  "lastCompletedTask": "049: all 4 tasks complete; neighbor-update-queue VERIFIED. New src/simulation/NeighborUpdateQueue.ts (FIFO, position dedupe, maxPerDrain budget, maxQueueSize cap with drop-newest false return, iterative handler-enqueue cascade without recursion, size/has/clear); 6 unit tests; 633 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 050-block-behavior-dispatch. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (050 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement registry-selected block behavior modules instead of central block switches, verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -481,6 +481,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "048 VERIFIED 4/4 (100%). New src/simulation/RandomTickSelector.ts (RANDOM_TICKS_PER_SUB_CHUNK 3; FNV-1a hash32; selectForSection -> local indices in [0,4096) with with-replacement sampling; selectEligible -> world positions with bounded attempts); 8 unit tests; 627 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "86149ae286d06cd0f5d6d0db04bec037e8bb10af",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 633/633; NeighborUpdateQueue 6/6",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "049 VERIFIED 4/4 (100%). New src/simulation/NeighborUpdateQueue.ts (FIFO, position dedupe, maxPerDrain budget, maxQueueSize cap with drop-newest false return, iterative handler-enqueue cascade without recursion, size/has/clear); 6 unit tests; 633 unit + 19 e2e pass, stable."
     }
   ]
 }
