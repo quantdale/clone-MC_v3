@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "071-ambient-occlusion",
+  "currentChange": "072-biome-tint-rendering",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "071-ambient-occlusion",
-  "nextChange": "072-biome-tint-rendering",
+  "lastCompletedChange": "072-biome-tint-rendering",
+  "nextChange": "073-animated-texture-metadata",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "2f4b637a4648286515774d212fb51010a24a8950",
-  "lastKnownHead": "2f4b637a4648286515774d212fb51010a24a8950",
-  "lastCompletedTask": "071: all 6 tasks complete; ambient-occlusion VERIFIED. New src/rendering/AmbientOcclusion.ts (AOLevel 0-3; sampleCornerAO/quadVertexAO: Minecraft table over the 3-cell outward-layer neighborhood side1=(fu-1,fv), side2=(fu,fv-1), corner=(fu-1,fv-1); front cell (fu,fv) never consulted; out-of-section cells never occlude; fractional corners floor-snap); OpaqueFaceQuad.vertexAO required in 070 corner order, emitted by greedy/naive/template meshers and the worker pipeline (no payload change); 12 new unit tests; 804 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 072-biome-tint-rendering. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (072 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement biome-controlled tint attributes for grass/foliage/water-like surfaces (deterministic, orthogonal to 070 light and 071 AO), verify full gate, commit + push, advance.",
+  "lastValidatedHead": "4739693bdd0a28833ece5bf3948ab69c8a771b28",
+  "lastKnownHead": "4739693bdd0a28833ece5bf3948ab69c8a771b28",
+  "lastCompletedTask": "072: all 6 tasks complete; biome-tint-rendering VERIFIED. BlockModelFace gains optional tintindex ('grass'|'foliage'|'water') strictly validated/preserved by validateBlockModel; DEFAULT_WATER_COLOR exported from Biome.ts; new src/rendering/BiomeTint.ts (BiomeTint; biomeTintColor/biomeTint: grass→grassColor, foliage→foliageColor, water→waterColor ?? DEFAULT_WATER_COLOR, rgb split via biomeColorToRGB; pure/deterministic); 10 new unit tests; 814 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 073-animated-texture-metadata. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (073 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement animated-texture metadata (frame timing/order for texture atlases; deterministic, data-model level), verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -711,6 +711,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "071 VERIFIED 6/6 (100%). Per-corner AO enters every generated mesh: OpaqueFaceQuad.vertexAO (0-3) in 070 corner order; new src/rendering/AmbientOcclusion.ts (Minecraft 0-3 table over 3-cell outward-layer neighborhood, front cell never consulted, out-of-section never occludes, floor-snap fractional corners); greedy/naive/template/worker all emit AO; no worker payload change; 12 new unit tests; 804 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "4739693bdd0a28833ece5bf3948ab69c8a771b28",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 814/814; BiomeTint 7/7",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "072 VERIFIED 6/6 (100%). Tint attributes: BlockModelFace.tintindex ('grass'|'foliage'|'water') strictly validated/preserved; DEFAULT_WATER_COLOR exported; new src/rendering/BiomeTint.ts (biomeTintColor/biomeTint: grass→grassColor, foliage→foliageColor, water→waterColor ?? default, rgb split; pure/deterministic); 10 new unit tests; 814 unit + 19 e2e pass, stable."
     }
   ]
 }
