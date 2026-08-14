@@ -1,6 +1,19 @@
-import { ItemId } from './ItemRegistry';
+import { type ResourceId } from '../data/ResourceId';
 import { Inventory } from './Inventory';
+import {
+  type RecipeDefinition,
+  type RecipeIngredient,
+  type RecipeOutput,
+  RecipeRegistry,
+  createDefaultRecipeRegistry,
+} from './RecipeRegistry';
 
+/**
+ * Public recipe projection consumed by the UI and tests. It keeps the pre-010
+ * shape (string id, numeric ingredient pairs, numeric output) so the crafting panel
+ * and game wiring are unchanged; it is derived from the 010 ResourceId-based
+ * registry rather than stored separately.
+ */
 export interface CraftingRecipe {
   id: string;
   name: string;
@@ -11,103 +24,88 @@ export interface CraftingRecipe {
 }
 
 /**
- * Small, deterministic recipe book for the survival loop. Recipes deliberately
- * use blocks already present in the world plus a small set of stable tool-item
- * ids, keeping the recipe book deterministic without a second item registry.
+ * One-click crafting system backed by the 010 recipe registry.
+ *
+ * Current behavior is preserved: a recipe is craftable only when every ingredient
+ * is affordable and the output fits, ingredients are removed only after both checks
+ * pass (transactional), and the output is then inserted. Recipe identity is now a
+ * ResourceId behind the registry; the UI continues to use the legacy short key.
  */
-export const RECIPES: readonly CraftingRecipe[] = [
-  {
-    id: 'planks',
-    name: 'Oak Planks',
-    description: '1 log → 4 planks',
-    ingredients: [[ItemId.Wood, 1]],
-    output: ItemId.Planks,
-    outputCount: 4,
-  },
-  {
-    id: 'glass',
-    name: 'Glass',
-    description: '4 sand → 1 glass',
-    ingredients: [[ItemId.Sand, 4]],
-    output: ItemId.Glass,
-    outputCount: 1,
-  },
-  {
-    id: 'sticks',
-    name: 'Sticks',
-    description: '2 planks → 4 sticks',
-    ingredients: [[ItemId.Planks, 2]],
-    output: ItemId.Stick,
-    outputCount: 4,
-  },
-  {
-    id: 'gravel',
-    name: 'Gravel',
-    description: '2 stone → 1 gravel',
-    ingredients: [[ItemId.Stone, 2]],
-    output: ItemId.Gravel,
-    outputCount: 1,
-  },
-  {
-    id: 'cobblestone',
-    name: 'Cobblestone',
-    description: '2 stone → 2 cobblestone',
-    ingredients: [[ItemId.Stone, 2]],
-    output: ItemId.Cobblestone,
-    outputCount: 2,
-  },
-  {
-    id: 'bricks',
-    name: 'Bricks',
-    description: '4 cobblestone → 4 bricks',
-    ingredients: [[ItemId.Cobblestone, 4]],
-    output: ItemId.Bricks,
-    outputCount: 4,
-  },
-  {
-    id: 'wooden_pickaxe',
-    name: 'Wooden Pickaxe',
-    description: '3 planks + 2 sticks → 1 tool',
-    ingredients: [[ItemId.Planks, 3], [ItemId.Stick, 2]],
-    output: ItemId.WoodenPickaxe,
-    outputCount: 1,
-  },
-  {
-    id: 'stone_pickaxe',
-    name: 'Stone Pickaxe',
-    description: '3 stone + 2 sticks → 1 tool',
-    ingredients: [[ItemId.Stone, 3], [ItemId.Stick, 2]],
-    output: ItemId.StonePickaxe,
-    outputCount: 1,
-  },
-  {
-    id: 'wooden_axe',
-    name: 'Wooden Axe',
-    description: '3 planks + 2 sticks → 1 tool',
-    ingredients: [[ItemId.Planks, 3], [ItemId.Stick, 2]],
-    output: ItemId.WoodenAxe,
-    outputCount: 1,
-  },
-];
-
 export class CraftingSystem {
-  readonly recipes = RECIPES;
+  private readonly inventory: Inventory;
+  private readonly registry: RecipeRegistry;
 
-  constructor(private readonly inventory: Inventory) {}
-
-  canCraft(recipe: CraftingRecipe): boolean {
-    return this.inventory.hasItems(recipe.ingredients);
+  constructor(inventory: Inventory, registry: RecipeRegistry = createDefaultRecipeRegistry()) {
+    this.inventory = inventory;
+    this.registry = registry;
   }
 
+  /** Recipes projected into the legacy shape for the crafting panel. */
+  get recipes(): CraftingRecipe[] {
+    return this.registry.toLegacyRecipes();
+  }
+
+  /** Whether the given legacy recipe can be crafted right now. */
+  canCraft(recipe: CraftingRecipe): boolean {
+    const def = this.registry.getByKey(recipe.id);
+    if (def === undefined) return false;
+    return this.canCraftDefinition(def) && this.canAddOutput(def.output);
+  }
+
+  /**
+   * Craft by legacy key. Returns the legacy recipe projection on success, or null
+   * when the recipe is unknown, unaffordable, or lacks output capacity. On failure
+   * the inventory is left unchanged.
+   */
   craft(recipeId: string): CraftingRecipe | null {
-    const recipe = this.recipes.find((candidate) => candidate.id === recipeId);
-    if (!recipe || !this.canCraft(recipe) || !this.inventory.canAddItem(recipe.output, recipe.outputCount)) {
-      return null;
+    const def = this.registry.getByKey(recipeId);
+    if (def === undefined) return null;
+    if (!this.canCraftDefinition(def) || !this.canAddOutput(def.output)) return null;
+
+    for (const ingredient of def.ingredients) {
+      const target = this.resolveIngredientItem(ingredient);
+      if (target === undefined) return null;
+      this.inventory.removeItem(target, ingredient.count);
     }
-    for (const [id, count] of recipe.ingredients) {
-      this.inventory.removeItem(id, count);
+    this.inventory.addItem(this.numericItemId(def.output.item), def.output.count);
+    return this.registry.legacyRecipe(def.key) ?? null;
+  }
+
+  private canCraftDefinition(def: RecipeDefinition): boolean {
+    return def.ingredients.every((ingredient) => {
+      if (ingredient.kind === 'item') {
+        return this.inventory.getItemCount(this.numericItemId(ingredient.item)) >= ingredient.count;
+      }
+      return this.firstTagMemberWith(ingredient) !== undefined;
+    });
+  }
+
+  private canAddOutput(output: RecipeOutput): boolean {
+    return this.inventory.canAddItem(this.numericItemId(output.item), output.count);
+  }
+
+  /** Resolve an exact-item ingredient to its numeric id, or the first tag member with enough stock. */
+  private resolveIngredientItem(ingredient: RecipeIngredient): number | undefined {
+    if (ingredient.kind === 'item') {
+      return this.numericItemId(ingredient.item);
     }
-    this.inventory.addItem(recipe.output, recipe.outputCount);
-    return recipe;
+    return this.firstTagMemberWith(ingredient);
+  }
+
+  /** First tag member (deterministic order) whose inventory stock covers the quantity, or undefined. */
+  private firstTagMemberWith(ingredient: Extract<RecipeIngredient, { kind: 'tag' }>): number | undefined {
+    const tags = this.registry.tagRegistry;
+    if (tags === undefined || !tags.isFinalized) return undefined;
+    for (const member of tags.membersOf(ingredient.tag)) {
+      const id = this.registry.itemRegistry.getByResourceId(member).id;
+      if (this.inventory.getItemCount(id) >= ingredient.count) {
+        return id;
+      }
+    }
+    return undefined;
+  }
+
+  private numericItemId(rid: ResourceId): number {
+    return this.registry.itemRegistry.getByResourceId(rid).id;
   }
 }
