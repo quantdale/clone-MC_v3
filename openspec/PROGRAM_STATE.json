@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "045-render-interpolation",
+  "currentChange": "046-singleplayer-pause-semantics",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "045-render-interpolation",
-  "nextChange": "046-singleplayer-pause-semantics",
+  "lastCompletedChange": "046-singleplayer-pause-semantics",
+  "nextChange": "047-scheduled-tick-queue",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "cec500da12532fe47037216d61c5a249f16a83da",
-  "lastKnownHead": "cec500da12532fe47037216d61c5a249f16a83da",
-  "lastCompletedTask": "045: all 4 tasks complete; render-interpolation VERIFIED. New src/engine/RenderInterpolator.ts (RenderState; alphaFromAccumulator = clamp(accumulatorMs/TICK_MS, 0, 1); RenderInterpolator setState/interpolate/hasState/reset with copy-on-set, mismatch fallback, first-state passthrough); 7 unit tests; 605 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 046-singleplayer-pause-semantics. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (046 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement explicit pause rules for simulation, UI, and timers, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "ff6aafd4849a91832e71bf8ec932e8b20765cefa",
+  "lastKnownHead": "ff6aafd4849a91832e71bf8ec932e8b20765cefa",
+  "lastCompletedTask": "046: all 4 tasks complete; singleplayer-pause-semantics VERIFIED. New src/engine/PauseManager.ts (PAUSE_REASONS vocabulary; pause/resume idempotent Set semantics; isPaused while any reason active; reasons; onChange transition-only listeners with unsubscribe; resumeAll; defensive listener invocation); 6 unit tests; 611 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 047-scheduled-tick-queue. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (047 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement a deterministic scheduled block/fluid tick queue with dedupe and persistence hooks, verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -451,6 +451,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "045 VERIFIED 4/4 (100%). New src/engine/RenderInterpolator.ts (RenderState; alphaFromAccumulator = clamp(accumulatorMs/TICK_MS, 0, 1); RenderInterpolator setState/interpolate/hasState/reset with copy-on-set, component-mismatch fallback, first-state passthrough; bounded catch-up, never extrapolates ahead of simulation truth); 7 unit tests; 605 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "ff6aafd4849a91832e71bf8ec932e8b20765cefa",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 611/611; PauseManager 6/6",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "046 VERIFIED 4/4 (100%). New src/engine/PauseManager.ts (PAUSE_REASONS vocabulary; pause/resume idempotent Set semantics; isPaused while any reason active; reasons; onChange transition-only listeners with unsubscribe; resumeAll; defensive listener invocation); 6 unit tests; 611 unit + 19 e2e pass, stable."
     }
   ]
 }
