@@ -117,6 +117,11 @@ export class TerrainColumn {
   setCell(localX: number, localY: number, localZ: number, blockId: number): void {
     this.cells.set(this.index(localX, localY, localZ), blockId);
   }
+
+  /** Remove a stored cell (idempotent). */
+  removeCell(localX: number, localY: number, localZ: number): void {
+    this.cells.delete(this.index(localX, localY, localZ));
+  }
 }
 
 const SURFACE_AMPLITUDE = 12;
