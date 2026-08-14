@@ -1,15 +1,19 @@
 /**
  * Configured feature core (094). `ConfiguredFeature` pairs a key with a validated typed config;
  * the core vocabulary is `simpleBlock` (place one block) and `blockPatch` (scatter up to `tries`
- * blocks within `radiusXZ` × `radiusY`); 096 added `ore` (tag-driven ore veins, see OreFeature).
+ * blocks within `radiusXZ` × `radiusY`); 096 added `ore` (tag-driven ore veins, see OreFeature)
+ * and 097 added `tree` (configurable trunk/foliage, see TreeFeature).
  * `ConfiguredFeatureRegistry` stores only validated
  * definitions with atomic rejection (003 pattern); `createDefaultConfiguredFeatures` provides
- * documented deterministic defaults. 097 tree features extend the config union further.
+ * documented deterministic defaults.
  */
+import type { TreeFoliageConfig, TreeTrunkConfig } from './TreeFeature';
+
 export type ConfiguredFeatureConfig =
   | { type: 'simpleBlock'; blockId: number }
   | { type: 'blockPatch'; blockId: number; tries: number; radiusXZ: number; radiusY: number }
-  | { type: 'ore'; blockId: number; size: number; discardChanceOnAirExposure: number; targetTags: string[] };
+  | { type: 'ore'; blockId: number; size: number; discardChanceOnAirExposure: number; targetTags: string[] }
+  | { type: 'tree'; trunk: TreeTrunkConfig; foliage: TreeFoliageConfig };
 
 /** A keyed, validated configured feature. */
 export interface ConfiguredFeature {
@@ -67,6 +71,28 @@ export function validateConfiguredFeatureConfig(input: unknown): ConfiguredFeatu
         }
       }
       return input as ConfiguredFeatureConfig;
+    case 'tree': {
+      if (typeof r.trunk !== 'object' || r.trunk === null) {
+        throw new Error('ConfiguredFeature: tree.trunk must be an object');
+      }
+      const trunk = r.trunk as Record<string, unknown>;
+      assertBlockId(trunk.blockId, 'tree.trunk.blockId');
+      assertPositive(trunk.minHeight, 'tree.trunk.minHeight');
+      assertPositive(trunk.maxHeight, 'tree.trunk.maxHeight');
+      if ((trunk.minHeight as number) > (trunk.maxHeight as number)) {
+        throw new Error(`ConfiguredFeature: tree.trunk.minHeight must be <= maxHeight (got ${String(trunk.minHeight)} > ${String(trunk.maxHeight)})`);
+      }
+      if (typeof r.foliage !== 'object' || r.foliage === null) {
+        throw new Error('ConfiguredFeature: tree.foliage must be an object');
+      }
+      const foliage = r.foliage as Record<string, unknown>;
+      assertBlockId(foliage.blockId, 'tree.foliage.blockId');
+      if (foliage.shape !== 'round' && foliage.shape !== 'flatTop' && foliage.shape !== 'spruce') {
+        throw new Error(`ConfiguredFeature: tree.foliage.shape must be one of round/flatTop/spruce, got ${String(foliage.shape)}`);
+      }
+      assertPositive(foliage.radius, 'tree.foliage.radius');
+      return input as ConfiguredFeatureConfig;
+    }
     default:
       throw new Error(`ConfiguredFeature: unknown feature type: ${String(r.type)}`);
   }

@@ -110,6 +110,23 @@ describe('TerrainGenerator', () => {
     expect(found).toBe(true);
   });
 
+  it('trees carry foliage above their trunks (097 tree feature system)', () => {
+    const gen = new TerrainGenerator(registry, 1234);
+    let leaves = 0;
+    for (let cx = -1; cx <= 1; cx++) {
+      for (let cz = -1; cz <= 1; cz++) {
+        const chunk = makeChunk(cx, 0, cz);
+        gen.generateChunk(chunk);
+        for (const id of chunk.blocks) {
+          if (id === BlockId.Leaves) {
+            leaves++;
+          }
+        }
+      }
+    }
+    expect(leaves).toBeGreaterThan(0);
+  });
+
   it('surface is grass above sea level and getHeightAt matches the highest non-air block', () => {
     const gen = new TerrainGenerator(registry, 1234);
 

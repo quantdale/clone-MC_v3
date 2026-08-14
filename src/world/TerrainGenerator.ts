@@ -2,11 +2,10 @@ import { CONFIG } from '../config';
 import { fbm2, valueNoise3 } from '../math/Noise';
 import { PRNG, hash2 } from '../math/PRNG';
 import { BlockId, BlockRegistry } from './BlockRegistry';
+import { buildTreeBlocks, createDefaultTreeConfiguredFeatures, type TreeFoliageConfig, type TreeTrunkConfig } from '../worldgen/TreeFeature';
 import { Chunk } from './Chunk';
 import { CHUNK_DIMENSIONS } from './WorldCoordinates';
 
-/** Horizontal reach (in blocks) of a tree canopy on each side of the trunk. */
-const CANOPY_HALF_WIDTH = 2;
 /** Probability that a given column is a tree location. */
 const TREE_DENSITY = 0.012;
 /** Half the vertical range of the height noise around sea level. */
@@ -38,6 +37,8 @@ export class TerrainGenerator {
   private readonly registry: BlockRegistry;
   private readonly seed: number;
 
+  /** The tree configured feature used for all placed trees (097). */
+  private readonly treeConfig: { trunk: TreeTrunkConfig; foliage: TreeFoliageConfig };
   constructor(registry: BlockRegistry, seed: number) {
     this.registry = registry;
     this.seed = seed >>> 0;
@@ -55,6 +56,12 @@ export class TerrainGenerator {
     this.registry.get(BlockId.CoalOre);
     this.registry.get(BlockId.IronOre);
     this.registry.get(BlockId.Lava);
+    // Resolve the default tree feature (097): fail fast on a missing/invalid default.
+    const oak = createDefaultTreeConfiguredFeatures().get('overworld/oak_tree');
+    if (!oak || oak.config.type !== 'tree') {
+      throw new Error('TerrainGenerator: missing default oak tree feature');
+    }
+    this.treeConfig = oak.config;
   }
 
   /**
@@ -243,9 +250,11 @@ export class TerrainGenerator {
 
   /**
    * Build the deterministic tree spec for a column, or null if it is not a
-   * tree location. Pure function of (worldX, worldZ, seed).
+   * tree location. Pure function of (worldX, worldZ, seed); returns the PRNG
+   * positioned right after the density draw, so the caller's next draw is the
+   * tree height draw (unchanged stream).
    */
-  private treeSpec(ax: number, az: number): { trunkHeight: number } | null {
+  private treeSpec(ax: number, az: number): { rng: PRNG } | null {
     const biome = this.getBiomeAt(ax, az);
     if (biome === 'desert') {
       return null;
@@ -255,21 +264,23 @@ export class TerrainGenerator {
     if (rng.next() >= density) {
       return null;
     }
-    return { trunkHeight: 4 + rng.nextInt(2) };
+    return { rng };
   }
 
   /**
-   * Place trees. Trunks live in their anchor column, so they never cross chunk
-   * borders. Canopy blocks are written by iterating over every anchor column
-   * whose canopy could reach this chunk; because this depends only on world
-   * coordinates and the seed, neighboring chunks compute the identical canopy
-   * blocks, so there is no duplication and no clipping.
+   * Place trees via the tree feature system (097). Trunks live in their anchor
+   * column, so they never cross chunk borders. Canopy blocks are written by
+   * iterating over every anchor column whose canopy could reach this chunk;
+   * because this depends only on world coordinates and the seed, neighboring
+   * chunks compute the identical blocks, so there is no duplication and no
+   * clipping. The per-column rng stream (density draw, then height draw) is
+   * unchanged from the former hard-coded trees, so world output is identical.
    */
   private placeTrees(chunk: Chunk): void {
     const wx0 = chunk.cx * CHUNK_DIMENSIONS.width;
     const wy0 = chunk.cy * CHUNK_DIMENSIONS.height;
     const wz0 = chunk.cz * CHUNK_DIMENSIONS.depth;
-    const half = CANOPY_HALF_WIDTH;
+    const half = this.treeConfig.foliage.radius;
 
     for (let ax = wx0 - half; ax <= wx0 + CHUNK_DIMENSIONS.width - 1 + half; ax++) {
       for (let az = wz0 - half; az <= wz0 + CHUNK_DIMENSIONS.depth - 1 + half; az++) {
@@ -282,53 +293,28 @@ export class TerrainGenerator {
           continue; // no trees below or at sea level
         }
 
-        const trunkHeight = spec.trunkHeight;
-
-        // Trunk: only in the anchor column, which sits in this chunk whenever
-        // the anchor is within this chunk's horizontal footprint.
-        if (
-          ax >= wx0 &&
-          ax < wx0 + CHUNK_DIMENSIONS.width &&
-          az >= wz0 &&
-          az < wz0 + CHUNK_DIMENSIONS.depth
-        ) {
-          const lx = ax - wx0;
-          const lz = az - wz0;
-          for (let y = surface + 1; y <= surface + trunkHeight; y++) {
-            const ly = y - wy0;
-            if (ly >= 0 && ly < CHUNK_DIMENSIONS.height && chunk.getLocalSafe(lx, ly, lz) === BlockId.Air) {
-              chunk.setLocal(lx, ly, lz, BlockId.Wood);
-            }
-          }
-        }
-
-        // Canopy: a 5x5x3 blob (top layer 3x3) sitting just above the trunk.
-        const canopyBottom = surface + trunkHeight + 1;
-        for (let layer = 0; layer < 3; layer++) {
-          const y = canopyBottom + layer;
-          const ly = y - wy0;
+        const blocks = buildTreeBlocks(this.treeConfig, { nextFloat: () => spec.rng.next() });
+        const baseY = surface;
+        for (const block of blocks) {
+          const wx = ax + block.dx;
+          const wy = baseY + block.dy;
+          const wz = az + block.dz;
+          const ly = wy - wy0;
           if (ly < 0 || ly >= CHUNK_DIMENSIONS.height) {
             continue;
           }
-          const reach = layer === 2 ? 1 : half;
-          for (let dx = -reach; dx <= reach; dx++) {
-            for (let dz = -reach; dz <= reach; dz++) {
-              const wx = ax + dx;
-              const wz = az + dz;
-              if (
-                wx < wx0 ||
-                wx >= wx0 + CHUNK_DIMENSIONS.width ||
-                wz < wz0 ||
-                wz >= wz0 + CHUNK_DIMENSIONS.depth
-              ) {
-                continue;
-              }
-              const lx = wx - wx0;
-              const lz = wz - wz0;
-              if (chunk.getLocalSafe(lx, ly, lz) === BlockId.Air) {
-                chunk.setLocal(lx, ly, lz, BlockId.Leaves);
-              }
-            }
+          if (
+            wx < wx0 ||
+            wx >= wx0 + CHUNK_DIMENSIONS.width ||
+            wz < wz0 ||
+            wz >= wz0 + CHUNK_DIMENSIONS.depth
+          ) {
+            continue;
+          }
+          const lx = wx - wx0;
+          const lz = wz - wz0;
+          if (chunk.getLocalSafe(lx, ly, lz) === BlockId.Air) {
+            chunk.setLocal(lx, ly, lz, block.blockId);
           }
         }
       }
