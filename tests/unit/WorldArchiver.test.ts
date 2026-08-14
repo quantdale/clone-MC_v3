@@ -70,7 +70,12 @@ async function populateWorld(deps: WorldArchiverDeps, worldId: string): Promise<
 }
 
 function stripExportedAt(archive: WorldArchive): WorldArchive {
-  return { ...archive, exportedAt: 0 };
+  return {
+    ...archive,
+    exportedAt: 0,
+    // putMetadata stamps updatedAt = Date.now() on import, so normalize it too.
+    metadata: archive.metadata ? { ...archive.metadata, updatedAt: 0 } : null,
+  };
 }
 
 describe('WorldArchiver', () => {
