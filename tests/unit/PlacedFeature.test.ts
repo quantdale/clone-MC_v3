@@ -32,8 +32,8 @@ class ScriptedRng {
   }
 }
 
-function context(rng: { nextFloat(): number }, biomeKey = 'plains', isSolid: (x: number, y: number, z: number) => boolean = () => true): PlacementContext {
-  return { biomeKey, isSolid, rng };
+function context(rng: { nextFloat(): number }, biomeKey = 'plains', isSolid: (x: number, y: number, z: number) => boolean = () => true, surfaceY: (x: number, z: number) => number = () => 0): PlacementContext {
+  return { biomeKey, isSolid, surfaceY, rng };
 }
 
 describe('validatePlacementModifier', () => {

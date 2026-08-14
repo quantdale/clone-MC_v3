@@ -3,16 +3,18 @@
  * key (094) and an ordered chain of placement modifiers. `placeFeature` applies the chain
  * deterministically from a `PlacementContext`, producing placement positions `[x, y, z]`.
  * Modifier semantics: count (expand candidates), rarity (1-in-chance survival), heightRange
- * (uniform y sampling), biomeFilter (biome key membership), survivalFilter (solidity probe).
+ * (uniform y sampling), surfaceHeight (y from the terrain surface callback; added by 098),
+ * biomeFilter (biome key membership), survivalFilter (solidity probe).
  * `PlacedFeatureRegistry` stores only validated definitions with atomic rejection (003 pattern).
  */
 
-/** A placement modifier; chains apply in data order (at most one count, survival needs a prior heightRange). */
+/** A placement modifier; chains apply in data order (at most one count, survival needs a prior y-definer). */
 export type PlacementModifier =
   | { type: 'count'; tries: number }
   | { type: 'rarity'; chance: number }
   | { type: 'heightRange'; minY: number; maxY: number }
   | { type: 'biomeFilter'; biomeKeys: string[] }
+  | { type: 'surfaceHeight' }
   | { type: 'survivalFilter' };
 
 /** A keyed, validated placed feature referencing a configured feature (094) by key. */
@@ -24,11 +26,13 @@ export interface PlacedFeature {
 
 /**
  * The environment placement runs in: the biome key at the placement column, a solidity probe,
- * and a `nextFloat` source. `SeedRng` (054) satisfies `rng` for deterministic production streams.
+ * the terrain surface height at a column, and a `nextFloat` source. `SeedRng` (054) satisfies
+ * `rng` for deterministic production streams.
  */
 export interface PlacementContext {
   biomeKey: string;
   isSolid(x: number, y: number, z: number): boolean;
+  surfaceY(x: number, z: number): number;
   rng: { nextFloat(): number };
 }
 
@@ -85,6 +89,8 @@ export function validatePlacementModifier(input: unknown): PlacementModifier {
         }
       }
       return input as PlacementModifier;
+    case 'surfaceHeight':
+      return input as PlacementModifier;
     case 'survivalFilter':
       return input as PlacementModifier;
     default:
@@ -111,12 +117,12 @@ export function validatePlacedFeature(input: unknown): PlacedFeature {
   if (modifiers.filter((m) => m.type === 'count').length > 1) {
     throw new Error('PlacedFeature: at most one count modifier is allowed per placed feature');
   }
-  let sawHeightRange = false;
+  let sawYDefiner = false;
   for (const m of modifiers) {
-    if (m.type === 'heightRange') {
-      sawHeightRange = true;
-    } else if (m.type === 'survivalFilter' && !sawHeightRange) {
-      throw new Error('PlacedFeature: survivalFilter requires a preceding heightRange modifier');
+    if (m.type === 'heightRange' || m.type === 'surfaceHeight') {
+      sawYDefiner = true;
+    } else if (m.type === 'survivalFilter' && !sawYDefiner) {
+      throw new Error('PlacedFeature: survivalFilter requires a preceding heightRange or surfaceHeight modifier');
     }
   }
   return { key: r.key, featureKey: r.featureKey, modifiers };
@@ -163,6 +169,10 @@ export function placeFeature(
           y: modifier.minY + Math.floor(ctx.rng.nextFloat() * span),
           z: c.z,
         }));
+        break;
+      }
+      case 'surfaceHeight': {
+        candidates = candidates.map((c) => ({ x: c.x, y: ctx.surfaceY(c.x, c.z), z: c.z }));
         break;
       }
       case 'biomeFilter': {

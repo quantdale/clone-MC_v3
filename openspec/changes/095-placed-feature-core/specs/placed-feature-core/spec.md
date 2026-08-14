@@ -25,7 +25,7 @@ duplicates and invalid inputs atomically, and expose get/has/size/clear.
 - `tries`/`chance` are positive integers; `minY`/`maxY` are integers with `minY <= maxY`;
   `biomeKeys` is a non-empty array of non-empty strings.
 - At most one `count` modifier per placed feature; `survivalFilter` requires a preceding
-  `heightRange` in the chain.
+  `heightRange` or `surfaceHeight` in the chain (amended by 098: `surfaceHeight` also defines y).
 - Unknown types and malformed fields throw.
 - Registry operations never leave partial state.
 - Identical `(placed, ctx, x, z)` MUST produce identical positions (fixed rng draw order).
