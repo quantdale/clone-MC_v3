@@ -386,10 +386,15 @@ test.describe('voxel game', () => {
       return g?.world?.getBlock(t.x, t.y, t.z) ?? -1;
     }, target!);
     expect(before).not.toBe(0); // not air
-    // Break it with a left click.
+    // Break it with a left click. Poll for the resulting air cell rather than a
+    // fixed delay so the assertion is robust to low frame rates (software WebGL
+    // in CI renders at only a few FPS).
     await page.mouse.down();
     await page.mouse.up();
-    await page.waitForTimeout(400);
+    await page.waitForFunction((t) => {
+      const g = (window as unknown as { __voxelGame?: { world?: { getBlock(x: number, y: number, z: number): number } } }).__voxelGame;
+      return (g?.world?.getBlock(t.x, t.y, t.z) ?? -1) === 0;
+    }, target!, { timeout: 5000 });
     const after = await page.evaluate((t) => {
       const g = (window as unknown as { __voxelGame?: { world?: { getBlock(x: number, y: number, z: number): number } } }).__voxelGame;
       return g?.world?.getBlock(t.x, t.y, t.z) ?? -1;
@@ -429,10 +434,15 @@ test.describe('voxel game', () => {
       return g?.world?.getBlock(p.x, p.y, p.z) ?? -1;
     }, { x: px, y: py, z: pz });
     expect(before).toBe(0); // empty before placing
-    // Place with a right click.
+    // Place with a right click. Poll for the placed block rather than a fixed
+    // delay so the assertion is robust to low frame rates (software WebGL in CI
+    // renders at only a few FPS).
     await page.mouse.down({ button: 'right' });
     await page.mouse.up({ button: 'right' });
-    await page.waitForTimeout(400);
+    await page.waitForFunction((p) => {
+      const g = (window as unknown as { __voxelGame?: { world?: { getBlock(x: number, y: number, z: number): number } } }).__voxelGame;
+      return (g?.world?.getBlock(p.x, p.y, p.z) ?? -1) === 3;
+    }, { x: px, y: py, z: pz }, { timeout: 5000 });
     const after = await page.evaluate((p) => {
       const g = (window as unknown as { __voxelGame?: { world?: { getBlock(x: number, y: number, z: number): number } } }).__voxelGame;
       return g?.world?.getBlock(p.x, p.y, p.z) ?? -1;

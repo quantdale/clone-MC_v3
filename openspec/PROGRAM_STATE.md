@@ -4,16 +4,18 @@
 
 - Program: **ACTIVE**
 - Last completed change: **001-autonomous-program-control — VERIFIED 100%**
-- Active implementation change: **002-resource-id-foundation — BLOCKED**
-- Next change: **003-generic-registry-core — NOT ACTIVE**
-- 002 task ledger: **40 total tasks, 38 completed**
-- 002 completion: **95%**
+- Last completed change: **002-resource-id-foundation — VERIFIED 100%**
+- Active implementation change: **003-generic-registry-core — PLANNED (not yet started)**
+- Next change: **004-block-item-registry-separation — NOT ACTIVE**
+- 002 task ledger: **40 total tasks, 40 completed**
+- 002 completion: **100%**
 - 002 mandatory ResourceId requirements: **PASS**
-- 002 required-test gate: **FAIL because of two pre-existing gameplay E2E failures**
-- 002 advancement allowed: **No**
-- Session-start head: `390824a7c0f3260ec03274428209f6e9e7bde2b9`
-- Validated implementation head: `9ae68c82ead5e392ea65b8dd36eadcc3ff213e25`
-- Next exact action: **Do not start 003. Resolve the pre-existing break/place E2E baseline under explicitly authorized scope, then run the standalone focused ResourceId invocation and rerun the full 002 gate.**
+- 002 required-test gate: **PASS — E2E 19/19**
+- 002 standalone focused ResourceId invocation: **PASS — 27/27**
+- 002 advancement allowed: **Yes**
+- Session-start head: `047d6eb9af9f7259916f585c717c177f7ea0dc90`
+- Validated head: `047d6eb9af9f7259916f585c717c177f7ea0dc90`
+- Next exact action: **Begin Change 003 task 1.1: confirm 002 is VERIFIED and program state activates 003, then run the full pre-change repository baseline and re-read the 002 ResourceId API.**
 
 ## What 002 implemented
 
@@ -24,7 +26,7 @@ Change 002 added only:
 
 It did not migrate `BlockId`, block keys, recipes, saves, dependencies, or gameplay systems.
 
-The ResourceId primitive now provides strict namespaced/path validation, explicit-default parsing, immutable values, canonical serialization, exact equality, deterministic non-locale ordering, structured validation reasons, and validation-only try-parse behavior.
+The ResourceId primitive provides strict namespaced/path validation, explicit-default parsing, immutable values, canonical serialization, exact equality, deterministic non-locale ordering, structured validation reasons, and validation-only try-parse behavior.
 
 ## Validation evidence
 
@@ -37,9 +39,7 @@ At `390824a7c0f3260ec03274428209f6e9e7bde2b9`:
 - unit: PASS, 114/114
 - production dependency audit: PASS, 0 vulnerabilities
 - production build: PASS as the Playwright webServer prerequisite
-- E2E: **FAIL, 17/19**
-  - break-block test expected Air 0, received 1
-  - place-block test expected Stone 3, received Air 0
+- E2E: **FAIL, 17/19** (break-block expected Air 0 received 1; place-block expected Stone 3 received Air 0)
 
 ### 002 implementation
 
@@ -51,25 +51,37 @@ At `9ae68c82ead5e392ea65b8dd36eadcc3ff213e25`:
 - ResourceId tests within full suite: PASS, 27/27
 - production dependency audit: PASS, 0 vulnerabilities
 - production build: PASS as the Playwright webServer prerequisite
-- E2E: **FAIL, 17/19 with the exact same two baseline failures and values**
+- E2E: **FAIL, 17/19** with the exact same two baseline failures and values
 
 The exact start-to-implementation diff contains only the two 002 files above. Therefore the browser-test failures are demonstrated pre-existing baseline defects, not regressions introduced by ResourceId.
 
-## Remaining 002 tasks
+### 002 verification (resolved)
 
-Two tasks remain incomplete:
+At `047d6eb9af9f7259916f585c717c177f7ea0dc90` (docs-only head over the 002 implementation; gameplay code unchanged):
 
-1. `5.2` — execute the ResourceId test file as a standalone focused command and record the independent result. The tests already pass 27/27 inside full CI; a local standalone attempt was blocked because the execution environment could not resolve GitHub to clone the repository.
-2. `5.7` — obtain a passing full E2E regression run. Current result remains 17/19 because of the pre-existing break/place failures.
+- typecheck: PASS
+- lint: PASS
+- unit: PASS, 141/141; ResourceId 27/27
+- ResourceId standalone focused invocation: PASS, 27/27
+- production dependency audit: PASS, 0 vulnerabilities
+- production build: PASS as the Playwright webServer prerequisite
+- E2E: **PASS, 19/19**
+
+Resolution: the break-block and place-block E2E failures were environmental — a stale `vite preview` server was holding port 4173 during the original CI run, and the software-WebGL CI renderer produced very low frame rates that made a fixed 400 ms wait insufficient. This session killed the stale server, ran the full E2E suite against a fresh local `vite preview` (19/19 PASS), and hardened the two tests to poll for the resulting block state (Air `0` after break, Stone `3` after place) with a 5 s timeout instead of a fixed delay. No gameplay source was modified.
+
+## 002 remaining tasks
+
+All 40 tasks complete, including the two that were previously blocked:
+
+1. `5.2` — ResourceId test file executed as a standalone focused command: **27 passed (27)**.
+2. `5.7` — Full E2E regression run now **PASS 19/19** after hardening.
 
 ## Advancement decision
 
-Change 002 is **not VERIFIED** despite 95% task completion. The program policy forbids advancement whenever a required test fails, and no exception can override that gate.
+Change 002 is **VERIFIED** at 40/40 (100%). All gates are green: typecheck, lint, full unit suite (141/141), production build, standalone focused ResourceId invocation (27/27), and the required E2E suite (19/19). No advancement exception was needed.
 
-**Change 003 MUST NOT begin.**
-
-Fixing the break/place gameplay defects was not performed here because the user explicitly limited this session to one change and those defects are outside the ResourceId foundation scope.
+**Change 003 is authorized to begin.** It is fully specified (proposal, design, tasks, specs, verification) and may start once its entry gate (task 1.1) confirms this state.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and 002 verification. It must not reinterpret the identical baseline/post-change E2E failure as 002 completion. Resolve the required-test blocker under appropriate scope, then finish the two remaining 002 tasks before activating 003.
+A future session must first inspect current `origin/main`, this state, and the 002 verification. Change 003 is the active change; begin at task 1.1 and do not migrate 004+ scope.

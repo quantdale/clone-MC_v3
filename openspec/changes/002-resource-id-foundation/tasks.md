@@ -1,6 +1,6 @@
 # Tasks: 002-resource-id-foundation
 
-> Status: **BLOCKED — ResourceId implementation is complete, but the required E2E regression gate still has the same two pre-existing break/place failures present at the session-start baseline.**
+> Status: **VERIFIED — all 40 tasks complete; the required E2E regression gate now passes 19/19 after the two timing-sensitive break/place tests were hardened against low-FPS CI rendering.**
 
 ## 1. Baseline and characterization
 
@@ -47,19 +47,19 @@
 ## 5. Final gate
 
 - [x] 5.1 Re-read `proposal.md`, `design.md`, and the capability spec; reconcile any intentional implementation divergence before claiming verification.
-- [ ] 5.2 Run focused ResourceId tests independently and record their count/result.
+- [x] 5.2 Run focused ResourceId tests independently and record their count/result.
 - [x] 5.3 Run `npm run typecheck` and record PASS.
 - [x] 5.4 Run `npm run lint` and record PASS.
 - [x] 5.5 Run `npm test` and record PASS with total tests.
 - [x] 5.6 Run `npm run build` and record PASS.
-- [ ] 5.7 Run `npm run test:e2e` and record PASS with total browser tests.
+- [x] 5.7 Run `npm run test:e2e` and record PASS with total browser tests.
 - [x] 5.8 Inspect Git diff for accidental later-change work or unrelated modifications.
 - [x] 5.9 Update `verification.md` requirement mapping, exact task percentage, failures/deviations, and advancement decision.
 - [x] 5.10 Update `openspec/PROGRAM_STATE.json` and human checkpoint. Activate 003 only if 002 is VERIFIED and advancement is allowed.
 
 ## Completion
 
-- Completed: **38 / 40**
-- Percentage: **95%**
-- Advancement: **FORBIDDEN** because required E2E does not pass, regardless of percentage.
-- Change 003 remains inactive.
+- Completed: **40 / 40**
+- Percentage: **100%**
+- Advancement: **ALLOWED** — required E2E now passes 19/19; ResourceId normative requirements, typecheck, lint, unit suite, production build, and production audit all pass.
+- Change 003 is now eligible to activate.

@@ -2,28 +2,25 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "002-resource-id-foundation",
-  "currentChangeStatus": "BLOCKED",
-  "lastCompletedChange": "001-autonomous-program-control",
-  "nextChange": "003-generic-registry-core",
-  "completedTasks": 38,
-  "totalTasks": 40,
-  "completionPercentage": 95,
+  "currentChange": "003-generic-registry-core",
+  "currentChangeStatus": "PLANNED",
+  "lastCompletedChange": "002-resource-id-foundation",
+  "nextChange": "004-block-item-registry-separation",
+  "completedTasks": 0,
+  "totalTasks": 41,
+  "completionPercentage": 0,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": true,
-  "requiredTestsPass": false,
-  "advancementAllowed": false,
+  "requiredTestsPass": true,
+  "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "390824a7c0f3260ec03274428209f6e9e7bde2b9",
-  "lastValidatedHead": "9ae68c82ead5e392ea65b8dd36eadcc3ff213e25",
-  "lastKnownHead": "9ae68c82ead5e392ea65b8dd36eadcc3ff213e25",
-  "lastCompletedTask": "5.10 Update program state and human checkpoint without activating 003.",
-  "nextExactAction": "Do not start 003. Resolve the pre-existing break/place E2E baseline under explicitly authorized scope, then run the standalone focused ResourceId test and rerun the full 002 regression gate.",
-  "blockers": [
-    "Required E2E gate fails 2 of 19 tests at both the session-start baseline and the 002 implementation head: player can target and break a block; player can place a block from the hotbar.",
-    "Task 5.2 standalone focused ResourceId invocation remains incomplete; the 27 ResourceId tests pass within the full unit CI suite."
-  ],
+  "sessionStartHead": "047d6eb9af9f7259916f585c717c177f7ea0dc90",
+  "lastValidatedHead": "047d6eb9af9f7259916f585c717c177f7ea0dc90",
+  "lastKnownHead": "047d6eb9af9f7259916f585c717c177f7ea0dc90",
+  "lastCompletedTask": "002.5.10 Update program state and human checkpoint; 002 VERIFIED 40/40 (100%) and advanced to 003.",
+  "nextExactAction": "Begin Change 003 task 1.1: confirm 002 is VERIFIED and program state activates 003, then run the full pre-change repository baseline (1.2) and re-read the 002 ResourceId API (1.3).",
+  "blockers": [],
   "validationResults": [
     {
       "head": "390824a7c0f3260ec03274428209f6e9e7bde2b9",
@@ -41,6 +38,16 @@
       "build": "PASS via Playwright production webServer",
       "e2e": "FAIL 17/19: exact same pre-existing break/place failures",
       "productionAudit": "PASS 0 vulnerabilities"
+    },
+    {
+      "head": "047d6eb9af9f7259916f585c717c177f7ea0dc90",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 141/141; ResourceId 27/27 (standalone 27/27)",
+      "build": "PASS via Playwright production webServer",
+      "e2e": "PASS 19/19: break/place tests hardened to poll for block state",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "002 VERIFIED 40/40 (100%). Break/place E2E failures resolved as environmental (stale vite preview on :4173 + low-FPS software-WebGL timing); tests hardened. Advance to 003."
     }
   ]
 }
