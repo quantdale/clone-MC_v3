@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "034-indexeddb-world-metadata",
+  "currentChange": "035-indexeddb-chunk-section-store",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "034-indexeddb-world-metadata",
-  "nextChange": "035-indexeddb-chunk-section-store",
-  "completedTasks": 5,
-  "totalTasks": 5,
+  "lastCompletedChange": "035-indexeddb-chunk-section-store",
+  "nextChange": "036-block-entity-persistence-store",
+  "completedTasks": 6,
+  "totalTasks": 6,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -15,11 +15,11 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "7de37f6d70fdc3c5e3cca6e99a1232435628016c",
-  "lastValidatedHead": "c3d986705e65aa571e2c5db886b5e71dcd976ea2",
-  "lastKnownHead": "c3d986705e65aa571e2c5db886b5e71dcd976ea2",
-  "lastCompletedTask": "034: all 5 tasks complete; indexeddb-world-metadata VERIFIED. Added src/storage/WorldMetadata.ts (WORLD_DB_NAME='voxel-world-db', WORLD_DB_VERSION=1, WORLD_METADATA_STORE='world-metadata', WorldMetadata type, validateWorldMetadata) and src/storage/WorldMetadataRepository.ts (injectable IDBFactory, open with store creation on onupgradeneeded, putMetadata/getMetadata/listMetadata/deleteMetadata/close, browserIdbFactory adapter). 14 unit tests via in-memory mock factory (tests/unit/IdbFactoryMock.ts + WorldMetadataRepository.test.ts); 499 unit + 19 e2e pass.",
-  "nextExactAction": "Advance to 035-indexeddb-chunk-section-store. Author proposal/design/tasks/specs/indexeddb-chunk-section-store/spec.md/verification via SPEC_AUTHORING_PROTOCOL.md, validate, implement a chunk-sections object store on the same WORLD_DB_NAME database (bump WORLD_DB_VERSION with an onupgradeneeded step), and a typed repository for persisting/reloading ChunkColumn section block-state data, verify full gate, commit + push, advance.",
+  "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
+  "lastValidatedHead": "a1e15dfe28307967753f5f4f9c49a3e0b6eaa776",
+  "lastKnownHead": "a1e15dfe28307967753f5f4f9c49a3e0b6eaa776",
+  "lastCompletedTask": "035: all 6 tasks complete; indexeddb-chunk-section-store VERIFIED. Bumped WORLD_DB_VERSION 1->2, added WORLD_CHUNK_SECTION_STORE; shared ensureWorldStores upgrade routine; new src/storage/ChunkSectionRepository.ts (validateSerializedChunkColumn + putColumn/getColumn/listColumns/deleteColumn/close) over chunk-sections store keyed worldId|chunkX|chunkZ; 14 unit tests via in-memory mock incl. in-place v1->v2 migration; 513 unit + 19 e2e pass.",
+  "nextExactAction": "Advance to 036-block-entity-persistence-store. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (036 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement a separate block-entity object store on the same voxel-world-db (bump WORLD_DB_VERSION with an onupgradeneeded step via shared ensureWorldStores), and a typed repository, verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -341,6 +341,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "034 VERIFIED 5/5 (100%). Versioned IndexedDB database (voxel-world-db v1) + typed world-metadata repository boundary with injectable IDBFactory; validateWorldMetadata rejects malformed records; put/get/list/delete round-trip via in-memory mock. 14 unit tests; 499 unit + 19 e2e pass."
+    },
+    {
+      "head": "a1e15dfe28307967753f5f4f9c49a3e0b6eaa776",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 513/513; ChunkSectionRepository 14/14",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "035 VERIFIED 6/6 (100%). Shared voxel-world-db at v2; added WORLD_CHUNK_SECTION_STORE + ensureWorldStores shared upgrade routine; new src/storage/ChunkSectionRepository.ts (validateSerializedChunkColumn + putColumn/getColumn/listColumns/deleteColumn/close) over chunk-sections store keyed worldId|chunkX|chunkZ; 14 unit tests via in-memory mock incl. in-place v1->v2 migration; 513 unit + 19 e2e pass."
     }
   ]
 }
