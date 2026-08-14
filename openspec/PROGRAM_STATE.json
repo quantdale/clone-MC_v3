@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "068-blocklight-propagation",
+  "currentChange": "069-incremental-light-updates",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "068-blocklight-propagation",
-  "nextChange": "069-incremental-light-updates",
+  "lastCompletedChange": "069-incremental-light-updates",
+  "nextChange": "070-light-aware-meshing",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "2749b103e55ec81c80fec79445499a0ecc03e03a",
-  "lastKnownHead": "2749b103e55ec81c80fec79445499a0ecc03e03a",
-  "lastCompletedTask": "068: all 4 tasks complete; blocklight-propagation VERIFIED. New src/rendering/BlockLightEngine.ts (BlockLightWorld; computeBlockLight with luminance-source seeding incl. opaque sources, FIFO BFS falloff, sources never dimmed, deterministic); 5 unit tests; 754 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 069-incremental-light-updates. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (069 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement correct light removal/repropagation after block edits, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "321a591fde1a8a589afffecd1b975a31c24057fe",
+  "lastKnownHead": "321a591fde1a8a589afffecd1b975a31c24057fe",
+  "lastCompletedTask": "069: all 4 tasks complete; incremental-light-updates VERIFIED. New src/rendering/LightUpdateEngine.ts (LightUpdateWorld; updateLightAfterEdit: per-type removal BFS zeroing cells strictly darker than the removed path without crossing opaque cells, then re-seeding block sources and re-add BFS from every surviving lit cell; fixed neighbor order + FIFO, deterministic; equals full 067+068 recompute on 14 equivalence fixtures); 25 unit tests; 779 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 070-light-aware-meshing. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (070 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement per-vertex light sampling in section meshing (opaque faces sample sky/block light at face centers per 067/068 LightStorage; deterministic), verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -681,6 +681,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "068 VERIFIED 4/4 (100%). New src/rendering/BlockLightEngine.ts (BlockLightWorld; computeBlockLight with luminance-source seeding incl. opaque sources, FIFO BFS falloff, sources never dimmed, deterministic); 5 unit tests; 754 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "321a591fde1a8a589afffecd1b975a31c24057fe",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 779/779; LightUpdateEngine 25/25",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "069 VERIFIED 4/4 (100%). New src/rendering/LightUpdateEngine.ts (LightUpdateWorld; updateLightAfterEdit removal BFS + source re-seed + re-add BFS, fixed neighbor order, deterministic; equivalent to full 067+068 recompute on 14 fixtures incl. compound/negative-Y/edge cases); 25 unit tests; 779 unit + 19 e2e pass, stable."
     }
   ]
 }
