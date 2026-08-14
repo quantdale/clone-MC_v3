@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "062-greedy-opaque-meshing",
+  "currentChange": "063-template-partial-block-meshing",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "062-greedy-opaque-meshing",
-  "nextChange": "063-template-partial-block-meshing",
+  "lastCompletedChange": "063-template-partial-block-meshing",
+  "nextChange": "064-worker-job-protocol",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "e4ec55eebf745070c46076f8aec94f8ed1cd416f",
-  "lastKnownHead": "e4ec55eebf745070c46076f8aec94f8ed1cd416f",
-  "lastCompletedTask": "062: all 4 tasks complete; greedy-opaque-meshing VERIFIED. New src/rendering/GreedyMesher.ts (OpaqueFaceQuad; greedyMergeOpaqueFaces with per-face/slice visibility grids and row-major maximal rectangles keyed by faceKey; enumerateOpaqueFacesNaive for equivalence; deterministic); 6 unit tests incl. equivalence matrix; 717 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 063-template-partial-block-meshing. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (063 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement meshing of slabs/stairs/panes/other model templates without full-cube assumptions, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "8fe4e07d2243626c1b96939af45f507e512ea100",
+  "lastKnownHead": "8fe4e07d2243626c1b96939af45f507e512ea100",
+  "lastCompletedTask": "063: all 4 tasks complete; template-partial-block-meshing VERIFIED. New src/rendering/TemplateMesher.ts (meshBlockModel: 059 BlockModel -> world-unit OpaqueFaceQuads with face-plane math and boundary-only culling; isFullCubeModel detection); 7 unit tests; 724 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 064-worker-job-protocol. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (064 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement a versioned transferable worker request/result protocol with stale result rejection, verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -621,6 +621,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "062 VERIFIED 4/4 (100%). New src/rendering/GreedyMesher.ts (OpaqueFaceQuad; greedyMergeOpaqueFaces with per-face/slice visibility grids and row-major maximal rectangles keyed by faceKey; enumerateOpaqueFacesNaive for equivalence; deterministic); 6 unit tests incl. equivalence matrix; 717 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "8fe4e07d2243626c1b96939af45f507e512ea100",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 724/724; TemplateMesher 7/7",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "063 VERIFIED 4/4 (100%). New src/rendering/TemplateMesher.ts (meshBlockModel: 059 BlockModel -> world-unit OpaqueFaceQuads with face-plane math and boundary-only culling; isFullCubeModel detection); 7 unit tests; 724 unit + 19 e2e pass, stable."
     }
   ]
 }
