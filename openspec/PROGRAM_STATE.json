@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "004-block-item-registry-separation",
+  "currentChange": "005-tag-registry",
   "currentChangeStatus": "PLANNED",
-  "lastCompletedChange": "003-generic-registry-core",
-  "nextChange": "005-tag-registry",
+  "lastCompletedChange": "004-block-item-registry-separation",
+  "nextChange": "006-block-property-schema",
   "completedTasks": 0,
-  "totalTasks": 60,
+  "totalTasks": 33,
   "completionPercentage": 0,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -15,11 +15,11 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "88b188038f3944e4533141b9b3b8bc361864d19a",
-  "lastValidatedHead": "88b188038f3944e4533141b9b3b8bc361864d19a",
-  "lastKnownHead": "88b188038f3944e4533141b9b3b3b8bc361864d19a",
-  "lastCompletedTask": "003: all 41 tasks complete; generic registry core VERIFIED and advanced to 004.",
-  "nextExactAction": "Begin Change 004 task 1.1: confirm 003 VERIFIED and program state activates 004, then inventory numeric definitions (1.3) and run the full baseline (1.2).",
+  "sessionStartHead": "7de37f6d70fdc3c5e3cca6e99a1232435628016c",
+  "lastValidatedHead": "b573d99ba22d266079f646debfee25842333a1b9",
+  "lastKnownHead": "b573d99ba22d266079f646debfee25842333a1b9",
+  "lastCompletedTask": "004: all 45 tasks complete; block/item registry separation VERIFIED and advanced to 005. 165 unit + 19 e2e tests pass; typecheck/lint/build green.",
+  "nextExactAction": "Begin Change 005 task 1.1: confirm 004 VERIFIED and program state activates 005, then define the typed tag model bound to one registry domain (2.1-2.3).",
   "blockers": [],
   "validationResults": [
     {
@@ -33,7 +33,7 @@
       "note": "002 VERIFIED 40/40 (100%)."
     },
     {
-      "head": "88b188038f3944e4533141b9b3b3b8bc361864d19a",
+      "head": "88b188038f3944e4533141b9b3b8bc361864d19a",
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 154/154; generic Registry 13/13",
@@ -41,6 +41,16 @@
       "e2e": "PASS 19/19: break/place hardened tests poll for block state",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "003 VERIFIED 41/41 (100%). Added src/data/Registry.ts + tests/unit/Registry.test.ts; BlockRegistry untouched."
+    },
+    {
+      "head": "b573d99ba22d266079f646debfee25842333a1b9",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 165/165; BlockItemSeparation 11/11",
+      "build": "PASS via Playwright production webServer",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "004 VERIFIED 45/45 (100%). Split BlockRegistry/ItemRegistry; added validateItemBlockCrossReferences + tests/unit/BlockItemSeparation.test.ts."
     }
   ]
 }
