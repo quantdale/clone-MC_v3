@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "084-fluid-regression-suite",
+  "currentChange": "085-worldgen-stage-pipeline",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "084-fluid-regression-suite",
-  "nextChange": "085-worldgen-stage-pipeline",
+  "lastCompletedChange": "085-worldgen-stage-pipeline",
+  "nextChange": "086-worker-worldgen",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "3dfe414277a94521361c887b3955da4bc0fe9d25",
-  "lastKnownHead": "3dfe414277a94521361c887b3955da4bc0fe9d25",
-  "lastCompletedTask": "084: all 4 tasks complete; fluid-regression-suite VERIFIED (fluid section complete 076-084). New tests/unit/FluidRegression.test.ts: RegressionWorld (bounds/solids/waterlogging) + deterministic 077 wiring (water step -> lava contacts -> waterlogging interception -> re-schedule affected + horizontal neighbors; a wiring defect found (feeder changes freezing decay) fixed via neighbor updates); 9 integration fixtures: corridor fill (per-cycle levels), waterfall pool, source-pool formation, decay after removal, boundaries (edges/walls), unload/reload 047 round-trip equivalence, bounded work 64x64 maxPerTick 50 with manhattan-diamond exact fill + double-run determinism; 954 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 085-worldgen-stage-pipeline. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (085 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement explicit deterministic generation stages/status transitions (worldgen pipeline scaffolding), verify full gate, commit + push, advance.",
+  "lastValidatedHead": "64871801eafbd17050db358b925aa2af9e3fedbf",
+  "lastKnownHead": "64871801eafbd17050db358b925aa2af9e3fedbf",
+  "lastCompletedTask": "085: all 4 tasks complete; worldgen-stage-pipeline VERIFIED. New src/worldgen/GenerationPipeline.ts (GENERATION_STAGES TERRAIN..FINAL ordered vocabulary; GenerationStageId; stageIndex/nextStage/validateGenerationStage; GenerationStageTransition; generic GenerationPipeline<S>: forward-only advanceTo with same-stage no-op and backward throw, getStage default first, isAtLeast, isComplete at final, per-column independence, Map-backed O(1)); 11 new unit tests; 965 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 086-worker-worldgen. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (086 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement off-main-thread generation jobs with versioned results (deterministic; 064/065 worker protocol patterns + 085 pipeline), verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -841,6 +841,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "084 VERIFIED 4/4 (100%). Fluid regression suite (test-only): RegressionWorld + deterministic 077 wiring (water step -> lava contacts -> waterlogging -> re-schedule affected + neighbors; decay-freeze defect fixed via neighbor updates); 9 fixtures: corridor fill, waterfall, source pool, decay, boundaries, unload/reload round-trip, 64x64 bounded work with exact diamond fill; 954 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "64871801eafbd17050db358b925aa2af9e3fedbf",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 965/965; GenerationPipeline 11/11",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "085 VERIFIED 4/4 (100%). Worldgen stage pipeline: src/worldgen/GenerationPipeline.ts (ordered GENERATION_STAGES vocabulary; generic GenerationPipeline<S> with forward-only advanceTo, same-stage no-op, backward throw, per-column monotonic status, isAtLeast/isComplete; deterministic); 11 new unit tests; 965 unit + 19 e2e pass, stable."
     }
   ]
 }
