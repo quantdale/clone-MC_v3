@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "069-incremental-light-updates",
+  "currentChange": "070-light-aware-meshing",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "069-incremental-light-updates",
-  "nextChange": "070-light-aware-meshing",
+  "lastCompletedChange": "070-light-aware-meshing",
+  "nextChange": "071-ambient-occlusion",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "321a591fde1a8a589afffecd1b975a31c24057fe",
-  "lastKnownHead": "321a591fde1a8a589afffecd1b975a31c24057fe",
-  "lastCompletedTask": "069: all 4 tasks complete; incremental-light-updates VERIFIED. New src/rendering/LightUpdateEngine.ts (LightUpdateWorld; updateLightAfterEdit: per-type removal BFS zeroing cells strictly darker than the removed path without crossing opaque cells, then re-seeding block sources and re-add BFS from every surviving lit cell; fixed neighbor order + FIFO, deterministic; equals full 067+068 recompute on 14 equivalence fixtures); 25 unit tests; 779 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 070-light-aware-meshing. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (070 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement per-vertex light sampling in section meshing (opaque faces sample sky/block light at face centers per 067/068 LightStorage; deterministic), verify full gate, commit + push, advance.",
+  "lastValidatedHead": "06356e95c96e96f8e0ac63ab520bd1706de36de0",
+  "lastKnownHead": "06356e95c96e96f8e0ac63ab520bd1706de36de0",
+  "lastCompletedTask": "070: all 7 tasks complete; light-aware-meshing VERIFIED. OpaqueFaceQuad carries required vertexLights 4-tuple (fixed corner order); new src/rendering/VertexLighting.ts (FaceLightContext, sampleCornerLight, quadVertexLights: rounded average of outward-layer cells adjacent to the corner; opaque contributes 0 and counts; out-of-section skipped; fractional corners use containing cell; integer-plane layer = planeCoord / planeCoord-1, fractional = cell+1 / own cell); greedy/naive/template meshers and worker pipeline emit lit quads; MeshSectionRequestPayload gains validated skyLight/blockLight arrays (4096 x [0,15]); 13 new unit tests; 792 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 071-ambient-occlusion. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (071 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement Minecraft-like vertex AO factors on generated quads (deterministic, per-vertex, orthogonal to 070 light), verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -691,6 +691,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "069 VERIFIED 4/4 (100%). New src/rendering/LightUpdateEngine.ts (LightUpdateWorld; updateLightAfterEdit removal BFS + source re-seed + re-add BFS, fixed neighbor order, deterministic; equivalent to full 067+068 recompute on 14 fixtures incl. compound/negative-Y/edge cases); 25 unit tests; 779 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "06356e95c96e96f8e0ac63ab520bd1706de36de0",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 792/792; VertexLighting 9/9",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "070 VERIFIED 7/7 (100%). Per-vertex light enters every generated mesh: OpaqueFaceQuad.vertexLights 4-tuple; new src/rendering/VertexLighting.ts corner sampling (rounded avg of outward-layer cells, opaque=0 counted, out-of-section skipped, fractional corners/planes); greedy/naive/template/worker all emit lit quads; worker payload gains validated skyLight/blockLight arrays; 13 new unit tests; 792 unit + 19 e2e pass, stable."
     }
   ]
 }
