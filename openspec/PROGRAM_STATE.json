@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "057-shape-aware-player-collision",
+  "currentChange": "058-shape-aware-raycast",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "057-shape-aware-player-collision",
-  "nextChange": "058-shape-aware-raycast",
+  "lastCompletedChange": "058-shape-aware-raycast",
+  "nextChange": "059-block-model-data",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "8f2b2aa3b1983beb6277b450fd0d2cde283eb6ea",
-  "lastKnownHead": "8f2b2aa3b1983beb6277b450fd0d2cde283eb6ea",
-  "lastCompletedTask": "057: all 4 tasks complete; shape-aware-player-collision VERIFIED. New src/world/CollisionResolver.ts (ShapeWorld/CollisionBox/MovementResult; move resolves X->Y->Z with swept-path face snapping and per-axis flags; collides boundary-inclusive; epsilon handling; deterministic); 7 unit tests; 688 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 058-shape-aware-raycast. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (058 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement selection/interactions raycasting against selection shapes, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "4fde1a5483089d5d57aba5eb10c0272e3c23e0e5",
+  "lastKnownHead": "4fde1a5483089d5d57aba5eb10c0272e3c23e0e5",
+  "lastCompletedTask": "058: all 4 tasks complete; shape-aware-raycast VERIFIED. New src/world/ShapeRaycast.ts (SelectionShapeWorld/ShapeRayHit; raycastSelection with DDA cell traversal + per-box slab intersection, nearest-box-per-cell, entry-face normals, maxDistance, degenerate guards); 6 unit tests; 694 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 059-block-model-data. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (059 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement original block-model geometry/texture-reference schema, verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -571,6 +571,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "057 VERIFIED 4/4 (100%). New src/world/CollisionResolver.ts (ShapeWorld/CollisionBox/MovementResult; move resolves X->Y->Z with swept-path face snapping and per-axis flags; collides boundary-inclusive; epsilon handling; deterministic); 7 unit tests; 688 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "4fde1a5483089d5d57aba5eb10c0272e3c23e0e5",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 694/694; ShapeRaycast 6/6",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "058 VERIFIED 4/4 (100%). New src/world/ShapeRaycast.ts (SelectionShapeWorld/ShapeRayHit; raycastSelection with DDA cell traversal + per-box slab intersection, nearest-box-per-cell, entry-face normals, maxDistance, degenerate guards); 6 unit tests; 694 unit + 19 e2e pass, stable."
     }
   ]
 }
