@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "095-placed-feature-core",
+  "currentChange": "096-ore-generation",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "095-placed-feature-core",
-  "nextChange": "096-ore-generation",
+  "lastCompletedChange": "096-ore-generation",
+  "nextChange": "097-tree-feature-system",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "5d9a36142e898d1d19be63914e04e6adb30e2c69",
-  "lastKnownHead": "5d9a36142e898d1d19be63914e04e6adb30e2c69",
-  "lastCompletedTask": "095: all 4 tasks complete; placed-feature-core VERIFIED. New src/worldgen/PlacedFeature.ts (PlacementModifier union count/rarity/heightRange/biomeFilter/survivalFilter with strict validation; PlacedFeature key+featureKey+ordered chain with one-count and survival-after-heightRange invariants; PlacementContext biomeKey/isSolid/nextFloat; deterministic placeFeature with pinned rng draw order; PlacedFeatureRegistry atomic register/get/has/size/clear); 17 new unit tests; 1061 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 096-ore-generation. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (096 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement registry/tag-driven ore configured/placed features (extend the 094 config union with an ore type and register ore placed features over 095 modifiers; deterministic; 054 RNG), verify full gate, commit + push, advance.",
+  "lastValidatedHead": "6dcd5e0d70b42633ff243f6528c9347e97cfcf1e",
+  "lastKnownHead": "6dcd5e0d70b42633ff243f6528c9347e97cfcf1e",
+  "lastCompletedTask": "096: all 4 tasks complete; ore-generation VERIFIED. Ore extends the 094 configured-feature union (blockId/size/discardChanceOnAirExposure [0,1]/non-empty targetTags, strict validation); new src/worldgen/OreFeature.ts (OreBlockTagRegistry atomic over ordered deduped numeric block-id tags; deterministic resolveOreTargetBlockIds with unknown-tag errors; defaults: tags stone_ore_replaceables [3] + soil_ore_replaceables [2,11,4]; configured coal_ore 14/17/0 + iron_ore 15/9/0; placed coal count 20 heightRange -64..192 + iron count 9 heightRange -64..72); 094 test unknown-type stand-in ore->portal; 14 new unit tests; 1075 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 097-tree-feature-system. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (097 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement configurable trunk/foliage tree features replacing hard-coded tree placement (extend the 094 config union with a tree type; trunk/foliage vocabulary over 095 placed features; deterministic; 054 RNG), verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -951,6 +951,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "095 VERIFIED 4/4 (100%). Placed feature core: src/worldgen/PlacedFeature.ts (placement modifier union count/rarity/heightRange/biomeFilter/survivalFilter; ordered deterministic chain via placeFeature with pinned rng draw order; strict validation with one-count + survival-after-heightRange invariants; PlacedFeatureRegistry atomic); 17 new unit tests; 1061 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "6dcd5e0d70b42633ff243f6528c9347e97cfcf1e",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 1075/1075; OreFeature 14/14",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "096 VERIFIED 4/4 (100%). Ore generation: ore member added to the 094 configured-feature union (strict validation); src/worldgen/OreFeature.ts (OreBlockTagRegistry atomic over ordered deduped numeric block-id tags; deterministic resolveOreTargetBlockIds; defaults tags/configured/placed for coal+iron); 094 test unknown-type stand-in ore->portal; 14 new unit tests; 1075 unit + 19 e2e pass, stable."
     }
   ]
 }
