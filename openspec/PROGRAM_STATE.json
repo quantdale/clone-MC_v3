@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "080-water-lava-interactions",
+  "currentChange": "081-waterlogging-state",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "080-water-lava-interactions",
-  "nextChange": "081-waterlogging-state",
+  "lastCompletedChange": "081-waterlogging-state",
+  "nextChange": "082-fluid-collision-movement",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "e1839494a05f3d7ad1e3704565b735e63c65e8e7",
-  "lastKnownHead": "e1839494a05f3d7ad1e3704565b735e63c65e8e7",
-  "lastCompletedTask": "080: all 4 tasks complete; water-lava-interactions VERIFIED. New src/simulation/FluidInteraction.ts (FluidContactResult OBSIDIAN/COBBLESTONE/STONE/NONE; resolveFluidContact classic MC table with falling 8-15 as flowing, only level 0 source: lava source+any water->obsidian, flowing lava+water source->stone, flowing lava+flowing water->cobblestone, null->none; InteractionBlockIds; FluidInteractionWorld; applyFluidContact clears both fluids and places the block at the lava cell, NONE never mutates; deterministic); 9 new unit tests; 905 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 081-waterlogging-state. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (081 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement waterlogged block-state support and fluid coexistence semantics (deterministic; coexists with 076-080 fluid model), verify full gate, commit + push, advance.",
+  "lastValidatedHead": "dc978854a117d919dadce36a018171e9ab747056",
+  "lastKnownHead": "dc978854a117d919dadce36a018171e9ab747056",
+  "lastCompletedTask": "081: all 4 tasks complete; waterlogging-state VERIFIED. New src/world/Waterlogging.ts (WaterloggedCell {blockId, waterLevel}; validateWaterloggingLevel accepts 0 or 8-15 only (flowing never coexists); waterlog; waterloggingLevelFromFluid (flowing 1-7 -> 0, falling kept); fluidLevelFromWaterlogging; withWaterLevel (null -> null, original untouched); isWaterloggable set membership; pure); 11 new unit tests; 916 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 082-fluid-collision-movement. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (082 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement fluid immersion, movement drag, buoyancy, and eye-fluid state from fluid data (deterministic; 056/057 collision primitives + 076 fluid data), verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -801,6 +801,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "080 VERIFIED 4/4 (100%). Water/lava interactions: src/simulation/FluidInteraction.ts (resolveFluidContact classic MC table, falling 8-15 as flowing; applyFluidContact clears both fluids and places obsidian/cobblestone/stone at the lava cell; NONE never mutates; deterministic); 9 new unit tests; 905 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "dc978854a117d919dadce36a018171e9ab747056",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 916/916; Waterlogging 11/11",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "081 VERIFIED 4/4 (100%). Waterlogging state: src/world/Waterlogging.ts (WaterloggedCell {blockId, waterLevel}; level validation 0 or 8-15 only (flowing never coexists); waterloggingLevelFromFluid flowing->0, falling kept; withWaterLevel null->null; isWaterloggable membership; pure); 11 new unit tests; 916 unit + 19 e2e pass, stable."
     }
   ]
 }
