@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "094-configured-feature-core",
+  "currentChange": "095-placed-feature-core",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "094-configured-feature-core",
-  "nextChange": "095-placed-feature-core",
+  "lastCompletedChange": "095-placed-feature-core",
+  "nextChange": "096-ore-generation",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "e350281a70fa9560b4144543ffe4aacdbdfc4929",
-  "lastKnownHead": "e350281a70fa9560b4144543ffe4aacdbdfc4929",
-  "lastCompletedTask": "094: all 4 tasks complete; configured-feature-core VERIFIED. New src/worldgen/ConfiguredFeature.ts (ConfiguredFeatureConfig union simpleBlock/blockPatch with strict validation; ConfiguredFeature key+config; ConfiguredFeatureRegistry atomic register/get/has/size/clear; createDefaultConfiguredFeatures: overworld/dirt_patch + overworld/gravel_patch); 6 new unit tests; 1044 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 095-placed-feature-core. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (095 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement placement modifiers, counts, rarity, height, biome and survival filters (deterministic; 094 features + 054 RNG), verify full gate, commit + push, advance.",
+  "lastValidatedHead": "5d9a36142e898d1d19be63914e04e6adb30e2c69",
+  "lastKnownHead": "5d9a36142e898d1d19be63914e04e6adb30e2c69",
+  "lastCompletedTask": "095: all 4 tasks complete; placed-feature-core VERIFIED. New src/worldgen/PlacedFeature.ts (PlacementModifier union count/rarity/heightRange/biomeFilter/survivalFilter with strict validation; PlacedFeature key+featureKey+ordered chain with one-count and survival-after-heightRange invariants; PlacementContext biomeKey/isSolid/nextFloat; deterministic placeFeature with pinned rng draw order; PlacedFeatureRegistry atomic register/get/has/size/clear); 17 new unit tests; 1061 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 096-ore-generation. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (096 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement registry/tag-driven ore configured/placed features (extend the 094 config union with an ore type and register ore placed features over 095 modifiers; deterministic; 054 RNG), verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -941,6 +941,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "094 VERIFIED 4/4 (100%). Configured feature core: src/worldgen/ConfiguredFeature.ts (validated simpleBlock/blockPatch config union; registry with atomic rejection; deterministic defaults overworld/dirt_patch + overworld/gravel_patch); 6 new unit tests; 1044 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "5d9a36142e898d1d19be63914e04e6adb30e2c69",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 1061/1061; PlacedFeature 17/17",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "095 VERIFIED 4/4 (100%). Placed feature core: src/worldgen/PlacedFeature.ts (placement modifier union count/rarity/heightRange/biomeFilter/survivalFilter; ordered deterministic chain via placeFeature with pinned rng draw order; strict validation with one-count + survival-after-heightRange invariants; PlacedFeatureRegistry atomic); 17 new unit tests; 1061 unit + 19 e2e pass, stable."
     }
   ]
 }
