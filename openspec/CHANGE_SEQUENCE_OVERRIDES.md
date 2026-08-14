@@ -13,12 +13,11 @@ The number, order, and scope are unchanged. Do not create a second implementatio
 
 The following missing files MUST be authored and pass `SPEC_AUTHORING_PROTOCOL.md` before their change becomes ACTIVE:
 
-- 006: missing `tasks.md`.
-- 007: missing `verification.md`.
-- 008: complete design/tasks/spec/verification are still required beyond its proposal.
-- 009: missing `verification.md`.
 - 011: missing `verification.md`.
 
 A missing artifact is a hard pre-implementation block, not completed work.
+
+> Resolved: 006, 007, 008, and 009 have all required artifacts present and are VERIFIED (006–009) or ahead of activation.
+> 009's `verification.md` was authored during the 009 implementation session and the change reached VERIFIED 24/24.
 
 For directory resolution this file overrides the slug text in `CHANGE_SEQUENCE.md`. Scope still comes from the numbered change artifacts and sequence outcome.
