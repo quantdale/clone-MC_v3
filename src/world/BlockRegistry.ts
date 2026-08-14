@@ -10,6 +10,7 @@
 
 import { type ResourceId, createResourceId, resourceIdToString } from '../data/ResourceId';
 import { RegistryError } from '../data/Registry';
+import { type BlockPropertySchema, EMPTY_SCHEMA } from './BlockPropertySchema';
 
 /** Block ids are stable numeric identifiers for world blocks only. */
 export const enum BlockId {
@@ -80,6 +81,11 @@ export interface BlockTypeDefinition {
    * for unbreakable blocks.
    */
   dropItem?: ResourceId;
+  /**
+   * Ordered immutable property schema for this block type. Omitted for current
+   * blocks that declare no state properties; resolved as EMPTY_SCHEMA.
+   */
+  propertySchema?: BlockPropertySchema;
 }
 
 /**
@@ -163,6 +169,14 @@ export class BlockTypeRegistry {
   /** Convenience: whether a face against this block should be culled. */
   occludesFace(id: number): boolean {
     return this.get(id).opaque;
+  }
+
+  /**
+   * Property schema for a block type. Blocks that declare no state properties
+   * resolve to EMPTY_SCHEMA so current gameplay/save behavior is unchanged.
+   */
+  getPropertySchema(id: number): BlockPropertySchema {
+    return this.get(id).propertySchema ?? EMPTY_SCHEMA;
   }
 
   /** All registered definitions. */

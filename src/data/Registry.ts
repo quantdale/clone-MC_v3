@@ -4,6 +4,7 @@ import { type ResourceId, resourceIdToString } from './ResourceId';
 export type RegistryErrorReason =
   | 'DUPLICATE_ID'
   | 'MISSING_ID'
+  | 'INVALID_ID'
   | 'INVALID_RUNTIME_ID'
   | 'FINALIZED'
   | 'CYCLE'
