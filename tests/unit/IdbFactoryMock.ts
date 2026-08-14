@@ -103,10 +103,16 @@ export function createIdbFactoryMock(): MockIdbFactory {
 
       let db = existing;
       if (upgrade) {
-        db = new MockDatabase(v);
-        databases.set(name, db);
-      } else if (db) {
-        db.version = v;
+        if (!db) {
+          db = new MockDatabase(v);
+          databases.set(name, db);
+        } else {
+          // Real IndexedDB fires onupgradeneeded on the SAME database object during an
+          // in-place version upgrade, preserving existing object stores and data while the
+          // handler adds new stores. Mirror that: keep the existing object and only bump
+          // its version so a v1->v2 migration test can assert world-metadata survives.
+          db.version = v;
+        }
       }
 
       const request: IdbOpenRequestLike = {

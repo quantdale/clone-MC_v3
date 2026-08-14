@@ -8,6 +8,7 @@ import {
   WORLD_DB_NAME,
   WORLD_DB_VERSION,
   WORLD_METADATA_STORE,
+  WORLD_CHUNK_SECTION_STORE,
   validateWorldMetadata,
   type WorldMetadata,
 } from './WorldMetadata';
@@ -64,6 +65,22 @@ function promisifyRequest(req: IdbRequestLike): Promise<unknown> {
 }
 
 /**
+ * Create every object store the world database is known to need, idempotently. Both repositories
+ * (034 world-metadata, 035 chunk-sections, and later stores) route their `onupgradeneeded` through
+ * this single routine so a single open creates/migrates the full schema rather than scattering
+ * store creation across boundaries. A store is only created when missing, so re-running on an
+ * already-upgraded database is a no-op.
+ */
+export function ensureWorldStores(db: IdbDatabaseLike): void {
+  if (!db.objectStoreNames.contains(WORLD_METADATA_STORE)) {
+    db.createObjectStore(WORLD_METADATA_STORE, { keyPath: 'worldId' });
+  }
+  if (!db.objectStoreNames.contains(WORLD_CHUNK_SECTION_STORE)) {
+    db.createObjectStore(WORLD_CHUNK_SECTION_STORE, { keyPath: 'key' });
+  }
+}
+
+/**
  * Typed boundary for world metadata, persisted in the world IndexedDB database. The
  * factory is injectable; production uses {@link browserIdbFactory}.
  */
@@ -73,7 +90,6 @@ export class WorldMetadataRepository {
   private readonly dbName: string;
   private readonly dbVersion: number;
   private readonly store = WORLD_METADATA_STORE;
-  private readonly keyPath = 'worldId';
 
   constructor(opts: { factory?: IdbFactoryLike; dbName?: string; dbVersion?: number } = {}) {
     this.factory = opts.factory ?? browserIdbFactory();
@@ -87,10 +103,7 @@ export class WorldMetadataRepository {
     const req = this.factory.open(this.dbName, this.dbVersion);
     await new Promise<void>((resolve, reject) => {
       req.onupgradeneeded = () => {
-        const db = req.result;
-        if (!db.objectStoreNames.contains(this.store)) {
-          db.createObjectStore(this.store, { keyPath: this.keyPath });
-        }
+        ensureWorldStores(req.result);
       };
       req.onsuccess = () => {
         this.db = req.result;
