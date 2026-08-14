@@ -45,17 +45,19 @@ Water MUST spawn falling water (level 8) into an empty replaceable cell below.
 - **THEN** nothing changes in the below cell.
 
 ### Requirement: falling at ground
-A falling cell whose below is blocked MUST convert to flowing level 7.
+A falling cell whose below is blocked MUST convert to flowing level 6 (max − 1), so its next step
+can spread and form a pool.
 
 #### Scenario: waterfall base
 - **GIVEN** a falling cell with a non-replaceable cell below
 - **WHEN** the step runs
-- **THEN** the cell becomes flowing level 7 and `affected` contains the cell itself.
+- **THEN** the cell becomes flowing level 6 and `affected` contains the cell itself.
 
 ### Requirement: horizontal spread
-With below blocked, water MUST spread horizontally in fixed order: sources propose level 1,
-flowing `L` proposes `min(L + 1, 7)`, into replaceable neighbors that are empty or carry worse
-flowing water (level in 1-7 above the proposal). Falling neighbors MUST NOT be targeted.
+With below blocked, water MUST spread horizontally in fixed order: sources propose level 1;
+flowing levels below 7 propose `L + 1`; a cell at level 7 MUST NOT spread (no endless edge crawl).
+Targets are replaceable neighbors that are empty or carry worse flowing water (level in 1-7 above
+the proposal). Falling neighbors MUST NOT be targeted.
 
 #### Scenario: source spreads
 - **GIVEN** a source with an empty replaceable east neighbor
@@ -67,10 +69,10 @@ flowing water (level in 1-7 above the proposal). Falling neighbors MUST NOT be t
 - **WHEN** the step runs
 - **THEN** the neighbor becomes flowing level 3.
 
-#### Scenario: level cap
-- **GIVEN** flowing level 7
+#### Scenario: level 7 never spreads
+- **GIVEN** flowing level 7 with an empty replaceable neighbor
 - **WHEN** the step runs
-- **THEN** no horizontal neighbor is added beyond level 7.
+- **THEN** the neighbor stays empty and the cell itself stays level 7 (when fed).
 
 #### Scenario: improvement of worse water
 - **GIVEN** a source next to a flowing level 5 cell

@@ -20,6 +20,8 @@ and reports which positions changed (the caller re-schedules them through 077 at
   (3) horizontal spread, (4) source formation, (5) decay.
 - Falling cells are never overwritten horizontally.
 - Downward spawn only into an empty replaceable cell (water below → no spawn).
+- Ground conversion produces level 6 (max − 1); a level-7 cell never spreads (edge cells cannot
+  crawl).
 - `affected` contains exactly the cells whose fluid changed (below, spread targets, or the cell
   itself when it converts/forms a source/decays).
 
@@ -60,10 +62,11 @@ export function stepWaterCell(
 - Downward spawn: if the cell below has no fluid and is replaceable, set it to falling (level 8);
   sources, flowing, and falling all do this.
 - Falling at ground: if below is blocked (not empty-replaceable), the falling cell converts to
-  flowing level 7 (and returns — spreading happens on its next step).
-- Horizontal spread (below blocked): sources propose level 1; flowing L proposes `min(L+1, 7)`.
-  A neighbor is a valid target when replaceable and (no fluid, or fluid level in 1-7 and greater
-  than the proposal). Falling neighbors are never targeted.
+  flowing level 6 (max − 1), so its next step can spread and form a pool.
+- Horizontal spread (below blocked): sources propose level 1; flowing levels below 7 propose
+  `L + 1`; a cell at level 7 never spreads. A neighbor is a valid target when replaceable and (no
+  fluid, or fluid level in 1-7 and greater than the proposal). Falling neighbors are never
+  targeted.
 - Source formation: after spread, a flowing cell with ≥ 2 horizontal source neighbors becomes a
   source.
 - Decay: after spread/formation, a flowing cell (1-7) with no water above and no horizontal

@@ -1,13 +1,14 @@
 /**
  * Deterministic water flow (078). `stepWaterCell` performs one water step for one cell with
  * MC-like rules in fixed order: (1) downward spawn of falling water (level 8) into an empty
- * replaceable cell below; (2) falling water converts to flowing level 7 at ground; (3) horizontal
- * spread with level+1 falloff (sources spread level 1, cap 7, worse flowing water improves,
- * falling water is never overwritten); (4) a flowing cell with ≥ 2 horizontal source neighbors
- * becomes a source; (5) unfed flowing water (no water above, no lower-level neighbor) decays
- * +1 per step and is removed at level 7. `affected` lists exactly the positions the caller must
- * re-schedule (077, `WATER_FLOW_INTERVAL`). Fixed neighbor order `-x, +x, -z, +z`; pure per-cell
- * steps.
+ * replaceable cell below; (2) falling water converts to flowing level 6 (max - 1) at ground so the
+ * base can spread into a pool; (3) horizontal spread with level+1 falloff — sources spread level
+ * 1, flowing levels below 7 spread +1, a level-7 cell never spreads (no endless edge crawl);
+ * worse flowing water improves and falling water is never overwritten; (4) a flowing cell with ≥ 2
+ * horizontal source neighbors becomes a source; (5) unfed flowing water (no water above, no
+ * lower-level neighbor) decays +1 per step and is removed at level 7. `affected` lists exactly the
+ * positions the caller must re-schedule (077, `WATER_FLOW_INTERVAL`). Fixed neighbor order
+ * `-x, +x, -z, +z`; pure per-cell steps.
  */
 import { createFluidState, type FluidState } from '../world/FluidState';
 
@@ -75,33 +76,42 @@ export function stepWaterCell(
     return { changed: true, affected };
   }
 
-  // 2. Falling water at ground converts to flowing level 7.
+  // 2. Falling water at ground converts to flowing level 6 (max - 1), so the base can still
+  //    spread and form a pool (a level-7 cell never spreads).
   if (level >= FALLING_LEVEL) {
-    world.setFluidState(x, y, z, flowingState(waterFluidId, MAX_FLOW_LEVEL));
+    world.setFluidState(x, y, z, flowingState(waterFluidId, MAX_FLOW_LEVEL - 1));
     affected.push([x, y, z]);
     return { changed: true, affected };
   }
 
-  // 3. Horizontal spread.
-  const proposal = level === 0 ? 1 : Math.min(level + 1, MAX_FLOW_LEVEL);
-  for (const [dx, dz] of NEIGHBORS) {
-    const nx = x + dx;
-    const nz = z + dz;
-    if (!world.isReplaceable(nx, y, nz)) continue;
-    const neighbor = world.getFluidState(nx, y, nz);
-    if (neighbor === null) {
-      world.setFluidState(nx, y, nz, flowingState(waterFluidId, proposal));
-      affected.push([nx, y, nz]);
-    } else if (
-      neighbor.fluidId === waterFluidId &&
-      neighbor.level >= 1 &&
-      neighbor.level <= MAX_FLOW_LEVEL &&
-      neighbor.level > proposal
-    ) {
-      world.setFluidState(nx, y, nz, flowingState(waterFluidId, proposal));
-      affected.push([nx, y, nz]);
+  // 3. Horizontal spread: sources propose level 1; flowing L (< MAX_FLOW_LEVEL) proposes L + 1;
+  //    a cell at the maximum level never spreads.
+  let proposal = 0;
+  if (level === 0) {
+    proposal = 1;
+  } else if (level < MAX_FLOW_LEVEL) {
+    proposal = level + 1;
+  }
+  if (proposal > 0) {
+    for (const [dx, dz] of NEIGHBORS) {
+      const nx = x + dx;
+      const nz = z + dz;
+      if (!world.isReplaceable(nx, y, nz)) continue;
+      const neighbor = world.getFluidState(nx, y, nz);
+      if (neighbor === null) {
+        world.setFluidState(nx, y, nz, flowingState(waterFluidId, proposal));
+        affected.push([nx, y, nz]);
+      } else if (
+        neighbor.fluidId === waterFluidId &&
+        neighbor.level >= 1 &&
+        neighbor.level <= MAX_FLOW_LEVEL &&
+        neighbor.level > proposal
+      ) {
+        world.setFluidState(nx, y, nz, flowingState(waterFluidId, proposal));
+        affected.push([nx, y, nz]);
+      }
+      // Falling neighbors (level >= 8) are never overwritten horizontally.
     }
-    // Falling neighbors (level >= 8) are never overwritten horizontally.
   }
 
   // 4. Source formation: ≥ 2 horizontal source neighbors.

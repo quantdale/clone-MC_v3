@@ -98,7 +98,7 @@ describe('stepWaterCell', () => {
     expect(world.levelAt(0, 1, 0)).toBe(0); // unchanged
   });
 
-  it('converts falling water to flowing level 7 at ground', () => {
+  it('converts falling water to flowing level 6 (max - 1) at ground', () => {
     const world = flooredWorld(0, 0, 0, 0);
     world.setFluid(0, 1, 0, 8);
 
@@ -106,13 +106,13 @@ describe('stepWaterCell', () => {
 
     expect(result.changed).toBe(true);
     expect(result.affected).toEqual([[0, 1, 0]]);
-    expect(world.levelAt(0, 1, 0)).toBe(MAX_FLOW_LEVEL);
+    expect(world.levelAt(0, 1, 0)).toBe(MAX_FLOW_LEVEL - 1);
   });
 
-  it('spreads from a converted base on the next step (cap at 7, never 8)', () => {
+  it('spreads from a converted base on the next step (pool formation)', () => {
     const world = flooredWorld(0, 1, 0, 0);
     world.setFluid(0, 1, 0, 8);
-    step(world, 0, 1, 0); // converts to flowing 7
+    step(world, 0, 1, 0); // converts to flowing 6
 
     const result = step(world, 0, 1, 0);
 
@@ -138,14 +138,13 @@ describe('stepWaterCell', () => {
     expect(world.levelAt(0, 1, -1)).toBe(3);
   });
 
-  it('caps horizontal spread at level 7', () => {
+  it('does not spread from level 7 (no endless edge crawl)', () => {
     const world = flooredWorld(-1, 1, 0, 0);
     world.setFluid(0, 1, 0, 7);
-    world.setFluid(-1, 1, 0, 6); // feeder keeps level 7 from decaying
+    world.setFluid(-1, 1, 0, 6); // feeder keeps level 7 stable
 
-    step(world, 0, 1, 0);
-
-    expect(world.levelAt(1, 1, 0)).toBe(MAX_FLOW_LEVEL); // capped at 7, never 8
+    expect(step(world, 0, 1, 0).changed).toBe(false);
+    expect(world.levelAt(1, 1, 0)).toBeNull(); // nothing beyond the edge
     expect(world.levelAt(0, 1, 0)).toBe(7);
   });
 

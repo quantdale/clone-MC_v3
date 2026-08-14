@@ -60,3 +60,16 @@ Not applicable — completion is 100%.
 ## Final decision
 
 VERIFIED. 078 deterministic water flow (downward propagation, ground conversion, capped horizontal spread, source formation, decay) is in place. Advance to 079-lava-flow-simulation.
+
+## Behavior amendment (with 079)
+
+While implementing 079's mirrored engine, review showed two correctness refinements applied to 078
+(recorded here per final spec reconciliation):
+
+- Ground conversion now produces flowing **level 6 (max − 1)** instead of 7, so a waterfall base
+  can still spread and form a pool on its next step.
+- A **level-7 cell never spreads** (the old `min(L+1, 7)` proposal let level-7 edges crawl
+  indefinitely); the decay ladder (removal at 7) is unchanged.
+
+The engine, tests, design.md, and spec.md were updated in the 079 commit; 079's lava engine mirrors
+the corrected rules.
