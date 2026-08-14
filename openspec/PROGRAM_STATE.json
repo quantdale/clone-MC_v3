@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "064-worker-job-protocol",
+  "currentChange": "065-worker-section-meshing",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "064-worker-job-protocol",
-  "nextChange": "065-worker-section-meshing",
+  "lastCompletedChange": "065-worker-section-meshing",
+  "nextChange": "066-voxel-light-storage",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "57dc9c336b3f05da85b482b2089f79514dc35f2f",
-  "lastKnownHead": "57dc9c336b3f05da85b482b2089f79514dc35f2f",
-  "lastCompletedTask": "064: all 4 tasks complete; worker-job-protocol VERIFIED. New src/rendering/WorkerJobProtocol.ts (WORKER_PROTOCOL_VERSION 1; WorkerRequest/WorkerResult/ResolvedOutcome; validateWorkerRequest/validateWorkerResult; WorkerJobClient submit/resolveResult/cancel/pendingCount with stale-result rejection and validate-before-mutate); 6 unit tests; 730 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 065-worker-section-meshing. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (065 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement moving section meshing off the main thread over the 064 protocol, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "b7ef2b7e708b7d641fb9cacf213938c617b5c8d1",
+  "lastKnownHead": "b7ef2b7e708b7d641fb9cacf213938c617b5c8d1",
+  "lastCompletedTask": "065: all 4 tasks complete; worker-section-meshing VERIFIED. New src/rendering/WorkerMeshing.ts (processMeshSectionRequest: pure structured-clone-safe 062-delegating job; MeshWorkerClient requestSection/handleMessage/cancel/pendingCount over the 064 protocol with per-job callbacks and stale rejection); 6 unit tests; 736 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 066-voxel-light-storage. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (066 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement section nibble arrays and light value accessors, verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -641,6 +641,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "064 VERIFIED 4/4 (100%). New src/rendering/WorkerJobProtocol.ts (WORKER_PROTOCOL_VERSION 1; WorkerRequest/WorkerResult/ResolvedOutcome; validateWorkerRequest/validateWorkerResult; WorkerJobClient submit/resolveResult/cancel/pendingCount with stale-result rejection and validate-before-mutate); 6 unit tests; 730 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "b7ef2b7e708b7d641fb9cacf213938c617b5c8d1",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 736/736; WorkerMeshing 6/6",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "065 VERIFIED 4/4 (100%). New src/rendering/WorkerMeshing.ts (processMeshSectionRequest: pure structured-clone-safe 062-delegating job; MeshWorkerClient requestSection/handleMessage/cancel/pendingCount over the 064 protocol with per-job callbacks and stale rejection); 6 unit tests; 736 unit + 19 e2e pass, stable."
     }
   ]
 }
