@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "046-singleplayer-pause-semantics",
+  "currentChange": "047-scheduled-tick-queue",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "046-singleplayer-pause-semantics",
-  "nextChange": "047-scheduled-tick-queue",
+  "lastCompletedChange": "047-scheduled-tick-queue",
+  "nextChange": "048-random-tick-system",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "ff6aafd4849a91832e71bf8ec932e8b20765cefa",
-  "lastKnownHead": "ff6aafd4849a91832e71bf8ec932e8b20765cefa",
-  "lastCompletedTask": "046: all 4 tasks complete; singleplayer-pause-semantics VERIFIED. New src/engine/PauseManager.ts (PAUSE_REASONS vocabulary; pause/resume idempotent Set semantics; isPaused while any reason active; reasons; onChange transition-only listeners with unsubscribe; resumeAll; defensive listener invocation); 6 unit tests; 611 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 047-scheduled-tick-queue. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (047 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement a deterministic scheduled block/fluid tick queue with dedupe and persistence hooks, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "25b20999721cf347ea4d9833289b352f78115377",
+  "lastKnownHead": "25b20999721cf347ea4d9833289b352f78115377",
+  "lastCompletedTask": "047: all 4 tasks complete; scheduled-tick-queue VERIFIED. New src/simulation/ScheduledTickQueue.ts (ScheduledTick; schedule/scheduleIn/tick(nowTick)/has/cancel/clear/size; position dedupe updating due tick in place; (tickTime, seq) deterministic ordering; versioned serialize/deserialize with validate-before-mutate); 8 unit tests; 619 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 048-random-tick-system. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (048 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement seeded random-tick selection for eligible blocks in ticking chunks, verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -461,6 +461,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "046 VERIFIED 4/4 (100%). New src/engine/PauseManager.ts (PAUSE_REASONS vocabulary; pause/resume idempotent Set semantics; isPaused while any reason active; reasons; onChange transition-only listeners with unsubscribe; resumeAll; defensive listener invocation); 6 unit tests; 611 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "25b20999721cf347ea4d9833289b352f78115377",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 619/619; ScheduledTickQueue 8/8",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "047 VERIFIED 4/4 (100%). New src/simulation/ScheduledTickQueue.ts (ScheduledTick; schedule/scheduleIn/tick(nowTick)/has/cancel/clear/size; position dedupe updating due tick in place; (tickTime, seq) deterministic ordering; versioned serialize/deserialize with validate-before-mutate); 8 unit tests; 619 unit + 19 e2e pass, stable."
     }
   ]
 }
