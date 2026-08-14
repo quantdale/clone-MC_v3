@@ -3,54 +3,58 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **081-waterlogging-state — VERIFIED 100%**
-- Active implementation change: **081-waterlogging-state — VERIFIED**
-- Next change: **082-fluid-collision-movement — NOT YET ACTIVE (artifacts pending)**
-- 081 task ledger: **4 total tasks, 4 completed**
-- 081 completion: **100%**
-- 081 mandatory waterlogging-state requirements: **PASS**
-- 081 required-test gate: **PASS — unit 916/916, E2E 19/19**
-- 081 advancement allowed: **Yes**
+- Last completed change: **082-fluid-collision-movement — VERIFIED 100%**
+- Active implementation change: **082-fluid-collision-movement — VERIFIED**
+- Next change: **083-fluid-surface-meshing — NOT YET ACTIVE (artifacts pending)**
+- 082 task ledger: **4 total tasks, 4 completed**
+- 082 completion: **100%**
+- 082 mandatory fluid-collision-movement requirements: **PASS**
+- 082 required-test gate: **PASS — unit 935/935, E2E 19/19**
+- 082 advancement allowed: **Yes**
 - Session-start head: `d282bbb01b4eabbdc76daaa05e78ccff81f2d685`
-- Validated head: `dc978854a117d919dadce36a018171e9ab747056`
-- Next exact action: **Advance to 082-fluid-collision-movement. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (082 artifacts NOT yet present — authoring is a hard pre-implementation block), validate, implement fluid immersion, movement drag, buoyancy, and eye-fluid state from fluid data (deterministic; 056/057 collision primitives + 076 fluid data), verify full gate, commit + push, advance program state.**
+- Validated head: `216ae5f32e5c154fee65c67146f65ee7ffb7ee99`
+- Next exact action: **Advance to 083-fluid-surface-meshing. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (083 artifacts NOT yet present — authoring is a hard pre-implementation block), validate, implement level-aware fluid surface geometry and side heights (deterministic; 076 levels + 062/070/071 quad pipeline), verify full gate, commit + push, advance program state.**
 
-## What 081 implemented
+## What 082 implemented
 
-Change 081 adds waterlogged block-state support and fluid coexistence semantics.
+Change 082 adds fluid immersion, movement drag, buoyancy, and eye-fluid state derived from fluid
+data.
 
-- `src/world/Waterlogging.ts` (NEW) — `WaterloggedCell { blockId, waterLevel }`;
-  `validateWaterloggingLevel` accepts exactly 0 (source) and 8-15 (falling) — flowing levels 1-7
-  never coexist with a block (MC semantics); `waterlog` (validated construction);
-  `waterloggingLevelFromFluid` (flowing 1-7 → 0, falling kept); `fluidLevelFromWaterlogging`
-  (0 → 0, falling kept); `withWaterLevel(cell, level | null)` (null → null, original untouched);
-  `isWaterloggable` (pure set membership). All helpers pure and deterministic.
-- `tests/unit/Waterlogging.test.ts` (NEW) — 11 tests: level validation (accepted/rejected
-  ranges), construction, both conversion directions, transitions, membership, purity.
+- `src/simulation/FluidMovement.ts` (NEW) — `FluidMovementWorld` (fluid reads + 015 density
+  lookup), `FluidImmersion`; `fluidDragFactor(d) = clamp(1.1 - 0.3 * d, 0, 1)` (water 0.8, lava
+  0.5); `applyFluidDrag(velocity, density, tickDelta)` scales each axis by `factor ^ tickDelta`
+  (input untouched); `buoyancyAcceleration(fd, ed, g) = g * max(0, 1 - ed / fd)` (neutral at equal
+  densities, upward on denser fluids); `eyeFluid` (fluid id at a point, null in air);
+  `fluidHeightAt` (topmost fluid top in a column window; falling water counts);
+  `submergedFraction` (clamped [0, 1]); `isFullySubmerged`; `immersion` report. Invalid
+  densities/tick deltas throw. Pure and deterministic.
+- `tests/unit/FluidMovement.test.ts` (NEW) — 19 tests: drag factors/clamp/validation, drag
+  compounding and identity, buoyancy cases, eye-fluid, height scans, submersion none/partial/full
+  + clamping, determinism.
 
-## Validation evidence (081)
+## Validation evidence (082)
 
 - typecheck: PASS (`tsc --noEmit`)
 - lint: PASS (`eslint .`)
-- unit: PASS 916/916 (prior 905 + 11 new), stable across repeated runs
+- unit: PASS 935/935 (prior 916 + 19 new), stable across repeated runs
 - production build: PASS (`tsc --noEmit && vite build`)
 - E2E: PASS 19/19
 
 ## Advancement decision
 
-Change 081 is **VERIFIED** at 4/4 (100%). All gates are green: typecheck, lint, the new 081 suites,
-the full unit suite (916/916, stable), production build, and the required E2E suite (19/19). No
+Change 082 is **VERIFIED** at 4/4 (100%). All gates are green: typecheck, lint, the new 082 suites,
+the full unit suite (935/935, stable), production build, and the required E2E suite (19/19). No
 advancement exception was needed.
 
-## Next change: 082 (pending artifacts)
+## Next change: 083 (pending artifacts)
 
-`082-fluid-collision-movement` is named in `CHANGE_SEQUENCE.md` with scope "Fluid immersion,
-movement drag, buoyancy, and eye-fluid state from fluid data." Per `AGENTS.md`, a change lacking
-full artifacts is a hard pre-implementation block. Author and validate those artifacts via
-`SPEC_AUTHORING_PROTOCOL.md` before any production code.
+`083-fluid-surface-meshing` is named in `CHANGE_SEQUENCE.md` with scope "Level-aware fluid surface
+geometry and side heights." Per `AGENTS.md`, a change lacking full artifacts is a hard
+pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md`
+before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 081 verification.
-Change 082 is the next change; its artifacts must be authored and validated before implementation
+A future session must first inspect current `origin/main`, this state, and the 082 verification.
+Change 083 is the next change; its artifacts must be authored and validated before implementation
 begins.
