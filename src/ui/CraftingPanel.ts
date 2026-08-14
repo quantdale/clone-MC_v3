@@ -91,7 +91,7 @@ export class CraftingPanel {
   private renderInventory(registry: ItemTypeRegistry): void {
     this.inventoryGridEl.textContent = '';
     for (let index = 0; index < this.inventory.slots.length; index++) {
-      const id = this.inventory.slots[index] ?? 0;
+      const id = this.inventory.slots[index]?.id ?? 0;
       const count = this.inventory.getSlotCount(index);
       const cell = this.createCell(registry, id, count, `${index + 1}: hotbar`, true);
       cell.classList.add('inventory-hotbar-cell');

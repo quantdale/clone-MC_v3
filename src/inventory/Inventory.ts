@@ -1,11 +1,32 @@
 import type { BlockSelector } from './BlockSelector';
-import { ItemId } from './ItemRegistry';
+import { ItemId, type ItemTypeRegistry, createDefaultItemRegistry } from './ItemRegistry';
+import {
+  DAMAGE_COMPONENT,
+  type DamageComponentValue,
+  StackComponentMap,
+  createDefaultStackComponentRegistry,
+  emptyStackComponents,
+} from './StackDataComponents';
 
+/**
+ * One unified occupied-slot value: item identity, quantity, and the immutable
+ * component map backing per-stack state (e.g. tool damage, introduced in 008).
+ * An unoccupied slot is represented by a stack with `count <= 0`; components are
+ * only meaningful for occupied stacks.
+ */
 export interface ItemStack {
   id: number;
   count: number;
+  /** Immutable per-stack component data; absent for plain items. */
+  components?: StackComponentMap;
 }
 
+/**
+ * Save representation for browser persistence. This keeps the pre-009 shape
+ * (parallel id/count/durability arrays plus a `{id,count}` storage list) so that
+ * existing saves restore verbatim; 009 encodes tool wear as the damage component
+ * for the round trip but exports it through the legacy `durability` field.
+ */
 export interface InventorySnapshot {
   version: 1;
   slots: number[];
@@ -18,11 +39,16 @@ export interface InventorySnapshot {
 
 const MAX_STACK = 64;
 
+// One shared, immutable component registry for every inventory instance.
+const SHARED_COMPONENT_REGISTRY = createDefaultStackComponentRegistry();
+// A shared empty component map used when comparing against an absent map.
+const EMPTY_COMPONENTS = emptyStackComponents();
+
 /**
  * Player inventory / hotbar backing store.
  *
- * Holds an ordered list of block ids (one per hotbar slot) and tracks the
- * currently selected slot. Implements {@link BlockSelector} so the interaction
+ * Represents the 9 hotbar slots and 27 storage slots (occupied subset) as unified
+ * {@link ItemStack} values. Implements {@link BlockSelector} so the interaction
  * system can query which block to place.
  *
  * Default slots use the stable ItemId values from the registry:
@@ -42,29 +68,47 @@ const DEFAULT_SLOTS: number[] = [
 const DEFAULT_COUNTS = [32, 32, 64, 16, 0, 0, 0, 8, 0];
 
 export class Inventory implements BlockSelector {
-  /** The block id in each hotbar slot. */
-  slots: number[];
-  /** The number of items in each hotbar slot. */
-  counts: number[];
-  /** Current durability for the item in each hotbar slot (0 for non-tools). */
-  durability: number[];
-  /** Index of the currently selected slot. */
+  /** The unified hotbar stacks, one per hotbar slot. */
+  slots: ItemStack[];
+  /** Index of the currently selected hotbar slot. */
   selected: number;
-  /** Main-inventory stacks that are not shown in the nine-slot hotbar. */
+  /** Occupied main-inventory stacks (not shown in the nine-slot hotbar). */
   readonly storage: ItemStack[];
 
-  constructor(slots?: number[], counts?: number[], storage?: ItemStack[]) {
-    this.slots = slots && slots.length > 0 ? [...slots] : [...DEFAULT_SLOTS];
-    this.counts = counts && counts.length === this.slots.length
-      ? counts.map((count) => this.clampCount(count))
-      : slots && slots.length > 0
-        ? this.slots.map(() => MAX_STACK)
-        : [...DEFAULT_COUNTS];
-    this.durability = this.slots.map(() => 0);
+  private readonly registry: ItemTypeRegistry;
+
+  constructor(
+    slots?: number[],
+    counts?: number[],
+    storage?: ItemStack[],
+    itemRegistry: ItemTypeRegistry = createDefaultItemRegistry(),
+  ) {
+    this.registry = itemRegistry;
+    if (slots && slots.length > 0) {
+      const countsPresent = counts !== undefined && counts.length === slots.length;
+      this.slots = slots.map((id, i): ItemStack => {
+        const raw = countsPresent ? (counts[i] ?? 0) : MAX_STACK;
+        return { id, count: this.clampCount(raw) };
+      });
+    } else {
+      this.slots = DEFAULT_SLOTS.map((id, i) => ({ id, count: this.clampCount(DEFAULT_COUNTS[i] ?? 0) }));
+    }
     this.selected = 0;
-    this.storage = storage
-      ? storage.map((stack) => ({ id: stack.id, count: this.clampCount(stack.count) }))
-      : [];
+    this.storage = (storage ? storage : []).map((stack) => ({ id: stack.id, count: this.clampCount(stack.count) }));
+  }
+
+  /** Maximum stack size for an item, falling back to the global cap. */
+  private maxStackFor(id: number): number {
+    const def = this.registry.getByLegacyId(id);
+    return def ? def.stackSize : MAX_STACK;
+  }
+
+  /**
+   * Whether two stacks may merge: equal item identity and logically equal
+   * component maps. A missing map is equivalent to an empty map.
+   */
+  private componentsCompatible(a?: StackComponentMap, b?: StackComponentMap): boolean {
+    return (a ?? EMPTY_COMPONENTS).equals(b ?? EMPTY_COMPONENTS);
   }
 
   /**
@@ -94,20 +138,20 @@ export class Inventory implements BlockSelector {
 
   /** The item id of the currently selected slot. */
   getSelectedItemId(): number {
-    return this.slots[this.selected] ?? 0;
+    return this.slots[this.selected]?.id ?? 0;
   }
 
   /** Number of items in a hotbar slot. */
   getSlotCount(index = this.selected): number {
-    return this.counts[index] ?? 0;
+    return this.slots[index]?.count ?? 0;
   }
 
   /** Number of copies of an item across the hotbar and main inventory. */
   getItemCount(id: number): number {
     let total = 0;
-    for (let i = 0; i < this.slots.length; i++) {
-      if (this.slots[i] === id) {
-        total += this.counts[i] ?? 0;
+    for (const stack of this.slots) {
+      if (stack.id === id) {
+        total += stack.count ?? 0;
       }
     }
     for (const stack of this.storage) {
@@ -125,45 +169,46 @@ export class Inventory implements BlockSelector {
 
   /** Whether a stack can be added without dropping the result on the ground. */
   canAddItem(id: number, amount: number): boolean {
+    const max = this.maxStackFor(id);
     let capacity = 0;
-    for (let i = 0; i < this.slots.length; i++) {
-      if (this.slots[i] === id) {
-        capacity += MAX_STACK - (this.counts[i] ?? 0);
+    for (const stack of this.slots) {
+      if (stack.id === id && this.componentsCompatible(stack.components, undefined) && stack.count < max) {
+        capacity += max - stack.count;
       }
     }
     for (const stack of this.storage) {
-      if (stack.id === id) {
-        capacity += MAX_STACK - stack.count;
+      if (stack.id === id && this.componentsCompatible(stack.components, undefined) && stack.count < max) {
+        capacity += max - stack.count;
       }
     }
-    for (let i = 0; i < this.slots.length; i++) {
-      if (this.slots[i] !== id && (this.counts[i] ?? 0) <= 0) {
-        capacity += MAX_STACK;
+    for (const stack of this.slots) {
+      if (stack.id !== id && (stack.count ?? 0) <= 0) {
+        capacity += max;
       }
     }
-    capacity += (27 - this.storage.length) * MAX_STACK;
+    capacity += (27 - this.storage.length) * max;
     return capacity >= Math.max(0, Math.trunc(amount));
   }
 
-  /** Add items to existing stacks, then to empty storage/hotbar slots. */
+  /** Add items to existing compatible stacks, then to empty storage/hotbar slots. */
   addItem(id: number, amount: number): number {
+    const max = this.maxStackFor(id);
     let remaining = Math.max(0, Math.trunc(amount));
     if (remaining === 0) {
       return 0;
     }
 
-    const targets: ItemStack[] = this.storage;
-    for (let i = 0; i < this.slots.length; i++) {
-      if (this.slots[i] === id && (this.counts[i] ?? 0) < MAX_STACK) {
-        const moved = Math.min(remaining, MAX_STACK - (this.counts[i] ?? 0));
-        this.counts[i] = (this.counts[i] ?? 0) + moved;
+    for (const stack of this.slots) {
+      if (stack.id === id && this.componentsCompatible(stack.components, undefined) && stack.count < max) {
+        const moved = Math.min(remaining, max - stack.count);
+        stack.count += moved;
         remaining -= moved;
         if (remaining === 0) return 0;
       }
     }
-    for (const stack of targets) {
-      if (stack.id === id && stack.count < MAX_STACK) {
-        const moved = Math.min(remaining, MAX_STACK - stack.count);
+    for (const stack of this.storage) {
+      if (stack.id === id && this.componentsCompatible(stack.components, undefined) && stack.count < max) {
+        const moved = Math.min(remaining, max - stack.count);
         stack.count += moved;
         remaining -= moved;
         if (remaining === 0) return 0;
@@ -174,17 +219,16 @@ export class Inventory implements BlockSelector {
     // which keeps crafted tools usable immediately instead of hiding them in
     // the storage grid.
     for (let i = 0; i < this.slots.length && remaining > 0; i++) {
-      if ((this.counts[i] ?? 0) > 0) continue;
-      const moved = Math.min(remaining, MAX_STACK);
-      this.slots[i] = id;
-      this.counts[i] = moved;
-      this.durability[i] = 0;
+      const stack = this.slots[i];
+      if (!stack || (stack.count ?? 0) > 0) continue;
+      const moved = Math.min(remaining, max);
+      this.slots[i] = { id, count: moved };
       remaining -= moved;
     }
 
-    while (remaining > 0 && targets.length < 27) {
-      const moved = Math.min(remaining, MAX_STACK);
-      targets.push({ id, count: moved });
+    while (remaining > 0 && this.storage.length < 27) {
+      const moved = Math.min(remaining, max);
+      this.storage.push({ id, count: moved });
       remaining -= moved;
     }
     return remaining;
@@ -197,12 +241,12 @@ export class Inventory implements BlockSelector {
       return false;
     }
     let remaining = requested;
-    for (let i = 0; i < this.slots.length && remaining > 0; i++) {
-      if (this.slots[i] !== id) continue;
-      const removed = Math.min(remaining, this.counts[i] ?? 0);
-      this.counts[i] = (this.counts[i] ?? 0) - removed;
-      if (this.counts[i] === 0) {
-        this.durability[i] = 0;
+    for (const stack of this.slots) {
+      if (stack.id !== id) continue;
+      const removed = Math.min(remaining, stack.count);
+      stack.count -= removed;
+      if (stack.count === 0) {
+        stack.components = undefined;
       }
       remaining -= removed;
     }
@@ -221,42 +265,52 @@ export class Inventory implements BlockSelector {
 
   /** Consume one item from the selected hotbar slot for placement. */
   consumeSelected(): boolean {
-    const index = this.selected;
-    if ((this.counts[index] ?? 0) <= 0) {
+    const stack = this.slots[this.selected];
+    if (!stack || stack.count <= 0) {
       return false;
     }
-    this.counts[index]!--;
+    stack.count -= 1;
+    if (stack.count === 0) {
+      stack.components = undefined;
+    }
     return true;
   }
 
-  /** Read the selected slot's durability, initializing a newly crafted tool. */
+  /** Read the selected slot's remaining durability for a newly crafted tool. */
   getSelectedDurability(maxDurability: number): number {
     return this.getSlotDurability(this.selected, maxDurability);
   }
 
+  /**
+   * Remaining durability for a slot. A stack with no damage component is treated
+   * as pristine (full durability); a damaged stack yields `max - damage`.
+   */
   getSlotDurability(index = this.selected, maxDurability = 0): number {
-    if (index < 0 || index >= this.slots.length || (this.counts[index] ?? 0) <= 0 || maxDurability <= 0) {
+    const stack = this.slots[index];
+    if (!stack || stack.count <= 0 || maxDurability <= 0) {
       return 0;
     }
-    if ((this.durability[index] ?? 0) <= 0) {
-      this.durability[index] = Math.trunc(maxDurability);
-    }
-    return this.durability[index] ?? 0;
+    const damage = stack.components?.get<DamageComponentValue>(DAMAGE_COMPONENT)?.damage ?? 0;
+    return Math.max(0, Math.min(maxDurability, maxDurability - damage));
   }
 
   /** Damage the selected tool; returns true when the tool breaks. */
   damageSelectedItem(amount: number, maxDurability: number): boolean {
-    if (maxDurability <= 0 || (this.counts[this.selected] ?? 0) <= 0) {
+    const stack = this.slots[this.selected];
+    if (maxDurability <= 0 || !stack || stack.count <= 0) {
       return false;
     }
-    const current = this.getSlotDurability(this.selected, maxDurability);
-    const next = current - Math.max(1, Math.trunc(amount));
+    const damage = stack.components?.get<DamageComponentValue>(DAMAGE_COMPONENT)?.damage ?? 0;
+    const remaining = maxDurability - damage;
+    const next = remaining - Math.max(1, Math.trunc(amount));
     if (next <= 0) {
-      this.counts[this.selected] = 0;
-      this.durability[this.selected] = 0;
+      stack.count = 0;
+      stack.components = undefined;
       return true;
     }
-    this.durability[this.selected] = next;
+    const newDamage = maxDurability - next;
+    const base = stack.components ?? emptyStackComponents();
+    stack.components = base.with(DAMAGE_COMPONENT, { damage: newDamage });
     return false;
   }
 
@@ -264,15 +318,19 @@ export class Inventory implements BlockSelector {
   snapshot(): InventorySnapshot {
     return {
       version: 1,
-      slots: [...this.slots],
-      counts: [...this.counts],
-      storage: this.storage.map((stack) => ({ ...stack })),
+      slots: this.slots.map((stack) => stack.id),
+      counts: this.slots.map((stack) => stack.count),
+      storage: this.storage.map((stack) => ({ id: stack.id, count: stack.count })),
       selected: this.selected,
-      durability: [...this.durability],
+      durability: this.slots.map((stack) => this.remainingDurability(stack)),
     };
   }
 
-  /** Restore a snapshot without allowing malformed values to escape. */
+  /**
+   * Restore a legacy snapshot without allowing malformed values to escape. Tool
+   * wear stored in the `durability` field is translated into the 008 damage
+   * component for the round trip.
+   */
   restore(
     snapshot: unknown,
     isValidItem: (id: number) => boolean = () => true,
@@ -316,17 +374,35 @@ export class Inventory implements BlockSelector {
         return false;
       }
     }
-    this.slots = [...candidate.slots];
-    this.counts = [...candidate.counts];
-    this.durability = candidate.durability
-      ? [...candidate.durability]
-      : this.slots.map(() => 0);
+    this.slots = candidate.slots.map((id, i) => {
+      const count = candidate.counts![i] ?? 0;
+      const stack: ItemStack = { id, count: this.clampCount(count) };
+      const max = maxDurabilityForItem(id);
+      const durability = candidate.durability?.[i];
+      if (max > 0 && count > 0 && Number.isInteger(durability) && (durability as number) > 0) {
+        stack.components = new StackComponentMap(SHARED_COMPONENT_REGISTRY).with(
+          DAMAGE_COMPONENT,
+          { damage: max - (durability as number) },
+        );
+      }
+      return stack;
+    });
     this.storage.length = 0;
     for (const stack of candidate.storage) {
-      this.storage.push({ id: stack.id, count: stack.count });
+      this.storage.push({ id: stack.id, count: this.clampCount(stack.count) });
     }
     this.select(candidate.selected!);
     return true;
+  }
+
+  /** Remaining durability to record for a stack in a legacy snapshot. */
+  private remainingDurability(stack: ItemStack): number {
+    const max = this.registry.getByLegacyId(stack.id)?.maxDurability ?? 0;
+    if (max <= 0 || stack.count <= 0) {
+      return 0;
+    }
+    const damage = stack.components?.get<DamageComponentValue>(DAMAGE_COMPONENT)?.damage ?? 0;
+    return Math.max(0, Math.min(max, max - damage));
   }
 
   private clampCount(count: number): number {

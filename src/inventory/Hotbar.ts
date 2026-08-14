@@ -28,7 +28,8 @@ export class Hotbar {
   private buildSlots(): void {
     this.container.setAttribute('role', 'toolbar');
     this.container.setAttribute('aria-label', 'Item hotbar');
-    this.inventory.slots.forEach((itemId, index) => {
+    this.inventory.slots.forEach((stack, index) => {
+      const itemId = stack?.id ?? 0;
       const def = this.registry.getByLegacyId(itemId);
       const slot = document.createElement('button');
       slot.type = 'button';
@@ -90,7 +91,7 @@ export class Hotbar {
       slot.setAttribute('aria-pressed', selected ? 'true' : 'false');
       const countLabel = slot.querySelector<HTMLElement>('.slot-count');
       const count = this.inventory.getSlotCount(index);
-      const definition = this.registry.getByLegacyId(this.inventory.slots[index] ?? 0);
+      const definition = this.registry.getByLegacyId(this.inventory.slots[index]?.id ?? 0);
       if (countLabel) {
         countLabel.textContent = count > 0 ? String(count) : '';
       }

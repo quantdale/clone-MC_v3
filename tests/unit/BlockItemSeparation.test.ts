@@ -152,7 +152,7 @@ describe('block/item registry separation', () => {
     const restored = new Inventory();
     expect(restored.restore(fresh.snapshot())).toBe(true);
     expect(restored.slots).toEqual(fresh.slots);
-    expect(restored.counts).toEqual(fresh.counts);
+    expect(restored.slots.map((s) => s.count)).toEqual(fresh.slots.map((s) => s.count));
   });
 
   it('places blocks through resource identity, never numeric inference', () => {
