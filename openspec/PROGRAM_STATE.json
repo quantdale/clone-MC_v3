@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "060-blockstate-model-resolution",
+  "currentChange": "061-render-layer-model",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "060-blockstate-model-resolution",
-  "nextChange": "061-render-layer-model",
+  "lastCompletedChange": "061-render-layer-model",
+  "nextChange": "062-greedy-opaque-meshing",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "337e22c1417e4ed6ac37594ced2f8a940a2a2f81",
-  "lastKnownHead": "337e22c1417e4ed6ac37594ced2f8a940a2a2f81",
-  "lastCompletedTask": "060: all 4 tasks complete; blockstate-model-resolution VERIFIED. New src/data/BlockModelResolver.ts (BlockProperties; setDefault/setVariant/resolve/has/size/clear; registration-order variant matching, duplicate-default rejection, deterministic, null for unknown blocks); 5 unit tests; 705 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 061-render-layer-model. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (061 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement opaque/cutout/translucent/emissive render-layer classification, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "e8eb69ed93523ae2b32f88aea8e874476bba8947",
+  "lastKnownHead": "e8eb69ed93523ae2b32f88aea8e874476bba8947",
+  "lastCompletedTask": "061: all 4 tasks complete; render-layer-model VERIFIED. New src/rendering/RenderLayer.ts (RenderLayer opaque/cutout/translucent/emissive; RENDER_LAYERS pinned order; isRenderLayer/parseRenderLayer/compareLayers; RenderLayerRegistry setLayer/getLayer/has/size/clear with default opaque and unknown-layer rejection); 6 unit tests; 711 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 062-greedy-opaque-meshing. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (062 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement greedy merge compatible opaque cube faces with regression equivalence tests, verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -601,6 +601,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "060 VERIFIED 4/4 (100%). New src/data/BlockModelResolver.ts (BlockProperties; setDefault/setVariant/resolve/has/size/clear; registration-order variant matching, duplicate-default rejection, deterministic, null for unknown blocks); 5 unit tests; 705 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "e8eb69ed93523ae2b32f88aea8e874476bba8947",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 711/711; RenderLayer 6/6",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "061 VERIFIED 4/4 (100%). New src/rendering/RenderLayer.ts (RenderLayer opaque/cutout/translucent/emissive; RENDER_LAYERS pinned order; isRenderLayer/parseRenderLayer/compareLayers; RenderLayerRegistry setLayer/getLayer/has/size/clear with default opaque and unknown-layer rejection); 6 unit tests; 711 unit + 19 e2e pass, stable."
     }
   ]
 }
