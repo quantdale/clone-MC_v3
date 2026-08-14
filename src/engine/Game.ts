@@ -155,6 +155,7 @@ export class Game {
       generator,
       materials: { opaque: this.materials.opaque, transparent: this.materials.transparent },
       renderDistance,
+      simulationDistance: this.runtimeSimulationDistance(),
     });
     this.saveStorageKey = `voxel-game-edits-v1:${this.seed}`;
     this.loadSavedEdits();
@@ -826,6 +827,12 @@ export class Game {
   private runtimeRenderDistance(): number {
     const headless = typeof navigator !== 'undefined' && navigator.webdriver;
     return headless ? CONFIG.headless.renderDistance : CONFIG.renderDistance;
+  }
+
+  /** Simulation/ticking radius for the current runtime; headless uses its own override. */
+  private runtimeSimulationDistance(): number {
+    const headless = typeof navigator !== 'undefined' && navigator.webdriver;
+    return headless ? CONFIG.headless.simulationDistance : CONFIG.simulationDistance;
   }
 
   private requireElement(id: string): HTMLElement {

@@ -7,6 +7,7 @@ import type { ChunkMesher } from './ChunkMesher';
 import type { TerrainGenerator } from './TerrainGenerator';
 import type { WorldStats } from './MeshingTypes';
 import type { WorldAccess } from './WorldAccess';
+import { RenderSimulationDistance } from './RenderSimulationDistance';
 import { CHUNK_DIMENSIONS, chunkKey, localIndex, worldToChunk, worldToLocal } from './WorldCoordinates';
 
 /** A queued generation job. */
@@ -53,6 +54,9 @@ export class World implements WorldAccess {
     transparent: THREE.MeshLambertMaterial;
   };
   private readonly renderDistance: number;
+  private readonly simulationDistance: number;
+  /** Classifier for the two independent radii; streaming stays on `renderDistance`. */
+  private readonly rsd: RenderSimulationDistance;
 
   /** Player edits keyed by chunk key → local index → block id. Survives unload. */
   private readonly editOverlay = new Map<string, Map<number, number>>();
@@ -105,6 +109,8 @@ export class World implements WorldAccess {
     generator: TerrainGenerator;
     materials: { opaque: THREE.MeshLambertMaterial; transparent: THREE.MeshLambertMaterial };
     renderDistance?: number;
+    /** Ticking/simulation radius; defaults to CONFIG.simulationDistance (== render by default). */
+    simulationDistance?: number;
   }) {
     this.registry = opts.registry;
     this.seed = opts.seed >>> 0;
@@ -113,6 +119,8 @@ export class World implements WorldAccess {
     this.generator = opts.generator;
     this.materials = opts.materials;
     this.renderDistance = opts.renderDistance ?? CONFIG.renderDistance;
+    this.simulationDistance = opts.simulationDistance ?? CONFIG.simulationDistance;
+    this.rsd = new RenderSimulationDistance(this.renderDistance, this.simulationDistance);
     this.chunkManager = new ChunkManager(opts.registry);
   }
 
@@ -760,6 +768,25 @@ export class World implements WorldAccess {
     }
     this.voxels += count - (this.chunkVoxelCounts.get(key) ?? 0);
     this.chunkVoxelCounts.set(key, count);
+  }
+
+  /** Rendering radius (chunks loaded/generated/meshed/unloaded around the player). */
+  getRenderDistance(): number {
+    return this.renderDistance;
+  }
+
+  /** Simulation/ticking radius (chunks actively ticked around the player). */
+  getSimulationDistance(): number {
+    return this.simulationDistance;
+  }
+
+  /**
+   * Whether chunk (cx,cz) is within the simulation/ticking radius of the current
+   * streaming center. False before the first `update` sets a center.
+   */
+  isChunkSimulating(cx: number, cz: number): boolean {
+    if (this.streamCenterX === null || this.streamCenterZ === null) return false;
+    return this.rsd.isWithinSimulationDistance(cx, cz, this.streamCenterX, this.streamCenterZ);
   }
 
   getStats(): WorldStats {

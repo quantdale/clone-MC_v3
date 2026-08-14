@@ -17,6 +17,11 @@ export const CONFIG = {
   /** Number of chunks to load around the player in each horizontal direction. */
   renderDistance: 6,
 
+  /** Number of chunks simulated/ticked around the player in each horizontal direction.
+   *  Independent of `renderDistance`; defaults equal so behavior is unchanged until a
+   *  later change sets them apart. Chunks beyond this radius are rendered but idle. */
+  simulationDistance: 6,
+
   /** Sea level (world Y) — water fills depressions below this. */
   seaLevel: 32,
 
@@ -100,6 +105,7 @@ export const CONFIG = {
   /** Conservative quality defaults for automated/headless browser sessions. */
   headless: {
     renderDistance: 2,
+    simulationDistance: 2,
     maxPixelRatio: 1,
     clouds: false,
   },
