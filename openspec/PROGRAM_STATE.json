@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "074-translucent-surface-rendering",
+  "currentChange": "075-render-performance-contract",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "074-translucent-surface-rendering",
-  "nextChange": "075-render-performance-contract",
+  "lastCompletedChange": "075-render-performance-contract",
+  "nextChange": "076-fluid-state-levels",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "46372518b47698291c47cab5290fb24eb9aef9e8",
-  "lastKnownHead": "46372518b47698291c47cab5290fb24eb9aef9e8",
-  "lastCompletedTask": "074: all 4 tasks complete; translucent-surface-rendering VERIFIED. New src/rendering/TranslucentGeometry.ts (QuadLayerResolver; partitionQuadsByLayer order-preserving opaque/translucent buckets; quadCentroid face-plane-aware (half-extents on in-plane axes via 070 inPlaneAxes); sortTranslucentBackToFront: descending squared centroid distance, explicit stable input-order tie-break, input never mutated, deterministic); 11 new unit tests; 837 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 075-render-performance-contract. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (075 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement draw-call/mesh-build/frame-time/memory/render-distance budgets with automated measurement (deterministic instrumentation harness), verify full gate, commit + push, advance.",
+  "lastValidatedHead": "c75cc9d01eb672d3868c30d3a4d92965f4fc99e2",
+  "lastKnownHead": "c75cc9d01eb672d3868c30d3a4d92965f4fc99e2",
+  "lastCompletedTask": "075: all 5 tasks complete; render-performance-contract VERIFIED. New src/rendering/RenderBudget.ts (RenderBudgetConfig/RenderMetrics/RenderBudgetReport, DEFAULT_RENDER_BUDGET placeholders, validateRenderBudgetConfig strict, evaluateRenderBudget per-dimension + overall with boundary and malformed-actual handling) and src/rendering/RenderPerformanceMonitor.ts (injectable clock; begin/end frame, begin/end mesh build with misuse guards, validated recordDrawCalls/setGeometryMemory/setRenderDistanceChunks, sample, evaluate); 14 new unit tests; 851 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 076-fluid-state-levels. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (076 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement source/flowing fluid state with level/falling metadata (deterministic, data-model level on 015 fluid types), verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -741,6 +741,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "074 VERIFIED 4/4 (100%). Dedicated translucent geometry: src/rendering/TranslucentGeometry.ts (partitionQuadsByLayer order-preserving buckets via caller-supplied 061 layer resolver; quadCentroid face-plane-aware; sortTranslucentBackToFront descending squared centroid distance with explicit stable tie-break, input never mutated); 11 new unit tests; 837 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "c75cc9d01eb672d3868c30d3a4d92965f4fc99e2",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 851/851; RenderPerformance 14/14",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "075 VERIFIED 5/5 (100%). Render performance contract: src/rendering/RenderBudget.ts (typed 5-dimension budgets, DEFAULT_RENDER_BUDGET placeholders, strict validation, pure evaluateRenderBudget with boundary/malformed handling) + src/rendering/RenderPerformanceMonitor.ts (injectable-clock per-frame aggregation, lifecycle misuse guards, validated setters, sample/evaluate); 14 new unit tests; 851 unit + 19 e2e pass, stable."
     }
   ]
 }

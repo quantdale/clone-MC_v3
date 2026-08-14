@@ -56,4 +56,4 @@ Not applicable — completion is 100%.
 
 ## Final decision
 
-VERIFIED. 075 render-performance contract (typed budgets, strict validation, deterministic evaluation) and automated measurement harness (injectable-clock monitor) are in place. Advance to 076-per-block-model-rotation.
+VERIFIED. 075 render-performance contract (typed budgets, strict validation, deterministic evaluation) and automated measurement harness (injectable-clock monitor) are in place. Advance to 076-fluid-state-levels.
