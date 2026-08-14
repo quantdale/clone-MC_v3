@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "078-water-flow-simulation",
+  "currentChange": "079-lava-flow-simulation",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "078-water-flow-simulation",
-  "nextChange": "079-lava-flow-simulation",
+  "lastCompletedChange": "079-lava-flow-simulation",
+  "nextChange": "080-water-lava-interactions",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "d67be5fefa9f023dee15a5b166d699ce2c11fc14",
-  "lastKnownHead": "d67be5fefa9f023dee15a5b166d699ce2c11fc14",
-  "lastCompletedTask": "078: all 4 tasks complete; water-flow-simulation VERIFIED. New src/simulation/WaterFlowEngine.ts (WaterWorldAccess; WaterStepResult changed/affected; WATER_FLOW_INTERVAL 5, MAX_FLOW_LEVEL 7, FALLING_LEVEL 8; stepWaterCell: downward falling-8 spawn into empty replaceable below, falling converts to flowing 7 at ground, horizontal spread level+1 capped at 7 with worse-water improvement and falling-never-overwritten, source formation from 2+ horizontal sources, decay ladder with feeder/water-above guards, removal at 7; fixed -x,+x,-z,+z order; pure); 18 new unit tests; 886 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 079-lava-flow-simulation. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (079 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement slower dimension-aware lava propagation (deterministic; mirrors 078 with lava cadence/range differences), verify full gate, commit + push, advance.",
+  "lastValidatedHead": "f39f9e29f3fdcdc0ba2c7108eb6fdc454729a7c6",
+  "lastKnownHead": "f39f9e29f3fdcdc0ba2c7108eb6fdc454729a7c6",
+  "lastCompletedTask": "079: all 5 tasks complete; lava-flow-simulation VERIFIED (incl. 078 correctness amendment). New src/simulation/LavaFlowEngine.ts (LAVA_FLOW_INTERVAL 30; stepLavaCell with validated spreadRange 3/7: corrected rule set — ground conversion to spreadRange-1, spread L+1 only below spreadRange (range-level never spreads), removal at spreadRange; reuses 078 types); 10 new unit tests; 078 amended: ground conversion to 6 (max-1), level-7 never spreads (no endless crawl), engine+tests+docs reconciled; 896 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 080-water-lava-interactions. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (080 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement deterministic fluid-contact transformations (water+lava -> stone/cobblestone/obsidian rules), verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -781,6 +781,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "078 VERIFIED 4/4 (100%). Deterministic water flow: src/simulation/WaterFlowEngine.ts (stepWaterCell: downward falling-8 spawn, falling→flowing-7 at ground, horizontal spread level+1 capped at 7 with improvement + falling protection, source formation from 2+ horizontal sources, decay ladder with feeder/water-above guards, removal at 7; WATER_FLOW_INTERVAL 5; fixed neighbor order; affected reporting); 18 new unit tests; 886 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "f39f9e29f3fdcdc0ba2c7108eb6fdc454729a7c6",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 896/896; LavaFlowEngine 10/10",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "079 VERIFIED 5/5 (100%). Dimension-aware lava flow: src/simulation/LavaFlowEngine.ts (LAVA_FLOW_INTERVAL 30; stepLavaCell with validated spreadRange 3/7: ground conversion spreadRange-1, spread L+1 below range, removal at range; 078 types reused). Bundled 078 correctness amendment: ground conversion to 6 (max-1) so bases form pools; level-7 never spreads (no endless edge crawl); 078 engine/tests/spec/design/verification reconciled. 10 new unit tests; 896 unit + 19 e2e pass, stable."
     }
   ]
 }
