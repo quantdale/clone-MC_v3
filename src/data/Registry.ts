@@ -5,7 +5,9 @@ export type RegistryErrorReason =
   | 'DUPLICATE_ID'
   | 'MISSING_ID'
   | 'INVALID_RUNTIME_ID'
-  | 'FINALIZED';
+  | 'FINALIZED'
+  | 'CYCLE'
+  | 'NOT_FINALIZED';
 
 export class RegistryError extends Error {
   readonly reason: RegistryErrorReason;

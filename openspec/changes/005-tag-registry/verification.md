@@ -1,38 +1,47 @@
 # Verification: 005-tag-registry
 
-Status: **PLANNED / NOT VERIFIED**
+Status: **VERIFIED**
 
-Completion: **0% until activated and implemented**
+Completion: **100% (33/33 tasks complete)**
 
-Advancement allowed: **false**
+Advancement allowed: **true**
 
 ## Entry gate
 
-005 implementation is forbidden until 004 is VERIFIED.
+004 was VERIFIED before 005 became active.
 
 ## Requirement evidence
 
 | Requirement | Evidence | Status |
 |---|---|---|
-| Direct/nested membership | focused tag tests | PENDING |
-| Deduplication | focused tag tests | PENDING |
-| Missing references | negative tests | PENDING |
-| Cycle rejection | self/multi-cycle tests | PENDING |
-| Atomic finalization | failure-state tests | PENDING |
-| Determinism | repeated-construction tests | PENDING |
-| Efficient resolved query | implementation inspection + focused tests | PENDING |
-| Immutability | mutation-rejection tests | PENDING |
-| Domain separation | typed/runtime tests | PENDING |
-| Additive compatibility | full regression suite | PENDING |
+| Direct members | `TagRegistry.membersOf` / `contains`; `TagRegistry.test.ts` direct-membership test | PASS |
+| Nested tags | transitive resolution in `finalize`; nested-membership test | PASS |
+| Deduplication | `Set` per tag; dedupe + deterministic-order test | PASS |
+| Reference validation | `finalize` throws MISSING_ID for missing resource / missing tag; negative tests | PASS |
+| Cycle rejection | `visiting` set throws CYCLE for self/multi-tag cycles; cycle tests | PASS |
+| Atomic finalization | failed `finalize` leaves `isFinalized === false` and `membersOf` throws NOT_FINALIZED; atomicity test | PASS |
+| Determinism | identical resolved order across repeated construction; determinism test | PASS |
+| Efficient query | resolved `Set<string>` membership, no re-traversal after finalize; inspection + tests | PASS |
+| Immutability | `membersOf` returns frozen snapshot; frozen resolved sets; mutation-rejection test | PASS |
+| Domain separation | separate `TagRegistry` instances per domain; domain-separation test | PASS |
+| Additive compatibility | full regression (177 unit + 19 e2e) unchanged; no gameplay migration | PASS |
 
 ## Required commands
 
-Focused tag tests, then typecheck, lint, full unit tests, build, and E2E.
+- `npm run typecheck` → PASS
+- `npm run lint` → PASS
+- `npm test` → PASS 177/177 (incl. 12 new tag-registry tests)
+- `npm run build` → PASS
+- `npm run test:e2e` → PASS 19/19
 
-## Advancement Exception
+## Compatibility checks
 
-No planned optional work. Expected completion is 100%.
+005 is additive only. It introduces `src/data/TagRegistry.ts` and its tests without altering any existing gameplay, save shape, block/item registries, or consumer code. No persistent identity or behavior changed.
+
+## Scope audit
+
+Diff adds only the generic, unused tag registry and its tests. No tag is consumed by gameplay yet, no block-state/property schema, no stack migration, no recipe migration introduced.
 
 ## Final decision
 
-**NOT ELIGIBLE TO ADVANCE.** 006 remains blocked until 005 is VERIFIED.
+**ELIGIBLE TO ADVANCE.** 005 is fully VERIFIED at 100%. Program state advanced to 006-block-property-schema after authoring its missing `tasks.md`.
