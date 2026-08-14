@@ -92,6 +92,45 @@ describe('validateBlockModel', () => {
     });
     expect(validateBlockModel(model)).toEqual(model);
   });
+
+  it('accepts and preserves tintindex for every tint kind (072)', () => {
+    const model = makeModel({
+      elements: [
+        {
+          from: [0, 0, 0],
+          to: [16, 8, 16],
+          faces: {
+            up: { texture: 'all', tintindex: 'grass' },
+            down: { texture: 'all', tintindex: 'foliage' },
+            north: { texture: 'all', tintindex: 'water' },
+            south: { texture: 'all', tintindex: 'grass', cullface: null },
+          },
+        },
+      ],
+    });
+    expect(validateBlockModel(model)).toEqual(model);
+    expect(validateBlockModel(model).elements[0]!.faces.south!.tintindex).toBe('grass');
+  });
+
+  it('rejects invalid tintindex values (072)', () => {
+    for (const bad of ['leaves', 'redstone', 1, null]) {
+      expect(() =>
+        validateBlockModel(
+          makeModel({
+            elements: [
+              { from: [0, 0, 0], to: [16, 8, 16], faces: { up: { texture: 'all', tintindex: bad as never } } },
+            ],
+          }),
+        ),
+      ).toThrow(/tintindex/i);
+    }
+  });
+
+  it('leaves faces without tintindex untouched (072)', () => {
+    const model = makeModel();
+    expect(validateBlockModel(model).elements[0]!.faces.up).toEqual({ texture: 'all' });
+    expect(validateBlockModel(model).elements[0]!.faces.up!.tintindex).toBeUndefined();
+  });
 });
 
 describe('BlockModelRegistry', () => {

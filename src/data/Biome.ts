@@ -89,7 +89,8 @@ const MIN_TEMPERATURE = -2;
 const MAX_TEMPERATURE = 5;
 const MAX_COLOR = 0xFFFFFF;
 const SNOW_MAX_TEMPERATURE = 0.15;
-const DEFAULT_WATER_COLOR = 0x3f76e4;
+/** Shared fallback water color used by 016 defaults and 072 water-tint resolution. */
+export const DEFAULT_WATER_COLOR = 0x3f76e4;
 const DEFAULT_FOG_COLOR = 0xc0d8ff;
 
 /** Red component (0-255) of a {@link BiomeColor}. */

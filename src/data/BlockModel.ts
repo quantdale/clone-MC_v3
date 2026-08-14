@@ -10,7 +10,12 @@ export type ModelFace = 'up' | 'down' | 'north' | 'south' | 'east' | 'west';
 
 const MODEL_FACES: ReadonlySet<string> = new Set(['up', 'down', 'north', 'south', 'east', 'west']);
 
-/** Per-face render data: texture reference plus optional UVs and cull rule. */
+/** Biome tint kind a model face can declare (MC-style tint attribute; 072). */
+export type TintKind = 'grass' | 'foliage' | 'water';
+
+const TINT_KINDS: ReadonlySet<string> = new Set(['grass', 'foliage', 'water']);
+
+/** Per-face render data: texture reference plus optional UVs, cull rule, and biome tint. */
 export interface BlockModelFace {
   /** Texture key from the model's `textures` map, or a `#`-prefixed parent reference. */
   texture: string;
@@ -18,6 +23,8 @@ export interface BlockModelFace {
   uv?: [number, number, number, number];
   /** Face to cull against (`null` = never cull; absent = cull when the neighbor is opaque). */
   cullface?: ModelFace | null;
+  /** Biome tint kind applied to this face; absent = untinted (072). */
+  tintindex?: TintKind;
 }
 
 /** One box element of the model. */
@@ -66,9 +73,15 @@ function validateFace(face: unknown, context: string): BlockModelFace {
   if (r.cullface !== undefined && r.cullface !== null && !MODEL_FACES.has(r.cullface as string)) {
     throw new Error(`BlockModel: ${context} face cullface must be a valid face or null`);
   }
+  if (r.tintindex !== undefined && (typeof r.tintindex !== 'string' || !TINT_KINDS.has(r.tintindex))) {
+    throw new Error(
+      `BlockModel: ${context} face tintindex must be one of grass|foliage|water, got ${String(r.tintindex)}`,
+    );
+  }
   const out: BlockModelFace = { texture: r.texture as string };
   if (r.uv !== undefined) out.uv = r.uv as [number, number, number, number];
   if (r.cullface !== undefined) out.cullface = r.cullface as ModelFace | null;
+  if (r.tintindex !== undefined) out.tintindex = r.tintindex as TintKind;
   return out;
 }
 
