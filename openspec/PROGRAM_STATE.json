@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "072-biome-tint-rendering",
+  "currentChange": "073-animated-texture-metadata",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "072-biome-tint-rendering",
-  "nextChange": "073-animated-texture-metadata",
+  "lastCompletedChange": "073-animated-texture-metadata",
+  "nextChange": "074-translucent-surface-rendering",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "4739693bdd0a28833ece5bf3948ab69c8a771b28",
-  "lastKnownHead": "4739693bdd0a28833ece5bf3948ab69c8a771b28",
-  "lastCompletedTask": "072: all 6 tasks complete; biome-tint-rendering VERIFIED. BlockModelFace gains optional tintindex ('grass'|'foliage'|'water') strictly validated/preserved by validateBlockModel; DEFAULT_WATER_COLOR exported from Biome.ts; new src/rendering/BiomeTint.ts (BiomeTint; biomeTintColor/biomeTint: grass→grassColor, foliage→foliageColor, water→waterColor ?? DEFAULT_WATER_COLOR, rgb split via biomeColorToRGB; pure/deterministic); 10 new unit tests; 814 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 073-animated-texture-metadata. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (073 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement animated-texture metadata (frame timing/order for texture atlases; deterministic, data-model level), verify full gate, commit + push, advance.",
+  "lastValidatedHead": "e445720aeb65d63ce27f8d9633d31b37b7c2d434",
+  "lastKnownHead": "e445720aeb65d63ce27f8d9633d31b37b7c2d434",
+  "lastCompletedTask": "073: all 5 tasks complete; animated-texture-metadata VERIFIED. New src/data/AnimatedTexture.ts (AnimatedTextureMetadata {frametimeTicks, frames}; strict validateAnimatedTextureMetadata; AnimatedTextureRegistry with duplicate rejection, 059 pattern) and src/rendering/AnimatedTextureFrame.ts (animatedTextureFrameAt: frames[floor(tick/frametimeTicks) % len], negative ticks clamp to frames[0], O(1), pure, no gameplay coupling); 12 new unit tests; 826 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 074-translucent-surface-rendering. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (074 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement dedicated translucent geometry handling and a stable ordering policy (deterministic; orthogonal to 061 RenderLayer data), verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -721,6 +721,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "072 VERIFIED 6/6 (100%). Tint attributes: BlockModelFace.tintindex ('grass'|'foliage'|'water') strictly validated/preserved; DEFAULT_WATER_COLOR exported; new src/rendering/BiomeTint.ts (biomeTintColor/biomeTint: grass→grassColor, foliage→foliageColor, water→waterColor ?? default, rgb split; pure/deterministic); 10 new unit tests; 814 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "e445720aeb65d63ce27f8d9633d31b37b7c2d434",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 826/826; AnimatedTexture 12/12",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "073 VERIFIED 5/5 (100%). Animated-texture metadata: src/data/AnimatedTexture.ts (AnimatedTextureMetadata frametimeTicks+frames, strict validation, registry with duplicate rejection) + src/rendering/AnimatedTextureFrame.ts (animatedTextureFrameAt: deterministic wrap, negative clamp, O(1), no gameplay coupling); 12 new unit tests; 826 unit + 19 e2e pass, stable."
     }
   ]
 }
