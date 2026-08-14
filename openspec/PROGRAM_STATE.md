@@ -3,63 +3,60 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **040-legacy-localstorage-migration — VERIFIED 100%**
-- Active implementation change: **040-legacy-localstorage-migration — VERIFIED**
-- Next change: **041-save-schema-migrations — NOT YET ACTIVE (artifacts pending)**
-- 040 task ledger: **7 total tasks, 7 completed**
-- 040 completion: **100%**
-- 040 mandatory legacy-localstorage-migration requirements: **PASS**
-- 040 required-test gate: **PASS — unit 570/570, E2E 19/19**
-- 040 advancement allowed: **Yes**
+- Last completed change: **041-save-schema-migrations — VERIFIED 100%**
+- Active implementation change: **041-save-schema-migrations — VERIFIED**
+- Next change: **042-world-export-import — NOT YET ACTIVE (artifacts pending)**
+- 041 task ledger: **5 total tasks, 5 completed**
+- 041 completion: **100%**
+- 041 mandatory save-schema-migrations requirements: **PASS**
+- 041 required-test gate: **PASS — unit 580/580, E2E 19/19**
+- 041 advancement allowed: **Yes**
 - Session-start head: `d282bbb01b4eabbdc76daaa05e78ccff81f2d685`
-- Validated head: `8df59e8708150a7ce649a3c99324bd7b5a495e2d`
-- Next exact action: **Advance to 041-save-schema-migrations. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (041 artifacts NOT yet present — authoring is a hard pre-implementation block), validate, implement ordered persistent schema/data-version migrations over the 034-040 world database, verify full gate, commit + push, advance program state.**
+- Validated head: `dbe59066fe55dab7d59d6fcbd50ae83e3c02b697`
+- Next exact action: **Advance to 042-world-export-import. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (042 artifacts NOT yet present — authoring is a hard pre-implementation block), validate, implement original world archive export/import with validation over the 034-041 world database, verify full gate, commit + push, advance program state.**
 
-## What 040 implemented
+## What 041 implemented
 
-Change 040 adds the migration path from the legacy localStorage saves into the new persistence layer,
-plus the player-state store those saves need.
+Change 041 adds the ordered, gap-checked data-version migration framework so stored records can be
+upgraded deterministically as their shapes evolve.
 
-- `src/storage/WorldMetadata.ts` / `WorldMetadataRepository.ts` — `WORLD_DB_VERSION` `4 → 5`;
-  `WORLD_PLAYER_STATE_STORE = 'player-state'` added to the shared `ensureWorldStores`.
-- `src/storage/PlayerStateRecord.ts` (NEW) — `PlayerStateRecord` (worldId-keyed position/yaw/pitch +
-  opaque inventory/survival payloads) and `validatePlayerStateRecord`.
-- `src/storage/PlayerStateRepository.ts` (NEW) — injectable-factory repository over `player-state`
-  (`putPlayerState`/`getPlayerState`/`deletePlayerState`/`listPlayerStates`/`close`).
-- `src/storage/LegacyLocalStorageMigrator.ts` (NEW) — `StorageLike`, legacy snapshot validators,
-  registry-free converters (`buildSectionContainer` with palette `[0, ...ids]`, `editsToSerializedChunkColumn`,
-  `toPlayerStateRecord`), and `LegacyLocalStorageMigrator.migrate(seed)` producing a
-  `LegacyMigrationReport`. Non-destructive (reads only), per-artifact errors, no partial writes.
-- `tests/unit/LegacyLocalStorageMigrator.test.ts` (NEW) — 11 tests: converters round-trip through
-  `ChunkColumn.deserialize`, player-state repository behavior, end-to-end migration, malformed-input
-  error handling, read-only legacy storage, and in-place v4→v5 migration preserving all prior stores
-  and records.
+- `src/storage/DataMigration.ts` (NEW) — `DataMigration<T>` (`fromVersion`/`toVersion = fromVersion+1`/
+  `migrate`), `DataMigrationError` (kinds `GAP` | `DUPLICATE` | `DOWNGRADE` | `UNKNOWN_VERSION`), and
+  `DataMigrationChain<T>` (`register` with eager contiguity/duplicate validation, `migrate` with
+  `appliedSteps` reporting, `needsMigration`, `currentVersion`, `steps`). Migration is pure — a
+  throwing step aborts with the input untouched; downgrades and unknown versions are rejected.
+- Typed chains for the persisted families: `WORLD_METADATA_MIGRATIONS` (`schemaVersion`, base 1) and
+  `CHUNK_COLUMN_MIGRATIONS` (`version`, base 1), both empty today (identity), plus
+  `migrateWorldMetadata`/`migrateChunkColumn` helpers.
+- `tests/unit/DataMigration.test.ts` (NEW) — 10 tests: ordered two-step application with `appliedSteps`,
+  identity on current records, gap/duplicate/non-contiguous registration rejection, downgrade and
+  unknown-version rejection, purity on a throwing step, and typed-chain identity.
 
-## Validation evidence (040)
+## Validation evidence (041)
 
 - typecheck: PASS (`tsc --noEmit`)
 - lint: PASS (`eslint .`)
-- unit: PASS 570/570 (prior 559 + 11 new LegacyLocalStorageMigrator tests)
+- unit: PASS 580/580 (prior 570 + 10 new DataMigration tests)
 - production build: PASS (`tsc --noEmit && vite build`)
 - E2E: PASS 19/19
 
 ## Advancement decision
 
-Change 040 is **VERIFIED** at 7/7 (100%). All gates are green: typecheck, lint, the new 040 suite
-(11/11), the full unit suite (570/570), production build, and the required E2E suite (19/19). No
-advancement exception was needed. The world database now carries all five stores at schema version 5
-with a tested v4→v5 upgrade and a non-destructive legacy import path.
+Change 041 is **VERIFIED** at 5/5 (100%). All gates are green: typecheck, lint, the new 041 suite
+(10/10), the full unit suite (580/580), production build, and the required E2E suite (19/19). No
+advancement exception was needed. No `WORLD_DB_VERSION` bump — 041 is an additive framework over the
+existing five-store schema (v5).
 
-## Next change: 041 (pending artifacts)
+## Next change: 042 (pending artifacts)
 
-`041-save-schema-migrations` is named in `CHANGE_SEQUENCE.md` with scope "Ordered persistent
-schema/data-version migrations." It builds on 034-040 by providing an ordered migration framework over
-the five-store world database and its records. Per `AGENTS.md`, a change lacking full artifacts is a
-hard pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md`
-before any production code.
+`042-world-export-import` is named in `CHANGE_SEQUENCE.md` with scope "Original world archive
+export/import with validation." It builds on 034-041 by serializing a world's stores (metadata,
+chunk sections, block entities, entities, player state) into a portable archive and validating/
+restoring it. Per `AGENTS.md`, a change lacking full artifacts is a hard pre-implementation block.
+Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md` before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 040 verification.
-Change 041 is the next change; its artifacts must be authored and validated before implementation
+A future session must first inspect current `origin/main`, this state, and the 041 verification.
+Change 042 is the next change; its artifacts must be authored and validated before implementation
 begins.
