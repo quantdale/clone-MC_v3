@@ -23,6 +23,7 @@ import { PlayerController } from '../player/PlayerController';
 import { PlayerPhysics } from '../player/PlayerPhysics';
 import { PlayerInteraction } from '../player/PlayerInteraction';
 import type { InteractionAction } from '../player/PlayerInteraction';
+import { LootTableRegistry, buildCurrentLootTables } from '../inventory/LootTable';
 import { Inventory } from '../inventory/Inventory';
 import type { InventorySnapshot } from '../inventory/Inventory';
 import { Hotbar } from '../inventory/Hotbar';
@@ -76,6 +77,7 @@ export class Game {
   private readonly physics: PlayerPhysics;
   private readonly survival: SurvivalSystem;
   private readonly interaction: PlayerInteraction;
+  private readonly lootTables: LootTableRegistry;
   private readonly inventory: Inventory;
   private readonly hotbar: Hotbar;
   private readonly skySunDirection = new THREE.Vector3();
@@ -122,6 +124,7 @@ export class Game {
     this.itemRegistry = createDefaultItemRegistry();
     this.registry = this.itemRegistry;
     validateItemBlockCrossReferences(this.blockRegistry, this.itemRegistry);
+    this.lootTables = new LootTableRegistry(buildCurrentLootTables(this.blockRegistry, this.itemRegistry), this.itemRegistry);
     this.atlas = new TextureAtlas();
     this.materials = new Materials(this.atlas);
     this.renderer = new Renderer(
@@ -197,6 +200,8 @@ export class Game {
         this.hotbar.render();
         this.showToast('Your tool broke');
       },
+      lootTables: this.lootTables,
+      rng: Math.random,
     });
     this.resources.track(this.interaction);
 

@@ -6,6 +6,7 @@ import { WorldAccess } from '../world/WorldAccess';
 import { BlockRegistry, BlockId } from '../world/BlockRegistry';
 import { ItemTypeRegistry, ItemId } from '../inventory/ItemRegistry';
 import { BlockSelector } from '../inventory/BlockSelector';
+import { type LootTableRegistry, type RandomSource, type LootContext, evaluate } from '../inventory/LootTable';
 import { raycastVoxel, RaycastResult } from '../math/DDA';
 
 export type InteractionAction = 'break' | 'place' | 'blocked' | 'empty';
@@ -31,6 +32,8 @@ export class PlayerInteraction {
   private readonly onAction?: (action: InteractionAction, blockId?: number) => void;
   private readonly onBreakProgress?: (progress: number) => void;
   private readonly onToolBreak?: () => void;
+  private readonly lootTables?: LootTableRegistry;
+  private readonly rng?: RandomSource;
 
   private readonly eyePos = new THREE.Vector3();
   private readonly dir = new THREE.Vector3();
@@ -56,6 +59,8 @@ export class PlayerInteraction {
     onAction?: (action: InteractionAction, blockId?: number) => void;
     onBreakProgress?: (progress: number) => void;
     onToolBreak?: () => void;
+    lootTables?: LootTableRegistry;
+    rng?: RandomSource;
   }) {
     this.world = opts.world;
     this.registry = opts.registry;
@@ -67,6 +72,8 @@ export class PlayerInteraction {
     this.onAction = opts.onAction;
     this.onBreakProgress = opts.onBreakProgress;
     this.onToolBreak = opts.onToolBreak;
+    this.lootTables = opts.lootTables;
+    this.rng = opts.rng;
 
     // A centered unit-cube wireframe marks the targeted block. Keeping the
     // geometry centered and placing it at block + 0.5 avoids the classic
@@ -220,18 +227,41 @@ export class PlayerInteraction {
     if (!this.target) return;
     const selectedTool = this.itemRegistry.getByLegacyId(this.selector.getSelectedItemId());
     this.world.setBlock(this.target.blockX, this.target.blockY, this.target.blockZ, BlockId.Air);
-    const dropRid = this.registry.get(blockId).dropItem ?? this.registry.get(blockId).resourceId;
-    const dropItemId = this.itemRegistry.getByResourceId(dropRid).id;
-    this.selector.addItem?.(dropItemId, 1);
-    if (blockId === BlockId.Leaves) {
-      this.selector.addItem?.(ItemId.Apple, 1);
+
+    const def = this.registry.get(blockId);
+    let primaryDropId: number | undefined;
+    if (this.lootTables && def.lootTable) {
+      // Route the drop through the block's loot table. Evaluation is pure;
+      // the caller inserts each returned stack into the inventory.
+      const table = this.lootTables.get(def.lootTable);
+      const ctx: LootContext = {
+        blockId,
+        toolItemId: this.selector.getSelectedItemId(),
+        itemRegistry: this.itemRegistry,
+      };
+      const rng = this.rng ?? Math.random;
+      for (const stack of evaluate(table, ctx, rng, this.itemRegistry)) {
+        this.selector.addItem?.(stack.item, stack.count);
+        if (primaryDropId === undefined) primaryDropId = stack.item;
+      }
+    } else {
+      // Fallback retained for test and legacy paths that do not inject a loot
+      // registry (e.g. unbreakable/edge cases). Mirrors pre-011 drop behavior.
+      const dropRid = def.dropItem ?? def.resourceId;
+      const dropItemId = this.itemRegistry.getByResourceId(dropRid).id;
+      this.selector.addItem?.(dropItemId, 1);
+      primaryDropId = dropItemId;
+      if (blockId === BlockId.Leaves) {
+        this.selector.addItem?.(ItemId.Apple, 1);
+      }
     }
+
     if (selectedTool?.maxDurability !== undefined && this.selector.damageSelectedItem) {
       if (this.selector.damageSelectedItem(1, selectedTool.maxDurability)) {
         this.onToolBreak?.();
       }
     }
-    this.onAction?.('break', dropItemId);
+    this.onAction?.('break', primaryDropId);
     this.lastActionTime = this.elapsed;
     this.resetBreakProgress();
   }

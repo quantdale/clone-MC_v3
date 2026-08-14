@@ -82,6 +82,13 @@ export interface BlockTypeDefinition {
    */
   dropItem?: ResourceId;
   /**
+   * Loot table governing this block's drops, as a resource id. Set for every
+   * breakable block (011) and resolved by the interaction system to produce drops.
+   * Kept separate from `dropItem`, which remains the validated cross-reference
+   * used by item/block bootstrap validation.
+   */
+  lootTable?: ResourceId;
+  /**
    * Ordered immutable property schema for this block type. Omitted for current
    * blocks that declare no state properties; resolved as EMPTY_SCHEMA.
    */
@@ -235,6 +242,7 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       hardness: 0.45,
       preferredTool: ToolKind.Shovel,
       dropItem: rid('grass'),
+      lootTable: rid('loot/grass'),
     },
     {
       id: BlockId.Dirt,
@@ -251,6 +259,7 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       hardness: 0.45,
       preferredTool: ToolKind.Shovel,
       dropItem: rid('dirt'),
+      lootTable: rid('loot/dirt'),
     },
     {
       id: BlockId.Stone,
@@ -267,6 +276,7 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       hardness: 1.5,
       preferredTool: ToolKind.Pickaxe,
       dropItem: rid('stone'),
+      lootTable: rid('loot/stone'),
     },
     {
       id: BlockId.Sand,
@@ -283,6 +293,7 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       hardness: 0.5,
       preferredTool: ToolKind.Shovel,
       dropItem: rid('sand'),
+      lootTable: rid('loot/sand'),
     },
     {
       id: BlockId.Water,
@@ -328,6 +339,7 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       hardness: 1.0,
       preferredTool: ToolKind.Axe,
       dropItem: rid('wood'),
+      lootTable: rid('loot/wood'),
     },
     {
       id: BlockId.Leaves,
@@ -344,6 +356,7 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       hardness: 0.2,
       preferredTool: ToolKind.Axe,
       dropItem: rid('leaves'),
+      lootTable: rid('loot/leaves'),
     },
     {
       id: BlockId.Glass,
@@ -359,6 +372,7 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       sideTile: 11,
       hardness: 0.3,
       dropItem: rid('glass'),
+      lootTable: rid('loot/glass'),
     },
     {
       id: BlockId.Snow,
@@ -375,6 +389,7 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       hardness: 0.3,
       preferredTool: ToolKind.Shovel,
       dropItem: rid('snow'),
+      lootTable: rid('loot/snow'),
     },
     {
       id: BlockId.Gravel,
@@ -391,6 +406,7 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       hardness: 0.6,
       preferredTool: ToolKind.Shovel,
       dropItem: rid('gravel'),
+      lootTable: rid('loot/gravel'),
     },
     {
       id: BlockId.Planks,
@@ -407,6 +423,7 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       hardness: 1.0,
       preferredTool: ToolKind.Axe,
       dropItem: rid('planks'),
+      lootTable: rid('loot/planks'),
     },
     {
       id: BlockId.CoalOre,
@@ -423,6 +440,7 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       hardness: 2.4,
       preferredTool: ToolKind.Pickaxe,
       dropItem: rid('coal'),
+      lootTable: rid('loot/coal_ore'),
     },
     {
       id: BlockId.IronOre,
@@ -439,6 +457,7 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       hardness: 3.0,
       preferredTool: ToolKind.Pickaxe,
       dropItem: rid('raw_iron'),
+      lootTable: rid('loot/iron_ore'),
     },
     {
       id: BlockId.Cobblestone,
@@ -455,6 +474,7 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       hardness: 2.0,
       preferredTool: ToolKind.Pickaxe,
       dropItem: rid('cobblestone'),
+      lootTable: rid('loot/cobblestone'),
     },
     {
       id: BlockId.Bricks,
@@ -471,6 +491,7 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       hardness: 2.0,
       preferredTool: ToolKind.Pickaxe,
       dropItem: rid('bricks'),
+      lootTable: rid('loot/bricks'),
     },
     {
       id: BlockId.Lava,
