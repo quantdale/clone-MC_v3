@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "077-fluid-tick-dispatch",
+  "currentChange": "078-water-flow-simulation",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "077-fluid-tick-dispatch",
-  "nextChange": "078-water-flow-simulation",
+  "lastCompletedChange": "078-water-flow-simulation",
+  "nextChange": "079-lava-flow-simulation",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "d8c9d9280e722c052884916027a05f0fc12219b2",
-  "lastKnownHead": "d8c9d9280e722c052884916027a05f0fc12219b2",
-  "lastCompletedTask": "077: all 4 tasks complete; fluid-tick-dispatch VERIFIED. New src/simulation/FluidTickDispatcher.ts (FluidTickHandler; FluidTickDispatchReport processed/deferred/pending; DEFAULT_MAX_FLUID_TICKS_PER_TICK 1000; validated positive-integer maxPerTick; relative scheduling via 047 scheduleIn with dedupe; bounded deterministic dispatch in (tickTime, seq) order with deferral at original due tick; pendingCount/clear); 8 new unit tests; 868 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 078-water-flow-simulation. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (078 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement water downward/horizontal propagation and source rules (deterministic; 076 states + 077 dispatcher), verify full gate, commit + push, advance.",
+  "lastValidatedHead": "d67be5fefa9f023dee15a5b166d699ce2c11fc14",
+  "lastKnownHead": "d67be5fefa9f023dee15a5b166d699ce2c11fc14",
+  "lastCompletedTask": "078: all 4 tasks complete; water-flow-simulation VERIFIED. New src/simulation/WaterFlowEngine.ts (WaterWorldAccess; WaterStepResult changed/affected; WATER_FLOW_INTERVAL 5, MAX_FLOW_LEVEL 7, FALLING_LEVEL 8; stepWaterCell: downward falling-8 spawn into empty replaceable below, falling converts to flowing 7 at ground, horizontal spread level+1 capped at 7 with worse-water improvement and falling-never-overwritten, source formation from 2+ horizontal sources, decay ladder with feeder/water-above guards, removal at 7; fixed -x,+x,-z,+z order; pure); 18 new unit tests; 886 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 079-lava-flow-simulation. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (079 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement slower dimension-aware lava propagation (deterministic; mirrors 078 with lava cadence/range differences), verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -771,6 +771,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "077 VERIFIED 4/4 (100%). Scheduled fluid tick integration: src/simulation/FluidTickDispatcher.ts (validated per-tick budget over a dedicated 047 queue; relative scheduling with dedupe; deterministic (tickTime, seq) dispatch; deferral at original due tick; FluidTickDispatchReport processed/deferred/pending; handler contract for 078/079); 8 new unit tests; 868 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "d67be5fefa9f023dee15a5b166d699ce2c11fc14",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 886/886; WaterFlowEngine 18/18",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "078 VERIFIED 4/4 (100%). Deterministic water flow: src/simulation/WaterFlowEngine.ts (stepWaterCell: downward falling-8 spawn, falling→flowing-7 at ground, horizontal spread level+1 capped at 7 with improvement + falling protection, source formation from 2+ horizontal sources, decay ladder with feeder/water-above guards, removal at 7; WATER_FLOW_INTERVAL 5; fixed neighbor order; affected reporting); 18 new unit tests; 886 unit + 19 e2e pass, stable."
     }
   ]
 }
