@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "049-neighbor-update-queue",
+  "currentChange": "050-block-behavior-dispatch",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "049-neighbor-update-queue",
-  "nextChange": "050-block-behavior-dispatch",
+  "lastCompletedChange": "050-block-behavior-dispatch",
+  "nextChange": "051-block-event-queue",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "86149ae286d06cd0f5d6d0db04bec037e8bb10af",
-  "lastKnownHead": "86149ae286d06cd0f5d6d0db04bec037e8bb10af",
-  "lastCompletedTask": "049: all 4 tasks complete; neighbor-update-queue VERIFIED. New src/simulation/NeighborUpdateQueue.ts (FIFO, position dedupe, maxPerDrain budget, maxQueueSize cap with drop-newest false return, iterative handler-enqueue cascade without recursion, size/has/clear); 6 unit tests; 633 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 050-block-behavior-dispatch. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (050 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement registry-selected block behavior modules instead of central block switches, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "5a0a6ca31aa5d6678e3b735e77b2becb508908d4",
+  "lastKnownHead": "5a0a6ca31aa5d6678e3b735e77b2becb508908d4",
+  "lastCompletedTask": "050: all 4 tasks complete; block-behavior-dispatch VERIFIED. New src/simulation/BlockBehavior.ts (BlockWorldAccess; BlockBehaviorContext x/y/z/tick/world; BlockBehavior optional hooks onScheduledTick/onRandomTick/onNeighborChanged/onPlaced/onBroken; frozen DEFAULT_BLOCK_BEHAVIOR; BlockBehaviorRegistry register/getBehavior/hasBehavior/size/clear with validation + duplicate rejection); 5 unit tests; 638 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 051-block-event-queue. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (051 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement local block events with deterministic ordering and bounded propagation, verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -491,6 +491,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "049 VERIFIED 4/4 (100%). New src/simulation/NeighborUpdateQueue.ts (FIFO, position dedupe, maxPerDrain budget, maxQueueSize cap with drop-newest false return, iterative handler-enqueue cascade without recursion, size/has/clear); 6 unit tests; 633 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "5a0a6ca31aa5d6678e3b735e77b2becb508908d4",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 638/638; BlockBehavior 5/5",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "050 VERIFIED 4/4 (100%). New src/simulation/BlockBehavior.ts (BlockWorldAccess; BlockBehaviorContext x/y/z/tick/world; BlockBehavior optional hooks onScheduledTick/onRandomTick/onNeighborChanged/onPlaced/onBroken; frozen DEFAULT_BLOCK_BEHAVIOR; BlockBehaviorRegistry register/getBehavior/hasBehavior/size/clear with validation + duplicate rejection); 5 unit tests; 638 unit + 19 e2e pass, stable."
     }
   ]
 }
