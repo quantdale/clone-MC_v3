@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "091-surface-rule-engine",
+  "currentChange": "092-cave-carver-system",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "091-surface-rule-engine",
-  "nextChange": "092-cave-carver-system",
+  "lastCompletedChange": "092-cave-carver-system",
+  "nextChange": "093-aquifer-system",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "36d8696ff7884e23c55d3334e8ee2e7761689ce2",
-  "lastKnownHead": "36d8696ff7884e23c55d3334e8ee2e7761689ce2",
-  "lastCompletedTask": "091: all 4 tasks complete; surface-rule-engine VERIFIED. New src/worldgen/SurfaceRuleEngine.ts (SurfaceCondition always/biome/height/noise/not/and/or; SurfaceRule blockId+depth (default 1); SurfaceRuleContext with noise sampler; evaluateSurfaceCondition; applySurfaceRules first-match-wins with depthFromSurface semantics; validateSurfaceRules strict with 64-composition cap); 9 new unit tests; 1022 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 092-cave-carver-system. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (092 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement configurable 3D cave-carving stage independent of terrain density (deterministic; 087 noise), verify full gate, commit + push, advance.",
+  "lastValidatedHead": "13cff430f0a14cee738f3a7bc35f3a54644589fb",
+  "lastKnownHead": "13cff430f0a14cee738f3a7bc35f3a54644589fb",
+  "lastCompletedTask": "092: all 5 tasks complete; cave-carver-system VERIFIED. New src/worldgen/CaveCarver.ts (CaveCarverConfig seed/threshold 0.05/minY -64/maxY 320; carveValue two-noise formula (wide fbm4 − 0.4·detail fbm3, documented scales); CarvedColumn sparse mask; carveColumn; applyCarving pure removal into a new 088 TerrainColumn) + TerrainColumn.removeCell (additive); 8 new unit tests (reduced-window fixtures keep the suite fast after a full-height determinism test hit the vitest timeout); 1030 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 093-aquifer-system. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (093 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement underground water/lava aquifer decisions (deterministic; 076 fluids + 092 carved space), verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -911,6 +911,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "091 VERIFIED 4/4 (100%). Surface rule engine: src/worldgen/SurfaceRuleEngine.ts (condition union always/biome/height/noise/not/and/or; first-match-wins rules with depth semantics; strict validation with 64-composition cap; pure); 9 new unit tests; 1022 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "13cff430f0a14cee738f3a7bc35f3a54644589fb",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 1030/1030; CaveCarver 8/8",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "092 VERIFIED 5/5 (100%). Cave carver: src/worldgen/CaveCarver.ts (documented two-noise carveValue; sparse CarvedColumn masks confined to [minY,maxY); carveColumn; applyCarving pure removal) + TerrainColumn.removeCell (additive); 8 new unit tests; 1030 unit + 19 e2e pass, stable."
     }
   ]
 }
