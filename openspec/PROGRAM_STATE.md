@@ -14,7 +14,8 @@
 - 002 standalone focused ResourceId invocation: **PASS — 27/27**
 - 002 advancement allowed: **Yes**
 - Session-start head: `047d6eb9af9f7259916f585c717c177f7ea0dc90`
-- Validated head: `047d6eb9af9f7259916f585c717c177f7ea0dc90`
+- Validated head: `12899e16c2cbb0f551afc2612130275ad4a68b38`
+- Published head: `12899e16c2cbb0f551afc2612130275ad4a68b38`
 - Next exact action: **Begin Change 003 task 1.1: confirm 002 is VERIFIED and program state activates 003, then run the full pre-change repository baseline and re-read the 002 ResourceId API.**
 
 ## What 002 implemented
