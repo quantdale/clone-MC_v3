@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "055-simulation-test-harness",
+  "currentChange": "056-voxel-shape-core",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "055-simulation-test-harness",
-  "nextChange": "056-voxel-shape-core",
+  "lastCompletedChange": "056-voxel-shape-core",
+  "nextChange": "057-shape-aware-player-collision",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "98d9daed1b83f36b8798f00abe9c8ae76d07a5d6",
-  "lastKnownHead": "98d9daed1b83f36b8798f00abe9c8ae76d07a5d6",
-  "lastCompletedTask": "055: all 4 tasks complete; simulation-test-harness VERIFIED. New src/simulation/SimulationHarness.ts (TickableSystem/HarnessSystem/HarnessSnapshot; step/stepUntil/tick/snapshot/restore/reset/run; registration-order ticking, validate-before-mutate restore, construction-captured initial state); 7 unit tests; 674 unit + 19 e2e pass, stable. Fixed-tick simulation section (044-055) complete.",
-  "nextExactAction": "Advance to 056-voxel-shape-core. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (056 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement immutable composable voxel shapes for collision, selection, and occlusion, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "9cc8f10d03ec61bdd40719539158a0db564c80d3",
+  "lastKnownHead": "9cc8f10d03ec61bdd40719539158a0db564c80d3",
+  "lastCompletedTask": "056: all 4 tasks complete; voxel-shape-core VERIFIED. New src/world/VoxelShape.ts (Aabb; VoxelShape of/EMPTY/FULL_CUBE/isEmpty/boxes/union/intersects/contains/maxY; copy-validate-freeze construction, boundary-inclusive queries, union without mutation); 7 unit tests; 681 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 057-shape-aware-player-collision. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (057 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement player collision queries against block collision shapes rather than full-cube assumptions, verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -551,6 +551,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "055 VERIFIED 4/4 (100%). New src/simulation/SimulationHarness.ts (TickableSystem/HarnessSystem/HarnessSnapshot; step/stepUntil/tick/snapshot/restore/reset/run; registration-order ticking, validate-before-mutate restore, construction-captured initial state); 7 unit tests; 674 unit + 19 e2e pass, stable. Fixed-tick simulation section (044-055) complete."
+    },
+    {
+      "head": "9cc8f10d03ec61bdd40719539158a0db564c80d3",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 681/681; VoxelShape 7/7",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "056 VERIFIED 4/4 (100%). New src/world/VoxelShape.ts (Aabb; VoxelShape of/EMPTY/FULL_CUBE/isEmpty/boxes/union/intersects/contains/maxY; copy-validate-freeze construction, boundary-inclusive queries, union without mutation); 7 unit tests; 681 unit + 19 e2e pass, stable."
     }
   ]
 }
