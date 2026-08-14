@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   MeshWorkerClient,
   processMeshSectionRequest,
+  sectionLightSampler,
   type MeshSectionRequestPayload,
 } from '../../src/rendering/WorkerMeshing';
 import {
@@ -12,7 +13,15 @@ import {
 const SECTION = 16;
 
 function emptyPayload(): MeshSectionRequestPayload {
-  return { sectionX: 0, sectionY: 0, sectionZ: 0, cells: new Array(4096).fill(null), opaqueIds: [1] };
+  return {
+    sectionX: 0,
+    sectionY: 0,
+    sectionZ: 0,
+    cells: new Array(4096).fill(null),
+    opaqueIds: [1],
+    skyLight: new Array(4096).fill(0),
+    blockLight: new Array(4096).fill(0),
+  };
 }
 
 function cubePayload(): MeshSectionRequestPayload {
@@ -37,7 +46,7 @@ function equivalentGreedy(payload: MeshSectionRequestPayload) {
     if (dx < 0 || dx >= SECTION || dy < 0 || dy >= SECTION || dz < 0 || dz >= SECTION) return null;
     return payload.cells[dx + dy * SECTION + dz * SECTION * SECTION] ?? null;
   };
-  return greedyMergeOpaqueFaces(sampler, (id) => opaque.has(id), (id) => String(id));
+  return greedyMergeOpaqueFaces(sampler, (id) => opaque.has(id), (id) => String(id), sectionLightSampler(payload));
 }
 
 describe('processMeshSectionRequest', () => {
@@ -50,7 +59,51 @@ describe('processMeshSectionRequest', () => {
   });
 
   it('rejects malformed cells arrays', () => {
-    expect(() => processMeshSectionRequest({ sectionX: 0, sectionY: 0, sectionZ: 0, cells: [1], opaqueIds: [] })).toThrow();
+    expect(() =>
+      processMeshSectionRequest({
+        sectionX: 0,
+        sectionY: 0,
+        sectionZ: 0,
+        cells: [1],
+        opaqueIds: [],
+        skyLight: [],
+        blockLight: [],
+      }),
+    ).toThrow();
+  });
+
+  it('rejects malformed light arrays', () => {
+    const wrongLength = emptyPayload();
+    wrongLength.skyLight = new Array(10).fill(0);
+    expect(() => processMeshSectionRequest(wrongLength)).toThrow();
+
+    const outOfRangeSky = emptyPayload();
+    outOfRangeSky.skyLight[0] = 16;
+    expect(() => processMeshSectionRequest(outOfRangeSky)).toThrow();
+
+    const outOfRangeBlock = emptyPayload();
+    outOfRangeBlock.blockLight[5] = -1;
+    expect(() => processMeshSectionRequest(outOfRangeBlock)).toThrow();
+
+    const fractional = emptyPayload();
+    fractional.blockLight[3] = 7.5;
+    expect(() => processMeshSectionRequest(fractional)).toThrow();
+  });
+
+  it('lights quads from the payload light arrays', () => {
+    const payload = cubePayload(); // a single cube at cell (0, 0, 0)
+    payload.skyLight[0 + 1 * SECTION] = 12; // sky 12 at (0, 1, 0), the air above the cube
+    const result = processMeshSectionRequest(payload);
+
+    const up = result.quads.find((q) => q.face === 'up')!;
+    // Corner (0,0) samples only (0,1,0) (all other corner cells out of section); corner (1,0)
+    // averages (0,1,0)=12 with (1,1,0)=0; corner (1,1) averages four cells: 12/4 = 3.
+    expect(up.vertexLights).toEqual([
+      { sky: 12, block: 0 },
+      { sky: 6, block: 0 },
+      { sky: 6, block: 0 },
+      { sky: 3, block: 0 },
+    ]);
   });
 });
 

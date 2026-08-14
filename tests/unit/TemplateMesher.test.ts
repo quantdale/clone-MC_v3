@@ -1,9 +1,20 @@
 import { describe, it, expect } from 'vitest';
 import { isFullCubeModel, meshBlockModel, type OpaqueCellPredicate } from '../../src/rendering/TemplateMesher';
 import type { BlockModel } from '../../src/data/BlockModel';
+import type { LightSampler } from '../../src/rendering/GreedyMesher';
 
 function face(texture = 'all'): { texture: string } {
   return { texture };
+}
+
+/** A light sampler that reports everything out of bounds → all corners are (0, 0). */
+function noLight(): LightSampler {
+  return {
+    inBounds: () => false,
+    isOpaque: () => false,
+    getSkyLight: () => 0,
+    getBlockLight: () => 0,
+  };
 }
 
 function fullCubeModel(): BlockModel {
@@ -57,7 +68,7 @@ function withOpaque(cells: Array<[number, number, number]>): OpaqueCellPredicate
 
 describe('meshBlockModel', () => {
   it('meshes an isolated full cube to six 1x1 boundary quads', () => {
-    const quads = meshBlockModel(fullCubeModel(), 1, 0, 0, 0, emptyNeighbors());
+    const quads = meshBlockModel(fullCubeModel(), 1, 0, 0, 0, emptyNeighbors(), noLight());
 
     expect(quads).toHaveLength(6);
     const byFace = new Map(quads.map((q) => [q.face, q]));
@@ -75,19 +86,27 @@ describe('meshBlockModel', () => {
   });
 
   it('culls every face of a fully buried cube', () => {
-    const quads = meshBlockModel(fullCubeModel(), 1, 1, 1, 1, withOpaque([
-      [0, 1, 1],
-      [2, 1, 1],
-      [1, 0, 1],
-      [1, 2, 1],
-      [1, 1, 0],
-      [1, 1, 2],
-    ]));
+    const quads = meshBlockModel(
+      fullCubeModel(),
+      1,
+      1,
+      1,
+      1,
+      withOpaque([
+        [0, 1, 1],
+        [2, 1, 1],
+        [1, 0, 1],
+        [1, 2, 1],
+        [1, 1, 0],
+        [1, 1, 2],
+      ]),
+      noLight(),
+    );
     expect(quads).toEqual([]);
   });
 
   it('meshes a slab: top at y+0.5, bottom at y, four sides', () => {
-    const quads = meshBlockModel(slabModel(), 2, 0, 0, 0, emptyNeighbors());
+    const quads = meshBlockModel(slabModel(), 2, 0, 0, 0, emptyNeighbors(), noLight());
 
     const byFace = new Map(quads.map((q) => [q.face, q]));
     expect(byFace.get('up')!.y).toBe(0.5);
@@ -99,7 +118,7 @@ describe('meshBlockModel', () => {
   });
 
   it('culls only the facing side of a slab against an opaque neighbor', () => {
-    const quads = meshBlockModel(slabModel(), 2, 0, 0, 0, withOpaque([[0, 0, -1]]));
+    const quads = meshBlockModel(slabModel(), 2, 0, 0, 0, withOpaque([[0, 0, -1]]), noLight());
 
     const faces = quads.map((q) => q.face);
     expect(faces).not.toContain('north');
@@ -117,7 +136,7 @@ describe('meshBlockModel', () => {
         { from: [0, 8, 0], to: [8, 16, 16], faces: { up: face() } },
       ],
     };
-    const quads = meshBlockModel(model, 3, 0, 0, 0, emptyNeighbors());
+    const quads = meshBlockModel(model, 3, 0, 0, 0, emptyNeighbors(), noLight());
 
     expect(quads).toHaveLength(2);
     expect(quads.some((q) => q.y === 0.5)).toBe(true);
@@ -131,11 +150,30 @@ describe('meshBlockModel', () => {
         { from: [0, 8, 0], to: [16, 16, 16], faces: { down: face() } }, // interior underside at y=0.5
       ],
     };
-    const quads = meshBlockModel(model, 4, 0, 0, 0, withOpaque([[0, -1, 0]]));
+    const quads = meshBlockModel(model, 4, 0, 0, 0, withOpaque([[0, -1, 0]]), noLight());
 
     expect(quads).toHaveLength(1);
     expect(quads[0]!.face).toBe('down');
     expect(quads[0]!.y).toBe(0.5);
+  });
+
+  it('samples light from the outward layer (slab top samples the cell above)', () => {
+    // Slab top face at y=0.5 (fractional) → outward layer y = cellY + 1 = 1.
+    const light: LightSampler = {
+      inBounds: () => true,
+      isOpaque: () => false,
+      getSkyLight: (_x, y, _z) => (y === 1 ? 9 : 0),
+      getBlockLight: () => 0,
+    };
+    const quads = meshBlockModel(slabModel(), 2, 0, 0, 0, emptyNeighbors(), light);
+
+    const up = quads.find((q) => q.face === 'up')!;
+    expect(up.vertexLights).toEqual([
+      { sky: 9, block: 0 },
+      { sky: 9, block: 0 },
+      { sky: 9, block: 0 },
+      { sky: 9, block: 0 },
+    ]);
   });
 });
 

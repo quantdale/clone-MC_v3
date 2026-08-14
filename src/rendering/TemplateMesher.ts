@@ -2,11 +2,13 @@
  * Template (partial-block) meshing (063). `meshBlockModel` converts a 059 `BlockModel` at a world
  * cell into world-unit `OpaqueFaceQuad`s: per element, per face, the quad spans the two in-plane
  * axes from `from/16` to `to/16` at the face plane. Boundary faces (plane at local 0 or 1) are culled
- * when the outward neighbor is opaque; interior faces are never culled. Deterministic output in model
- * element order.
+ * when the outward neighbor is opaque; interior faces are never culled. Since 070 every quad carries
+ * per-corner sky/block light sampled from the caller-supplied `LightSampler`. Deterministic output in
+ * model element order.
  */
 import type { BlockModel, ModelFace } from '../data/BlockModel';
-import type { OpaqueFaceQuad } from './GreedyMesher';
+import type { OpaqueFaceQuad, LightSampler } from './GreedyMesher';
+import { quadVertexLights, type FaceLightContext } from './VertexLighting';
 
 /** Whether the cell at world coordinates is opaque (for culling). */
 export type OpaqueCellPredicate = (x: number, y: number, z: number) => boolean;
@@ -30,7 +32,8 @@ const FACE_ORDER: readonly FaceSpec[] = [
 
 /**
  * Mesh a block model at cell `(x, y, z)` into world-unit quads. `blockId` is stamped on every quad.
- * Boundary faces whose outward neighbor is opaque are culled.
+ * Boundary faces whose outward neighbor is opaque are culled. Every quad carries per-corner light
+ * sampled from `light` (070).
  */
 export function meshBlockModel(
   model: BlockModel,
@@ -39,6 +42,7 @@ export function meshBlockModel(
   y: number,
   z: number,
   isOpaqueCell: OpaqueCellPredicate,
+  light: LightSampler,
 ): OpaqueFaceQuad[] {
   const out: OpaqueFaceQuad[] = [];
 
@@ -78,6 +82,15 @@ export function meshBlockModel(
       quadPos[uAxis] = cell[uAxis]! + uFrom;
       quadPos[vAxis] = cell[vAxis]! + vFrom;
 
+      const ctx: FaceLightContext = {
+        axis: spec.axis,
+        isMax: spec.isMax,
+        planeCoord: cell[spec.axis]! + planeLocal,
+        cellX: x,
+        cellY: y,
+        cellZ: z,
+      };
+
       out.push({
         face: spec.face,
         x: quadPos[0],
@@ -86,6 +99,7 @@ export function meshBlockModel(
         width,
         height,
         blockId,
+        vertexLights: quadVertexLights(light, ctx, cell[uAxis]! + uFrom, cell[vAxis]! + vFrom, width, height),
       });
     }
   }

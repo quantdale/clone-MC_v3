@@ -4,9 +4,27 @@
  * face and slice, builds a visibility grid (opaque cell whose outward neighbor is not opaque —
  * out-of-section neighbors count as exposed), and greedily extends rectangles row-major. Output is
  * deterministic. `enumerateOpaqueFacesNaive` emits one quad per exposed face for regression
- * equivalence testing.
+ * equivalence testing. Since 070 every emitted quad also carries per-corner sky/block light sampled
+ * from a caller-supplied `LightSampler` (see VertexLighting).
  */
 import type { ModelFace } from '../data/BlockModel';
+import { quadVertexLights, type FaceLightContext } from './VertexLighting';
+
+/** Sky/block light at one quad corner (0-15). */
+export interface VertexLight {
+  sky: number;
+  block: number;
+}
+
+/** Samples sky/block light and opacity at world cells (070 per-vertex lighting). */
+export interface LightSampler {
+  /** Whether the world cell lies inside the sampled volume. */
+  inBounds(x: number, y: number, z: number): boolean;
+  /** Whether the world cell is opaque (contributes 0 to corner averages). */
+  isOpaque(x: number, y: number, z: number): boolean;
+  getSkyLight(x: number, y: number, z: number): number;
+  getBlockLight(x: number, y: number, z: number): number;
+}
 
 /** One merged opaque face rectangle (block-unit coordinates; `x/y/z` is the min corner). */
 export interface OpaqueFaceQuad {
@@ -19,6 +37,8 @@ export interface OpaqueFaceQuad {
   /** Extent along the second in-plane axis. */
   height: number;
   blockId: number;
+  /** Per-corner light, order `(minU,minV), (maxU,minV), (minU,maxV), (maxU,maxV)` (070). */
+  vertexLights: [VertexLight, VertexLight, VertexLight, VertexLight];
 }
 
 /** Samples the block id at a world cell; `null` = not opaque/absent. */
@@ -119,14 +139,48 @@ function quadPosition(plane: FacePlane, slice: number, u: number, v: number): [n
   return [planeCoord, v, u];
 }
 
+/** The quad's in-plane (u, v) min corner, in cell/world units. */
+function quadInPlaneMin(plane: FacePlane, x: number, y: number, z: number): [number, number] {
+  if (plane.axis === 1) return [x, z];
+  if (plane.axis === 2) return [x, y];
+  return [z, y];
+}
+
+/** Light-sampling context for a face of the cell at the quad's min corner. */
+function faceLightContext(plane: FacePlane, slice: number, x: number, y: number, z: number): FaceLightContext {
+  let cellX = x;
+  let cellY = y;
+  let cellZ = z;
+  if (plane.axis === 0) cellX = slice;
+  else if (plane.axis === 1) cellY = slice;
+  else cellZ = slice;
+  return { axis: plane.axis, isMax: plane.offset === 1, planeCoord: slice + plane.offset, cellX, cellY, cellZ };
+}
+
+/** Attach per-corner light to a quad (070). */
+function withVertexLights(
+  light: LightSampler,
+  plane: FacePlane,
+  slice: number,
+  x: number,
+  y: number,
+  z: number,
+  width: number,
+  height: number,
+): [VertexLight, VertexLight, VertexLight, VertexLight] {
+  const [minU, minV] = quadInPlaneMin(plane, x, y, z);
+  return quadVertexLights(light, faceLightContext(plane, slice, x, y, z), minU, minV, width, height);
+}
+
 /**
  * Greedily merge exposed opaque faces into maximal rectangles. Deterministic: faces in fixed order,
- * slices ascending, rectangles expanded row-major.
+ * slices ascending, rectangles expanded row-major. Every quad carries per-corner light (070).
  */
 export function greedyMergeOpaqueFaces(
   getCell: FaceCellSampler,
   isOpaque: OpaquePredicate,
   faceKey: FaceKeyFn,
+  light: LightSampler,
 ): OpaqueFaceQuad[] {
   const out: OpaqueFaceQuad[] = [];
 
@@ -179,6 +233,7 @@ export function greedyMergeOpaqueFaces(
             width,
             height,
             blockId: cell.id,
+            vertexLights: withVertexLights(light, plane, slice, x, y, z, width, height),
           });
         }
       }
@@ -193,6 +248,7 @@ export function enumerateOpaqueFacesNaive(
   getCell: FaceCellSampler,
   isOpaque: OpaquePredicate,
   faceKey: FaceKeyFn,
+  light: LightSampler,
 ): OpaqueFaceQuad[] {
   const out: OpaqueFaceQuad[] = [];
   for (const plane of PLANES) {
@@ -203,7 +259,16 @@ export function enumerateOpaqueFacesNaive(
           const cell = grid[v]![u];
           if (!cell) continue;
           const [x, y, z] = quadPosition(plane, slice, u, v);
-          out.push({ face: plane.face, x, y, z, width: 1, height: 1, blockId: cell.id });
+          out.push({
+            face: plane.face,
+            x,
+            y,
+            z,
+            width: 1,
+            height: 1,
+            blockId: cell.id,
+            vertexLights: withVertexLights(light, plane, slice, x, y, z, 1, 1),
+          });
         }
       }
     }

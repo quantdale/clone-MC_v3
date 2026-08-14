@@ -3,12 +3,33 @@ import {
   enumerateOpaqueFacesNaive,
   greedyMergeOpaqueFaces,
   type FaceCellSampler,
+  type LightSampler,
   type OpaqueFaceQuad,
 } from '../../src/rendering/GreedyMesher';
 import type { ModelFace } from '../../src/data/BlockModel';
 
 function sampler(cells: Record<string, number>): FaceCellSampler {
   return (x, y, z) => cells[`${x},${y},${z}`] ?? null;
+}
+
+/** A light sampler that reports everything out of bounds → all corners are (0, 0). */
+function noLight(): LightSampler {
+  return {
+    inBounds: () => false,
+    isOpaque: () => false,
+    getSkyLight: () => 0,
+    getBlockLight: () => 0,
+  };
+}
+
+/** Sky light equals the cell's x coordinate; everything in bounds, nothing opaque. */
+function gradientLight(): LightSampler {
+  return {
+    inBounds: (x, y, z) => x >= 0 && x < 16 && y >= 0 && y < 16 && z >= 0 && z < 16,
+    isOpaque: () => false,
+    getSkyLight: (x) => x,
+    getBlockLight: () => 0,
+  };
 }
 
 const isOpaque = (id: number): boolean => id > 0;
@@ -42,11 +63,11 @@ function makeCheckerboard(): Record<string, number> {
 
 describe('greedyMergeOpaqueFaces', () => {
   it('produces no quads for an empty section', () => {
-    expect(greedyMergeOpaqueFaces(sampler({}), isOpaque, faceKey)).toEqual([]);
+    expect(greedyMergeOpaqueFaces(sampler({}), isOpaque, faceKey, noLight())).toEqual([]);
   });
 
   it('produces six 1x1 quads for a single opaque cube', () => {
-    const quads = greedyMergeOpaqueFaces(sampler({ '0,0,0': 1 }), isOpaque, faceKey);
+    const quads = greedyMergeOpaqueFaces(sampler({ '0,0,0': 1 }), isOpaque, faceKey, noLight());
 
     expect(quads).toHaveLength(6);
     const byFace = new Map(quads.map((q) => [q.face, q]));
@@ -55,6 +76,7 @@ describe('greedyMergeOpaqueFaces', () => {
       expect(q.width).toBe(1);
       expect(q.height).toBe(1);
       expect(q.blockId).toBe(1);
+      expect(q.vertexLights).toHaveLength(4); // 070: every quad carries per-corner light
     }
     // Face planes.
     expect(byFace.get('down')!.y).toBe(0);
@@ -66,7 +88,7 @@ describe('greedyMergeOpaqueFaces', () => {
   });
 
   it('merges adjacent faces of a 2x1x1 slab into 6 quads', () => {
-    const quads = greedyMergeOpaqueFaces(sampler({ '0,0,0': 1, '1,0,0': 1 }), isOpaque, faceKey);
+    const quads = greedyMergeOpaqueFaces(sampler({ '0,0,0': 1, '1,0,0': 1 }), isOpaque, faceKey, noLight());
 
     expect(quads).toHaveLength(6);
     const byFace = new Map(quads.map((q) => [q.face, q]));
@@ -80,7 +102,7 @@ describe('greedyMergeOpaqueFaces', () => {
   });
 
   it('does not merge faces with different keys', () => {
-    const quads = greedyMergeOpaqueFaces(sampler({ '0,0,0': 1, '1,0,0': 2 }), isOpaque, faceKey);
+    const quads = greedyMergeOpaqueFaces(sampler({ '0,0,0': 1, '1,0,0': 2 }), isOpaque, faceKey, noLight());
 
     const north = quads.filter((q) => q.face === 'north');
     expect(north).toHaveLength(2);
@@ -88,7 +110,7 @@ describe('greedyMergeOpaqueFaces', () => {
   });
 
   it('merges a full plain into one quad per exposed face kind', () => {
-    const quads = greedyMergeOpaqueFaces(sampler(makePlain()), isOpaque, faceKey);
+    const quads = greedyMergeOpaqueFaces(sampler(makePlain()), isOpaque, faceKey, noLight());
 
     const up = quads.filter((q) => q.face === 'up');
     expect(up).toHaveLength(1);
@@ -106,13 +128,31 @@ describe('greedyMergeOpaqueFaces', () => {
     };
 
     for (const [name, cells] of Object.entries(fixtures)) {
-      const merged = greedyMergeOpaqueFaces(sampler(cells), isOpaque, faceKey);
-      const naive = enumerateOpaqueFacesNaive(sampler(cells), isOpaque, faceKey);
+      const merged = greedyMergeOpaqueFaces(sampler(cells), isOpaque, faceKey, noLight());
+      const naive = enumerateOpaqueFacesNaive(sampler(cells), isOpaque, faceKey, noLight());
 
       expect(area(merged)).toBe(area(naive)); // same coverage
       expect(merged.length).toBeLessThanOrEqual(naive.length);
-      expect(merged).toEqual(greedyMergeOpaqueFaces(sampler(cells), isOpaque, faceKey)); // deterministic
+      expect(merged).toEqual(greedyMergeOpaqueFaces(sampler(cells), isOpaque, faceKey, noLight())); // deterministic
       expect(name).toBeTruthy();
     }
+  });
+
+  it('attaches per-corner light sampled from the light sampler (070)', () => {
+    // A 2x2 block at (5..6, y=0, 5..6): its up face is a merged 2x2 quad whose corners sample the
+    // outward layer y=1 (sky = x).
+    const cells: Record<string, number> = {};
+    for (let x = 5; x <= 6; x++) {
+      for (let z = 5; z <= 6; z++) {
+        cells[`${x},0,${z}`] = 1;
+      }
+    }
+    const quads = greedyMergeOpaqueFaces(sampler(cells), isOpaque, faceKey, gradientLight());
+
+    const up = quads.filter((q) => q.face === 'up');
+    expect(up).toHaveLength(1);
+    // Corners (5,5), (7,5), (5,7), (7,7): x∈{4,5}→5, x∈{6,7}→7 (rounded averages).
+    expect(up[0]!.vertexLights.map((l) => l.sky)).toEqual([5, 7, 5, 7]);
+    expect(up[0]!.vertexLights.every((l) => l.block === 0)).toBe(true);
   });
 });
