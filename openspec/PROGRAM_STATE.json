@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "089-climate-sampler",
+  "currentChange": "090-biome-source",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "089-climate-sampler",
-  "nextChange": "090-biome-source",
+  "lastCompletedChange": "090-biome-source",
+  "nextChange": "091-surface-rule-engine",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "e78d3d74b6990ad85974e30da882aec5226d335b",
-  "lastKnownHead": "e78d3d74b6990ad85974e30da882aec5226d335b",
-  "lastCompletedTask": "089: all 4 tasks complete; climate-sampler VERIFIED. New src/worldgen/ClimateSampler.ts (ClimateSample five fields; ClimateSampler: per-field 087 noise derived from seed via distinct XOR offsets, documented scales, fbm 4/2/0.5, clamped [-1,1], 2D pure sampling; validateClimateSample strict; climateDistance Euclidean); 8 new unit tests; 1007 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 090-biome-source. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (090 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement registry-driven biome selection from climate samples (016 biomes + 089 sampler + distance metric), verify full gate, commit + push, advance.",
+  "lastValidatedHead": "239e0f80a92ef2eb1b6e2cda828535812395c59a",
+  "lastKnownHead": "239e0f80a92ef2eb1b6e2cda828535812395c59a",
+  "lastCompletedTask": "090: all 4 tasks complete; biome-source VERIFIED. New src/worldgen/BiomeSource.ts (biomeClimateTargets: documented mapping from 016 definitions — temperature clamp(t/2.5), category humidity/continentalness/erosion tables, weirdness 0; BiomeSource: injectable sampler, nearest climateDistance target, registration-order tie-break, getBiome/getBiomeKey); 6 new unit tests; 1013 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 091-surface-rule-engine. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (091 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement layered biome/height/noise-driven surface replacement rules (deterministic; consumes 088 columns + 090 biomes), verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -891,6 +891,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "089 VERIFIED 4/4 (100%). Climate sampler: src/worldgen/ClimateSampler.ts (five MC-like fields in [-1,1] from per-field seed-derived 087 noise with documented scales; strict validateClimateSample; Euclidean climateDistance for 090 biome matching); 8 new unit tests; 1007 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "239e0f80a92ef2eb1b6e2cda828535812395c59a",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 1013/1013; BiomeSource 6/6",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "090 VERIFIED 4/4 (100%). Biome source: src/worldgen/BiomeSource.ts (biomeClimateTargets derived from 016 definitions via documented tables; nearest-target selection with registration-order tie-break; injectable sampler for exact tests; registry-bound); 6 new unit tests; 1013 unit + 19 e2e pass, stable."
     }
   ]
 }
