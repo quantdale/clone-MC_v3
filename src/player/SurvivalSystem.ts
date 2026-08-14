@@ -1,5 +1,11 @@
 import { CONFIG } from '../config';
 import { Player } from './Player';
+import {
+  createDefaultDamageTypeRegistry,
+  requireDamageType,
+  type DamageTypeDefinition,
+  type DamageTypeRegistry,
+} from '../data/DamageType';
 
 export interface SurvivalSnapshot {
   version: 1;
@@ -27,7 +33,20 @@ export class SurvivalSystem {
   private invulnerability = 0;
   private dead = false;
 
-  constructor(private readonly onEvent?: (event: SurvivalEvent, amount?: number) => void) {}
+  private readonly fallType: DamageTypeDefinition;
+  private readonly drowningType: DamageTypeDefinition;
+  private readonly lavaType: DamageTypeDefinition;
+  private readonly starvationType: DamageTypeDefinition;
+
+  constructor(
+    registry: DamageTypeRegistry = createDefaultDamageTypeRegistry(),
+    private readonly onEvent?: (event: SurvivalEvent, amount?: number) => void,
+  ) {
+    this.fallType = requireDamageType(registry, 'fall');
+    this.drowningType = requireDamageType(registry, 'drowning');
+    this.lavaType = requireDamageType(registry, 'lava');
+    this.starvationType = requireDamageType(registry, 'starvation');
+  }
 
   update(
     dt: number,
@@ -38,15 +57,18 @@ export class SurvivalSystem {
     const d = Math.max(0, Math.min(dt, CONFIG.maxDeltaTime));
     this.invulnerability = Math.max(0, this.invulnerability - d);
 
-    if (options.landingDistance > 3) {
-      this.damage(Math.ceil((options.landingDistance - 3) * 1.5), 'fall');
+    if (options.landingDistance > this.fallType.fallThreshold!) {
+      this.damage(
+        Math.ceil((options.landingDistance - this.fallType.fallThreshold!) * this.fallType.fallScaling!),
+        'fall',
+      );
     }
 
     if (options.headSubmerged) {
       this.drowningClock += d;
-      if (this.drowningClock >= 1.5) {
+      if (this.drowningClock >= this.drowningType.interval!) {
         this.drowningClock = 0;
-        this.damage(2, 'drowning');
+        this.damage(this.drowningType.amount, 'drowning');
       }
     } else {
       this.drowningClock = 0;
@@ -54,9 +76,9 @@ export class SurvivalSystem {
 
     if (options.inLava) {
       this.lavaClock += d;
-      if (this.lavaClock >= 0.7) {
+      if (this.lavaClock >= this.lavaType.interval!) {
         this.lavaClock = 0;
-        this.damage(4, 'lava');
+        this.damage(this.lavaType.amount, 'lava');
       }
     } else {
       this.lavaClock = 0;
@@ -71,7 +93,7 @@ export class SurvivalSystem {
         this.hunger = Math.max(0, this.hunger - 1);
         this.onEvent?.('hunger', 1);
       } else {
-        this.damage(1, 'starvation');
+        this.damage(this.starvationType.amount, 'starvation');
       }
     }
 

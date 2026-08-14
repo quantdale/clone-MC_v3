@@ -163,7 +163,7 @@ export class Game {
     this.spawnPlayerSafely(generator);
     this.spawnPosition = this.player.position.clone();
     this.inventory = new Inventory();
-    this.survival = new SurvivalSystem((event, amount) => this.onSurvivalEvent(event, amount));
+    this.survival = new SurvivalSystem(undefined, (event, amount) => this.onSurvivalEvent(event, amount));
     this.loadPlayerState();
 
     // Queue the spawn area before the loop starts. World work is then spread
