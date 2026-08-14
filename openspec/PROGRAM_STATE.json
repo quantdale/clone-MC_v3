@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "036-block-entity-persistence-store",
+  "currentChange": "037-entity-persistence-store",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "036-block-entity-persistence-store",
-  "nextChange": "037-entity-persistence-store",
+  "lastCompletedChange": "037-entity-persistence-store",
+  "nextChange": "038-dirty-save-queue",
   "completedTasks": 7,
   "totalTasks": 7,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "822c62c7dab6d7ff7c80967ba40ad96117dc5e2f",
-  "lastKnownHead": "822c62c7dab6d7ff7c80967ba40ad96117dc5e2f",
-  "lastCompletedTask": "036: all 7 tasks complete; block-entity-persistence-store VERIFIED. Bumped WORLD_DB_VERSION 2->3, added WORLD_BLOCK_ENTITY_STORE; block-entities branch in shared ensureWorldStores; new src/storage/BlockEntityRecord.ts (SerializedBlockEntity + BlockEntityChunkRecord + validators) and src/storage/BlockEntityRepository.ts (putChunkEntities/getChunkEntities/listChunks/deleteChunkEntities/close); 16 unit tests via in-memory mock incl. in-place v2->v3 migration preserving prior stores; 529 unit + 19 e2e pass.",
-  "nextExactAction": "Advance to 037-entity-persistence-store. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (037 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement a separate entity object store on the same voxel-world-db (bump WORLD_DB_VERSION with an onupgradeneeded step via shared ensureWorldStores), and a typed repository, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "46b15f0653e65bd5d8dce208506c047599cb03b1",
+  "lastKnownHead": "46b15f0653e65bd5d8dce208506c047599cb03b1",
+  "lastCompletedTask": "037: all 7 tasks complete; entity-persistence-store VERIFIED. Bumped WORLD_DB_VERSION 3->4, added WORLD_ENTITY_STORE; entities branch in shared ensureWorldStores; new src/storage/EntityRecord.ts (SerializedEntity + EntityChunkRecord + validators) and src/storage/EntityRepository.ts (putChunkEntities/getChunkEntities/listChunks/deleteChunkEntities/close); 16 unit tests via in-memory mock incl. in-place v3->v4 migration preserving prior stores; 545 unit + 19 e2e pass.",
+  "nextExactAction": "Advance to 038-dirty-save-queue. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (038 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement an incremental dirty-unit save queue with bounded work over the 034-037 repositories, verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -361,6 +361,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "036 VERIFIED 7/7 (100%). Shared voxel-world-db at v3; added WORLD_BLOCK_ENTITY_STORE + block-entities branch in shared ensureWorldStores; new src/storage/BlockEntityRecord.ts (SerializedBlockEntity + BlockEntityChunkRecord + validators) and src/storage/BlockEntityRepository.ts (putChunkEntities/getChunkEntities/listChunks/deleteChunkEntities/close); 16 unit tests via in-memory mock incl. in-place v2->v3 migration preserving prior stores; 529 unit + 19 e2e pass."
+    },
+    {
+      "head": "46b15f0653e65bd5d8dce208506c047599cb03b1",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 545/545; EntityRepository 16/16",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "037 VERIFIED 7/7 (100%). Shared voxel-world-db at v4; added WORLD_ENTITY_STORE + entities branch in shared ensureWorldStores; new src/storage/EntityRecord.ts (SerializedEntity + EntityChunkRecord + validators) and src/storage/EntityRepository.ts (putChunkEntities/getChunkEntities/listChunks/deleteChunkEntities/close); 16 unit tests via in-memory mock incl. in-place v3->v4 migration preserving prior stores; 545 unit + 19 e2e pass."
     }
   ]
 }
