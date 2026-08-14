@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "013-damage-type-registry",
+  "currentChange": "014-status-effect-registry",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "013-damage-type-registry",
-  "nextChange": "014-status-effect-registry",
-  "completedTasks": 18,
-  "totalTasks": 18,
+  "lastCompletedChange": "014-status-effect-registry",
+  "nextChange": "015-fluid-registry",
+  "completedTasks": 17,
+  "totalTasks": 17,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "7de37f6d70fdc3c5e3cca6e99a1232435628016c",
-  "lastValidatedHead": "95b06d7751ac73d2c3975305c9c8b5dbb776fb60",
-  "lastKnownHead": "95b06d7751ac73d2c3975305c9c8b5dbb776fb60",
-  "lastCompletedTask": "013: all 18 tasks complete; damage-type-registry VERIFIED. Data-driven DamageType model: DamageTypeFlag (BYPASS_ARMOR/FIRE/DROWNING/FALL/STARVATION/ENVIRONMENTAL) + DamageTypeKind (fall/periodic/starvation) + DamageTypeDefinition on a Registry-backed DamageTypeRegistry with full validation (finite non-negative params, kind-required fields, known flags, unique ids) and finalize. createDefaultDamageTypeRegistry encodes current fall(3/1.5)/drowning(2/1.5s)/lava(4/0.7s)/starvation(1). SurvivalSystem routes all environmental damage through the optional registry, preserving current semantics exactly; default arg keeps call sites unchanged. 298 unit + 19 e2e pass.",
-  "nextExactAction": "Advance to 014-status-effect-registry. NOTE: like 013, the 014 directory does not yet exist, so its artifacts are missing. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md, validate them, then implement a status-effect type registry and serializable effect instances (without gameplay effects yet), verify full gate, commit + push, advance program state.",
+  "lastValidatedHead": "92ea0b9425e6282b407540add8cf077f98ee0e42",
+  "lastKnownHead": "92ea0b9425e6282b407540add8cf077f98ee0e42",
+  "lastCompletedTask": "014: all 17 tasks complete; status-effect-registry VERIFIED. Gameplay-free data model: StatusEffectCategory (BENEFICIAL/HARMFUL/NEUTRAL) + StatusEffectFlag + StatusEffectTypeDefinition on a Registry-backed StatusEffectTypeRegistry (validation + finalize); createDefaultStatusEffectRegistry (24 placeholder effect types); serializable StatusEffectInstance with deterministic ticking/expiry and serialize/deserialize round-trip rejecting malformed/unregistered type ids. No consumer migrated. 311 unit + 19 e2e pass.",
+  "nextExactAction": "Advance to 015-fluid-registry. NOTE: like 013/014, the 015 directory does not yet exist, so its artifacts are missing. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md, validate them, then implement registry-backed fluid types (water/lava) separating them from blocks, verify full gate, commit + push, advance program state.",
   "blockers": [],
   "validationResults": [
     {
@@ -141,6 +141,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "013 VERIFIED 18/18 (100%). Data-driven damage types: DamageTypeFlag/DamageTypeKind/DamageTypeDefinition + Registry-backed DamageTypeRegistry (validation + finalize) + createDefaultDamageTypeRegistry (fall 3/1.5, drowning 2/1.5s, lava 4/0.7s, starvation 1). SurvivalSystem routes all environmental damage through the optional registry, preserving current fall/drown/lava/starvation semantics exactly; default arg keeps call sites unchanged. 298 unit + 19 e2e pass."
+    },
+    {
+      "head": "92ea0b9425e6282b407540add8cf077f98ee0e42",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 311/311; StatusEffect 13/13",
+      "build": "PASS via Playwright production webServer",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "014 VERIFIED 17/17 (100%). Gameplay-free status-effect data model: StatusEffectCategory/StatusEffectFlag/StatusEffectTypeDefinition + Registry-backed StatusEffectTypeRegistry (validation + finalize) + createDefaultStatusEffectRegistry (24 placeholder types); serializable StatusEffectInstance with deterministic ticking/expiry and serialize/deserialize round-trip rejecting malformed/unregistered ids. No consumer migrated. 311 unit + 19 e2e pass."
     }
   ]
 }
