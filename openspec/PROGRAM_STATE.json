@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "088-overworld-density-terrain",
+  "currentChange": "089-climate-sampler",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "088-overworld-density-terrain",
-  "nextChange": "089-climate-sampler",
+  "lastCompletedChange": "089-climate-sampler",
+  "nextChange": "090-biome-source",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "754b1eabd6d4fd16a52f8f4fc17c1c0508827d53",
-  "lastKnownHead": "754b1eabd6d4fd16a52f8f4fc17c1c0508827d53",
-  "lastCompletedTask": "088: all 4 tasks complete; overworld-density-terrain VERIFIED. New src/worldgen/OverworldTerrain.ts (OverworldTerrainConfig defaults minY -64 / maxY 320 / seaLevel 63; TerrainBlockIds defaults stone 1/water 8/bedrock 7; TerrainColumn sparse with getBlock/blockCount/surfaceHeightAt; generateTerrainColumn: density formula surface=64+12*fbm, density=(surface-y)/32+0.25*detail, stone if >0, water below seaLevel, bedrock at minY; seed-derived 087 noise; config/ids validation; deterministic); 9 new unit tests; 999 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 089-climate-sampler. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (089 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement temperature/humidity/continentalness/erosion/weirdness-like climate fields (deterministic; 087 noise + 016 biome data), verify full gate, commit + push, advance.",
+  "lastValidatedHead": "e78d3d74b6990ad85974e30da882aec5226d335b",
+  "lastKnownHead": "e78d3d74b6990ad85974e30da882aec5226d335b",
+  "lastCompletedTask": "089: all 4 tasks complete; climate-sampler VERIFIED. New src/worldgen/ClimateSampler.ts (ClimateSample five fields; ClimateSampler: per-field 087 noise derived from seed via distinct XOR offsets, documented scales, fbm 4/2/0.5, clamped [-1,1], 2D pure sampling; validateClimateSample strict; climateDistance Euclidean); 8 new unit tests; 1007 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 090-biome-source. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (090 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement registry-driven biome selection from climate samples (016 biomes + 089 sampler + distance metric), verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -881,6 +881,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "088 VERIFIED 4/4 (100%). Modern-height density terrain: src/worldgen/OverworldTerrain.ts (default -64..320/sea 63; sparse TerrainColumn with surface heights; generateTerrainColumn density formula over 087 noise: stone/water/bedrock classification; config/ids validation; deterministic per seed); 9 new unit tests; 999 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "e78d3d74b6990ad85974e30da882aec5226d335b",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 1007/1007; ClimateSampler 8/8",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "089 VERIFIED 4/4 (100%). Climate sampler: src/worldgen/ClimateSampler.ts (five MC-like fields in [-1,1] from per-field seed-derived 087 noise with documented scales; strict validateClimateSample; Euclidean climateDistance for 090 biome matching); 8 new unit tests; 1007 unit + 19 e2e pass, stable."
     }
   ]
 }
