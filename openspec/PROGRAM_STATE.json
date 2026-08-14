@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "073-animated-texture-metadata",
+  "currentChange": "074-translucent-surface-rendering",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "073-animated-texture-metadata",
-  "nextChange": "074-translucent-surface-rendering",
+  "lastCompletedChange": "074-translucent-surface-rendering",
+  "nextChange": "075-render-performance-contract",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "e445720aeb65d63ce27f8d9633d31b37b7c2d434",
-  "lastKnownHead": "e445720aeb65d63ce27f8d9633d31b37b7c2d434",
-  "lastCompletedTask": "073: all 5 tasks complete; animated-texture-metadata VERIFIED. New src/data/AnimatedTexture.ts (AnimatedTextureMetadata {frametimeTicks, frames}; strict validateAnimatedTextureMetadata; AnimatedTextureRegistry with duplicate rejection, 059 pattern) and src/rendering/AnimatedTextureFrame.ts (animatedTextureFrameAt: frames[floor(tick/frametimeTicks) % len], negative ticks clamp to frames[0], O(1), pure, no gameplay coupling); 12 new unit tests; 826 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 074-translucent-surface-rendering. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (074 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement dedicated translucent geometry handling and a stable ordering policy (deterministic; orthogonal to 061 RenderLayer data), verify full gate, commit + push, advance.",
+  "lastValidatedHead": "46372518b47698291c47cab5290fb24eb9aef9e8",
+  "lastKnownHead": "46372518b47698291c47cab5290fb24eb9aef9e8",
+  "lastCompletedTask": "074: all 4 tasks complete; translucent-surface-rendering VERIFIED. New src/rendering/TranslucentGeometry.ts (QuadLayerResolver; partitionQuadsByLayer order-preserving opaque/translucent buckets; quadCentroid face-plane-aware (half-extents on in-plane axes via 070 inPlaneAxes); sortTranslucentBackToFront: descending squared centroid distance, explicit stable input-order tie-break, input never mutated, deterministic); 11 new unit tests; 837 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 075-render-performance-contract. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (075 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement draw-call/mesh-build/frame-time/memory/render-distance budgets with automated measurement (deterministic instrumentation harness), verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -731,6 +731,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "073 VERIFIED 5/5 (100%). Animated-texture metadata: src/data/AnimatedTexture.ts (AnimatedTextureMetadata frametimeTicks+frames, strict validation, registry with duplicate rejection) + src/rendering/AnimatedTextureFrame.ts (animatedTextureFrameAt: deterministic wrap, negative clamp, O(1), no gameplay coupling); 12 new unit tests; 826 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "46372518b47698291c47cab5290fb24eb9aef9e8",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 837/837; TranslucentGeometry 11/11",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "074 VERIFIED 4/4 (100%). Dedicated translucent geometry: src/rendering/TranslucentGeometry.ts (partitionQuadsByLayer order-preserving buckets via caller-supplied 061 layer resolver; quadCentroid face-plane-aware; sortTranslucentBackToFront descending squared centroid distance with explicit stable tie-break, input never mutated); 11 new unit tests; 837 unit + 19 e2e pass, stable."
     }
   ]
 }
