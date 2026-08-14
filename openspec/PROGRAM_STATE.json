@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "039-transactional-autosave",
+  "currentChange": "040-legacy-localstorage-migration",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "039-transactional-autosave",
-  "nextChange": "040-legacy-localstorage-migration",
-  "completedTasks": 4,
-  "totalTasks": 4,
+  "lastCompletedChange": "040-legacy-localstorage-migration",
+  "nextChange": "041-save-schema-migrations",
+  "completedTasks": 7,
+  "totalTasks": 7,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "9c5df3fbe431c20601c0bfaeea9d6410a53df691",
-  "lastKnownHead": "9c5df3fbe431c20601c0bfaeea9d6410a53df691",
-  "lastCompletedTask": "039: all 4 tasks complete; transactional-autosave VERIFIED. New src/storage/AutosaveCoordinator.ts (injectable timer/flushTarget; markDirty/start/stop/tick/flush/size; bounded periodic drain, idle no-op, pagehide/hidden flush with zero-progress guard, wake-on-dirty re-arm); 7 unit tests with fake timers + fake event target; 559 unit + 19 e2e pass. No WORLD_DB_VERSION bump.",
-  "nextExactAction": "Advance to 040-legacy-localstorage-migration. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (040 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement import of existing sparse edit/player/inventory localStorage saves into the new 034-039 world database, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "8df59e8708150a7ce649a3c99324bd7b5a495e2d",
+  "lastKnownHead": "8df59e8708150a7ce649a3c99324bd7b5a495e2d",
+  "lastCompletedTask": "040: all 7 tasks complete; legacy-localstorage-migration VERIFIED. WORLD_DB_VERSION 4->5 with WORLD_PLAYER_STATE_STORE; PlayerStateRecord + PlayerStateRepository; LegacyLocalStorageMigrator (StorageLike, legacy snapshot validators, buildSectionContainer/editsToSerializedChunkColumn/toPlayerStateRecord converters, migrate(seed) with LegacyMigrationReport; non-destructive, errors reported, no partial writes); 11 unit tests incl. ChunkColumn.deserialize round-trip and v4->v5 migration; 570 unit + 19 e2e pass.",
+  "nextExactAction": "Advance to 041-save-schema-migrations. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (041 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement ordered persistent schema/data-version migrations over the 034-040 world database, verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -391,6 +391,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "039 VERIFIED 4/4 (100%). New src/storage/AutosaveCoordinator.ts (injectable timer/flushTarget; markDirty/start/stop/tick/flush/size; bounded periodic drain, idle no-op, pagehide/hidden flush with zero-progress guard, wake-on-dirty re-arm); 7 unit tests with fake timers + fake event target; 559 unit + 19 e2e pass. No WORLD_DB_VERSION bump."
+    },
+    {
+      "head": "8df59e8708150a7ce649a3c99324bd7b5a495e2d",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 570/570; LegacyLocalStorageMigrator 11/11",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "040 VERIFIED 7/7 (100%). Shared voxel-world-db at v5; added WORLD_PLAYER_STATE_STORE + branch in shared ensureWorldStores; new src/storage/PlayerStateRecord.ts (+ validator) and PlayerStateRepository.ts; new src/storage/LegacyLocalStorageMigrator.ts (StorageLike, legacy snapshot validators, buildSectionContainer/editsToSerializedChunkColumn/toPlayerStateRecord converters, migrate(seed) with LegacyMigrationReport; non-destructive, errors reported, no partial writes); 11 unit tests incl. ChunkColumn.deserialize round-trip and v4->v5 migration; 570 unit + 19 e2e pass."
     }
   ]
 }
