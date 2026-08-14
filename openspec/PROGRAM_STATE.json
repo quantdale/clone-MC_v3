@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "096-ore-generation",
+  "currentChange": "097-tree-feature-system",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "096-ore-generation",
-  "nextChange": "097-tree-feature-system",
+  "lastCompletedChange": "097-tree-feature-system",
+  "nextChange": "098-vegetation-features",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "6dcd5e0d70b42633ff243f6528c9347e97cfcf1e",
-  "lastKnownHead": "6dcd5e0d70b42633ff243f6528c9347e97cfcf1e",
-  "lastCompletedTask": "096: all 4 tasks complete; ore-generation VERIFIED. Ore extends the 094 configured-feature union (blockId/size/discardChanceOnAirExposure [0,1]/non-empty targetTags, strict validation); new src/worldgen/OreFeature.ts (OreBlockTagRegistry atomic over ordered deduped numeric block-id tags; deterministic resolveOreTargetBlockIds with unknown-tag errors; defaults: tags stone_ore_replaceables [3] + soil_ore_replaceables [2,11,4]; configured coal_ore 14/17/0 + iron_ore 15/9/0; placed coal count 20 heightRange -64..192 + iron count 9 heightRange -64..72); 094 test unknown-type stand-in ore->portal; 14 new unit tests; 1075 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 097-tree-feature-system. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (097 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement configurable trunk/foliage tree features replacing hard-coded tree placement (extend the 094 config union with a tree type; trunk/foliage vocabulary over 095 placed features; deterministic; 054 RNG), verify full gate, commit + push, advance.",
+  "lastValidatedHead": "0ac810f929463d8ed2d6f784f87313c68f5b8dbe",
+  "lastKnownHead": "0ac810f929463d8ed2d6f784f87313c68f5b8dbe",
+  "lastCompletedTask": "097: all 4 tasks complete; tree-feature-system VERIFIED. Tree extends the 094 configured-feature union (trunk blockId/minHeight/maxHeight with minHeight<=maxHeight; foliage blockId/shape round|flatTop|spruce/radius; strict validation); new src/worldgen/TreeFeature.ts (deterministic buildTreeBlocks with documented layer tables and one height draw; createDefaultTreeConfiguredFeatures: overworld/oak_tree trunk 7/4-5 foliage 8/round/2); src/world/TerrainGenerator.ts rewired to build trees via buildTreeBlocks with unchanged density/biome gating and draw sequence (bit-identical output; off-by-one trunk base caught by anchored-trunk test and fixed via wy = surface + dy); 11 new unit tests; 1086 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 098-vegetation-features. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (098 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement grass/flowers/mushrooms/simple vegetation placed features (extend the 094 config union or reuse simpleBlock/blockPatch over 095 placed features; deterministic; 054 RNG), verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -961,6 +961,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "096 VERIFIED 4/4 (100%). Ore generation: ore member added to the 094 configured-feature union (strict validation); src/worldgen/OreFeature.ts (OreBlockTagRegistry atomic over ordered deduped numeric block-id tags; deterministic resolveOreTargetBlockIds; defaults tags/configured/placed for coal+iron); 094 test unknown-type stand-in ore->portal; 14 new unit tests; 1075 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "0ac810f929463d8ed2d6f784f87313c68f5b8dbe",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 1086/1086; TreeFeature 10/10; TerrainGenerator 14/14",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "097 VERIFIED 4/4 (100%). Tree feature system: tree member added to the 094 configured-feature union (strict validation); src/worldgen/TreeFeature.ts (deterministic buildTreeBlocks with round/flatTop/spruce layer tables; default oak trunk 7/4-5 foliage 8/round/2); TerrainGenerator rewired to build trees via buildTreeBlocks with unchanged gating and draw sequence (bit-identical output; trunk base fixed at surface+1 via wy = surface + dy); 11 new unit tests; 1086 unit + 19 e2e pass, stable."
     }
   ]
 }
