@@ -86,6 +86,12 @@ export interface BlockTypeDefinition {
    * blocks that declare no state properties; resolved as EMPTY_SCHEMA.
    */
   propertySchema?: BlockPropertySchema;
+  /**
+   * Default property value assignment for this block type, keyed by property
+   * name. Required when the block declares a non-empty property schema; the
+   * 007 state registry fails construction when absent or invalid.
+   */
+  defaultState?: Record<string, boolean | number | string>;
 }
 
 /**
