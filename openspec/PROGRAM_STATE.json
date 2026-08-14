@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "090-biome-source",
+  "currentChange": "091-surface-rule-engine",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "090-biome-source",
-  "nextChange": "091-surface-rule-engine",
+  "lastCompletedChange": "091-surface-rule-engine",
+  "nextChange": "092-cave-carver-system",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "239e0f80a92ef2eb1b6e2cda828535812395c59a",
-  "lastKnownHead": "239e0f80a92ef2eb1b6e2cda828535812395c59a",
-  "lastCompletedTask": "090: all 4 tasks complete; biome-source VERIFIED. New src/worldgen/BiomeSource.ts (biomeClimateTargets: documented mapping from 016 definitions — temperature clamp(t/2.5), category humidity/continentalness/erosion tables, weirdness 0; BiomeSource: injectable sampler, nearest climateDistance target, registration-order tie-break, getBiome/getBiomeKey); 6 new unit tests; 1013 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 091-surface-rule-engine. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (091 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement layered biome/height/noise-driven surface replacement rules (deterministic; consumes 088 columns + 090 biomes), verify full gate, commit + push, advance.",
+  "lastValidatedHead": "36d8696ff7884e23c55d3334e8ee2e7761689ce2",
+  "lastKnownHead": "36d8696ff7884e23c55d3334e8ee2e7761689ce2",
+  "lastCompletedTask": "091: all 4 tasks complete; surface-rule-engine VERIFIED. New src/worldgen/SurfaceRuleEngine.ts (SurfaceCondition always/biome/height/noise/not/and/or; SurfaceRule blockId+depth (default 1); SurfaceRuleContext with noise sampler; evaluateSurfaceCondition; applySurfaceRules first-match-wins with depthFromSurface semantics; validateSurfaceRules strict with 64-composition cap); 9 new unit tests; 1022 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 092-cave-carver-system. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (092 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement configurable 3D cave-carving stage independent of terrain density (deterministic; 087 noise), verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -901,6 +901,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "090 VERIFIED 4/4 (100%). Biome source: src/worldgen/BiomeSource.ts (biomeClimateTargets derived from 016 definitions via documented tables; nearest-target selection with registration-order tie-break; injectable sampler for exact tests; registry-bound); 6 new unit tests; 1013 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "36d8696ff7884e23c55d3334e8ee2e7761689ce2",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 1022/1022; SurfaceRuleEngine 9/9",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "091 VERIFIED 4/4 (100%). Surface rule engine: src/worldgen/SurfaceRuleEngine.ts (condition union always/biome/height/noise/not/and/or; first-match-wins rules with depth semantics; strict validation with 64-composition cap; pure); 9 new unit tests; 1022 unit + 19 e2e pass, stable."
     }
   ]
 }
