@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "053-game-event-framework",
+  "currentChange": "054-deterministic-rng-streams",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "053-game-event-framework",
-  "nextChange": "054-deterministic-rng-streams",
+  "lastCompletedChange": "054-deterministic-rng-streams",
+  "nextChange": "055-simulation-test-harness",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "61a44fd109249d6d26630ee8e3cc25a5ce99063a",
-  "lastKnownHead": "61a44fd109249d6d26630ee8e3cc25a5ce99063a",
-  "lastCompletedTask": "053: all 4 tasks complete; game-event-framework VERIFIED. New src/simulation/GameEventBus.ts (GameEvent type/tick/position/data; emit typed-then-wildcard in subscription order with defensive isolation and shared in-flight queue for nested emits; on/once/clear); 7 unit tests; 658 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 054-deterministic-rng-streams. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (054 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement named seed-derived RNG streams for simulation subsystems, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "56a933ddd2a31f0abe768383e6954abc8e3c7d70",
+  "lastKnownHead": "56a933ddd2a31f0abe768383e6954abc8e3c7d70",
+  "lastCompletedTask": "054: all 4 tasks complete; deterministic-rng-streams VERIFIED. New src/simulation/SeedRng.ts (mulberry32 SeedRng: next/nextFloat/nextInt/nextIntInclusive/nextBoolean/fork(name)/state; createNamedRng(worldSeed, streamName); FNV-1a string hash; RangeError on invalid args); 9 unit tests; 667 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 055-simulation-test-harness. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (055 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement a headless tick-stepping harness with fixture worlds, state assertions, and deterministic replay hooks, verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -531,6 +531,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "053 VERIFIED 4/4 (100%). New src/simulation/GameEventBus.ts (GameEvent type/tick/position/data; emit typed-then-wildcard in subscription order with defensive isolation and shared in-flight queue for nested emits; on/once/clear); 7 unit tests; 658 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "56a933ddd2a31f0abe768383e6954abc8e3c7d70",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 667/667; SeedRng 9/9",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "054 VERIFIED 4/4 (100%). New src/simulation/SeedRng.ts (mulberry32 SeedRng: next/nextFloat/nextInt/nextIntInclusive/nextBoolean/fork(name)/state; createNamedRng(worldSeed, streamName); FNV-1a string hash; RangeError on invalid args); 9 unit tests; 667 unit + 19 e2e pass, stable."
     }
   ]
 }
