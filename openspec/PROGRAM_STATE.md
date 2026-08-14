@@ -3,41 +3,41 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **017-entity-type-registry — VERIFIED 100%**
-- Active implementation change: **017-entity-type-registry — VERIFIED (advanced)**
-- Next change: **018-block-entity-type-registry — NOT YET ACTIVE (artifacts missing)**
-- 017 task ledger: **10 total tasks, 10 completed**
-- 017 completion: **100%**
-- 017 mandatory entity requirements: **PASS**
-- 017 required-test gate: **PASS — unit 336/336, E2E 19/19**
-- 017 advancement allowed: **Yes**
+- Last completed change: **018-block-entity-type-registry — VERIFIED 100%**
+- Active implementation change: **018-block-entity-type-registry — VERIFIED (advanced)**
+- Next change: **019-versioned-codec-framework — NOT YET ACTIVE (artifacts missing)**
+- 018 task ledger: **11 total tasks, 11 completed**
+- 018 completion: **100%**
+- 018 mandatory block-entity requirements: **PASS**
+- 018 required-test gate: **PASS — unit 343/343, E2E 19/19**
+- 018 advancement allowed: **Yes**
 - Session-start head: `7de37f6d70fdc3c5e3cca6e99a1232435628016c`
-- Validated head: `1b96fe0ef6d87c260c9219eab47fd461e6d85989`
-- Next exact action: **Advance to 018-block-entity-type-registry. Its directory/artifacts do not yet exist; author proposal/design/tasks/specs/block-entity-types/spec.md/verification via SPEC_AUTHORING_PROTOCOL.md, validate, then implement a block-entity type registry plus block compatibility declarations (which blocks may host which block entities), verify full gate, commit + push, advance program state.**
+- Validated head: `186afe66b43e2a2f59b5c57e238151e9c91ce6c6`
+- Next exact action: **Advance to 019-versioned-codec-framework. Its directory/artifacts do not yet exist; author proposal/design/tasks/specs/versioned-codec/spec.md/verification via SPEC_AUTHORING_PROTOCOL.md, validate, then implement versioned validation/codec primitives for persistent and network-safe data (schema version marker, forward/backward tolerant encode/decode, integrity checks), verify full gate, commit + push, advance program state.**
 
-## What 017 implemented
+## What 018 implemented
 
-Change 017 introduced a behavior-free entity data model:
+Change 018 introduced a behavior-free block-entity data model:
 
-- `src/data/EntityType.ts` — `EntityCategory` (7 values), and `EntityTypeDefinition` (ResourceId id, key, name, category, optional `health` > 0, `attackDamage` >= 0, `isSummonable`, `isPersistent`). `EntityRegistry` builds on the 003 generic `Registry`, validates every definition (known category, finite bounded health/attack) and finalizes, assigning dense deterministic runtime ids by registration order. `createDefaultEntityRegistry` provides eleven representative entities (monsters, creatures, ambient, water, and an `item` OTHER placeholder).
-- `tests/unit/EntityType.test.ts` — 7 tests covering registry validation/error paths (health, attack, category, duplicate id), default registry contents/metadata, and runtime-id assignment/lookup.
+- `src/data/BlockEntityType.ts` — `BlockEntityTypeDefinition` (ResourceId id, key, name, optional `inventorySize` > 0, `tickable`). `BlockEntityRegistry` builds on the 003 generic `Registry`, validates every definition (unique id, finite positive inventorySize) and finalizes. `BlockEntityCompatibility` declares block-key → block-entity-type-key mappings, validated at construction against the registry (rejects unknown types). `createDefaultBlockEntityRegistry` provides ten representative types; `createDefaultBlockEntityCompatibility` maps block keys (including `oak_sign`/`hanging_sign` → `sign`).
+- `tests/unit/BlockEntityType.test.ts` — 7 tests covering registry validation/error paths (inventorySize, duplicate id), compatibility validation (unknown-type rejection), and compatibility queries (resolve, undeclared, shared type).
 
-## Validation evidence (017)
+## Validation evidence (018)
 
 - typecheck: PASS
 - lint: PASS
-- unit: PASS 336/336 (prior 329 + 7 new EntityType tests)
+- unit: PASS 343/343 (prior 336 + 7 new BlockEntityType tests)
 - production build: PASS as the Playwright webServer prerequisite
 - E2E: PASS 19/19
 
 ## Advancement decision
 
-Change 017 is **VERIFIED** at 10/10 (100%). All gates are green: typecheck, lint, full unit suite (336/336), production build, and the required E2E suite (19/19). No advancement exception was needed. The model is additive and behavior-free; no AI/behavior was attached.
+Change 018 is **VERIFIED** at 11/11 (100%). All gates are green: typecheck, lint, full unit suite (343/343), production build, and the required E2E suite (19/19). No advancement exception was needed. The model is additive and behavior-free; no storage/UI/dispatch was attached.
 
-## Next change: 018 (blocked on missing artifacts)
+## Next change: 019 (blocked on missing artifacts)
 
-`018-block-entity-type-registry` is named in `CHANGE_SEQUENCE.md` but its change directory does not yet exist, so it has no proposal/design/tasks/specs/verification. Per `AGENTS.md`, a change lacking full artifacts is a hard pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md` before any production code; scope is "block-entity type registry and block compatibility declarations."
+`019-versioned-codec-framework` is named in `CHANGE_SEQUENCE.md` but its change directory does not yet exist, so it has no proposal/design/tasks/specs/verification. Per `AGENTS.md`, a change lacking full artifacts is a hard pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md` before any production code; scope is "versioned validation/codec primitives for persistent and network-safe data."
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 017 verification. Change 018 is the next change; its artifacts must be authored and validated before implementation begins.
+A future session must first inspect current `origin/main`, this state, and the 018 verification. Change 019 is the next change; its artifacts must be authored and validated before implementation begins.
