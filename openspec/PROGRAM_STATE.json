@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "008-stack-data-components",
+  "currentChange": "009-slot-data-unification",
   "currentChangeStatus": "PLANNED",
-  "lastCompletedChange": "007-block-state-runtime-registry",
-  "nextChange": "009-slot-data-unification",
+  "lastCompletedChange": "008-stack-data-components",
+  "nextChange": "010-recipe-data-model",
   "completedTasks": 0,
   "totalTasks": 0,
   "completionPercentage": 0,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "7de37f6d70fdc3c5e3cca6e99a1232435628016c",
-  "lastValidatedHead": "19a340e47d07768c8a4f91864a059032ea2ca725",
-  "lastKnownHead": "19a340e47d07768c8a4f91864a059032ea2ca725",
-  "lastCompletedTask": "007: all 25 tasks complete; block-state runtime registry VERIFIED. Deterministic enumeration, default states, dense BlockStateIds, immutable transitions, overflow/cross-block guards. 217 unit + 19 e2e pass.",
-  "nextExactAction": "Author 008-stack-data-components missing artifacts (design/tasks/spec/verification) per SPEC_AUTHORING_PROTOCOL, then implement the extensible item-stack component map.",
+  "lastValidatedHead": "2d9593a9dd8828bb6586d653293392b3096b9bc4",
+  "lastKnownHead": "2d9593a9dd8828bb6586d653293392b3096b9bc4",
+  "lastCompletedTask": "008: all 20 tasks complete; stack-data component framework VERIFIED. Typed component registry/map, immutable validated values, deterministic iteration, tool damage component. Inventory not migrated. 229 unit + 19 e2e pass.",
+  "nextExactAction": "Author 009-slot-data-unification missing verification.md (and any other missing artifacts) per SPEC_AUTHORING_PROTOCOL, then migrate inventory/hotbar to component-based ItemStack.",
   "blockers": [],
   "validationResults": [
     {
@@ -80,7 +80,17 @@
       "build": "PASS via Playwright production webServer",
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
-      "note": "007 VERIFIED 25/25 (100%). Added src/world/BlockStateRegistry.ts + tests/unit/BlockStateRegistry.test.ts; optional defaultState on BlockTypeDefinition. World storage not migrated."
+      "note": "007 VERIFIED 25/25 (100%). Added src/world/BlockStateRegistry.ts + tests/unit/BlockStateRegistry.test.ts; optional defaultState on BlockTypeDefinition."
+    },
+    {
+      "head": "2d9593a9dd8828bb6586d653293392b3096b9bc4",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 229/229; StackDataComponents 12/12",
+      "build": "PASS via Playwright production webServer",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "008 VERIFIED 20/20 (100%). Added src/inventory/StackDataComponents.ts + tests/unit/StackDataComponents.test.ts; tool damage component; inventory not migrated."
     }
   ]
 }
