@@ -3,54 +3,53 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **063-template-partial-block-meshing — VERIFIED 100%**
-- Active implementation change: **063-template-partial-block-meshing — VERIFIED**
-- Next change: **064-worker-job-protocol — NOT YET ACTIVE (artifacts pending)**
-- 063 task ledger: **4 total tasks, 4 completed**
-- 063 completion: **100%**
-- 063 mandatory template-partial-block-meshing requirements: **PASS**
-- 063 required-test gate: **PASS — unit 724/724, E2E 19/19**
-- 063 advancement allowed: **Yes**
+- Last completed change: **064-worker-job-protocol — VERIFIED 100%**
+- Active implementation change: **064-worker-job-protocol — VERIFIED**
+- Next change: **065-worker-section-meshing — NOT YET ACTIVE (artifacts pending)**
+- 064 task ledger: **4 total tasks, 4 completed**
+- 064 completion: **100%**
+- 064 mandatory worker-job-protocol requirements: **PASS**
+- 064 required-test gate: **PASS — unit 730/730, E2E 19/19**
+- 064 advancement allowed: **Yes**
 - Session-start head: `d282bbb01b4eabbdc76daaa05e78ccff81f2d685`
-- Validated head: `8fe4e07d2243626c1b96939af45f507e512ea100`
-- Next exact action: **Advance to 064-worker-job-protocol. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (064 artifacts NOT yet present — authoring is a hard pre-implementation block), validate, implement a versioned transferable worker request/result protocol with stale result rejection, verify full gate, commit + push, advance program state.**
+- Validated head: `57dc9c336b3f05da85b482b2089f79514dc35f2f`
+- Next exact action: **Advance to 065-worker-section-meshing. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (065 artifacts NOT yet present — authoring is a hard pre-implementation block), validate, implement moving section meshing off the main thread over the 064 protocol, verify full gate, commit + push, advance program state.**
 
-## What 063 implemented
+## What 064 implemented
 
-Change 063 adds template (partial-block) meshing.
+Change 064 adds the versioned worker job protocol.
 
-- `src/rendering/TemplateMesher.ts` (NEW) — `meshBlockModel(model, blockId, x, y, z, isOpaqueCell)`
-  converts a 059 `BlockModel` into world-unit `OpaqueFaceQuad`s: per element, per face, quad planes
-  from `from/16`/`to/16` with `(to - from)/16` extents; boundary faces (local 0/1) culled against
-  opaque outward neighbors; interior faces never culled; deterministic element/face order.
-  `isFullCubeModel` detects the canonical full cube.
-- `tests/unit/TemplateMesher.test.ts` (NEW) — 7 tests: isolated/buried full cube, slab planes +
-  neighbor culling, multi-element stair-like model, interior-face non-culling, and full-cube
-  detection.
+- `src/rendering/WorkerJobProtocol.ts` (NEW) — `WORKER_PROTOCOL_VERSION = 1`, `WorkerRequest`/
+  `WorkerResult` envelopes with strict `validateWorkerRequest`/`validateWorkerResult` (version match,
+  non-empty ids/kinds, payload-on-ok / error-on-failure), and `WorkerJobClient` (`submit` unique ids,
+  `resolveResult` resolving each pending job exactly once with deterministic stale rejection of
+  unknown/cancelled/already-resolved ids, `cancel`, `pendingCount`; validate-before-mutate).
+- `tests/unit/WorkerJobProtocol.test.ts` (NEW) — 6 tests: envelope validation, submission/ids,
+  single resolution, stale rejection (unknown/cancelled/duplicate), invalid-message non-mutation,
+  and outcome payload rules.
 
-## Validation evidence (063)
+## Validation evidence (064)
 
 - typecheck: PASS (`tsc --noEmit`)
 - lint: PASS (`eslint .`)
-- unit: PASS 724/724 (prior 717 + 7 new TemplateMesher tests), stable across repeated runs
+- unit: PASS 730/730 (prior 724 + 6 new WorkerJobProtocol tests), stable across repeated runs
 - production build: PASS (`tsc --noEmit && vite build`)
 - E2E: PASS 19/19
 
 ## Advancement decision
 
-Change 063 is **VERIFIED** at 4/4 (100%). All gates are green: typecheck, lint, the new 063 suite
-(7/7), the full unit suite (724/724, stable), production build, and the required E2E suite (19/19). No
+Change 064 is **VERIFIED** at 4/4 (100%). All gates are green: typecheck, lint, the new 064 suite
+(6/6), the full unit suite (730/730, stable), production build, and the required E2E suite (19/19). No
 advancement exception was needed.
 
-## Next change: 064 (pending artifacts)
+## Next change: 065 (pending artifacts)
 
-`064-worker-job-protocol` is named in `CHANGE_SEQUENCE.md` with scope "Versioned transferable worker
-request/result protocol with stale result rejection." Per `AGENTS.md`, a change lacking full
-artifacts is a hard pre-implementation block. Author and validate those artifacts via
-`SPEC_AUTHORING_PROTOCOL.md` before any production code.
+`065-worker-section-meshing` is named in `CHANGE_SEQUENCE.md` with scope "Move section meshing off the
+main thread." Per `AGENTS.md`, a change lacking full artifacts is a hard pre-implementation block.
+Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md` before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 063 verification.
-Change 064 is the next change; its artifacts must be authored and validated before implementation
+A future session must first inspect current `origin/main`, this state, and the 064 verification.
+Change 065 is the next change; its artifacts must be authored and validated before implementation
 begins.
