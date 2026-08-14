@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "087-density-noise-router",
+  "currentChange": "088-overworld-density-terrain",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "087-density-noise-router",
-  "nextChange": "088-overworld-density-terrain",
+  "lastCompletedChange": "088-overworld-density-terrain",
+  "nextChange": "089-climate-sampler",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "1ad6e0923700c0f4d54382fac644ec057f843b82",
-  "lastKnownHead": "1ad6e0923700c0f4d54382fac644ec057f843b82",
-  "lastCompletedTask": "087: all 5 tasks complete; density-noise-router VERIFIED. New src/worldgen/DensityNoise.ts (hashNoise3D FNV-1a [0,1); smoothstep/lerp; ValueNoise3D periodic trilinear value noise [-1,1] with exact lattice values at integer coords and period wrap; fbm3D octave sum defaults 4/2/0.5 bounded) and src/worldgen/DensityComposition.ts (DensityNode tree: constant/yGradient/noise/add/multiply/scale/offset/min/max/clamp; evaluateDensity pure fixed child order; validateDensityNode strict with 64-depth cap); 15 new unit tests; 990 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 088-overworld-density-terrain. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (088 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement modern-height terrain from density functions preserving deterministic seeds (087 primitives + 054 seeded RNG), verify full gate, commit + push, advance.",
+  "lastValidatedHead": "754b1eabd6d4fd16a52f8f4fc17c1c0508827d53",
+  "lastKnownHead": "754b1eabd6d4fd16a52f8f4fc17c1c0508827d53",
+  "lastCompletedTask": "088: all 4 tasks complete; overworld-density-terrain VERIFIED. New src/worldgen/OverworldTerrain.ts (OverworldTerrainConfig defaults minY -64 / maxY 320 / seaLevel 63; TerrainBlockIds defaults stone 1/water 8/bedrock 7; TerrainColumn sparse with getBlock/blockCount/surfaceHeightAt; generateTerrainColumn: density formula surface=64+12*fbm, density=(surface-y)/32+0.25*detail, stone if >0, water below seaLevel, bedrock at minY; seed-derived 087 noise; config/ids validation; deterministic); 9 new unit tests; 999 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 089-climate-sampler. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (089 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement temperature/humidity/continentalness/erosion/weirdness-like climate fields (deterministic; 087 noise + 016 biome data), verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -871,6 +871,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "087 VERIFIED 5/5 (100%). Density/noise router: src/worldgen/DensityNoise.ts (FNV-1a hashNoise3D; periodic trilinear ValueNoise3D with lattice exactness and period wrap; bounded fbm3D) + src/worldgen/DensityComposition.ts (validated DensityNode tree with pure evaluateDensity, 64-depth cap); 15 new unit tests; 990 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "754b1eabd6d4fd16a52f8f4fc17c1c0508827d53",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 999/999; OverworldTerrain 9/9",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "088 VERIFIED 4/4 (100%). Modern-height density terrain: src/worldgen/OverworldTerrain.ts (default -64..320/sea 63; sparse TerrainColumn with surface heights; generateTerrainColumn density formula over 087 noise: stone/water/bedrock classification; config/ids validation; deterministic per seed); 9 new unit tests; 999 unit + 19 e2e pass, stable."
     }
   ]
 }
