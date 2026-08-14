@@ -3,56 +3,58 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **086-worker-worldgen — VERIFIED 100%**
-- Active implementation change: **086-worker-worldgen — VERIFIED**
-- Next change: **087-density-noise-router — NOT YET ACTIVE (artifacts pending)**
-- 086 task ledger: **4 total tasks, 4 completed**
-- 086 completion: **100%**
-- 086 mandatory worker-worldgen requirements: **PASS**
-- 086 required-test gate: **PASS — unit 975/975, E2E 19/19**
-- 086 advancement allowed: **Yes**
+- Last completed change: **087-density-noise-router — VERIFIED 100%**
+- Active implementation change: **087-density-noise-router — VERIFIED**
+- Next change: **088-overworld-density-terrain — NOT YET ACTIVE (artifacts pending)**
+- 087 task ledger: **5 total tasks, 5 completed**
+- 087 completion: **100%**
+- 087 mandatory density-noise-router requirements: **PASS**
+- 087 required-test gate: **PASS — unit 990/990, E2E 19/19**
+- 087 advancement allowed: **Yes**
 - Session-start head: `d282bbb01b4eabbdc76daaa05e78ccff81f2d685`
-- Validated head: `69dace37afa1cba295fcf2858add56e2034320f5`
-- Next exact action: **Advance to 087-density-noise-router. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (087 artifacts NOT yet present — authoring is a hard pre-implementation block), validate, implement reusable 3D density/noise composition primitives (deterministic; 054 SeedRng + 048 FNV-1a patterns), verify full gate, commit + push, advance program state.**
+- Validated head: `1ad6e0923700c0f4d54382fac644ec057f843b82`
+- Next exact action: **Advance to 088-overworld-density-terrain. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (088 artifacts NOT yet present — authoring is a hard pre-implementation block), validate, implement modern-height terrain from density functions preserving deterministic seeds (087 primitives + 054 seeded RNG), verify full gate, commit + push, advance program state.**
 
-## What 086 implemented
+## What 087 implemented
 
-Change 086 adds off-main-thread worldgen jobs with versioned results.
+Change 087 adds reusable deterministic 3D density/noise composition primitives.
 
-- `src/worldgen/WorkerWorldgen.ts` (NEW) — `WORLDGEN_PROTOCOL_VERSION` (1);
-  `WorldgenRequestPayload { columnX, columnZ, seed, stage }` (085 stage vocabulary) and the
-  versioned identity-echoing `WorldgenResultPayload { identity..., generationVersion }`; strict
-  `validateWorldgenRequest`/`validateWorldgenResult`; pure `processWorldgenRequest` (the worker
-  job envelope — stage bodies arrive in 087+); `WorldgenWorkerClient` over 064: exactly-once
-  dispatch on identity-matching results; stale, duplicate, cancelled, and identity-mismatched
-  results rejected without callbacks (a mismatch consumes the job per 064 semantics; the caller
-  re-submits).
-- `tests/unit/WorkerWorldgen.test.ts` (NEW) — 10 tests: request/result validation matrices,
-  pure job, client dispatch (valid/mismatch-retry/stale/duplicate/cancel), pendingCount.
+- `src/worldgen/DensityNoise.ts` (NEW) — `hashNoise3D` (FNV-1a over integer coordinates + seed,
+  [0, 1)); `smoothstep`/`lerp`; `ValueNoise3D` (periodic lattice of hash values, default period
+  256, smoothstep trilinear sampling into [-1, 1], exact lattice values at integer coordinates,
+  exact period wrap); `fbm3D` (octave sum, defaults 4 octaves / lacunarity 2 / gain 0.5, bounded
+  by the amplitude sum).
+- `src/worldgen/DensityComposition.ts` (NEW) — `DensityNode` union (constant, yGradient, noise,
+  add, multiply, scale, offset, min, max, clamp), `DensityContext`, `evaluateDensity` (pure,
+  fixed child order a-then-b, scalars after children), `validateDensityNode` (strict, 64-depth
+  cap, non-finite scalar rejection).
+- Tests (NEW) — `DensityNoise.test.ts` (7) and `DensityComposition.test.ts` (7): hash
+  range/determinism/variation, lattice exactness, period wrap, range checks, fbm bounds,
+  per-node hand-computed fixtures, nested trees, validation matrix, purity.
 
-## Validation evidence (086)
+## Validation evidence (087)
 
 - typecheck: PASS (`tsc --noEmit`)
 - lint: PASS (`eslint .`)
-- unit: PASS 975/975 (prior 965 + 10 new), stable across repeated runs
+- unit: PASS 990/990 (prior 975 + 15 new), stable across repeated runs
 - production build: PASS (`tsc --noEmit && vite build`)
 - E2E: PASS 19/19
 
 ## Advancement decision
 
-Change 086 is **VERIFIED** at 4/4 (100%). All gates are green: typecheck, lint, the new 086 suites,
-the full unit suite (975/975, stable), production build, and the required E2E suite (19/19). No
+Change 087 is **VERIFIED** at 5/5 (100%). All gates are green: typecheck, lint, the new 087 suites,
+the full unit suite (990/990, stable), production build, and the required E2E suite (19/19). No
 advancement exception was needed.
 
-## Next change: 087 (pending artifacts)
+## Next change: 088 (pending artifacts)
 
-`087-density-noise-router` is named in `CHANGE_SEQUENCE.md` with scope "Reusable 3D density/noise
-composition primitives." Per `AGENTS.md`, a change lacking full artifacts is a hard
-pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md`
-before any production code.
+`088-overworld-density-terrain` is named in `CHANGE_SEQUENCE.md` with scope "Modern-height terrain
+from density functions, preserving deterministic seeds." Per `AGENTS.md`, a change lacking full
+artifacts is a hard pre-implementation block. Author and validate those artifacts via
+`SPEC_AUTHORING_PROTOCOL.md` before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 086 verification.
-Change 087 is the next change; its artifacts must be authored and validated before implementation
+A future session must first inspect current `origin/main`, this state, and the 087 verification.
+Change 088 is the next change; its artifacts must be authored and validated before implementation
 begins.
