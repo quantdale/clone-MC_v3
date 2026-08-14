@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "037-entity-persistence-store",
+  "currentChange": "038-dirty-save-queue",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "037-entity-persistence-store",
-  "nextChange": "038-dirty-save-queue",
-  "completedTasks": 7,
-  "totalTasks": 7,
+  "lastCompletedChange": "038-dirty-save-queue",
+  "nextChange": "039-transactional-autosave",
+  "completedTasks": 5,
+  "totalTasks": 5,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "46b15f0653e65bd5d8dce208506c047599cb03b1",
-  "lastKnownHead": "46b15f0653e65bd5d8dce208506c047599cb03b1",
-  "lastCompletedTask": "037: all 7 tasks complete; entity-persistence-store VERIFIED. Bumped WORLD_DB_VERSION 3->4, added WORLD_ENTITY_STORE; entities branch in shared ensureWorldStores; new src/storage/EntityRecord.ts (SerializedEntity + EntityChunkRecord + validators) and src/storage/EntityRepository.ts (putChunkEntities/getChunkEntities/listChunks/deleteChunkEntities/close); 16 unit tests via in-memory mock incl. in-place v3->v4 migration preserving prior stores; 545 unit + 19 e2e pass.",
-  "nextExactAction": "Advance to 038-dirty-save-queue. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (038 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement an incremental dirty-unit save queue with bounded work over the 034-037 repositories, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "8fa1d1c96695a5d04d287bbbf25e4d6aa4bc833c",
+  "lastKnownHead": "8fa1d1c96695a5d04d287bbbf25e4d6aa4bc833c",
+  "lastCompletedTask": "038: all 5 tasks complete; dirty-save-queue VERIFIED. New src/storage/DirtySaveQueue.ts (SaveUnit/ SaveSink/DirtySaveQueue: markDirty/drain(limit)/size/has/keys/clear, FIFO, dedupe, bounded, failure-requeue) and src/storage/RepositorySaveSink.ts routing each SaveUnitKind to the matching 034-037 repository; 7 unit tests incl. repository-sink integration over in-memory mocks; 552 unit + 19 e2e pass. No WORLD_DB_VERSION bump (layers above 034-037).",
+  "nextExactAction": "Advance to 039-transactional-autosave. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (039 artifacts are NOT yet present; authoring is a hard pre-implementation block), validate, implement crash-resistant periodic autosave and pagehide flush over the 038 DirtySaveQueue + 034-037 repositories, verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -371,6 +371,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "037 VERIFIED 7/7 (100%). Shared voxel-world-db at v4; added WORLD_ENTITY_STORE + entities branch in shared ensureWorldStores; new src/storage/EntityRecord.ts (SerializedEntity + EntityChunkRecord + validators) and src/storage/EntityRepository.ts (putChunkEntities/getChunkEntities/listChunks/deleteChunkEntities/close); 16 unit tests via in-memory mock incl. in-place v3->v4 migration preserving prior stores; 545 unit + 19 e2e pass."
+    },
+    {
+      "head": "8fa1d1c96695a5d04d287bbbf25e4d6aa4bc833c",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 552/552; DirtySaveQueue 7/7",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "038 VERIFIED 5/5 (100%). New src/storage/DirtySaveQueue.ts (SaveUnit/SaveSink/DirtySaveQueue: markDirty/drain(limit)/size/has/keys/clear, FIFO, dedupe, bounded, failure-requeue) and src/storage/RepositorySaveSink.ts routing each SaveUnitKind to the matching 034-037 repository; 7 unit tests incl. repository-sink integration over in-memory mocks; 552 unit + 19 e2e pass. No WORLD_DB_VERSION bump."
     }
   ]
 }

@@ -3,66 +3,59 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **037-entity-persistence-store — VERIFIED 100%**
-- Active implementation change: **037-entity-persistence-store — VERIFIED**
-- Next change: **038-dirty-save-queue — NOT YET ACTIVE (artifacts pending)**
-- 037 task ledger: **7 total tasks, 7 completed**
-- 037 completion: **100%**
-- 037 mandatory entity-persistence-store requirements: **PASS**
-- 037 required-test gate: **PASS — unit 545/545, E2E 19/19**
-- 037 advancement allowed: **Yes**
+- Last completed change: **038-dirty-save-queue — VERIFIED 100%**
+- Active implementation change: **038-dirty-save-queue — VERIFIED**
+- Next change: **039-transactional-autosave — NOT YET ACTIVE (artifacts pending)**
+- 038 task ledger: **5 total tasks, 5 completed**
+- 038 completion: **100%**
+- 038 mandatory dirty-save-queue requirements: **PASS**
+- 038 required-test gate: **PASS — unit 552/552, E2E 19/19**
+- 038 advancement allowed: **Yes**
 - Session-start head: `d282bbb01b4eabbdc76daaa05e78ccff81f2d685`
-- Validated head: `46b15f0653e65bd5d8dce208506c047599cb03b1`
-- Next exact action: **Advance to 038-dirty-save-queue. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (038 artifacts NOT yet present — authoring is a hard pre-implementation block), validate, implement an incremental dirty-unit save queue with bounded work over the 034-037 repositories, verify full gate, commit + push, advance program state.**
+- Validated head: `8fa1d1c96695a5d04d287bbbf25e4d6aa4bc833c`
+- Next exact action: **Advance to 039-transactional-autosave. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (039 artifacts NOT yet present — authoring is a hard pre-implementation block), validate, implement crash-resistant periodic autosave and pagehide flush over the 038 DirtySaveQueue + 034-037 repositories, verify full gate, commit + push, advance program state.**
 
-## What 037 implemented
+## What 038 implemented
 
-Change 037 persists and reloads entity records in the same versioned IndexedDB database established by
-034/035/036, behind a typed, injectable-factory repository boundary. A live entity instance/behavior
-does not yet exist (017 only defines the `EntityTypeRegistry`), so 037 defines a decoupled,
-forward-compatible persistence envelope and groups entities per chunk.
+Change 038 adds the bounded, ordered, de-duplicated dirty-save queue that coordinates the four 034-037
+repositories, so world saves never block the simulation or starve the frame budget.
 
-- `src/storage/WorldMetadata.ts` — `WORLD_DB_VERSION` bumped `3 → 4`; added `WORLD_ENTITY_STORE = 'entities'`.
-- `src/storage/WorldMetadataRepository.ts` — added an `entities` branch (keyPath `key`) inside the
-  shared `ensureWorldStores(db)` routine; a v3→v4 open adds the new store while preserving the three
-  prior stores.
-- `src/storage/EntityRecord.ts` (NEW) — `SerializedEntity` (`schemaVersion`, `typeKey`, `x`/`y`/`z`,
-  `data`) and `EntityChunkRecord` (`key`, `worldId`, `chunkX`, `chunkZ`, `entities`), plus
-  `validateSerializedEntity` and `validateEntityChunkRecord` (reject malformed records before any write).
-- `src/storage/EntityRepository.ts` (NEW) — `EntityRepository` (injectable `IDBFactory`, `open`/`close`,
-  `putChunkEntities`/`getChunkEntities`/`listChunks`/`deleteChunkEntities` over the `entities` store
-  keyed `worldId|chunkX|chunkZ`). The repository is decoupled from any live entity framework; the `data`
-  payload is opaque.
-- `tests/unit/EntityRepository.test.ts` (NEW) — 16 tests covering store creation (all four stores),
-  put/get round-trip, absent-chunk null, list-by-world isolation, delete, validation rejection (writes
-  nothing), construction without a global `indexedDB`, and in-place v3→v4 migration preserving the three
-  prior stores and their records.
+- `src/storage/DirtySaveQueue.ts` (NEW) — `SaveUnitKind`, `SaveUnit`, `SaveSink`, and `DirtySaveQueue`.
+  `markDirty` de-duplicates by key (keeping original FIFO position); `drain(sink, limit)` performs at
+  most `limit` async writes in insertion order, removing successes and re-queuing failures at the end;
+  `size`/`has`/`keys`/`clear` expose pending state.
+- `src/storage/RepositorySaveSink.ts` (NEW) — `RepositorySaveSink` mapping each `SaveUnitKind` to the
+  matching repository: `world-metadata`→`WorldMetadataRepository.putMetadata`, `chunk-sections`→
+  `ChunkSectionRepository.putColumn`, `block-entities`/`entities`→`*EntityRepository.putChunkEntities`.
+  A missing repository or unknown kind makes `write` reject (unit re-queued, never dropped).
+- `tests/unit/DirtySaveQueue.test.ts` (NEW) — 7 tests covering bounded ordered drain, de-duplication,
+  failure-retry, size/has/keys/clear, `limit <= 0`, and repository-sink integration over all four
+  repositories backed by the in-memory `IDBFactory` mocks (each kind lands in its store).
 
-## Validation evidence (037)
+## Validation evidence (038)
 
 - typecheck: PASS (`tsc --noEmit`)
 - lint: PASS (`eslint .`)
-- unit: PASS 545/545 (prior 529 + 16 new EntityRepository tests)
+- unit: PASS 552/552 (prior 545 + 7 new DirtySaveQueue tests)
 - production build: PASS (`tsc --noEmit && vite build`)
 - E2E: PASS 19/19
 
 ## Advancement decision
 
-Change 037 is **VERIFIED** at 7/7 (100%). All gates are green: typecheck, lint, the new 037 suite
-(16/16), the full unit suite (545/545), production build, and the required E2E suite (19/19). No
-advancement exception was needed. The repository boundary remains injectable and dependency-free; the
-only browser-global touch is inside `browserIdbFactory`, shared with 034/035/036.
+Change 038 is **VERIFIED** at 5/5 (100%). All gates are green: typecheck, lint, the new 038 suite
+(7/7), the full unit suite (552/552), production build, and the required E2E suite (19/19). No
+advancement exception was needed. No `WORLD_DB_VERSION` bump — 038 layers purely above 034-037.
 
-## Next change: 038 (pending artifacts)
+## Next change: 039 (pending artifacts)
 
-`038-dirty-save-queue` is named in `CHANGE_SEQUENCE.md` with scope "Incremental dirty-unit save queue
-with bounded work." It builds on 034-037 by draining dirty world units (metadata, chunk sections,
-block entities, entities) through the existing repositories with bounded per-tick work. Per
+`039-transactional-autosave` is named in `CHANGE_SEQUENCE.md` with scope "Crash-resistant periodic
+autosave and pagehide flush policy." It builds on 038 by driving `DirtySaveQueue.drain` on a periodic
+and `pagehide` schedule with a bounded `limit` and backoff, over the 034-037 repositories. Per
 `AGENTS.md`, a change lacking full artifacts is a hard pre-implementation block. Author and validate
 those artifacts via `SPEC_AUTHORING_PROTOCOL.md` before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 037 verification.
-Change 038 is the next change; its artifacts must be authored and validated before implementation
+A future session must first inspect current `origin/main`, this state, and the 038 verification.
+Change 039 is the next change; its artifacts must be authored and validated before implementation
 begins.
