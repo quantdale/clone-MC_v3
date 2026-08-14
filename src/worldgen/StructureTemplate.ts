@@ -328,6 +328,11 @@ export class StructureTemplateRegistry {
     return this.templates.size;
   }
 
+  /** All validated templates in registration order (101 extension). */
+  all(): StructureTemplate[] {
+    return [...this.templates.values()];
+  }
+
   clear(): void {
     this.templates.clear();
   }

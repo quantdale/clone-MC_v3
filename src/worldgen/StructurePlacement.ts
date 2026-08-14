@@ -159,6 +159,11 @@ export class StructurePlacementRegistry {
     return this.configs.size;
   }
 
+  /** All validated configs in registration order (101 extension). */
+  all(): StructurePlacementConfig[] {
+    return [...this.configs.values()];
+  }
+
   clear(): void {
     this.configs.clear();
   }

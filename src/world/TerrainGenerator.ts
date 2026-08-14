@@ -3,6 +3,7 @@ import { fbm2, valueNoise3 } from '../math/Noise';
 import { PRNG, hash2 } from '../math/PRNG';
 import { BlockId, BlockRegistry } from './BlockRegistry';
 import { buildTreeBlocks, createDefaultTreeConfiguredFeatures, type TreeFoliageConfig, type TreeTrunkConfig } from '../worldgen/TreeFeature';
+import { createDefaultStructureGenerator, StructureGenerator } from '../worldgen/StructureGenerator';
 import { Chunk } from './Chunk';
 import { CHUNK_DIMENSIONS } from './WorldCoordinates';
 
@@ -39,9 +40,12 @@ export class TerrainGenerator {
 
   /** The tree configured feature used for all placed trees (097). */
   private readonly treeConfig: { trunk: TreeTrunkConfig; foliage: TreeFoliageConfig };
-  constructor(registry: BlockRegistry, seed: number) {
+  /** The structure generator (101): deterministic template structures per seed. */
+  private readonly structures: StructureGenerator;
+  constructor(registry: BlockRegistry, seed: number, structures: StructureGenerator = createDefaultStructureGenerator(seed)) {
     this.registry = registry;
     this.seed = seed >>> 0;
+    this.structures = structures;
     // Fail fast on a registry missing the block ids generation emits.
     this.registry.get(BlockId.Bedrock);
     this.registry.get(BlockId.Grass);
@@ -201,6 +205,29 @@ export class TerrainGenerator {
     }
 
     this.placeTrees(chunk);
+    this.placeStructures(chunk);
+  }
+
+  /**
+   * Place structure template blocks (101). Deterministic per seed: the structure generator
+   * resolves every start whose footprint intersects this chunk and returns world-coordinate
+   * blocks; structures overwrite terrain (no air gate, unlike trees).
+   */
+  private placeStructures(chunk: Chunk): void {
+    const wx0 = chunk.cx * CHUNK_DIMENSIONS.width;
+    const wy0 = chunk.cy * CHUNK_DIMENSIONS.height;
+    const wz0 = chunk.cz * CHUNK_DIMENSIONS.depth;
+    const blocks = this.structures.blocksForChunk(chunk.cx, chunk.cz, {
+      biomeKey: (x, z) => this.getBiomeAt(x, z),
+      surfaceY: (x, z) => this.getHeightAt(x, z),
+    });
+    for (const block of blocks) {
+      const ly = block.y - wy0;
+      if (ly < 0 || ly >= CHUNK_DIMENSIONS.height) {
+        continue;
+      }
+      chunk.setLocal(block.x - wx0, ly, block.z - wz0, block.blockId);
+    }
   }
 
   /** Deterministically embed small coal and iron clusters in deep stone. */
