@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "100-structure-placement-core",
+  "currentChange": "101-small-structure-baseline",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "100-structure-placement-core",
-  "nextChange": "101-small-structure-baseline",
+  "lastCompletedChange": "101-small-structure-baseline",
+  "nextChange": "102-worldgen-golden-seeds",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "a63b599df35bed3a04e63ef8d76991996796905c",
-  "lastKnownHead": "a63b599df35bed3a04e63ef8d76991996796905c",
-  "lastCompletedTask": "100: all 4 tasks complete; structure-placement-core VERIFIED. New src/worldgen/StructurePlacement.ts (StructurePlacementConfig key/templateKey/spacing positive/separation in [0, spacing)/salt non-negative/biomeKeys non-empty/minSurfaceHeight integer with strict validation; StructurePlacementContext biomeKey/surfaceY; deterministic structureStartAtChunk: floor-division regions, SeedRng(hash3(regionX, salt, regionZ, seed)) with fixed draw order offsetX/offsetZ/rotation, biome gate and terrain gate at the start chunk center, StructureStart with rotation and mirror 'none'; StructurePlacementRegistry atomic); 11 new unit tests incl. exact region vectors (0,0)->(3,0)/180, (1,0)->(8,2)/90, (-1,-1)->(-4,-8)/270, (2,3)->(19,28)/0, separation and negative-region checks; 1119 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 101-small-structure-baseline. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (101 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement the first simple generated structure end-to-end using the template system (099 template + 100 placement; deterministic writing into chunks), verify full gate, commit + push, advance.",
+  "lastValidatedHead": "64c8235760e3fd5e6b7aa5871b13046dc08892ba",
+  "lastKnownHead": "64c8235760e3fd5e6b7aa5871b13046dc08892ba",
+  "lastCompletedTask": "101: all 4 tasks complete; small-structure-baseline VERIFIED. New src/worldgen/StructureGenerator.ts (StructureGenerator composing 099 templates + 100 placements + seed; fail-fast on missing templateKey; maxExtent; startAt; deterministic blocksForChunk with window +/-ceil(maxExtent/16), registration-order placements, overwrite-on-overlap, origin Y = surfaceY at the start center; defaults: ruined_well 5x3x5 dry cobble ring 56 blocks + placement spacing 12/separation 4/salt 40101/biomeKeys plains+forest+taiga/minSurfaceHeight 33; registry all() extensions); src/world/TerrainGenerator.ts wired with optional structures param (default per seed) writing structure blocks after trees (overwrite); 11 new unit tests incl. end-to-end well generation; 1130 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 102-worldgen-golden-seeds. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (102 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement golden seed/hash/landmark regression fixtures across coordinates and versions, verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -1001,6 +1001,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "100 VERIFIED 4/4 (100%). Structure placement core: src/worldgen/StructurePlacement.ts (validated spacing/separation/salt/biomeKeys/minSurfaceHeight config; deterministic structureStartAtChunk with floor-division regions, region-seeded draws in fixed order, biome and terrain gates; StructurePlacementRegistry atomic); exact vectors for 4 regions; 11 new unit tests; 1119 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "64c8235760e3fd5e6b7aa5871b13046dc08892ba",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 1130/1130; StructureGenerator 11/11",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "101 VERIFIED 4/4 (100%). Small structure baseline: src/worldgen/StructureGenerator.ts (fail-fast templateKey checks; deterministic blocksForChunk with windowed starts, transforms, overwrite order; default ruined_well 5x3x5 dry cobble ring + placement spacing 12/separation 4/salt 40101/minSurfaceHeight 33); TerrainGenerator wired (optional structures param); 11 new unit tests incl. end-to-end well in a generated chunk; 1130 unit + 19 e2e pass, stable."
     }
   ]
 }
