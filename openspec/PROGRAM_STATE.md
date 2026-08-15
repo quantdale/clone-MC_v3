@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **122-potion-item-data — VERIFIED 100%**
-- Active implementation change: **122-potion-item-data — VERIFIED**
-- Next change: **123-brewing-stand — NOT YET ACTIVE (artifacts pending)**
-- 122 task ledger: **6 total task groups, 6 completed**
-- 122 completion: **100%**
-- 122 mandatory potion-item-data requirements: **PASS**
-- 122 required-test gate: **PASS — unit 1545/1545, E2E 21/21**
-- 122 advancement allowed: **Yes**
-- Session-start head: `a3b062bd868f04e5b3672b93fe4dcb1344d02233`
-- Validated head: `aa9ee0921e208e57cdb227c322447a78f08ab14a` (122 feature commit)
-- Next exact action: **Advance to 123-brewing-stand. Read its artifacts (and SPEC_AUTHORING_PROTOCOL.md if incomplete); author/validate proposal/design/tasks/specs/verification; implement brewing block entity, recipes, fuel/timing/persistence; verify full gate; commit + push; advance program state.**
+- Last completed change: **123-brewing-stand — VERIFIED 100%**
+- Active implementation change: **123-brewing-stand — VERIFIED**
+- Next change: **124-food-component-runtime — NOT YET ACTIVE (artifacts pending)**
+- 123 task ledger: **6 total task groups, 6 completed**
+- 123 completion: **100%**
+- 123 mandatory brewing-stand requirements: **PASS**
+- 123 required-test gate: **PASS — unit 1568/1568, E2E 21/21**
+- 123 advancement allowed: **Yes**
+- Session-start head: `49dfbab74177c62c0b0b5b7a0cc34c3c6bc5757d`
+- Validated head: `0960771424c02173f662bd6ebec277fedce211fc` (123 feature commit)
+- Next exact action: **Advance to 124-food-component-runtime. Read its artifacts (and SPEC_AUTHORING_PROTOCOL.md if incomplete); author/validate proposal/design/tasks/specs/verification; implement hunger/saturation/effect-application runtime from item data; verify full gate; commit + push; advance program state.**
 
 ## What 119 implemented
 
@@ -556,15 +556,60 @@ advancement exception was needed. Gameplay application of the payloads (drink/sp
 is an explicit non-goal of 122 (downstream changes 123/124 and a throwable-entity
 change) and 119/121 are unmodified. Advance to 123.
 
-## Next change: 123 (pending artifacts)
+## What 123 implemented
 
-`123-brewing-stand` is named in `CHANGE_SEQUENCE.md` with scope "Brewing block
-entity, recipes, fuel/timing/persistence." Per `AGENTS.md`, a change lacking full
-artifacts is a hard pre-implementation block. Author and validate those artifacts via
+Change 123 adds the brewing-stand block entity: a deterministic, immutable, per-tick
+state machine that brews one bottle from an ingredient using blaze-powder fuel and
+persists its progress. It is the engine + recipe context + fuel/timing + persistence —
+not block placement, `Game` tick wiring, or a menu UI (downstream). The 109/122
+contracts are unchanged.
+
+- `src/inventory/BrewingRecipes.ts` (NEW) — `BrewingContext` (`match`/`fuelBurnTicks`/
+  `brewTicks`), `BrewingRecipeOutput` (`{ base?, customEffects? }`), and
+  `createDefaultBrewingContext` with the starter recipe table: water+nether_wart→awkward
+  (empty effects); awkward+redstone→`speed 1×480`; awkward+glowstone→`speed 1×120, amp 2`;
+  awkward+fermented_spider_eye→mundane; awkward+speed/strength/healing reagents; blaze
+  powder fuel `1200` ticks; `brewTicks()` `400`. Unknown `(base, ingredient)` pairs return
+  `null`. Exports item/base constants.
+- `src/world/BrewingStandBlockEntity.ts` (NEW) — `BrewingState` (`bottle`/`fuel`/
+  `ingredient` slots + `brewTime`/`brewTimeTotal`/`fuelBurnTime`/`fuelBurnTimeTotal`),
+  `validateBrewingState` (rejects out-of-range timers, malformed slots/components),
+  `createBrewingState`, pure immutable `tickBrewing(state, ctx, ticks)` (fuel-light gated on
+  `canBrew`, active fuel always burns down, brew timer advances to `brewTicks()`, on
+  completion applies the recipe into `bottle.components['minecraft:potion_contents']` via
+  `createPotionContents` and consumes one ingredient, resetting timers; a recipe that cannot
+  form a valid potion is caught defensively and pauses), `serializeBrewingState`/
+  `deserializeBrewingState` (lossless, re-validating), `BlockEntityInstance` factory/read/
+  update (`BREWING_STAND_TYPE_KEY`), and progress helpers `brewingIsLit`/
+  `brewingBrewProgress`/`brewingFuelFraction`.
+- `src/inventory/MenuTransaction.ts` (EDIT) — `MenuSlot` gains an optional additive
+  `components?: Readonly<Record<string, unknown>>`, carried by the slot parser and validated
+  when present. No existing call site changes; 109/122 suites stay green.
+
+## Validation evidence (123)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1568/1568 (prior 1545 + 23 new: BrewingRecipes 9, BrewingStandBlockEntity 14)
+- production build: PASS (`tsc --noEmit && vite build`, 69 modules)
+- E2E: PASS 21/21 (no Game/stack integration touched beyond MenuSlot)
+
+## Advancement decision
+
+Change 123 is **VERIFIED** at 6/6 task groups (100%). All gates are green: typecheck, lint,
+the 1568-unit suite, production build, and the required E2E suite (21/21). No advancement
+exception was needed. Block placement / `Game` tick wiring / menu UI are explicit non-goals
+of 123 (downstream changes) and 109/122 are unmodified. Advance to 124.
+
+## Next change: 124 (pending artifacts)
+
+`124-food-component-runtime` is named in `CHANGE_SEQUENCE.md` with scope "Hunger/saturation/
+effect application from item data." Per `AGENTS.md`, a change lacking full artifacts is a
+hard pre-implementation block. Author and validate those artifacts via
 `SPEC_AUTHORING_PROTOCOL.md` before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 122
-verification. Change 123 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 123
+verification. Change 124 is the next change; its artifacts must be authored and
 validated before implementation begins.

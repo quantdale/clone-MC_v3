@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "122-potion-item-data",
+  "currentChange": "123-brewing-stand",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "122-potion-item-data",
-  "nextChange": "123-brewing-stand",
+  "lastCompletedChange": "123-brewing-stand",
+  "nextChange": "124-food-component-runtime",
   "completedTasks": 6,
   "totalTasks": 6,
   "completionPercentage": 100,
@@ -15,9 +15,9 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "a3b062bd868f04e5b3672b93fe4dcb1344d02233",
-  "lastCompletedTask": "122: all 6 task groups complete; potion-item-data VERIFIED. PotionItemData.ts (PotionKind/PotionEffectData/PotionContents/PotionConsumePayload/PotionSplashPayload, POTION_CONTENTS_COMPONENT, strict createPotionContents factory, potionContentsComponentType) + pure getEffectiveEffects/buildConsumePayload/buildSplashPayload; registered in createDefaultStackComponentRegistry (now 3 types). 23 unit tests. 119/121 contracts unchanged. Full gate green (typecheck, lint, 1545 unit, build, 21 e2e).",
-  "nextExactAction": "Advance to 123-brewing-stand. Read its artifacts (and SPEC_AUTHORING_PROTOCOL.md if incomplete); author/validate proposal/design/tasks/specs/verification; implement brewing block entity, recipes, fuel/timing/persistence; verify full gate; commit + push; advance program state.",
+  "sessionStartHead": "49dfbab74177c62c0b0b5b7a0cc34c3c6bc5757d",
+  "lastCompletedTask": "123: all 6 task groups complete; brewing-stand VERIFIED. BrewingRecipes.ts (BrewingContext/BrewingRecipeOutput/createDefaultBrewingContext, starter table water->awkward + awkward modifiers + reagents, blaze-powder fuel 1200 ticks, brewTicks 400), BrewingStandBlockEntity.ts (BrewingState, validateBrewingState, createBrewingState, immutable tickBrewing fuel-light/brew/apply/consume, serialize/deserialize, BlockEntityInstance factory/read/update, progress helpers), MenuTransaction.MenuSlot gains optional components. 23 unit tests. 1568-unit suite green; 21/21 E2E green.",
+  "nextExactAction": "Advance to 124-food-component-runtime. Read its artifacts (and SPEC_AUTHORING_PROTOCOL.md if incomplete); author/validate proposal/design/tasks/specs/verification; implement hunger/saturation/effect-application runtime from item data; verify full gate; commit + push; advance program state.",
   "blockers": [],
   "validationResults": [
     {
@@ -1199,10 +1199,19 @@
       "e2e": "PASS 21/21",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "122 VERIFIED 6/6; potion contents component + consume/splash payload primitives; no consumer wiring (downstream)."
+    },
+    {
+      "head": "0960771424c02173f662bd6ebec277fedce211fc",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 1568/1568 (prior 1545 + 23 new: BrewingRecipes 9, BrewingStandBlockEntity 14)",
+      "build": "PASS via vite production build (69 modules)",
+      "e2e": "PASS 21/21",
+      "note": "123 VERIFIED 6/6 task groups (100%). Brewing stand engine + recipe context + fuel/timing + persistence; MenuSlot.components additive."
     }
   ],
   "publishedHead": "3d19ae7c290e51b9b27bb8679a7134c98a847cba",
   "publishedAt": "2026-08-15T04:27:31Z",
-  "lastValidatedHead": "aa9ee0921e208e57cdb227c322447a78f08ab14a",
-  "lastKnownHead": "aa9ee0921e208e57cdb227c322447a78f08ab14a"
+  "lastValidatedHead": "0960771424c02173f662bd6ebec277fedce211fc",
+  "lastKnownHead": "0960771424c02173f662bd6ebec277fedce211fc"
 }
