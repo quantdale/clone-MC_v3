@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **138-mob-spawn-cycle — VERIFIED 100%**
-- Active implementation change: **138-mob-spawn-cycle — VERIFIED**
-- Next change: **139-passive-wander-ai — NOT YET ACTIVE (artifacts pending)**
-- 138 task ledger: **5 total task groups, 5 completed**
-- 138 completion: **100%**
-- 138 mandatory mob-spawn-cycle requirements: **PASS**
-- 138 required-test gate: **PASS — unit 1789/1789, E2E 21/21**
-- 138 advancement allowed: **Yes**
-- Session-start head: `22dee8a1a1b6f4e0261ead9a878ccff69cb2a385`
-- Validated head: `d53e6fb591885576b7a793b8e456de78a08be19a` (138 feature commit)
-- Next exact action: **Advance to 139-passive-wander-ai. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (wander/look/avoid-water baseline behavior, building on 136 GoalSelector + 130 EntityPhysics); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **139-passive-wander-ai — VERIFIED 100%**
+- Active implementation change: **139-passive-wander-ai — VERIFIED**
+- Next change: **140-hostile-target-ai — NOT YET ACTIVE (artifacts pending)**
+- 139 task ledger: **5 total task groups, 5 completed**
+- 139 completion: **100%**
+- 139 mandatory passive-wander-ai requirements: **PASS**
+- 139 required-test gate: **PASS — unit 1798/1798, E2E 21/21**
+- 139 advancement allowed: **Yes**
+- Session-start head: `d53e6fb591885576b7a793b8e456de78a08be19a`
+- Validated head: `221a52c37e07c42c6c62c0cc27666bc06f6a2a47` (139 feature commit)
+- Next exact action: **Advance to 140-hostile-target-ai. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (target acquisition, chase, attack-range baseline behavior, building on 136 GoalSelector + 135 AStarPathfinding); implement; verify full gate; commit + push; advance program state.**
 
 ## What 119 implemented
 
@@ -735,6 +735,42 @@ the 1631-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Bonemeal (127), hoe tilling, and a rain/weather hook are explicit non-goals
 (documented). Advance to 127.
 
+## What 139 implemented
+
+Change 139 adds the first two concrete 136 `Goal` implementations. It is the behaviors only — no
+pathfinding-through-obstacles, no terrain-following target search, and no `Game`/mob-spawning wiring.
+
+- `src/simulation/PassiveWanderAI.ts` (NEW) — `WanderGoal` (`Move`-flagged; `canUse` gates on a
+  random per-tick start chance then searches up to 10 attempts for a target column around the
+  entity's current position at its current rounded `y` that is not `Water` (134 `classifyNode`) and
+  passes `canStandAt`; `tick` steers `vx`/`vz` toward the cached target scaled by `speed`, never
+  touching `vy`; `canContinueToUse` is `false` at arrival (within `arrivalRadius`), at
+  `maxDurationTicks`, or when the entity is gone; `stop` zeroes horizontal velocity) and `LookGoal`
+  (`Look`-flagged filler; `tick` applies a new random yaw at a per-tick `changeChance`, touching
+  nothing else). Both consume randomness only through an injected 054 `SeedRng`.
+- Tests: `tests/unit/PassiveWanderAI.test.ts` (NEW, 9) — an all-water world never yields a target
+  (20 repeated `canUse()` calls); an open area always yields one; a missing entity fails `canUse`;
+  steering leaves `vy` untouched; a `radius: 0` target collapses to the entity's own column for a
+  clean arrival/stop test; a `maxDurationTicks` timeout; `LookGoal`'s `changeChance: 1`/`0`
+  branches (exploiting `nextFloat()`'s `[0, 1)` range for deterministic branch selection); and full
+  determinism across two independently-seeded-identically instances.
+
+## Validation evidence (139)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`; fixed an empty-interface lint error by using a type alias for
+  `ResolvedWanderOptions`)
+- unit: PASS 1798/1798 (prior 1789 + 9 new `PassiveWanderAI.test.ts`)
+- production build: PASS (`tsc --noEmit && vite build`, 83 modules — unchanged, no consumer yet)
+- E2E: PASS 21/21 (no existing file touched; nothing consumes the new module)
+
+## Advancement decision
+
+Change 139 is **VERIFIED** at 5/5 task groups (100%). All gates are green: typecheck, lint, the
+1798-unit suite, production build, and the required E2E suite (21/21). No advancement exception was
+needed. Pathfinding-through-obstacles, terrain-following search, and `Game`/mob-spawning wiring are
+explicit non-goals (documented, deferred to 145+). Advance to 140.
+
 ## What 138 implemented
 
 Change 138 adds per-category live counting, deterministic in-chunk candidate selection, and a
@@ -1189,15 +1225,15 @@ the 1654-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Sapling/tree bonemeal is an explicit non-goal (deferred; no Sapling block
 exists) and the `FertilizerRegistry` extension point is documented. Advance to 128.
 
-## Next change: 139 (pending artifacts)
+## Next change: 140 (pending artifacts)
 
-`139-passive-wander-ai` is named in `CHANGE_SEQUENCE.md` with scope "Wander/look/avoid-water
-baseline behavior." Per `AGENTS.md`, a change lacking full artifacts is
+`140-hostile-target-ai` is named in `CHANGE_SEQUENCE.md` with scope "Target acquisition, chase,
+attack-range baseline behavior." Per `AGENTS.md`, a change lacking full artifacts is
 a hard pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md`
 before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 138
-verification. Change 139 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 139
+verification. Change 140 is the next change; its artifacts must be authored and
 validated before implementation begins.
