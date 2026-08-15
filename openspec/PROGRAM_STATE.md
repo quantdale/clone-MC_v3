@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **129-entity-core — VERIFIED 100%**
-- Active implementation change: **129-entity-core — VERIFIED**
-- Next change: **130-entity-collision-and-physics — NOT YET ACTIVE (artifacts pending)**
-- 129 task ledger: **6 total task groups, 6 completed**
-- 129 completion: **100%**
-- 129 mandatory entity-core requirements: **PASS**
-- 129 required-test gate: **PASS — unit 1694/1694, E2E 21/21**
-- 129 advancement allowed: **Yes**
-- Session-start head: `559f468221fcc7e5337e12269018076ee9a72107`
-- Validated head: `227abe0dafe9a55524b5916d065694715ecd3b5c` (129 feature commit)
-- Next exact action: **Advance to 130-entity-collision-and-physics. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (shape-based world/entity movement and gravity for non-player entities, building on 129 EntityManager + 056/057 VoxelShape/CollisionResolver); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **130-entity-collision-and-physics — VERIFIED 100%**
+- Active implementation change: **130-entity-collision-and-physics — VERIFIED**
+- Next change: **131-entity-persistence-runtime — NOT YET ACTIVE (artifacts pending)**
+- 130 task ledger: **5 total task groups, 5 completed**
+- 130 completion: **100%**
+- 130 mandatory entity-collision-and-physics requirements: **PASS**
+- 130 required-test gate: **PASS — unit 1702/1702, E2E 21/21**
+- 130 advancement allowed: **Yes**
+- Session-start head: `227abe0dafe9a55524b5916d065694715ecd3b5c`
+- Validated head: `ed08458601c629aacae84771d6248472c403d3cc` (130 feature commit)
+- Next exact action: **Advance to 131-entity-persistence-runtime. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (save/load persistent entities through the existing 037 SerializedEntity/EntityRepository store, building on 129 EntityManager); implement; verify full gate; commit + push; advance program state.**
 
 ## What 119 implemented
 
@@ -735,6 +735,42 @@ the 1631-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Bonemeal (127), hoe tilling, and a rain/weather hook are explicit non-goals
 (documented). Advance to 127.
 
+## What 130 implemented
+
+Change 130 adds gravity + shape-aware collision movement for non-player entities, built on the
+057 `CollisionResolver`/056 `VoxelShape` primitive and the 129 `EntityManager`. It is the physics
+step + a thin manager wrapper only — no `PlayerPhysics` migration, no per-type bounding box on the
+017 `EntityRegistry`, no sub-stepping, no fluid physics, and no `Game` tick-loop wiring.
+
+- `src/simulation/EntityPhysics.ts` (NEW) — `EntityPhysicsBox` (`width/height/depth`),
+  `EntityPhysicsOptions` (`gravity?`, `terminalVelocity?`), `DEFAULT_GRAVITY=26.0`,
+  `DEFAULT_TERMINAL_VELOCITY=54.0` (duplicated from `CONFIG.player`'s values, not imported, to keep
+  non-player physics decoupled from the player config namespace); `computeEntityPhysicsStep` (pure:
+  applies gravity to `vy` with a terminal-velocity clamp, converts the entity's center/feet
+  `EntityTransform` to a `CollisionBox`, calls `CollisionResolver.move`, converts back, zeroes any
+  collided axis's velocity, and reports `onGround` — true only for a downward Y collision);
+  `tickEntityPhysics` (reads one entity via `EntityManager.get`, no-ops on a missing/`REMOVED` id or
+  non-positive/non-finite `dt`, else runs the step and writes back via `setTransform`/`setVelocity`).
+- Tests: `tests/unit/EntityPhysics.test.ts` (NEW, 8) — free-fall gravity/terminal-velocity clamp,
+  purity, floor landing (`onGround`, vy zeroed, swept-path clamp to the face), horizontal wall
+  collision (only that axis zeroed), ceiling collision (vy zeroed, not grounded), and
+  `tickEntityPhysics`'s no-op/persist contract.
+
+## Validation evidence (130)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1702/1702 (prior 1694 + 8 new `EntityPhysics.test.ts`)
+- production build: PASS (`tsc --noEmit && vite build`, 83 modules — unchanged, no consumer yet)
+- E2E: PASS 21/21 (no existing file touched; nothing consumes the new module)
+
+## Advancement decision
+
+Change 130 is **VERIFIED** at 5/5 task groups (100%). All gates are green: typecheck, lint, the
+1702-unit suite, production build, and the required E2E suite (21/21). No advancement exception was
+needed. `PlayerPhysics` migration, per-type bounding-box storage, sub-stepping, fluid physics, and
+`Game` tick-loop wiring are explicit non-goals (documented, deferred). Advance to 131.
+
 ## What 129 implemented
 
 Change 129 adds a general, minimal runtime entity model shared by future entity kinds: transform,
@@ -859,15 +895,15 @@ the 1654-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Sapling/tree bonemeal is an explicit non-goal (deferred; no Sapling block
 exists) and the `FertilizerRegistry` extension point is documented. Advance to 128.
 
-## Next change: 130 (pending artifacts)
+## Next change: 131 (pending artifacts)
 
-`130-entity-collision-and-physics` is named in `CHANGE_SEQUENCE.md` with scope "Shape-based
-world/entity movement and gravity for non-player entities." Per `AGENTS.md`, a change lacking full
-artifacts is a hard pre-implementation block. Author and validate those artifacts via
-`SPEC_AUTHORING_PROTOCOL.md` before any production code.
+`131-entity-persistence-runtime` is named in `CHANGE_SEQUENCE.md` with scope "Save/load persistent
+entities through the existing entity store." Per `AGENTS.md`, a change lacking full artifacts is a
+hard pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md`
+before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 129
-verification. Change 130 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 130
+verification. Change 131 is the next change; its artifacts must be authored and
 validated before implementation begins.
