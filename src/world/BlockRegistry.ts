@@ -38,6 +38,7 @@ export const enum BlockId {
   EnchantingTable = 32,
   Bookshelf = 33,
   Wheat = 34,
+  Farmland = 35,
 }
 
 /**
@@ -47,6 +48,15 @@ export const enum BlockId {
  */
 export const WHEAT_SCHEMA = new BlockPropertySchema([
   { kind: 'integer', name: 'age', min: 0, max: 7 },
+]);
+
+/**
+ * Hydration-level property schema for farmland: a single integer `moisture` in
+ * [0, 7] (0 = dry, 7 = fully hydrated). Consumed by the 007 state registry to
+ * enumerate exactly 8 farmland states.
+ */
+export const FARMLAND_SCHEMA = new BlockPropertySchema([
+  { kind: 'integer', name: 'moisture', min: 0, max: 7 },
 ]);
 
 /** Tool families used for preferred-tool mining bonuses. */
@@ -620,6 +630,25 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       lootTable: rid('loot/wheat'),
       propertySchema: WHEAT_SCHEMA,
       defaultState: { age: 0 },
+    },
+    {
+      id: BlockId.Farmland,
+      resourceId: rid('farmland'),
+      key: 'farmland',
+      name: 'Farmland',
+      solid: true,
+      opaque: true,
+      breakable: true,
+      renderCategory: RenderCategory.Opaque,
+      topTile: 2,
+      bottomTile: 2,
+      sideTile: 2,
+      hardness: 0.6,
+      preferredTool: ToolKind.Shovel,
+      dropItem: rid('dirt'),
+      lootTable: rid('loot/dirt'),
+      propertySchema: FARMLAND_SCHEMA,
+      defaultState: { moisture: 0 },
     },
   ];
   return new BlockTypeRegistry(defs);

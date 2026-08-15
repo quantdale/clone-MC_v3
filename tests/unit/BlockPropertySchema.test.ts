@@ -205,10 +205,11 @@ describe('block property schema', () => {
 
   it('current blocks resolve to EMPTY_SCHEMA with unchanged gameplay', () => {
     const registry = createDefaultBlockRegistry();
-    // Every block except the stateful wheat crop declares no property schema and
-    // must resolve empty; wheat resolves its age schema (125).
+    // Every block except the stateful wheat crop and farmland declares no
+    // property schema and must resolve empty; wheat resolves its age schema
+    // (125) and farmland its moisture schema (126).
     for (const def of registry.all()) {
-      if (def.key === 'wheat') {
+      if (def.key === 'wheat' || def.key === 'farmland') {
         expect(registry.getPropertySchema(def.id).isEmpty).toBe(false);
         continue;
       }

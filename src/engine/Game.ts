@@ -23,6 +23,7 @@ import { World } from '../world/World';
 import { BlockStateRegistry, createDefaultBlockStateRegistry } from '../world/BlockStateRegistry';
 import { BlockBehaviorRegistry } from '../simulation/BlockBehavior';
 import { CropBlockBehavior } from '../simulation/CropBehavior';
+import { FarmlandBlockBehavior } from '../simulation/FarmlandBehavior';
 import { RandomTickSelector } from '../simulation/RandomTickSelector';
 import { WorldBlockAccess } from '../simulation/WorldBlockAccess';
 import { Player } from '../player/Player';
@@ -87,6 +88,7 @@ export class Game {
   /** Block behaviors (050): crop growth registered against the wheat block. */
   private readonly behaviorRegistry: BlockBehaviorRegistry;
   private readonly cropBehavior: CropBlockBehavior;
+  private readonly farmlandBehavior: FarmlandBlockBehavior;
   /** Deterministic random-tick selection (048) per ticking section. */
   private readonly randomTickSelector: RandomTickSelector;
   /** Behavior-facing world access adapter (125). */
@@ -171,8 +173,10 @@ export class Game {
     validateItemBlockCrossReferences(this.blockRegistry, this.itemRegistry);
     this.stateRegistry = createDefaultBlockStateRegistry();
     this.cropBehavior = new CropBlockBehavior(BlockId.Wheat);
+    this.farmlandBehavior = new FarmlandBlockBehavior();
     this.behaviorRegistry = new BlockBehaviorRegistry();
     this.behaviorRegistry.register(this.blockRegistry.get(BlockId.Wheat).key, this.cropBehavior);
+    this.behaviorRegistry.register(this.blockRegistry.get(BlockId.Farmland).key, this.farmlandBehavior);
     this.randomTickSelector = new RandomTickSelector();
     this.lootTables = new LootTableRegistry(buildCurrentLootTables(this.blockRegistry, this.itemRegistry), this.itemRegistry);
     this.enchantmentRegistry = createDefaultEnchantmentRegistry();
@@ -552,7 +556,7 @@ export class Game {
           cz,
           this.simTick,
           this.seed,
-          (x, y, z) => this.isCropAt(x, y, z),
+          (x, y, z) => this.isRandomTickEligible(x, y, z),
         );
         for (const [x, y, z] of positions) {
           const blockKey = this.blockRegistry.get(this.world.getBlock(x, y, z)).key;
@@ -565,7 +569,7 @@ export class Game {
   }
 
   /** Whether the block at (x, y, z) has a registered `onRandomTick` behavior. */
-  private isCropAt(x: number, y: number, z: number): boolean {
+  private isRandomTickEligible(x: number, y: number, z: number): boolean {
     const id = this.world.getBlock(x, y, z);
     if (id === BlockId.Air) {
       return false;

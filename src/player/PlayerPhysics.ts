@@ -2,6 +2,7 @@ import { CONFIG } from '../config';
 import { Player } from './Player';
 import { WorldAccess } from '../world/WorldAccess';
 import { BlockId, BlockRegistry } from '../world/BlockRegistry';
+import { trampleFarmland } from '../simulation/FarmlandBehavior';
 
 /**
  * Axis-aligned bounding box collision resolution for the player.
@@ -242,6 +243,8 @@ export class PlayerPhysics {
         player.onGround = true;
         this.landingDistance = Math.max(this.landingDistance, player.fallDistance);
         player.fallDistance = 0;
+        // Landing on farmland tramples it back to dirt (126).
+        trampleFarmland(this.world, x, y, z);
       } else {
         player.position.y = y - player.height;
       }

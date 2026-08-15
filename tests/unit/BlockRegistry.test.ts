@@ -30,6 +30,7 @@ describe('block registry', () => {
       [BlockId.EnchantingTable, 'enchanting_table'],
       [BlockId.Bookshelf, 'bookshelf'],
       [BlockId.Wheat, 'wheat'],
+      [BlockId.Farmland, 'farmland'],
     ];
     for (const [id, key] of required) {
       const def = registry.get(id);
@@ -39,7 +40,7 @@ describe('block registry', () => {
       expect(registry.getByKey(def.key)?.id).toBe(id);
     }
     // The ids are unique and map back to the same definitions.
-    expect(registry.all()).toHaveLength(23);
+    expect(registry.all()).toHaveLength(24);
   });
 
   it('registers the enchanting-table and bookshelf blocks (120)', () => {
@@ -94,6 +95,7 @@ describe('block registry', () => {
     expectDef(BlockId.Cobblestone, { solid: true, opaque: true, breakable: true, topTile: 18, bottomTile: 18, sideTile: 18 });
     expectDef(BlockId.Bricks, { solid: true, opaque: true, breakable: true, topTile: 19, bottomTile: 19, sideTile: 19 });
     expectDef(BlockId.Lava, { solid: false, opaque: false, breakable: false, topTile: 20, bottomTile: 20, sideTile: 20 });
+    expectDef(BlockId.Farmland, { solid: true, opaque: true, breakable: true, topTile: 2, bottomTile: 2, sideTile: 2 });
   });
 
   it('exposes solidity, opacity, breakability', () => {

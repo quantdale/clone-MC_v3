@@ -240,11 +240,11 @@ describe('block-state runtime registry', () => {
   });
 
   // --- current-block compatibility / no storage migration ---
-  it('keeps current simple blocks at one state each; wheat enumerates 8 (125)', () => {
+  it('keeps current simple blocks at one state each; wheat and farmland enumerate 8 (125/126)', () => {
     const blockRegistry = createDefaultBlockRegistry();
     const stateRegistry = createDefaultBlockStateRegistry();
-    // 22 single-state blocks + 8 wheat states.
-    expect(stateRegistry.size).toBe(blockRegistry.all().length - 1 + 8);
+    // 22 single-state blocks + 8 wheat states + 8 farmland states.
+    expect(stateRegistry.size).toBe(blockRegistry.all().length - 2 + 8 + 8);
     for (const defn of blockRegistry.all()) {
       const states = stateRegistry.statesForBlock(defn.id);
       if (defn.key === 'wheat') {
@@ -253,6 +253,12 @@ describe('block-state runtime registry', () => {
           ['0', '1', '2', '3', '4', '5', '6', '7'],
         );
         expect(stateRegistry.getDefaultState(defn.id).getProperty('age')).toBe('0');
+      } else if (defn.key === 'farmland') {
+        expect(states.length).toBe(8);
+        expect(states.map((s) => s.getProperty('moisture'))).toEqual(
+          ['0', '1', '2', '3', '4', '5', '6', '7'],
+        );
+        expect(stateRegistry.getDefaultState(defn.id).getProperty('moisture')).toBe('0');
       } else {
         expect(states.length).toBe(1);
         expect(states[0]).toBe(stateRegistry.getDefaultState(defn.id));
