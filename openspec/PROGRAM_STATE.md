@@ -3,17 +3,63 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **146-hostile-mob-baseline — VERIFIED 100%**
-- Active implementation change: **146-hostile-mob-baseline — VERIFIED**
-- Next change: **147-animal-breeding — NOT YET ACTIVE (artifacts pending)**
-- 146 task ledger: **20 total tasks, 20 completed**
-- 146 completion: **100%**
-- 146 mandatory hostile-mob-baseline requirements: **PASS**
-- 146 required-test gate: **PASS — unit 1896/1896, E2E 22/22**
-- 146 advancement allowed: **Yes**
-- Session-start head: `59267b96829bd23822eadc903f3d834d839d7a3c`
-- Validated head: `0cdcf7a9651dc962dc26b9395350d542e0694504` (146 feature commit)
-- Next exact action: **Advance to 147-animal-breeding. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (love state, food triggers, child spawn, cooldown — building on 145's PassiveMobSystem/pig population); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **147-animal-breeding — VERIFIED 100%**
+- Active implementation change: **147-animal-breeding — VERIFIED**
+- Next change: **148-mob-drop-loot — NOT YET ACTIVE (artifacts pending)**
+- 147 task ledger: **23 total tasks, 23 completed**
+- 147 completion: **100%**
+- 147 mandatory animal-breeding requirements: **PASS**
+- 147 required-test gate: **PASS — unit 1910/1910, E2E 22/22**
+- 147 advancement allowed: **Yes**
+- Session-start head: `c95c5689ea15e4e26380179a42044f6255057a31`
+- Validated head: `1519f6aa53e599dd66fd5016f97c4a75e367e738` (147 feature commit)
+- Next exact action: **Advance to 148-mob-drop-loot. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (entity death routes through 011's loot-table primitives and 111/112's item-entity/XP-orb spawning — needs a minimal entity-health/death model for pig and zombie first, since neither 145 nor 146 wired one in); implement; verify full gate; commit + push; advance program state.**
+
+## What 147 implemented
+
+Change 147 adds the animal-breeding state machine — love mode, breeding cooldown, in-range
+same-species pair matching, and child spawning — operating on 145's existing pig population via
+`PassiveMobSystem.getManager()`/`getActivePigs()`, with no new entity id-space. It is a baseline
+state machine and `Game` wiring — not player-initiated feeding interaction (the same
+entity-hit-raycast gap 146 already flagged for player→mob combat), not inventory-item consumption,
+not baby-growth/ageing, not love-mode visuals (all documented non-goals, several deferred to a
+future interaction-wiring change).
+
+- `src/simulation/AnimalBreeding.ts` (NEW) — `LOVE_MODE_DURATION_TICKS=600`/
+  `BREEDING_COOLDOWN_TICKS=6000`/`BREEDING_RANGE=8`; `BreedableSpecies` interface (`typeId`,
+  `breedingFoodItemId`); `LoveStateTracker` (per-entity love/cooldown expiry maps; `feed` enters
+  love mode only for the correct breeding food while off cooldown; `completeBreeding` clears love
+  and starts the cooldown; `isInLove`/`isOnCooldown`/`clear`); `findBreedingPair` (pure,
+  deterministic same-species/in-love/in-range nested-scan match); `childSpawnTransform` (horizontal
+  midpoint, lower-of-two-parents `y`); `BreedingSystem` (owns one tracker + its own internal frame
+  counter, matching 145/146's identical per-frame-not-fixed-20TPS cadence convention; `feedEntity`
+  forwards to the tracker; `tick` spawns at most one child per call via the caller-supplied
+  `EntityManager.spawn`, gated on a population cap, completing breeding for both parents in the
+  same call).
+- `src/engine/Game.ts` (EDIT) — constructs one `BreedingSystem` for the pig species (breeding food
+  `ItemId.Wheat`); ticks it every frame against `passiveMobs.getManager()`/`getActivePigs()` with
+  `SPAWN_CAP` as the population cap — a bred child is spawned on `PassiveMobSystem`'s own
+  `EntityManager`, so it is automatically picked up by `PassiveMobSystem.tick`'s existing
+  goal-assignment logic and rendered by `PassiveMobRenderer` the very next frame, with zero
+  additional wiring in either module.
+
+## Validation evidence (147)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1910/1910 (prior 1896 + 14 new: `LoveStateTracker` feed/cooldown/expiry gating,
+  `findBreedingPair` species/love/range filtering, `BreedingSystem.tick` spawn/no-spawn/
+  population-cap cases using a real `EntityManager`)
+- production build: PASS (`tsc --noEmit && vite build`, 103 modules, up from 102 — confirms
+  `Game.ts` now consumes the new module)
+- E2E: PASS 22/22 (all pre-existing assertions unaffected; no live-game breeding-trigger assertion
+  added — nothing calls `feedEntity` in the live game yet, per the proposal's Definition of Done)
+
+## Advancement decision (147)
+
+Advance. 100% task completion, full gate green, no MUST/SHALL requirement unmet, no regression.
+Real player→entity feeding interaction remains an explicit, flagged non-goal — the same
+entity-interaction gap 146 already flagged for player→mob combat. Next change: 148-mob-drop-loot.
 
 ## What 146 implemented
 
