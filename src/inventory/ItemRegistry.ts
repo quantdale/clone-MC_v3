@@ -11,6 +11,7 @@
 
 import { type ResourceId, createResourceId, resourceIdToString } from '../data/ResourceId';
 import { RegistryError } from '../data/Registry';
+import { TagRegistry, type TagDefinition, type TagMember } from '../data/TagRegistry';
 import { BlockTypeRegistry, ToolKind } from '../world/BlockRegistry';
 
 /** Item ids are stable numeric identifiers for inventory items. */
@@ -63,6 +64,8 @@ export interface ItemTypeDefinition {
   maxDurability?: number;
   /** Tool family for a tool item. */
   toolKind?: ToolKind;
+  /** Tier of a tool item; higher tiers satisfy higher block mining levels. `0` (default) for non-tools. */
+  toolTier?: number;
   /** Mining speed multiplier supplied by a tool. */
   toolPower?: number;
   /** Whether this item is edible. */
@@ -341,6 +344,7 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       stackSize: 64,
       toolKind: ToolKind.Pickaxe,
       toolPower: 2.2,
+      toolTier: 1,
       maxDurability: 59,
     },
     {
@@ -352,6 +356,7 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       stackSize: 64,
       toolKind: ToolKind.Pickaxe,
       toolPower: 4,
+      toolTier: 2,
       maxDurability: 131,
     },
     {
@@ -363,6 +368,7 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       stackSize: 64,
       toolKind: ToolKind.Axe,
       toolPower: 2.4,
+      toolTier: 1,
       maxDurability: 59,
     },
     {
@@ -409,6 +415,39 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
     },
   ];
   return new ItemTypeRegistry(defs);
+}
+
+/** Item tag backing each tool kind, in the `minecraft:tools/<kind>` form. */
+export const TOOLS_TAG_BY_KIND: Readonly<Record<ToolKind, ResourceId>> = {
+  [ToolKind.Pickaxe]: createResourceId('minecraft', 'tools/pickaxe'),
+  [ToolKind.Axe]: createResourceId('minecraft', 'tools/axe'),
+  [ToolKind.Shovel]: createResourceId('minecraft', 'tools/shovel'),
+};
+
+/**
+ * Build and finalize the item-domain tag registry that declares which tool
+ * items belong to each tool kind.
+ *
+ * Membership is derived directly from each item definition's `toolKind`, so the
+ * tags cannot reference an item absent from the registry; finalization validates
+ * membership against `itemRegistry.hasByResourceId` and throws on any missing
+ * reference. The resulting registry is frozen and O(1) to query.
+ */
+export function createDefaultItemTags(itemRegistry: ItemTypeRegistry): TagRegistry {
+  const membersByKind = new Map<ToolKind, TagMember[]>();
+  for (const def of itemRegistry.all()) {
+    if (def.toolKind === undefined) continue;
+    const list = membersByKind.get(def.toolKind) ?? [];
+    list.push({ kind: 'resource', id: def.resourceId });
+    membersByKind.set(def.toolKind, list);
+  }
+  const defs: TagDefinition[] = [];
+  for (const kind of [ToolKind.Pickaxe, ToolKind.Axe, ToolKind.Shovel]) {
+    defs.push({ id: TOOLS_TAG_BY_KIND[kind], members: membersByKind.get(kind) ?? [] });
+  }
+  const registry = new TagRegistry('item', defs);
+  registry.finalize((rid) => itemRegistry.hasByResourceId(rid));
+  return registry;
 }
 
 /**

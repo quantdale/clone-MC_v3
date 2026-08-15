@@ -1,10 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
 import { Player } from '../../src/player/Player';
 import { PlayerInteraction } from '../../src/player/PlayerInteraction';
 import type { InputState } from '../../src/engine/InputTypes';
-import { BlockId, createDefaultBlockRegistry } from '../../src/world/BlockRegistry';
-import { ItemId, createDefaultItemRegistry } from '../../src/inventory/ItemRegistry';
+import { BlockId, createDefaultBlockRegistry, createDefaultBlockTags } from '../../src/world/BlockRegistry';
+import { ItemId, createDefaultItemRegistry, createDefaultItemTags } from '../../src/inventory/ItemRegistry';
+import { HarvestRules } from '../../src/world/HarvestRules';
 import { ItemEntityManager } from '../../src/simulation/ItemEntityManager';
 
 function makeWorld(): import('../../src/world/WorldAccess').WorldAccess {
@@ -233,6 +234,39 @@ describe('player interaction selection', () => {
     expect(world.getBlock(2, 1, 0)).toBe(BlockId.Air);
     expect(durability).toBe(4);
     expect(toolBreaks).toBe(0);
+    interaction.dispose();
+  });
+
+  it('removes a non-harvestable block without spawning a drop when untooled', () => {
+    const player = new Player({ position: new THREE.Vector3(0.5, 0, 0.5) });
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 20);
+    camera.position.copy(player.eyePosition);
+    camera.lookAt(10, player.eyePosition.y, player.eyePosition.z);
+    camera.updateMatrixWorld(true);
+    const world = makeMutableWorld();
+    const itemEntities = new ItemEntityManager({ itemRegistry: createDefaultItemRegistry(), rng: Math.random });
+    const spawnSpy = vi.spyOn(itemEntities, 'spawnLootStacks');
+    const harvestRules = new HarvestRules(
+      createDefaultBlockTags(createDefaultBlockRegistry()),
+      createDefaultItemTags(createDefaultItemRegistry()),
+    );
+    const interaction = new PlayerInteraction({
+      world,
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
+      // Stone item (no toolKind) held while breaking stone (miningLevel 1).
+      selector: { getSelectedItemId: () => BlockId.Stone },
+      player,
+      camera,
+      input: makeInput({ breakRequested: true, held: false }),
+      itemEntities,
+      harvestRules,
+    });
+
+    interaction.update(0.016);
+
+    expect(world.getBlock(2, 1, 0)).toBe(BlockId.Air);
+    expect(spawnSpy).not.toHaveBeenCalled();
     interaction.dispose();
   });
 });

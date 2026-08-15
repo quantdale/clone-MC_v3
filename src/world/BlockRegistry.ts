@@ -10,6 +10,7 @@
 
 import { type ResourceId, createResourceId, resourceIdToString } from '../data/ResourceId';
 import { RegistryError } from '../data/Registry';
+import { TagRegistry, type TagDefinition, type TagMember } from '../data/TagRegistry';
 import { type BlockPropertySchema, EMPTY_SCHEMA } from './BlockPropertySchema';
 
 /** Block ids are stable numeric identifiers for world blocks only. */
@@ -77,6 +78,13 @@ export interface BlockTypeDefinition {
   hardness: number;
   /** Preferred tool family for efficient mining, when applicable. */
   preferredTool?: ToolKind;
+  /**
+   * Minimum tool tier required to harvest (drop) this block. `0` (the default
+   * when omitted) means the block drops even when broken by hand; a higher value
+   * requires a tool of the matching kind whose `toolTier` meets or exceeds this
+   * level, otherwise breaking removes the block without a drop.
+   */
+  miningLevel?: number;
   /**
    * Inventory item dropped when this block is broken, as a resource id. The
    * referenced item MUST exist in the item registry (validated at init). Omitted
@@ -277,6 +285,7 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       sideTile: 4,
       hardness: 1.5,
       preferredTool: ToolKind.Pickaxe,
+      miningLevel: 1,
       dropItem: rid('stone'),
       lootTable: rid('loot/stone'),
     },
@@ -441,6 +450,7 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       sideTile: 16,
       hardness: 2.4,
       preferredTool: ToolKind.Pickaxe,
+      miningLevel: 1,
       dropItem: rid('coal'),
       lootTable: rid('loot/coal_ore'),
     },
@@ -458,6 +468,7 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       sideTile: 17,
       hardness: 3.0,
       preferredTool: ToolKind.Pickaxe,
+      miningLevel: 1,
       dropItem: rid('raw_iron'),
       lootTable: rid('loot/iron_ore'),
     },
@@ -475,6 +486,7 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       sideTile: 18,
       hardness: 2.0,
       preferredTool: ToolKind.Pickaxe,
+      miningLevel: 1,
       dropItem: rid('cobblestone'),
       lootTable: rid('loot/cobblestone'),
     },
@@ -492,6 +504,7 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       sideTile: 19,
       hardness: 2.0,
       preferredTool: ToolKind.Pickaxe,
+      miningLevel: 1,
       dropItem: rid('bricks'),
       lootTable: rid('loot/bricks'),
     },
@@ -541,9 +554,43 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       sideTile: 28,
       hardness: 3.5,
       preferredTool: ToolKind.Pickaxe,
+      miningLevel: 1,
       dropItem: rid('furnace'),
       lootTable: rid('loot/furnace'),
     },
   ];
   return new BlockTypeRegistry(defs);
+}
+
+/** Block tag backing each tool kind, in the `minecraft:mineable/<kind>` form. */
+export const MINABLE_TAG_BY_KIND: Readonly<Record<ToolKind, ResourceId>> = {
+  [ToolKind.Pickaxe]: createResourceId('minecraft', 'mineable/pickaxe'),
+  [ToolKind.Axe]: createResourceId('minecraft', 'mineable/axe'),
+  [ToolKind.Shovel]: createResourceId('minecraft', 'mineable/shovel'),
+};
+
+/**
+ * Build and finalize the block-domain tag registry that declares which blocks
+ * are mineable by each tool kind.
+ *
+ * Membership is derived directly from each block definition's `preferredTool`,
+ * so the tags cannot reference a block absent from the registry; finalization
+ * validates membership against `blockRegistry.hasByResourceId` and throws on
+ * any missing reference. The resulting registry is frozen and O(1) to query.
+ */
+export function createDefaultBlockTags(blockRegistry: BlockTypeRegistry): TagRegistry {
+  const membersByKind = new Map<ToolKind, TagMember[]>();
+  for (const def of blockRegistry.all()) {
+    if (def.preferredTool === undefined) continue;
+    const list = membersByKind.get(def.preferredTool) ?? [];
+    list.push({ kind: 'resource', id: def.resourceId });
+    membersByKind.set(def.preferredTool, list);
+  }
+  const defs: TagDefinition[] = [];
+  for (const kind of [ToolKind.Pickaxe, ToolKind.Axe, ToolKind.Shovel]) {
+    defs.push({ id: MINABLE_TAG_BY_KIND[kind], members: membersByKind.get(kind) ?? [] });
+  }
+  const registry = new TagRegistry('block', defs);
+  registry.finalize((rid) => blockRegistry.hasByResourceId(rid));
+  return registry;
 }

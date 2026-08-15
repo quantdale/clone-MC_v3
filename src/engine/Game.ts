@@ -8,13 +8,15 @@ import { Lighting } from '../rendering/Lighting';
 import { Environment } from '../rendering/Environment';
 import { TextureAtlas } from '../rendering/TextureAtlas';
 import { Materials } from '../rendering/Materials';
-import { BlockId, BlockRegistry, createDefaultBlockRegistry } from '../world/BlockRegistry';
+import { BlockId, BlockRegistry, createDefaultBlockRegistry, createDefaultBlockTags } from '../world/BlockRegistry';
 import {
   ItemTypeRegistry,
   ItemId,
   createDefaultItemRegistry,
+  createDefaultItemTags,
   validateItemBlockCrossReferences,
 } from '../inventory/ItemRegistry';
+import { HarvestRules } from '../world/HarvestRules';
 import { TerrainGenerator } from '../world/TerrainGenerator';
 import { ChunkMesher } from '../world/ChunkMesher';
 import { World } from '../world/World';
@@ -79,6 +81,8 @@ export class Game {
   private readonly survival: SurvivalSystem;
   private readonly interaction: PlayerInteraction;
   private readonly lootTables: LootTableRegistry;
+  /** Harvest rules (114): tier/mineability-aware break speed and drop gating. */
+  private readonly harvestRules: HarvestRules;
   /** Live world item-entity store (111); mined blocks drop into this. */
   readonly itemEntities: ItemEntityManager;
   private readonly inventory: Inventory;
@@ -128,6 +132,9 @@ export class Game {
     this.registry = this.itemRegistry;
     validateItemBlockCrossReferences(this.blockRegistry, this.itemRegistry);
     this.lootTables = new LootTableRegistry(buildCurrentLootTables(this.blockRegistry, this.itemRegistry), this.itemRegistry);
+    const blockTags = createDefaultBlockTags(this.blockRegistry);
+    const itemTags = createDefaultItemTags(this.itemRegistry);
+    this.harvestRules = new HarvestRules(blockTags, itemTags);
     this.atlas = new TextureAtlas();
     this.materials = new Materials(this.atlas);
     this.renderer = new Renderer(
@@ -206,6 +213,7 @@ export class Game {
         this.showToast('Your tool broke');
       },
       lootTables: this.lootTables,
+      harvestRules: this.harvestRules,
       rng: Math.random,
       itemEntities: this.itemEntities,
     });

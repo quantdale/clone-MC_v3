@@ -3,8 +3,9 @@ import { CONFIG } from '../config';
 import { Player } from './Player';
 import { InputState } from '../engine/InputTypes';
 import { WorldAccess } from '../world/WorldAccess';
-import { BlockRegistry, BlockId } from '../world/BlockRegistry';
+import { BlockRegistry, BlockId, type BlockTypeDefinition } from '../world/BlockRegistry';
 import { ItemTypeRegistry, ItemId } from '../inventory/ItemRegistry';
+import { type HarvestRules } from '../world/HarvestRules';
 import { BlockSelector } from '../inventory/BlockSelector';
 import { type LootTableRegistry, type RandomSource, type LootContext, type LootStack, evaluate } from '../inventory/LootTable';
 import { raycastVoxel, RaycastResult } from '../math/DDA';
@@ -37,6 +38,7 @@ export class PlayerInteraction {
   private readonly lootTables?: LootTableRegistry;
   private readonly rng?: RandomSource;
   private readonly itemEntities?: ItemEntityManager;
+  private readonly harvestRules?: HarvestRules;
 
   private readonly eyePos = new THREE.Vector3();
   private readonly dir = new THREE.Vector3();
@@ -65,6 +67,7 @@ export class PlayerInteraction {
     lootTables?: LootTableRegistry;
     rng?: RandomSource;
     itemEntities?: ItemEntityManager;
+    harvestRules?: HarvestRules;
   }) {
     this.world = opts.world;
     this.registry = opts.registry;
@@ -79,6 +82,7 @@ export class PlayerInteraction {
     this.lootTables = opts.lootTables;
     this.rng = opts.rng;
     this.itemEntities = opts.itemEntities;
+    this.harvestRules = opts.harvestRules;
 
     // A centered unit-cube wireframe marks the targeted block. Keeping the
     // geometry centered and placing it at block + 0.5 avoids the classic
@@ -234,28 +238,36 @@ export class PlayerInteraction {
     this.world.setBlock(this.target.blockX, this.target.blockY, this.target.blockZ, BlockId.Air);
 
     const def = this.registry.get(blockId);
+    // Harvest gating (114): a block yields drops only when the held tool can
+    // harvest it. Blocks requiring a tool (miningLevel > 0) drop nothing when
+    // broken by hand or by the wrong/under-tier tool. When no harvest rules are
+    // injected (legacy/test paths) the block always drops, preserving prior
+    // behavior.
+    const canHarvest = this.harvestRules ? this.harvestRules.canHarvest(def, selectedTool) : true;
     const stacks: LootStack[] = [];
-    if (this.lootTables && def.lootTable) {
-      // Route the drop through the block's loot table. Evaluation is pure;
-      // the resulting stacks become world item entities (111).
-      const table = this.lootTables.get(def.lootTable);
-      const ctx: LootContext = {
-        blockId,
-        toolItemId: this.selector.getSelectedItemId(),
-        itemRegistry: this.itemRegistry,
-      };
-      const rng = this.rng ?? Math.random;
-      for (const stack of evaluate(table, ctx, rng, this.itemRegistry)) {
-        stacks.push(stack);
+    if (canHarvest) {
+      if (this.lootTables && def.lootTable) {
+        // Route the drop through the block's loot table. Evaluation is pure;
+        // the resulting stacks become world item entities (111).
+        const table = this.lootTables.get(def.lootTable);
+        const ctx: LootContext = {
+          blockId,
+          toolItemId: this.selector.getSelectedItemId(),
+          itemRegistry: this.itemRegistry,
+        };
+        const rng = this.rng ?? Math.random;
+        for (const stack of evaluate(table, ctx, rng, this.itemRegistry)) {
+          stacks.push(stack);
+        }
+      } else {
+        // Fallback retained for test and legacy paths that do not inject a loot
+        // registry (e.g. unbreakable/edge cases). Mirrors pre-011 drop behavior.
+        const dropRid = def.dropItem ?? def.resourceId;
+        stacks.push({ item: this.itemRegistry.getByResourceId(dropRid).id, count: 1 });
       }
-    } else {
-      // Fallback retained for test and legacy paths that do not inject a loot
-      // registry (e.g. unbreakable/edge cases). Mirrors pre-011 drop behavior.
-      const dropRid = def.dropItem ?? def.resourceId;
-      stacks.push({ item: this.itemRegistry.getByResourceId(dropRid).id, count: 1 });
-    }
-    if (blockId === BlockId.Leaves) {
-      stacks.push({ item: ItemId.Apple, count: 1 });
+      if (blockId === BlockId.Leaves) {
+        stacks.push({ item: ItemId.Apple, count: 1 });
+      }
     }
 
     // Spawn the resolved drops as world item entities at the block center.
@@ -276,9 +288,15 @@ export class PlayerInteraction {
   }
 
   /** Resolve the effective break duration, applying the selected tool bonus. */
-  private getBreakDuration(def: { hardness: number; preferredTool?: number }): number {
-    let duration = def.hardness;
+  private getBreakDuration(def: BlockTypeDefinition): number {
     const tool = this.itemRegistry.getByLegacyId(this.selector.getSelectedItemId());
+    if (this.harvestRules) {
+      return this.harvestRules.getBreakDuration(def, tool);
+    }
+    // Legacy fallback retained for callers that do not inject harvest rules
+    // (prior behavior: speed bonus only for the exact preferred tool with a
+    // non-empty slot).
+    let duration = def.hardness;
     if (
       def.preferredTool !== undefined &&
       tool?.toolKind === def.preferredTool &&
