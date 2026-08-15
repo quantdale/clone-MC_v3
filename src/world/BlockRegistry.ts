@@ -53,6 +53,7 @@ export const enum BlockId {
   Trapdoor = 47,
   Piston = 48,
   StickyPiston = 49,
+  Hopper = 50,
 }
 
 /**
@@ -168,6 +169,17 @@ export const OPEN_SCHEMA = new BlockPropertySchema([{ kind: 'boolean', name: 'op
 export const PISTON_SCHEMA = new BlockPropertySchema([
   { kind: 'named', name: 'facing', values: ['north', 'south', 'east', 'west', 'up', 'down'] },
   { kind: 'boolean', name: 'extended' },
+]);
+
+/**
+ * Hopper property schema (166): `facing` is five-way (down/north/south/east/west) — `up` is never
+ * legal, since a hopper's intake is always fixed to its top face regardless of facing — and
+ * `enabled` (matching vanilla's own blockstate name for "currently unlocked", not `powered`).
+ * Enumerates 5 x 2 = 10 states.
+ */
+export const HOPPER_SCHEMA = new BlockPropertySchema([
+  { kind: 'named', name: 'facing', values: ['down', 'north', 'south', 'east', 'west'] },
+  { kind: 'boolean', name: 'enabled' },
 ]);
 
 /** Tool families used for preferred-tool mining bonuses. */
@@ -999,6 +1011,25 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       dropItem: rid('sticky_piston'),
       propertySchema: PISTON_SCHEMA,
       defaultState: { facing: 'north', extended: false },
+    },
+    {
+      id: BlockId.Hopper,
+      resourceId: rid('hopper'),
+      key: 'hopper',
+      name: 'Hopper',
+      solid: false,
+      opaque: false,
+      breakable: true,
+      renderCategory: RenderCategory.Transparent,
+      topTile: 0,
+      bottomTile: 0,
+      sideTile: 0,
+      hardness: 3,
+      preferredTool: ToolKind.Pickaxe,
+      miningLevel: 1,
+      dropItem: rid('hopper'),
+      propertySchema: HOPPER_SCHEMA,
+      defaultState: { facing: 'down', enabled: true },
     },
   ];
   return new BlockTypeRegistry(defs);

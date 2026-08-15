@@ -66,6 +66,7 @@ export const enum ItemId {
   Trapdoor = 47,
   Piston = 48,
   StickyPiston = 49,
+  Hopper = 50,
 }
 
 /**
@@ -665,6 +666,15 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       iconTile: 51,
       stackSize: 64,
       placeBlock: rid('sticky_piston'),
+    },
+    {
+      id: ItemId.Hopper,
+      resourceId: rid('hopper'),
+      key: 'hopper',
+      name: 'Hopper',
+      iconTile: 52,
+      stackSize: 64,
+      placeBlock: rid('hopper'),
     },
   ];
   return new ItemTypeRegistry(defs);
