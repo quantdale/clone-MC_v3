@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **130-entity-collision-and-physics — VERIFIED 100%**
-- Active implementation change: **130-entity-collision-and-physics — VERIFIED**
-- Next change: **131-entity-persistence-runtime — NOT YET ACTIVE (artifacts pending)**
-- 130 task ledger: **5 total task groups, 5 completed**
-- 130 completion: **100%**
-- 130 mandatory entity-collision-and-physics requirements: **PASS**
-- 130 required-test gate: **PASS — unit 1702/1702, E2E 21/21**
-- 130 advancement allowed: **Yes**
-- Session-start head: `227abe0dafe9a55524b5916d065694715ecd3b5c`
-- Validated head: `ed08458601c629aacae84771d6248472c403d3cc` (130 feature commit)
-- Next exact action: **Advance to 131-entity-persistence-runtime. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (save/load persistent entities through the existing 037 SerializedEntity/EntityRepository store, building on 129 EntityManager); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **131-entity-persistence-runtime — VERIFIED 100%**
+- Active implementation change: **131-entity-persistence-runtime — VERIFIED**
+- Next change: **132-entity-chunk-tracking — NOT YET ACTIVE (artifacts pending)**
+- 131 task ledger: **5 total task groups, 5 completed**
+- 131 completion: **100%**
+- 131 mandatory entity-persistence-runtime requirements: **PASS**
+- 131 required-test gate: **PASS — unit 1713/1713, E2E 21/21**
+- 131 advancement allowed: **Yes**
+- Session-start head: `ed08458601c629aacae84771d6248472c403d3cc`
+- Validated head: `a15a0f510757a554b46d65d2ffaf7d0ebea106ca` (131 feature commit)
+- Next exact action: **Advance to 132-entity-chunk-tracking. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (activate/deactivate entities based on chunk tickets/simulation distance, building on 129 EntityManager + 031 ChunkTicketManager + 032 RenderSimulationDistance); implement; verify full gate; commit + push; advance program state.**
 
 ## What 119 implemented
 
@@ -735,6 +735,47 @@ the 1631-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Bonemeal (127), hoe tilling, and a rain/weather hook are explicit non-goals
 (documented). Advance to 127.
 
+## What 131 implemented
+
+Change 131 bridges live 129 `EntityInstance`s to the already-generic 037/038 persistence store:
+`EntityRepository` and `DirtySaveQueue`/`RepositorySaveSink` already handle an `'entities'`
+`SaveUnitKind` of `SerializedEntity[]`; nothing could produce or consume that shape from a live
+`EntityManager` until now. It is the manager-side bridge only — no `Game`/chunk-lifecycle wiring
+(132's scope) and no edits to `EntityRepository`/`DirtySaveQueue`/`RepositorySaveSink`.
+
+- `src/simulation/EntityManager.ts` (EDIT, additive methods) —
+  `serializeChunk(cx, cz): SerializedEntity[]` filters `getAll()` to `ACTIVE` entities whose
+  registered type has `isPersistent === true` (017) and whose transform's chunk
+  (`sectionIndex(x)`/`sectionIndex(z)`, 021) equals `(cx, cz)`, mapping each to
+  `{ schemaVersion: ENTITY_RECORD_VERSION, typeKey: resourceIdToString(typeId), x/y/z: floored,
+  data: { id, dimension, transform, velocity } }` (floor-for-position mirrors `ItemEntityManager`'s
+  existing convention). `deserializeChunk(cx, cz, entities: unknown[]): number` validates the whole
+  batch first — 037 envelope, chunk membership, registered `typeKey`, well-formed
+  `dimension`/`transform`/`velocity`, no duplicate id (within the batch or against the manager,
+  `ACTIVE` or retained `REMOVED`) — before spawning any entity; throws (manager unchanged) on the
+  first invalid record.
+- Tests: `tests/unit/EntityManager.test.ts` (EXTENDED, +11) — active+persistent+in-chunk filtering
+  and exclusion (removed/non-persistent/out-of-chunk); full round-trip identity/state preservation
+  into a fresh manager; chunk-membership mismatch rejection; four malformed-payload rejections
+  (unregistered typeKey, malformed dimension, non-finite transform/velocity field); two duplicate-id
+  rejections (within batch, against a live entity), both confirmed atomic.
+
+## Validation evidence (131)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1713/1713 (prior 1702 + 11 new `EntityManager.test.ts` cases)
+- production build: PASS (`tsc --noEmit && vite build`, 83 modules — unchanged, no consumer yet)
+- E2E: PASS 21/21 (no existing file touched beyond the extended test file; nothing consumes the new
+  methods)
+
+## Advancement decision
+
+Change 131 is **VERIFIED** at 5/5 task groups (100%). All gates are green: typecheck, lint, the
+1713-unit suite, production build, and the required E2E suite (21/21). No advancement exception was
+needed. `Game`/chunk-lifecycle wiring and any change to `EntityRepository`/`DirtySaveQueue`/
+`RepositorySaveSink` are explicit non-goals (documented, deferred to 132+). Advance to 132.
+
 ## What 130 implemented
 
 Change 130 adds gravity + shape-aware collision movement for non-player entities, built on the
@@ -895,15 +936,15 @@ the 1654-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Sapling/tree bonemeal is an explicit non-goal (deferred; no Sapling block
 exists) and the `FertilizerRegistry` extension point is documented. Advance to 128.
 
-## Next change: 131 (pending artifacts)
+## Next change: 132 (pending artifacts)
 
-`131-entity-persistence-runtime` is named in `CHANGE_SEQUENCE.md` with scope "Save/load persistent
-entities through the existing entity store." Per `AGENTS.md`, a change lacking full artifacts is a
+`132-entity-chunk-tracking` is named in `CHANGE_SEQUENCE.md` with scope "Activate/deactivate entities
+based on chunk tickets/simulation distance." Per `AGENTS.md`, a change lacking full artifacts is a
 hard pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md`
 before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 130
-verification. Change 131 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 131
+verification. Change 132 is the next change; its artifacts must be authored and
 validated before implementation begins.
