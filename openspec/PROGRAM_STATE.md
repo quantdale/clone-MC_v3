@@ -3,70 +3,62 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **107-chest-block-entity — VERIFIED 100%**
-- Active implementation change: **107-chest-block-entity — VERIFIED**
-- Next change: **108-double-chest-composition — NOT YET ACTIVE (artifacts pending)**
-- 107 task ledger: **5 total tasks, 5 completed**
-- 107 completion: **100%**
-- 107 mandatory chest-block-entity requirements: **PASS**
-- 107 required-test gate: **PASS — unit 1216/1216, E2E 19/19**
-- 107 advancement allowed: **Yes**
+- Last completed change: **108-double-chest-composition — VERIFIED 100%**
+- Active implementation change: **108-double-chest-composition — VERIFIED**
+- Next change: **109-furnace-block-entity — NOT YET ACTIVE (artifacts pending)**
+- 108 task ledger: **4 total tasks, 4 completed**
+- 108 completion: **100%**
+- 108 mandatory double-chest-composition requirements: **PASS**
+- 108 required-test gate: **PASS — unit 1229/1229, E2E 19/19**
+- 108 advancement allowed: **Yes**
 - Session-start head: `d282bbb01b4eabbdc76daaa05e78ccff81f2d685`
-- Validated head: `7ea32b9122c49125832a96a6a36d7bc99a3349f7`
-- Next exact action: **Advance to 108-double-chest-composition. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (108 artifacts NOT yet present — authoring is a hard pre-implementation block), validate, implement deterministic adjacent chest pairing/unpairing over the 107 `ChestInventory` model, verify full gate, commit + push, advance program state.**
+- Validated head: `f1d75084a8c46f6d961386349e676681a138b65b`
+- Next exact action: **Advance to 109-furnace-block-entity. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (109 artifacts NOT yet present — authoring is a hard pre-implementation block), validate, implement furnace inventory, timers, lit state, and persistence (018 furnace type tickable; 052 tick hook; 036 envelope), verify full gate, commit + push, advance program state.**
 
-## What 107 implemented
+## What 108 implemented
 
-Change 107 adds the single-chest block-entity core and its registry data.
+Change 108 adds deterministic double-chest composition over the 107 model.
 
-- `src/world/ChestBlockEntity.ts` (NEW) — constants (`CHEST_BLOCK_ID 19`, `CHEST_ITEM_ID 25`,
-  `CHEST_TYPE_KEY 'chest'`, `CHEST_INVENTORY_SIZE 27`, `PLAYER_INVENTORY_SIZE 36`,
-  `CHEST_MENU_SLOT_COUNT 63`, `CHEST_PLAYER_SLOT_START 27`, `DEFAULT_SLOT_MAX_STACK 64`);
-  `ChestInventory` (exactly 27 validated `MenuSlot`s); `createChestInventory` /
-  `validateChestInventory` (strict, throws on malformed shapes/slots); lossless
-  `serializeChestInventory` / `deserializeChestInventory` (036 opaque payload, round-trip
-  exact); the 106 menu bridge `createChestMenu` (63 slots, `playerSlotStart` 27) /
-  `applyChestMenuTransaction` / `extractChestInventory` / `extractPlayerSlots`; the 052
-  entity lifecycle `createChestBlockEntity` / `readChestEntity` (rejects wrong type keys and
-  malformed payloads) / `updateChestEntityInventory` (immutable); `chestEntityContents` /
-  `chestInstanceContents` (ordered non-empty stacks for the 111 drop integration).
-- `src/world/BlockRegistry.ts` — chest block id 19 (solid, opaque, breakable, hardness 2.5,
-  axe-preferred, drops `minecraft:chest`, auto `loot/chest` table).
-- `src/inventory/ItemRegistry.ts` — chest item id 25 (iconTile 27, stackSize 64, places the
-  chest block).
-- `src/rendering/TextureAtlas.ts` — original procedural chest tile (index 27): plank base,
-  dark frame, lid seam band, latch.
-- `tests/unit/ChestBlockEntity.test.ts` (NEW) — 24 tests: construction/validation matrix,
-  serialization round-trips and rejects, menu transaction vectors across the chest/player
-  boundary (pickup/merge/swap/split-half/placeOne/quickMove with remainder), immutability,
-  out-of-bounds throws, entity lifecycle, wrong-type and malformed-payload rejects, contents
-  extraction, 052 manager chunk round-trip, registry cross-references. The legacy-id
-  separation and block-registry enumeration tests were updated for the new block.
+- `src/world/DoubleChest.ts` (NEW) — `isHorizontalAdjacent` (same Y, distinct, |dx|+|dz| == 1);
+  `chestPairKey` (canonical, argument-order-independent pair identity); `doubleChestOrder`
+  (`[primary, secondary]`, primary = lexicographically smaller by x then z); `ChestPosition`;
+  `createDoubleChestMenu` (90 slots: primary 0-26, secondary 27-53, player 54-89,
+  `playerSlotStart` 54, over the 106 transaction core); `applyDoubleChestMenuTransaction`;
+  `extractDoubleChestHalves` / `extractDoubleChestPlayerSlots` (reject foreign menus);
+  `unpairDoubleChest` (returns the surviving half's inventory for any argument/assignment
+  order; unknown removed positions throw). Each half remains its own 107 27-slot
+  `ChestInventory`, matching Minecraft's per-block-entity persistence.
+- `tests/unit/DoubleChest.test.ts` (NEW) — 13 tests: adjacency matrix, pair-key/order
+  determinism across argument orders, menu construction and validation, a full cross-region
+  transaction vector (pickup, merge-limit, quick-move first-fit with remainder, placeOne),
+  extraction round-trips, unpairing vectors, immutability/determinism, and a 052 manager
+  chunk round-trip of two adjacent chest entities.
 
-## Validation evidence (107)
+## Validation evidence (108)
 
 - typecheck: PASS (`tsc --noEmit`)
 - lint: PASS (`eslint .`)
-- unit: PASS 1216/1216 (prior 1192 + 24 new), stable across repeated runs
+- unit: PASS 1229/1229 (prior 1216 + 13 new), stable across consecutive runs
 - production build: PASS (`tsc --noEmit && vite build`)
 - E2E: PASS 19/19
 
 ## Advancement decision
 
-Change 107 is **VERIFIED** at 5/5 (100%). All gates are green: typecheck, lint, the new 107
-suites, the full unit suite (1216/1216, stable across two runs), production build, and the
-required E2E suite (19/19). No advancement exception was needed.
+Change 108 is **VERIFIED** at 4/4 (100%). All gates are green: typecheck, lint, the new 108
+suites, the full unit suite (1229/1229, stable across consecutive runs), production build, and
+the required E2E suite (19/19). No advancement exception was needed.
 
-## Next change: 108 (pending artifacts)
+## Next change: 109 (pending artifacts)
 
-`108-double-chest-composition` is named in `CHANGE_SEQUENCE.md` with scope "Deterministic
-adjacent chest pairing/unpairing." Per `AGENTS.md`, a change lacking full artifacts is a hard
+`109-furnace-block-entity` is named in `CHANGE_SEQUENCE.md` with scope "Furnace inventory,
+timers, lit state, persistence." Per `AGENTS.md`, a change lacking full artifacts is a hard
 pre-implementation block. Author and validate those artifacts via
-`SPEC_AUTHORING_PROTOCOL.md` before any production code. It composes the 107 `ChestInventory`
-model.
+`SPEC_AUTHORING_PROTOCOL.md` before any production code. The 018 registry declares the
+`furnace` block-entity type as tickable; the 052 `BlockEntityInstance` tick hook and the 036
+envelope are the persistence path.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 107 verification.
-Change 108 is the next change; its artifacts must be authored and validated before implementation
+A future session must first inspect current `origin/main`, this state, and the 108 verification.
+Change 109 is the next change; its artifacts must be authored and validated before implementation
 begins.

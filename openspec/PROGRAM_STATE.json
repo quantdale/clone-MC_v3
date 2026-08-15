@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "107-chest-block-entity",
+  "currentChange": "108-double-chest-composition",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "107-chest-block-entity",
-  "nextChange": "108-double-chest-composition",
+  "lastCompletedChange": "108-double-chest-composition",
+  "nextChange": "109-furnace-block-entity",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "7ea32b9122c49125832a96a6a36d7bc99a3349f7",
-  "lastKnownHead": "7ea32b9122c49125832a96a6a36d7bc99a3349f7",
-  "lastCompletedTask": "107: all 5 tasks complete; chest-block-entity VERIFIED. New src/world/ChestBlockEntity.ts (27-slot ChestInventory with strict validation; lossless 036-envelope serialize/deserialize; 106 menu bridge createChestMenu 63 slots playerSlotStart 27 / applyChestMenuTransaction / extractChestInventory / extractPlayerSlots; 052 entity lifecycle createChestBlockEntity/readChestEntity/updateChestEntityInventory; chestEntityContents ordered non-empty stacks for 111); chest block id 19 + chest item id 25 + atlas tile 27; 24 new unit tests; registry enumeration tests updated; 1216 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 108-double-chest-composition. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (108 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement deterministic adjacent chest pairing/unpairing over the 107 ChestInventory model, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "f1d75084a8c46f6d961386349e676681a138b65b",
+  "lastKnownHead": "f1d75084a8c46f6d961386349e676681a138b65b",
+  "lastCompletedTask": "108: all 4 tasks complete; double-chest-composition VERIFIED. New src/world/DoubleChest.ts (isHorizontalAdjacent same-Y |dx|+|dz|==1; order-independent canonical chestPairKey; doubleChestOrder primary = lexicographic min by x then z; createDoubleChestMenu 90 slots primary 0-26 secondary 27-53 player 54-89 playerSlotStart 54 over 106 core; extractDoubleChestHalves/extractDoubleChestPlayerSlots; unpairDoubleChest returns surviving half, unknown removed throws); each half persists as its own 107 27-slot envelope; 13 new unit tests; 1229 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 109-furnace-block-entity. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (109 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement furnace inventory, timers, lit state, and persistence (018 furnace type tickable; 052 tick hook; 036 envelope), verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -1071,6 +1071,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "107 VERIFIED 5/5 (100%). Single chest block entity: src/world/ChestBlockEntity.ts (27-slot ChestInventory strict validation; 036-envelope serialize/deserialize lossless; 106 menu bridge 63 slots playerSlotStart 27; 052 entity lifecycle create/read/update; contents extraction for 111); chest block id 19 + item id 25 + atlas tile 27; 24 new unit tests; 1216 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "f1d75084a8c46f6d961386349e676681a138b65b",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 1229/1229; DoubleChest 13/13",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "108 VERIFIED 4/4 (100%). Double chest composition: src/world/DoubleChest.ts (horizontal adjacency; order-independent canonical pair key; lexicographic primary order; 90-slot menu bridge playerSlotStart 54; half extraction; unpairing to surviving half; per-half 107 envelopes); 13 new unit tests; 1229 unit + 19 e2e pass, stable."
     }
   ]
 }
