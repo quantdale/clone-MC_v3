@@ -56,6 +56,7 @@ export const enum BlockId {
   Hopper = 50,
   Dropper = 51,
   Dispenser = 52,
+  Tnt = 53,
 }
 
 /**
@@ -1091,6 +1092,21 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       dropItem: rid('dispenser'),
       propertySchema: DISPENSER_SCHEMA,
       defaultState: { facing: 'down', enabled: true },
+    },
+    {
+      id: BlockId.Tnt,
+      resourceId: rid('tnt'),
+      key: 'tnt',
+      name: 'TNT',
+      solid: true,
+      opaque: true,
+      breakable: true,
+      renderCategory: RenderCategory.Opaque,
+      topTile: 55,
+      bottomTile: 55,
+      sideTile: 55,
+      hardness: 0,
+      dropItem: rid('tnt'),
     },
   ];
   return new BlockTypeRegistry(defs);
