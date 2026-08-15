@@ -55,6 +55,7 @@ export const enum BlockId {
   StickyPiston = 49,
   Hopper = 50,
   Dropper = 51,
+  Dispenser = 52,
 }
 
 /**
@@ -189,6 +190,17 @@ export const HOPPER_SCHEMA = new BlockPropertySchema([
  * the difference is purely behavioral (drop vs. container-transfer). Enumerates 5 x 2 = 10 states.
  */
 export const DROPPER_SCHEMA = new BlockPropertySchema([
+  { kind: 'named', name: 'facing', values: ['down', 'north', 'south', 'east', 'west'] },
+  { kind: 'boolean', name: 'enabled' },
+]);
+
+/**
+ * Dispenser property schema (168): identical shape to 166's `HOPPER_SCHEMA` / 167's
+ * `DROPPER_SCHEMA` (five-way `facing` × boolean `enabled`, 10 states). A dispenser and a dropper
+ * share the same blockstate; the dispenser's novelty is behavioral (a data-driven item->action table
+ * for special items), not structural. Enumerates 5 x 2 = 10 states.
+ */
+export const DISPENSER_SCHEMA = new BlockPropertySchema([
   { kind: 'named', name: 'facing', values: ['down', 'north', 'south', 'east', 'west'] },
   { kind: 'boolean', name: 'enabled' },
 ]);
@@ -1059,6 +1071,25 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       miningLevel: 1,
       dropItem: rid('dropper'),
       propertySchema: DROPPER_SCHEMA,
+      defaultState: { facing: 'down', enabled: true },
+    },
+    {
+      id: BlockId.Dispenser,
+      resourceId: rid('dispenser'),
+      key: 'dispenser',
+      name: 'Dispenser',
+      solid: false,
+      opaque: false,
+      breakable: true,
+      renderCategory: RenderCategory.Transparent,
+      topTile: 0,
+      bottomTile: 0,
+      sideTile: 0,
+      hardness: 3,
+      preferredTool: ToolKind.Pickaxe,
+      miningLevel: 1,
+      dropItem: rid('dispenser'),
+      propertySchema: DISPENSER_SCHEMA,
       defaultState: { facing: 'down', enabled: true },
     },
   ];
