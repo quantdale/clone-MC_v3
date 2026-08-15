@@ -3,17 +3,66 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **150-villager-professions — VERIFIED 100%**
-- Active implementation change: **150-villager-professions — VERIFIED**
-- Next change: **151-villager-trading — NOT YET ACTIVE (artifacts pending)**
-- 150 task ledger: **20 total tasks, 20 completed**
-- 150 completion: **100%**
-- 150 mandatory villager-professions requirements: **PASS**
-- 150 required-test gate: **PASS — unit 1952/1952, E2E 22/22**
-- 150 advancement allowed: **Yes**
-- Session-start head: `ecd617d6ba88832de3acf021be2846d2f4766c59`
-- Validated head: `db902e431dc97bde2c0cfe9e233ff78b37b80470` (150 feature commit)
-- Next exact action: **Advance to 151-villager-trading. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (trade offers, demand/use limits, XP/progression, transactional UI — first real consumer of 150's VillagerProfession assignment; needs a trade-offer data model and 106's container-menu-transaction-core for the UI side); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **151-villager-trading — VERIFIED 100%**
+- Active implementation change: **151-villager-trading — VERIFIED**
+- Next change: **152-raid-state-machine — NOT YET ACTIVE (artifacts pending)**
+- 151 task ledger: **28 total tasks, 28 completed**
+- 151 completion: **100%**
+- 151 mandatory villager-trading requirements: **PASS**
+- 151 required-test gate: **PASS — unit 1975/1975, E2E 22/22**
+- 151 advancement allowed: **Yes**
+- Session-start head: `e13f3b743d76731b8e31224fdc940477efaf5556`
+- Validated head: `3f02a8a6584d6ecf3c134a2906f4fa6a5d8f9600` (151 feature commit)
+- Next exact action: **Advance to 152-raid-state-machine. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (settlement raid trigger/waves/win-loss persistence — a bounded state machine over wave composition and outcome; no raider mob types or village-boundary detection exist yet, so expect an additive/unconsumed state-machine baseline like 148-151); implement; verify full gate; commit + push; advance program state.**
+
+## What 151 implemented
+
+Change 151 adds the villager trade-offer model consuming 150's professions, mirroring 120's
+`EnchantingTableSession` precedent: session/offer state plus pure application logic, with the DOM
+screen (203's titled scope) and any `Inventory`/`Game` wiring explicitly deferred. Additive/
+unconsumed — nothing spawns a villager yet (150's inherited blocker: no village/structure
+generation).
+
+- `src/simulation/VillagerTrading.ts` (NEW) — `TradeItem`/`TradeOffer` (one or two inputs, a
+  result, `maxUses`/`usesRemaining`, `xpReward`, `unlockLevel`)/`VillagerTradeState`
+  (offers+level+xp); a per-profession `OFFER_TABLE` keyed off 150's profession `key` string (so
+  150's file is **not** edited, mirroring 146's identical decision not to edit 145's) with
+  farmer/librarian/weaponsmith × 3 offers spanning unlock levels 1-3, including a two-input
+  librarian L3 offer exercising the optional `inputB` branch; `createOffersForProfession` (filters
+  by `unlockLevel <= level`, returns fresh objects per call so two villagers never share mutable
+  offer state, empty array for an unknown key without throwing); `createVillagerTradeState`;
+  `canAcceptTrade` (requires remaining uses, a matching sufficient `inputA`, and a matching
+  `inputB` when required; ignores `offeredB` entirely when `inputB` is null, matching vanilla's
+  unused second slot); `applyTrade` (pure — never mutates inputs; rejection returns the **same**
+  state reference with `result: null`; success decrements exactly one offer's `usesRemaining` by 1,
+  returns the offer's exact declared input costs as `consumedA`/`consumedB`, and accrues
+  `xpReward`, converting full `XP_PER_VILLAGER_LEVEL` (10) increments into levels capped at
+  `VILLAGER_MAX_LEVEL` (5)); `restock` (resets every offer to `maxUses`, level/xp untouched);
+  `buildTradeMenu` (projects an offer into a 106 `ContainerMenu` — slot 0 `inputA` preview, slot 1
+  `inputB`-or-empty, slot 2 `result`, then the player region, `playerSlotStart === 3`).
+- **Deliberate documented divergence**: `applyTrade` *rejects* an out-of-range `offerIndex` rather
+  than throwing (unlike 106's `applyMenuTransaction`, which throws on a bad slot index), matching
+  the total/non-throwing convention of 129/141/147/149/150.
+- **Known documented limitation**: 106 has no read-only-slot concept, so `buildTradeMenu`'s result
+  slot is **not** write-protected — a future UI must gate result-slot interaction itself (flagged
+  in the proposal's Risks and design.md, not silently assumed).
+
+## Validation evidence (151)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1975/1975 (prior 1952 + 23 new, including direct purity assertions: the original state
+  is unchanged after a successful trade, and a rejected trade returns the identical reference via
+  `toBe`)
+- production build: PASS (`tsc --noEmit && vite build`, 103 modules, unchanged from 150 — confirms
+  no `Game.ts` consumer, matching 148/149/150's own identical evidence)
+- E2E: PASS 22/22 (all pre-existing assertions unaffected — nothing wired into the live game)
+
+## Advancement decision (151)
+
+Advance. 100% task completion, full gate green, no MUST/SHALL requirement unmet, no regression.
+Additive/unconsumed pending village generation and 203's container-screen UI. Next change:
+152-raid-state-machine.
 
 ## What 150 implemented
 
