@@ -205,11 +205,14 @@ describe('block property schema', () => {
 
   it('current blocks resolve to EMPTY_SCHEMA with unchanged gameplay', () => {
     const registry = createDefaultBlockRegistry();
-    // Every block except the stateful wheat crop, farmland, and fire declares no
-    // property schema and must resolve empty; wheat resolves its age schema
-    // (125), farmland its moisture schema (126), and fire its age schema (128).
+    // Every stateless block must resolve to EMPTY_SCHEMA. The stateful ones resolve their own:
+    // wheat's age (125), farmland's moisture (126), fire's age (128), redstone wire's
+    // power + four connection sides (155), and the three input components' `powered` (157).
+    const STATEFUL_BLOCK_KEYS = new Set([
+      'wheat', 'farmland', 'fire', 'redstone_wire', 'lever', 'stone_button', 'pressure_plate',
+    ]);
     for (const def of registry.all()) {
-      if (def.key === 'wheat' || def.key === 'farmland' || def.key === 'fire' || def.key === 'redstone_wire') {
+      if (STATEFUL_BLOCK_KEYS.has(def.key)) {
         expect(registry.getPropertySchema(def.id).isEmpty).toBe(false);
         continue;
       }

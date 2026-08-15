@@ -54,6 +54,9 @@ export const enum ItemId {
   Porkchop = 35,
   RottenFlesh = 36,
   Redstone = 37,
+  Lever = 38,
+  StoneButton = 39,
+  PressurePlate = 40,
 }
 
 /**
@@ -545,6 +548,33 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       iconTile: 39,
       stackSize: 64,
       placeBlock: rid('redstone_wire'),
+    },
+    {
+      id: ItemId.Lever,
+      resourceId: rid('lever'),
+      key: 'lever',
+      name: 'Lever',
+      iconTile: 40,
+      stackSize: 64,
+      placeBlock: rid('lever'),
+    },
+    {
+      id: ItemId.StoneButton,
+      resourceId: rid('stone_button'),
+      key: 'stone_button',
+      name: 'Stone Button',
+      iconTile: 41,
+      stackSize: 64,
+      placeBlock: rid('stone_button'),
+    },
+    {
+      id: ItemId.PressurePlate,
+      resourceId: rid('pressure_plate'),
+      key: 'pressure_plate',
+      name: 'Pressure Plate',
+      iconTile: 42,
+      stackSize: 64,
+      placeBlock: rid('pressure_plate'),
     },
   ];
   return new ItemTypeRegistry(defs);

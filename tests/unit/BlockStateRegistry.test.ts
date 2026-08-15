@@ -244,7 +244,7 @@ describe('block-state runtime registry', () => {
     const blockRegistry = createDefaultBlockRegistry();
     const stateRegistry = createDefaultBlockStateRegistry();
     // Single-state blocks + 8 wheat + 8 farmland + 16 fire + 1296 redstone-wire states.
-    expect(stateRegistry.size).toBe(blockRegistry.all().length - 4 + 8 + 8 + 16 + 1296);
+    expect(stateRegistry.size).toBe(blockRegistry.all().length - 7 + 8 + 8 + 16 + 1296 + 6);
     for (const defn of blockRegistry.all()) {
       const states = stateRegistry.statesForBlock(defn.id);
       if (defn.key === 'wheat') {
@@ -259,6 +259,9 @@ describe('block-state runtime registry', () => {
           ['0', '1', '2', '3', '4', '5', '6', '7'],
         );
         expect(stateRegistry.getDefaultState(defn.id).getProperty('moisture')).toBe('0');
+      } else if (defn.key === 'lever' || defn.key === 'stone_button' || defn.key === 'pressure_plate') {
+        expect(states.length).toBe(2);
+        expect(stateRegistry.getDefaultState(defn.id).getProperty('powered')).toBe('false');
       } else if (defn.key === 'redstone_wire') {
         // 16 power values x 3 connection values ^ 4 sides.
         expect(states.length).toBe(1296);

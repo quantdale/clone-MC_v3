@@ -41,6 +41,9 @@ export const enum BlockId {
   Farmland = 35,
   Fire = 36,
   RedstoneWire = 37,
+  Lever = 38,
+  StoneButton = 39,
+  PressurePlate = 40,
 }
 
 /**
@@ -84,6 +87,13 @@ export const REDSTONE_WIRE_SCHEMA = new BlockPropertySchema([
   { kind: 'named', name: 'east', values: ['none', 'side', 'up'] },
   { kind: 'named', name: 'west', values: ['none', 'side', 'up'] },
 ]);
+
+/**
+ * Shared on/off property schema for the 157 input components (lever, button, pressure plate): a
+ * single boolean `powered`. Each block enumerates exactly 2 states. Facing/attachment state is
+ * deliberately omitted — it drives models (059/060), not signal behavior.
+ */
+export const POWERED_SCHEMA = new BlockPropertySchema([{ kind: 'boolean', name: 'powered' }]);
 
 /** Tool families used for preferred-tool mining bonuses. */
 export const enum ToolKind {
@@ -708,6 +718,57 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       dropItem: createResourceId('minecraft', 'redstone'),
       propertySchema: REDSTONE_WIRE_SCHEMA,
       defaultState: { power: 0, north: 'none', south: 'none', east: 'none', west: 'none' },
+    },
+    {
+      id: BlockId.Lever,
+      resourceId: rid('lever'),
+      key: 'lever',
+      name: 'Lever',
+      solid: false,
+      opaque: false,
+      breakable: true,
+      renderCategory: RenderCategory.Transparent,
+      topTile: 0,
+      bottomTile: 0,
+      sideTile: 0,
+      hardness: 0.5,
+      dropItem: rid('lever'),
+      propertySchema: POWERED_SCHEMA,
+      defaultState: { powered: false },
+    },
+    {
+      id: BlockId.StoneButton,
+      resourceId: rid('stone_button'),
+      key: 'stone_button',
+      name: 'Stone Button',
+      solid: false,
+      opaque: false,
+      breakable: true,
+      renderCategory: RenderCategory.Transparent,
+      topTile: 0,
+      bottomTile: 0,
+      sideTile: 0,
+      hardness: 0.5,
+      dropItem: rid('stone_button'),
+      propertySchema: POWERED_SCHEMA,
+      defaultState: { powered: false },
+    },
+    {
+      id: BlockId.PressurePlate,
+      resourceId: rid('pressure_plate'),
+      key: 'pressure_plate',
+      name: 'Pressure Plate',
+      solid: false,
+      opaque: false,
+      breakable: true,
+      renderCategory: RenderCategory.Transparent,
+      topTile: 0,
+      bottomTile: 0,
+      sideTile: 0,
+      hardness: 0.5,
+      dropItem: rid('pressure_plate'),
+      propertySchema: POWERED_SCHEMA,
+      defaultState: { powered: false },
     },
   ];
   return new BlockTypeRegistry(defs);
