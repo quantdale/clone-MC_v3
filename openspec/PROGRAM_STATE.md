@@ -5,7 +5,7 @@
 - Program: **ACTIVE**
 - Last completed change: **160-comparator — VERIFIED 100%**
 - Active implementation change: **160-comparator — VERIFIED**
-- Next change: **161-redstone-observer — NOT YET ACTIVE (artifacts pending)**
+- Next change: **161-observer — NOT YET ACTIVE (artifacts pending)**
 - 160 task ledger: **29 total tasks, 29 completed**
 - 160 completion: **100%**
 - 160 mandatory comparator requirements: **PASS**
@@ -14,7 +14,7 @@
 - Session-start head: `89017135263a9122a8981c3f0a7c0fad8d25ed94`
 - Validated head: `85c61f2f6f8e39ccf7672a096c68d4100c6da563` (160 feature commit)
 - Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress.**
-- Next exact action: **Advance to 161-redstone-observer. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (the observer block: detects a state change in the block it faces — comparator-like short-pulse output — without needing direct power input, e.g. a crop's growth-stage change, a comparator's output change, a furnace's lit-state change. Decide explicitly which detectable-state-change sources are in scope given how few titled changes have wired real block behavior into a shared change-detection hook yet, and document deferred sources as non-goals); implement; verify full gate; commit + push; advance program state.**
+- Next exact action: **Advance to 161-observer. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (the observer block: detects a state change in the block it faces — comparator-like short-pulse output — without needing direct power input, e.g. a crop's growth-stage change, a comparator's output change, a furnace's lit-state change. Decide explicitly which detectable-state-change sources are in scope given how few titled changes have wired real block behavior into a shared change-detection hook yet, and document deferred sources as non-goals); implement; verify full gate; commit + push; advance program state.**
 
 ## What 160 implemented
 
@@ -55,7 +55,7 @@ genuine function of two signal strengths, not just two booleans.
 
 Advance. 100% task completion, full gate green, no MUST/SHALL requirement unmet, no regression.
 Container signal reads and observer wiring deferred as documented non-goals. Next change:
-161-redstone-observer.
+161-observer.
 
 ## What 159 implemented
 
