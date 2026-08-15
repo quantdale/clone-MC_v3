@@ -68,6 +68,7 @@ import { createResourceId, type ResourceId } from '../data/ResourceId';
 import {
   PassiveMobWorldAdapter,
   PassiveMobSystem,
+  SPAWN_CAP,
   SPAWN_CYCLE_INTERVAL_TICKS,
   type ChunkCoord,
 } from '../simulation/PassiveMobBaseline';
@@ -77,6 +78,7 @@ import {
   HOSTILE_SPAWN_CYCLE_INTERVAL_TICKS,
 } from '../simulation/HostileMobBaseline';
 import { HostileMobRenderer } from '../rendering/HostileMobRenderer';
+import { BreedingSystem, type BreedableSpecies } from '../simulation/AnimalBreeding';
 
 interface GameSaveSnapshot {
   version: 1;
@@ -129,6 +131,9 @@ export class Game {
   /** Hostile mob baseline (146): entity/AI/physics/melee system and mesh renderer, reusing passiveMobWorld. */
   private readonly hostileMobs: HostileMobSystem;
   private readonly hostileMobRenderer: HostileMobRenderer;
+  /** Animal breeding (147): love-mode/cooldown/child-spawn system operating on passiveMobs' pig population. */
+  private readonly breeding: BreedingSystem;
+  private readonly pigBreedableSpecies: BreedableSpecies;
   private readonly overworldDimension: ResourceId;
   private readonly audio: GameAudio;
 
@@ -254,12 +259,15 @@ export class Game {
       generator,
       biomeRegistry: createDefaultBiomeRegistry(),
     });
-    this.passiveMobs = new PassiveMobSystem(createDefaultEntityRegistry(), this.seed);
+    const entityRegistry = createDefaultEntityRegistry();
+    this.passiveMobs = new PassiveMobSystem(entityRegistry, this.seed);
     this.passiveMobRenderer = new PassiveMobRenderer(this.renderer.scene);
     this.resources.track(this.passiveMobRenderer);
-    this.hostileMobs = new HostileMobSystem(createDefaultEntityRegistry(), this.seed);
+    this.hostileMobs = new HostileMobSystem(entityRegistry, this.seed);
     this.hostileMobRenderer = new HostileMobRenderer(this.renderer.scene);
     this.resources.track(this.hostileMobRenderer);
+    this.breeding = new BreedingSystem();
+    this.pigBreedableSpecies = { typeId: entityRegistry.getByKey('pig')!.id, breedingFoodItemId: ItemId.Wheat };
 
     this.player = new Player();
     this.spawnPlayerSafely(generator);
@@ -480,6 +488,7 @@ export class Game {
       this.passiveMobRenderer.sync(this.passiveMobs.getActivePigs());
       this.tickHostileMobs(dt);
       this.hostileMobRenderer.sync(this.hostileMobs.getActiveZombies());
+      this.breeding.tick(this.passiveMobs.getManager(), this.passiveMobs.getActivePigs(), this.pigBreedableSpecies, SPAWN_CAP);
       const headY = Math.floor(this.player.position.y + CONFIG.player.eyeHeight);
       const headSubmerged = this.world.getBlock(
         Math.floor(this.player.position.x),
