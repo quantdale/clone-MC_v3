@@ -46,6 +46,7 @@ export const enum BlockId {
   PressurePlate = 40,
   RedstoneTorch = 41,
   RedstoneRepeater = 42,
+  RedstoneComparator = 43,
 }
 
 /**
@@ -114,6 +115,17 @@ export const REPEATER_SCHEMA = new BlockPropertySchema([
   { kind: 'named', name: 'facing', values: ['north', 'south', 'east', 'west'] },
   { kind: 'integer', name: 'delay', min: 1, max: 4 },
   { kind: 'boolean', name: 'locked' },
+  { kind: 'boolean', name: 'powered' },
+]);
+
+/**
+ * Redstone comparator property schema (160): `facing` (4-way, behavioral like 159's repeater),
+ * `mode` (`compare`/`subtract`, named rather than boolean so it reads naturally in a debug dump
+ * and matches vanilla's own data convention), and `powered`. Enumerates 4 x 2 x 2 = 16 states.
+ */
+export const COMPARATOR_SCHEMA = new BlockPropertySchema([
+  { kind: 'named', name: 'facing', values: ['north', 'south', 'east', 'west'] },
+  { kind: 'named', name: 'mode', values: ['compare', 'subtract'] },
   { kind: 'boolean', name: 'powered' },
 ]);
 
@@ -825,6 +837,23 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       dropItem: rid('redstone_repeater'),
       propertySchema: REPEATER_SCHEMA,
       defaultState: { facing: 'north', delay: 1, locked: false, powered: false },
+    },
+    {
+      id: BlockId.RedstoneComparator,
+      resourceId: rid('redstone_comparator'),
+      key: 'redstone_comparator',
+      name: 'Redstone Comparator',
+      solid: false,
+      opaque: false,
+      breakable: true,
+      renderCategory: RenderCategory.Transparent,
+      topTile: 0,
+      bottomTile: 0,
+      sideTile: 0,
+      hardness: 0,
+      dropItem: rid('redstone_comparator'),
+      propertySchema: COMPARATOR_SCHEMA,
+      defaultState: { facing: 'north', mode: 'compare', powered: false },
     },
   ];
   return new BlockTypeRegistry(defs);
