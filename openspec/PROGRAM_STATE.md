@@ -3,18 +3,64 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **156-redstone-update-order — VERIFIED 100%**
-- Active implementation change: **156-redstone-update-order — VERIFIED**
-- Next change: **157-redstone-input-components — NOT YET ACTIVE (artifacts pending)**
-- 156 task ledger: **23 total tasks, 23 completed**
-- 156 completion: **100%**
-- 156 mandatory redstone-update-order requirements: **PASS**
-- 156 required-test gate: **PASS — unit 2099/2099, E2E 22/22**
-- 156 advancement allowed: **Yes**
-- Session-start head: `c08f83955a15ee75b1d0b499d271dfd6817d73cb`
-- Validated head: `1033e9711906f82fd2a1c1a57d74ae73070e2226` (156 feature commit)
+- Last completed change: **157-redstone-input-components — VERIFIED 100%**
+- Active implementation change: **157-redstone-input-components — VERIFIED**
+- Next change: **158-redstone-torch — NOT YET ACTIVE (artifacts pending)**
+- 157 task ledger: **28 total tasks, 28 completed**
+- 157 completion: **100%**
+- 157 mandatory redstone-input-components requirements: **PASS**
+- 157 required-test gate: **PASS — unit 2120/2120, E2E 22/22**
+- 157 advancement allowed: **Yes**
+- Session-start head: `5e5c482da6ea61a5ea5f4d9828756e040876912f`
+- Validated head: `97075d876770aa4841e4217538527d2a0d32ca69` (157 feature commit)
 - Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress.**
-- Next exact action: **Advance to 157-redstone-input-components. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (levers/buttons/pressure plates: signal generation and timing — the first real power *sources* feeding 154's `RedstonePowerSource` and 155's `connectsToRedstone`. Expect to register lever/button/pressure_plate blocks with powered/facing state schemas plus a pure component-state model; buttons and plates need timed deactivation, so decide explicitly whether to use 047's `ScheduledTickQueue` for that or keep timing caller-driven like 152/153's tick counters); implement; verify full gate; commit + push; advance program state.**
+- Next exact action: **Advance to 158-redstone-torch. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (torch inversion/burnout semantics — a torch is powered iff its attachment block is *not* powered, the first **inverting** component, which is what makes logic gates possible. Burnout requires tracking rapid toggle counts within a window. Expect a `redstone_torch` block with a `lit` boolean state plus a pure inversion/burnout model; 047's `ScheduledTickQueue` is the natural primitive for the torch update delay, same as 157); implement; verify full gate; commit + push; advance program state.**
+
+## What 157 implemented
+
+Change 157 adds the three foundational redstone **sources**. All three emit full signal while
+powered and nothing otherwise — they differ in exactly one interesting way, which is what this
+change models: **how the powered state ends**.
+
+- `src/simulation/RedstoneInputComponents.ts` (NEW) — `RedstoneComponentKind`;
+  `componentSignalStrength`; `toggleLever` (involutive latch); `pressButton(currentTick)` →
+  `{ powered: true, releaseTick: currentTick + BUTTON_ACTIVE_TICKS (20) }`; `platePowered`
+  (true iff count > 0; negative/non-finite reads false, never throws) + `plateReleaseTick`
+  (`+ PLATE_RELEASE_DELAY_TICKS` (10)); `scheduleComponentRelease` (returns **false** and schedules
+  nothing for a lever — a boolean rather than a silent no-op, so a caller can assert it did not arm
+  a latch) / `dueComponentReleases`; `componentStateProperties`.
+- **Timing rides on 047's `ScheduledTickQueue`** — absolute due-tick scheduling, per-position dedup,
+  deterministic `(tickTime, seq)` ordering. 156 correctly did *not* use 047 (wire propagation is
+  immediate); this is its first redstone consumer, and 159's repeater delay will be the second. That
+  per-position dedup is precisely why **re-pressing a button extends its release** rather than
+  firing early (pressed at 0 then 10 → nothing due at 20, release at 30), asserted directly.
+- `src/world/BlockRegistry.ts` / `src/inventory/ItemRegistry.ts` (EDITS) — `POWERED_SCHEMA` (one
+  boolean, shared by all three; 007 enumerates per block so sharing is safe and keeps them honest
+  about being state-identical); `BlockId.Lever = 38`/`StoneButton = 39`/`PressurePlate = 40` (2
+  states each) and their placing items 38-40.
+- **Facing/attachment state deliberately omitted**: vanilla's `facing` + `face` multiplies the state
+  space ~15× purely to drive *models* (059/060's scope) with zero effect on signal behavior.
+
+## Validation evidence (157)
+
+- typecheck: PASS; lint: PASS (`eslint .`, full project)
+- unit: PASS 2120/2120 (prior 2099 + 21 new, including same-tick release determinism asserted
+  **repeatable**, proof a lever is never scheduled even when drained far in the future, and that
+  draining an earlier tick leaves later entries queued)
+- production build: PASS (registry edits in the live graph; the simulation module has no `Game.ts`
+  consumer yet)
+- E2E: PASS 22/22 — real evidence the three new blocks/items did not disturb worldgen, meshing,
+  placement, or breaking
+- Four characterization tests updated (155's precedent): block count 26 → 29; the stateful-block set
+  generalized to a `STATEFUL_BLOCK_KEYS` set; the state-count formula +6 plus per-component
+  exact-2-state assertions (registry 1350 → 1356 states); three new legacy-id rows
+
+## Advancement decision (157)
+
+Advance. 100% task completion, full gate green, no MUST/SHALL requirement unmet, no regression. The
+components are registered and placeable but do not yet emit into a live circuit — that needs an
+interaction/collision hook plus a `RedstonePowerSource` adapter over the real `World`, the same
+integration surface 156 deferred. Next change: 158-redstone-torch.
 
 ## What 156 implemented
 
