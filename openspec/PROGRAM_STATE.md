@@ -3,18 +3,40 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **176-nether-world-generation — VERIFIED 100%**
-- Active implementation change: **176-nether-world-generation — VERIFIED**
-- Next change: **177-nether-portal-blocks — NOT YET ACTIVE (artifacts pending)**
-- 176 task ledger: **22 total tasks, 22 completed**
-- 176 completion: **100%**
-- 176 mandatory nether-world-generation requirements: **PASS**
-- 176 required-test gate: **PASS — unit 2394/2394, E2E 22/22**
-- 176 advancement allowed: **Yes**
-- Session-start head: `4b14e41121d6ac500542f0e0c50185653da78d1f`
-- Validated head: `7dce6006306f4b28091d5f7286c8a2eff27bbb1a` (176 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension container (174), canonical types (175), and Nether terrain (176) are COMPLETE.**
-- Next exact action: **Advance to 177-nether-portal-blocks. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: portal frame validation and portal block state/lifecycle — the first Nether block, and the first frame-validation logic).**
+- Last completed change: **177-nether-portal-blocks — VERIFIED 100%**
+- Active implementation change: **177-nether-portal-blocks — VERIFIED**
+- Next change: **178-nether-portal-linking — NOT YET ACTIVE (artifacts pending)**
+- 177 task ledger: **22 total tasks, 22 completed**
+- 177 completion: **100%**
+- 177 mandatory nether-portal-blocks requirements: **PASS**
+- 177 required-test gate: **PASS — unit 2407/2407, E2E 22/22**
+- 177 advancement allowed: **Yes**
+- Session-start head: `93b75e64594862f8c09b04fcd8488fe0e9ab8c0f`
+- Validated head: `8fa9438f2af6169eeb2bdb5d13620596fa930dd6` (177 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension container (174), canonical types (175), Nether terrain (176), and portal blocks/frame validation (177) are COMPLETE.**
+- Next exact action: **Advance to 178-nether-portal-linking. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: coordinate scale, destination search/create, cooldown, safe placement — the first teleportation logic, consuming 177's validatePortalFrame/portalBlockPositions).**
+
+## What 177 implemented
+
+Change 177 adds the first Nether block and the first **frame-validation** logic.
+
+- `src/simulation/NetherPortal.ts` (NEW) — `validatePortalFrame(world, x, y, z)` is pure over a
+  caller-supplied seam (`isAir`/`isFire`/`isObsidian`): from an interior cell (typically where fire
+  sits while lighting) it probes both axes deterministically ('x' first, then 'z') and returns the
+  first valid `PortalShape { axis, x0, y0, z0, width, height }` or `null`. Vanilla 1.16+ rules:
+  interior **width 2..21**, **height 3..21**, the full 1-thick ring (bars + columns,
+  **corners included**) must be obsidian, and the interior must be air or fire (the lighting fire
+  lives inside the opening). Probes are bounded by `MAX_PORTAL_SIZE` and require obsidian far walls,
+  so probing the wrong orientation in open terrain returns null. `portalBlockPositions` lists the
+  interior cells column-major for a wiring change to fill; `portalStateProperties` projects
+  `{ axis }`.
+- `src/world/BlockRegistry.ts` (EDIT) — `BlockId.NetherPortal = 55`; `PORTAL_SCHEMA` (`axis` 'x'|'z',
+  2 states, default `x`); the block is **unbreakable with no item** (portals are unobtainable —
+  matching the cross-reference validator's unbreakable-no-drop rule).
+- Tests: `tests/unit/NetherPortal.test.ts` (NEW, 13 tests): exact minimal-frame shape, Z-oriented
+  frame, fire-in-interior, missing corner/top-bar rejection, too-narrow/too-short rejection,
+  solid-probe and empty-world rejection, positions, projection, registration. Three characterization
+  updates (nether_portal: 21st multi-state block, +2 states).
 
 ## What 176 implemented
 
