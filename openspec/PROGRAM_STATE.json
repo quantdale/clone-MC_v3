@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "113-equipment-slots",
+  "currentChange": "114-tool-tier-and-harvest-rules",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "113-equipment-slots",
-  "nextChange": "114-tool-tier-and-harvest-rules",
-  "completedTasks": 6,
-  "totalTasks": 6,
+  "lastCompletedChange": "114-tool-tier-and-harvest-rules",
+  "nextChange": "115-item-durability-repair",
+  "completedTasks": 7,
+  "totalTasks": 7,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "e715b661b40b252baf64d7abe190eee40eb4836f",
-  "lastValidatedHead": "677a151a9a08c9f887b51d5fc4f00afd8e8efcef",
-  "lastKnownHead": "677a151a9a08c9f887b51d5fc4f00afd8e8efcef",
-  "lastCompletedTask": "113: all 6 tasks complete; equipment-slots VERIFIED. PlayerEquipment owns five slots (Head/Chest/Legs/Feet/Offhand) each ItemStack|null; setEquipment returns previous; getArmorStacks returns non-null armor in fixed order; serialize/restore atomic and validating. Inventory.equipment lives on Inventory and round-trips through snapshot()/restore() (malformed equipment rejects whole restore). 23 new unit tests (Equipment.test.ts); full suite 1329 unit + 21 e2e green.",
-  "nextExactAction": "Advance to 114-tool-tier-and-harvest-rules. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (114 artifacts must be authored before implementation), validate, implement mining level / preferred-tool / correct-drop-speed harvest rules through tags, verify full gate, commit + push, advance program state.",
+  "lastValidatedHead": "2dcae08fd01a8ab83092521f941600fdcdb2c510",
+  "lastKnownHead": "2dcae08fd01a8ab83092521f941600fdcdb2c510",
+  "lastCompletedTask": "114: all 7 task groups complete; tool-tier-and-harvest-rules VERIFIED. Added miningLevel (block) and toolTier (item) data model; createDefaultBlockTags/createDefaultItemTags build mineable/tools tags; HarvestRules drives isEffectiveTool, canHarvest, getBreakDuration (0.08 floor) from tags. PlayerInteraction.finishBreak gates drops on canHarvest; Game wires tag registries + HarvestRules. 24 HarvestRules unit tests + 1 PlayerInteraction integration test; full gate green (typecheck, lint, 1354 unit, build, 21 e2e).",
+  "nextExactAction": "Advance to 115-item-durability-repair. Read it (and SPEC_AUTHORING_PROTOCOL.md if artifacts incomplete), author/validate proposal/design/tasks/specs/verification, implement general component-driven durability damage/break/repair rules, verify full gate, commit + push, advance program state.",
   "blockers": [],
   "validationResults": [
     {
@@ -1121,8 +1121,18 @@
       "e2e": "PASS 21/21",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "113 VERIFIED 6/6 (100%). Added src/inventory/Equipment.ts (PlayerEquipment: Head/Chest/Legs/Feet/Offhand slots, get/set/clear/swap, getArmorStacks, atomic validating serialize/restore) and integrated it as Inventory.equipment so it round-trips through InventorySnapshot; optional equipment field keeps pre-113 saves loading empty. 23 new unit tests (Equipment.test.ts); full gate green (1329 unit + 21 e2e)."
+    },
+    {
+      "head": "2dcae08fd01a8ab83092521f941600fdcdb2c510",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 1354/1354",
+      "build": "PASS via Playwright production webServer",
+      "e2e": "PASS 21/21",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "114 VERIFIED 7/7 (100%). Added mining-level/tool-tier data model, mineable/tools tag factories, and HarvestRules (effective-tool, canHarvest, getBreakDuration floor 0.08) wired into PlayerInteraction + Game; blocks needing a tool no longer drop by hand. 24 new HarvestRules unit tests + 1 PlayerInteraction integration test; full gate green (typecheck, lint, 1354 unit, build, 21 e2e)."
     }
   ],
-  "publishedHead": "677a151a9a08c9f887b51d5fc4f00afd8e8efcef",
-  "publishedAt": "2026-08-15T02:05:03.083Z"
+  "publishedHead": "2dcae08fd01a8ab83092521f941600fdcdb2c510",
+  "publishedAt": "2026-08-15T02:22:07.101Z"
 }

@@ -3,17 +3,59 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **113-equipment-slots — VERIFIED 100%**
-- Active implementation change: **113-equipment-slots — VERIFIED**
-- Next change: **114-tool-tier-and-harvest-rules — NOT YET ACTIVE (artifacts pending)**
-- 113 task ledger: **6 total tasks, 6 completed**
-- 113 completion: **100%**
-- 113 mandatory equipment-slots requirements: **PASS**
-- 113 required-test gate: **PASS — unit 1329/1329, E2E 21/21**
-- 113 advancement allowed: **Yes**
+- Last completed change: **114-tool-tier-and-harvest-rules — VERIFIED 100%**
+- Active implementation change: **114-tool-tier-and-harvest-rules — VERIFIED**
+- Next change: **115-item-durability-repair — NOT YET ACTIVE (artifacts pending)**
+- 114 task ledger: **7 total tasks, 7 completed**
+- 114 completion: **100%**
+- 114 mandatory tool-tier-and-harvest-rules requirements: **PASS**
+- 114 required-test gate: **PASS — unit 1354/1354, E2E 21/21**
+- 114 advancement allowed: **Yes**
 - Session-start head: `e715b661b40b252baf64d7abe190eee40eb4836f`
-- Validated head: `677a151a9a08c9f887b51d5fc4f00afd8e8efcef` (113 feature commit; state advanced to 114)
-- Next exact action: **Advance to 114-tool-tier-and-harvest-rules. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (114 artifacts must be authored before implementation), validate, implement mining level / preferred-tool / correct-drop-speed harvest rules through tags, verify full gate, commit + push, advance program state.**
+- Validated head: `2dcae08fd01a8ab83092521f941600fdcdb2c510` (114 feature commit; state advanced to 115)
+- Next exact action: **Advance to 115-item-durability-repair. Read it (and SPEC_AUTHORING_PROTOCOL.md if artifacts incomplete), author/validate proposal/design/tasks/specs/verification, implement general component-driven durability damage/break/repair rules, verify full gate, commit + push, advance program state.**
+
+## What 114 implemented
+
+Change 114 adds tool-tier and harvest rules driven by block/item tags. It
+introduces a `miningLevel` (block) + `toolTier` (item) data model, mineable/tools
+tag factories, and a `HarvestRules` module that decides effective tool, drop
+eligibility, and break speed — wired into `PlayerInteraction`/`Game` so blocks
+that require a tool no longer drop by hand.
+
+- `src/world/BlockRegistry.ts` (EDIT) — `miningLevel?: number` on
+  `BlockTypeDefinition`; set `miningLevel: 1` on the six pickaxe-family blocks
+  (Stone, CoalOre, IronOre, Cobblestone, Bricks, Furnace). New `MINABLE_TAG_BY_KIND`
+  + `createDefaultBlockTags(blockRegistry)` builds/finalizes
+  `minecraft:mineable/{pickaxe,axe,shovel}` from `preferredTool`.
+- `src/inventory/ItemRegistry.ts` (EDIT) — `toolTier?: number` on
+  `ItemTypeDefinition`; `toolTier: 1` on WoodenPickaxe/WoodenAxe, `2` on
+  StonePickaxe. New `TOOLS_TAG_BY_KIND` + `createDefaultItemTags(itemRegistry)`.
+- `src/world/HarvestRules.ts` (NEW) — `HarvestRules` with `blockToolKind`,
+  `toolKind`, `isEffectiveTool`, `canHarvest`, `getBreakDuration` (floor
+  `MIN_BREAK_DURATION = 0.08`). Tag-driven kind; tier gate: effective iff kind
+  matches AND (`miningLevel===0` OR `toolTier>=miningLevel`); harvestable iff level
+  0, or right kind + `toolTier>=miningLevel`.
+- `src/player/PlayerInteraction.ts` (EDIT) — optional `harvestRules?` field;
+  `getBreakDuration` delegates to `HarvestRules` with legacy fallback; `finishBreak`
+  gates drops on `canHarvest` (no drop when not harvestable; block still removed,
+  tool still damaged).
+- `src/engine/Game.ts` (EDIT) — builds `blockTags`/`itemTags`/`harvestRules` after
+  loot tables and injects `harvestRules` into `PlayerInteraction`.
+
+## Validation evidence (114)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1354/1354 (prior 1329 + 24 new HarvestRules + 1 PlayerInteraction)
+- production build: PASS (`tsc --noEmit && vite build`)
+- E2E: PASS 21/21 (drop tests target level-0 terrain; gating leaves them dropping)
+
+## Advancement decision
+
+Change 114 is **VERIFIED** at 7/7 (100%). All gates are green: typecheck, lint,
+the new 1354-unit suite, production build, and the required E2E suite (21/21). No
+advancement exception was needed. Advance to 115.
 
 ## What 113 implemented
 
@@ -134,15 +176,15 @@ Change 111 is **VERIFIED** at 6/6 (100%). All gates are green: typecheck, lint, 
 1290-unit suite, production build, and the required E2E suite (20/20). No advancement
 exception was needed. Advance to 112.
 
-## Next change: 114 (pending artifacts)
+## Next change: 115 (pending artifacts)
 
-`114-tool-tier-and-harvest-rules` is named in `CHANGE_SEQUENCE.md` with scope "Mining
-level, preferred tools, correct drops/speeds through tags." Per `AGENTS.md`, a change
+`115-item-durability-repair` is named in `CHANGE_SEQUENCE.md` with scope "General
+component-driven durability damage/break/repair rules." Per `AGENTS.md`, a change
 lacking full artifacts is a hard pre-implementation block. Author and validate those
 artifacts via `SPEC_AUTHORING_PROTOCOL.md` before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 113
-verification. Change 114 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 114
+verification. Change 115 is the next change; its artifacts must be authored and
 validated before implementation begins.
