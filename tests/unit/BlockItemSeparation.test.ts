@@ -116,6 +116,7 @@ describe('block/item registry separation', () => {
       [34, 'wheat', 'bone_meal'],
       [35, 'farmland', 'porkchop'],
       [36, 'fire', 'rotten_flesh'],
+      [37, 'redstone_wire', 'redstone'],
     ];
     for (const [id, blockPath, itemPath] of table) {
       if (blockPath !== null) {
@@ -185,9 +186,14 @@ describe('block/item registry separation', () => {
       const placed = blockRegistry.getByResourceId(item.placeBlock);
       expect(blockRegistry.has(placed.id)).toBe(true);
       // Resolution is by resource path, not by coincidental numeric equality.
-      // Wheat seeds intentionally place the `wheat` block, not a `wheat_seeds`
-      // block (125), so that crop's placement key differs from the item key.
-      const expected = item.key === 'wheat_seeds' ? `minecraft:wheat` : `minecraft:${item.key}`;
+      // Two items intentionally place a block whose key differs from the item key:
+      // wheat seeds place the `wheat` crop (125), and redstone dust places the
+      // `redstone_wire` block (155).
+      const PLACEMENT_KEY_OVERRIDES: Record<string, string> = {
+        wheat_seeds: 'wheat',
+        redstone: 'redstone_wire',
+      };
+      const expected = `minecraft:${PLACEMENT_KEY_OVERRIDES[item.key] ?? item.key}`;
       expect(resourceIdToString(item.placeBlock)).toBe(expected);
     }
   });

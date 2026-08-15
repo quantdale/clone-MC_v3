@@ -209,7 +209,7 @@ describe('block property schema', () => {
     // property schema and must resolve empty; wheat resolves its age schema
     // (125), farmland its moisture schema (126), and fire its age schema (128).
     for (const def of registry.all()) {
-      if (def.key === 'wheat' || def.key === 'farmland' || def.key === 'fire') {
+      if (def.key === 'wheat' || def.key === 'farmland' || def.key === 'fire' || def.key === 'redstone_wire') {
         expect(registry.getPropertySchema(def.id).isEmpty).toBe(false);
         continue;
       }

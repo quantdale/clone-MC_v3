@@ -240,11 +240,11 @@ describe('block-state runtime registry', () => {
   });
 
   // --- current-block compatibility / no storage migration ---
-  it('keeps current simple blocks at one state each; wheat/farmland enumerate 8, fire enumerates 16 (125/126/128)', () => {
+  it('keeps current simple blocks at one state each; wheat/farmland enumerate 8, fire 16, redstone wire 1296 (125/126/128/155)', () => {
     const blockRegistry = createDefaultBlockRegistry();
     const stateRegistry = createDefaultBlockStateRegistry();
-    // 23 single-state blocks + 8 wheat states + 8 farmland states + 16 fire states.
-    expect(stateRegistry.size).toBe(blockRegistry.all().length - 3 + 8 + 8 + 16);
+    // Single-state blocks + 8 wheat + 8 farmland + 16 fire + 1296 redstone-wire states.
+    expect(stateRegistry.size).toBe(blockRegistry.all().length - 4 + 8 + 8 + 16 + 1296);
     for (const defn of blockRegistry.all()) {
       const states = stateRegistry.statesForBlock(defn.id);
       if (defn.key === 'wheat') {
@@ -259,6 +259,14 @@ describe('block-state runtime registry', () => {
           ['0', '1', '2', '3', '4', '5', '6', '7'],
         );
         expect(stateRegistry.getDefaultState(defn.id).getProperty('moisture')).toBe('0');
+      } else if (defn.key === 'redstone_wire') {
+        // 16 power values x 3 connection values ^ 4 sides.
+        expect(states.length).toBe(1296);
+        const def = stateRegistry.getDefaultState(defn.id);
+        expect(def.getProperty('power')).toBe('0');
+        for (const side of ['north', 'south', 'east', 'west']) {
+          expect(def.getProperty(side)).toBe('none');
+        }
       } else if (defn.key === 'fire') {
         expect(states.length).toBe(16);
         expect(states.map((s) => s.getProperty('age'))).toEqual(

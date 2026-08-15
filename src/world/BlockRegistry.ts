@@ -40,6 +40,7 @@ export const enum BlockId {
   Wheat = 34,
   Farmland = 35,
   Fire = 36,
+  RedstoneWire = 37,
 }
 
 /**
@@ -67,6 +68,21 @@ export const FARMLAND_SCHEMA = new BlockPropertySchema([
  */
 export const FIRE_SCHEMA = new BlockPropertySchema([
   { kind: 'integer', name: 'age', min: 0, max: 15 },
+]);
+
+/**
+ * Redstone wire property schema (155): the carried signal strength as an integer `power` in
+ * [0, 15], plus one named connection property per horizontal side (`none` = unconnected,
+ * `side` = connected at this level or descending, `up` = climbing the neighbouring block).
+ * Consumed by the 007 state registry to enumerate exactly 16 x 3^4 = 1296 wire states — the first
+ * multi-property block in the registry, and ~2% of `MAX_STATES_PER_BLOCK`.
+ */
+export const REDSTONE_WIRE_SCHEMA = new BlockPropertySchema([
+  { kind: 'integer', name: 'power', min: 0, max: 15 },
+  { kind: 'named', name: 'north', values: ['none', 'side', 'up'] },
+  { kind: 'named', name: 'south', values: ['none', 'side', 'up'] },
+  { kind: 'named', name: 'east', values: ['none', 'side', 'up'] },
+  { kind: 'named', name: 'west', values: ['none', 'side', 'up'] },
 ]);
 
 /** Tool families used for preferred-tool mining bonuses. */
@@ -675,6 +691,23 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       hardness: Infinity,
       propertySchema: FIRE_SCHEMA,
       defaultState: { age: 0 },
+    },
+    {
+      id: BlockId.RedstoneWire,
+      resourceId: rid('redstone_wire'),
+      key: 'redstone_wire',
+      name: 'Redstone Wire',
+      solid: false,
+      opaque: false,
+      breakable: true,
+      renderCategory: RenderCategory.Transparent,
+      topTile: 0,
+      bottomTile: 0,
+      sideTile: 0,
+      hardness: 0,
+      dropItem: createResourceId('minecraft', 'redstone'),
+      propertySchema: REDSTONE_WIRE_SCHEMA,
+      defaultState: { power: 0, north: 'none', south: 'none', east: 'none', west: 'none' },
     },
   ];
   return new BlockTypeRegistry(defs);

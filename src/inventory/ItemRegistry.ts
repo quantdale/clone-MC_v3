@@ -53,6 +53,7 @@ export const enum ItemId {
   BoneMeal = 34,
   Porkchop = 35,
   RottenFlesh = 36,
+  Redstone = 37,
 }
 
 /**
@@ -535,6 +536,15 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       isFood: true,
       foodHunger: 4,
       foodSaturation: 0.4,
+    },
+    {
+      id: ItemId.Redstone,
+      resourceId: rid('redstone'),
+      key: 'redstone',
+      name: 'Redstone Dust',
+      iconTile: 39,
+      stackSize: 64,
+      placeBlock: rid('redstone_wire'),
     },
   ];
   return new ItemTypeRegistry(defs);
