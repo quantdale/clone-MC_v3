@@ -350,6 +350,15 @@ export class Game {
       this.controller.update(dt);
       this.physics.update(this.player, dt);
       this.itemEntities.tickItemEntities(dt);
+      this.itemEntities.mergeEntities();
+      this.itemEntities.despawnExpired();
+      const collected = this.itemEntities.collectPlayerDrops(
+        this.player.position.x,
+        this.player.position.y,
+        this.player.position.z,
+        (id, count) => this.inventory.addItem(id, count),
+      );
+      if (collected > 0) this.hotbar.render();
       this.worldLife.update(dt, this.player.position);
       const headY = Math.floor(this.player.position.y + CONFIG.player.eyeHeight);
       const headSubmerged = this.world.getBlock(

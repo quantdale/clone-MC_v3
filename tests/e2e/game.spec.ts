@@ -435,6 +435,55 @@ test.describe('voxel game', () => {
     expect(entityCount).toBeGreaterThan(0);
   });
 
+  test('breaking a block drops an item the player collects', async ({ page }) => {
+    await waitForGame(page);
+    await enterPointerLock(page);
+    await page.evaluate(() => {
+      const g = (window as unknown as { __voxelGame?: { player: { pitch: number } } }).__voxelGame;
+      if (g) g.player.pitch = -1.0;
+    });
+    let target: { x: number; y: number; z: number } | null = null;
+    for (let i = 0; i < 20; i++) {
+      await page.waitForTimeout(100);
+      target = await page.evaluate(() => {
+        const g = (window as unknown as { __voxelGame?: { interaction?: { getTarget(): { blockX: number; blockY: number; blockZ: number } | null } } }).__voxelGame;
+        const t = g?.interaction?.getTarget();
+        return t ? { x: t.blockX, y: t.blockY, z: t.blockZ } : null;
+      });
+      if (target) break;
+    }
+    expect(target).not.toBeNull();
+    // The mined block's drop starts in the world (111), then the 112 pickup path
+    // collects it into the inventory after the 0.5s pickup delay elapses.
+    const totalCount = () => {
+      const g = (window as unknown as { __voxelGame?: { inventory?: { slots: { count: number }[]; storage: { count: number }[] } } }).__voxelGame;
+      if (!g?.inventory) return 0;
+      return [...g.inventory.slots, ...g.inventory.storage].reduce(
+        (a: number, s: { count: number }) => a + (s?.count ?? 0),
+        0,
+      );
+    };
+    const before = await page.evaluate(totalCount);
+    await page.mouse.down();
+    await page.mouse.up();
+    await page.waitForFunction((t) => {
+      const g = (window as unknown as { __voxelGame?: { world?: { getBlock(x: number, y: number, z: number): number } } }).__voxelGame;
+      return (g?.world?.getBlock(t.x, t.y, t.z) ?? -1) === 0;
+    }, target!, { timeout: 5000 });
+    // Poll for the drop to be collected (pickup requires ageTicks >= 10 ~ 0.5s).
+    await page.waitForFunction((b) => {
+      const g = (window as unknown as { __voxelGame?: { inventory?: { slots: { count: number }[]; storage: { count: number }[] } } }).__voxelGame;
+      if (!g?.inventory) return false;
+      const now = [...g.inventory.slots, ...g.inventory.storage].reduce(
+        (a: number, s: { count: number }) => a + (s?.count ?? 0),
+        0,
+      );
+      return now > b;
+    }, before, { timeout: 6000 });
+    const after = await page.evaluate(totalCount);
+    expect(after).toBeGreaterThan(before);
+  });
+
   test('player can place a block from the hotbar', async ({ page }) => {
     await waitForGame(page);
     await enterPointerLock(page);

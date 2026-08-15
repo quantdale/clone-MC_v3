@@ -30,6 +30,15 @@ const SPAWN_JITTER = 0.25;
 /** Small stored upward motion seeded on spawn for future physics integration. */
 const SPAWN_UP_VELOCITY = 0.05;
 
+/** Ticks before a freshly spawned drop may be collected (0.5s at 20 TPS). */
+export const PICKUP_DELAY_TICKS = 10;
+/** Ticks before an uncollected drop despawns (5 min at 20 TPS). */
+export const DESPAWN_AGE_TICKS = 6000;
+/** Center-distance (blocks) within which same-item entities merge. */
+export const MERGE_RADIUS = 0.25;
+/** Player-center → entity distance (blocks) within which a delayed drop is collected. */
+export const PICKUP_RADIUS = 1.5;
+
 function isFiniteNumber(v: unknown): v is number {
   return typeof v === 'number' && Number.isFinite(v);
 }
@@ -170,6 +179,98 @@ export class ItemEntityManager {
       if (e) e.ageTicks += ticks;
     }
     return this.byId.size;
+  }
+
+  /**
+   * Fold overlapping same-item entities into one up to the item's `stackSize`.
+   * For each entity (lower id first), the first later entity with the same
+   * `item` and a center distance `<= radius` is merged into it when the summed
+   * count fits within `stackSize` (otherwise both are left intact). Merged
+   * entities are removed. Returns the number of entities removed.
+   */
+  mergeEntities(radius: number = MERGE_RADIUS): number {
+    const ids = [...this.order];
+    const removedIds = new Set<number>();
+    const radiusSq = radius * radius;
+    let removed = 0;
+    for (let i = 0; i < ids.length; i++) {
+      const aId = ids[i]!;
+      if (removedIds.has(aId)) continue;
+      const a = this.byId.get(aId);
+      if (!a) continue;
+      const max = this.itemRegistry.get(a.item).stackSize;
+      if (a.count >= max) continue;
+      for (let j = i + 1; j < ids.length; j++) {
+        const bId = ids[j]!;
+        if (removedIds.has(bId)) continue;
+        const b = this.byId.get(bId);
+        if (!b || b.item !== a.item) continue;
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const dz = a.z - b.z;
+        if (dx * dx + dy * dy + dz * dz > radiusSq) continue;
+        if (a.count + b.count > max) continue;
+        a.count += b.count;
+        removedIds.add(bId);
+        this.removeItemEntity(bId);
+        removed++;
+        if (a.count >= max) break;
+      }
+    }
+    return removed;
+  }
+
+  /**
+   * Remove every entity whose `ageTicks >= maxAgeTicks`. The boundary is
+   * inclusive, so an entity exactly at the cap despawns. Returns the number
+   * removed.
+   */
+  despawnExpired(maxAgeTicks: number = DESPAWN_AGE_TICKS): number {
+    let removed = 0;
+    for (const id of [...this.order]) {
+      const e = this.byId.get(id);
+      if (e && e.ageTicks >= maxAgeTicks) {
+        this.removeItemEntity(id);
+        removed++;
+      }
+    }
+    return removed;
+  }
+
+  /**
+   * Collect every deliverable drop for the player. A drop is deliverable when
+   * `ageTicks >= PICKUP_DELAY_TICKS` and its center is within `pickupRadius` of
+   * `(playerX, playerY, playerZ)`. Each is offered to `insert(item, count)`
+   * (mirroring `Inventory.addItem`'s contract: returns the uninserted leftover).
+   * On a full insert the drop is removed; on a partial insert its `count` is set
+   * to the leftover. Returns the total count collected. Iterates a snapshot so it
+   * is safe for `insert` to mutate the manager.
+   */
+  collectPlayerDrops(
+    playerX: number,
+    playerY: number,
+    playerZ: number,
+    insert: (item: number, count: number) => number,
+    pickupRadius: number = PICKUP_RADIUS,
+  ): number {
+    let collected = 0;
+    const radiusSq = pickupRadius * pickupRadius;
+    for (const e of this.getItemEntities()) {
+      if (e.ageTicks < PICKUP_DELAY_TICKS) continue;
+      const dx = e.x - playerX;
+      const dy = e.y - playerY;
+      const dz = e.z - playerZ;
+      if (dx * dx + dy * dy + dz * dz > radiusSq) continue;
+      const leftover = insert(e.item, e.count);
+      const taken = e.count - leftover;
+      if (taken > 0) collected += taken;
+      if (leftover <= 0) {
+        this.removeItemEntity(e.id);
+      } else {
+        e.count = leftover;
+      }
+    }
+    return collected;
   }
 
   /** Number of live entities. */

@@ -20,8 +20,10 @@ export interface ItemEntity {
   readonly id: number;
   /** Registered item id (numeric legacy id). */
   readonly item: number;
-  /** Positive integer quantity, `1 <= count <= stackSize(item)`. */
-  readonly count: number;
+  /** Positive integer quantity, `1 <= count <= stackSize(item)`. Mutable: the
+   *  manager is the sole owner of quantity and may adjust it during merge and
+   *  partial pickup. `createItemEntity` still validates the initial value. */
+  count: number;
   /** World X (float). */
   x: number;
   /** World Y (float). */
