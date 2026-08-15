@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **134-navigation-grid-query — VERIFIED 100%**
-- Active implementation change: **134-navigation-grid-query — VERIFIED**
-- Next change: **135-a-star-pathfinding — NOT YET ACTIVE (artifacts pending)**
-- 134 task ledger: **5 total task groups, 5 completed**
-- 134 completion: **100%**
-- 134 mandatory navigation-grid-query requirements: **PASS**
-- 134 required-test gate: **PASS — unit 1749/1749, E2E 21/21**
-- 134 advancement allowed: **Yes**
-- Session-start head: `ccccb5576e22e6912cf9ef8b576bee54cfa59138`
-- Validated head: `198808ddd622a239b77bf33d4c8de777f4a7c3d4` (134 feature commit)
-- Next exact action: **Advance to 135-a-star-pathfinding. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (bounded deterministic path search with cancellation/stale guards, building on 134 NavigationGridQuery); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **135-a-star-pathfinding — VERIFIED 100%**
+- Active implementation change: **135-a-star-pathfinding — VERIFIED**
+- Next change: **136-mob-goal-selector — NOT YET ACTIVE (artifacts pending)**
+- 135 task ledger: **5 total task groups, 5 completed**
+- 135 completion: **100%**
+- 135 mandatory a-star-pathfinding requirements: **PASS**
+- 135 required-test gate: **PASS — unit 1759/1759, E2E 21/21**
+- 135 advancement allowed: **Yes**
+- Session-start head: `198808ddd622a239b77bf33d4c8de777f4a7c3d4`
+- Validated head: `5824d4e526867736a92f8d0d8a87e9db618ed61d` (135 feature commit)
+- Next exact action: **Advance to 136-mob-goal-selector. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (prioritized interruptible AI goal framework, building on 129 EntityManager); implement; verify full gate; commit + push; advance program state.**
 
 ## What 119 implemented
 
@@ -735,6 +735,42 @@ the 1631-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Bonemeal (127), hoe tilling, and a rain/weather hook are explicit non-goals
 (documented). Advance to 127.
 
+## What 135 implemented
+
+Change 135 adds bounded, deterministic, cancellable A* pathfinding over a 6-directional voxel grid,
+built on 134's `NavigationGridQuery`, plus a stale-path guard. It is the search primitive only — no
+diagonal/step-climb movement, no incremental/multi-tick search, and no mob AI/`Game` wiring.
+
+- `src/simulation/AStarPathfinding.ts` (NEW) — `PathNode`/`PathfindOptions`/`PathResult`;
+  `findPath(world, start, goal, options?)` (`null` exactly when `start` isn't standable; otherwise a
+  linear-scan open set with a fixed `+x/-x/+z/-z/+y/-y` neighbor order and a strict insertion-sequence
+  tiebreak for equal-`f` entries, guaranteeing determinism; a Manhattan-distance heuristic, admissible
+  and consistent given every edge costs `>= 1`; bounded by `maxExpansions`; returns the goal path when
+  reached, or a best-effort partial path toward the lowest-`h` node discovered when the budget is
+  exhausted, the open set empties, or `options.isCancelled()` returns `true`);
+  `isPathStale(world, path, fromIndex, height)` (true as soon as one remaining node's `movementCost`
+  becomes `Infinity`, reusing the exact oracle `findPath` used).
+- Tests: `tests/unit/AStarPathfinding.test.ts` (NEW, 10) — unstandable-start `null`; a simple open
+  corridor reaching the goal; a walled-off room yielding a best-effort partial path (contained purely
+  by `canStandAt`'s support rule, no ceiling needed); a tiny `maxExpansions` cutting off an
+  otherwise-reachable goal; immediate cancellation; determinism across two identical calls; and
+  `isPathStale`'s fresh/stale/before-`fromIndex` cases.
+
+## Validation evidence (135)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1759/1759 (prior 1749 + 10 new `AStarPathfinding.test.ts`)
+- production build: PASS (`tsc --noEmit && vite build`, 83 modules — unchanged, no consumer yet)
+- E2E: PASS 21/21 (no existing file touched; nothing consumes the new module)
+
+## Advancement decision
+
+Change 135 is **VERIFIED** at 5/5 task groups (100%). All gates are green: typecheck, lint, the
+1759-unit suite, production build, and the required E2E suite (21/21). No advancement exception was
+needed. Diagonal/step-climb movement, incremental/multi-tick search, and mob AI/`Game` wiring are
+explicit non-goals (documented, deferred to 136+). Advance to 136.
+
 ## What 134 implemented
 
 Change 134 adds per-cell walkability classification and movement-cost queries for a generic
@@ -1049,15 +1085,15 @@ the 1654-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Sapling/tree bonemeal is an explicit non-goal (deferred; no Sapling block
 exists) and the `FertilizerRegistry` extension point is documented. Advance to 128.
 
-## Next change: 135 (pending artifacts)
+## Next change: 136 (pending artifacts)
 
-`135-a-star-pathfinding` is named in `CHANGE_SEQUENCE.md` with scope "Bounded deterministic path
-search with cancellation/stale guards." Per `AGENTS.md`, a change lacking full artifacts is a
+`136-mob-goal-selector` is named in `CHANGE_SEQUENCE.md` with scope "Prioritized interruptible AI
+goal framework." Per `AGENTS.md`, a change lacking full artifacts is a
 hard pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md`
 before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 134
-verification. Change 135 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 135
+verification. Change 136 is the next change; its artifacts must be authored and
 validated before implementation begins.
