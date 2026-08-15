@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **124-food-component-runtime — VERIFIED 100%**
-- Active implementation change: **124-food-component-runtime — VERIFIED**
-- Next change: **125-crop-growth — NOT YET ACTIVE (artifacts pending)**
-- 124 task ledger: **6 total task groups, 6 completed**
-- 124 completion: **100%**
-- 124 mandatory food-component-runtime requirements: **PASS**
-- 124 required-test gate: **PASS — unit 1579/1579, E2E 21/21**
-- 124 advancement allowed: **Yes**
+- Last completed change: **125-crop-growth — VERIFIED 100%**
+- Active implementation change: **125-crop-growth — VERIFIED**
+- Next change: **126-farmland-moisture — NOT YET ACTIVE (artifacts pending)**
+- 125 task ledger: **7 total task groups, 7 completed**
+- 125 completion: **100%**
+- 125 mandatory crop-growth requirements: **PASS**
+- 125 required-test gate: **PASS — unit 1601/1601, E2E 21/21**
+- 125 advancement allowed: **Yes**
 - Session-start head: `e2c8066d1b178d01baf6f0775133e8fbb6cd581a`
-- Validated head: `5e68879a50f6bd327b9505f30bc3ce9f5d2acb0c` (124 feature commit)
-- Next exact action: **Advance to 125-crop-growth. Read its artifacts (and SPEC_AUTHORING_PROTOCOL.md if incomplete); author/validate proposal/design/tasks/specs/verification; implement Age block states, random-tick crop growth, and crop drops; verify full gate; commit + push; advance program state.**
+- Validated head: `08569a73b19ea4bc3b41da8ed184faaf6bbe7813` (125 feature commit)
+- Next exact action: **Advance to 126-farmland-moisture. Read its artifacts (and SPEC_AUTHORING_PROTOCOL.md if incomplete); author/validate proposal/design/tasks/specs/verification; implement farmland hydration, trampling/reversion rules, and crop support; verify full gate; commit + push; advance program state.**
 
 ## What 119 implemented
 
@@ -647,15 +647,65 @@ advancement exception was needed. Effect persistence across sessions is an expli
 non-goal (transient by design); potion drinking is deferred until a potion item exists.
 Advance to 125.
 
-## Next change: 125 (pending artifacts)
+## What 125 implemented
 
-`125-crop-growth` is named in `CHANGE_SEQUENCE.md` with scope "Age block states,
-random-tick crop growth, and crop drops." Per `AGENTS.md`, a change lacking full
-artifacts is a hard pre-implementation block. Author and validate those artifacts via
-`SPEC_AUTHORING_PROTOCOL.md` before any production code.
+Change 125 adds crop growth: Wheat with an `age` (0..7) block-property state, deterministic
+random-tick growth through the 050 block-behavior dispatch + 048 `RandomTickSelector`, and
+age-aware crop drops via the 011 loot path. It is crop growth only — not farmland hydration/
+trampling (126) or bonemeal (127), and crop `age` is intentionally session-transient (not
+persisted to the localStorage edit snapshot).
+
+- `src/world/BlockRegistry.ts` (EDIT) — `BlockId.Wheat = 34`; `WHEAT_SCHEMA` integer `age` 0..7;
+  Wheat def with `propertySchema`/`defaultState {age:0}` and `lootTable: loot/wheat`.
+- `src/inventory/ItemRegistry.ts` (EDIT) — `WheatSeeds = 32` (with `placeBlock` → wheat at age 0)
+  and `Wheat = 33` items; cross-ref validation passes.
+- `src/world/CropGrowth.ts` (NEW) — `MAX_AGE = 7`, `isMature(age)`, `nextCropAge(age)` (clamped).
+- `src/simulation/CropBehavior.ts` (NEW) — `CropBlockBehavior` with `onRandomTick` that reads the
+  current age from the block state, and when not mature writes `age+1` via `ctx.world.setBlockState`
+  (defensive try/catch on malformed/missing capability).
+- `src/simulation/WorldBlockAccess.ts` (NEW) — `BlockWorldAccess` adapter over `World`
+  (`getBlockId`/`setBlockId`/`getBlockState`/`setBlockState`).
+- `src/simulation/BlockBehavior.ts` (EDIT) — optional `getBlockState`/`setBlockState` on the access.
+- `src/world/WorldAccess.ts` + `src/world/World.ts` (EDIT) — `setBlockState(x,y,z,blockId,props)`
+  /`getBlockState(x,y,z)` resolving via `BlockStateRegistry` (`lookup`/`getDefaultState`), writing the
+  `BlockStateId`; `setBlock` clears any stale state override; state overlay survives chunk unload/reload
+  and is cleared on `dispose`.
+- `src/inventory/LootTable.ts` (EDIT) — `LootContext.properties?` (additive); `buildCurrentLootTables`
+  adds a `loot/wheat` table: seeds always, wheat only when `age === '7'`.
+- `src/player/PlayerInteraction.ts` (EDIT) — `finishBreak` passes block-state `properties` into the
+  loot context so crop drops are age-aware.
+- `src/engine/Game.ts` (EDIT) — builds `BlockStateRegistry`, `BlockBehaviorRegistry` (wheat →
+  `CropBlockBehavior`), and `RandomTickSelector`; new `simTick`/`tickRandomBlocks` invokes
+  `selectEligible` over loaded sections and dispatches `onRandomTick`.
+- Tests: `CropGrowth.test.ts` (5), `CropBehavior.test.ts` (5), `CropRandomTick.test.ts` (3),
+  `WorldBlockState.test.ts` (5), `WheatLoot.test.ts` (4); updates to `BlockRegistry`/`BlockStateRegistry`/
+  `BlockPropertySchema`/`BlockItemSeparation` tests.
+
+## Validation evidence (125)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1601/1601 (prior 1579 + 22 new: CropGrowth 5, CropBehavior 5, CropRandomTick 3,
+  WorldBlockState 5, WheatLoot 4)
+- production build: PASS (`tsc --noEmit && vite build`, 80 modules)
+- E2E: PASS 21/21 (break/place/craft/harvest paths unaffected)
+
+## Advancement decision
+
+Change 125 is **VERIFIED** at 7/7 task groups (100%). All gates are green: typecheck, lint,
+the 1601-unit suite, production build, and the required E2E suite (21/21). No advancement
+exception was needed. Farmland hydration/trampling (126), bonemeal (127), and persisting crop
+`age` across page reload are explicit non-goals (documented). Advance to 126.
+
+## Next change: 126 (pending artifacts)
+
+`126-farmland-moisture` is named in `CHANGE_SEQUENCE.md` with scope "Hydration, trampling/
+reversion rules, crop support." Per `AGENTS.md`, a change lacking full artifacts is a hard
+pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md`
+before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 124
-verification. Change 125 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 125
+verification. Change 126 is the next change; its artifacts must be authored and
 validated before implementation begins.
