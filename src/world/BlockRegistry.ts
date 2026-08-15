@@ -47,6 +47,7 @@ export const enum BlockId {
   RedstoneTorch = 41,
   RedstoneRepeater = 42,
   RedstoneComparator = 43,
+  Observer = 44,
 }
 
 /**
@@ -126,6 +127,16 @@ export const REPEATER_SCHEMA = new BlockPropertySchema([
 export const COMPARATOR_SCHEMA = new BlockPropertySchema([
   { kind: 'named', name: 'facing', values: ['north', 'south', 'east', 'west'] },
   { kind: 'named', name: 'mode', values: ['compare', 'subtract'] },
+  { kind: 'boolean', name: 'powered' },
+]);
+
+/**
+ * Observer property schema (161): `facing` is six-way (north/south/east/west/up/down) — the first
+ * non-horizontal-only facing in this series, since an observer can watch the block directly above
+ * or below it just as validly as one to a side — and `powered`. Enumerates 6 x 2 = 12 states.
+ */
+export const OBSERVER_SCHEMA = new BlockPropertySchema([
+  { kind: 'named', name: 'facing', values: ['north', 'south', 'east', 'west', 'up', 'down'] },
   { kind: 'boolean', name: 'powered' },
 ]);
 
@@ -854,6 +865,25 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       dropItem: rid('redstone_comparator'),
       propertySchema: COMPARATOR_SCHEMA,
       defaultState: { facing: 'north', mode: 'compare', powered: false },
+    },
+    {
+      id: BlockId.Observer,
+      resourceId: rid('observer'),
+      key: 'observer',
+      name: 'Observer',
+      solid: true,
+      opaque: true,
+      breakable: true,
+      renderCategory: RenderCategory.Opaque,
+      topTile: 34,
+      bottomTile: 34,
+      sideTile: 34,
+      hardness: 3.5,
+      preferredTool: ToolKind.Pickaxe,
+      miningLevel: 1,
+      dropItem: rid('observer'),
+      propertySchema: OBSERVER_SCHEMA,
+      defaultState: { facing: 'north', powered: false },
     },
   ];
   return new BlockTypeRegistry(defs);

@@ -209,7 +209,7 @@ describe('block property schema', () => {
     // wheat's age (125), farmland's moisture (126), fire's age (128), redstone wire's
     // power + four connection sides (155), and the three input components' `powered` (157).
     const STATEFUL_BLOCK_KEYS = new Set([
-      'wheat', 'farmland', 'fire', 'redstone_wire', 'lever', 'stone_button', 'pressure_plate', 'redstone_torch', 'redstone_repeater', 'redstone_comparator',
+      'wheat', 'farmland', 'fire', 'redstone_wire', 'lever', 'stone_button', 'pressure_plate', 'redstone_torch', 'redstone_repeater', 'redstone_comparator', 'observer',
     ]);
     for (const def of registry.all()) {
       if (STATEFUL_BLOCK_KEYS.has(def.key)) {
