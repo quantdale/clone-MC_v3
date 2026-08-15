@@ -3,18 +3,40 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **173-redstone-regression-worlds — VERIFIED 100%**
-- Active implementation change: **173-redstone-regression-worlds — VERIFIED**
-- Next change: **174-dimension-manager — NOT YET ACTIVE (artifacts pending)**
-- 173 task ledger: **22 total tasks, 22 completed**
-- 173 completion: **100%**
-- 173 mandatory redstone-regression-worlds requirements: **PASS**
-- 173 required-test gate: **PASS — unit 2371/2371, E2E 22/22**
-- 173 advancement allowed: **Yes**
-- Session-start head: `13afbcb8304884f644c7088be31db0b88ad9a36c`
-- Validated head: `24947756b4fd27c7f6bc03a40c88ac1cb78529ec` (173 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE (closed by 173's canonical fixtures F1-F8); "Dimensions and major progression" (174-195) begins next.**
-- Next exact action: **Advance to 174-dimension-manager — the FIRST change of the 'Dimensions and major progression' section (174-195). Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: multiple loaded dimensions with independent world/chunk/tick state).**
+- Last completed change: **174-dimension-manager — VERIFIED 100%**
+- Active implementation change: **174-dimension-manager — VERIFIED**
+- Next change: **175-nether-dimension-type — NOT YET ACTIVE (artifacts pending)**
+- 174 task ledger: **22 total tasks, 22 completed**
+- 174 completion: **100%**
+- 174 mandatory dimension-manager requirements: **PASS**
+- 174 required-test gate: **PASS — unit 2381/2381, E2E 22/22**
+- 174 advancement allowed: **Yes**
+- Session-start head: `4130ef61f854fcec056dbe6d27dc4077d81a47b9`
+- Validated head: `feb7b3b346e847d87bc4997a53bb7dce23c264e9` (174 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — 174's multi-dimension container is COMPLETE.**
+- Next exact action: **Advance to 175-nether-dimension-type. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Nether bounds, no skylight, ambient rules and save namespace — the first real dimension type beyond the overworld, registered through 174's DimensionManager).**
+
+## What 174 implemented
+
+Change 174 opens the **Dimensions and major progression section (174-195)** with the multi-dimension
+container.
+
+- `src/world/DimensionManager.ts` (NEW) — `LoadedDimension = { key, type: DimensionType, world:
+  WorldAccess, tickQueue: ScheduledTickQueue }`: one dimension's complete independent state. The key
+  **IS** `resourceIdToString(type.id)` (e.g. `minecraft:overworld`), so lookups and 025 height
+  metadata can never disagree. `registerDimension` rejects duplicates (`DUPLICATE_ID`) before
+  mutating state and gives every dimension its own 047 `ScheduledTickQueue` (fresh unless a caller
+  supplies a restored one); `hasDimension`/`getDimension`/`getWorld`/`getTickQueue` are total
+  (`undefined`/`false` for unknown keys); `dimensions()` iterates in registration order;
+  `removeDimension` is idempotent. `tickAll(nowTick)` drains every dimension's queue independently,
+  in registration order, returning a deterministic key→due map — ticking one dimension never
+  affects another (pinned both directions by tests). The manager operates over the `WorldAccess`
+  seam the real `World` already implements, so production wiring and headless fixtures share one
+  interface; **no `World` refactor**.
+- Tests: `tests/unit/DimensionManager.test.ts` (NEW, 10 tests): key derivation, duplicate
+  rejection, queue independence, supplied-queue adoption, lookups/unknown keys, registration order,
+  idempotent removal, `tickAll` independence + determinism, per-dimension vertical metadata
+  (overworld −64/384/24 sections vs nether 0/256/16), and world-edit isolation.
 
 ## What 173 implemented
 
