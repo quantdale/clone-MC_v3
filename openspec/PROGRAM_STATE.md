@@ -3,18 +3,40 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **170-tnt-block-entity — VERIFIED 100%**
-- Active implementation change: **170-tnt-block-entity — VERIFIED**
-- Next change: **171-rail-block-states — NOT YET ACTIVE (artifacts pending)**
-- 170 task ledger: **22 total tasks, 22 completed**
-- 170 completion: **100%**
-- 170 mandatory tnt-block-entity requirements: **PASS**
-- 170 required-test gate: **PASS — unit 2320/2320, E2E 22/22**
-- 170 advancement allowed: **Yes**
-- Session-start head: `ecce3ba80ec4248f56f96889d4b2f10b88ce4d98`
-- Validated head: `cc79d9cfc4bec4b262adcd06a3bfc3f06c462071` (170 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress — the 157-161 logic-component trio, 162's first consumers, the piston sub-arc (163-165), the item-moving trio (166-168), the destruction core (169), and TNT (170) are all COMPLETE.**
-- Next exact action: **Advance to 171-rail-block-states. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: rail shapes, placement, neighbor updates — the first transport block, and the first multi-shape block since the pistons whose geometry depends on its neighbors).**
+- Last completed change: **171-rail-block-states — VERIFIED 100%**
+- Active implementation change: **171-rail-block-states — VERIFIED**
+- Next change: **172-minecart-physics — NOT YET ACTIVE (artifacts pending)**
+- 171 task ledger: **28 total tasks, 28 completed**
+- 171 completion: **100%**
+- 171 mandatory rail-block-states requirements: **PASS**
+- 171 required-test gate: **PASS — unit 2336/2336, E2E 22/22**
+- 171 advancement allowed: **Yes**
+- Session-start head: `33601e38bef8e247511aa3b3854606d2cce218e8`
+- Validated head: `f40b63f2a187f0413bc7f334bf4c3d5903c90185` (171 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress — the 157-161 logic-component trio, 162's first consumers, the piston sub-arc (163-165), the item-moving trio (166-168), destruction (169-170), and the first transport block (171) are all COMPLETE.**
+- Next exact action: **Advance to 172-minecart-physics. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: rail-constrained cart movement and collisions — the first consumer of 171's rail shapes, and the first vehicle).**
+
+## What 171 implemented
+
+Change 171 is the first **transport** block, and the first multi-shape block whose shape is a pure
+function of its *neighbors*.
+
+- `src/simulation/RailBlockStates.ts` (NEW) — `RailShape` has the ten vanilla values (2 flat
+  straights, 4 ascents, 4 corners). `resolveRailShape` is a total deterministic connection rule with
+  documented precedence: straight pairs first (ascending toward whichever side is elevated), then
+  same-level corners, then single-neighbor ascents/flats, else `north_south` — and an elevated
+  neighbor **never** forms a corner. `railNeighborInfo` samples a same-height rail (level 0) or a
+  one-higher rail (level 1) in a horizontal direction through a caller-supplied `RailNeighborWorld<S>`
+  seam using 154's `DIRECTION_OFFSETS`; `railHasSupport` is the placement rule (a solid-supporting
+  block directly below); `railShapeConnections` and `railStateProperties` make shapes inspectable.
+  `RAIL_SHAPES` is the single source of truth, spread into `RAIL_SCHEMA` so module and registry
+  cannot drift.
+- `src/world/BlockRegistry.ts`/`src/inventory/ItemRegistry.ts` (EDIT) — `BlockId.Rail = 54`/
+  `ItemId.Rail = 54`; `RAIL_SCHEMA` is a 10-value `shape` named property, default `north_south`.
+- Tests: `tests/unit/RailBlockStates.test.ts` (NEW, 16 tests) plus three characterization updates
+  (`BlockRegistry` `all()` 42→43; `BlockStateRegistry` total + explicit `rail` 10-state branch;
+  `BlockPropertySchema` `STATEFUL_BLOCK_KEYS` adds `rail`). No powered/detector rails, no world
+  mutation, no minecart physics (172).
 
 ## What 170 implemented
 
