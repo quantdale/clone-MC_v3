@@ -3,17 +3,88 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **118-enchantment-registry — VERIFIED 100%**
-- Active implementation change: **118-enchantment-registry — VERIFIED**
-- Next change: **119-enchantment-application — NOT YET ACTIVE (artifacts pending)**
-- 118 task ledger: **7 total task groups, 7 completed**
-- 118 completion: **100%**
-- 118 mandatory enchantment-registry requirements: **PASS**
-- 118 required-test gate: **PASS — unit 1439/1439, E2E 21/21**
-- 118 advancement allowed: **Yes**
-- Session-start head: `d8a03a3d2432ea58c3ac0d60f143f3a41115a719`
-- Validated head: `b1890da644ee9eaaf34dfdd2515ece06fb47b526` (118 feature commit; state advanced to 119)
-- Next exact action: **Advance to 119-enchantment-application. Read it (and SPEC_AUTHORING_PROTOCOL.md if artifacts incomplete), author/validate proposal/design/tasks/specs/verification, implement enchantment effect application to mining/combat/durability pathways, verify full gate, commit + push, advance program state.**
+- Last completed change: **119-enchantment-application — VERIFIED 100%**
+- Active implementation change: **119-enchantment-application — VERIFIED**
+- Next change: **120-enchanting-table — NOT YET ACTIVE (artifacts pending)**
+- 119 task ledger: **7 total task groups, 7 completed**
+- 119 completion: **100%**
+- 119 mandatory enchantment-application requirements: **PASS**
+- 119 required-test gate: **PASS — unit 1476/1476, E2E 21/21**
+- 119 advancement allowed: **Yes**
+- Session-start head: `e6a03cb164862d40763b1aed3973a07c781f444e`
+- Validated head: `6abc3db1acf52be0d09d1e1e61afee2d18716239` (119 feature commit)
+- Next exact action: **Advance to 120-enchanting-table. Read it (and SPEC_AUTHORING_PROTOCOL.md if artifacts incomplete), author/validate proposal/design/tasks/specs/verification, implement enchanting-table interaction, cost/offer generation, and XP/lapis-like payment using original data, verify full gate, commit + push, advance program state.**
+
+## What 119 implemented
+
+Change 119 applies enchantment effects to the mining, combat, and durability
+pathways. It builds on the 118 registry: it reads enchantments off an
+`ItemStack` via the new `ENCHANTMENTS_COMPONENT`, computes each effect with
+pure primitives, and folds those effects into the existing
+`HarvestRules` / `PlayerInteraction` / `DurabilityRules` / `ArmorProtection` /
+`SurvivalSystem` / `Game` code. It is effect application — not the enchanting
+table UI/offer generation (120), `ItemStack` acquisition of enchantments (120),
+or live armor-equipment wiring (deferred; 116 gap).
+
+- `src/inventory/StackDataComponents.ts` (EDIT) — `ENCHANTMENTS_COMPONENT`
+  (`createResourceId('minecraft','enchantments')`), `EnchantmentsComponentValue`
+  (record `string -> number`), `enchantmentsComponentType` validating a non-null
+  object whose every value is a finite integer `>= 1`; registered in
+  `createDefaultStackComponentRegistry`.
+- `src/inventory/EnchantmentApplication.ts` (NEW) — `getStackEnchantments` /
+  `setStackEnchantments` / `getEnchantmentLevel` storage accessors plus the
+  effect primitives `efficiencySpeedMultiplier(l)=1+0.3*l`,
+  `silkTouchActive(l)=l>=1`, `fortuneBonusCount(l,rng)=l<=0?0:floor(rng()*(l+1))`,
+  `weaponDamageBonus` (sharpness `1+0.5*l`, smite/bane `2.5*l`, else 0),
+  `unbreakingWearChance(l)=1/(l+1)`, `protectionEPF(kind,l)` (protection→`l`,
+  else `2*l`), `protectionEnchantKeysFor(d)` (fire/lava→+fire_protection,
+  explosion/blast→+blast_protection, projectile/arrow→+projectile_protection,
+  else `['protection']`), `armorEnchantEPF` (sum, capped 20), and
+  `applyArmorEnchantReduction(reduced,epf)=epf>0?reduced/(epf+1):reduced`.
+- `src/world/HarvestRules.ts` (EDIT) — `getBreakDuration` divides the effective
+  duration by `efficiencySpeedMultiplier(level)` when `efficiencyLevel > 0`,
+  floored at `MIN_BREAK_DURATION`.
+- `src/player/PlayerInteraction.ts` (EDIT) — optional `enchantmentRegistry?`;
+  `advanceBreak` passes the selected stack's `efficiency` level; `finishBreak`
+  applies Silk Touch (override primary drop with the block's item form) and
+  Fortune (add `fortuneBonusCount` to the primary drop), and reads `unbreaking`
+  from the selected stack to forward `unbreakingLevel` + `rng` to
+  `selector.damageSelectedItem`.
+- `src/inventory/DurabilityRules.ts` (EDIT) — `applyDamage` gains optional
+  `unbreakingLevel?` / `rng?`; skips wear when
+  `unbreakingLevel > 0 && rng !== undefined && rng() >= 1/(unbreakingLevel+1)`.
+- `src/inventory/BlockSelector.ts` / `Inventory.ts` (EDIT) — `getSelectedStack?()`
+  added; `damageSelectedItem?(amount, maxDurability, unbreakingLevel?, rng?)`
+  implemented in `Inventory` (delegates to `DurabilityRules`).
+- `src/player/ArmorProtection.ts` (EDIT, bug fix) — import corrected from
+  `'./EnchantmentRegistry'` to `'../inventory/EnchantmentRegistry'`; constructor
+  gains optional `enchantRegistry?`; `reduce(rawDamage, bypassArmor, damageType?)`
+  folds `armorEnchantEPF` into the post-armor `reduced` via
+  `applyArmorEnchantReduction`, leaving `absorbed` unchanged; returns the
+  EPF-less result when no registry is present.
+- `src/player/SurvivalSystem.ts` (EDIT) — `damage(amount, reason)` passes
+  `reason` to `armor.reduce(amount, false, reason)`.
+- `src/engine/Game.ts` (EDIT) — builds `createDefaultEnchantmentRegistry()` once
+  and injects it into `PlayerInteraction` via the new `enchantmentRegistry` opt.
+
+## Validation evidence (119)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1476/1476 (prior 1439 + 37: EnchantmentApplication,
+  ArmorProtection, DurabilityRules, HarvestRules, PlayerInteraction,
+  SurvivalSystem)
+- production build: PASS (`tsc --noEmit && vite build`, 67 modules)
+- E2E: PASS 21/21 (no Game/stack integration touched beyond registry injection)
+
+## Advancement decision
+
+Change 119 is **VERIFIED** at 7/7 task groups (100%). All gates are green:
+typecheck, lint, the 1476-unit suite, production build, and the required E2E
+suite (21/21). No advancement exception was needed. ArmorProtection is
+intentionally NOT wired into the live `Player.armor` (pre-existing 116
+composition gap) — armor EPF is correct when constructed with a registry, and
+leaving live armor unwired keeps gameplay stable. Advance to 120.
 
 ## What 118 implemented
 
@@ -348,15 +419,16 @@ Change 111 is **VERIFIED** at 6/6 (100%). All gates are green: typecheck, lint, 
 1290-unit suite, production build, and the required E2E suite (20/20). No advancement
 exception was needed. Advance to 112.
 
-## Next change: 119 (pending artifacts)
+## Next change: 120 (pending artifacts)
 
-`119-enchantment-application` is named in `CHANGE_SEQUENCE.md` with scope "Apply
-enchantment effects to mining/combat/durability pathways." Per `AGENTS.md`, a change
-lacking full artifacts is a hard pre-implementation block. Author and validate those
-artifacts via `SPEC_AUTHORING_PROTOCOL.md` before any production code.
+`120-enchanting-table` is named in `CHANGE_SEQUENCE.md` with scope "Table
+interaction, cost generation, XP/lapis-like payment using original data." Per
+`AGENTS.md`, a change lacking full artifacts is a hard pre-implementation block.
+Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md` before any
+production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 118
-verification. Change 119 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 119
+verification. Change 120 is the next change; its artifacts must be authored and
 validated before implementation begins.

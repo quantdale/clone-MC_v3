@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "118-enchantment-registry",
+  "currentChange": "119-enchantment-application",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "118-enchantment-registry",
-  "nextChange": "119-enchantment-application",
+  "lastCompletedChange": "119-enchantment-application",
+  "nextChange": "120-enchanting-table",
   "completedTasks": 7,
   "totalTasks": 7,
   "completionPercentage": 100,
@@ -15,11 +15,11 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "d8a03a3d2432ea58c3ac0d60f143f3a41115a719",
-  "lastValidatedHead": "b1890da644ee9eaaf34dfdd2515ece06fb47b526",
-  "lastKnownHead": "b1890da644ee9eaaf34dfdd2515ece06fb47b526",
-  "lastCompletedTask": "118: all 7 task groups complete; enchantment-registry VERIFIED. EnchantmentRegistry (definition registry get/getByResourceId/getByKey/all/areIncompatible/appliesTo + createDefaultEnchantmentRegistry 11-entry catalog) + enchantmentAppliesTo predicate map (9 targets) + validateEnchantmentList (UNKNOWN_ENCHANTMENT/LEVEL_OUT_OF_RANGE/ENCHANTMENT_CONFLICT) + serialize/deserialize version:1 atomic envelope + ItemTypeDefinition reserved target flags (isWeapon/isBow/isFishingRod). Full gate green (typecheck, lint, 1439 unit, build, 21 e2e).",
-  "nextExactAction": "Advance to 119-enchantment-application. Read it (and SPEC_AUTHORING_PROTOCOL.md if artifacts incomplete), author/validate proposal/design/tasks/specs/verification, implement enchantment effect application to mining/combat/durability pathways, verify full gate, commit + push, advance program state.",
+  "sessionStartHead": "e6a03cb164862d40763b1aed3973a07c781f444e",
+  "lastValidatedHead": "6abc3db1acf52be0d09d1e1e61afee2d18716239",
+  "lastKnownHead": "6abc3db1acf52be0d09d1e1e61afee2d18716239",
+  "lastCompletedTask": "119: all 7 task groups complete; enchantment-application VERIFIED. ENCHANTMENTS_COMPONENT registered/validated; EnchantmentApplication storage + effect primitives (efficiency/silk/fortune/weaponDamage/unbreaking/protection-EPF); HarvestRules efficiency, PlayerInteraction silk/fortune/unbreaking, DurabilityRules unbreaking, ArmorProtection EPF fold (import fixed), SurvivalSystem damage reason, Game registry injection. Full gate green (typecheck, lint, 1476 unit, build, 21 e2e).",
+  "nextExactAction": "Advance to 120-enchanting-table. Read it (and SPEC_AUTHORING_PROTOCOL.md if artifacts incomplete), author/validate proposal/design/tasks/specs/verification, implement enchanting-table interaction, cost/offer generation, and XP/lapis-like payment using original data, verify full gate, commit + push, advance program state.",
   "blockers": [],
   "validationResults": [
     {
@@ -1161,8 +1161,18 @@
       "e2e": "PASS 21/21",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "116 VERIFIED 6/6 (100%). Added defensePoints/toughness to ItemTypeDefinition; new pure ArmorProtection (computeArmorStats/reduceDamage/applyArmorWear + class) reduces non-bypass damage via a deterministic, toughness-aware curve and wears durable pieces via DurabilityRules; SurvivalSystem.damage consults an optional ArmorProtection; fall/drowning/lava/starvation carry BYPASS_ARMOR. 17 new unit tests; full gate green (typecheck, lint, 1391 unit, build, 21 e2e)."
+    },
+    {
+      "head": "6abc3db1acf52be0d09d1e1e61afee2d18716239",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 1476/1476 (prior 1439 + 37: EnchantmentApplication + ArmorProtection + DurabilityRules + HarvestRules + PlayerInteraction + SurvivalSystem)",
+      "build": "PASS via tsc --noEmit && vite build (67 modules)",
+      "e2e": "PASS 21/21",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "119 VERIFIED 7/7 (100%). ENCHANTMENTS_COMPONENT registered/validated; EnchantmentApplication storage + effect primitives (efficiencySpeedMultiplier, silkTouchActive, fortuneBonusCount, weaponDamageBonus, unbreakingWearChance, protectionEPF, protectionEnchantKeysFor, armorEnchantEPF, applyArmorEnchantReduction); HarvestRules efficiency divides duration; PlayerInteraction silk/fortune/unbreaking via registry; DurabilityRules unbreaking skip/wear; ArmorProtection folds armor EPF (broken import fixed); SurvivalSystem routes damage reason; Game injects default enchantment registry. ArmorProtection intentionally NOT wired into live Player.armor (pre-existing 116 gap). Full gate green (typecheck, lint, 1476 unit, build, 21 e2e)."
     }
   ],
-  "publishedHead": "eb370dec0be458df786c5945ce9d562640fa9bfd",
-  "publishedAt": "2026-08-15T02:36:52.809Z"
+  "publishedHead": "6abc3db1acf52be0d09d1e1e61afee2d18716239",
+  "publishedAt": "2026-08-15T02:55:09.702Z"
 }
