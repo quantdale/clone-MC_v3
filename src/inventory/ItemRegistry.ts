@@ -51,6 +51,8 @@ export const enum ItemId {
   WheatSeeds = 32,
   Wheat = 33,
   BoneMeal = 34,
+  Porkchop = 35,
+  RottenFlesh = 36,
 }
 
 /**
@@ -511,6 +513,28 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       name: 'Bone Meal',
       iconTile: 36,
       stackSize: 64,
+    },
+    {
+      id: ItemId.Porkchop,
+      resourceId: rid('porkchop'),
+      key: 'porkchop',
+      name: 'Porkchop',
+      iconTile: 37,
+      stackSize: 64,
+      isFood: true,
+      foodHunger: 3,
+      foodSaturation: 1.8,
+    },
+    {
+      id: ItemId.RottenFlesh,
+      resourceId: rid('rotten_flesh'),
+      key: 'rotten_flesh',
+      name: 'Rotten Flesh',
+      iconTile: 38,
+      stackSize: 64,
+      isFood: true,
+      foodHunger: 4,
+      foodSaturation: 0.4,
     },
   ];
   return new ItemTypeRegistry(defs);

@@ -114,8 +114,8 @@ describe('block/item registry separation', () => {
       [32, 'enchanting_table', 'wheat_seeds'],
       [33, 'bookshelf', 'wheat'],
       [34, 'wheat', 'bone_meal'],
-      [35, 'farmland', null],
-      [36, 'fire', null],
+      [35, 'farmland', 'porkchop'],
+      [36, 'fire', 'rotten_flesh'],
     ];
     for (const [id, blockPath, itemPath] of table) {
       if (blockPath !== null) {
