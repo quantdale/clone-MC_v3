@@ -1,5 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
+import { createResourceId } from '../../src/data/ResourceId';
+import {
+  createDefaultDamageTypeRegistry,
+  DamageTypeRegistry,
+} from '../../src/data/DamageType';
+import {
+  ItemTypeRegistry,
+  type ItemTypeDefinition,
+} from '../../src/inventory/ItemRegistry';
+import { PlayerEquipment, EquipmentSlot } from '../../src/inventory/Equipment';
+import {
+  DAMAGE_COMPONENT,
+  type DamageComponentValue,
+} from '../../src/inventory/StackDataComponents';
+import { ArmorProtection } from '../../src/player/ArmorProtection';
 import { Player } from '../../src/player/Player';
 import { SurvivalSystem } from '../../src/player/SurvivalSystem';
 
@@ -61,5 +76,67 @@ describe('survival system', () => {
     const survival = new SurvivalSystem();
     runFor(survival, 0.7, { sprinting: false, headSubmerged: false, inLava: true, landingDistance: 0 });
     expect(survival.health).toBe(16);
+  });
+});
+
+describe('survival system armor integration (116)', () => {
+  const rid = (k: string) => createResourceId('minecraft', k);
+
+  const itemRegistry = new ItemTypeRegistry([
+    {
+      id: 100,
+      resourceId: rid('chestplate'),
+      key: 'chestplate',
+      name: 'Chestplate',
+      iconTile: 0,
+      stackSize: 1,
+      defensePoints: 12,
+      toughness: 4,
+      maxDurability: 100,
+    } satisfies ItemTypeDefinition,
+  ]);
+
+  const combatRegistry = new DamageTypeRegistry([
+    ...createDefaultDamageTypeRegistry().entries(),
+    {
+      id: rid('damage/combat'),
+      key: 'combat',
+      name: 'Combat',
+      flags: ['ENVIRONMENTAL'],
+      kind: 'periodic',
+      amount: 1,
+      interval: 1,
+    },
+  ]);
+
+  function armoredSurvival(): { survival: SurvivalSystem; equipment: PlayerEquipment } {
+    const equipment = new PlayerEquipment();
+    equipment.setEquipment(EquipmentSlot.Chest, { id: 100, count: 1 });
+    const survival = new SurvivalSystem(combatRegistry);
+    survival.armor = new ArmorProtection(equipment, itemRegistry);
+    survival.health = 20;
+    return { survival, equipment };
+  }
+
+  it('reduces non-bypass damage and wears the armor', () => {
+    const { survival, equipment } = armoredSurvival();
+    survival.damage(20, 'combat');
+    expect(survival.health).toBeLessThan(20);
+    expect(survival.health).toBeGreaterThan(0);
+    const chest = equipment.getEquipment(EquipmentSlot.Chest);
+    expect(chest?.components?.get<DamageComponentValue>(DAMAGE_COMPONENT)?.damage).toBe(7);
+  });
+
+  it('ignores armor for a bypass damage type', () => {
+    const { survival, equipment } = armoredSurvival();
+    survival.damage(20, 'fall');
+    expect(survival.health).toBe(0);
+    expect(equipment.getEquipment(EquipmentSlot.Chest)?.components).toBeUndefined();
+  });
+
+  it('still applies armor for an unrecognized reason (fail-safe)', () => {
+    const { survival } = armoredSurvival();
+    survival.damage(20, 'mystery');
+    expect(survival.health).toBeLessThan(20);
   });
 });

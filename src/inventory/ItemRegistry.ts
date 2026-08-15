@@ -62,6 +62,10 @@ export interface ItemTypeDefinition {
   stackSize: number;
   /** Maximum durability for a tool item (0/absent for non-tools). */
   maxDurability?: number;
+  /** Armor protection points contributed when worn (default 0). Added in 116. */
+  defensePoints?: number;
+  /** Armor toughness preserving protection at high damage (default 0). Added in 116. */
+  toughness?: number;
   /** Tool family for a tool item. */
   toolKind?: ToolKind;
   /** Tier of a tool item; higher tiers satisfy higher block mining levels. `0` (default) for non-tools. */

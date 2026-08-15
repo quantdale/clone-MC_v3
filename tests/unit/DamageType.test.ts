@@ -71,7 +71,7 @@ describe('default damage type data', () => {
     const reg = createDefaultDamageTypeRegistry();
     const fall = requireDamageType(reg, 'fall');
     expect(fall.kind).toBe('fall');
-    expect(fall.flags).toEqual(['FALL', 'ENVIRONMENTAL']);
+    expect(fall.flags).toEqual(['FALL', 'ENVIRONMENTAL', 'BYPASS_ARMOR']);
     expect(fall.fallThreshold).toBe(3);
     expect(fall.fallScaling).toBe(1.5);
 
@@ -79,16 +79,18 @@ describe('default damage type data', () => {
     expect(drowning.kind).toBe('periodic');
     expect(drowning.amount).toBe(2);
     expect(drowning.interval).toBe(1.5);
-    expect(drowning.flags).toEqual(['DROWNING', 'ENVIRONMENTAL']);
+    expect(drowning.flags).toEqual(['DROWNING', 'ENVIRONMENTAL', 'BYPASS_ARMOR']);
 
     const lava = requireDamageType(reg, 'lava');
     expect(lava.amount).toBe(4);
     expect(lava.interval).toBe(0.7);
     expect(lava.flags).toContain('FIRE');
+    expect(lava.flags).toContain('BYPASS_ARMOR');
 
     const starvation = requireDamageType(reg, 'starvation');
     expect(starvation.amount).toBe(1);
     expect(starvation.flags).toContain('STARVATION');
+    expect(starvation.flags).toContain('BYPASS_ARMOR');
   });
 
   it('fail-fast when a required default type is missing', () => {

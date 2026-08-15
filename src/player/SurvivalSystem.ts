@@ -6,6 +6,7 @@ import {
   type DamageTypeDefinition,
   type DamageTypeRegistry,
 } from '../data/DamageType';
+import { type ArmorProtection } from './ArmorProtection';
 
 export interface SurvivalSnapshot {
   version: 1;
@@ -37,15 +38,30 @@ export class SurvivalSystem {
   private readonly drowningType: DamageTypeDefinition;
   private readonly lavaType: DamageTypeDefinition;
   private readonly starvationType: DamageTypeDefinition;
+  private readonly registry: DamageTypeRegistry;
+
+  /** Optional armor protection; when present, non-bypass damage is mitigated. */
+  armor?: ArmorProtection;
 
   constructor(
     registry: DamageTypeRegistry = createDefaultDamageTypeRegistry(),
     private readonly onEvent?: (event: SurvivalEvent, amount?: number) => void,
   ) {
+    this.registry = registry;
     this.fallType = requireDamageType(registry, 'fall');
     this.drowningType = requireDamageType(registry, 'drowning');
     this.lavaType = requireDamageType(registry, 'lava');
     this.starvationType = requireDamageType(registry, 'starvation');
+  }
+
+  /**
+   * Whether damage from `reason` ignores armor. Resolves the matching
+   * `DamageType` by key; an unrecognized reason is treated as **non-bypass**
+   * (armor still applies) — fail-safe toward player protection.
+   */
+  private isBypass(reason: string): boolean {
+    const def = this.registry.entries().find((d) => d.key === reason);
+    return def?.flags.includes('BYPASS_ARMOR') ?? false;
   }
 
   update(
@@ -115,9 +131,15 @@ export class SurvivalSystem {
     }
   }
 
-  damage(amount: number, _reason = 'damage'): void {
+  damage(amount: number, reason = 'damage'): void {
     if (this.dead || this.invulnerability > 0) return;
-    const applied = Math.max(0, Math.ceil(amount));
+    let appliedAmount = amount;
+    if (this.armor && !this.isBypass(reason)) {
+      const { reduced, absorbed } = this.armor.reduce(amount, false);
+      appliedAmount = reduced;
+      if (absorbed > 0) this.armor.applyWear(absorbed);
+    }
+    const applied = Math.max(0, Math.ceil(appliedAmount));
     if (applied === 0) return;
     this.health = Math.max(0, this.health - applied);
     this.invulnerability = 0.55;
