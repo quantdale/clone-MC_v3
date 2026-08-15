@@ -45,8 +45,8 @@ Completion: 100%
       `npx vitest run` (1306 passed), `npm run build`, `npm run test:e2e` (21 passed).
 
 ## Documentation / state
-- [ ] Update `openspec/PROGRAM_STATE.json` + `PROGRAM_STATE.md` to 112 VERIFIED.
-- [ ] Commit impl + tests + artifacts; push to `origin/main`; advance program.
+- [x] Update `openspec/PROGRAM_STATE.json` + `PROGRAM_STATE.md` to 112 VERIFIED.
+- [x] Commit impl + tests + artifacts; push to `origin/main`; advance program.
 
 ## Final gate
 - [x] Set change to VERIFYING; run full verification contract; reconcile spec vs
