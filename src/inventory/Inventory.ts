@@ -1,4 +1,5 @@
 import type { BlockSelector } from './BlockSelector';
+import { PlayerEquipment, type EquipmentSnapshot } from './Equipment';
 import { ItemId, type ItemTypeRegistry, createDefaultItemRegistry } from './ItemRegistry';
 import {
   DAMAGE_COMPONENT,
@@ -35,6 +36,8 @@ export interface InventorySnapshot {
   selected: number;
   /** Optional for backwards compatibility with pre-tool saves. */
   durability?: number[];
+  /** Worn equipment (Head/Chest/Legs/Feet/Offhand); absent in pre-113 saves. */
+  equipment?: EquipmentSnapshot;
 }
 
 const MAX_STACK = 64;
@@ -74,6 +77,9 @@ export class Inventory implements BlockSelector {
   selected: number;
   /** Occupied main-inventory stacks (not shown in the nine-slot hotbar). */
   readonly storage: ItemStack[];
+  /** Worn equipment (Head/Chest/Legs/Feet/Offhand). The mainhand is the selected
+   *  hotbar slot and is delegated, not stored here. */
+  readonly equipment: PlayerEquipment;
 
   private readonly registry: ItemTypeRegistry;
 
@@ -84,6 +90,7 @@ export class Inventory implements BlockSelector {
     itemRegistry: ItemTypeRegistry = createDefaultItemRegistry(),
   ) {
     this.registry = itemRegistry;
+    this.equipment = new PlayerEquipment();
     if (slots && slots.length > 0) {
       const countsPresent = counts !== undefined && counts.length === slots.length;
       this.slots = slots.map((id, i): ItemStack => {
@@ -323,6 +330,7 @@ export class Inventory implements BlockSelector {
       storage: this.storage.map((stack) => ({ id: stack.id, count: stack.count })),
       selected: this.selected,
       durability: this.slots.map((stack) => this.remainingDurability(stack)),
+      equipment: this.equipment.serialize(),
     };
   }
 
@@ -357,7 +365,8 @@ export class Inventory implements BlockSelector {
           value < 0 ||
           value > maxDurabilityForItem(candidate.slots?.[index] ?? -1)
         ))
-      ))
+      )) ||
+      (candidate.equipment !== undefined && !PlayerEquipment.validateSnapshot(candidate.equipment, isValidItem))
     ) {
       return false;
     }
@@ -390,6 +399,9 @@ export class Inventory implements BlockSelector {
     this.storage.length = 0;
     for (const stack of candidate.storage) {
       this.storage.push({ id: stack.id, count: this.clampCount(stack.count) });
+    }
+    if (candidate.equipment !== undefined) {
+      this.equipment.restore(candidate.equipment, isValidItem);
     }
     this.select(candidate.selected!);
     return true;
