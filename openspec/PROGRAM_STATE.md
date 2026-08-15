@@ -3,18 +3,44 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **168-dispenser — VERIFIED 100%**
-- Active implementation change: **168-dispenser — VERIFIED**
-- Next change: **169-explosion-core — NOT YET ACTIVE (artifacts pending)**
-- 168 task ledger: **33 total tasks, 33 completed**
-- 168 completion: **100%**
-- 168 mandatory dispenser-behavior requirements: **PASS**
-- 168 required-test gate: **PASS — unit 2298/2298, E2E 22/22**
-- 168 advancement allowed: **Yes**
-- Session-start head: `5485f29cb4ab80bdf0df41a4ce6bd76adbbd1513`
-- Validated head: `f1d6dcb2887d88f820a4dfeb49f8dade0e96abc5` (168 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress — the 157-161 logic-component trio, 162's first consumers, the piston sub-arc (163-165), the item-moving trio (166 hopper, 167 dropper, 168 dispenser) are all COMPLETE.**
-- Next exact action: **Advance to 169-explosion-core. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: deterministic ray/strength block destruction, entity damage, drops — the first destruction-path module after the item-moving consumers, and the first place 168's behavior-descriptor model meets real world mutation).**
+- Last completed change: **169-explosion-core — VERIFIED 100%**
+- Active implementation change: **169-explosion-core — VERIFIED**
+- Next change: **170-tnt-block-entity — NOT YET ACTIVE (artifacts pending)**
+- 169 task ledger: **24 total tasks, 24 completed**
+- 169 completion: **100%**
+- 169 mandatory explosion-core requirements: **PASS**
+- 169 required-test gate: **PASS — unit 2310/2310, E2E 22/22**
+- 169 advancement allowed: **Yes**
+- Session-start head: `8c6761516b9b52c64097de87c0d0177d9b6de79a`
+- Validated head: `e11f4e2020c94b1c10fb8ff2f391492a38a7cacd` (169 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress — the 157-161 logic-component trio, 162's first consumers, the piston sub-arc (163-165), the item-moving trio (166-168), and the destruction-path core (169) are all COMPLETE.**
+- Next exact action: **Advance to 170-tnt-block-entity. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: priming, fuse, entity, redstone/fire integration — the first consumer of 169's explosion core and the first TNT block in the registry).**
+
+## What 169 implemented
+
+Change 169 is the first **destruction-path** module in the redstone/automation arc, and the first
+redstone-arc module since 163 with **zero registry changes** — a genuinely standalone deterministic
+core.
+
+- `src/simulation/ExplosionCore.ts` (NEW) — `computeExplosion` mirrors vanilla's ray model:
+  `EXPLOSION_RAY_COUNT = 1352` unit rays sampled from the surface of a 16×16×16 lattice, marching in
+  `EXPLOSION_RAY_STEP = 0.3` steps while power decays `EXPLOSION_RAY_DECAY = 0.225` per step plus
+  `(resistance + 0.3) * 0.3` per non-air block. A position is destroyed when a ray's power is
+  positive there **and** `world.isDestroyable(state)` is true — the `ExplosionWorld<S>` seam has
+  separate `isAir` (resistance penalty) and `isDestroyable` (destruction filter) predicates, so
+  fluids absorb rays like vanilla's water without ever being destroyed. Destroyed positions are
+  sorted lexicographically by (x, y, z); drops resolve through the caller's `dropFor` in that order;
+  non-finite strength/center inputs short-circuit to an empty result (never an unbounded march).
+  `explosionEntityDamage` mirrors vanilla's `damageEntities` at exposure = 1:
+  `f = strength * 2`, `d = distance / f`, damage = `floor(((1-d)^2 + (1-d)) / 2 * 7 * f + 1)`,
+  input order preserved. Vanilla's random exposure roll is deliberately **not** modeled — the
+  deterministic rule is documented as a parity difference owned by a future wiring layer.
+- Resistances and drops are caller data (stone 6, dirt 0.5, glass 0.3, water 100, obsidian 1200 in
+  the test world), so 170's TNT can consume the core with no registry coupling.
+- Tests: `tests/unit/ExplosionCore.test.ts` (NEW, 12 tests): ray count/unit-length/determinism,
+  all-air none, non-finite short-circuit, stone destroyed + dropped, second-layer shielding,
+  water absorb/no-destroy/shield, obsidian blocking, sorted drops, cross-call determinism, entity
+  damage at d=0/0.5/1 and beyond, input order.
 
 ## What 168 implemented
 
