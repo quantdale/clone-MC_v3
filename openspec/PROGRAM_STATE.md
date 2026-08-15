@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **133-entity-data-tracker — VERIFIED 100%**
-- Active implementation change: **133-entity-data-tracker — VERIFIED**
-- Next change: **134-navigation-grid-query — NOT YET ACTIVE (artifacts pending)**
-- 133 task ledger: **5 total task groups, 5 completed**
-- 133 completion: **100%**
-- 133 mandatory entity-data-tracker requirements: **PASS**
-- 133 required-test gate: **PASS — unit 1736/1736, E2E 21/21**
-- 133 advancement allowed: **Yes**
-- Session-start head: `be4fec2ad001fb55439cd3bfcdb862ebda4afc3e`
-- Validated head: `ccccb5576e22e6912cf9ef8b576bee54cfa59138` (133 feature commit)
-- Next exact action: **Advance to 134-navigation-grid-query. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (walkability/cost queries from voxel shapes and fluids, building on 056 VoxelShape + 076 fluid state); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **134-navigation-grid-query — VERIFIED 100%**
+- Active implementation change: **134-navigation-grid-query — VERIFIED**
+- Next change: **135-a-star-pathfinding — NOT YET ACTIVE (artifacts pending)**
+- 134 task ledger: **5 total task groups, 5 completed**
+- 134 completion: **100%**
+- 134 mandatory navigation-grid-query requirements: **PASS**
+- 134 required-test gate: **PASS — unit 1749/1749, E2E 21/21**
+- 134 advancement allowed: **Yes**
+- Session-start head: `ccccb5576e22e6912cf9ef8b576bee54cfa59138`
+- Validated head: `198808ddd622a239b77bf33d4c8de777f4a7c3d4` (134 feature commit)
+- Next exact action: **Advance to 135-a-star-pathfinding. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (bounded deterministic path search with cancellation/stale guards, building on 134 NavigationGridQuery); implement; verify full gate; commit + push; advance program state.**
 
 ## What 119 implemented
 
@@ -735,6 +735,40 @@ the 1631-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Bonemeal (127), hoe tilling, and a rain/weather hook are explicit non-goals
 (documented). Advance to 127.
 
+## What 134 implemented
+
+Change 134 adds per-cell walkability classification and movement-cost queries for a generic
+ground-walker entity profile, combining 056 `VoxelShape` collision with block-id-based hazard/fluid
+detection. It is the query primitives only — no pathfinding/search (135's scope), no per-mob
+movement profiles, and no `Game`/`World` wiring.
+
+- `src/simulation/NavigationGridQuery.ts` (NEW) — `NavigationWorld` (`getCollisionShape`/
+  `getBlockId`); `PathNodeType` (`Blocked`/`Open`/`Water`/`DamageFire`/`Lava`); `classifyNode`
+  (non-empty collision shape always wins as `Blocked`, else block id determines
+  Lava/Fire/Water/Open); `nodeCost` (`Open=0 < Water=8 < DamageFire=16 < Blocked=Lava=Infinity`,
+  vanilla-inspired); `isPassable` (`true` for `Open`/`Water`/`DamageFire`); `canStandAt` (every cell
+  in the occupied body height passable, plus solid ground below or the feet cell itself is `Water`);
+  `movementCost` (`Infinity` unless `canStandAt`, else the feet cell's `nodeCost`).
+- Tests: `tests/unit/NavigationGridQuery.test.ts` (NEW, 13) — classification of stone/lava/fire/
+  water/air plus the collision-shape-priority case; the full cost-ordering and `isPassable`-partition
+  invariants; `canStandAt`'s five scenarios (clear, obstructed, no-ground, water-floating,
+  lava-feet); `movementCost`'s finite vs. `Infinity` outcomes.
+
+## Validation evidence (134)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1749/1749 (prior 1736 + 13 new `NavigationGridQuery.test.ts`)
+- production build: PASS (`tsc --noEmit && vite build`, 83 modules — unchanged, no consumer yet)
+- E2E: PASS 21/21 (no existing file touched; nothing consumes the new module)
+
+## Advancement decision
+
+Change 134 is **VERIFIED** at 5/5 task groups (100%). All gates are green: typecheck, lint, the
+1749-unit suite, production build, and the required E2E suite (21/21). No advancement exception was
+needed. Pathfinding/search, per-mob movement profiles, and `Game`/`World` wiring are explicit
+non-goals (documented, deferred to 135+). Advance to 135.
+
 ## What 133 implemented
 
 Change 133 adds a generic, standalone dirty-property container mirroring real Minecraft's
@@ -1015,15 +1049,15 @@ the 1654-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Sapling/tree bonemeal is an explicit non-goal (deferred; no Sapling block
 exists) and the `FertilizerRegistry` extension point is documented. Advance to 128.
 
-## Next change: 134 (pending artifacts)
+## Next change: 135 (pending artifacts)
 
-`134-navigation-grid-query` is named in `CHANGE_SEQUENCE.md` with scope "Walkability/cost queries
-from voxel shapes and fluids." Per `AGENTS.md`, a change lacking full artifacts is a
+`135-a-star-pathfinding` is named in `CHANGE_SEQUENCE.md` with scope "Bounded deterministic path
+search with cancellation/stale guards." Per `AGENTS.md`, a change lacking full artifacts is a
 hard pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md`
 before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 133
-verification. Change 134 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 134
+verification. Change 135 is the next change; its artifacts must be authored and
 validated before implementation begins.
