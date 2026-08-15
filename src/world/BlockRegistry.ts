@@ -59,6 +59,7 @@ export const enum BlockId {
   Dispenser = 52,
   Tnt = 53,
   Rail = 54,
+  NetherPortal = 55,
 }
 
 /**
@@ -214,6 +215,14 @@ export const DISPENSER_SCHEMA = new BlockPropertySchema([
  */
 export const RAIL_SCHEMA = new BlockPropertySchema([
   { kind: 'named', name: 'shape', values: [...RAIL_SHAPES] },
+]);
+
+/**
+ * Nether portal property schema (177): a single `axis` named property ('x' | 'z') — the portal
+ * opening's horizontal orientation. Default 'x'. Enumerates 2 states.
+ */
+export const PORTAL_SCHEMA = new BlockPropertySchema([
+  { kind: 'named', name: 'axis', values: ['x', 'z'] },
 ]);
 
 /** Tool families used for preferred-tool mining bonuses. */
@@ -1134,6 +1143,22 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       dropItem: rid('rail'),
       propertySchema: RAIL_SCHEMA,
       defaultState: { shape: 'north_south' },
+    },
+    {
+      id: BlockId.NetherPortal,
+      resourceId: rid('nether_portal'),
+      key: 'nether_portal',
+      name: 'Nether Portal',
+      solid: false,
+      opaque: false,
+      breakable: false,
+      renderCategory: RenderCategory.Transparent,
+      topTile: 57,
+      bottomTile: 57,
+      sideTile: 57,
+      hardness: 0,
+      propertySchema: PORTAL_SCHEMA,
+      defaultState: { axis: 'x' },
     },
   ];
   return new BlockTypeRegistry(defs);
