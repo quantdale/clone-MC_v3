@@ -3,61 +3,70 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **106-container-menu-transaction-core — VERIFIED 100%**
-- Active implementation change: **106-container-menu-transaction-core — VERIFIED**
-- Next change: **107-chest-block-entity — NOT YET ACTIVE (artifacts pending)**
-- 106 task ledger: **4 total tasks, 4 completed**
-- 106 completion: **100%**
-- 106 mandatory container-menu-transaction-core requirements: **PASS**
-- 106 required-test gate: **PASS — unit 1192/1192, E2E 19/19**
-- 106 advancement allowed: **Yes**
+- Last completed change: **107-chest-block-entity — VERIFIED 100%**
+- Active implementation change: **107-chest-block-entity — VERIFIED**
+- Next change: **108-double-chest-composition — NOT YET ACTIVE (artifacts pending)**
+- 107 task ledger: **5 total tasks, 5 completed**
+- 107 completion: **100%**
+- 107 mandatory chest-block-entity requirements: **PASS**
+- 107 required-test gate: **PASS — unit 1216/1216, E2E 19/19**
+- 107 advancement allowed: **Yes**
 - Session-start head: `d282bbb01b4eabbdc76daaa05e78ccff81f2d685`
-- Validated head: `758745df325fd890b4c7e3948f35dad130701ed8`
-- Next exact action: **Advance to 107-chest-block-entity. Read `src/world/BlockRegistry.ts` (BlockId enum; block 13 reserved for crafting table; confirm ids 15-18 assignment) and `src/player/PlayerInteraction.ts` interaction conventions; author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (107 artifacts NOT yet present — authoring is a hard pre-implementation block), validate, implement single chest inventory persistence and interaction (27-slot inventory, open/close, block placement), verify full gate, commit + push, advance program state.**
+- Validated head: `7ea32b9122c49125832a96a6a36d7bc99a3349f7`
+- Next exact action: **Advance to 108-double-chest-composition. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (108 artifacts NOT yet present — authoring is a hard pre-implementation block), validate, implement deterministic adjacent chest pairing/unpairing over the 107 `ChestInventory` model, verify full gate, commit + push, advance program state.**
 
-## What 106 implemented
+## What 107 implemented
 
-Change 106 adds the reusable container-menu slot and transaction core.
+Change 107 adds the single-chest block-entity core and its registry data.
 
-- `src/inventory/MenuTransaction.ts` (NEW) — `MenuSlot` (`item`, `count`, `maxStack`
-  bounded to [1,64]); `MenuCursor` (`item`, `count` in [0,64], empty allowed); `ContainerMenu`
-  (1+ slots, `playerSlotStart` in `(0, len)`, optional cursor); `createContainerMenu` /
-  `validateContainerMenu` (strict construction and bounds validation, never throws on valid
-  input); `MenuTransaction` union `leftClick` / `rightClick` / `placeOne` / `quickMove`;
-  `applyMenuTransaction` (deterministic, immutable: leftClick pick-up / merge / swap;
-  rightClick same-item split-half pick-up with `ceil(count/2)` or place-one onto an empty /
-  mergeable non-full slot; placeOne drops exactly 1; quickMove first-fit merge-then-empty
-  across regions with the remainder left in the source slot); out-of-bounds slot indices
-  throw.
-- `tests/unit/MenuTransaction.test.ts` (NEW) — 20 tests: construction matrix (maxStack/count/
-  playerSlotStart bounds, 1-slot menu), per-transaction vectors for all four transaction
-  kinds, split-half rounding, immutability (inputs unchanged after apply), out-of-bounds
-  throws, determinism.
+- `src/world/ChestBlockEntity.ts` (NEW) — constants (`CHEST_BLOCK_ID 19`, `CHEST_ITEM_ID 25`,
+  `CHEST_TYPE_KEY 'chest'`, `CHEST_INVENTORY_SIZE 27`, `PLAYER_INVENTORY_SIZE 36`,
+  `CHEST_MENU_SLOT_COUNT 63`, `CHEST_PLAYER_SLOT_START 27`, `DEFAULT_SLOT_MAX_STACK 64`);
+  `ChestInventory` (exactly 27 validated `MenuSlot`s); `createChestInventory` /
+  `validateChestInventory` (strict, throws on malformed shapes/slots); lossless
+  `serializeChestInventory` / `deserializeChestInventory` (036 opaque payload, round-trip
+  exact); the 106 menu bridge `createChestMenu` (63 slots, `playerSlotStart` 27) /
+  `applyChestMenuTransaction` / `extractChestInventory` / `extractPlayerSlots`; the 052
+  entity lifecycle `createChestBlockEntity` / `readChestEntity` (rejects wrong type keys and
+  malformed payloads) / `updateChestEntityInventory` (immutable); `chestEntityContents` /
+  `chestInstanceContents` (ordered non-empty stacks for the 111 drop integration).
+- `src/world/BlockRegistry.ts` — chest block id 19 (solid, opaque, breakable, hardness 2.5,
+  axe-preferred, drops `minecraft:chest`, auto `loot/chest` table).
+- `src/inventory/ItemRegistry.ts` — chest item id 25 (iconTile 27, stackSize 64, places the
+  chest block).
+- `src/rendering/TextureAtlas.ts` — original procedural chest tile (index 27): plank base,
+  dark frame, lid seam band, latch.
+- `tests/unit/ChestBlockEntity.test.ts` (NEW) — 24 tests: construction/validation matrix,
+  serialization round-trips and rejects, menu transaction vectors across the chest/player
+  boundary (pickup/merge/swap/split-half/placeOne/quickMove with remainder), immutability,
+  out-of-bounds throws, entity lifecycle, wrong-type and malformed-payload rejects, contents
+  extraction, 052 manager chunk round-trip, registry cross-references. The legacy-id
+  separation and block-registry enumeration tests were updated for the new block.
 
-## Validation evidence (106)
+## Validation evidence (107)
 
 - typecheck: PASS (`tsc --noEmit`)
 - lint: PASS (`eslint .`)
-- unit: PASS 1192/1192 (prior 1172 + 20 new), stable across repeated runs
+- unit: PASS 1216/1216 (prior 1192 + 24 new), stable across repeated runs
 - production build: PASS (`tsc --noEmit && vite build`)
 - E2E: PASS 19/19
 
 ## Advancement decision
 
-Change 106 is **VERIFIED** at 4/4 (100%). All gates are green: typecheck, lint, the new 106
-suites, the full unit suite (1192/1192, stable across two runs), production build, and the
+Change 107 is **VERIFIED** at 5/5 (100%). All gates are green: typecheck, lint, the new 107
+suites, the full unit suite (1216/1216, stable across two runs), production build, and the
 required E2E suite (19/19). No advancement exception was needed.
 
-## Next change: 107 (pending artifacts)
+## Next change: 108 (pending artifacts)
 
-`107-chest-block-entity` is named in `CHANGE_SEQUENCE.md` with scope "Single chest inventory
-persistence and interaction." Per `AGENTS.md`, a change lacking full artifacts is a hard
+`108-double-chest-composition` is named in `CHANGE_SEQUENCE.md` with scope "Deterministic
+adjacent chest pairing/unpairing." Per `AGENTS.md`, a change lacking full artifacts is a hard
 pre-implementation block. Author and validate those artifacts via
-`SPEC_AUTHORING_PROTOCOL.md` before any production code. The 106 `MenuTransaction` core is the
-intended interaction layer for the chest screen.
+`SPEC_AUTHORING_PROTOCOL.md` before any production code. It composes the 107 `ChestInventory`
+model.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 106 verification.
-Change 107 is the next change; its artifacts must be authored and validated before implementation
+A future session must first inspect current `origin/main`, this state, and the 107 verification.
+Change 108 is the next change; its artifacts must be authored and validated before implementation
 begins.
