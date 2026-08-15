@@ -18,6 +18,11 @@ export interface MenuSlot {
   item: string | null;
   count: number;
   maxStack: number;
+  /**
+   * Optional per-slot stack components (additive, change 123). Carries item-state such as a
+   * potion bottle's `potion_contents`. Absent on the vast majority of slots; never required.
+   */
+  components?: Readonly<Record<string, unknown>>;
 }
 
 /** A validated container menu state. */
@@ -58,6 +63,11 @@ function validateSlot(slot: MenuSlot, index: number): void {
       throw new Error(`MenuTransaction: slot ${index}.count must be an integer in [1, maxStack]`);
     }
   }
+  if (slot.components !== undefined) {
+    if (typeof slot.components !== 'object' || slot.components === null || Array.isArray(slot.components)) {
+      throw new Error(`MenuTransaction: slot ${index}.components must be an object when present`);
+    }
+  }
 }
 
 function validateCursor(cursor: MenuCursor): void {
@@ -91,7 +101,12 @@ export function validateContainerMenu(input: unknown): ContainerMenu {
       throw new Error(`MenuTransaction: slot ${i} must be an object`);
     }
     const s = slot as Record<string, unknown>;
-    const parsed: MenuSlot = { item: s.item as string | null, count: s.count as number, maxStack: s.maxStack as number };
+    const parsed: MenuSlot = {
+      item: s.item as string | null,
+      count: s.count as number,
+      maxStack: s.maxStack as number,
+      ...(s.components !== undefined ? { components: s.components as Readonly<Record<string, unknown>> } : {}),
+    };
     validateSlot(parsed, i);
     slots.push(parsed);
   }
