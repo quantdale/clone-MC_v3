@@ -3,18 +3,41 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **166-hopper-transfer — VERIFIED 100%**
-- Active implementation change: **166-hopper-transfer — VERIFIED**
-- Next change: **167-dropper — NOT YET ACTIVE (artifacts pending)**
-- 166 task ledger: **33 total tasks, 33 completed**
-- 166 completion: **100%**
-- 166 mandatory hopper-transfer requirements: **PASS**
-- 166 required-test gate: **PASS — unit 2265/2265, E2E 22/22**
-- 166 advancement allowed: **Yes**
-- Session-start head: `e12feb274803e55490047947941eedd8da01e48f`
-- Validated head: `7a9132a1e8294e45879af616349390d809315dea` (166 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress — the 157-161 logic-component trio, 162's first consumers, the piston sub-arc (163-165), and 166's item-moving hopper are all COMPLETE.**
-- Next exact action: **Advance to 167-dropper. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: inventory ejection into world/containers — the next module in the 'item-moving redstone consumer' family after 166's hopper, and the first place 166's transferOneItem/MenuSlot model meets a real container write-back).**
+- Last completed change: **167-dropper — VERIFIED 100%**
+- Active implementation change: **167-dropper — VERIFIED**
+- Next change: **168-dispenser — NOT YET ACTIVE (artifacts pending)**
+- 167 task ledger: **33 total tasks, 33 completed**
+- 167 completion: **100%**
+- 167 mandatory dropper-eject requirements: **PASS**
+- 167 required-test gate: **PASS — unit 2280/2280, E2E 22/22**
+- 167 advancement allowed: **Yes**
+- Session-start head: `28b2fab770693e44cf8bbaa2c7e71e1553527e24`
+- Validated head: `ce41847b1e1ddc617984754658ba4758a2809e39` (167 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress — the 157-161 logic-component trio, 162's first consumers, the piston sub-arc (163-165), 166's item-moving hopper, and 167's item-moving dropper are all COMPLETE.**
+- Next exact action: **Advance to 168-dispenser. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: data/behavior-driven dispenser actions for initial items — the third and final 'item-moving redstone consumer' after 166's hopper and 167's dropper; the first place a behavior table (item -> action) is needed, since a dispenser fires arrows/eggs/snowballs/etc. rather than dropping the raw item).**
+
+## What 167 implemented
+
+Change 167 is the second **item-moving** module and the first place 166's model meets a real
+container write-back (and the first place a world drop is modeled).
+
+- `src/simulation/DropperEject.ts` (NEW) — `ejectFromDropper(source, destinationContainer,
+  dropPosition)`: when `destinationContainer` is a `MenuSlot[]` it reuses 166's `transferOneItem`
+  (merge-first, then first-empty) and returns `kind: 'container'`; when `destinationContainer` is
+  `null` it returns `kind: 'drop'` with a `DroppedItem` descriptor (`item`, `count: 1`, `position`)
+  and decrements `source` by one; an empty source or a full container returns `kind: 'none'` (a
+  dropper **does not** spill into the world when facing a full container). `dropperShouldTransfer`
+  is the same inverse-of-162 `!powered` lockout as 166; `dropper -style` output position uses 154's
+  `offsetInDirection`; `scheduleDropperEject`/`dueDropperEjects` bridge 047; `dropperStateProperties`
+  projects `facing`+`enabled`.
+- `src/world/BlockRegistry.ts`/`src/inventory/ItemRegistry.ts` (EDIT) — `BlockId.Dropper = 51`/
+  `ItemId.Dropper = 51`; `DROPPER_SCHEMA` is five-way `facing` × boolean `enabled` = **10 states**,
+  default `{ facing: 'down', enabled: true }` (same shape as 166's `HOPPER_SCHEMA`); the placing item
+  cross-references cleanly.
+- Tests: `tests/unit/DropperEject.test.ts` (NEW, 15 tests) plus three characterization updates
+  (`BlockRegistry` `all()` 39→40; `BlockStateRegistry` total formula + explicit `dropper` 10-state
+  branch; `BlockPropertySchema` `STATEFUL_BLOCK_KEYS` adds `dropper`). No `Game`/`World` wiring, no
+  real item-entity spawn.
 
 ## What 166 implemented
 
