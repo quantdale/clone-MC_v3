@@ -113,7 +113,7 @@ describe('block/item registry separation', () => {
       [31, null, 'enchanting_table'],
       [32, 'enchanting_table', 'wheat_seeds'],
       [33, 'bookshelf', 'wheat'],
-      [34, 'wheat', null],
+      [34, 'wheat', 'bone_meal'],
       [35, 'farmland', null],
     ];
     for (const [id, blockPath, itemPath] of table) {
@@ -177,7 +177,7 @@ describe('block/item registry separation', () => {
         expect(
           item.isFood === true ||
             item.toolKind !== undefined ||
-            ['stick', 'coal', 'raw_iron', 'iron_ingot', 'bedrock', 'lapis_lazuli', 'book', 'wheat'].includes(item.key),
+            ['stick', 'coal', 'raw_iron', 'iron_ingot', 'bedrock', 'lapis_lazuli', 'book', 'wheat', 'bone_meal'].includes(item.key),
         ).toBe(true);
         continue;
       }

@@ -50,6 +50,7 @@ export const enum ItemId {
   EnchantingTable = 31,
   WheatSeeds = 32,
   Wheat = 33,
+  BoneMeal = 34,
 }
 
 /**
@@ -501,6 +502,14 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       key: 'wheat',
       name: 'Wheat',
       iconTile: 35,
+      stackSize: 64,
+    },
+    {
+      id: ItemId.BoneMeal,
+      resourceId: rid('bone_meal'),
+      key: 'bone_meal',
+      name: 'Bone Meal',
+      iconTile: 36,
       stackSize: 64,
     },
   ];

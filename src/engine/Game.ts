@@ -24,6 +24,7 @@ import { BlockStateRegistry, createDefaultBlockStateRegistry } from '../world/Bl
 import { BlockBehaviorRegistry } from '../simulation/BlockBehavior';
 import { CropBlockBehavior } from '../simulation/CropBehavior';
 import { FarmlandBlockBehavior } from '../simulation/FarmlandBehavior';
+import { bonemealTarget } from '../simulation/Bonemeal';
 import { RandomTickSelector } from '../simulation/RandomTickSelector';
 import { WorldBlockAccess } from '../simulation/WorldBlockAccess';
 import { Player } from '../player/Player';
@@ -782,9 +783,40 @@ export class Game {
         this.showToast('That action is not possible here');
         break;
       case 'use':
-        this.openEnchanting();
+        if (this.isBonemealSelected()) {
+          this.useBonemeal();
+        } else {
+          this.openEnchanting();
+        }
         break;
     }
+  }
+
+  /** Whether the selected hotbar item is bone meal (the fertilization item). */
+  private isBonemealSelected(): boolean {
+    return this.inventory.getSelectedStack()?.id === ItemId.BoneMeal;
+  }
+
+  /**
+   * Use bone meal on the block under the crosshair. Applies growth via the
+   * fertilization interface and, only when growth was applied, consumes exactly
+   * one bone meal from the selected stack. A no-op target (air, mature crop,
+   * non-fertilizable block) consumes nothing.
+   */
+  private useBonemeal(): void {
+    const target = this.interaction.getTarget();
+    if (!target) return;
+    const applied = bonemealTarget(
+      this.worldBlockAccess,
+      target.blockX,
+      target.blockY,
+      target.blockZ,
+      () => this.inventory.consumeSelected(),
+    );
+    if (!applied) return;
+    this.hotbar.render();
+    this.audio.play('place');
+    this.showToast('Fertilized');
   }
 
   /**

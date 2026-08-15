@@ -181,8 +181,13 @@ export class PlayerInteraction {
       if (!breakRequested && this.elapsed >= this.lastActionTime + CONFIG.actionCooldown && this.input.consumePlace()) {
         if (this.target) {
           const targetBlockId = this.world.getBlock(this.target.blockX, this.target.blockY, this.target.blockZ);
+          const selectedId = this.selector.getSelectedItemId();
           // Right-clicking an enchanting table opens a session instead of placing.
           if (targetBlockId === BlockId.EnchantingTable) {
+            this.onAction?.('use', targetBlockId);
+            this.lastActionTime = this.elapsed;
+          } else if (selectedId === ItemId.BoneMeal) {
+            // Bone meal is used on the block under the crosshair instead of placing.
             this.onAction?.('use', targetBlockId);
             this.lastActionTime = this.elapsed;
           } else if (this.placeBlock()) {

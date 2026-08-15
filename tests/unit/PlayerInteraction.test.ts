@@ -556,3 +556,64 @@ describe('player interaction enchantment application (119)', () => {
     interaction.dispose();
   });
 });
+
+describe('player interaction bone meal (127)', () => {
+  function aim(player: Player, camera: THREE.PerspectiveCamera): void {
+    camera.position.copy(player.eyePosition);
+    camera.lookAt(10, player.eyePosition.y, player.eyePosition.z);
+    camera.updateMatrixWorld(true);
+  }
+
+  it('emits use instead of placing when bone meal is selected and a block is targeted', () => {
+    const player = new Player({ position: new THREE.Vector3(0.5, 0, 0.5) });
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 20);
+    aim(player, camera);
+    const world = makeMutableWorld(BlockId.Wheat);
+    const actions: string[] = [];
+    const interaction = new PlayerInteraction({
+      world,
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
+      selector: {
+        getSelectedItemId: () => ItemId.BoneMeal,
+        getSlotCount: () => 1,
+        consumeSelected: () => true,
+      },
+      player,
+      camera,
+      input: { ...makeInput({ breakRequested: false, held: false }), consumePlace: () => true },
+      onAction: (action) => actions.push(action),
+    });
+
+    interaction.update(0.016);
+
+    expect(actions).toContain('use');
+    expect(actions).not.toContain('place');
+    // Bone meal is not placeable, so the targeted block is untouched.
+    expect(world.getBlock(2, 1, 0)).toBe(BlockId.Wheat);
+    interaction.dispose();
+  });
+
+  it('does not emit use for bone meal when a non-bone-meal item is selected', () => {
+    const player = new Player({ position: new THREE.Vector3(0.5, 0, 0.5) });
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 20);
+    aim(player, camera);
+    const world = makeMutableWorld(BlockId.Wheat);
+    const actions: string[] = [];
+    const interaction = new PlayerInteraction({
+      world,
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
+      selector: { getSelectedItemId: () => ItemId.WoodenPickaxe },
+      player,
+      camera,
+      input: { ...makeInput({ breakRequested: false, held: false }), consumePlace: () => true },
+      onAction: (action) => actions.push(action),
+    });
+
+    interaction.update(0.016);
+
+    expect(actions).not.toContain('use');
+    interaction.dispose();
+  });
+});
