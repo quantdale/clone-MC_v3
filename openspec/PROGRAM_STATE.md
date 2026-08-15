@@ -3,18 +3,62 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **161-observer — VERIFIED 100%**
-- Active implementation change: **161-observer — VERIFIED**
-- Next change: **162-redstone-consumer-blocks — NOT YET ACTIVE (artifacts pending)**
-- 161 task ledger: **29 total tasks, 29 completed**
-- 161 completion: **100%**
-- 161 mandatory observer requirements: **PASS**
-- 161 required-test gate: **PASS — unit 2188/2188, E2E 22/22**
-- 161 advancement allowed: **Yes**
+- Last completed change: **162-redstone-consumer-blocks — VERIFIED 100%**
+- Active implementation change: **162-redstone-consumer-blocks — VERIFIED**
+- Next change: **163-piston-move-planner — NOT YET ACTIVE (artifacts pending)**
+- 162 task ledger: **29 total tasks, 29 completed**
+- 162 completion: **100%**
+- 162 mandatory redstone-consumer requirements: **PASS**
+- 162 required-test gate: **PASS — unit 2205/2205, E2E 22/22**
+- 162 advancement allowed: **Yes**
 - Session-start head: `89017135263a9122a8981c3f0a7c0fad8d25ed94`
-- Validated head: `e207ad9db4208b74da9c2e4ec55a75b00ff3f48c` (161 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress — the 157-161 logic-component trio is now COMPLETE.**
-- Next exact action: **Advance to 162-redstone-consumer-blocks. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (the first change where a redstone signal actually drives a visible/behavioral block-state change on the *receiving* end: lamps that light when powered, doors/trapdoors that open when powered. Check CHANGE_SEQUENCE.md for whether a dedicated doors change exists later before deciding how much door/trapdoor open-state modeling belongs here. Also the first natural point a real `RedstonePowerSource` adapter over the live `World` could plausibly start being built, given 154-161 are all additive/unconsumed so far — decide explicitly whether to scope that bridge in now or continue deferring it, and document the decision either way); implement; verify full gate; commit + push; advance program state.**
+- Validated head: `00c3a1f27c2f948def18746a3c973a7e2b462b3d` (162 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress — the 157-161 logic-component trio is COMPLETE and 162 adds the first consumers.**
+- Next exact action: **Advance to 163-piston-move-planner. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: validate bounded push chains, immovable blocks, and destroy reactions — this is a planning/validation-only change; actual atomic block-state/block-entity moves are 164's separate titled scope, so keep 163 strictly to computing/validating a push chain without mutating any `World` state yet); implement; verify full gate; commit + push; advance program state.**
+
+## What 162 implemented
+
+Change 162 adds the first redstone *consumers*: 154-161 all read power in only to compute a signal
+they emit back out; a lamp/door/trapdoor reads power in and changes its own visible state, full
+stop — closing the producer-to-consumer loop the redstone section has been building toward since
+154.
+
+- `src/simulation/RedstoneConsumers.ts` (NEW) — the shared rule across all three blocks is a
+  trivial one-line identity (active exactly when powered), given three distinct named entry points
+  per vanilla property naming (`lampShouldBeLit`/`doorShouldBeOpen`/`trapdoorShouldBeOpen`) rather
+  than one generic export, for call-site clarity matching 160's named-mode precedent. The lamp is
+  the one place with real timing: turns on immediately but defers turning off via its own 047
+  `ScheduledTickQueue` bridge (`LAMP_OFF_DELAY_TICKS = 4`, vanilla's flicker guard — this section's
+  sixth 047 consumer), while doors/trapdoors toggle immediately in both directions with no
+  scheduling at all. Unlike every 154-161 producer, this module has **zero dependency on 154's
+  `RedstoneSignal.ts`**: these blocks consume a plain caller-supplied `powered` boolean, not a
+  signal strength — also the first redstone module in this arc with no `*SignalStrength`-shaped
+  export, since pure sinks have nothing to emit back out.
+- `src/world/BlockRegistry.ts`/`ItemRegistry.ts` (EDIT) — `LAMP_SCHEMA` (`lit`, 2 states);
+  `OPEN_SCHEMA` (`open`, 2 states, shared by `door` and `trapdoor` — the same one-schema-many-blocks
+  pattern `POWERED_SCHEMA` established for lever/button/plate, confirmed by an explicit
+  object-identity test); `BlockId.RedstoneLamp = 45`/`Door = 46`/`Trapdoor = 47` (and matching
+  `ItemId`s). `facing` is deliberately omitted from both door and trapdoor — purely visual, the
+  identical reasoning 157/158 already applied — and the real door's two-block hinge/half geometry
+  is likewise out of scope (placement/rendering concern, not redstone-consumer behavior), flagged
+  explicitly rather than silently dropped.
+
+## Validation evidence (162)
+
+- typecheck: PASS; lint: PASS (full project)
+- unit: PASS 2205/2205 (prior 2188 + 17 new, including an object-identity check that door/trapdoor
+  share one schema instance and both-boundary coverage for all three predicates)
+- production build: PASS (registry edits live; simulation module has no `Game.ts` consumer yet)
+- E2E: PASS 22/22 (all pre-existing assertions unaffected)
+- Four characterization tests updated: block count 33 → 36 (three new blocks), stateful-block set +
+  `redstone_lamp`/`door`/`trapdoor`, state-count formula base-block offset -11 → -14 plus a total
+  +6 (2+2+2) with new per-block exact-2-state assertions, three new legacy-id rows
+
+## Advancement decision (162)
+
+Advance. 100% task completion, full gate green, no MUST/SHALL requirement unmet, no regression.
+Player interaction and the real door's two-block geometry deferred as documented non-goals. Next
+change: 163-piston-move-planner.
 
 ## What 161 implemented
 
