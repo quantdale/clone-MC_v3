@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "114-tool-tier-and-harvest-rules",
+  "currentChange": "115-item-durability-repair",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "114-tool-tier-and-harvest-rules",
-  "nextChange": "115-item-durability-repair",
-  "completedTasks": 7,
-  "totalTasks": 7,
+  "lastCompletedChange": "115-item-durability-repair",
+  "nextChange": "116-armor-protection",
+  "completedTasks": 5,
+  "totalTasks": 5,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "e715b661b40b252baf64d7abe190eee40eb4836f",
-  "lastValidatedHead": "2dcae08fd01a8ab83092521f941600fdcdb2c510",
-  "lastKnownHead": "2dcae08fd01a8ab83092521f941600fdcdb2c510",
-  "lastCompletedTask": "114: all 7 task groups complete; tool-tier-and-harvest-rules VERIFIED. Added miningLevel (block) and toolTier (item) data model; createDefaultBlockTags/createDefaultItemTags build mineable/tools tags; HarvestRules drives isEffectiveTool, canHarvest, getBreakDuration (0.08 floor) from tags. PlayerInteraction.finishBreak gates drops on canHarvest; Game wires tag registries + HarvestRules. 24 HarvestRules unit tests + 1 PlayerInteraction integration test; full gate green (typecheck, lint, 1354 unit, build, 21 e2e).",
-  "nextExactAction": "Advance to 115-item-durability-repair. Read it (and SPEC_AUTHORING_PROTOCOL.md if artifacts incomplete), author/validate proposal/design/tasks/specs/verification, implement general component-driven durability damage/break/repair rules, verify full gate, commit + push, advance program state.",
+  "lastValidatedHead": "74f311c",
+  "lastKnownHead": "74f311c",
+  "lastCompletedTask": "115: all 5 task groups complete; item-durability-repair VERIFIED. Added DurabilityRules (remaining/apply/break/repair) pure module; Inventory.damageSelectedItem delegates to applyDamage (identical behavior, existing durability tests green); Inventory.repairSelectedItem added. Full gate green (typecheck, lint, 1374 unit, build, 21 e2e).",
+  "nextExactAction": "Advance to 116-armor-protection. Read it (and SPEC_AUTHORING_PROTOCOL.md if artifacts incomplete), author/validate proposal/design/tasks/specs/verification, implement armor points/toughness/durability into the damage calculation, verify full gate, commit + push, advance program state.",
   "blockers": [],
   "validationResults": [
     {
@@ -1131,8 +1131,18 @@
       "e2e": "PASS 21/21",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "114 VERIFIED 7/7 (100%). Added mining-level/tool-tier data model, mineable/tools tag factories, and HarvestRules (effective-tool, canHarvest, getBreakDuration floor 0.08) wired into PlayerInteraction + Game; blocks needing a tool no longer drop by hand. 24 new HarvestRules unit tests + 1 PlayerInteraction integration test; full gate green (typecheck, lint, 1354 unit, build, 21 e2e)."
+    },
+    {
+      "head": "74f311c",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 1374/1374",
+      "build": "PASS via Playwright production webServer",
+      "e2e": "PASS 21/21",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "115 VERIFIED 5/5 (100%). Added pure DurabilityRules (getRemainingDurability, isBroken, applyDamage, repair) operating on maxDurability + DAMAGE_COMPONENT; Inventory.damageSelectedItem delegates to applyDamage (identical behavior), new Inventory.repairSelectedItem delegates to repair. 18 new DurabilityRules unit tests + 2 new Inventory repair cases; full gate green (typecheck, lint, 1374 unit, build, 21 e2e)."
     }
   ],
-  "publishedHead": "2dcae08fd01a8ab83092521f941600fdcdb2c510",
-  "publishedAt": "2026-08-15T02:22:07.101Z"
+  "publishedHead": "74f311c",
+  "publishedAt": "2026-08-15T02:36:52.809Z"
 }

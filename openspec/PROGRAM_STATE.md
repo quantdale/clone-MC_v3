@@ -3,17 +3,55 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **114-tool-tier-and-harvest-rules — VERIFIED 100%**
-- Active implementation change: **114-tool-tier-and-harvest-rules — VERIFIED**
-- Next change: **115-item-durability-repair — NOT YET ACTIVE (artifacts pending)**
-- 114 task ledger: **7 total tasks, 7 completed**
-- 114 completion: **100%**
-- 114 mandatory tool-tier-and-harvest-rules requirements: **PASS**
-- 114 required-test gate: **PASS — unit 1354/1354, E2E 21/21**
-- 114 advancement allowed: **Yes**
+- Last completed change: **115-item-durability-repair — VERIFIED 100%**
+- Active implementation change: **115-item-durability-repair — VERIFIED**
+- Next change: **116-armor-protection — NOT YET ACTIVE (artifacts pending)**
+- 115 task ledger: **5 total tasks, 5 completed**
+- 115 completion: **100%**
+- 115 mandatory item-durability-repair requirements: **PASS**
+- 115 required-test gate: **PASS — unit 1374/1374, E2E 21/21**
+- 115 advancement allowed: **Yes**
 - Session-start head: `e715b661b40b252baf64d7abe190eee40eb4836f`
-- Validated head: `2dcae08fd01a8ab83092521f941600fdcdb2c510` (114 feature commit; state advanced to 115)
-- Next exact action: **Advance to 115-item-durability-repair. Read it (and SPEC_AUTHORING_PROTOCOL.md if artifacts incomplete), author/validate proposal/design/tasks/specs/verification, implement general component-driven durability damage/break/repair rules, verify full gate, commit + push, advance program state.**
+- Validated head: `74f311c` (115 feature commit; state advanced to 116)
+- Next exact action: **Advance to 116-armor-protection. Read it (and SPEC_AUTHORING_PROTOCOL.md if artifacts incomplete), author/validate proposal/design/tasks/specs/verification, implement armor points/toughness/durability into the damage calculation, verify full gate, commit + push, advance program state.**
+
+## What 115 implemented
+
+Change 115 adds a general, pure, component-driven durability rule set and makes
+`Inventory` delegate its wear/repair to it. It is reusable by later enchantment
+(119) and anvil/grindstone/mending (948/949/2202/2203) changes.
+
+- `src/inventory/DurabilityRules.ts` (NEW) — pure functions on an explicit
+  `maxDurability` plus the stack's `DAMAGE_COMPONENT`:
+  - `getRemainingDurability(maxDurability, stack)` → `max(0,min(max,max-damage))`
+    for a tool, `0` for non-tool/empty/missing.
+  - `isBroken(maxDurability, stack)` → true for a depleted tool (`remaining<=0`)
+    or `count<=0`, false for non-tools.
+  - `applyDamage(maxDurability, stack, amount)` → `{ stack, broke }`; accumulates
+    `max(1,trunc(amount))` into `DAMAGE_COMPONENT`; on depletion returns
+    `{ ...stack, count:0, components:undefined }` with `broke:true` (identical to
+    the prior inline zeroing); non-tools/empty returned unchanged.
+  - `repair(maxDurability, stack, amount)` → reduces `damage` by
+    `max(1,trunc(amount))`, clamped at `0` (pristine, component removed);
+    preserves `count`/identity; non-tool/empty/pristine returned unchanged.
+- `src/inventory/Inventory.ts` (EDIT) — `damageSelectedItem` now delegates to
+  `applyDamage` with identical observable behavior; new `repairSelectedItem`
+  looks up `maxDurability` from the registry and delegates to `repair`, returning
+  whether the selected tool changed.
+
+## Validation evidence (115)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1374/1374 (prior 1354 + 18 new DurabilityRules + 2 new Inventory repair)
+- production build: PASS (`tsc --noEmit && vite build`)
+- E2E: PASS 21/21 (no new e2e needed — rule-only change; durability drop tests stay green)
+
+## Advancement decision
+
+Change 115 is **VERIFIED** at 5/5 (100%). All gates are green: typecheck, lint,
+the new 1374-unit suite, production build, and the required E2E suite (21/21).
+No advancement exception was needed. Advance to 116.
 
 ## What 114 implemented
 
@@ -176,15 +214,16 @@ Change 111 is **VERIFIED** at 6/6 (100%). All gates are green: typecheck, lint, 
 1290-unit suite, production build, and the required E2E suite (20/20). No advancement
 exception was needed. Advance to 112.
 
-## Next change: 115 (pending artifacts)
+## Next change: 116 (pending artifacts)
 
-`115-item-durability-repair` is named in `CHANGE_SEQUENCE.md` with scope "General
-component-driven durability damage/break/repair rules." Per `AGENTS.md`, a change
-lacking full artifacts is a hard pre-implementation block. Author and validate those
-artifacts via `SPEC_AUTHORING_PROTOCOL.md` before any production code.
+`116-armor-protection` is named in `CHANGE_SEQUENCE.md` with scope "Armor
+points/toughness/durability integrated into damage calculation." Per `AGENTS.md`,
+a change lacking full artifacts is a hard pre-implementation block. Author and
+validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md` before any production
+code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 114
-verification. Change 115 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 115
+verification. Change 116 is the next change; its artifacts must be authored and
 validated before implementation begins.
