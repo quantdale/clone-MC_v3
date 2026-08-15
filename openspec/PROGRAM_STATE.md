@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **137-mob-spawn-rules — VERIFIED 100%**
-- Active implementation change: **137-mob-spawn-rules — VERIFIED**
-- Next change: **138-mob-spawn-cycle — NOT YET ACTIVE (artifacts pending)**
-- 137 task ledger: **5 total task groups, 5 completed**
-- 137 completion: **100%**
-- 137 mandatory mob-spawn-rules requirements: **PASS**
-- 137 required-test gate: **PASS — unit 1782/1782, E2E 21/21**
-- 137 advancement allowed: **Yes**
-- Session-start head: `d5cf221af8928905567faaaffe33bd357c73b148`
-- Validated head: `22dee8a1a1b6f4e0261ead9a878ccff69cb2a385` (137 feature commit)
-- Next exact action: **Advance to 138-mob-spawn-cycle. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per-category caps and deterministic spawn attempts in ticking chunks, building on 137 MobSpawnRules); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **138-mob-spawn-cycle — VERIFIED 100%**
+- Active implementation change: **138-mob-spawn-cycle — VERIFIED**
+- Next change: **139-passive-wander-ai — NOT YET ACTIVE (artifacts pending)**
+- 138 task ledger: **5 total task groups, 5 completed**
+- 138 completion: **100%**
+- 138 mandatory mob-spawn-cycle requirements: **PASS**
+- 138 required-test gate: **PASS — unit 1789/1789, E2E 21/21**
+- 138 advancement allowed: **Yes**
+- Session-start head: `22dee8a1a1b6f4e0261ead9a878ccff69cb2a385`
+- Validated head: `d53e6fb591885576b7a793b8e456de78a08be19a` (138 feature commit)
+- Next exact action: **Advance to 139-passive-wander-ai. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (wander/look/avoid-water baseline behavior, building on 136 GoalSelector + 130 EntityPhysics); implement; verify full gate; commit + push; advance program state.**
 
 ## What 119 implemented
 
@@ -735,6 +735,41 @@ the 1631-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Bonemeal (127), hoe tilling, and a rain/weather hook are explicit non-goals
 (documented). Advance to 127.
 
+## What 138 implemented
+
+Change 138 adds per-category live counting, deterministic in-chunk candidate selection, and a
+bounded per-chunk spawn cycle composing 137's `canSpawn` with 129's `EntityManager`. It is the cycle
+orchestration only — no per-biome spawn tables, no `Game`/tick-loop wiring, and no despawning.
+
+- `src/simulation/MobSpawnCycle.ts` (NEW) — `SpawnCategoryConfig` (`category`, `typeId`, `cap`,
+  `attemptsPerChunk`, optional `height`); `countLiveByCategory` (`ACTIVE` entities via 129
+  `EntityManager.getAll()` whose 017 registered type matches the category); `selectSpawnCandidate`
+  (048 `hash32`-derived deterministic in-chunk `{x, z}`, always within the chunk's 16-wide
+  footprint, verified for negative chunk coordinates too); `runSpawnCycleForChunk` (per config: skip
+  entirely if already at `cap`; else up to `attemptsPerChunk` deterministic candidates, each
+  validated through `canSpawn` before `manager.spawn` places it at the block center, stopping that
+  config's attempts as soon as `cap` is reached mid-cycle).
+- Tests: `tests/unit/MobSpawnCycle.test.ts` (NEW, 7) — mixed-category/removed counting; candidate
+  determinism + footprint bounds; already-at-cap zero attempts; mid-cycle cap cutoff; a successful
+  spawn's exact placement verified against `selectSpawnCandidate`'s own output; an entirely
+  ineligible world spawning nothing without error.
+
+## Validation evidence (138)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1789/1789 (prior 1782 + 7 new `MobSpawnCycle.test.ts`)
+- production build: PASS (`tsc --noEmit && vite build`, 83 modules — unchanged, no consumer yet)
+- E2E: PASS 21/21 (no existing file touched; nothing consumes the new module)
+
+## Advancement decision
+
+Change 138 is **VERIFIED** at 5/5 task groups (100%). All gates are green: typecheck, lint, the
+1789-unit suite, production build, and the required E2E suite (21/21). No advancement exception was
+needed. Per-biome spawn tables, `Game`/tick-loop wiring, and despawning are explicit non-goals
+(documented, deferred). This completes the mob-spawning arc (137-138); advance to 139, which begins
+concrete mob AI (goal implementations on 136's `GoalSelector`).
+
 ## What 137 implemented
 
 Change 137 adds spawn-eligibility predicates combining light, biome, block/clearance, distance, and
@@ -1154,15 +1189,15 @@ the 1654-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Sapling/tree bonemeal is an explicit non-goal (deferred; no Sapling block
 exists) and the `FertilizerRegistry` extension point is documented. Advance to 128.
 
-## Next change: 138 (pending artifacts)
+## Next change: 139 (pending artifacts)
 
-`138-mob-spawn-cycle` is named in `CHANGE_SEQUENCE.md` with scope "Per-category caps and
-deterministic spawn attempts in ticking chunks." Per `AGENTS.md`, a change lacking full artifacts is
+`139-passive-wander-ai` is named in `CHANGE_SEQUENCE.md` with scope "Wander/look/avoid-water
+baseline behavior." Per `AGENTS.md`, a change lacking full artifacts is
 a hard pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md`
 before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 137
-verification. Change 138 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 138
+verification. Change 139 is the next change; its artifacts must be authored and
 validated before implementation begins.
