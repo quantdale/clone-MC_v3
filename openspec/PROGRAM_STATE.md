@@ -3,17 +3,61 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **149-point-of-interest-system — VERIFIED 100%**
-- Active implementation change: **149-point-of-interest-system — VERIFIED**
-- Next change: **150-villager-professions — NOT YET ACTIVE (artifacts pending)**
-- 149 task ledger: **24 total tasks, 24 completed**
-- 149 completion: **100%**
-- 149 mandatory point-of-interest-system requirements: **PASS**
-- 149 required-test gate: **PASS — unit 1942/1942, E2E 22/22**
-- 149 advancement allowed: **Yes**
-- Session-start head: `36118bdaec43c126dae8b62f997744d668495f82`
-- Validated head: `319a0e6f414dc4b9bb83125358b5c05c7d140b92` (149 feature commit)
-- Next exact action: **Advance to 150-villager-professions. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (profession/workstation assignment and schedules — first real consumer of 149's PointOfInterestManager; needs a villager entity type registered in 017's EntityRegistry first, since none exists yet); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **150-villager-professions — VERIFIED 100%**
+- Active implementation change: **150-villager-professions — VERIFIED**
+- Next change: **151-villager-trading — NOT YET ACTIVE (artifacts pending)**
+- 150 task ledger: **20 total tasks, 20 completed**
+- 150 completion: **100%**
+- 150 mandatory villager-professions requirements: **PASS**
+- 150 required-test gate: **PASS — unit 1952/1952, E2E 22/22**
+- 150 advancement allowed: **Yes**
+- Session-start head: `ecd617d6ba88832de3acf021be2846d2f4766c59`
+- Validated head: `db902e431dc97bde2c0cfe9e233ff78b37b80470` (150 feature commit)
+- Next exact action: **Advance to 151-villager-trading. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (trade offers, demand/use limits, XP/progression, transactional UI — first real consumer of 150's VillagerProfession assignment; needs a trade-offer data model and 106's container-menu-transaction-core for the UI side); implement; verify full gate; commit + push; advance program state.**
+
+## What 150 implemented
+
+Change 150 adds a `villager` `CREATURE` entity type (017, health 20) and the profession/workstation
+assignment model — the first real consumer of 149's `PointOfInterestManager`. It is the data model
++ assignment/schedule logic only, additive/unconsumed: no village/structure generation exists yet
+to naturally spawn a villager or place a workstation block.
+
+- `src/data/EntityType.ts` (EDIT) — `def('villager', 'CREATURE', 20, 0, true, true)` added to
+  `createDefaultEntityRegistry()`.
+- `src/simulation/VillagerProfession.ts` (NEW) — `VillagerProfession` (`id`/`key`/
+  `workstationType`) + `VillagerProfessionRegistry` (003 `Registry` core, `getByKey`/`get`/
+  `getOptional`/`has`/`entries`, never contains an "unemployed" entry — unemployment is `null`);
+  `createDefaultVillagerProfessionRegistry` (farmer/librarian/weaponsmith, each keyed to a
+  placeholder `minecraft:poi/<key>` workstation type not yet tied to any real block);
+  `scheduleForHour` (pure hour-of-day → `WORK` `[6,18)` / `MEANDER` `[18,22)` / `REST` `[22,24)` ∪
+  `[0,6)`, total coverage, no gap or overlap); `VillagerAssignment` + `VillagerProfessionSystem`
+  (per-entity-id assignment map; `assignProfession` tries professions strictly in the
+  caller-supplied priority order, claims the first available (unclaimed, in-range) workstation via
+  149's `findNearestUnclaimed`+`claim`, and is idempotent for an already-employed villager — never
+  reassigns or double-claims; `unassign` releases the tracked POI via 149's `release` and clears
+  tracking, a safe no-op when nothing is tracked).
+
+## Validation evidence (150)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1952/1952 (prior 1942 + 10 new: `VillagerProfessionRegistry` construction/lookup,
+  `scheduleForHour` all-eight-boundary-hours, `assignProfession`
+  claims-only-available/priority-order-over-nearer/no-workstation-null/already-assigned-idempotent,
+  `unassign` releases+clears/no-op-when-unassigned)
+- production build: PASS (`tsc --noEmit && vite build`, 103 modules, unchanged from 149 — confirms
+  no `Game.ts` consumer, matching 148/149's own identical evidence)
+- E2E: PASS 22/22 (all pre-existing assertions unaffected — nothing wired into the live game)
+- Required, non-regression update to `tests/unit/EntityType.test.ts`'s hardcoded default-registry
+  size (11→12), sorted key list (+`villager`), and the fixed `item` runtime-id expectation (10→11,
+  since `villager` registers before `item`; `Registry.ts` documents runtime ids as
+  process/data-set-local, not persistent identity) — the same test-maintenance pattern 148's
+  `BlockItemSeparation.test.ts` update followed.
+
+## Advancement decision (150)
+
+Advance. 100% task completion, full gate green, no MUST/SHALL requirement unmet, no regression.
+Additive/unconsumed pending village/structure generation. Next change: 151-villager-trading.
 
 ## What 149 implemented
 
