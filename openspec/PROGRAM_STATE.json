@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "103-recipe-registry-loader",
+  "currentChange": "104-player-2x2-crafting",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "103-recipe-registry-loader",
-  "nextChange": "104-player-2x2-crafting",
+  "lastCompletedChange": "104-player-2x2-crafting",
+  "nextChange": "105-crafting-table-3x3",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "390a40bc4e90645bfe29cd2a9968cc7ad6f131e1",
-  "lastKnownHead": "390a40bc4e90645bfe29cd2a9968cc7ad6f131e1",
-  "lastCompletedTask": "103: all 4 tasks complete; recipe-registry-loader VERIFIED. New src/inventory/TypedRecipe.ts (TypedRecipe union shaped 1-3x1-3 pattern grid with uppercase A-Z keys, no dead keys, '_' empty cells, non-empty cell required / shapeless 1-9 ingredients / processing single input with positive cookingTime and finite experience >= 0; result item string + count in [1, 64]; strict validation; TypedRecipeRegistry atomic with all(); createDefaultTypedRecipes: wooden_pickaxe shaped WWW/_S_/_S_ W=planks S=stick, glass shapeless 4x sand, smelt_sand + smelt_cobblestone processing 200 ticks xp 0.1); 9 new unit tests; 1148 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 104-player-2x2-crafting. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (104 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement the true 2x2 ingredient grid and result consumption semantics over 103 recipes, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "7cfd660c7378f18207023e9f509ece4209f2226c",
+  "lastKnownHead": "7cfd660c7378f18207023e9f509ece4209f2226c",
+  "lastCompletedTask": "104: all 4 tasks complete; player-2x2-crafting VERIFIED. New src/inventory/CraftingGrid.ts (validated 1-3x1-3 row-major CraftingGrid with CraftingSlot item/count payload; immutable createCraftingGrid/emptyCraftingGrid/setCraftingSlot; deterministic matchCraftingRecipe: shaped top-left fit with '_' empty-cell equivalence and no extras, shapeless ingredient multiset, first match in input order, processing never matches; craftCraftingGrid returns exact result + consumed cell coordinates or null); 14 new unit tests; 1162 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 105-crafting-table-3x3. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (105 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement crafting-table block interaction and the 3x3 grid (104 evaluator over 103 recipes), verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -1031,6 +1031,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "103 VERIFIED 4/4 (100%). Recipe registry loader: src/inventory/TypedRecipe.ts (typed shaped/shapeless/processing recipes with strict validation: 1-3x1-3 patterns, A-Z keys with no dead keys, 1-9 ingredients, cooking time/experience rules, result counts in [1,64]; TypedRecipeRegistry atomic; defaults wooden_pickaxe/glass/smelt_sand/smelt_cobblestone); 9 new unit tests; 1148 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "7cfd660c7378f18207023e9f509ece4209f2226c",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 1162/1162; CraftingGrid 14/14",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "104 VERIFIED 4/4 (100%). Player 2x2 crafting: src/inventory/CraftingGrid.ts (validated 1-3x1-3 grids with immutable updates; deterministic shaped top-left fit with empty-cell equivalence and no-extras rule, shapeless multiset matching, first-match order; craftCraftingGrid with exact consumption coordinates; processing never crafts); 14 new unit tests; 1162 unit + 19 e2e pass, stable."
     }
   ]
 }
