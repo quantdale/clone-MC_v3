@@ -1,7 +1,7 @@
 # Tasks: 113-equipment-slots
 
-Status: VERIFYING
-Completion: 95%
+Status: VERIFIED
+Completion: 100%
 
 ## Artifacts (pre-implementation, per SPEC_AUTHORING_PROTOCOL)
 - [x] Author `proposal.md`
@@ -41,9 +41,9 @@ Completion: 95%
       `npx vitest run` (1329), `npm run build`, `npm run test:e2e` (21).
 
 ## Documentation / state
-- [ ] Update `openspec/PROGRAM_STATE.json` + `PROGRAM_STATE.md` to 113 VERIFIED.
-- [ ] Commit impl + tests + artifacts; push to `origin/main`; advance program.
+- [x] Update `openspec/PROGRAM_STATE.json` + `PROGRAM_STATE.md` to 113 VERIFIED.
+- [x] Commit impl + tests + artifacts; push to `origin/main`; advance program.
 
 ## Final gate
-- [ ] Set change to VERIFYING; run full verification contract; reconcile spec vs
+- [x] Set change to VERIFYING; run full verification contract; reconcile spec vs
       implementation; mark VERIFIED at 100%.

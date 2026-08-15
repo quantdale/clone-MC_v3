@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "112-item-pickup-and-despawn",
+  "currentChange": "113-equipment-slots",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "112-item-pickup-and-despawn",
-  "nextChange": "113-equipment-slots",
+  "lastCompletedChange": "113-equipment-slots",
+  "nextChange": "114-tool-tier-and-harvest-rules",
   "completedTasks": 6,
   "totalTasks": 6,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "e715b661b40b252baf64d7abe190eee40eb4836f",
-  "lastValidatedHead": "4f7d0e7bb3586590b783ba340814122952664159",
-  "lastKnownHead": "4f7d0e7bb3586590b783ba340814122952664159",
-  "lastCompletedTask": "112: all 6 tasks complete; item-pickup-and-despawn VERIFIED. ItemEntity.count made mutable (manager-owned quantity). ItemEntityManager adds constants PICKUP_DELAY_TICKS(10)/DESPAWN_AGE_TICKS(6000)/MERGE_RADIUS(0.25)/PICKUP_RADIUS(1.5) and methods mergeEntities (idempotent overlap fold up to stackSize), despawnExpired (inclusive age cap), collectPlayerDrops (delay + radius gated inventory insertion via injected insert, full/partial handling, snapshot iteration). Game.update runs merge->despawn->collect each simulation tick and re-renders hotbar on collection. 16 new unit tests (ItemPickup.test.ts) + break->collect e2e; full suite 1306 unit + 21 e2e green.",
-  "nextExactAction": "Advance to 113-equipment-slots. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (113 artifacts must be authored before implementation), validate, implement armor/offhand/mainhand equipment state and inventory integration, verify full gate, commit + push, advance program state.",
+  "lastValidatedHead": "677a151a9a08c9f887b51d5fc4f00afd8e8efcef",
+  "lastKnownHead": "677a151a9a08c9f887b51d5fc4f00afd8e8efcef",
+  "lastCompletedTask": "113: all 6 tasks complete; equipment-slots VERIFIED. PlayerEquipment owns five slots (Head/Chest/Legs/Feet/Offhand) each ItemStack|null; setEquipment returns previous; getArmorStacks returns non-null armor in fixed order; serialize/restore atomic and validating. Inventory.equipment lives on Inventory and round-trips through snapshot()/restore() (malformed equipment rejects whole restore). 23 new unit tests (Equipment.test.ts); full suite 1329 unit + 21 e2e green.",
+  "nextExactAction": "Advance to 114-tool-tier-and-harvest-rules. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (114 artifacts must be authored before implementation), validate, implement mining level / preferred-tool / correct-drop-speed harvest rules through tags, verify full gate, commit + push, advance program state.",
   "blockers": [],
   "validationResults": [
     {
@@ -1111,8 +1111,18 @@
       "e2e": "PASS 21/21",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "112 VERIFIED 6/6 (100%)."
+    },
+    {
+      "head": "677a151a9a08c9f887b51d5fc4f00afd8e8efcef",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 1329/1329",
+      "build": "PASS via Playwright production webServer",
+      "e2e": "PASS 21/21",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "113 VERIFIED 6/6 (100%). Added src/inventory/Equipment.ts (PlayerEquipment: Head/Chest/Legs/Feet/Offhand slots, get/set/clear/swap, getArmorStacks, atomic validating serialize/restore) and integrated it as Inventory.equipment so it round-trips through InventorySnapshot; optional equipment field keeps pre-113 saves loading empty. 23 new unit tests (Equipment.test.ts); full gate green (1329 unit + 21 e2e)."
     }
   ],
-  "publishedHead": "4f7d0e7bb3586590b783ba340814122952664159",
-  "publishedAt": "2026-08-15T01:51:01.389Z"
+  "publishedHead": "677a151a9a08c9f887b51d5fc4f00afd8e8efcef",
+  "publishedAt": "2026-08-15T02:05:03.083Z"
 }

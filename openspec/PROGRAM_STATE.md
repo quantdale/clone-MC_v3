@@ -3,17 +3,54 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **112-item-pickup-and-despawn — VERIFIED 100%**
-- Active implementation change: **112-item-pickup-and-despawn — VERIFIED**
-- Next change: **113-equipment-slots — NOT YET ACTIVE (artifacts pending)**
-- 112 task ledger: **6 total tasks, 6 completed**
-- 112 completion: **100%**
-- 112 mandatory item-pickup-and-despawn requirements: **PASS**
-- 112 required-test gate: **PASS — unit 1306/1306, E2E 21/21**
-- 112 advancement allowed: **Yes**
+- Last completed change: **113-equipment-slots — VERIFIED 100%**
+- Active implementation change: **113-equipment-slots — VERIFIED**
+- Next change: **114-tool-tier-and-harvest-rules — NOT YET ACTIVE (artifacts pending)**
+- 113 task ledger: **6 total tasks, 6 completed**
+- 113 completion: **100%**
+- 113 mandatory equipment-slots requirements: **PASS**
+- 113 required-test gate: **PASS — unit 1329/1329, E2E 21/21**
+- 113 advancement allowed: **Yes**
 - Session-start head: `e715b661b40b252baf64d7abe190eee40eb4836f`
-- Validated head: `4f7d0e7bb3586590b783ba340814122952664159` (112 feature commit; state advanced to 113)
-- Next exact action: **Advance to 113-equipment-slots. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (113 artifacts must be authored before implementation), validate, implement armor/offhand/mainhand equipment state and inventory integration, verify full gate, commit + push, advance program state.**
+- Validated head: `677a151a9a08c9f887b51d5fc4f00afd8e8efcef` (113 feature commit; state advanced to 114)
+- Next exact action: **Advance to 114-tool-tier-and-harvest-rules. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (114 artifacts must be authored before implementation), validate, implement mining level / preferred-tool / correct-drop-speed harvest rules through tags, verify full gate, commit + push, advance program state.**
+
+## What 113 implemented
+
+Change 113 adds durable, serializable player-equipment state integrated with the
+existing `Inventory`. It is state + integration only: no protection math, shield
+logic, or HUD.
+
+- `src/inventory/Equipment.ts` (NEW) — `EquipmentSlot` (Head/Chest/Legs/Feet/Offhand),
+  `EQUIPMENT_SLOT_ORDER`, `ARMOR_SLOTS`, `EquipmentSnapshot { version:1, slots:(ItemStack|null)[] }`,
+  and `PlayerEquipment`:
+  - `getEquipment(slot)` → `ItemStack | null`;
+  - `setEquipment(slot, stack|null)` stores/replaces and returns the previous stack,
+    clamping `count` into `[1, MAX_STACK]`, preserving `components`;
+  - `clear()` empties all five slots;
+  - `getArmorStacks()` returns non-null armor in Head→Chest→Legs→Feet order (the
+    116 input);
+  - `serialize()` (pure) + `restore(data, isValidItem)` / `validateSnapshot`
+    (atomic — a malformed payload returns false without mutating any slot).
+- `src/inventory/Inventory.ts` (EDIT) — `readonly equipment: PlayerEquipment`
+  (ctor-initialized); `InventorySnapshot.equipment` (optional, backward compatible);
+  `snapshot()` includes `equipment.serialize()`; `restore()` validates and restores
+  equipment in its atomic early-return block, so a malformed equipment block rejects
+  the whole restore.
+
+## Validation evidence (113)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1329/1329 (prior 1306 + 23 new Equipment)
+- production build: PASS (`tsc --noEmit && vite build`)
+- E2E: PASS 21/21 (no new e2e needed — state-only change; 111/112 drop tests stay green)
+
+## Advancement decision
+
+Change 113 is **VERIFIED** at 6/6 (100%). All gates are green: typecheck, lint, the
+new 1329-unit suite, production build, and the required E2E suite (21/21). No
+advancement exception was needed. Advance to 114.
 
 ## What 112 implemented
 
@@ -97,15 +134,15 @@ Change 111 is **VERIFIED** at 6/6 (100%). All gates are green: typecheck, lint, 
 1290-unit suite, production build, and the required E2E suite (20/20). No advancement
 exception was needed. Advance to 112.
 
-## Next change: 113 (pending artifacts)
+## Next change: 114 (pending artifacts)
 
-`113-equipment-slots` is named in `CHANGE_SEQUENCE.md` with scope "Armor/offhand/
-mainhand equipment state and inventory integration." Per `AGENTS.md`, a change lacking
-full artifacts is a hard pre-implementation block. Author and validate those artifacts
-via `SPEC_AUTHORING_PROTOCOL.md` before any production code.
+`114-tool-tier-and-harvest-rules` is named in `CHANGE_SEQUENCE.md` with scope "Mining
+level, preferred tools, correct drops/speeds through tags." Per `AGENTS.md`, a change
+lacking full artifacts is a hard pre-implementation block. Author and validate those
+artifacts via `SPEC_AUTHORING_PROTOCOL.md` before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 112
-verification. Change 113 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 113
+verification. Change 114 is the next change; its artifacts must be authored and
 validated before implementation begins.
