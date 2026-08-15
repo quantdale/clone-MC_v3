@@ -74,6 +74,12 @@ export interface ItemTypeDefinition {
   toolPower?: number;
   /** Whether this item is edible. */
   isFood?: boolean;
+  /** Whether this item is a weapon (sword). Reserved enchantment target; none set yet. */
+  isWeapon?: boolean;
+  /** Whether this item is a bow. Reserved enchantment target; none set yet. */
+  isBow?: boolean;
+  /** Whether this item is a fishing rod. Reserved enchantment target; none set yet. */
+  isFishingRod?: boolean;
   /** Hunger restored when eaten. */
   foodHunger?: number;
   /** Saturation restored when eaten. */

@@ -8,7 +8,12 @@ export type RegistryErrorReason =
   | 'INVALID_RUNTIME_ID'
   | 'FINALIZED'
   | 'CYCLE'
-  | 'NOT_FINALIZED';
+  | 'NOT_FINALIZED'
+  | 'UNKNOWN_ENCHANTMENT'
+  | 'LEVEL_OUT_OF_RANGE'
+  | 'ENCHANTMENT_CONFLICT'
+  | 'INVALID_SNAPSHOT'
+  | 'INVALID_ENTRY';
 
 export class RegistryError extends Error {
   readonly reason: RegistryErrorReason;
