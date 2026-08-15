@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **142-projectile-core — VERIFIED 100%**
-- Active implementation change: **142-projectile-core — VERIFIED**
-- Next change: **143-bow-and-arrow — NOT YET ACTIVE (artifacts pending)**
-- 142 task ledger: **5 total task groups, 5 completed**
-- 142 completion: **100%**
-- 142 mandatory projectile-core requirements: **PASS**
-- 142 required-test gate: **PASS — unit 1827/1827, E2E 21/21**
-- 142 advancement allowed: **Yes**
-- Session-start head: `8a88586dcec301218b0e1f790bb8684ac578a0f1`
-- Validated head: `cc12b8bfad9e9d3e1d2ebcfe7304084238c4efaf` (142 feature commit)
-- Next exact action: **Advance to 143-bow-and-arrow. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (charge/fire arrows, ammo, pickup behavior, damage, building on 142 ProjectileCore + 111/112 ItemEntity pickup pattern); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **143-bow-and-arrow — VERIFIED 100%**
+- Active implementation change: **143-bow-and-arrow — VERIFIED**
+- Next change: **144-shield-blocking — NOT YET ACTIVE (artifacts pending)**
+- 143 task ledger: **5 total task groups, 5 completed**
+- 143 completion: **100%**
+- 143 mandatory bow-and-arrow requirements: **PASS**
+- 143 required-test gate: **PASS — unit 1842/1842, E2E 21/21**
+- 143 advancement allowed: **Yes**
+- Session-start head: `cc12b8bfad9e9d3e1d2ebcfe7304084238c4efaf`
+- Validated head: `5aa7bc0f72b32349619ffbf0344890c6c8fe8c37` (143 feature commit)
+- Next exact action: **Advance to 144-shield-blocking. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (offhand shield use, directional blocking, durability/cooldown hooks, building on 113 Equipment + 115 DurabilityRules); implement; verify full gate; commit + push; advance program state.**
 
 ## What 119 implemented
 
@@ -735,6 +735,42 @@ the 1631-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Bonemeal (127), hoe tilling, and a rain/weather hook are explicit non-goals
 (documented). Advance to 127.
 
+## What 143 implemented
+
+Change 143 adds the bow-specific charge/fire/damage layer over 142's projectile core, plus a
+standalone landed-arrow pickup tracker. It is the formulas + tracker only — no `Inventory`/
+`EntityManager`/`Game` wiring.
+
+- `src/simulation/BowAndArrow.ts` (NEW) — `bowPullProgress` (vanilla `(f²+2f)/3` charge curve, `0` at
+  no draw, `1` at a full 20-tick draw, clamped beyond); `computeArrowSpeed`/`computeFireVelocity`
+  (accepts a normalized direction *vector* rather than yaw/pitch — a deliberate choice sidestepping
+  this codebase's existing inconsistency between `Player`'s radian yaw and 129 `EntityTransform`'s
+  degree yaw per 139; zero-length direction returns zero velocity); `computeArrowDamage`
+  (non-negative, non-decreasing in speed); `canFireBow` (ammo-count gate with an `infiniteAmmo`
+  escape hatch); `LandedArrowTracker` (mirrors 112's `ItemEntityManager` pickup-delay/radius
+  convention exactly: `addLandedArrow`/`getArrow`/`removeArrow`/`getAll`/`size`/`clear`/
+  `collectNearby`).
+- Tests: `tests/unit/BowAndArrow.test.ts` (NEW, 15) — charge-curve reference points; fire-velocity
+  magnitude/direction (including non-unit-direction normalization and the zero-length fallback);
+  damage non-negativity/monotonicity; the ammo gate (including a negative-count edge case and
+  infinite ammo); the tracker's full add/get/remove/clear lifecycle plus `collectNearby`'s
+  independent delay-gate and radius-gate scenarios.
+
+## Validation evidence (143)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1842/1842 (prior 1827 + 15 new `BowAndArrow.test.ts`)
+- production build: PASS (`tsc --noEmit && vite build`, 83 modules — unchanged, no consumer yet)
+- E2E: PASS 21/21 (no existing file touched; nothing consumes the new module)
+
+## Advancement decision
+
+Change 143 is **VERIFIED** at 5/5 task groups (100%). All gates are green: typecheck, lint, the
+1842-unit suite, production build, and the required E2E suite (21/21). No advancement exception was
+needed. `Inventory`/`EntityManager`/`Game` wiring is an explicit non-goal (documented, deferred).
+Advance to 144.
+
 ## What 142 implemented
 
 Change 142 adds a pure per-tick projectile physics/collision step over 057's `CollisionResolver`. It
@@ -1343,15 +1379,15 @@ the 1654-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Sapling/tree bonemeal is an explicit non-goal (deferred; no Sapling block
 exists) and the `FertilizerRegistry` extension point is documented. Advance to 128.
 
-## Next change: 143 (pending artifacts)
+## Next change: 144 (pending artifacts)
 
-`143-bow-and-arrow` is named in `CHANGE_SEQUENCE.md` with scope "Charge/fire arrows, ammo, pickup
-behavior, damage." Per `AGENTS.md`, a change lacking full artifacts is
+`144-shield-blocking` is named in `CHANGE_SEQUENCE.md` with scope "Offhand shield use, directional
+blocking, durability/cooldown hooks." Per `AGENTS.md`, a change lacking full artifacts is
 a hard pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md`
 before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 142
-verification. Change 143 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 143
+verification. Change 144 is the next change; its artifacts must be authored and
 validated before implementation begins.
