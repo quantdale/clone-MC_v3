@@ -1,6 +1,12 @@
 import * as THREE from 'three';
 import { CONFIG } from '../config';
 import { BlockId, BlockRegistry } from './BlockRegistry';
+import {
+  BlockState,
+  BlockStateId,
+  BlockStateRegistry,
+  createDefaultBlockStateRegistry,
+} from './BlockStateRegistry';
 import { DimensionType } from '../data/DimensionType';
 import { Chunk, ChunkState } from './Chunk';
 import { ChunkManager } from './ChunkManager';
@@ -73,6 +79,18 @@ export class World implements WorldAccess {
    *  memory growth over very long sessions. */
   private static readonly EDIT_OVERLAY_MAX_CHUNKS = 10_000;
 
+  /**
+   * In-memory block-state overrides keyed by chunk key → cell index →
+   * BlockStateId, mirroring the edit overlay. Stateful blocks (e.g. wheat) write
+   * their resolved state id here on {@link setBlockState}; {@link getBlockState}
+   * prefers it over the block's default state. It survives chunk unload/reload
+   * within a session but is not yet persisted to the edit snapshot (125 scope).
+   */
+  private readonly stateOverlay = new Map<string, Map<number, BlockStateId>>();
+
+  /** Block-state registry used to resolve/read canonical block states. */
+  private readonly stateRegistry: BlockStateRegistry;
+
   private genQueue: GenJob[] = [];
   private readonly genSet = new Set<string>();
   private meshQueue: MeshJob[] = [];
@@ -118,6 +136,8 @@ export class World implements WorldAccess {
     simulationDistance?: number;
     /** Active dimension; derives the streamed vertical chunk-layer window. Omit for single-layer. */
     dimension?: DimensionType;
+    /** Block-state registry for reading/writing canonical block states. Omit for the default. */
+    stateRegistry?: BlockStateRegistry;
   }) {
     this.registry = opts.registry;
     this.seed = opts.seed >>> 0;
@@ -125,6 +145,7 @@ export class World implements WorldAccess {
     this.mesher = opts.mesher;
     this.generator = opts.generator;
     this.materials = opts.materials;
+    this.stateRegistry = opts.stateRegistry ?? createDefaultBlockStateRegistry();
     this.renderDistance = opts.renderDistance ?? CONFIG.renderDistance;
     this.simulationDistance = opts.simulationDistance ?? CONFIG.simulationDistance;
     this.rsd = new RenderSimulationDistance(this.renderDistance, this.simulationDistance);
@@ -166,7 +187,18 @@ export class World implements WorldAccess {
 
     const [cx, cy, cz] = worldToChunk(x, y, z);
     const [lx, ly, lz] = worldToLocal(x, y, z);
+    const index = localIndex(lx, ly, lz);
     const key = chunkKey(cx, cy, cz);
+
+    // A plain block-id write invalidates any recorded state for this cell so a
+    // stale state never outlives the block it described (125).
+    const stateLayer = this.stateOverlay.get(key);
+    if (stateLayer) {
+      stateLayer.delete(index);
+      if (stateLayer.size === 0) {
+        this.stateOverlay.delete(key);
+      }
+    }
 
     const chunk = this.chunkManager.getChunk(cx, cy, cz);
 
@@ -213,6 +245,73 @@ export class World implements WorldAccess {
       this.enqueueFalling(x, y, z);
     }
     this.enqueueFalling(x, y + 1, z);
+  }
+
+  /**
+   * Write the canonical block state for `blockId` with the given property values
+   * at (x, y, z). Resolves the state through the {@link BlockStateRegistry},
+   * writes the block id via {@link setBlock} (edits/dirty/mesh), and records the
+   * resolved state id so {@link getBlockState} returns it. Invalid coordinates or
+   * an unregistered block id are a no-op; an illegal property assignment throws
+   * from the registry's `lookup`.
+   */
+  setBlockState(
+    x: number,
+    y: number,
+    z: number,
+    blockId: number,
+    properties: Readonly<Record<string, boolean | number | string>>,
+  ): void {
+    if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(z)) {
+      return;
+    }
+    if (y < 0 || y >= CHUNK_DIMENSIONS.height) {
+      return;
+    }
+    if (!Number.isInteger(blockId) || !this.registry.has(blockId)) {
+      return;
+    }
+    const state = this.stateRegistry.lookup(blockId, { ...properties });
+    this.setBlock(x, y, z, blockId);
+
+    const [cx, cy, cz] = worldToChunk(x, y, z);
+    const [lx, ly, lz] = worldToLocal(x, y, z);
+    const index = localIndex(lx, ly, lz);
+    const key = chunkKey(cx, cy, cz);
+    let layer = this.stateOverlay.get(key);
+    if (!layer) {
+      layer = new Map<number, BlockStateId>();
+      this.stateOverlay.set(key, layer);
+    }
+    layer.set(index, state.id);
+  }
+
+  /**
+   * The block state at (x, y, z): the recorded state from a prior
+   * {@link setBlockState}, or the block's default state when none is recorded.
+   * Out-of-bounds coordinates resolve to the air default state.
+   */
+  getBlockState(x: number, y: number, z: number): BlockState {
+    if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(z)) {
+      return this.stateRegistry.getDefaultState(BlockId.Air);
+    }
+    const [cx, cy, cz] = worldToChunk(x, y, z);
+    const [lx, ly, lz] = worldToLocal(x, y, z);
+    const index = localIndex(lx, ly, lz);
+    const key = chunkKey(cx, cy, cz);
+    const stateId = this.stateOverlay.get(key)?.get(index);
+    if (stateId !== undefined) {
+      return this.stateRegistry.getState(stateId);
+    }
+    return this.stateRegistry.getDefaultState(this.getBlock(x, y, z));
+  }
+
+  /**
+   * Iterate every loaded chunk's coordinates. Used by the simulation loop (125)
+   * to dispatch random ticks per 16×16×16 section.
+   */
+  forEachLoadedChunk(fn: (cx: number, cy: number, cz: number) => void): void {
+    this.chunkManager.forEachChunk((chunk) => fn(chunk.cx, chunk.cy, chunk.cz));
   }
 
   isSolid(x: number, y: number, z: number): boolean {
@@ -887,6 +986,7 @@ export class World implements WorldAccess {
     this.chunkVoxelCounts.clear();
     this.editOverlay.clear();
     this.editOverlayAccessOrder.length = 0;
+    this.stateOverlay.clear();
     this.streamCenterX = null;
     this.streamCenterZ = null;
     this.needsEnsure = true;

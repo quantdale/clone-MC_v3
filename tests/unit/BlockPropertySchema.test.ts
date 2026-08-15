@@ -205,8 +205,13 @@ describe('block property schema', () => {
 
   it('current blocks resolve to EMPTY_SCHEMA with unchanged gameplay', () => {
     const registry = createDefaultBlockRegistry();
-    // Every current block declares no property schema and must resolve empty.
+    // Every block except the stateful wheat crop declares no property schema and
+    // must resolve empty; wheat resolves its age schema (125).
     for (const def of registry.all()) {
+      if (def.key === 'wheat') {
+        expect(registry.getPropertySchema(def.id).isEmpty).toBe(false);
+        continue;
+      }
       expect(registry.getPropertySchema(def.id).isEmpty).toBe(true);
     }
     // Core gameplay lookups remain valid and unchanged.

@@ -48,6 +48,8 @@ export const enum ItemId {
   Book = 29,
   Bookshelf = 30,
   EnchantingTable = 31,
+  WheatSeeds = 32,
+  Wheat = 33,
 }
 
 /**
@@ -483,6 +485,23 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       iconTile: 33,
       stackSize: 64,
       placeBlock: rid('enchanting_table'),
+    },
+    {
+      id: ItemId.WheatSeeds,
+      resourceId: rid('wheat_seeds'),
+      key: 'wheat_seeds',
+      name: 'Wheat Seeds',
+      iconTile: 34,
+      stackSize: 64,
+      placeBlock: rid('wheat'),
+    },
+    {
+      id: ItemId.Wheat,
+      resourceId: rid('wheat'),
+      key: 'wheat',
+      name: 'Wheat',
+      iconTile: 35,
+      stackSize: 64,
     },
   ];
   return new ItemTypeRegistry(defs);

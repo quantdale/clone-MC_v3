@@ -37,6 +37,12 @@ export interface LootContext {
   readonly toolItemId: number | undefined;
   /** Item registry used to resolve entry resource ids to legacy numeric ids. */
   readonly itemRegistry: ItemTypeRegistry;
+  /**
+   * Canonical text values of the broken block's state properties (e.g.
+   * `{ age: '7' }` for a mature crop), or undefined when the block has no
+   * state. Optional and additive (125); absent for legacy/plain blocks.
+   */
+  readonly properties?: Readonly<Record<string, string>>;
 }
 
 /** A single evaluated output to be inserted into the inventory by the caller. */
@@ -301,6 +307,8 @@ export function buildCurrentLootTables(
   itemRegistry: ItemTypeRegistry,
 ): LootTable[] {
   const appleRid = itemRegistry.getByLegacyId(ItemId.Apple)!.resourceId;
+  const wheatRid = itemRegistry.getByLegacyId(ItemId.Wheat)!.resourceId;
+  const wheatSeedsRid = itemRegistry.getByLegacyId(ItemId.WheatSeeds)!.resourceId;
   const tables: LootTable[] = [];
   for (const def of blockRegistry.all()) {
     if (!def.breakable || def.dropItem === undefined) continue;
@@ -314,6 +322,27 @@ export function buildCurrentLootTables(
       pools.push({
         rolls: 1,
         entries: [{ item: appleRid, weight: 1, min: 1, max: 1 }],
+      });
+    } else if (def.key === 'wheat') {
+      // Crop drops (125): seeds always; wheat only when the broken plant is
+      // mature (age 7). Read from the additive `properties` context field so the
+      // existing harvest wiring (finishBreak → evaluate) works unchanged.
+      pools.length = 0;
+      pools.push({
+        rolls: 1,
+        entries: [{ item: wheatSeedsRid, weight: 1, min: 1, max: 1 }],
+      });
+      pools.push({
+        rolls: 1,
+        entries: [
+          {
+            item: wheatRid,
+            weight: 1,
+            min: 1,
+            max: 1,
+            conditions: [(ctx) => ctx.properties?.age === '7'],
+          },
+        ],
       });
     }
     tables.push({ id: lootTableResourceId(def.key), pools });

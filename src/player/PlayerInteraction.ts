@@ -260,7 +260,23 @@ export class PlayerInteraction {
     if (!this.target) return;
     const selectedTool = this.itemRegistry.getByLegacyId(this.selector.getSelectedItemId());
     const selectedStack = this.selector.getSelectedStack?.() ?? null;
-    this.world.setBlock(this.target.blockX, this.target.blockY, this.target.blockZ, BlockId.Air);
+    const { blockX, blockY, blockZ } = this.target;
+
+    // Capture the broken block's state (e.g. a crop's `age`) before it is
+    // removed so age-aware loot tables can read it (125).
+    let properties: Record<string, string> | undefined;
+    if (this.world.getBlockState) {
+      const state = this.world.getBlockState(blockX, blockY, blockZ);
+      const assigns = state.assignments;
+      if (assigns.length > 0) {
+        properties = {};
+        for (const [name, value] of assigns) {
+          properties[name] = value;
+        }
+      }
+    }
+
+    this.world.setBlock(blockX, blockY, blockZ, BlockId.Air);
 
     const def = this.registry.get(blockId);
     // Harvest gating (114): a block yields drops only when the held tool can
@@ -279,6 +295,7 @@ export class PlayerInteraction {
           blockId,
           toolItemId: this.selector.getSelectedItemId(),
           itemRegistry: this.itemRegistry,
+          properties,
         };
         const rng = this.rng ?? Math.random;
         for (const stack of evaluate(table, ctx, rng, this.itemRegistry)) {

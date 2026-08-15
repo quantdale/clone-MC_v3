@@ -5,11 +5,28 @@
  * interact with the world only through the minimal `BlockWorldAccess`, keeping them decoupled and
  * unit-testable. Unregistered blocks resolve to the shared no-op default.
  */
+import type { BlockState } from '../world/BlockStateRegistry';
 
 /** Minimal block-world access a behavior may use (satisfied by the world wiring later). */
 export interface BlockWorldAccess {
   getBlockId(x: number, y: number, z: number): number;
   setBlockId(x: number, y: number, z: number, id: number): void;
+  /**
+   * Read the block state at (x, y, z). Optional: behaviors that only need block
+   * ids work without it; the world adapter (125) provides it.
+   */
+  getBlockState?(x: number, y: number, z: number): BlockState;
+  /**
+   * Write the canonical state for `blockId` with the given property values at
+   * (x, y, z). Optional; crop growth uses it to advance a block's state.
+   */
+  setBlockState?(
+    x: number,
+    y: number,
+    z: number,
+    blockId: number,
+    properties: Readonly<Record<string, boolean | number | string>>,
+  ): void;
 }
 
 /** Everything a behavior hook needs: position, game tick, and world access. */

@@ -20,6 +20,11 @@ import { HarvestRules } from '../world/HarvestRules';
 import { TerrainGenerator } from '../world/TerrainGenerator';
 import { ChunkMesher } from '../world/ChunkMesher';
 import { World } from '../world/World';
+import { BlockStateRegistry, createDefaultBlockStateRegistry } from '../world/BlockStateRegistry';
+import { BlockBehaviorRegistry } from '../simulation/BlockBehavior';
+import { CropBlockBehavior } from '../simulation/CropBehavior';
+import { RandomTickSelector } from '../simulation/RandomTickSelector';
+import { WorldBlockAccess } from '../simulation/WorldBlockAccess';
 import { Player } from '../player/Player';
 import { PlayerController } from '../player/PlayerController';
 import { PlayerPhysics } from '../player/PlayerPhysics';
@@ -77,6 +82,17 @@ export class Game {
   private readonly itemRegistry: ItemTypeRegistry;
   /** Test hook: the inventory item registry (used by E2E hooks). */
   readonly registry: ItemTypeRegistry;
+  /** Block-state registry (007) backing canonical state reads/writes. */
+  private readonly stateRegistry: BlockStateRegistry;
+  /** Block behaviors (050): crop growth registered against the wheat block. */
+  private readonly behaviorRegistry: BlockBehaviorRegistry;
+  private readonly cropBehavior: CropBlockBehavior;
+  /** Deterministic random-tick selection (048) per ticking section. */
+  private readonly randomTickSelector: RandomTickSelector;
+  /** Behavior-facing world access adapter (125). */
+  private readonly worldBlockAccess: WorldBlockAccess;
+  /** Monotonic simulation tick counter driving random-tick seeding. */
+  private simTick = 0;
   private readonly atlas: TextureAtlas;
   private readonly materials: Materials;
   private readonly renderer: Renderer;
@@ -153,6 +169,11 @@ export class Game {
     this.itemRegistry = createDefaultItemRegistry();
     this.registry = this.itemRegistry;
     validateItemBlockCrossReferences(this.blockRegistry, this.itemRegistry);
+    this.stateRegistry = createDefaultBlockStateRegistry();
+    this.cropBehavior = new CropBlockBehavior(BlockId.Wheat);
+    this.behaviorRegistry = new BlockBehaviorRegistry();
+    this.behaviorRegistry.register(this.blockRegistry.get(BlockId.Wheat).key, this.cropBehavior);
+    this.randomTickSelector = new RandomTickSelector();
     this.lootTables = new LootTableRegistry(buildCurrentLootTables(this.blockRegistry, this.itemRegistry), this.itemRegistry);
     this.enchantmentRegistry = createDefaultEnchantmentRegistry();
     const blockTags = createDefaultBlockTags(this.blockRegistry);
@@ -189,7 +210,9 @@ export class Game {
       materials: { opaque: this.materials.opaque, transparent: this.materials.transparent },
       renderDistance,
       simulationDistance: this.runtimeSimulationDistance(),
+      stateRegistry: this.stateRegistry,
     });
+    this.worldBlockAccess = new WorldBlockAccess(this.world);
     this.saveStorageKey = `voxel-game-edits-v1:${this.seed}`;
     this.loadSavedEdits();
 
@@ -389,6 +412,7 @@ export class Game {
     if (simulationActive) {
       this.controller.update(dt);
       this.physics.update(this.player, dt);
+      this.tickRandomBlocks();
       this.itemEntities.tickItemEntities(dt);
       this.itemEntities.mergeEntities();
       this.itemEntities.despawnExpired();
@@ -505,6 +529,49 @@ export class Game {
       return;
     }
     this.renderer.render();
+  }
+
+  /**
+   * Dispatch deterministic random ticks (048/050/125) over simulating chunks.
+   * Increments the simulation tick counter, selects eligible cells per 16×16×16
+   * section via the bounded {@link RandomTickSelector}, and invokes each
+   * selected block's `onRandomTick` hook with the world adapter.
+   */
+  private tickRandomBlocks(): void {
+    this.simTick++;
+    const sectionsPerChunk = CONFIG.chunk.height / 16;
+    this.world.forEachLoadedChunk((cx, cy, cz) => {
+      if (!this.world.isChunkSimulating(cx, cz)) {
+        return;
+      }
+      const sectionY0 = cy * sectionsPerChunk;
+      for (let s = 0; s < sectionsPerChunk; s++) {
+        const positions = this.randomTickSelector.selectEligible(
+          cx,
+          sectionY0 + s,
+          cz,
+          this.simTick,
+          this.seed,
+          (x, y, z) => this.isCropAt(x, y, z),
+        );
+        for (const [x, y, z] of positions) {
+          const blockKey = this.blockRegistry.get(this.world.getBlock(x, y, z)).key;
+          this.behaviorRegistry
+            .getBehavior(blockKey)
+            .onRandomTick?.({ x, y, z, tick: this.simTick, world: this.worldBlockAccess });
+        }
+      }
+    });
+  }
+
+  /** Whether the block at (x, y, z) has a registered `onRandomTick` behavior. */
+  private isCropAt(x: number, y: number, z: number): boolean {
+    const id = this.world.getBlock(x, y, z);
+    if (id === BlockId.Air) {
+      return false;
+    }
+    const behavior = this.behaviorRegistry.getBehavior(this.blockRegistry.get(id).key);
+    return typeof behavior.onRandomTick === 'function';
   }
 
   private spawnPlayerSafely(generator: TerrainGenerator): void {

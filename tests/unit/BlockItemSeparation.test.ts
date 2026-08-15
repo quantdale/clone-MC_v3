@@ -111,8 +111,9 @@ describe('block/item registry separation', () => {
       [29, null, 'book'],
       [30, null, 'bookshelf'],
       [31, null, 'enchanting_table'],
-      [32, 'enchanting_table', null],
-      [33, 'bookshelf', null],
+      [32, 'enchanting_table', 'wheat_seeds'],
+      [33, 'bookshelf', 'wheat'],
+      [34, 'wheat', null],
     ];
     for (const [id, blockPath, itemPath] of table) {
       if (blockPath !== null) {
@@ -172,13 +173,20 @@ describe('block/item registry separation', () => {
     for (const item of itemRegistry.all()) {
       if (item.placeBlock === undefined) {
         // Non-placeable items (food, tools, raw materials) carry no placeBlock.
-        expect(item.isFood === true || item.toolKind !== undefined || ['stick', 'coal', 'raw_iron', 'iron_ingot', 'bedrock', 'lapis_lazuli', 'book'].includes(item.key)).toBe(true);
+        expect(
+          item.isFood === true ||
+            item.toolKind !== undefined ||
+            ['stick', 'coal', 'raw_iron', 'iron_ingot', 'bedrock', 'lapis_lazuli', 'book', 'wheat'].includes(item.key),
+        ).toBe(true);
         continue;
       }
       const placed = blockRegistry.getByResourceId(item.placeBlock);
       expect(blockRegistry.has(placed.id)).toBe(true);
       // Resolution is by resource path, not by coincidental numeric equality.
-      expect(resourceIdToString(item.placeBlock)).toBe(`minecraft:${item.key}`);
+      // Wheat seeds intentionally place the `wheat` block, not a `wheat_seeds`
+      // block (125), so that crop's placement key differs from the item key.
+      const expected = item.key === 'wheat_seeds' ? `minecraft:wheat` : `minecraft:${item.key}`;
+      expect(resourceIdToString(item.placeBlock)).toBe(expected);
     }
   });
 

@@ -11,7 +11,7 @@
 import { type ResourceId, createResourceId, resourceIdToString } from '../data/ResourceId';
 import { RegistryError } from '../data/Registry';
 import { TagRegistry, type TagDefinition, type TagMember } from '../data/TagRegistry';
-import { type BlockPropertySchema, EMPTY_SCHEMA } from './BlockPropertySchema';
+import { BlockPropertySchema, EMPTY_SCHEMA } from './BlockPropertySchema';
 
 /** Block ids are stable numeric identifiers for world blocks only. */
 export const enum BlockId {
@@ -37,7 +37,17 @@ export const enum BlockId {
   Furnace = 20,
   EnchantingTable = 32,
   Bookshelf = 33,
+  Wheat = 34,
 }
+
+/**
+ * Growth-stage property schema for the wheat crop: a single integer `age` in
+ * [0, 7] (0 = freshly planted, 7 = mature). Consumed by the 007 state registry
+ * to enumerate exactly 8 wheat states.
+ */
+export const WHEAT_SCHEMA = new BlockPropertySchema([
+  { kind: 'integer', name: 'age', min: 0, max: 7 },
+]);
 
 /** Tool families used for preferred-tool mining bonuses. */
 export const enum ToolKind {
@@ -592,6 +602,24 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       hardness: 0.8,
       preferredTool: ToolKind.Axe,
       dropItem: rid('bookshelf'),
+    },
+    {
+      id: BlockId.Wheat,
+      resourceId: rid('wheat'),
+      key: 'wheat',
+      name: 'Wheat',
+      solid: false,
+      opaque: false,
+      breakable: true,
+      renderCategory: RenderCategory.Transparent,
+      topTile: 0,
+      bottomTile: 0,
+      sideTile: 0,
+      hardness: 0.0,
+      dropItem: rid('wheat_seeds'),
+      lootTable: rid('loot/wheat'),
+      propertySchema: WHEAT_SCHEMA,
+      defaultState: { age: 0 },
     },
   ];
   return new BlockTypeRegistry(defs);
