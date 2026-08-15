@@ -3,18 +3,39 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **165-slime-honey-move-groups — VERIFIED 100%**
-- Active implementation change: **165-slime-honey-move-groups — VERIFIED**
-- Next change: **166-hopper-transfer — NOT YET ACTIVE (artifacts pending)**
-- 165 task ledger: **33 total tasks, 33 completed**
-- 165 completion: **100%**
-- 165 mandatory slime-honey-move-groups requirements: **PASS**
-- 165 required-test gate: **PASS — unit 2249/2249, E2E 22/22**
-- 165 advancement allowed: **Yes**
-- Session-start head: `89017135263a9122a8981c3f0a7c0fad8d25ed94`
-- Validated head: `7a9310fd1f8faea623b28a4a76e50e90c968cc8c` (165 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress — the 157-161 logic-component trio, 162's first consumers, and the piston sub-arc (163-165) are all COMPLETE.**
-- Next exact action: **Advance to 166-hopper-transfer. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: directional timed item transfer using menu/container transactions — the first natural point a container-signal bridge for 160's comparator `sideInput` would matter, and the first real redstone-side consumer of 106's `ContainerMenu`/inventory model. Decide explicitly how deep the container-transaction integration goes and whether item-entity scooping is in scope here or a documented non-goal); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **166-hopper-transfer — VERIFIED 100%**
+- Active implementation change: **166-hopper-transfer — VERIFIED**
+- Next change: **167-dropper — NOT YET ACTIVE (artifacts pending)**
+- 166 task ledger: **33 total tasks, 33 completed**
+- 166 completion: **100%**
+- 166 mandatory hopper-transfer requirements: **PASS**
+- 166 required-test gate: **PASS — unit 2265/2265, E2E 22/22**
+- 166 advancement allowed: **Yes**
+- Session-start head: `e12feb274803e55490047947941eedd8da01e48f`
+- Validated head: `7a9132a1e8294e45879af616349390d809315dea` (166 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress — the 157-161 logic-component trio, 162's first consumers, the piston sub-arc (163-165), and 166's item-moving hopper are all COMPLETE.**
+- Next exact action: **Advance to 167-dropper. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: inventory ejection into world/containers — the next module in the 'item-moving redstone consumer' family after 166's hopper, and the first place 166's transferOneItem/MenuSlot model meets a real container write-back).**
+
+## What 166 implemented
+
+Change 166 is the first **item-moving** module in the redstone/automation arc: directional, timed,
+one-item-at-a-time transfer between containers, plus the `hopper` block.
+
+- `src/simulation/HopperTransfer.ts` (NEW) — `transferOneItem` reuses 106's `MenuSlot` shape directly
+  (merge-first, then first-empty destination; a failed search leaves both sides unchanged with
+  `moved: false`, never depleting the source). `hopperShouldTransfer(powered)` is exactly `!powered` —
+  the *inverse* of 162's consumer rule, the second inverting rule in this section after 158's torch.
+  `hopperIntakePosition` is always `offsetInDirection(x, y, z, 'up')` (a hopper's intake is fixed to its
+  top face, so `HopperFacing` excludes `'up'`); `hopperOutputPosition(facing)` follows the facing.
+  `scheduleHopperTransfer`/`dueHopperTransfers` bridge 047's deterministic scheduled-tick queue with
+  `HOPPER_TRANSFER_COOLDOWN_TICKS = 8`. `hopperStateProperties(facing, enabled)` projects the full state.
+- `src/world/BlockRegistry.ts`/`src/inventory/ItemRegistry.ts` (EDIT) — `BlockId.Hopper = 50`/
+  `ItemId.Hopper = 50`; `HOPPER_SCHEMA` is five-way `facing` × boolean `enabled` = **10 states**, default
+  `{ facing: 'down', enabled: true }`; the placing item cross-references cleanly.
+- Tests: `tests/unit/HopperTransfer.test.ts` (NEW, 16 tests) plus three characterization updates
+  (`BlockRegistry` `all()` 38→39; `BlockStateRegistry` total formula + explicit `hopper` 10-state branch;
+  `BlockPropertySchema` `STATEFUL_BLOCK_KEYS` adds `hopper`). No `Game`/`World` wiring, no item-entity
+  scooping, no container-transaction integration (proposal non-goals).
 
 ## What 165 implemented
 
