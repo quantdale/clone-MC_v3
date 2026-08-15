@@ -3,18 +3,38 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **171-rail-block-states — VERIFIED 100%**
-- Active implementation change: **171-rail-block-states — VERIFIED**
-- Next change: **172-minecart-physics — NOT YET ACTIVE (artifacts pending)**
-- 171 task ledger: **28 total tasks, 28 completed**
-- 171 completion: **100%**
-- 171 mandatory rail-block-states requirements: **PASS**
-- 171 required-test gate: **PASS — unit 2336/2336, E2E 22/22**
-- 171 advancement allowed: **Yes**
-- Session-start head: `33601e38bef8e247511aa3b3854606d2cce218e8`
-- Validated head: `f40b63f2a187f0413bc7f334bf4c3d5903c90185` (171 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress — the 157-161 logic-component trio, 162's first consumers, the piston sub-arc (163-165), the item-moving trio (166-168), destruction (169-170), and the first transport block (171) are all COMPLETE.**
-- Next exact action: **Advance to 172-minecart-physics. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: rail-constrained cart movement and collisions — the first consumer of 171's rail shapes, and the first vehicle).**
+- Last completed change: **172-minecart-physics — VERIFIED 100%**
+- Active implementation change: **172-minecart-physics — VERIFIED**
+- Next change: **173-redstone-regression-worlds — NOT YET ACTIVE (artifacts pending)**
+- 172 task ledger: **24 total tasks, 24 completed**
+- 172 completion: **100%**
+- 172 mandatory minecart-physics requirements: **PASS**
+- 172 required-test gate: **PASS — unit 2360/2360, E2E 22/22**
+- 172 advancement allowed: **Yes**
+- Session-start head: `b368fe62520d3d78f3eb7adb8045fcf053fd2333`
+- Validated head: `6237621bf704470403ddf64dbffefb9738f32297` (172 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress — everything through 172 (signals, components, consumers, pistons, item movers, destruction, rails, minecarts) COMPLETE; 173 (regression worlds) is the section-closing change.**
+- Next exact action: **Advance to 173-redstone-regression-worlds — the change that CLOSES the Redstone and automation section (154-173). Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: headless canonical circuit fixtures and timing assertions).**
+
+## What 172 implemented
+
+Change 172 is the first consumer of 171's rail shapes and the first **vehicle** — a pure one-tick
+core with zero registry changes (like 169).
+
+- `src/simulation/MinecartPhysics.ts` (NEW) — `tickMinecart(state, world)` advances a `MinecartState`
+  (position + velocity) one fixed 20 TPS tick through a caller-supplied `MinecartWorld` seam
+  (`getRailShapeAt`/`isBlocking`). Straights hold rail height (`vy = 0`) and zero the cross axis, so
+  the cart slides along its axis; ascents couple `vy` to the slope (`vy = vx` on `ascending_east`,
+  `-vx` west, `-vz` north, `+vz` south — one block up per block horizontal, rising toward the
+  elevated end, falling away); corners turn **pure-axis** arrivals onto the outgoing axis and stop
+  any diagonal arrival (exact-zero cross component — sound because straights zero it first); rail
+  speed clamps to `MINECART_MAX_SPEED = 0.4` blocks/tick (vanilla's 8 m/s). Off rails the cart falls
+  with `MINECART_GRAVITY = 0.04` and horizontal motion decays by `MINECART_OFFRAIL_DECAY = 0.98`;
+  a blocking next cell stops the cart dead (velocity zeroed, position unchanged) — also the landing
+  rule for falling carts. `minecartOnRails` reports riding state.
+- Tests: `tests/unit/MinecartPhysics.test.ts` (NEW, 24 tests): onRails both ways, both straights,
+  all 8 ascent cases, all 8 corner turns + the diagonal-arrival stop, speed clamping, off-rail
+  gravity/decay, the wall-stop and landing collisions. No registry or characterization changes.
 
 ## What 171 implemented
 
