@@ -3,17 +3,71 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **147-animal-breeding — VERIFIED 100%**
-- Active implementation change: **147-animal-breeding — VERIFIED**
-- Next change: **148-mob-drop-loot — NOT YET ACTIVE (artifacts pending)**
-- 147 task ledger: **23 total tasks, 23 completed**
-- 147 completion: **100%**
-- 147 mandatory animal-breeding requirements: **PASS**
-- 147 required-test gate: **PASS — unit 1910/1910, E2E 22/22**
-- 147 advancement allowed: **Yes**
-- Session-start head: `c95c5689ea15e4e26380179a42044f6255057a31`
-- Validated head: `1519f6aa53e599dd66fd5016f97c4a75e367e738` (147 feature commit)
-- Next exact action: **Advance to 148-mob-drop-loot. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (entity death routes through 011's loot-table primitives and 111/112's item-entity/XP-orb spawning — needs a minimal entity-health/death model for pig and zombie first, since neither 145 nor 146 wired one in); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **148-mob-drop-loot — VERIFIED 100%**
+- Active implementation change: **148-mob-drop-loot — VERIFIED**
+- Next change: **149-point-of-interest-system — NOT YET ACTIVE (artifacts pending)**
+- 148 task ledger: **22 total tasks, 22 completed**
+- 148 completion: **100%**
+- 148 mandatory mob-drop-loot requirements: **PASS**
+- 148 required-test gate: **PASS — unit 1925/1925, E2E 22/22**
+- 148 advancement allowed: **Yes**
+- Session-start head: `4d073aedbbf6f1f9275eeb3864413458e173264d`
+- Validated head: `0822767b24e17c043f2456821bb997bf443d86a6` (148 feature commit)
+- Next exact action: **Advance to 149-point-of-interest-system. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (persisted searchable POIs for villager-like AI — a new, independent data/query primitive; no villager entity exists yet, so this is additive/unconsumed until 150-villager-professions); implement; verify full gate; commit + push; advance program state.**
+
+## What 148 implemented
+
+Change 148 adds the mob health/death→loot/XP pipeline as an additive, unconsumed capability
+(mirroring 136-144 before 145/146 wired mob systems in). Nothing in the live game can currently
+damage a mob — 146's flagged, still-unscheduled player→mob combat gap (no titled change between
+146 and 153 covers it) — so this is the death→loot/XP mechanics as a complete, correct, fully-tested
+capability, ready for whichever future change adds real combat.
+
+- `src/inventory/ItemRegistry.ts` (EDIT) — `ItemId.Porkchop = 35`/`ItemId.RottenFlesh = 36` (simple
+  food items, `isFood: true`, no `placeBlock`) so pig/zombie have something real to drop.
+- `src/simulation/MobDropLoot.ts` (NEW) — `MobHealthTracker` (lazy per-entity health, initialized
+  to a species' `maxHealth` on first `damage()` call so no existing spawn path in 145's
+  `PassiveMobSystem`/146's `HostileMobSystem`/147's `BreedingSystem` needs to be touched; `damage`
+  clamps at `0`, reports `died: true` only on the call that first reaches `0`, no-ops for
+  non-positive/non-finite amounts); `MobSpecies` (`typeId`/`maxHealth`/`lootTableId`/`xpDrop`);
+  `createPigMobSpecies`/`createZombieMobSpecies` (read `maxHealth` from 017's `EntityRegistry`
+  `pig.health=10`/`zombie.health=20`, throw if the key is missing); `createDefaultMobLootTables` (a
+  011 `LootTableRegistry` with `loot/pig` → porkchop 1-3, `loot/zombie` → rotten_flesh 1-2 — 011's
+  `LootEntry.min` must be a positive integer, so zombie always drops at least one flesh rather than
+  vanilla's sometimes-zero, a documented simplification); `resolveMobDeath` (pure loot+XP
+  resolution); `MobDropLootSystem.damageEntity` (the single composed entry point: guards on the
+  entity being `ACTIVE` in the supplied `EntityManager`, applies damage, and only on a lethal hit
+  removes the entity, stops health tracking, resolves loot/XP, and invokes caller-supplied
+  `spawnLoot`/`spawnXp` sinks with the entity's death position — works with `Game`'s real
+  `ItemEntityManager.spawnLootStacks`/`XpOrbManager.spawnXpOrb` via injection, or plain
+  array-collecting fakes in tests, with zero import-time coupling to either manager).
+- **Not wired into `Game.ts`** — inventing a fake trigger to claim "wired in" would misrepresent
+  this baseline as more interactive than it is; `damageEntity` is a pure API for a future
+  combat/interaction change to call directly.
+
+## Validation evidence (148)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1925/1925 (prior 1910 + 15 new: `MobHealthTracker` lazy-init/clamp/died-gating/no-op
+  cases, `resolveMobDeath` against a real `LootTableRegistry`, `MobDropLootSystem.damageEntity`
+  lethal/non-lethal/missing-entity composition using a real `EntityManager`)
+- production build: PASS (`tsc --noEmit && vite build`, 103 modules, unchanged from 147 — confirms
+  no `Game.ts` consumer, matching 136-144's own identical evidence)
+- E2E: PASS 22/22 (all pre-existing assertions unaffected — nothing wired into the live game yet)
+- Required, non-regression update to `tests/unit/BlockItemSeparation.test.ts`'s hardcoded
+  legacy-numeric-id table (ids 35/36 now also resolve to `porkchop`/`rotten_flesh` on the item side
+  alongside the pre-existing `farmland`/`fire` blocks at those same shared legacy ids) and its
+  placeable-item exhaustiveness check — the same test-maintenance pattern every prior
+  item-registry-expanding change (117/120/122/125) has followed.
+
+## Advancement decision (148)
+
+Advance. 100% task completion, full gate green, no MUST/SHALL requirement unmet, no regression.
+This capability is intentionally additive/unconsumed — real player→mob combat remains an
+unscheduled gap (flagged by 146, still not covered by any titled change through 153); a future
+combat/interaction change is the real consumer of `MobDropLootSystem.damageEntity`. Next change:
+149-point-of-interest-system.
 
 ## What 147 implemented
 
