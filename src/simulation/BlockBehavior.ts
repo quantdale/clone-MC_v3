@@ -37,6 +37,12 @@ export interface BlockBehaviorContext {
   /** Current game tick. */
   tick: number;
   world: BlockWorldAccess;
+  /**
+   * Deterministic world/simulation seed, optionally supplied by the dispatcher
+   * (128) so behaviors can derive stable per-cell randomness (e.g. fire spread)
+   * without a global RNG. Absent when the caller has no seed to offer.
+   */
+  seed?: number;
 }
 
 /** A block behavior module; every hook is optional. */

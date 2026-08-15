@@ -24,6 +24,7 @@ import { BlockStateRegistry, createDefaultBlockStateRegistry } from '../world/Bl
 import { BlockBehaviorRegistry } from '../simulation/BlockBehavior';
 import { CropBlockBehavior } from '../simulation/CropBehavior';
 import { FarmlandBlockBehavior } from '../simulation/FarmlandBehavior';
+import { FireBlockBehavior } from '../simulation/FireBehavior';
 import { bonemealTarget } from '../simulation/Bonemeal';
 import { RandomTickSelector } from '../simulation/RandomTickSelector';
 import { WorldBlockAccess } from '../simulation/WorldBlockAccess';
@@ -90,6 +91,7 @@ export class Game {
   private readonly behaviorRegistry: BlockBehaviorRegistry;
   private readonly cropBehavior: CropBlockBehavior;
   private readonly farmlandBehavior: FarmlandBlockBehavior;
+  private readonly fireBehavior: FireBlockBehavior;
   /** Deterministic random-tick selection (048) per ticking section. */
   private readonly randomTickSelector: RandomTickSelector;
   /** Behavior-facing world access adapter (125). */
@@ -175,9 +177,11 @@ export class Game {
     this.stateRegistry = createDefaultBlockStateRegistry();
     this.cropBehavior = new CropBlockBehavior(BlockId.Wheat);
     this.farmlandBehavior = new FarmlandBlockBehavior();
+    this.fireBehavior = new FireBlockBehavior();
     this.behaviorRegistry = new BlockBehaviorRegistry();
     this.behaviorRegistry.register(this.blockRegistry.get(BlockId.Wheat).key, this.cropBehavior);
     this.behaviorRegistry.register(this.blockRegistry.get(BlockId.Farmland).key, this.farmlandBehavior);
+    this.behaviorRegistry.register(this.blockRegistry.get(BlockId.Fire).key, this.fireBehavior);
     this.randomTickSelector = new RandomTickSelector();
     this.lootTables = new LootTableRegistry(buildCurrentLootTables(this.blockRegistry, this.itemRegistry), this.itemRegistry);
     this.enchantmentRegistry = createDefaultEnchantmentRegistry();
@@ -563,7 +567,7 @@ export class Game {
           const blockKey = this.blockRegistry.get(this.world.getBlock(x, y, z)).key;
           this.behaviorRegistry
             .getBehavior(blockKey)
-            .onRandomTick?.({ x, y, z, tick: this.simTick, world: this.worldBlockAccess });
+            .onRandomTick?.({ x, y, z, tick: this.simTick, world: this.worldBlockAccess, seed: this.seed });
         }
       }
     });

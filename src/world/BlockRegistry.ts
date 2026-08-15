@@ -660,6 +660,22 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       propertySchema: FARMLAND_SCHEMA,
       defaultState: { moisture: 0 },
     },
+    {
+      id: BlockId.Fire,
+      resourceId: rid('fire'),
+      key: 'fire',
+      name: 'Fire',
+      solid: false,
+      opaque: false,
+      breakable: false,
+      renderCategory: RenderCategory.Transparent,
+      topTile: 0,
+      bottomTile: 0,
+      sideTile: 0,
+      hardness: Infinity,
+      propertySchema: FIRE_SCHEMA,
+      defaultState: { age: 0 },
+    },
   ];
   return new BlockTypeRegistry(defs);
 }
