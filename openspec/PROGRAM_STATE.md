@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **135-a-star-pathfinding — VERIFIED 100%**
-- Active implementation change: **135-a-star-pathfinding — VERIFIED**
-- Next change: **136-mob-goal-selector — NOT YET ACTIVE (artifacts pending)**
-- 135 task ledger: **5 total task groups, 5 completed**
-- 135 completion: **100%**
-- 135 mandatory a-star-pathfinding requirements: **PASS**
-- 135 required-test gate: **PASS — unit 1759/1759, E2E 21/21**
-- 135 advancement allowed: **Yes**
-- Session-start head: `198808ddd622a239b77bf33d4c8de777f4a7c3d4`
-- Validated head: `5824d4e526867736a92f8d0d8a87e9db618ed61d` (135 feature commit)
-- Next exact action: **Advance to 136-mob-goal-selector. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (prioritized interruptible AI goal framework, building on 129 EntityManager); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **136-mob-goal-selector — VERIFIED 100%**
+- Active implementation change: **136-mob-goal-selector — VERIFIED**
+- Next change: **137-mob-spawn-rules — NOT YET ACTIVE (artifacts pending)**
+- 136 task ledger: **5 total task groups, 5 completed**
+- 136 completion: **100%**
+- 136 mandatory mob-goal-selector requirements: **PASS**
+- 136 required-test gate: **PASS — unit 1768/1768, E2E 21/21**
+- 136 advancement allowed: **Yes**
+- Session-start head: `5824d4e526867736a92f8d0d8a87e9db618ed61d`
+- Validated head: `d5cf221af8928905567faaaffe33bd357c73b148` (136 feature commit)
+- Next exact action: **Advance to 137-mob-spawn-rules. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (light/biome/block/distance/category spawn predicates); implement; verify full gate; commit + push; advance program state.**
 
 ## What 119 implemented
 
@@ -735,6 +735,41 @@ the 1631-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Bonemeal (127), hoe tilling, and a rain/weather hook are explicit non-goals
 (documented). Advance to 127.
 
+## What 136 implemented
+
+Change 136 adds a generic, prioritized, interruptible AI goal scheduler — the framework a future mob
+uses to decide what to do each tick. It is the scheduler only — no concrete goal implementations
+(wander/attack/etc., 139/140's scope) and no `Game`/mob wiring.
+
+- `src/simulation/GoalSelector.ts` (NEW) — `GoalFlag` (`Move`/`Look`/`Jump`/`Target`); `Goal`
+  interface (`flags`, `canUse()`, optional `canContinueToUse()`/`start()`/`tick()`/`stop()`);
+  `GoalSelector`: `addGoal(priority, goal)` (kept sorted by ascending priority, ties by insertion
+  order), `removeGoal(goal)` (stops if running, removes from future selection), `tick()` (evaluates
+  goals in priority order; a goal is selected only if it wants to run — `canContinueToUse()` when
+  already running, else `canUse()` — and none of its flags were already claimed by an
+  earlier-evaluated selected goal this tick, so a higher-priority goal interrupts a running
+  lower-priority one sharing a flag; every dropped goal's `stop()` runs before any newly selected
+  goal's `start()`; every goal still running afterward gets `tick()`), `getRunning()`, `clear()`.
+- Tests: `tests/unit/GoalSelector.test.ts` (NEW, 9) — single-goal start; priority interruption
+  (verified via call-order `stop` before `start`); disjoint-flag simultaneous running; both
+  continuation-stop paths (`canContinueToUse` and its `canUse` fallback); a stopped goal excluded
+  from `tick()` the same cycle; `removeGoal`/`clear` membership management.
+
+## Validation evidence (136)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1768/1768 (prior 1759 + 9 new `GoalSelector.test.ts`)
+- production build: PASS (`tsc --noEmit && vite build`, 83 modules — unchanged, no consumer yet)
+- E2E: PASS 21/21 (no existing file touched; nothing consumes the new module)
+
+## Advancement decision
+
+Change 136 is **VERIFIED** at 5/5 task groups (100%). All gates are green: typecheck, lint, the
+1768-unit suite, production build, and the required E2E suite (21/21). No advancement exception was
+needed. Concrete goal implementations and `Game`/mob wiring are explicit non-goals (documented,
+deferred to 139/140+). Advance to 137.
+
 ## What 135 implemented
 
 Change 135 adds bounded, deterministic, cancellable A* pathfinding over a 6-directional voxel grid,
@@ -1085,15 +1120,15 @@ the 1654-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Sapling/tree bonemeal is an explicit non-goal (deferred; no Sapling block
 exists) and the `FertilizerRegistry` extension point is documented. Advance to 128.
 
-## Next change: 136 (pending artifacts)
+## Next change: 137 (pending artifacts)
 
-`136-mob-goal-selector` is named in `CHANGE_SEQUENCE.md` with scope "Prioritized interruptible AI
-goal framework." Per `AGENTS.md`, a change lacking full artifacts is a
+`137-mob-spawn-rules` is named in `CHANGE_SEQUENCE.md` with scope "Light/biome/block/distance/
+category spawn predicates." Per `AGENTS.md`, a change lacking full artifacts is a
 hard pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md`
 before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 135
-verification. Change 136 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 136
+verification. Change 137 is the next change; its artifacts must be authored and
 validated before implementation begins.
