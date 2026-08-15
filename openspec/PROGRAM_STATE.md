@@ -3,18 +3,61 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **157-redstone-input-components — VERIFIED 100%**
-- Active implementation change: **157-redstone-input-components — VERIFIED**
-- Next change: **158-redstone-torch — NOT YET ACTIVE (artifacts pending)**
-- 157 task ledger: **28 total tasks, 28 completed**
-- 157 completion: **100%**
-- 157 mandatory redstone-input-components requirements: **PASS**
-- 157 required-test gate: **PASS — unit 2120/2120, E2E 22/22**
-- 157 advancement allowed: **Yes**
-- Session-start head: `5e5c482da6ea61a5ea5f4d9828756e040876912f`
-- Validated head: `97075d876770aa4841e4217538527d2a0d32ca69` (157 feature commit)
+- Last completed change: **158-redstone-torch — VERIFIED 100%**
+- Active implementation change: **158-redstone-torch — VERIFIED**
+- Next change: **159-repeater — NOT YET ACTIVE (artifacts pending)**
+- 158 task ledger: **29 total tasks, 29 completed**
+- 158 completion: **100%**
+- 158 mandatory redstone-torch requirements: **PASS**
+- 158 required-test gate: **PASS — unit 2142/2142, E2E 22/22**
+- 158 advancement allowed: **Yes**
+- Session-start head: `57b0d469cfff3f040c5ec2e918c21f0e033547d5`
+- Validated head: `d6e794e4defb0b8d4bb93864a42c6ec0c276645e` (158 feature commit)
 - Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress.**
-- Next exact action: **Advance to 158-redstone-torch. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (torch inversion/burnout semantics — a torch is powered iff its attachment block is *not* powered, the first **inverting** component, which is what makes logic gates possible. Burnout requires tracking rapid toggle counts within a window. Expect a `redstone_torch` block with a `lit` boolean state plus a pure inversion/burnout model; 047's `ScheduledTickQueue` is the natural primitive for the torch update delay, same as 157); implement; verify full gate; commit + push; advance program state.**
+- Next exact action: **Advance to 159-repeater. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (direction/delay/locking and scheduled output — the third consumer of 047's `ScheduledTickQueue`, joining 157/158. A repeater samples its input, holds it for a configurable 1-4 redstone-tick delay before re-emitting (pure delay-line semantics distinct from 158's inversion), and can be **locked** by a perpendicular repeater feeding it — the first component whose output depends on a *side* input, not just its front. Expect `redstone_repeater` with facing+delay+locked+powered state); implement; verify full gate; commit + push; advance program state.**
+
+## What 158 implemented
+
+Change 158 adds the first **inverting** redstone component. `torchShouldBeLit(attachmentPowered)`
+is exactly `!attachmentPowered`, deliberately kept separate from burnout so the one-line inversion
+stays trivially correct and independently testable — burnout is applied by the caller on top, never
+folded in, so a future bug can never be ambiguous about which rule caused an unlit torch.
+
+- `src/simulation/RedstoneTorch.ts` (NEW) — `torchShouldBeLit`; `torchSignalStrength` (full while
+  lit, none otherwise); `scheduleTorchUpdate`/`dueTorchUpdates` riding on 047's
+  `ScheduledTickQueue` (same primitive 157 established; 159's repeater delay will be the third
+  consumer) with `TORCH_UPDATE_DELAY_TICKS` (2); `TorchBurnoutTracker` — `recordToggle` **prunes on
+  write** (drops entries older than `BURNOUT_WINDOW_TICKS` (60) before the incoming tick) so
+  per-torch memory stays bounded by `BURNOUT_TOGGLE_LIMIT` (8) regardless of session length
+  (proven directly: after 50 toggles spaced beyond the window, `toggleCount` reports exactly 1
+  retained); `isBurnedOut` fires once retained toggles **strictly exceed** the limit (asserted at
+  both boundaries: exactly 8 does not burn out, 9 does) and persists until
+  `BURNOUT_RECOVERY_TICKS` (60) pass since the **last recorded toggle** (not burnout onset) — a
+  dedicated test proves a further toggle partway through recovery **extends** the recovery point,
+  confirming a torch still being driven by a live loop cannot recover mid-loop.
+- `src/world/BlockRegistry.ts`/`ItemRegistry.ts` (EDIT) — `LIT_SCHEMA` (one boolean `lit`, kept
+  distinct from 157's `POWERED_SCHEMA` since a torch names its state for what it *is* — lit — not
+  what drives it); `BlockId.RedstoneTorch = 41`/`ItemId.RedstoneTorch = 41`, 2 states. No
+  facing/attachment-direction state (157's identical reasoning: models are 059/060's scope).
+
+## Validation evidence (158)
+
+- typecheck: PASS; lint: PASS (full project)
+- unit: PASS 2142/2142 (prior 2120 + 22 new, including both boundaries of the burnout threshold,
+  direct proof of window-pruning, and both boundaries of the recovery window; same-tick scheduling
+  determinism asserted repeatable, continuing 156/157's pattern)
+- production build: PASS (registry edits live; simulation module has no `Game.ts` consumer yet)
+- E2E: PASS 22/22 (all pre-existing assertions unaffected)
+- Four characterization tests updated: block count 29 → 30, stateful-block set +`redstone_torch`,
+  state-count formula +2 plus a per-block exact-2-state assertion (registry 1356 → 1358 states),
+  one new legacy-id row
+
+## Advancement decision (158)
+
+Advance. 100% task completion, full gate green, no MUST/SHALL requirement unmet, no regression. Not
+yet emitting into a live circuit — needs an interaction/collision hook plus a
+`RedstonePowerSource` adapter over the real `World`, the same integration surface 156/157 deferred.
+Next change: 159-repeater.
 
 ## What 157 implemented
 
