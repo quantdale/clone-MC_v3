@@ -45,6 +45,10 @@ import { CraftingPanel } from '../ui/CraftingPanel';
 import type { CraftingRecipe } from '../inventory/Crafting';
 import { SurvivalSystem } from '../player/SurvivalSystem';
 import type { SurvivalEvent, SurvivalSnapshot } from '../player/SurvivalSystem';
+import { resolveFoodConsume, applyConsumeEffects } from '../player/FoodComponentRuntime';
+import { StatusEffectManager } from '../data/StatusEffectManager';
+import { createDefaultStatusEffectRegistry } from '../data/StatusEffect';
+import { createDefaultAttributeRegistry } from '../data/AttributeRegistry';
 import { ExperienceSystem } from '../player/ExperienceSystem';
 import type { ExperienceSnapshot } from '../player/ExperienceSystem';
 import { worldToChunk } from '../world/WorldCoordinates';
@@ -89,6 +93,8 @@ export class Game {
   private readonly controller: PlayerController;
   private readonly physics: PlayerPhysics;
   private readonly survival: SurvivalSystem;
+  /** Active status effects for the player; ticked each frame and fed by consume. */
+  playerEffects: StatusEffectManager;
   private readonly experience: ExperienceSystem;
   private readonly xpOrbs: XpOrbManager;
   private readonly interaction: PlayerInteraction;
@@ -192,6 +198,10 @@ export class Game {
     this.spawnPosition = this.player.position.clone();
     this.inventory = new Inventory();
     this.survival = new SurvivalSystem(undefined, (event, amount) => this.onSurvivalEvent(event, amount));
+    this.playerEffects = new StatusEffectManager(
+      createDefaultStatusEffectRegistry(),
+      createDefaultAttributeRegistry(),
+    );
     this.loadPlayerState();
 
     // Queue the spawn area before the loop starts. World work is then spread
@@ -409,15 +419,9 @@ export class Game {
         inLava: this.player.inLava,
         landingDistance: this.physics.consumeLandingDistance(),
       });
-      if (
-        this.input.consumeEat() &&
-        this.inventory.getItemCount(ItemId.Apple) > 0 &&
-        this.survival.eat({ hunger: 4, saturation: 2 })
-      ) {
-        this.inventory.removeItem(ItemId.Apple, 1);
-        this.hotbar.render();
-        this.audio.play('eat');
-        this.showToast('Ate an apple');
+      this.playerEffects.tick(dt);
+      if (this.input.consumeEat()) {
+        this.tryEatSelected();
       }
       this.hud.setSurvival(this.survival.health, this.survival.hunger);
     } else {
@@ -916,6 +920,26 @@ export class Game {
     this.hud.setSurvival(this.survival.health, this.survival.hunger);
   }
 
+  /**
+   * Eat the selected hotbar food item using its registry-defined nutrition, then
+   * apply any food-borne status effects. A non-food selection or a full hunger bar
+   * (survival.eat returns false) consumes nothing and applies no effects.
+   */
+  private tryEatSelected(): void {
+    const stack = this.inventory.getSelectedStack();
+    if (!stack) return;
+    const def = this.itemRegistry.getByLegacyId(stack.id);
+    if (!def || !def.isFood) return;
+    const consume = resolveFoodConsume(def);
+    if (!consume) return;
+    if (!this.survival.eat({ hunger: consume.hunger, saturation: consume.saturation })) return;
+    this.inventory.consumeSelected();
+    applyConsumeEffects(this.playerEffects, consume.effects);
+    this.hotbar.render();
+    this.audio.play('eat');
+    this.showToast(`Ate ${def.name}`);
+  }
+
   private respawnPlayer(): void {
     this.player.position.copy(this.spawnPosition);
     this.player.velocity.set(0, 0, 0);
@@ -926,6 +950,7 @@ export class Game {
     this.player.yaw = 0;
     this.player.pitch = 0;
     this.survival.consumeDeath();
+    this.playerEffects.clear();
     this.interaction.clearTarget();
     this.showToast('You died. Respawned at spawn.');
   }

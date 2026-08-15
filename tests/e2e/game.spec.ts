@@ -195,14 +195,19 @@ test.describe('voxel game', () => {
       const game = (window as unknown as {
         __voxelGame?: {
           survival: { hunger: number; saturation: number };
-          inventory: { addItem(id: number, amount: number): number };
+          inventory: {
+            addItem(id: number, amount: number): number;
+            setSelectedStack(stack: { id: number; count: number }): void;
+          };
           hotbar: { render(): void };
         };
       }).__voxelGame;
       if (!game) throw new Error('test game handle missing');
       game.survival.hunger = 10;
       game.survival.saturation = 0;
-      game.inventory.addItem(13, 1);
+      // Eating consumes the selected hotbar item (change 124): put an apple in the
+      // selected slot, then press the eat key.
+      game.inventory.setSelectedStack({ id: 13, count: 1 });
       game.hotbar.render();
     });
     await page.keyboard.press('KeyR');

@@ -50,6 +50,20 @@ export const enum ItemId {
   EnchantingTable = 31,
 }
 
+/**
+ * One status effect granted by eating a food item. Identical in shape to a potion
+ * effect row (`PotionEffectData`) so the same `applyConsumeEffects` helper serves both.
+ * `typeId` follows the `minecraft:effect/<key>` convention.
+ */
+export interface FoodEffectData {
+  /** Effect-type ResourceId string, e.g. `minecraft:effect/regeneration`. */
+  readonly typeId: string;
+  /** Effect duration in seconds (>= 0). */
+  readonly duration: number;
+  /** Effect amplifier/level (>= 0). */
+  readonly amplifier: number;
+}
+
 /** An inventory-item definition. */
 export interface ItemTypeDefinition {
   /** Stable numeric legacy id. This value is the current save identity. */
@@ -90,6 +104,9 @@ export interface ItemTypeDefinition {
   foodHunger?: number;
   /** Saturation restored when eaten. */
   foodSaturation?: number;
+  /** Status effects applied when this food is eaten. Each row uses a
+   *  `minecraft:effect/<key>` typeId. Absent = no effects (default food). */
+  foodEffects?: readonly FoodEffectData[];
   /** The block this item places, referenced explicitly. Absent = not placeable. */
   placeBlock?: ResourceId;
 }
