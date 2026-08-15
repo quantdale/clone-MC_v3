@@ -3,18 +3,64 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **164-piston-execution — VERIFIED 100%**
-- Active implementation change: **164-piston-execution — VERIFIED**
-- Next change: **165-slime-honey-move-groups — NOT YET ACTIVE (artifacts pending)**
-- 164 task ledger: **28 total tasks, 28 completed**
-- 164 completion: **100%**
-- 164 mandatory piston-execution requirements: **PASS**
-- 164 required-test gate: **PASS — unit 2231/2231, E2E 22/22**
-- 164 advancement allowed: **Yes**
+- Last completed change: **165-slime-honey-move-groups — VERIFIED 100%**
+- Active implementation change: **165-slime-honey-move-groups — VERIFIED**
+- Next change: **166-hopper-transfer — NOT YET ACTIVE (artifacts pending)**
+- 165 task ledger: **33 total tasks, 33 completed**
+- 165 completion: **100%**
+- 165 mandatory slime-honey-move-groups requirements: **PASS**
+- 165 required-test gate: **PASS — unit 2249/2249, E2E 22/22**
+- 165 advancement allowed: **Yes**
 - Session-start head: `89017135263a9122a8981c3f0a7c0fad8d25ed94`
-- Validated head: `05c5718051d0fd10a995d0c52f3a250f900af169` (164 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress — the 157-161 logic-component trio and 162's first consumers are both COMPLETE; the piston sub-arc (163-165) is two-thirds done.**
-- Next exact action: **Advance to 165-slime-honey-move-groups. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: sticky adjacency rules and push grouping — this closes the piston sub-arc. Add `BlockId.StickyPiston` alongside a slime/honey-block adjacency rule and extend the push-chain algorithm to validate a pull chain on retract, reusing 164's `PistonExecutionWorld<TState>`/`executePistonPush` shape wherever the same snapshot-then-apply discipline applies. A slime block sticks blocks on all six faces — a genuinely different shape than 163's linear walk, not a trivial reuse — so scope the adjacency graph narrowly and document what is deferred); implement; verify full gate; commit + push; advance program state.**
+- Validated head: `7a9310fd1f8faea623b28a4a76e50e90c968cc8c` (165 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress — the 157-161 logic-component trio, 162's first consumers, and the piston sub-arc (163-165) are all COMPLETE.**
+- Next exact action: **Advance to 166-hopper-transfer. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: directional timed item transfer using menu/container transactions — the first natural point a container-signal bridge for 160's comparator `sideInput` would matter, and the first real redstone-side consumer of 106's `ContainerMenu`/inventory model. Decide explicitly how deep the container-transaction integration goes and whether item-entity scooping is in scope here or a documented non-goal); implement; verify full gate; commit + push; advance program state.**
+
+## What 165 implemented
+
+Change 165 closes the piston sub-arc (163-165) with sticky (slime/honey) adjacency grouping and
+sticky-piston retract-pull.
+
+- `src/simulation/PistonStickyGroups.ts` (NEW) — `wouldDrag(current, neighbor)` encodes vanilla's
+  real rule as a two-line equality check: `neighbor === null` (a non-sticky passenger, always
+  dragged) or `neighbor === current` (same kind); a *different* sticky kind (slime touching honey)
+  is explicitly not dragged. `expandStickyGroup` is a bounded BFS reusing 163's
+  `classifyPistonBlock` for every newly-discovered neighbor rather than reimplementing movability
+  classification — an immovable neighbor fails the **whole group** (163's whole-chain-blocked
+  semantics, generalized to a graph); only positions whose *own* `stickyKind` is non-null ever
+  expand the frontier, so a dragged non-sticky passenger is a dead end.
+  `orderGroupForMove(positions, movementDirection)` generalizes 163/164's farthest-first ordering
+  via projection onto the movement direction's unit offset — proven safe for a genuinely
+  **non-linear** (L-shaped) group by feeding the sorted result straight through 164's real
+  `executePistonPush` and asserting the exact final world state. Because this generalization holds,
+  **164 needed zero changes** to handle groups. `extendPushPlanWithStickyGroup` composes onto *any*
+  piston's already-computed 163 plan (slime/honey stickiness is a property of the pushed block, not
+  the pushing piston) — returns the base plan completely unchanged (reference-equal) when blocked
+  or non-sticky. `planStickyRetract` is the sticky-piston-only pull behavior.
+- `src/world/BlockRegistry.ts`/`ItemRegistry.ts` (EDIT) — `BlockId.StickyPiston = 49`/
+  `ItemId.StickyPiston = 49`, **reusing `PISTON_SCHEMA` unchanged** — the third reuse of the
+  one-schema-many-blocks pattern (after `POWERED_SCHEMA` and `OPEN_SCHEMA`), since the only real
+  difference between `piston` and `sticky_piston` is which retract function a future wiring change
+  invokes. No `slime_block`/`honey_block` `BlockId` — `StickyWorld.stickyKind` is injected (154's
+  seam), the same reasoning 163 used for `PistonWorld`.
+
+## Validation evidence (165)
+
+- typecheck: PASS; lint: PASS (full project)
+- unit: PASS 2249/2249 (prior 2231 + 18 new, including an executable (not just theoretical)
+  proof that the L-shaped group's execution order is safe)
+- production build: PASS (103 modules, unchanged — registry edits live, simulation module has no
+  `Game.ts` consumer yet)
+- E2E: PASS 22/22 (all pre-existing assertions unaffected)
+- Four characterization tests updated: block count 37 → 38, stateful-block set + `sticky_piston`,
+  state-count formula base-block offset -15 → -16 plus a total +12 (sharing `piston`'s 12-state
+  shape), one new legacy-id row
+
+## Advancement decision (165)
+
+Advance. 100% task completion, full gate green, no MUST/SHALL requirement unmet, no regression.
+`slime_block`/`honey_block` blocks and all `Game`/`World` wiring deferred as documented non-goals.
+Next change: 166-hopper-transfer.
 
 ## What 164 implemented
 
