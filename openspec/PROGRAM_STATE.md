@@ -3,17 +3,54 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **148-mob-drop-loot — VERIFIED 100%**
-- Active implementation change: **148-mob-drop-loot — VERIFIED**
-- Next change: **149-point-of-interest-system — NOT YET ACTIVE (artifacts pending)**
-- 148 task ledger: **22 total tasks, 22 completed**
-- 148 completion: **100%**
-- 148 mandatory mob-drop-loot requirements: **PASS**
-- 148 required-test gate: **PASS — unit 1925/1925, E2E 22/22**
-- 148 advancement allowed: **Yes**
-- Session-start head: `4d073aedbbf6f1f9275eeb3864413458e173264d`
-- Validated head: `0822767b24e17c043f2456821bb997bf443d86a6` (148 feature commit)
-- Next exact action: **Advance to 149-point-of-interest-system. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (persisted searchable POIs for villager-like AI — a new, independent data/query primitive; no villager entity exists yet, so this is additive/unconsumed until 150-villager-professions); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **149-point-of-interest-system — VERIFIED 100%**
+- Active implementation change: **149-point-of-interest-system — VERIFIED**
+- Next change: **150-villager-professions — NOT YET ACTIVE (artifacts pending)**
+- 149 task ledger: **24 total tasks, 24 completed**
+- 149 completion: **100%**
+- 149 mandatory point-of-interest-system requirements: **PASS**
+- 149 required-test gate: **PASS — unit 1942/1942, E2E 22/22**
+- 149 advancement allowed: **Yes**
+- Session-start head: `36118bdaec43c126dae8b62f997744d668495f82`
+- Validated head: `319a0e6f414dc4b9bb83125358b5c05c7d140b92` (149 feature commit)
+- Next exact action: **Advance to 150-villager-professions. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (profession/workstation assignment and schedules — first real consumer of 149's PointOfInterestManager; needs a villager entity type registered in 017's EntityRegistry first, since none exists yet); implement; verify full gate; commit + push; advance program state.**
+
+## What 149 implemented
+
+Change 149 adds a chunk-scoped, in-memory `PointOfInterestManager` for future villager-like AI
+(150/198), mirroring 129's `EntityManager` shape applied to a stationary typed block position
+instead of a moving entity. It is fully additive/unconsumed — no villager entity or
+profession/workstation catalog exists yet — and does not add a real IndexedDB persistence store
+(no existing POI store to bridge into yet, unlike 131's bridge into 037's already-existing entity
+store).
+
+- `src/simulation/PointOfInterest.ts` (NEW) — `PointOfInterestRecord` (`type`/`x`/`y`/`z`/
+  `claimed`); `add` (strict finite-integer coordinate validation, rejects a duplicate position);
+  `remove`/`get`/`getAll`/`getInChunk`; `claim`/`release` (`true`/`false` success reporting,
+  matching `EntityManager.setTransform`'s own convention); `findNearestUnclaimed` (deterministic
+  type/claimed-state/distance filtering over the live set, ties broken by registration order);
+  `serializeChunk`/`deserializeChunk` (atomic all-or-nothing batch validation via a self-contained
+  `SerializedPoi` envelope, chunk-scoped via 021 `sectionIndex`, mirroring
+  `EntityManager.serializeChunk`/`deserializeChunk`'s exact shape); `forgetChunk` (chunk-scoped
+  eviction).
+
+## Validation evidence (149)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1942/1942 (prior 1925 + 17 new: add/duplicate-rejection, claim/release
+  success/failure/nonexistent, `findNearestUnclaimed` nearer/claimed-excluded/type-excluded/
+  out-of-range, serialize/deserialize round-trip + malformed-batch atomic rejection, `forgetChunk`
+  chunk-scoped eviction)
+- production build: PASS (`tsc --noEmit && vite build`, 103 modules, unchanged from 148 — confirms
+  no `Game.ts` consumer, matching 148's own identical evidence)
+- E2E: PASS 22/22 (all pre-existing assertions unaffected — nothing wired into the live game)
+
+## Advancement decision (149)
+
+Advance. 100% task completion, full gate green, no MUST/SHALL requirement unmet, no regression.
+Fully additive/unconsumed — no villager entity or profession/workstation catalog exists yet (150's
+scope). Next change: 150-villager-professions.
 
 ## What 148 implemented
 
