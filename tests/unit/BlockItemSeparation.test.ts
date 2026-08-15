@@ -124,6 +124,9 @@ describe('block/item registry separation', () => {
       [42, 'redstone_repeater', 'redstone_repeater'],
       [43, 'redstone_comparator', 'redstone_comparator'],
       [44, 'observer', 'observer'],
+      [45, 'redstone_lamp', 'redstone_lamp'],
+      [46, 'door', 'door'],
+      [47, 'trapdoor', 'trapdoor'],
     ];
     for (const [id, blockPath, itemPath] of table) {
       if (blockPath !== null) {

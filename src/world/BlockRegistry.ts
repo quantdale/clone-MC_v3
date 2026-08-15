@@ -48,6 +48,9 @@ export const enum BlockId {
   RedstoneRepeater = 42,
   RedstoneComparator = 43,
   Observer = 44,
+  RedstoneLamp = 45,
+  Door = 46,
+  Trapdoor = 47,
 }
 
 /**
@@ -139,6 +142,21 @@ export const OBSERVER_SCHEMA = new BlockPropertySchema([
   { kind: 'named', name: 'facing', values: ['north', 'south', 'east', 'west', 'up', 'down'] },
   { kind: 'boolean', name: 'powered' },
 ]);
+
+/**
+ * Redstone lamp property schema (162): a single boolean `lit`. The first pure-consumer block in
+ * this series — it reads power in and changes its own visible state, with nothing to emit back out.
+ */
+export const LAMP_SCHEMA = new BlockPropertySchema([{ kind: 'boolean', name: 'lit' }]);
+
+/**
+ * Door/trapdoor property schema (162): a single boolean `open`, shared by both blocks — the same
+ * one-schema-many-blocks pattern `POWERED_SCHEMA` established for lever/button/plate. `facing` is
+ * deliberately omitted (purely visual swing/orientation, 157/158's identical reasoning), as is the
+ * real door's two-block hinge/half geometry (placement/rendering scope, not redstone-consumer
+ * scope).
+ */
+export const OPEN_SCHEMA = new BlockPropertySchema([{ kind: 'boolean', name: 'open' }]);
 
 /** Tool families used for preferred-tool mining bonuses. */
 export const enum ToolKind {
@@ -884,6 +902,57 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       dropItem: rid('observer'),
       propertySchema: OBSERVER_SCHEMA,
       defaultState: { facing: 'north', powered: false },
+    },
+    {
+      id: BlockId.RedstoneLamp,
+      resourceId: rid('redstone_lamp'),
+      key: 'redstone_lamp',
+      name: 'Redstone Lamp',
+      solid: true,
+      opaque: true,
+      breakable: true,
+      renderCategory: RenderCategory.Opaque,
+      topTile: 35,
+      bottomTile: 35,
+      sideTile: 35,
+      hardness: 0.3,
+      dropItem: rid('redstone_lamp'),
+      propertySchema: LAMP_SCHEMA,
+      defaultState: { lit: false },
+    },
+    {
+      id: BlockId.Door,
+      resourceId: rid('door'),
+      key: 'door',
+      name: 'Door',
+      solid: false,
+      opaque: false,
+      breakable: true,
+      renderCategory: RenderCategory.Transparent,
+      topTile: 0,
+      bottomTile: 0,
+      sideTile: 0,
+      hardness: 3,
+      dropItem: rid('door'),
+      propertySchema: OPEN_SCHEMA,
+      defaultState: { open: false },
+    },
+    {
+      id: BlockId.Trapdoor,
+      resourceId: rid('trapdoor'),
+      key: 'trapdoor',
+      name: 'Trapdoor',
+      solid: false,
+      opaque: false,
+      breakable: true,
+      renderCategory: RenderCategory.Transparent,
+      topTile: 0,
+      bottomTile: 0,
+      sideTile: 0,
+      hardness: 3,
+      dropItem: rid('trapdoor'),
+      propertySchema: OPEN_SCHEMA,
+      defaultState: { open: false },
     },
   ];
   return new BlockTypeRegistry(defs);
