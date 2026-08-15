@@ -3,18 +3,57 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **162-redstone-consumer-blocks — VERIFIED 100%**
-- Active implementation change: **162-redstone-consumer-blocks — VERIFIED**
-- Next change: **163-piston-move-planner — NOT YET ACTIVE (artifacts pending)**
-- 162 task ledger: **29 total tasks, 29 completed**
-- 162 completion: **100%**
-- 162 mandatory redstone-consumer requirements: **PASS**
-- 162 required-test gate: **PASS — unit 2205/2205, E2E 22/22**
-- 162 advancement allowed: **Yes**
+- Last completed change: **163-piston-move-planner — VERIFIED 100%**
+- Active implementation change: **163-piston-move-planner — VERIFIED**
+- Next change: **164-piston-execution — NOT YET ACTIVE (artifacts pending)**
+- 163 task ledger: **26 total tasks, 26 completed**
+- 163 completion: **100%**
+- 163 mandatory piston-move-planner requirements: **PASS**
+- 163 required-test gate: **PASS — unit 2218/2218, E2E 22/22**
+- 163 advancement allowed: **Yes**
 - Session-start head: `89017135263a9122a8981c3f0a7c0fad8d25ed94`
-- Validated head: `00c3a1f27c2f948def18746a3c973a7e2b462b3d` (162 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress — the 157-161 logic-component trio is COMPLETE and 162 adds the first consumers.**
-- Next exact action: **Advance to 163-piston-move-planner. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: validate bounded push chains, immovable blocks, and destroy reactions — this is a planning/validation-only change; actual atomic block-state/block-entity moves are 164's separate titled scope, so keep 163 strictly to computing/validating a push chain without mutating any `World` state yet); implement; verify full gate; commit + push; advance program state.**
+- Validated head: `4a6ca8d78fc5638048d1853aef9a81b670d5a29c` (163 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress — the 157-161 logic-component trio and 162's first consumers are both COMPLETE; 163 opens the piston sub-arc (163-165).**
+- Next exact action: **Advance to 164-piston-execution. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: atomic block-state/block-entity moves and neighbor updates — this change actually applies 163's `PistonPushPlan` against a real `World`. Also the first natural point `BlockId.Piston`/`ItemId.Piston` would need to exist, since something must finally exist to execute the plan against — decide explicitly whether to add the block/item now); implement; verify full gate; commit + push; advance program state.**
+
+## What 163 implemented
+
+Change 163 adds a pure push-chain planner — the first module in the redstone arc reasoning about
+**block movement** rather than signal strength.
+
+- `src/simulation/PistonMovePlanner.ts` (NEW) — `classifyPistonBlock(world, x, y, z)` resolves any
+  position to `'movable' | 'terminates-clear' | 'terminates-destroy' | 'immovable'` via an injected
+  `PistonWorld` (`isImmovable`/`isPushable`/`isDestroyedByPush`) — `isImmovable` always takes
+  precedence, even over an inconsistent `isPushable = true` report for the same position, so a
+  misbehaving world can never cause a chain to treat an immovable position as movable (mirrors
+  154's `clampSignal` safe-reading-wins discipline). `planPistonPush` walks outward from the start
+  position in the given facing (154's six-way `Direction`, since pistons can point up/down),
+  bounded to `PISTON_PUSH_LIMIT (12) + 1 = 13` iterations (budgeted, never unbounded, 049's
+  discipline): a movable position continues the chain; a clean or destroying terminator ends it
+  successfully with `blocksToMove` ordered farthest-from-the-piston-first (the order a future
+  execution change needs so it never overwrites a not-yet-vacated block) and `blocksToDestroy`
+  holding at most the one terminating position; an immovable position at **any** point, or
+  exceeding the push limit, blocks the **entire** push — `blocksToMove`/`blocksToDestroy` both
+  empty, `blockedReason` set to `'immovable'` or `'exceeded-limit'` respectively.
+- Deliberately **no `Piston` `BlockId`/`ItemId`** — repeats 154's own signal-model-first-block-second
+  ordering. The **first redstone-arc change with zero `BlockRegistry.ts`/`ItemRegistry.ts` touch**,
+  following 133-140's pure-algorithm precedent, so none of the four characterization tests needed
+  updating.
+
+## Validation evidence (163)
+
+- typecheck: PASS; lint: PASS (full project)
+- unit: PASS 2218/2218 (prior 2205 + 13 new, including all-six-`Direction` facing-correctness
+  coverage and an inconsistent-world immovable-precedence test)
+- production build: PASS (103 modules, unchanged — the new module has no consumer yet)
+- E2E: PASS 22/22 (all pre-existing assertions unaffected)
+- No characterization-test updates — this change touches no registry.
+
+## Advancement decision (163)
+
+Advance. 100% task completion, full gate green, no MUST/SHALL requirement unmet, no regression.
+Actual block movement/mutation, sticky-pull behavior, and extend/retract triggering deferred as
+documented non-goals. Next change: 164-piston-execution.
 
 ## What 162 implemented
 
