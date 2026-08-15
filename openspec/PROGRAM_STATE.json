@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "121-status-effect-runtime",
+  "currentChange": "122-potion-item-data",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "121-status-effect-runtime",
-  "nextChange": "122-potion-item-data",
+  "lastCompletedChange": "122-potion-item-data",
+  "nextChange": "123-brewing-stand",
   "completedTasks": 6,
   "totalTasks": 6,
   "completionPercentage": 100,
@@ -15,9 +15,9 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "94a31ae6d87229d501b95800757017ec8ee8ebb1",
-  "lastCompletedTask": "121: all 6 task groups complete; status-effect-runtime VERIFIED. StatusEffectManager (src/data/StatusEffectManager.ts) with strict type resolution, duration/amplifier clamping, max-amplifier duration-refresh stacking rule, default effect->attribute hook table (speed/slowness/strength/weakness/health_boost/haste/mining_fatigue), tick+expire+unhook, INSTANT surfacing, atomic serialize/deserialize, and 21 unit tests. 012/014 contracts unchanged. Full gate green (typecheck, lint, 1522 unit, build, 21 e2e).",
-  "nextExactAction": "Advance to 122-potion-item-data. Read its artifacts (and SPEC_AUTHORING_PROTOCOL.md if incomplete); author/validate proposal/design/tasks/specs/verification; implement potion contents in item components and consume/splash payload primitives; verify full gate; commit + push; advance program state.",
+  "sessionStartHead": "a3b062bd868f04e5b3672b93fe4dcb1344d02233",
+  "lastCompletedTask": "122: all 6 task groups complete; potion-item-data VERIFIED. PotionItemData.ts (PotionKind/PotionEffectData/PotionContents/PotionConsumePayload/PotionSplashPayload, POTION_CONTENTS_COMPONENT, strict createPotionContents factory, potionContentsComponentType) + pure getEffectiveEffects/buildConsumePayload/buildSplashPayload; registered in createDefaultStackComponentRegistry (now 3 types). 23 unit tests. 119/121 contracts unchanged. Full gate green (typecheck, lint, 1545 unit, build, 21 e2e).",
+  "nextExactAction": "Advance to 123-brewing-stand. Read its artifacts (and SPEC_AUTHORING_PROTOCOL.md if incomplete); author/validate proposal/design/tasks/specs/verification; implement brewing block entity, recipes, fuel/timing/persistence; verify full gate; commit + push; advance program state.",
   "blockers": [],
   "validationResults": [
     {
@@ -1189,10 +1189,20 @@
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "121 VERIFIED 6/6 tasks; attribute-hook runtime for status effects; no consumer wiring (downstream).",
       "head": "63412f2d911d96adef6820aa7a5f1de0daead3fb"
+    },
+    {
+      "head": "aa9ee0921e208e57cdb227c322447a78f08ab14a",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 1545/1545 (prior 1522 + 23 new: PotionItemData)",
+      "build": "PASS via tsc --noEmit && vite build (68 modules)",
+      "e2e": "PASS 21/21",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "122 VERIFIED 6/6; potion contents component + consume/splash payload primitives; no consumer wiring (downstream)."
     }
   ],
   "publishedHead": "3d19ae7c290e51b9b27bb8679a7134c98a847cba",
   "publishedAt": "2026-08-15T04:27:31Z",
-  "lastValidatedHead": "63412f2d911d96adef6820aa7a5f1de0daead3fb",
-  "lastKnownHead": "63412f2d911d96adef6820aa7a5f1de0daead3fb"
+  "lastValidatedHead": "aa9ee0921e208e57cdb227c322447a78f08ab14a",
+  "lastKnownHead": "aa9ee0921e208e57cdb227c322447a78f08ab14a"
 }

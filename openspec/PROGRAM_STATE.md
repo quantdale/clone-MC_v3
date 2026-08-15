@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **121-status-effect-runtime — VERIFIED 100%**
-- Active implementation change: **121-status-effect-runtime — VERIFIED**
-- Next change: **122-potion-item-data — NOT YET ACTIVE (artifacts pending)**
-- 121 task ledger: **6 total task groups, 6 completed**
-- 121 completion: **100%**
-- 121 mandatory status-effect-runtime requirements: **PASS**
-- 121 required-test gate: **PASS — unit 1522/1522, E2E 21/21**
-- 121 advancement allowed: **Yes**
-- Session-start head: `94a31ae6d87229d501b95800757017ec8ee8ebb1`
-- Validated head: `63412f2d911d96adef6820aa7a5f1de0daead3fb` (121 feature commit)
-- Next exact action: **Advance to 122-potion-item-data. Read its artifacts (and SPEC_AUTHORING_PROTOCOL.md if incomplete); author/validate proposal/design/tasks/specs/verification; implement potion contents in item components and consume/splash payload primitives; verify full gate; commit + push; advance program state.**
+- Last completed change: **122-potion-item-data — VERIFIED 100%**
+- Active implementation change: **122-potion-item-data — VERIFIED**
+- Next change: **123-brewing-stand — NOT YET ACTIVE (artifacts pending)**
+- 122 task ledger: **6 total task groups, 6 completed**
+- 122 completion: **100%**
+- 122 mandatory potion-item-data requirements: **PASS**
+- 122 required-test gate: **PASS — unit 1545/1545, E2E 21/21**
+- 122 advancement allowed: **Yes**
+- Session-start head: `a3b062bd868f04e5b3672b93fe4dcb1344d02233`
+- Validated head: `aa9ee0921e208e57cdb227c322447a78f08ab14a` (122 feature commit)
+- Next exact action: **Advance to 123-brewing-stand. Read its artifacts (and SPEC_AUTHORING_PROTOCOL.md if incomplete); author/validate proposal/design/tasks/specs/verification; implement brewing block entity, recipes, fuel/timing/persistence; verify full gate; commit + push; advance program state.**
 
 ## What 119 implemented
 
@@ -520,15 +520,51 @@ suite (21/21). No advancement exception was needed. Gameplay consumers of the
 manager (player movement speed, attack damage, etc.) are an explicit non-goal of
 121 (downstream change) and 012/014 are unmodified. Advance to 122.
 
-## Next change: 122 (pending artifacts)
+## What 122 implemented
 
-`122-potion-item-data` is named in `CHANGE_SEQUENCE.md` with scope "Potion contents
-in item components and consume/splash payload primitives." Per `AGENTS.md`, a change
-lacking full artifacts is a hard pre-implementation block. Author and validate those
-artifacts via `SPEC_AUTHORING_PROTOCOL.md` before any production code.
+Change 122 adds the potion item data layer: a serializable `potion_contents` stack
+component and pure primitives that turn potion contents into consume/splash payloads.
+It is data + payload only — not brewing (123), consume-on-eat (124), or any
+throwable-entity wiring; those are downstream. The 119/121 contracts are unchanged.
+
+- `src/data/PotionItemData.ts` (NEW) — `PotionKind` (`NORMAL | SPLASH | LINGERING`),
+  `PotionEffectData` (`{ typeId, duration, amplifier }`, `typeId` stored as a
+  `minecraft:effect/<key>` string), `PotionContents`, `PotionConsumePayload`,
+  `PotionSplashPayload`; `POTION_CONTENTS_COMPONENT` (`minecraft:potion_contents`,
+  registered ResourceId); strict `createPotionContents` factory (rejects empty
+  effects, unknown kind, non-string/negative/non-finite duration, negative/non-finite
+  amplifier, duplicate `typeId`, non-string `base`; floors fractional amplifier;
+  defaults `kind` to `NORMAL`); `potionContentsComponentType` (validate-on-write guard
+  used by `StackComponentMap`); `getEffectiveEffects`, `buildConsumePayload`,
+  `buildSplashPayload` (splash radius `4.0` for SPLASH/LINGERING, `0` for NORMAL).
+- `src/inventory/StackDataComponents.ts` (EDIT) — imports and registers
+  `potionContentsComponentType` in `createDefaultStackComponentRegistry` (now 3 types).
+
+## Validation evidence (122)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1545/1545 (prior 1522 + 23 new `PotionItemData.test.ts`)
+- production build: PASS (`tsc --noEmit && vite build`, 68 modules)
+- E2E: PASS 21/21
+
+## Advancement decision
+
+Change 122 is **VERIFIED** at 6/6 task groups (100%). All gates are green: typecheck,
+lint, the 1545-unit suite, production build, and the required E2E suite (21/21). No
+advancement exception was needed. Gameplay application of the payloads (drink/splash)
+is an explicit non-goal of 122 (downstream changes 123/124 and a throwable-entity
+change) and 119/121 are unmodified. Advance to 123.
+
+## Next change: 123 (pending artifacts)
+
+`123-brewing-stand` is named in `CHANGE_SEQUENCE.md` with scope "Brewing block
+entity, recipes, fuel/timing/persistence." Per `AGENTS.md`, a change lacking full
+artifacts is a hard pre-implementation block. Author and validate those artifacts via
+`SPEC_AUTHORING_PROTOCOL.md` before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 121
-verification. Change 122 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 122
+verification. Change 123 is the next change; its artifacts must be authored and
 validated before implementation begins.
