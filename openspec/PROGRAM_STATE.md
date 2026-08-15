@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **123-brewing-stand — VERIFIED 100%**
-- Active implementation change: **123-brewing-stand — VERIFIED**
-- Next change: **124-food-component-runtime — NOT YET ACTIVE (artifacts pending)**
-- 123 task ledger: **6 total task groups, 6 completed**
-- 123 completion: **100%**
-- 123 mandatory brewing-stand requirements: **PASS**
-- 123 required-test gate: **PASS — unit 1568/1568, E2E 21/21**
-- 123 advancement allowed: **Yes**
-- Session-start head: `49dfbab74177c62c0b0b5b7a0cc34c3c6bc5757d`
-- Validated head: `0960771424c02173f662bd6ebec277fedce211fc` (123 feature commit)
-- Next exact action: **Advance to 124-food-component-runtime. Read its artifacts (and SPEC_AUTHORING_PROTOCOL.md if incomplete); author/validate proposal/design/tasks/specs/verification; implement hunger/saturation/effect-application runtime from item data; verify full gate; commit + push; advance program state.**
+- Last completed change: **124-food-component-runtime — VERIFIED 100%**
+- Active implementation change: **124-food-component-runtime — VERIFIED**
+- Next change: **125-crop-growth — NOT YET ACTIVE (artifacts pending)**
+- 124 task ledger: **6 total task groups, 6 completed**
+- 124 completion: **100%**
+- 124 mandatory food-component-runtime requirements: **PASS**
+- 124 required-test gate: **PASS — unit 1579/1579, E2E 21/21**
+- 124 advancement allowed: **Yes**
+- Session-start head: `e2c8066d1b178d01baf6f0775133e8fbb6cd581a`
+- Validated head: `5e68879a50f6bd327b9505f30bc3ce9f5d2acb0c` (124 feature commit)
+- Next exact action: **Advance to 125-crop-growth. Read its artifacts (and SPEC_AUTHORING_PROTOCOL.md if incomplete); author/validate proposal/design/tasks/specs/verification; implement Age block states, random-tick crop growth, and crop drops; verify full gate; commit + push; advance program state.**
 
 ## What 119 implemented
 
@@ -601,15 +601,61 @@ the 1568-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Block placement / `Game` tick wiring / menu UI are explicit non-goals
 of 123 (downstream changes) and 109/122 are unmodified. Advance to 124.
 
-## Next change: 124 (pending artifacts)
+## What 124 implemented
 
-`124-food-component-runtime` is named in `CHANGE_SEQUENCE.md` with scope "Hunger/saturation/
-effect application from item data." Per `AGENTS.md`, a change lacking full artifacts is a
-hard pre-implementation block. Author and validate those artifacts via
+Change 124 adds the food-component runtime: a `FoodComponentRuntime` that derives
+hunger restoration, saturation, and status-effect payloads from `ItemTypeDefinition`
+data, plus the `Game` wiring that consumes the **selected** hotbar item and applies
+its effects through the 121 `StatusEffectManager`. It is the consume runtime — not
+beverage/potion drinking (no potion item exists yet; `applyConsumeEffects` is reusable
+for it downstream) and not effect persistence (effects are session-transient by design,
+documented as out-of-scope).
+
+- `src/inventory/ItemRegistry.ts` (EDIT) — `FoodEffectData` interface and
+  `foodHunger?` / `foodSaturation?` / `foodEffects?: readonly FoodEffectData[]` on
+  `ItemTypeDefinition` (defaults 0 when absent).
+- `src/player/FoodComponentRuntime.ts` (NEW) — `resolveFoodConsume(def)` returns
+  `null` for non-food defs and otherwise `{ hunger, saturation, effects }` clamped/defaulted
+  from `foodHunger`/`foodSaturation`, filtering malformed `foodEffects` rows;
+  `applyConsumeEffects(manager, effects)` parses each `typeId` via `tryParseResourceId`,
+  and calls `manager.add` inside try/catch (defensive skip of unregistered typeIds).
+- `src/engine/Game.ts` (EDIT) — constructs `StatusEffectManager` from the 121
+  defaults; ticks it each frame (`this.playerEffects.tick(dt)`); replaces the hard-coded
+  apple bump with `tryEatSelected()` that reads the selected slot, resolves nutrition from
+  the `ItemTypeDefinition`, calls `survival.eat`, and on success runs `consumeSelected()`
+  + `applyConsumeEffects(this.playerEffects, consume.effects)`; `respawnPlayer()` clears
+  effects (`this.playerEffects.clear()`) after `consumeDeath()`.
+- `tests/unit/FoodComponentRuntime.test.ts` (NEW, 11) — null for non-food, clamp/default
+  nutrition, malformed-effect filtering, effect application + skip of unregistered typeId.
+- `tests/e2e/game.spec.ts` (EDIT) — appetite test now places the apple in the selected
+  slot (change 124 eats the **selected** item) before pressing the eat key; expects
+  hunger 10→14 and apple count 1→0.
+
+## Validation evidence (124)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1579/1579 (prior 1568 + 11 new `FoodComponentRuntime.test.ts`)
+- production build: PASS (`tsc --noEmit && vite build`, 73 modules)
+- E2E: PASS 21/21 (updated `shows survival status and food in the hotbar`)
+
+## Advancement decision
+
+Change 124 is **VERIFIED** at 6/6 task groups (100%). All gates are green: typecheck,
+lint, the 1579-unit suite, production build, and the required E2E suite (21/21). No
+advancement exception was needed. Effect persistence across sessions is an explicit
+non-goal (transient by design); potion drinking is deferred until a potion item exists.
+Advance to 125.
+
+## Next change: 125 (pending artifacts)
+
+`125-crop-growth` is named in `CHANGE_SEQUENCE.md` with scope "Age block states,
+random-tick crop growth, and crop drops." Per `AGENTS.md`, a change lacking full
+artifacts is a hard pre-implementation block. Author and validate those artifacts via
 `SPEC_AUTHORING_PROTOCOL.md` before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 123
-verification. Change 124 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 124
+verification. Change 125 is the next change; its artifacts must be authored and
 validated before implementation begins.
