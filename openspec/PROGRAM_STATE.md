@@ -3,18 +3,59 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **159-repeater — VERIFIED 100%**
-- Active implementation change: **159-repeater — VERIFIED**
-- Next change: **160-comparator — NOT YET ACTIVE (artifacts pending)**
-- 159 task ledger: **26 total tasks, 26 completed**
-- 159 completion: **100%**
-- 159 mandatory repeater requirements: **PASS**
-- 159 required-test gate: **PASS — unit 2157/2157, E2E 22/22**
-- 159 advancement allowed: **Yes**
+- Last completed change: **160-comparator — VERIFIED 100%**
+- Active implementation change: **160-comparator — VERIFIED**
+- Next change: **161-redstone-observer — NOT YET ACTIVE (artifacts pending)**
+- 160 task ledger: **29 total tasks, 29 completed**
+- 160 completion: **100%**
+- 160 mandatory comparator requirements: **PASS**
+- 160 required-test gate: **PASS — unit 2176/2176, E2E 22/22**
+- 160 advancement allowed: **Yes**
 - Session-start head: `89017135263a9122a8981c3f0a7c0fad8d25ed94`
-- Validated head: `aadf454670bf9000ffc874ebe3d2a2939ed0dd3c` (159 feature commit)
+- Validated head: `85c61f2f6f8e39ccf7672a096c68d4100c6da563` (160 feature commit)
 - Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress.**
-- Next exact action: **Advance to 160-comparator. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (compare/subtract modes and container signal reads — an **analog** component, the first to output a signal strength other than 0 or MAX. Compare mode: output = input if input >= side, else 0. Subtract mode: output = max(0, input - side). Container signal reads (a chest/furnace's fullness as 0-15) need 106's container/inventory model — decide explicitly whether to scope that in or defer it as a documented non-goal given no titled change bridges redstone to inventories yet); implement; verify full gate; commit + push; advance program state.**
+- Next exact action: **Advance to 161-redstone-observer. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (the observer block: detects a state change in the block it faces — comparator-like short-pulse output — without needing direct power input, e.g. a crop's growth-stage change, a comparator's output change, a furnace's lit-state change. Decide explicitly which detectable-state-change sources are in scope given how few titled changes have wired real block behavior into a shared change-detection hook yet, and document deferred sources as non-goals); implement; verify full gate; commit + push; advance program state.**
+
+## What 160 implemented
+
+Change 160 adds the redstone comparator: the first **analog** redstone component — output is a
+genuine function of two signal strengths, not just two booleans.
+
+- `src/simulation/RedstoneComparator.ts` (NEW) — `resolveComparatorOutput(mode, frontInput,
+  sideInput)` clamps both inputs through 154's `clampSignal` before any comparison or arithmetic
+  (mirroring 154's own clamp-on-read discipline), so an out-of-domain caller value — including
+  `Number.NaN` — can never produce an out-of-domain result. `compare` mode passes the (clamped)
+  front input through when it is `>=` the (clamped) side input (the inclusive boundary is tested
+  explicitly, at exact equality and on both sides of it), else 0; `subtract` mode always yields
+  `max(0, front - side)`, floored rather than underflowing. `cycleComparatorMode` is a pure
+  `compare ↔ subtract` bijection. `comparatorIsPowered` is exactly strictly-positive-output.
+  `scheduleComparatorUpdate`/`dueComparatorUpdates` ride on 047's `ScheduledTickQueue` on a 2-tick
+  delay (reusing 158's `TORCH_UPDATE_DELAY_TICKS` value directly — vanilla's comparator and torch
+  genuinely share the same one-redstone-tick update speed), exercised for not-due-before-tick,
+  fires-at-tick, and same-tick deterministic/repeatable ordering.
+- `src/world/BlockRegistry.ts`/`ItemRegistry.ts` (EDIT) — `COMPARATOR_SCHEMA` (`facing` × `mode` ×
+  `powered` = 16 states); `BlockId.RedstoneComparator = 43`/`ItemId.RedstoneComparator = 43`.
+- Explicitly out of scope: container signal reads (a chest/furnace's fullness as 0-15 needs a
+  bridge from 106's container model that no titled change builds before 166; `sideInput` is a
+  plain number so a future bridge plugs in without touching this module), no `Game`/`World`
+  wiring, no observer (161).
+
+## Validation evidence (160)
+
+- typecheck: PASS; lint: PASS (full project)
+- unit: PASS 2176/2176 (prior 2157 + 19 new, including the inclusive compare-mode boundary in both
+  directions and non-finite-input clamping)
+- production build: PASS (registry edits live; simulation module has no `Game.ts` consumer yet)
+- E2E: PASS 22/22 (all pre-existing assertions unaffected)
+- Four characterization tests updated: block count 31 → 32, stateful-block set +
+  `redstone_comparator`, state-count formula +16 plus a per-block exact-16-state assertion,
+  one new legacy-id row
+
+## Advancement decision (160)
+
+Advance. 100% task completion, full gate green, no MUST/SHALL requirement unmet, no regression.
+Container signal reads and observer wiring deferred as documented non-goals. Next change:
+161-redstone-observer.
 
 ## What 159 implemented
 
