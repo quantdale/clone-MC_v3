@@ -3,17 +3,57 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **117-player-experience — VERIFIED 100%**
-- Active implementation change: **117-player-experience — VERIFIED**
-- Next change: **118-enchantment-registry — NOT YET ACTIVE (artifacts pending)**
-- 117 task ledger: **6 total task groups, 6 completed**
-- 117 completion: **100%**
-- 117 mandatory player-experience requirements: **PASS**
-- 117 required-test gate: **PASS — unit 1418/1418, E2E 21/21**
-- 117 advancement allowed: **Yes**
+- Last completed change: **118-enchantment-registry — VERIFIED 100%**
+- Active implementation change: **118-enchantment-registry — VERIFIED**
+- Next change: **119-enchantment-application — NOT YET ACTIVE (artifacts pending)**
+- 118 task ledger: **7 total task groups, 7 completed**
+- 118 completion: **100%**
+- 118 mandatory enchantment-registry requirements: **PASS**
+- 118 required-test gate: **PASS — unit 1439/1439, E2E 21/21**
+- 118 advancement allowed: **Yes**
 - Session-start head: `d8a03a3d2432ea58c3ac0d60f143f3a41115a719`
-- Validated head: `4e87e3fef93f35b03bf88f7a5b5fe9391c7c7615` (117 feature commit; state advanced to 118)
-- Next exact action: **Advance to 118-enchantment-registry. Read it (and SPEC_AUTHORING_PROTOCOL.md if artifacts incomplete), author/validate proposal/design/tasks/specs/verification, implement enchantment definitions/levels/applicability/conflict rules, verify full gate, commit + push, advance program state.**
+- Validated head: `b1890da644ee9eaaf34dfdd2515ece06fb47b526` (118 feature commit; state advanced to 119)
+- Next exact action: **Advance to 119-enchantment-application. Read it (and SPEC_AUTHORING_PROTOCOL.md if artifacts incomplete), author/validate proposal/design/tasks/specs/verification, implement enchantment effect application to mining/combat/durability pathways, verify full gate, commit + push, advance program state.**
+
+## What 118 implemented
+
+Change 118 adds the enchantment registry: stable enchantment definitions, the
+per-item-category applicability rules, the symmetric conflict rules, the
+normalized `EnchantmentInstance` model, strict validation of an enchantment
+list, and a `version:1` persistence envelope. It is the catalog + rules + model
+— not effect application (119), `ItemStack` attachment (119/equipment), or
+offer generation at an enchanting table (120).
+
+- `src/inventory/EnchantmentRegistry.ts` (NEW) — `EnchantmentTarget`,
+  `EnchantmentDefinition`, `EnchantmentInstance`, `EnchantmentListSnapshot`, the
+  `EnchantmentId` enum, and `EnchantmentRegistry` (`get`/`getByResourceId`/
+  `getByKey`/`all`/`areIncompatible`/`appliesTo`) with O(1) dense lookups.
+  `enchantmentAppliesTo(targets, itemDef)` covers `all`/`tool`/`weapon`/`armor`/
+  `pickaxe`/`axe`/`shovel`/`bow`/`fishing_rod`; `validateEnchantmentList`
+  (throws `UNKNOWN_ENCHANTMENT`/`LEVEL_OUT_OF_RANGE`/`ENCHANTMENT_CONFLICT`,
+  never mutates input); `serializeEnchantments`/`deserializeEnchantments`
+  (strict atomic `version:1` envelope); `createDefaultEnchantmentRegistry`
+  seeds 11 enchantments with symmetric conflict groups (fortune⇎silk_touch;
+  sharpness/smite/bane_of_arthropods; protection/fire/blast/projectile).
+- `src/data/Registry.ts` (EDIT) — `RegistryErrorReason` gains
+  `UNKNOWN_ENCHANTMENT`/`LEVEL_OUT_OF_RANGE`/`ENCHANTMENT_CONFLICT`/
+  `INVALID_SNAPSHOT`/`INVALID_ENTRY`.
+- `src/inventory/ItemRegistry.ts` (EDIT) — `ItemTypeDefinition` gains optional
+  reserved enchantment target flags `isWeapon`/`isBow`/`isFishingRod`.
+
+## Validation evidence (118)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1439/1439 (prior 1418 + 21 new `EnchantmentRegistry.test.ts`)
+- production build: PASS (`tsc --noEmit && vite build`)
+- E2E: PASS 21/21 (no Game/stack integration touched)
+
+## Advancement decision
+
+Change 118 is **VERIFIED** at 7/7 task groups (100%). All gates are green:
+typecheck, lint, the 1439-unit suite, production build, and the required E2E
+suite (21/21). No advancement exception was needed. Advance to 119.
 
 ## What 117 implemented
 
@@ -308,15 +348,15 @@ Change 111 is **VERIFIED** at 6/6 (100%). All gates are green: typecheck, lint, 
 1290-unit suite, production build, and the required E2E suite (20/20). No advancement
 exception was needed. Advance to 112.
 
-## Next change: 118 (pending artifacts)
+## Next change: 119 (pending artifacts)
 
-`118-enchantment-registry` is named in `CHANGE_SEQUENCE.md` with scope "Enchantment
-definitions, levels, applicability, conflict rules." Per `AGENTS.md`, a change lacking
-full artifacts is a hard pre-implementation block. Author and validate those artifacts
-via `SPEC_AUTHORING_PROTOCOL.md` before any production code.
+`119-enchantment-application` is named in `CHANGE_SEQUENCE.md` with scope "Apply
+enchantment effects to mining/combat/durability pathways." Per `AGENTS.md`, a change
+lacking full artifacts is a hard pre-implementation block. Author and validate those
+artifacts via `SPEC_AUTHORING_PROTOCOL.md` before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 117
-verification. Change 118 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 118
+verification. Change 119 is the next change; its artifacts must be authored and
 validated before implementation begins.
