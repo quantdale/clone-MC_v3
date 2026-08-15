@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **128-fire-block-simulation — VERIFIED 100%**
-- Active implementation change: **128-fire-block-simulation — VERIFIED**
-- Next change: **129-entity-core — NOT YET ACTIVE (artifacts pending)**
-- 128 task ledger: **8 total task groups, 8 completed**
-- 128 completion: **100%**
-- 128 mandatory fire-block-simulation requirements: **PASS**
-- 128 required-test gate: **PASS — unit 1674/1674, E2E 21/21**
-- 128 advancement allowed: **Yes**
-- Session-start head: `201873635678a21651b6ce02e64bdddc2aca25ec`
-- Validated head: `559f468221fcc7e5337e12269018076ee9a72107` (128 feature commit)
-- Next exact action: **Advance to 129-entity-core. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (stable entity IDs, transforms, velocity, type, lifecycle, dimension ownership); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **129-entity-core — VERIFIED 100%**
+- Active implementation change: **129-entity-core — VERIFIED**
+- Next change: **130-entity-collision-and-physics — NOT YET ACTIVE (artifacts pending)**
+- 129 task ledger: **6 total task groups, 6 completed**
+- 129 completion: **100%**
+- 129 mandatory entity-core requirements: **PASS**
+- 129 required-test gate: **PASS — unit 1694/1694, E2E 21/21**
+- 129 advancement allowed: **Yes**
+- Session-start head: `559f468221fcc7e5337e12269018076ee9a72107`
+- Validated head: `227abe0dafe9a55524b5916d065694715ecd3b5c` (129 feature commit)
+- Next exact action: **Advance to 130-entity-collision-and-physics. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (shape-based world/entity movement and gravity for non-player entities, building on 129 EntityManager + 056/057 VoxelShape/CollisionResolver); implement; verify full gate; commit + push; advance program state.**
 
 ## What 119 implemented
 
@@ -735,6 +735,52 @@ the 1631-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Bonemeal (127), hoe tilling, and a rain/weather hook are explicit non-goals
 (documented). Advance to 127.
 
+## What 129 implemented
+
+Change 129 adds a general, minimal runtime entity model shared by future entity kinds: transform,
+velocity, registered 017 type, lifecycle, and dimension ownership, plus a manager that mints ids and
+validates/mutates instances. It is the data/runtime substrate only — no physics/collision (130), no
+persistence wiring (131), no chunk-based activation (132), no dirty-property tracker (133), and no
+migration of `ItemEntityManager`/`XpOrbManager` onto it.
+
+- `src/world/Entity.ts` (NEW) — `EntityTransform` (`x,y,z,yaw,pitch`), `EntityVelocity`
+  (`vx,vy,vz`), `ZERO_VELOCITY`, `EntityLifecycleState` (`'ACTIVE'|'REMOVED'`), `EntityInstance`
+  (`id`, `typeId`, `transform`, `velocity`, `dimension`, `state`), and pure validators
+  `isValidTransform`/`isValidVelocity` (every field a finite number).
+- `src/simulation/EntityManager.ts` (NEW) — bound to one `EntityRegistry`; mirrors the
+  `ItemEntityManager` id-minting/insertion-order idiom:
+  - `spawn(typeId, dimension, transform, opts?)` — atomic: throws (no mutation) on an unregistered
+    type, a non-finite transform/velocity field, or an explicit `opts.id` colliding with any existing
+    record (`ACTIVE` or retained `REMOVED`); on success stores defensive copies and returns a new
+    `ACTIVE` instance.
+  - `get(id)` — resolves regardless of lifecycle state; `undefined` only if never spawned.
+  - `getAll()` / `getInDimension(dimension)` — `ACTIVE`-only, insertion order; dimension compared by
+    resource-id string value, not reference.
+  - `setTransform`/`setVelocity`/`changeDimension` — pure mutators; `false` no-op on an unknown/
+    `REMOVED` id or (for the two setters) a non-finite field; `true` + defensive-copy write on
+    success.
+  - `remove(id)` — idempotent `ACTIVE → REMOVED` transition (never reverses); `size`/`clear()`.
+- Tests: `tests/unit/EntityManager.test.ts` (NEW, 20) covering valid spawn, every atomic-rejection
+  case, id-collision (active + removed), lifecycle-filtered queries, mutator no-ops/rejections, and
+  remove idempotency.
+
+## Validation evidence (129)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1694/1694 (prior 1674 + 20 new `EntityManager.test.ts`)
+- production build: PASS (`tsc --noEmit && vite build`, 83 modules — unchanged, since nothing yet
+  imports the new modules)
+- E2E: PASS 21/21 (no existing file touched; nothing consumes the new modules)
+
+## Advancement decision
+
+Change 129 is **VERIFIED** at 6/6 task groups (100%). All gates are green: typecheck, lint, the
+1694-unit suite, production build, and the required E2E suite (21/21). No advancement exception was
+needed. Physics/collision integration, persistence, chunk-based activation, the dirty-property
+tracker, and migrating `ItemEntityManager`/`XpOrbManager` onto this model are explicit non-goals
+(documented, deferred to 130-133+). Advance to 130.
+
 ## What 128 implemented
 
 Change 128 adds the Fire block and a deterministic fire simulation: ignition, aging, environmental
@@ -813,15 +859,15 @@ the 1654-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Sapling/tree bonemeal is an explicit non-goal (deferred; no Sapling block
 exists) and the `FertilizerRegistry` extension point is documented. Advance to 128.
 
-## Next change: 129 (pending artifacts)
+## Next change: 130 (pending artifacts)
 
-`129-entity-core` is named in `CHANGE_SEQUENCE.md` with scope "Stable IDs, transforms, velocity,
-type, lifecycle, dimension ownership." Per `AGENTS.md`, a change lacking full artifacts is a
-hard pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md`
-before any production code.
+`130-entity-collision-and-physics` is named in `CHANGE_SEQUENCE.md` with scope "Shape-based
+world/entity movement and gravity for non-player entities." Per `AGENTS.md`, a change lacking full
+artifacts is a hard pre-implementation block. Author and validate those artifacts via
+`SPEC_AUTHORING_PROTOCOL.md` before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 128
-verification. Change 129 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 129
+verification. Change 130 is the next change; its artifacts must be authored and
 validated before implementation begins.
