@@ -26,6 +26,7 @@ describe('block registry', () => {
       [BlockId.Bricks, 'bricks'],
       [BlockId.Lava, 'lava'],
       [BlockId.Chest, 'chest'],
+      [BlockId.Furnace, 'furnace'],
     ];
     for (const [id, key] of required) {
       const def = registry.get(id);
@@ -35,7 +36,7 @@ describe('block registry', () => {
       expect(registry.getByKey(def.key)?.id).toBe(id);
     }
     // The ids are unique and map back to the same definitions.
-    expect(registry.all()).toHaveLength(19);
+    expect(registry.all()).toHaveLength(20);
   });
 
   it('pins the full block-property contract per block', () => {

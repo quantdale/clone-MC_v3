@@ -33,6 +33,7 @@ export const enum BlockId {
   Bricks = 17,
   Lava = 18,
   Chest = 19,
+  Furnace = 20,
 }
 
 /** Tool families used for preferred-tool mining bonuses. */
@@ -525,6 +526,23 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       preferredTool: ToolKind.Axe,
       dropItem: rid('chest'),
       lootTable: rid('loot/chest'),
+    },
+    {
+      id: BlockId.Furnace,
+      resourceId: rid('furnace'),
+      key: 'furnace',
+      name: 'Furnace',
+      solid: true,
+      opaque: true,
+      breakable: true,
+      renderCategory: RenderCategory.Opaque,
+      topTile: 28,
+      bottomTile: 28,
+      sideTile: 28,
+      hardness: 3.5,
+      preferredTool: ToolKind.Pickaxe,
+      dropItem: rid('furnace'),
+      lootTable: rid('loot/furnace'),
     },
   ];
   return new BlockTypeRegistry(defs);

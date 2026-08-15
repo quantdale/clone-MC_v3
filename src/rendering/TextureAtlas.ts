@@ -48,6 +48,7 @@ export const TILE_INDEX = {
   coal: 25,
   rawIron: 26,
   chest: 27,
+  furnace: 28,
 } as const;
 
 export function tileUV(tile: number): { u0: number; v0: number; u1: number; v1: number } {
@@ -534,6 +535,33 @@ export class TextureAtlas {
       ctx.fillRect(7, 4, 2, 3);
       ctx.fillStyle = '#7a4e28';
       ctx.fillRect(7, 9, 2, 1);
+    });
+
+    // 28: furnace — a stone block face with a dark ash opening and fire glow.
+    this.drawTile(TILE_INDEX.furnace, (ctx, rng) => {
+      ctx.clearRect(0, 0, TILE_SIZE, TILE_SIZE);
+      // Stone base with speckles.
+      ctx.fillStyle = '#7d8084';
+      ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+      for (let i = 0; i < 14; i++) {
+        ctx.fillStyle = rng.next() > 0.5 ? '#8f9296' : '#66696d';
+        ctx.fillRect(rng.nextInt(TILE_SIZE), rng.nextInt(TILE_SIZE), 1, 1);
+      }
+      // Dark rim around the mouth.
+      ctx.fillStyle = '#4a4d51';
+      ctx.fillRect(1, 1, TILE_SIZE - 2, 2);
+      ctx.fillRect(1, TILE_SIZE - 3, TILE_SIZE - 2, 2);
+      ctx.fillRect(1, 1, 2, TILE_SIZE - 2);
+      ctx.fillRect(TILE_SIZE - 3, 1, 2, TILE_SIZE - 2);
+      // Mouth opening.
+      ctx.fillStyle = '#1c1e21';
+      ctx.fillRect(3, 3, TILE_SIZE - 6, TILE_SIZE - 6);
+      // Ember glow inside the mouth.
+      ctx.fillStyle = '#d3541f';
+      ctx.fillRect(5, 9, 3, 2);
+      ctx.fillRect(8, 7, 2, 2);
+      ctx.fillStyle = '#f2a33c';
+      ctx.fillRect(6, 8, 2, 1);
     });
   }
 

@@ -36,7 +36,7 @@ describe('block/item registry separation', () => {
     // Pen/tool-only items are likewise absent as blocks.
     expect(blockRegistry.getByKey('wooden_pickaxe')).toBeUndefined();
     expect(blockRegistry.getByKey('stick')).toBeUndefined();
-    expect(blockRegistry.has(ItemId.WoodenPickaxe)).toBe(false);
+    expect(blockRegistry.has(ItemId.RawIron)).toBe(false);
   });
 
   it('resolves a placeable item to its target block via resource identity', () => {
@@ -55,8 +55,13 @@ describe('block/item registry separation', () => {
     expect(pickaxe.toolKind).toBeDefined();
     expect(pickaxe.toolPower).toBeGreaterThan(1);
     expect(pickaxe.maxDurability).toBeGreaterThan(0);
-    // The same numeric id carries no block and no tool metadata on the block side.
-    expect(blockRegistry.has(ItemId.WoodenPickaxe)).toBe(false);
+    // The block side of the shared numeric space carries no tool metadata: the
+    // furnace block at id 20 is not a tool and the pickaxe has no block.
+    const furnaceDef = blockRegistry.get(BlockId.Furnace) as unknown as Record<string, unknown>;
+    expect('toolKind' in furnaceDef).toBe(false);
+    expect('toolPower' in furnaceDef).toBe(false);
+    expect('maxDurability' in furnaceDef).toBe(false);
+    expect(blockRegistry.has(ItemId.RawIron)).toBe(false);
   });
 
   it('resolves a block drop to the correct item id', () => {
@@ -94,12 +99,13 @@ describe('block/item registry separation', () => {
       [17, 'bricks', 'bricks'],
       [18, 'lava', 'lava'],
       [19, 'chest', 'stick'],
-      [20, null, 'wooden_pickaxe'],
+      [20, 'furnace', 'wooden_pickaxe'],
       [21, null, 'stone_pickaxe'],
       [22, null, 'wooden_axe'],
       [23, null, 'coal'],
       [24, null, 'raw_iron'],
       [25, null, 'chest'],
+      [26, null, 'furnace'],
     ];
     for (const [id, blockPath, itemPath] of table) {
       if (blockPath !== null) {

@@ -41,6 +41,7 @@ export const enum ItemId {
   Coal = 23,
   RawIron = 24,
   Chest = 25,
+  Furnace = 26,
 }
 
 /** An inventory-item definition. */
@@ -387,6 +388,15 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       iconTile: 27,
       stackSize: 64,
       placeBlock: rid('chest'),
+    },
+    {
+      id: ItemId.Furnace,
+      resourceId: rid('furnace'),
+      key: 'furnace',
+      name: 'Furnace',
+      iconTile: 28,
+      stackSize: 64,
+      placeBlock: rid('furnace'),
     },
   ];
   return new ItemTypeRegistry(defs);
