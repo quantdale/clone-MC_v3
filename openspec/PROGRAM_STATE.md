@@ -3,18 +3,66 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **155-redstone-wire-connectivity — VERIFIED 100%**
-- Active implementation change: **155-redstone-wire-connectivity — VERIFIED**
-- Next change: **156-redstone-update-order — NOT YET ACTIVE (artifacts pending)**
-- 155 task ledger: **30 total tasks, 30 completed**
-- 155 completion: **100%**
-- 155 mandatory redstone-wire-connectivity requirements: **PASS**
-- 155 required-test gate: **PASS — unit 2087/2087, E2E 22/22**
-- 155 advancement allowed: **Yes**
-- Session-start head: `5f564fcbbfe46e831a375c40244850e33631f2bc`
-- Validated head: `d16daa5aefbc79422f2eb5c500316229e6bce8be` (155 feature commit)
+- Last completed change: **156-redstone-update-order — VERIFIED 100%**
+- Active implementation change: **156-redstone-update-order — VERIFIED**
+- Next change: **157-redstone-input-components — NOT YET ACTIVE (artifacts pending)**
+- 156 task ledger: **23 total tasks, 23 completed**
+- 156 completion: **100%**
+- 156 mandatory redstone-update-order requirements: **PASS**
+- 156 required-test gate: **PASS — unit 2099/2099, E2E 22/22**
+- 156 advancement allowed: **Yes**
+- Session-start head: `c08f83955a15ee75b1d0b499d271dfd6817d73cb`
+- Validated head: `1033e9711906f82fd2a1c1a57d74ae73070e2226` (156 feature commit)
 - Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress.**
-- Next exact action: **Advance to 156-redstone-update-order. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (deterministic scheduled neighbour propagation and loop protection — iterate 155's `computeWirePower` over a dirty set to a fixed point with a bounded iteration cap and stable ordering, composing 047's `ScheduledTickQueue` and/or 049's `NeighborUpdateQueue` which already exist; this is the change that makes placed wire actually carry a signal, so decide explicitly whether to attach a `BlockBehavior` and wire it into `Game` or keep it a pure propagation core); implement; verify full gate; commit + push; advance program state.**
+- Next exact action: **Advance to 157-redstone-input-components. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (levers/buttons/pressure plates: signal generation and timing — the first real power *sources* feeding 154's `RedstonePowerSource` and 155's `connectsToRedstone`. Expect to register lever/button/pressure_plate blocks with powered/facing state schemas plus a pure component-state model; buttons and plates need timed deactivation, so decide explicitly whether to use 047's `ScheduledTickQueue` for that or keep timing caller-driven like 152/153's tick counters); implement; verify full gate; commit + push; advance program state.**
+
+## What 156 implemented
+
+Change 156 iterates 155's local wire rule to a fixed point — the algorithm that makes a redstone
+signal actually travel. Additive/unconsumed: deliberately **not** wired into `Game`/`World`.
+
+- `src/simulation/RedstonePropagation.ts` (NEW) — `WirePowerStore` (injected mutable power store),
+  `PropagationResult` (`visited`/`changed`/`hitLimit`), and `RedstonePropagator` composing 049's
+  `NeighborUpdateQueue` with 155's `computeWirePower`: `markDirty`/`markNeighborsDirty` enqueue;
+  `propagate` drains, counting non-wire cells as visited but never writing them, recomputing each
+  wire and writing + enqueueing its connected neighbours **only when the value actually changed**;
+  `settle` repeats until convergence or `maxSettleRounds`.
+- **Termination is structural, not incidental**: 155 guarantees every neighbour contribution is
+  attenuated by ≥ 1, and enqueueing only on change turns that into a genuine fixed point. A closed
+  wire ring settles with `hitLimit` false and an *empty* backlog — asserted positively rather than
+  as "does not throw".
+- The enqueue set deliberately includes the `y ± 1` cells even though connections are
+  horizontal-only, because a wire one block up/down may be connected to this one *from its own
+  perspective* (155's climb/descent asymmetry). Covered by a staircase test (15 → 14 → 13).
+
+### Two defects found and fixed during implementation
+1. The first `propagate` draft gave 049 a multi-position `maxPerDrain` and guarded the per-position
+   budget *inside* the handler — but 049 dequeues *before* invoking the handler, so a bound trip
+   would have **silently dropped queued work**, violating the "remainder stays queued" guarantee.
+   Fixed with `maxPerDrain: 1` so this class's own loop owns the bound exactly; a regression test
+   asserts `before - pendingCount === result.visited`.
+2. `settle().hitLimit` initially accumulated *any* round's bound trip, making it useless as the
+   "did it converge?" signal that is the only question a `settle` caller has. Re-specified across
+   design.md, spec.md's Definitions, and a **new requirement** so it means precisely "did not
+   converge"; a test proves `maxUpdates: 8` still fully settles a 20-wire run.
+
+## Validation evidence (156)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`, full project)
+- unit: PASS 2099/2099 (prior 2087 + 12 new, including the two regression guards above, positive
+  ring termination, staircase climb, and determinism across two independently-constructed
+  propagators — so a future reordering of 049's FIFO or 155's direction order fails immediately)
+- production build: PASS (`tsc --noEmit && vite build`, 103 modules, unchanged)
+- E2E: PASS 22/22 (all pre-existing assertions unaffected)
+
+## Advancement decision (156)
+
+Advance. 100% task completion, full gate green, no MUST/SHALL requirement unmet, no regression.
+Not wired into `Game`/`World` — that needs a `WirePowerStore` backed by 125's block-state overlay
+plus a `BlockBehavior` on block edits, deferred as 145 deferred 129-139. 047's `ScheduledTickQueue`
+was considered and correctly not used (it models *delayed* ticks; relevant at 159). 049 is composed,
+not modified. Next change: 157-redstone-input-components.
 
 ## What 155 implemented
 
