@@ -32,6 +32,7 @@ export const enum BlockId {
   Cobblestone = 16,
   Bricks = 17,
   Lava = 18,
+  Chest = 19,
 }
 
 /** Tool families used for preferred-tool mining bonuses. */
@@ -507,6 +508,23 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       sideTile: 20,
       hardness: Infinity,
       dropItem: rid('lava'),
+    },
+    {
+      id: BlockId.Chest,
+      resourceId: rid('chest'),
+      key: 'chest',
+      name: 'Chest',
+      solid: true,
+      opaque: true,
+      breakable: true,
+      renderCategory: RenderCategory.Opaque,
+      topTile: 27,
+      bottomTile: 27,
+      sideTile: 27,
+      hardness: 2.5,
+      preferredTool: ToolKind.Axe,
+      dropItem: rid('chest'),
+      lootTable: rid('loot/chest'),
     },
   ];
   return new BlockTypeRegistry(defs);

@@ -73,42 +73,42 @@ describe('block/item registry separation', () => {
   });
 
   it('preserves every legacy numeric id across both registries', () => {
-    const table: Array<[number, string, 'block' | 'item' | 'both']> = [
-      [0, 'air', 'block'],
-      [1, 'grass', 'both'],
-      [2, 'dirt', 'both'],
-      [3, 'stone', 'both'],
-      [4, 'sand', 'both'],
-      [5, 'water', 'both'],
-      [6, 'bedrock', 'both'],
-      [7, 'wood', 'both'],
-      [8, 'leaves', 'both'],
-      [9, 'glass', 'both'],
-      [10, 'snow', 'both'],
-      [11, 'gravel', 'both'],
-      [12, 'planks', 'both'],
-      [13, 'apple', 'item'],
-      [14, 'coal_ore', 'both'],
-      [15, 'iron_ore', 'both'],
-      [16, 'cobblestone', 'both'],
-      [17, 'bricks', 'both'],
-      [18, 'lava', 'both'],
-      [19, 'stick', 'item'],
-      [20, 'wooden_pickaxe', 'item'],
-      [21, 'stone_pickaxe', 'item'],
-      [22, 'wooden_axe', 'item'],
-      [23, 'coal', 'item'],
-      [24, 'raw_iron', 'item'],
+    const table: Array<[number, string | null, string | null]> = [
+      [0, 'air', null],
+      [1, 'grass', 'grass'],
+      [2, 'dirt', 'dirt'],
+      [3, 'stone', 'stone'],
+      [4, 'sand', 'sand'],
+      [5, 'water', 'water'],
+      [6, 'bedrock', 'bedrock'],
+      [7, 'wood', 'wood'],
+      [8, 'leaves', 'leaves'],
+      [9, 'glass', 'glass'],
+      [10, 'snow', 'snow'],
+      [11, 'gravel', 'gravel'],
+      [12, 'planks', 'planks'],
+      [13, null, 'apple'],
+      [14, 'coal_ore', 'coal_ore'],
+      [15, 'iron_ore', 'iron_ore'],
+      [16, 'cobblestone', 'cobblestone'],
+      [17, 'bricks', 'bricks'],
+      [18, 'lava', 'lava'],
+      [19, 'chest', 'stick'],
+      [20, null, 'wooden_pickaxe'],
+      [21, null, 'stone_pickaxe'],
+      [22, null, 'wooden_axe'],
+      [23, null, 'coal'],
+      [24, null, 'raw_iron'],
+      [25, null, 'chest'],
     ];
-    for (const [id, path, kind] of table) {
-      const expected = `minecraft:${path}`;
-      if (kind === 'block' || kind === 'both') {
-        expect(resourceIdToString(blockRegistry.getByLegacyId(id)!.resourceId)).toBe(expected);
+    for (const [id, blockPath, itemPath] of table) {
+      if (blockPath !== null) {
+        expect(resourceIdToString(blockRegistry.getByLegacyId(id)!.resourceId)).toBe(`minecraft:${blockPath}`);
       } else {
         expect(blockRegistry.getByLegacyId(id)).toBeUndefined();
       }
-      if (kind === 'item' || kind === 'both') {
-        expect(resourceIdToString(itemRegistry.getByLegacyId(id)!.resourceId)).toBe(expected);
+      if (itemPath !== null) {
+        expect(resourceIdToString(itemRegistry.getByLegacyId(id)!.resourceId)).toBe(`minecraft:${itemPath}`);
       } else {
         expect(itemRegistry.getByLegacyId(id)).toBeUndefined();
       }

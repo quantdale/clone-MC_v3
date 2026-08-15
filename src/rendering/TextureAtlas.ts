@@ -47,6 +47,7 @@ export const TILE_INDEX = {
   woodenAxe: 24,
   coal: 25,
   rawIron: 26,
+  chest: 27,
 } as const;
 
 export function tileUV(tile: number): { u0: number; v0: number; u1: number; v1: number } {
@@ -506,6 +507,33 @@ export class TextureAtlas {
       ctx.fillStyle = '#f0aa79';
       ctx.fillRect(6, 5, 3, 2);
       ctx.fillRect(9, 9, 2, 2);
+    });
+
+    // 27: chest — a warm wooden container tile with a framed lid and latch.
+    this.drawTile(TILE_INDEX.chest, (ctx, rng) => {
+      ctx.clearRect(0, 0, TILE_SIZE, TILE_SIZE);
+      // Plank base.
+      ctx.fillStyle = '#a9743f';
+      ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+      // Darker frame border.
+      ctx.fillStyle = '#6b4526';
+      ctx.fillRect(0, 0, TILE_SIZE, 2);
+      ctx.fillRect(0, TILE_SIZE - 2, TILE_SIZE, 2);
+      ctx.fillRect(0, 0, 2, TILE_SIZE);
+      ctx.fillRect(TILE_SIZE - 2, 0, 2, TILE_SIZE);
+      // Lid seam band.
+      ctx.fillStyle = '#8a5a30';
+      ctx.fillRect(0, 7, TILE_SIZE, 2);
+      // Plank grain speckles.
+      for (let i = 0; i < 10; i++) {
+        ctx.fillStyle = rng.next() > 0.5 ? '#b9824a' : '#9c6636';
+        ctx.fillRect(rng.nextInt(TILE_SIZE), rng.nextInt(TILE_SIZE), 1, 1);
+      }
+      // Latch.
+      ctx.fillStyle = '#d8b04c';
+      ctx.fillRect(7, 4, 2, 3);
+      ctx.fillStyle = '#7a4e28';
+      ctx.fillRect(7, 9, 2, 1);
     });
   }
 
