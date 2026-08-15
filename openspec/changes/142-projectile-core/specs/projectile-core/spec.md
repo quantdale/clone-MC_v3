@@ -13,7 +13,9 @@ entity/item representation, and no `Game`/spawning wiring — see the proposal's
 - **Entity hit**: the first target (in supplied order) whose squared distance to the tick's
   destination point is within its squared radius, excluding the owner during its immunity window.
 - **Block hit**: a collision reported by `CollisionResolver.move` on any axis, using a small cube
-  centered on the projectile's pre-tick position.
+  centered on the projectile's pre-tick position. `hitBlock` reports `floor(x/y/z)` of the resolved
+  (embedded) rest position — typically the cell immediately against the solid surface, not
+  necessarily the solid cell itself (see design.md).
 - **Expired**: `ageTicks` (post-increment) exceeds `maxAgeTicks`.
 
 ## Invariants
@@ -43,11 +45,12 @@ When `CollisionResolver.move` reports a collision on any axis, `stepProjectile` 
 resolved (clamped) position, zeroed velocity, and `hitBlock` set to the floored cell the projectile
 now occupies, with `hitEntityId: null`.
 
-#### Scenario: a projectile flying into a solid floor embeds and reports the block
+#### Scenario: a projectile flying into a solid floor embeds and reports the resting block
 - **GIVEN** a `ShapeWorld` with a full-cube floor directly below the projectile's flight path
 - **WHEN** `stepProjectile` is called with a downward velocity that would cross the floor
-- **THEN** the result has `hitBlock` set to the floor's cell, `state.vx/vy/vz` all `0`, and
-  `hitEntityId: null`
+- **THEN** the result has `hitBlock` equal to `floor` of the resolved embedded position (the cell
+  the projectile now rests in, directly against the floor's top face), `state.vx/vy/vz` all `0`,
+  and `hitEntityId: null`
 
 ### Requirement: entity collision takes priority over block collision and reports the target id
 When a non-immune target's squared distance to the tick's destination point is within its squared

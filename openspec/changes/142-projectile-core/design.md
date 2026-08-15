@@ -92,8 +92,13 @@ export function stepProjectile(
 - Owner immunity is keyed on the *post-increment* `ageTicks` so a projectile's very first step
   (`ageTicks` becomes `1`) is still within the default 5-tick window and cannot immediately hit its
   own firer at the moment of release.
-- `hitBlock`'s coordinates are the floored block cell the resolved (embedded) position falls in —
-  the block the projectile is now touching/stuck in.
+- `hitBlock`'s coordinates are `floor(x/y/z)` of the resolved (embedded) rest position — the cell the
+  projectile now occupies once clamped to the colliding surface. Because `CollisionResolver.move`
+  clamps to the face boundary rather than reporting which specific neighboring cell was solid, this
+  is the *resting* cell (typically the empty cell immediately against the solid surface, e.g. the air
+  cell a projectile embeds in just above a floor), not necessarily the solid cell itself. A caller
+  wanting the exact solid neighbor can inspect the six cells adjacent to `hitBlock` using the same
+  `ShapeWorld` it passed in.
 
 ## Failure modes
 - `stepProjectile` never throws for a well-formed `ShapeWorld`/`CollisionResolver` and finite state;
