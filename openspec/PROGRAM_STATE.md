@@ -3,17 +3,63 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **151-villager-trading — VERIFIED 100%**
-- Active implementation change: **151-villager-trading — VERIFIED**
-- Next change: **152-raid-state-machine — NOT YET ACTIVE (artifacts pending)**
-- 151 task ledger: **28 total tasks, 28 completed**
-- 151 completion: **100%**
-- 151 mandatory villager-trading requirements: **PASS**
-- 151 required-test gate: **PASS — unit 1975/1975, E2E 22/22**
-- 151 advancement allowed: **Yes**
-- Session-start head: `e13f3b743d76731b8e31224fdc940477efaf5556`
-- Validated head: `3f02a8a6584d6ecf3c134a2906f4fa6a5d8f9600` (151 feature commit)
-- Next exact action: **Advance to 152-raid-state-machine. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (settlement raid trigger/waves/win-loss persistence — a bounded state machine over wave composition and outcome; no raider mob types or village-boundary detection exist yet, so expect an additive/unconsumed state-machine baseline like 148-151); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **152-raid-state-machine — VERIFIED 100%**
+- Active implementation change: **152-raid-state-machine — VERIFIED**
+- Next change: **153-boss-framework — NOT YET ACTIVE (artifacts pending)**
+- 152 task ledger: **31 total tasks, 31 completed**
+- 152 completion: **100%**
+- 152 mandatory raid-state-machine requirements: **PASS**
+- 152 required-test gate: **PASS — unit 2003/2003, E2E 22/22**
+- 152 advancement allowed: **Yes**
+- Session-start head: `48f6edd4f26a02c7180748fdc6ddd0e5f55dc5c4`
+- Validated head: `133e702ab9427fdc07c844d7eb223d6ecb688707` (152 feature commit)
+- Next exact action: **Advance to 153-boss-framework. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (boss health/events/arena lifecycle reusable by major bosses — a phase/health-threshold state machine plus a boss-bar event model; no boss entity types exist yet, so expect an additive/unconsumed baseline like 148-152, and it may reuse 152's immutable-transition shape as a template); implement; verify full gate; commit + push; advance program state.**
+
+## What 152 implemented
+
+Change 152 adds a bounded, deterministic, immutable settlement-raid lifecycle, structurally
+mirroring 123's `tickBrewing` (pure per-tick state machine) and 149's `SerializedPoi` codec (atomic
+validate-then-return). Additive/unconsumed — no raider entity types are registered, no
+village-boundary detection exists to trigger a raid, and nothing grants bad omen.
+
+- `src/simulation/RaidStateMachine.ts` (NEW, **zero imports** — deliberately self-contained like
+  141's `MeleeCombat`) — `RaidStatus` (`INACTIVE`/`ACTIVE`/`VICTORY`/`DEFEAT`); `RaidWaveEntry`
+  (`typeKey` as a plain string, **not** a resolved `ResourceId`, since no raider entity type is
+  registered in 017); `RaidState`; `startRaid` (`totalWaves = min(RAID_MAX_WAVES 7,
+  RAID_BASE_WAVES 3 + max(0, badOmenLevel-1))`); `waveComposition` (pure deterministic escalating
+  roster — pillager `2+wave` always, vindicator `= wave` (absent on wave 1), ravager `1` from wave 3
+  on, witch `1` at omen ≥ 3; zero-count entries omitted; negative inputs clamped so the function is
+  total); `spawnWave` (increments `waveIndex`, seeds `raidersRemaining`, refuses when terminal or
+  past the final wave); `recordRaiderDeath` (decrement floored at 0, non-`ACTIVE` no-op);
+  `tickRaid` (the single lifecycle driver: terminal no-op → tick advance → `DEFEAT` on timeout →
+  in-progress wave advances the clock → cleared wave spawns the next, or `VICTORY` once all are
+  cleared); `serializeRaid`/`deserializeRaid` (strict `version: 1` envelope; deserialize validates
+  schema version, the status vocabulary, finite coordinates/ticks, non-negative integer counters,
+  **and** the `waveIndex <= totalWaves` cross-field invariant, throwing before returning anything).
+- **Indexing convention** (documented in design.md): `waveComposition` is called with the
+  *pre-increment* `waveIndex`, so wave 1's roster is `waveComposition(0, …)`, and `waveIndex` after
+  the call equals waves-spawned-so-far — which is exactly what both the spawn guard and the
+  `VICTORY` check read.
+- **`DEFEAT` is a documented elapsed-time timeout**, not a "villagers all died" check, because no
+  villager population is tracked anywhere yet; a future change can add a second defeat trigger
+  without changing this contract.
+
+## Validation evidence (152)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 2003/2003 (prior 1975 + 28 new, including a full start→`VICTORY` lifecycle drive with
+  a 1000-iteration guard, direct purity assertions, terminal-immunity assertions via `toBe`, and 7
+  codec rejection cases)
+- production build: PASS (`tsc --noEmit && vite build`, 103 modules, unchanged from 151 — confirms
+  no `Game.ts` consumer, matching 148-151's own identical evidence)
+- E2E: PASS 22/22 (all pre-existing assertions unaffected — nothing wired into the live game)
+
+## Advancement decision (152)
+
+Advance. 100% task completion, full gate green, no MUST/SHALL requirement unmet, no regression.
+Additive/unconsumed pending raider mob types and village-boundary detection (both flagged, not
+silently dropped). Next change: 153-boss-framework.
 
 ## What 151 implemented
 
