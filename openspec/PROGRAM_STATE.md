@@ -3,17 +3,67 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **152-raid-state-machine — VERIFIED 100%**
-- Active implementation change: **152-raid-state-machine — VERIFIED**
-- Next change: **153-boss-framework — NOT YET ACTIVE (artifacts pending)**
-- 152 task ledger: **31 total tasks, 31 completed**
-- 152 completion: **100%**
-- 152 mandatory raid-state-machine requirements: **PASS**
-- 152 required-test gate: **PASS — unit 2003/2003, E2E 22/22**
-- 152 advancement allowed: **Yes**
-- Session-start head: `48f6edd4f26a02c7180748fdc6ddd0e5f55dc5c4`
-- Validated head: `133e702ab9427fdc07c844d7eb223d6ecb688707` (152 feature commit)
-- Next exact action: **Advance to 153-boss-framework. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (boss health/events/arena lifecycle reusable by major bosses — a phase/health-threshold state machine plus a boss-bar event model; no boss entity types exist yet, so expect an additive/unconsumed baseline like 148-152, and it may reuse 152's immutable-transition shape as a template); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **153-boss-framework — VERIFIED 100%**
+- Active implementation change: **153-boss-framework — VERIFIED**
+- Next change: **154-redstone-signal-core — NOT YET ACTIVE (artifacts pending)**
+- 153 task ledger: **37 total tasks, 37 completed**
+- 153 completion: **100%**
+- 153 mandatory boss-framework requirements: **PASS**
+- 153 required-test gate: **PASS — unit 2034/2034, E2E 22/22**
+- 153 advancement allowed: **Yes**
+- Session-start head: `ed70425c29ee98340f70196d9ab96f111a742168`
+- Validated head: `699c6b4467b5d648f5f933346df2e5aba4324e71` (153 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) is COMPLETE.**
+- Next exact action: **Advance to 154-redstone-signal-core, which opens the "Redstone and automation" section (154-173). Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (directional weak/strong signal queries and 0-15 power values — the foundational primitive every later redstone change builds on; expect a pure signal-model module, likely additive/unconsumed until 155-157 add wire connectivity and input components); implement; verify full gate; commit + push; advance program state.**
+
+## What 153 implemented
+
+Change 153 adds the reusable boss framework that 183 (`ender-dragon-boss`) and a later Wither-like
+secondary boss both need, structurally mirroring 152's `RaidStateMachine` (immutable transitions,
+documented terminal-state no-ops, atomic `version: 1` codec). **This completes the "Entity
+framework and mobs" section (129-153).** Additive/unconsumed — no boss entity type is registered,
+the End dimension a dragon needs does not exist (180/181), and the boss-bar HUD is 205's scope.
+
+- `src/simulation/BossFramework.ts` (NEW; imports only 002 `ResourceId` + 003 `Registry` for the
+  definition catalog, the state machine itself otherwise self-contained) — `BossPhase` (name +
+  `healthThreshold` as a *fraction*) / `BossDefinition` + `BossRegistry` (003-based; the
+  constructor validates positive `maxHealth`, a non-empty phase list, every threshold within
+  `[0, 1]`, **strictly descending** thresholds, and a first threshold of exactly `1` — so an
+  invalid definition can never reach phase lookup, throwing before registration);
+  `createDefaultBossRegistry` (ender_dragon 200hp perching/strafing/enraged at 1/0.6/0.25, wither
+  300hp ranged/armored at 1/0.5 — representative, not exhaustive); `BossStatus`
+  (`SPAWNING`/`ACTIVE`/`DEFEATED`) / `BossState`; `startBossFight`; `phaseForHealthFraction`
+  (clamps into `[0, 1]` then returns the **last** phase whose threshold is `>=` it — unambiguous
+  because descent is validated); `damageBoss` → `BossDamageResult` (health floored at 0, phase
+  recomputed, `DEFEATED` at 0, **reporting** `phaseChanged`/`defeated` so a caller can fire events
+  without diffing states — and reporting `defeated` exactly once, since a second call on a
+  `DEFEATED` boss is a no-op, making a double-fired death event impossible); `healBoss` (capped,
+  phase recomputed so healing above a threshold restores the earlier phase, **never** revives a
+  `DEFEATED` boss); `tickBossFight` (`SPAWNING` → `ACTIVE` once `ticks` reaches `BOSS_SPAWN_TICKS`);
+  `bossBarSnapshot` (205's future HUD input); `serializeBoss`/`deserializeBoss`.
+- **Deliberate architectural choice** (documented in design.md): `damageBoss` does *not* publish
+  053 `GameEventBus` events — returning explicit flags keeps a pure state machine decoupled from an
+  event-bus instance and simplifies testing, matching 148's injected-sink convention.
+
+## Validation evidence (153)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 2034/2034 (prior 2003 + 31 new, including a full spawn→every-phase→`DEFEATED`
+  lifecycle drive asserting every declared phase is actually observed, a direct assertion that
+  `phaseIndex` always equals `phaseForHealthFraction` across ten successive hits,
+  defeat-fires-exactly-once via `toBe` reference identity, all five registry-validation defect
+  classes, and 7 codec rejection cases)
+- production build: PASS (`tsc --noEmit && vite build`, 103 modules, unchanged from 152 — confirms
+  no `Game.ts` consumer, matching 148-152's own identical evidence)
+- E2E: PASS 22/22 (all pre-existing assertions unaffected — nothing wired into the live game)
+
+## Advancement decision (153)
+
+Advance. 100% task completion, full gate green, no MUST/SHALL requirement unmet, no regression.
+Additive/unconsumed pending 183 (dragon) and 205 (HUD). This completes the "Entity framework and
+mobs" section (129-153). Next change: 154-redstone-signal-core, opening the "Redstone and
+automation" section.
 
 ## What 152 implemented
 
