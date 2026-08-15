@@ -3,18 +3,72 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **154-redstone-signal-core — VERIFIED 100%**
-- Active implementation change: **154-redstone-signal-core — VERIFIED**
-- Next change: **155-redstone-wire-connectivity — NOT YET ACTIVE (artifacts pending)**
-- 154 task ledger: **34 total tasks, 34 completed**
-- 154 completion: **100%**
-- 154 mandatory redstone-signal-core requirements: **PASS**
-- 154 required-test gate: **PASS — unit 2063/2063, E2E 22/22**
-- 154 advancement allowed: **Yes**
-- Session-start head: `ec0cb1c8fb020300e073a807347a825c9ca3bc5f`
-- Validated head: `e25ec07d9469eecd8121f39b4e410fec2315774c` (154 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) now open.**
-- Next exact action: **Advance to 155-redstone-wire-connectivity. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (wire block states, connection shapes, attenuation — the first consumer of 154's `attenuate`/`clampSignal`/direction helpers; needs a `redstone_wire` block with a power 0-15 property schema (006/007) plus connection-side state, and a pure connectivity/propagation resolver; decide explicitly whether to register the block now or keep it a pure model like 154); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **155-redstone-wire-connectivity — VERIFIED 100%**
+- Active implementation change: **155-redstone-wire-connectivity — VERIFIED**
+- Next change: **156-redstone-update-order — NOT YET ACTIVE (artifacts pending)**
+- 155 task ledger: **30 total tasks, 30 completed**
+- 155 completion: **100%**
+- 155 mandatory redstone-wire-connectivity requirements: **PASS**
+- 155 required-test gate: **PASS — unit 2087/2087, E2E 22/22**
+- 155 advancement allowed: **Yes**
+- Session-start head: `5f564fcbbfe46e831a375c40244850e33631f2bc`
+- Validated head: `d16daa5aefbc79422f2eb5c500316229e6bce8be` (155 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress.**
+- Next exact action: **Advance to 156-redstone-update-order. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (deterministic scheduled neighbour propagation and loop protection — iterate 155's `computeWirePower` over a dirty set to a fixed point with a bounded iteration cap and stable ordering, composing 047's `ScheduledTickQueue` and/or 049's `NeighborUpdateQueue` which already exist; this is the change that makes placed wire actually carry a signal, so decide explicitly whether to attach a `BlockBehavior` and wire it into `Game` or keep it a pure propagation core); implement; verify full gate; commit + push; advance program state.**
+
+## What 155 implemented
+
+Change 155 is the first consumer of 154's signal core, and the first change since 148 to touch the
+**live** block/item registries. The wire block is registered and placeable but **inert during
+play** — nothing recomputes its power until 156 adds propagation; a placed wire correctly reads
+unpowered.
+
+- `src/world/BlockRegistry.ts` (EDIT) — `REDSTONE_WIRE_SCHEMA` (integer `power` 0-15 + four
+  **named** per-side properties `north`/`south`/`east`/`west`, each `none|side|up`) → 16 × 3⁴ =
+  **1296 enumerated states**, the registry's first multi-property block and ~2% of 007's
+  `MAX_STATES_PER_BLOCK`; `BlockId.RedstoneWire = 37` (non-solid, non-opaque, breakable, hardness
+  0, `dropItem` → `minecraft:redstone`, default state power 0 / all sides `none`).
+- `src/inventory/ItemRegistry.ts` (EDIT) — `ItemId.Redstone = 37` placing `minecraft:redstone_wire`.
+- `src/simulation/RedstoneWire.ts` (NEW; `WireWorld` injected — `isWire`/`isSolid`/
+  `connectsToRedstone`/`getWirePower` — mirroring 154's seam, so no `World`/`BlockRegistry`
+  import) — `resolveWireConnections` implements vanilla's **branch precedence**: a
+  wire-or-connectable neighbour yields `'side'` and outranks a step-up; a step-up yields `'up'`
+  only when the neighbour is solid, a wire sits above it, **and** the block above the *querying*
+  wire is non-solid (the ceiling guard is on the querier, not the neighbour — the one asymmetry
+  worth calling out); a descent is reported as `'side'` because vanilla has no distinct "down"
+  state (the lower wire reports its own `'up'`); else `'none'`. `computeWirePower` returns the max
+  of 154's `getIndirectPower` and each connected wire's **stored** power attenuated by one,
+  resolving the correct cell per connection kind. `wireStateProperties` projects into the 006/007
+  property record.
+- **Key design decision**: reading *stored* rather than recursively-recomputed neighbour power
+  keeps the rule local and O(1); iterating it to a fixed point with deterministic ordering and loop
+  protection is precisely 156's titled scope. Because attenuation is always ≥ 1, a wire can never
+  sustain or amplify its own signal through a neighbour — the property that makes that future
+  iteration terminate, asserted directly.
+
+## Validation evidence (155)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`, full project)
+- unit: PASS 2087/2087 (prior 2063 + 24 new, including direct assertions of branch precedence, the
+  ceiling guard as its own case, up/down attenuation parity, and the no-self-sustain property
+  across stored values 1/5/15)
+- production build: PASS (`tsc --noEmit && vite build`, 103 modules — registry edits are in the
+  live graph; the new simulation module has no `Game.ts` consumer yet)
+- E2E: PASS 22/22 — **notable evidence here**, since the registry edits *are* live: a green run
+  confirms worldgen, meshing, placement, and breaking are undisturbed by the new block/item
+- Four characterization tests required the documented, non-regression update (the same maintenance
+  pattern 125/148 followed): `BlockRegistry.test.ts` block count 25→26;
+  `BlockPropertySchema.test.ts` stateful-block set gains `redstone_wire`;
+  `BlockStateRegistry.test.ts` total-state formula now includes 1296 plus a new per-block
+  exact-count/default assertion (the registry grew 55 → 1350 states);
+  `BlockItemSeparation.test.ts` legacy-id row `[37, 'redstone_wire', 'redstone']` plus a
+  generalized `PLACEMENT_KEY_OVERRIDES` map
+
+## Advancement decision (155)
+
+Advance. 100% task completion, full gate green, no MUST/SHALL requirement unmet, no regression.
+Wire is placeable but inert pending 156's propagation. Next change: 156-redstone-update-order.
 
 ## What 154 implemented
 
