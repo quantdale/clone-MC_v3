@@ -3,18 +3,42 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **169-explosion-core — VERIFIED 100%**
-- Active implementation change: **169-explosion-core — VERIFIED**
-- Next change: **170-tnt-block-entity — NOT YET ACTIVE (artifacts pending)**
-- 169 task ledger: **24 total tasks, 24 completed**
-- 169 completion: **100%**
-- 169 mandatory explosion-core requirements: **PASS**
-- 169 required-test gate: **PASS — unit 2310/2310, E2E 22/22**
-- 169 advancement allowed: **Yes**
-- Session-start head: `8c6761516b9b52c64097de87c0d0177d9b6de79a`
-- Validated head: `e11f4e2020c94b1c10fb8ff2f391492a38a7cacd` (169 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress — the 157-161 logic-component trio, 162's first consumers, the piston sub-arc (163-165), the item-moving trio (166-168), and the destruction-path core (169) are all COMPLETE.**
-- Next exact action: **Advance to 170-tnt-block-entity. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: priming, fuse, entity, redstone/fire integration — the first consumer of 169's explosion core and the first TNT block in the registry).**
+- Last completed change: **170-tnt-block-entity — VERIFIED 100%**
+- Active implementation change: **170-tnt-block-entity — VERIFIED**
+- Next change: **171-rail-block-states — NOT YET ACTIVE (artifacts pending)**
+- 170 task ledger: **22 total tasks, 22 completed**
+- 170 completion: **100%**
+- 170 mandatory tnt-block-entity requirements: **PASS**
+- 170 required-test gate: **PASS — unit 2320/2320, E2E 22/22**
+- 170 advancement allowed: **Yes**
+- Session-start head: `ecce3ba80ec4248f56f96889d4b2f10b88ce4d98`
+- Validated head: `cc79d9cfc4bec4b262adcd06a3bfc3f06c462071` (170 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress — the 157-161 logic-component trio, 162's first consumers, the piston sub-arc (163-165), the item-moving trio (166-168), the destruction core (169), and TNT (170) are all COMPLETE.**
+- Next exact action: **Advance to 171-rail-block-states. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: rail shapes, placement, neighbor updates — the first transport block, and the first multi-shape block since the pistons whose geometry depends on its neighbors).**
+
+## What 170 implemented
+
+Change 170 is the first consumer of 169's explosion core: the TNT block and its priming/detonation
+lifecycle.
+
+- `src/simulation/TntPriming.ts` (NEW) — `tntShouldPrime(powered, fireAdjacent)` is exactly
+  `powered || fireAdjacent`: a **162-style powered consumer**, deliberately NOT the 166-168 inverted
+  lockout (flagged in the design doc). `primeTnt` produces a `PrimedTnt` descriptor (vanilla's
+  PrimedTnt entity modeled as pure data, like 167's `DroppedItem`) with `tntFuseTicks(cause)`: 80 for
+  `'redstone'` (vanilla's 4 s) and a fixed deterministic 20 for `'fire'` (stand-in for vanilla's
+  random 10-30, consistent with 169's no-random-roll stance). `tickPrimedTnt` counts the fuse down on
+  the fixed 20 TPS clock (clamps at 0; NaN/negative elapsed are no-ops); `primedTntIsDue` flips
+  exactly at fuse 0; `explodePrimedTnt` runs 169's `computeExplosion` centered on the block center
+  (`+0.5`) with strength 4 — deterministic, no world mutation (the caller applies destroyed/drops
+  164-style).
+- `src/world/BlockRegistry.ts`/`src/inventory/ItemRegistry.ts` (EDIT) — `BlockId.Tnt = 53`/
+  `ItemId.Tnt = 53`; the tnt block is **stateless** (EMPTY_SCHEMA, exactly 1 state — vanilla TNT has
+  no blockstate properties), so the stateful-block characterization tests needed **no** edits; only
+  the `BlockRegistry` `all()` count moved 41→42.
+- Tests: `tests/unit/TntPriming.test.ts` (NEW, 10 tests): stateless single-state registration,
+  item cross-reference, fuse ticks, all four trigger combinations, descriptor shape, fuse
+  decrement/clamp/invalid-elapsed, due flip, block-center explosion reaching a stone block one block
+  east, empty-world none, determinism.
 
 ## What 169 implemented
 
