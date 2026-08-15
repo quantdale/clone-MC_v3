@@ -3,17 +3,67 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **116-armor-protection — VERIFIED 100%**
-- Active implementation change: **116-armor-protection — VERIFIED**
-- Next change: **117-player-experience — NOT YET ACTIVE (artifacts pending)**
-- 116 task ledger: **6 total tasks, 6 completed**
-- 116 completion: **100%**
-- 116 mandatory armor-protection requirements: **PASS**
-- 116 required-test gate: **PASS — unit 1391/1391, E2E 21/21**
-- 116 advancement allowed: **Yes**
+- Last completed change: **117-player-experience — VERIFIED 100%**
+- Active implementation change: **117-player-experience — VERIFIED**
+- Next change: **118-enchantment-registry — NOT YET ACTIVE (artifacts pending)**
+- 117 task ledger: **6 total task groups, 6 completed**
+- 117 completion: **100%**
+- 117 mandatory player-experience requirements: **PASS**
+- 117 required-test gate: **PASS — unit 1418/1418, E2E 21/21**
+- 117 advancement allowed: **Yes**
 - Session-start head: `d8a03a3d2432ea58c3ac0d60f143f3a41115a719`
-- Validated head: `eb370dec0be458df786c5945ce9d562640fa9bfd` (116 feature commit; state advanced to 117)
-- Next exact action: **Advance to 117-player-experience. Read it (and SPEC_AUTHORING_PROTOCOL.md if artifacts incomplete), author/validate proposal/design/tasks/specs/verification, implement XP orbs/points/levels and persistence, verify full gate, commit + push, advance program state.**
+- Validated head: `4e87e3fef93f35b03bf88f7a5b5fe9391c7c7615` (117 feature commit; state advanced to 118)
+- Next exact action: **Advance to 118-enchantment-registry. Read it (and SPEC_AUTHORING_PROTOCOL.md if artifacts incomplete), author/validate proposal/design/tasks/specs/verification, implement enchantment definitions/levels/applicability/conflict rules, verify full gate, commit + push, advance program state.**
+
+## What 117 implemented
+
+Change 117 adds the player experience track: an XP/level model with the canonical
+leveling curve, free-floating XP orbs that are attracted to and collected by the
+player, and persistence of the accumulated level/XP. It is the model + orb runtime +
+persistence — not the XP HUD (205), enchantment XP spending (118/119), or a full
+XP-drop catalog (215).
+
+- `src/player/ExperienceSystem.ts` (NEW) — `ExperienceSnapshot { version:1, level, xp }`,
+  `computeXpToNext(level)` (`2L+7` / `5L-38` / `9L-158`, continuous at 16 and 31), and
+  `ExperienceSystem` with `addXp` (level-only-rises, bad input no-op), `snapshot`,
+  `restore` (rejects `version!=1`/non-int `level`/`xp<0`, clamps `xp` into `[0,xpToNext)`),
+  and derived `progress`.
+- `src/world/XpOrb.ts` (NEW) — `XP_ORB_TYPE_KEY='minecraft:xp_orb'`, the `XpOrb`
+  interface, and strict `createXpOrb` (positive-integer `value`, non-negative `id`,
+  finite coords/velocity, non-negative `ageTicks`).
+- `src/simulation/XpOrbManager.ts` (NEW) — deterministic id minting, `spawnXpOrb`
+  (jitter when an rng is supplied, else exact), `tickItemEntities(dt,px,py,pz,experience)`
+  (age advance `round(dt*20)`; attraction within `orbAttractionRadius²` capped at the
+  current distance — no overshoot; collect within `orbCollectRadius²` →
+  `experience.addXp(value)`; despawn at `orbDespawnTicks`), `clear`/`getXpOrbs`, and
+  037 `serializeAll`/`deserializeAll` (atomic on one bad record).
+- `src/config/index.ts` (EDIT) — frozen `xp` block: attraction/collect radius,
+  attraction speed, despawn ticks, spawn up-velocity, default orb value.
+- `src/engine/Game.ts` (EDIT) — constructs `ExperienceSystem` + `XpOrbManager`, ticks
+  orbs after item-entity collection, adds `experience` to `GameSaveSnapshot`, writes it
+  in `savePlayerState`, restores it in `loadPlayerState`, and requires it in
+  `isGameSaveSnapshot`.
+- `src/player/PlayerInteraction.ts` (EDIT) — optional `xpOrbs?`/`xpOrbValue?`; on a
+  productive break, spawns one orb of `xpOrbValue` at the block-center spawn.
+- `src/storage/PlayerStateRecord.ts` (EDIT) — adds required `experience: unknown`;
+  `validatePlayerStateRecord` rejects a missing `experience`.
+- `src/storage/LegacyLocalStorageMigrator.ts` (EDIT) — seeds `experience` in
+  `toPlayerStateRecord`.
+
+## Validation evidence (117)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1418/1418 (prior 1391 + 27 new: ExperienceSystem 8, XpOrbManager 12,
+  PlayerStateRecord 3, PlayerInteraction +2 productive-break)
+- production build: PASS (`tsc --noEmit && vite build`)
+- E2E: PASS 21/21 (rule/entity change; survival/drop tests stay green)
+
+## Advancement decision
+
+Change 117 is **VERIFIED** at 6/6 task groups (100%). All gates are green: typecheck,
+lint, the 1418-unit suite, production build, and the required E2E suite (21/21). No
+advancement exception was needed. Advance to 118.
 
 ## What 116 implemented
 
@@ -258,15 +308,15 @@ Change 111 is **VERIFIED** at 6/6 (100%). All gates are green: typecheck, lint, 
 1290-unit suite, production build, and the required E2E suite (20/20). No advancement
 exception was needed. Advance to 112.
 
-## Next change: 117 (pending artifacts)
+## Next change: 118 (pending artifacts)
 
-`117-player-experience` is named in `CHANGE_SEQUENCE.md` with scope "XP orbs/points/
-levels and persistence." Per `AGENTS.md`, a change lacking full artifacts is a hard
-pre-implementation block. Author and validate those artifacts via
-`SPEC_AUTHORING_PROTOCOL.md` before any production code.
+`118-enchantment-registry` is named in `CHANGE_SEQUENCE.md` with scope "Enchantment
+definitions, levels, applicability, conflict rules." Per `AGENTS.md`, a change lacking
+full artifacts is a hard pre-implementation block. Author and validate those artifacts
+via `SPEC_AUTHORING_PROTOCOL.md` before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 116
-verification. Change 117 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 117
+verification. Change 118 is the next change; its artifacts must be authored and
 validated before implementation begins.
