@@ -12,7 +12,7 @@
 - 111 required-test gate: **PASS — unit 1290/1290, E2E 20/20**
 - 111 advancement allowed: **Yes**
 - Session-start head: `e715b661b40b252baf64d7abe190eee40eb4836f`
-- Validated head: `6154ef48997de9a3e2aff0421b36811a26312240` (pre-111 baseline; updated to 111 head after push)
+- Validated head: `6a7c34a23131999eaa02a4d8f33034895944c152` (111 feature commit; state advanced to 112)
 - Next exact action: **Advance to 112-item-pickup-and-despawn. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (112 artifacts must be authored before implementation), validate, implement item pickup + despawn/merge, verify full gate, commit + push, advance program state.**
 
 ## What 111 implemented

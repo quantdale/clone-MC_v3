@@ -16,8 +16,8 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "e715b661b40b252baf64d7abe190eee40eb4836f",
-  "lastValidatedHead": "b2cfe01b7cca0273bfa652af75372b442bab17a0",
-  "lastKnownHead": "b2cfe01b7cca0273bfa652af75372b442bab17a0",
+  "lastValidatedHead": "6a7c34a23131999eaa02a4d8f33034895944c152",
+  "lastKnownHead": "6a7c34a23131999eaa02a4d8f33034895944c152",
   "lastCompletedTask": "111: all 6 tasks complete; item-entity-drops VERIFIED. ItemEntity.ts (ItemEntity type, ITEM_ENTITY_TYPE_KEY, createSpawnPosition, strict createItemEntity). ItemEntityManager.ts (id minting, spawnItemEntity validation, spawnLootStacks splitting+jitter, removeItemEntity, query/in-chunk, tickItemEntities round(dt*20), clear, serializeAll/deserializeAll to 037 envelope, atomic reject). PlayerInteraction.finishBreak routes drops through itemEntities.spawnLootStacks; removed selector.addItem drop path. Game.ts constructs+ticks+exposes ItemEntityManager. 23 new unit tests + PlayerInteraction rewrite + new e2e; full suite 1290 unit + 20 e2e green.",
   "nextExactAction": "Advance to 112-item-pickup-and-despawn. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (112 artifacts must be authored before implementation), validate, implement item pickup + despawn/merge, verify full gate, commit impl+test+dir, update PROGRAM_STATE, push to origin/main, advance.",
   "blockers": [],
@@ -1093,7 +1093,7 @@
       "note": "109 VERIFIED 5/5 (100%). Furnace block entity: src/world/FurnaceBlockEntity.ts (FurnaceState strict validation; deterministic tickFurnace over injected FurnaceContext; lit = burnTime>0; blocked-output pause; input-removal reset; cook completion merge; 036 envelope; 39-slot menu bridge; 052 lifecycle; progress fractions); furnace block id 20 + item id 26 + tile 28; 24 new unit tests; 1253 unit + 19 e2e pass, stable."
     },
     {
-      "head": "b2cfe01b7cca0273bfa652af75372b442bab17a0",
+      "head": "6a7c34a23131999eaa02a4d8f33034895944c152",
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 1290/1290; ItemEntityManager 23/23",
@@ -1103,6 +1103,6 @@
       "note": "111 VERIFIED 100/100 (100%). ItemEntity + ItemEntityManager (037 envelope serialize/deserialize), PlayerInteraction.finishBreak routes drops through manager, Game.ts constructs+ticks+exposes it. 23 new unit tests + PlayerInteraction rewrite + new e2e; full gate green."
     }
   ],
-  "publishedHead": "b2cfe01b7cca0273bfa652af75372b442bab17a0",
+  "publishedHead": "6a7c34a23131999eaa02a4d8f33034895944c152",
   "publishedAt": "2026-08-15T01:18:24.067Z"
 }
