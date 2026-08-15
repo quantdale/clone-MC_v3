@@ -10,6 +10,7 @@
 
 import { type ResourceId, createResourceId, resourceIdToString } from '../data/ResourceId';
 import { Registry, RegistryError } from '../data/Registry';
+import { potionContentsComponentType } from '../data/PotionItemData';
 
 /** A component value is a primitive or a bag of primitives (no nesting). */
 export type StackComponentValue =
@@ -223,7 +224,7 @@ export const enchantmentsComponentType: StackComponentType = {
 
 /** Default component registry with the base component types for current tools. */
 export function createDefaultStackComponentRegistry(): StackComponentRegistry {
-  return new StackComponentRegistry([damageComponentType, enchantmentsComponentType]);
+  return new StackComponentRegistry([damageComponentType, enchantmentsComponentType, potionContentsComponentType]);
 }
 
 /** Convenience: an empty component map for a stack using the default registry. */
