@@ -44,6 +44,7 @@ export const enum BlockId {
   Lever = 38,
   StoneButton = 39,
   PressurePlate = 40,
+  RedstoneTorch = 41,
 }
 
 /**
@@ -94,6 +95,13 @@ export const REDSTONE_WIRE_SCHEMA = new BlockPropertySchema([
  * deliberately omitted — it drives models (059/060), not signal behavior.
  */
 export const POWERED_SCHEMA = new BlockPropertySchema([{ kind: 'boolean', name: 'powered' }]);
+
+/**
+ * Lit-state property schema for the redstone torch (158): a single boolean `lit`. Kept distinct
+ * from `POWERED_SCHEMA` because a torch's state is named for what it *is* (lit), not for what is
+ * driving it — a torch is lit precisely when its attachment is *un*powered.
+ */
+export const LIT_SCHEMA = new BlockPropertySchema([{ kind: 'boolean', name: 'lit' }]);
 
 /** Tool families used for preferred-tool mining bonuses. */
 export const enum ToolKind {
@@ -769,6 +777,23 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       dropItem: rid('pressure_plate'),
       propertySchema: POWERED_SCHEMA,
       defaultState: { powered: false },
+    },
+    {
+      id: BlockId.RedstoneTorch,
+      resourceId: rid('redstone_torch'),
+      key: 'redstone_torch',
+      name: 'Redstone Torch',
+      solid: false,
+      opaque: false,
+      breakable: true,
+      renderCategory: RenderCategory.Transparent,
+      topTile: 0,
+      bottomTile: 0,
+      sideTile: 0,
+      hardness: 0,
+      dropItem: rid('redstone_torch'),
+      propertySchema: LIT_SCHEMA,
+      defaultState: { lit: false },
     },
   ];
   return new BlockTypeRegistry(defs);
