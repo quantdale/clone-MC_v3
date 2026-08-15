@@ -23,6 +23,7 @@ import { PlayerController } from '../player/PlayerController';
 import { PlayerPhysics } from '../player/PlayerPhysics';
 import { PlayerInteraction } from '../player/PlayerInteraction';
 import type { InteractionAction } from '../player/PlayerInteraction';
+import { ItemEntityManager } from '../simulation/ItemEntityManager';
 import { LootTableRegistry, buildCurrentLootTables } from '../inventory/LootTable';
 import { Inventory } from '../inventory/Inventory';
 import type { InventorySnapshot } from '../inventory/Inventory';
@@ -78,6 +79,8 @@ export class Game {
   private readonly survival: SurvivalSystem;
   private readonly interaction: PlayerInteraction;
   private readonly lootTables: LootTableRegistry;
+  /** Live world item-entity store (111); mined blocks drop into this. */
+  readonly itemEntities: ItemEntityManager;
   private readonly inventory: Inventory;
   private readonly hotbar: Hotbar;
   private readonly skySunDirection = new THREE.Vector3();
@@ -187,6 +190,7 @@ export class Game {
     );
     this.controller = new PlayerController(this.player, this.input);
     this.physics = new PlayerPhysics(this.world, this.blockRegistry);
+    this.itemEntities = new ItemEntityManager({ itemRegistry: this.itemRegistry, rng: Math.random });
     this.interaction = new PlayerInteraction({
       world: this.world,
       registry: this.blockRegistry,
@@ -203,6 +207,7 @@ export class Game {
       },
       lootTables: this.lootTables,
       rng: Math.random,
+      itemEntities: this.itemEntities,
     });
     this.resources.track(this.interaction);
 
@@ -344,6 +349,7 @@ export class Game {
     if (simulationActive) {
       this.controller.update(dt);
       this.physics.update(this.player, dt);
+      this.itemEntities.tickItemEntities(dt);
       this.worldLife.update(dt, this.player.position);
       const headY = Math.floor(this.player.position.y + CONFIG.player.eyeHeight);
       const headSubmerged = this.world.getBlock(

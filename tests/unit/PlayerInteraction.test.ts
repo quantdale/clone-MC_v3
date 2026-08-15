@@ -5,6 +5,7 @@ import { PlayerInteraction } from '../../src/player/PlayerInteraction';
 import type { InputState } from '../../src/engine/InputTypes';
 import { BlockId, createDefaultBlockRegistry } from '../../src/world/BlockRegistry';
 import { ItemId, createDefaultItemRegistry } from '../../src/inventory/ItemRegistry';
+import { ItemEntityManager } from '../../src/simulation/ItemEntityManager';
 
 function makeWorld(): import('../../src/world/WorldAccess').WorldAccess {
   return {
@@ -132,14 +133,14 @@ describe('player interaction selection', () => {
     interaction.dispose();
   });
 
-  it('turns ore blocks into their distinct inventory drops', () => {
+  it('turns ore blocks into their distinct world item entities', () => {
     const player = new Player({ position: new THREE.Vector3(0.5, 0, 0.5) });
     const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 20);
     camera.position.copy(player.eyePosition);
     camera.lookAt(10, player.eyePosition.y, player.eyePosition.z);
     camera.updateMatrixWorld(true);
     const world = makeMutableWorld(BlockId.CoalOre);
-    const drops: number[] = [];
+    const itemEntities = new ItemEntityManager({ itemRegistry: createDefaultItemRegistry() });
     const interaction = new PlayerInteraction({
       world,
       registry: createDefaultBlockRegistry(),
@@ -147,18 +148,17 @@ describe('player interaction selection', () => {
       selector: {
         getSelectedItemId: () => BlockId.Stone,
         getSlotCount: () => 1,
-        addItem: (id) => {
-          drops.push(id);
-          return 0;
-        },
       },
       player,
       camera,
       input: makeInput({ breakRequested: true, held: false }),
+      itemEntities,
     });
 
     interaction.update(0.016);
-    expect(drops).toEqual([ItemId.Coal]);
+    expect(itemEntities.size).toBe(1);
+    expect(itemEntities.getItemEntities()[0]!.item).toBe(ItemId.Coal);
+    expect(itemEntities.getItemEntities()[0]!.count).toBe(1);
     interaction.dispose();
   });
 

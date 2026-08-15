@@ -6,8 +6,10 @@ import { WorldAccess } from '../world/WorldAccess';
 import { BlockRegistry, BlockId } from '../world/BlockRegistry';
 import { ItemTypeRegistry, ItemId } from '../inventory/ItemRegistry';
 import { BlockSelector } from '../inventory/BlockSelector';
-import { type LootTableRegistry, type RandomSource, type LootContext, evaluate } from '../inventory/LootTable';
+import { type LootTableRegistry, type RandomSource, type LootContext, type LootStack, evaluate } from '../inventory/LootTable';
 import { raycastVoxel, RaycastResult } from '../math/DDA';
+import type { ItemEntityManager } from '../simulation/ItemEntityManager';
+import { createSpawnPosition } from '../world/ItemEntity';
 
 export type InteractionAction = 'break' | 'place' | 'blocked' | 'empty';
 
@@ -34,6 +36,7 @@ export class PlayerInteraction {
   private readonly onToolBreak?: () => void;
   private readonly lootTables?: LootTableRegistry;
   private readonly rng?: RandomSource;
+  private readonly itemEntities?: ItemEntityManager;
 
   private readonly eyePos = new THREE.Vector3();
   private readonly dir = new THREE.Vector3();
@@ -61,6 +64,7 @@ export class PlayerInteraction {
     onToolBreak?: () => void;
     lootTables?: LootTableRegistry;
     rng?: RandomSource;
+    itemEntities?: ItemEntityManager;
   }) {
     this.world = opts.world;
     this.registry = opts.registry;
@@ -74,6 +78,7 @@ export class PlayerInteraction {
     this.onToolBreak = opts.onToolBreak;
     this.lootTables = opts.lootTables;
     this.rng = opts.rng;
+    this.itemEntities = opts.itemEntities;
 
     // A centered unit-cube wireframe marks the targeted block. Keeping the
     // geometry centered and placing it at block + 0.5 avoids the classic
@@ -229,10 +234,10 @@ export class PlayerInteraction {
     this.world.setBlock(this.target.blockX, this.target.blockY, this.target.blockZ, BlockId.Air);
 
     const def = this.registry.get(blockId);
-    let primaryDropId: number | undefined;
+    const stacks: LootStack[] = [];
     if (this.lootTables && def.lootTable) {
       // Route the drop through the block's loot table. Evaluation is pure;
-      // the caller inserts each returned stack into the inventory.
+      // the resulting stacks become world item entities (111).
       const table = this.lootTables.get(def.lootTable);
       const ctx: LootContext = {
         blockId,
@@ -241,19 +246,23 @@ export class PlayerInteraction {
       };
       const rng = this.rng ?? Math.random;
       for (const stack of evaluate(table, ctx, rng, this.itemRegistry)) {
-        this.selector.addItem?.(stack.item, stack.count);
-        if (primaryDropId === undefined) primaryDropId = stack.item;
+        stacks.push(stack);
       }
     } else {
       // Fallback retained for test and legacy paths that do not inject a loot
       // registry (e.g. unbreakable/edge cases). Mirrors pre-011 drop behavior.
       const dropRid = def.dropItem ?? def.resourceId;
-      const dropItemId = this.itemRegistry.getByResourceId(dropRid).id;
-      this.selector.addItem?.(dropItemId, 1);
-      primaryDropId = dropItemId;
-      if (blockId === BlockId.Leaves) {
-        this.selector.addItem?.(ItemId.Apple, 1);
-      }
+      stacks.push({ item: this.itemRegistry.getByResourceId(dropRid).id, count: 1 });
+    }
+    if (blockId === BlockId.Leaves) {
+      stacks.push({ item: ItemId.Apple, count: 1 });
+    }
+
+    // Spawn the resolved drops as world item entities at the block center.
+    const primaryDropId = stacks[0]?.item;
+    if (this.itemEntities && stacks.length > 0) {
+      const spawn = createSpawnPosition(this.target.blockX, this.target.blockY, this.target.blockZ);
+      this.itemEntities.spawnLootStacks(stacks, spawn.x, spawn.y, spawn.z, this.rng);
     }
 
     if (selectedTool?.maxDurability !== undefined && this.selector.damageSelectedItem) {

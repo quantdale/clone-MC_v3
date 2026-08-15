@@ -402,6 +402,39 @@ test.describe('voxel game', () => {
     expect(after).toBe(0); // now air
   });
 
+  test('breaking a block spawns a world item entity', async ({ page }) => {
+    await waitForGame(page);
+    await enterPointerLock(page);
+    await page.evaluate(() => {
+      const g = (window as unknown as { __voxelGame?: { player: { pitch: number } } }).__voxelGame;
+      if (g) g.player.pitch = -1.0;
+    });
+    let target: { x: number; y: number; z: number } | null = null;
+    for (let i = 0; i < 20; i++) {
+      await page.waitForTimeout(100);
+      target = await page.evaluate(() => {
+        const g = (window as unknown as { __voxelGame?: { interaction?: { getTarget(): { blockX: number; blockY: number; blockZ: number } | null } } }).__voxelGame;
+        const t = g?.interaction?.getTarget();
+        return t ? { x: t.blockX, y: t.blockY, z: t.blockZ } : null;
+      });
+      if (target) break;
+    }
+    expect(target).not.toBeNull();
+    await page.mouse.down();
+    await page.mouse.up();
+    await page.waitForFunction((t) => {
+      const g = (window as unknown as { __voxelGame?: { world?: { getBlock(x: number, y: number, z: number): number } } }).__voxelGame;
+      return (g?.world?.getBlock(t.x, t.y, t.z) ?? -1) === 0;
+    }, target!, { timeout: 5000 });
+    // The mined block's drops now exist as world item entities (111), not in the
+    // inventory directly.
+    const entityCount = await page.evaluate(() => {
+      const g = (window as unknown as { __voxelGame?: { itemEntities?: { size: number } } }).__voxelGame;
+      return g?.itemEntities?.size ?? 0;
+    });
+    expect(entityCount).toBeGreaterThan(0);
+  });
+
   test('player can place a block from the hotbar', async ({ page }) => {
     await waitForGame(page);
     await enterPointerLock(page);

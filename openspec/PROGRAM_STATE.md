@@ -3,17 +3,57 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **110-furnace-recipes-and-fuels — VERIFIED 100%**
-- Active implementation change: **110-furnace-recipes-and-fuels — VERIFIED**
-- Next change: **111-item-entity-drops — NOT YET ACTIVE (artifacts pending)**
-- 110 task ledger: **6 total tasks, 6 completed**
-- 110 completion: **100%**
-- 110 mandatory furnace-recipes-and-fuels requirements: **PASS**
-- 110 required-test gate: **PASS — unit 1267/1267, E2E 19/19**
-- 110 advancement allowed: **Yes**
+- Last completed change: **111-item-entity-drops — VERIFIED 100%**
+- Active implementation change: **111-item-entity-drops — VERIFIED**
+- Next change: **112-item-pickup-and-despawn — NOT YET ACTIVE (artifacts pending)**
+- 111 task ledger: **6 total tasks, 6 completed**
+- 111 completion: **100%**
+- 111 mandatory item-entity-drops requirements: **PASS**
+- 111 required-test gate: **PASS — unit 1290/1290, E2E 20/20**
+- 111 advancement allowed: **Yes**
 - Session-start head: `e715b661b40b252baf64d7abe190eee40eb4836f`
-- Validated head: `e715b661b40b252baf64d7abe190eee40eb4836f`
-- Next exact action: **Advance to 111-item-entity-drops. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (111 artifacts must be authored before implementation), validate, implement world item entity spawning for block/entity drops, verify full gate, commit + push, advance program state.**
+- Validated head: `6154ef48997de9a3e2aff0421b36811a26312240` (pre-111 baseline; updated to 111 head after push)
+- Next exact action: **Advance to 112-item-pickup-and-despawn. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (112 artifacts must be authored before implementation), validate, implement item pickup + despawn/merge, verify full gate, commit + push, advance program state.**
+
+## What 111 implemented
+
+Change 111 adds world item-entity spawning for block/entity drops.
+
+- `src/world/ItemEntity.ts` (NEW) — `ITEM_ENTITY_TYPE_KEY 'minecraft:item'`; `ItemEntity`
+  interface (id, item, count, x/y/z, vx/vy/vz, ageTicks); `createSpawnPosition(bx,by,bz)`
+  → block center `{x+0.5,y+0.5,z+0.5}`; strict `createItemEntity` validating finite
+  coords/velocity and a non-negative integer `ageTicks`.
+- `src/simulation/ItemEntityManager.ts` (NEW) — per-world store; strict id minting;
+  `spawnItemEntity` (item-registry + positive-integer-count + stackSize + finite-coord
+  validation, atomic on rejection); `spawnLootStacks` (splits each stack into
+  `ceil(count/stackSize)` entities with deterministic rng jitter, or exact positions with
+  no rng); `removeItemEntity` / `getItemEntity` / `getItemEntities` (insertion order) /
+  `getItemEntitiesInChunk` (floor x/16, floor z/16); `tickItemEntities(dt)` ages by
+  `round(dt*20)`, no-op when `dt<=0`; `clear` / `size`; `serializeAll` / `deserializeAll`
+  to the 037 `SerializedEntity` envelope (atomic all-or-nothing validation, resets nextId
+  to maxId+1). Velocity stored for 130 physics.
+- `src/player/PlayerInteraction.ts` — `itemEntities?` constructor field; `finishBreak`
+  collects drops into `LootStack[]` (loot table, else `dropItem`/`resourceId` fallback;
+  leaves → `ItemId.Apple`) and routes them through `itemEntities.spawnLootStacks` at the
+  block center. The `selector.addItem` drop path is removed; `onAction('break', primaryDropId)`
+  is unchanged.
+- `src/engine/Game.ts` — constructs `new ItemEntityManager({ itemRegistry, rng: Math.random })`,
+  passes it to `PlayerInteraction`, ticks it each simulation step, and exposes it publicly
+  (`window.__voxelGame.itemEntities`).
+
+## Validation evidence (111)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1290/1290 (prior 1267 + 23 new ItemEntityManager + rewritten PlayerInteraction ore test)
+- production build: PASS (`tsc --noEmit && vite build`)
+- E2E: PASS 20/20 (new `breaking a block spawns a world item entity`)
+
+## Advancement decision
+
+Change 111 is **VERIFIED** at 6/6 (100%). All gates are green: typecheck, lint, the new
+1290-unit suite, production build, and the required E2E suite (20/20). No advancement
+exception was needed. Advance to 112.
 
 ## What 109 implemented
 
