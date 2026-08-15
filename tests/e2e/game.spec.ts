@@ -240,6 +240,22 @@ test.describe('voxel game', () => {
     expect(critters).toBe(8);
   });
 
+  test('spawns a live, simulated pig entity near the player', async ({ page }) => {
+    await waitForGame(page);
+    await enterPointerLock(page);
+    // Passive mob baseline (145): the spawn-cycle sweep is throttled to every
+    // SPAWN_CYCLE_INTERVAL_TICKS (100) simulated frames, so give it a generous window.
+    await page.waitForFunction(
+      () => {
+        const game = (window as unknown as {
+          __voxelGame?: { renderer: { scene: { children: Array<{ name: string }> } } };
+        }).__voxelGame;
+        return (game?.renderer.scene.children.filter((child) => child.name === 'passive-mob-pig').length ?? 0) > 0;
+      },
+      { timeout: 25_000 },
+    );
+  });
+
   test('FPS counter updates over time', async ({ page }) => {
     await waitForGame(page);
     await enterPointerLock(page);

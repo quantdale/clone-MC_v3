@@ -72,8 +72,9 @@ mob anywhere in the live game.
 
 ## Proposed change
 1. `src/simulation/PassiveMobBaseline.ts` (NEW):
-   - `PassiveMobWorldAdapter` — wraps `World` + `BlockRegistry` + `TerrainGenerator` +
-     `BiomeRegistry`; implements `ShapeWorld & NavigationWorld & SpawnWorld`.
+   - `PassiveMobWorldAdapter` — wraps `World` (using its existing `isSolid`/`getBlock` directly, no
+     separate `BlockRegistry` dependency) + `TerrainGenerator` + `BiomeRegistry`; implements
+     `ShapeWorld & NavigationWorld & SpawnWorld`.
    - `PIG_BOUNDING_BOX` (`{width: 0.9, height: 0.9, depth: 0.9}`).
    - `PassiveMobSystem` — owns one `EntityManager` (constructed with
      `createDefaultEntityRegistry()`), a `CollisionResolver`, and a per-entity `GoalSelector` map;

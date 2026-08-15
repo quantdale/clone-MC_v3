@@ -8,8 +8,8 @@ pig a visible mesh. No combat/damage/health/death, no breeding/feeding/taming, n
 save/load persistence — see the proposal's Non-goals.
 
 ## Definitions
-- **Adapter**: `PassiveMobWorldAdapter`, the sole bridge between `World`/`BlockRegistry`/
-  `TerrainGenerator`/`BiomeRegistry` and the `ShapeWorld`/`NavigationWorld`/`SpawnWorld` interfaces.
+- **Adapter**: `PassiveMobWorldAdapter`, the sole bridge between `World`/`TerrainGenerator`/
+  `BiomeRegistry` and the `ShapeWorld`/`NavigationWorld`/`SpawnWorld` interfaces.
 - **Open-sky column**: a vertical run of non-solid cells from a given `y` up to `CONFIG.chunk.height`
   at a fixed `(x, z)`.
 - **Spawn-cycle sweep**: one invocation of `PassiveMobSystem.spawnCycle` over a list of chunks.
@@ -33,8 +33,8 @@ save/load persistence — see the proposal's Non-goals.
 ## Requirements
 
 ### Requirement: getCollisionShape reflects block solidity as a full cube or empty
-`PassiveMobWorldAdapter.getCollisionShape(x, y, z)` MUST return `VoxelShape.FULL_CUBE` when the
-world block at `(x, y, z)` is solid, and `VoxelShape.EMPTY` otherwise.
+`PassiveMobWorldAdapter.getCollisionShape(x, y, z)` MUST return `VoxelShape.FULL_CUBE` when
+`world.isSolid(x, y, z)` is `true`, and `VoxelShape.EMPTY` otherwise.
 
 #### Scenario: a solid block yields a full cube
 - **GIVEN** a world where `(0, 0, 0)` holds a solid block

@@ -62,6 +62,16 @@ import type { ExperienceSnapshot } from '../player/ExperienceSystem';
 import { worldToChunk } from '../world/WorldCoordinates';
 import { GameAudio } from '../audio/GameAudio';
 import { WorldLife } from '../world/WorldLife';
+import { createDefaultEntityRegistry } from '../data/EntityType';
+import { createDefaultBiomeRegistry } from '../data/Biome';
+import { createResourceId, type ResourceId } from '../data/ResourceId';
+import {
+  PassiveMobWorldAdapter,
+  PassiveMobSystem,
+  SPAWN_CYCLE_INTERVAL_TICKS,
+  type ChunkCoord,
+} from '../simulation/PassiveMobBaseline';
+import { PassiveMobRenderer } from '../rendering/PassiveMobRenderer';
 
 interface GameSaveSnapshot {
   version: 1;
@@ -107,6 +117,11 @@ export class Game {
   private readonly lighting: Lighting;
   private readonly environment: Environment;
   private readonly worldLife: WorldLife;
+  /** Passive mob baseline (145): world adapter, entity/AI/physics system, and mesh renderer. */
+  private readonly passiveMobWorld: PassiveMobWorldAdapter;
+  private readonly passiveMobs: PassiveMobSystem;
+  private readonly passiveMobRenderer: PassiveMobRenderer;
+  private readonly overworldDimension: ResourceId;
   private readonly audio: GameAudio;
 
   private readonly world: World;
@@ -224,6 +239,16 @@ export class Game {
     this.worldBlockAccess = new WorldBlockAccess(this.world);
     this.saveStorageKey = `voxel-game-edits-v1:${this.seed}`;
     this.loadSavedEdits();
+
+    this.overworldDimension = createResourceId('minecraft', 'overworld');
+    this.passiveMobWorld = new PassiveMobWorldAdapter({
+      world: this.world,
+      generator,
+      biomeRegistry: createDefaultBiomeRegistry(),
+    });
+    this.passiveMobs = new PassiveMobSystem(createDefaultEntityRegistry(), this.seed);
+    this.passiveMobRenderer = new PassiveMobRenderer(this.renderer.scene);
+    this.resources.track(this.passiveMobRenderer);
 
     this.player = new Player();
     this.spawnPlayerSafely(generator);
@@ -440,6 +465,8 @@ export class Game {
         this.experience,
       );
       this.worldLife.update(dt, this.player.position);
+      this.tickPassiveMobs(dt);
+      this.passiveMobRenderer.sync(this.passiveMobs.getActivePigs());
       const headY = Math.floor(this.player.position.y + CONFIG.player.eyeHeight);
       const headSubmerged = this.world.getBlock(
         Math.floor(this.player.position.x),
@@ -571,6 +598,29 @@ export class Game {
         }
       }
     });
+  }
+
+  /**
+   * Passive mob baseline (145): throttled spawn-cycle sweep over currently-simulating chunks
+   * (every {@link SPAWN_CYCLE_INTERVAL_TICKS} frames), then a per-frame AI/physics tick over the
+   * live pig set restricted to the chunk-ticking set.
+   */
+  private tickPassiveMobs(dt: number): void {
+    if (this.simTick % SPAWN_CYCLE_INTERVAL_TICKS === 0) {
+      const seen = new Set<string>();
+      const chunks: ChunkCoord[] = [];
+      this.world.forEachLoadedChunk((cx, _cy, cz) => {
+        const key = `${cx},${cz}`;
+        if (!seen.has(key) && this.world.isChunkSimulating(cx, cz)) {
+          seen.add(key);
+          chunks.push({ cx, cz });
+        }
+      });
+      this.passiveMobs.spawnCycle(this.passiveMobWorld, this.overworldDimension, chunks, (x, y, z) =>
+        Math.hypot(x - this.player.position.x, y - this.player.position.y, z - this.player.position.z),
+      );
+    }
+    this.passiveMobs.tick(dt, this.passiveMobWorld, (cx, cz) => this.world.isChunkSimulating(cx, cz));
   }
 
   /** Whether the block at (x, y, z) has a registered `onRandomTick` behavior. */

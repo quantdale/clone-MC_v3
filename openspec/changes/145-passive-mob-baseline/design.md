@@ -1,10 +1,11 @@
 # Design: 145-passive-mob-baseline
 
 ## Context/current state
-- `World` exposes `getBlock`/`isSolid`-backed queries but none of `ShapeWorld.getCollisionShape`
-  (057), `NavigationWorld` (134), or `SpawnWorld`'s light methods (137) — every prior change that
-  declared one of those interfaces did so explicitly to avoid touching `World`, per their own
-  design docs.
+- `World` already exposes `getBlock(x,y,z)` and `isSolid(x,y,z)` directly (the latter delegating to
+  `BlockRegistry.isSolid`), but none of `ShapeWorld.getCollisionShape` (057), `NavigationWorld`
+  (134), or `SpawnWorld`'s light methods (137) — every prior change that declared one of those
+  interfaces did so explicitly to avoid touching `World`, per their own design docs. Since `World`
+  already exposes `isSolid` directly, the adapter needs no separate `BlockRegistry` dependency.
 - `TerrainGenerator.getBiomeAt(x, z): Biome` returns a legacy `'plains'|'forest'|'desert'|'taiga'`
   string, unrelated to 016's `data/Biome.ts` `BiomeRegistry`/`BiomeTypeDefinition` that
   `MobSpawnRules.canSpawn` requires. The four legacy keys happen to match four of
@@ -34,8 +35,8 @@
 
 ## Invariants
 - `PassiveMobWorldAdapter.getCollisionShape(x, y, z)` returns `VoxelShape.FULL_CUBE` when
-  `blockRegistry.isSolid(world.getBlock(x, y, z))`, else `VoxelShape.EMPTY` — always one of exactly
-  those two values, never a partial shape.
+  `world.isSolid(x, y, z)`, else `VoxelShape.EMPTY` — always one of exactly those two values, never
+  a partial shape.
 - `PassiveMobWorldAdapter.getSkyLight(x, y, z)` returns `15` when every cell `(x, yy, z)` for
   `yy` in `[y, CONFIG.chunk.height)` is non-solid, else `0`. `getBlockLight` always returns `0`.
 - `PassiveMobWorldAdapter.getBiomeDefinition(x, z)` never returns `undefined` for the four legacy
@@ -57,12 +58,18 @@
 
 export interface PassiveMobWorldDeps {
   world: World;
-  blockRegistry: BlockRegistry;
   generator: TerrainGenerator;
   biomeRegistry: BiomeRegistry;
 }
 
-export class PassiveMobWorldAdapter implements ShapeWorld, NavigationWorld, SpawnWorld {
+// The full world-access surface PassiveMobSystem needs; PassiveMobSystem depends on this
+// interface (not the concrete adapter), so tests can supply a plain object literal.
+export interface PassiveMobWorld extends ShapeWorld, NavigationWorld, SpawnWorld {
+  getBiomeDefinition(x: number, z: number): BiomeTypeDefinition;
+  getSurfaceHeightAt(x: number, z: number): number;
+}
+
+export class PassiveMobWorldAdapter implements PassiveMobWorld {
   constructor(deps: PassiveMobWorldDeps);
   getCollisionShape(x: number, y: number, z: number): VoxelShape;
   getBlockId(x: number, y: number, z: number): number;
@@ -82,12 +89,12 @@ export interface ChunkCoord { readonly cx: number; readonly cz: number; }
 export class PassiveMobSystem {
   constructor(registry: EntityRegistry, seed: number);
   spawnCycle(
-    world: PassiveMobWorldAdapter,
+    world: PassiveMobWorld,
     dimension: ResourceId,
     chunks: readonly ChunkCoord[],
     nearestPlayerDistance: (x: number, y: number, z: number) => number,
   ): number;
-  tick(dt: number, world: PassiveMobWorldAdapter, isChunkTicking: (cx: number, cz: number) => boolean): void;
+  tick(dt: number, world: PassiveMobWorld, isChunkTicking: (cx: number, cz: number) => boolean): void;
   getActivePigs(): readonly EntityInstance[];
 }
 ```
