@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **127-bonemeal-growth-hooks — VERIFIED 100%**
-- Active implementation change: **127-bonemeal-growth-hooks — VERIFIED**
-- Next change: **128-fire-block-simulation — NOT YET ACTIVE (artifacts pending)**
-- 127 task ledger: **6 total task groups, 6 completed**
-- 127 completion: **100%**
-- 127 mandatory bonemeal-growth-hooks requirements: **PASS**
-- 127 required-test gate: **PASS — unit 1654/1654, E2E 21/21**
-- 127 advancement allowed: **Yes**
-- Session-start head: `e2c8066d1b178d01baf6f0775133e8fbb6cd581a`
-- Validated head: `5a23ee3ed7dd76620e832b7aff53779456dba1b3` (127 feature commit)
-- Next exact action: **Advance to 128-fire-block-simulation. Read its artifacts (and SPEC_AUTHORING_PROTOCOL.md if incomplete); author/validate proposal/design/tasks/specs/verification; implement ignition, age, burn/spread/extinguish with bounded scheduled/random ticks; verify full gate; commit + push; advance program state.**
+- Last completed change: **128-fire-block-simulation — VERIFIED 100%**
+- Active implementation change: **128-fire-block-simulation — VERIFIED**
+- Next change: **129-entity-core — NOT YET ACTIVE (artifacts pending)**
+- 128 task ledger: **8 total task groups, 8 completed**
+- 128 completion: **100%**
+- 128 mandatory fire-block-simulation requirements: **PASS**
+- 128 required-test gate: **PASS — unit 1674/1674, E2E 21/21**
+- 128 advancement allowed: **Yes**
+- Session-start head: `201873635678a21651b6ce02e64bdddc2aca25ec`
+- Validated head: `559f468221fcc7e5337e12269018076ee9a72107` (128 feature commit)
+- Next exact action: **Advance to 129-entity-core. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (stable entity IDs, transforms, velocity, type, lifecycle, dimension ownership); implement; verify full gate; commit + push; advance program state.**
 
 ## What 119 implemented
 
@@ -735,6 +735,50 @@ the 1631-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Bonemeal (127), hoe tilling, and a rain/weather hook are explicit non-goals
 (documented). Advance to 127.
 
+## What 128 implemented
+
+Change 128 adds the Fire block and a deterministic fire simulation: ignition, aging, environmental
+extinguish, burning its flammable support at end of life, and bounded seeded spread. It is the fire
+block + behavior — not a Flint & Steel tool item, not `ScheduledTickQueue` wiring (not yet integrated
+into the `Game` tick loop), and not player/entity damage, light, particles, or sound.
+
+- `src/world/BlockRegistry.ts` (EDIT) — `BlockId.Fire = 36`; `FIRE_SCHEMA` (integer `age` 0..15); a
+  fire definition in `createDefaultBlockRegistry` (non-solid, non-opaque, non-breakable, transparent,
+  no `dropItem`, `defaultState { age: 0 }`).
+- `src/simulation/BlockBehavior.ts` (EDIT) — `BlockBehaviorContext.seed?: number` (additive/optional)
+  so behaviors can derive deterministic per-cell randomness from the world seed.
+- `src/simulation/FireBehavior.ts` (NEW) — `FIRE_AGE_PROPERTY='age'`, `MAX_FIRE_AGE=15`,
+  `SPREAD_PROBABILITY=0.5`, `MAX_SPREAD_PER_TICK=2`; `isFlammable` (Wood/Leaves/Planks only);
+  `parseFireAge` (invalid → 0); `canIgnite`/`ignite` (air over flammable support only, never throws);
+  `isAdjacentToWater` (6 orthogonal neighbors); `spreadRoll` (pure `hash32`-derived `[0,1)`);
+  `spreadFire` (≤ 2 ignitions among 6 fixed neighbors, roll-gated); `FireBlockBehavior.onRandomTick`
+  (extinguish unsupported/water-adjacent without burning; else advance age, and at end-of-life
+  extinguish AND burn the flammable support to Air; live fire attempts bounded spread). Safe on a
+  non-fire cell, a throwing state read, and a state-less access.
+- `src/engine/Game.ts` (EDIT) — imports/constructs `FireBlockBehavior`, registers it against the fire
+  block key, and passes `seed: this.seed` in the random-tick `BlockBehaviorContext`.
+- Tests: `tests/unit/FireBehavior.test.ts` (NEW, 20) plus updates to four pre-existing hard-coded-count
+  tests discovered during the gate run: `BlockRegistry.test.ts` (`all()` length 24→25 + fire row),
+  `BlockPropertySchema.test.ts` (fire added to the non-empty-schema exclusion list),
+  `BlockItemSeparation.test.ts` (row `[36, 'fire', null]`), `BlockStateRegistry.test.ts` (state-count
+  formula `-2+8+8` → `-3+8+8+16` + fire enumeration branch).
+
+## Validation evidence (128)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1674/1674 (prior 1654 + 20 new `FireBehavior.test.ts`)
+- production build: PASS (`tsc --noEmit && vite build`, 83 modules)
+- E2E: PASS 21/21 (fire never spawns in current terrain/worldgen/crafting paths; no interaction with
+  existing flows)
+
+## Advancement decision
+
+Change 128 is **VERIFIED** at 8/8 task groups (100%). All gates are green: typecheck, lint, the
+1674-unit suite, production build, and the required E2E suite (21/21). No advancement exception was
+needed. A Flint & Steel tool item, `ScheduledTickQueue` game-loop wiring, and player/entity
+damage/light/particles are explicit non-goals (documented, deferred). Advance to 129.
+
 ## What 127 implemented
 
 Change 127 adds the bonemeal (fertilization) interface and the first crop bonemeal behavior. It is the
@@ -769,15 +813,15 @@ the 1654-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Sapling/tree bonemeal is an explicit non-goal (deferred; no Sapling block
 exists) and the `FertilizerRegistry` extension point is documented. Advance to 128.
 
-## Next change: 128 (pending artifacts)
+## Next change: 129 (pending artifacts)
 
-`128-fire-block-simulation` is named in `CHANGE_SEQUENCE.md` with scope "Ignition, age, burn/spread/
-extinguish with bounded scheduled/random ticks." Per `AGENTS.md`, a change lacking full artifacts is a
+`129-entity-core` is named in `CHANGE_SEQUENCE.md` with scope "Stable IDs, transforms, velocity,
+type, lifecycle, dimension ownership." Per `AGENTS.md`, a change lacking full artifacts is a
 hard pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md`
 before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 127
-verification. Change 128 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 128
+verification. Change 129 is the next change; its artifacts must be authored and
 validated before implementation begins.
