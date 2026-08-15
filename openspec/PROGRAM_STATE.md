@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **120-enchanting-table — VERIFIED 100%**
-- Active implementation change: **120-enchanting-table — VERIFIED**
-- Next change: **121-status-effect-runtime — NOT YET ACTIVE (artifacts pending)**
-- 120 task ledger: **5 total task groups, 5 completed**
-- 120 completion: **100%**
-- 120 mandatory enchanting-table requirements: **PASS**
-- 120 required-test gate: **PASS — unit 1501/1501, E2E 21/21**
-- 120 advancement allowed: **Yes**
-- Session-start head: `ba1d6754ceb928a0cfef840b524760f43b9afa0e`
-- Validated head: `3d19ae7c290e51b9b27bb8679a7134c98a847cba` (120 feature commit)
-- Next exact action: **Advance to 121-status-effect-runtime. Read it (and SPEC_AUTHORING_PROTOCOL.md if artifacts incomplete), author/validate proposal/design/tasks/specs/verification, implement effect ticking, duration/amplifier stacking, and attribute hooks using original data, verify full gate, commit + push, advance program state.**
+- Last completed change: **121-status-effect-runtime — VERIFIED 100%**
+- Active implementation change: **121-status-effect-runtime — VERIFIED**
+- Next change: **122-potion-item-data — NOT YET ACTIVE (artifacts pending)**
+- 121 task ledger: **6 total task groups, 6 completed**
+- 121 completion: **100%**
+- 121 mandatory status-effect-runtime requirements: **PASS**
+- 121 required-test gate: **PASS — unit 1522/1522, E2E 21/21**
+- 121 advancement allowed: **Yes**
+- Session-start head: `94a31ae6d87229d501b95800757017ec8ee8ebb1`
+- Validated head: `63412f2d911d96adef6820aa7a5f1de0daead3fb` (121 feature commit)
+- Next exact action: **Advance to 122-potion-item-data. Read its artifacts (and SPEC_AUTHORING_PROTOCOL.md if incomplete); author/validate proposal/design/tasks/specs/verification; implement potion contents in item components and consume/splash payload primitives; verify full gate; commit + push; advance program state.**
 
 ## What 119 implemented
 
@@ -477,15 +477,58 @@ an explicit non-goal of 120 (deferred change) and consumes the
 `EnchantingTableSession` produced here; no persisted-schema change was required.
 Advance to 121.
 
-## Next change: 121 (pending artifacts)
+## What 121 implemented
 
-`121-status-effect-runtime` is named in `CHANGE_SEQUENCE.md` with scope "Effect
-ticking, duration/amplifier stacking, attribute hooks." Per `AGENTS.md`, a change
-lacking full artifacts is a hard pre-implementation block. Author and validate
-those artifacts via `SPEC_AUTHORING_PROTOCOL.md` before any production code.
+Change 121 adds the status-effect runtime: a per-entity `StatusEffectManager` that
+owns the set of active effects and reflects them into the existing 012 attribute
+model via an effect→attribute hook table. It is the ticking/stacking/hook/serialize
+core — not a gameplay consumer (movement/damage/rendering wiring is a downstream
+change), and it leaves the 012/014 contracts unchanged.
+
+- `src/data/StatusEffectManager.ts` (NEW) — `EffectAttributeHook` interface and
+  `DEFAULT_EFFECT_ATTRIBUTE_HOOKS` (speed→movement_speed ×1.2/amp, slowness→
+  movement_speed ×0.85/amp, strength→attack_damage +3/amp, weakness→attack_damage
+  −4/amp, health_boost→max_health +4/amp, haste→attack_speed ×1.1/amp,
+  mining_fatigue→attack_speed ×0.9/amp). `StatusEffectManager`:
+  - strict type resolution (`add` throws on an unregistered id);
+  - duration clamped to `maxDuration`, amplifier clamped to `maxAmplifier`
+    (non-finite/negative sanitized to 0 before instance construction);
+  - one instance per type; stacking rule `amplifier = max(cur, incoming)`, and
+    when the incoming amplifier is strictly stronger the duration is replaced,
+    otherwise the longer duration is kept;
+  - `applyHook`/`removeHook` keyed on the effect-type `ResourceId` (unique modifier
+    id; `removeHook` runs before re-apply so 012 `addModifier` never hits a
+    duplicate);
+  - `tick(dt)` ignores non-finite/negative `dt`, decrements, removes + unhooks
+    expired, returns the expired list (INSTANT effects surface here on first tick);
+  - `serialize`/`deserialize` (atomic: validate-all-then-clear+re-add);
+  - `clear`/`get`/`getAll`/`remove`/`getAttribute`/`attributes`.
+
+## Validation evidence (121)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1522/1522 (prior 1501 + 21 new `StatusEffectManager.test.ts`)
+- production build: PASS (`tsc --noEmit && vite build`, 68 modules)
+- E2E: PASS 21/21
+
+## Advancement decision
+
+Change 121 is **VERIFIED** at 6/6 task groups (100%). All gates are green:
+typecheck, lint, the 1522-unit suite, production build, and the required E2E
+suite (21/21). No advancement exception was needed. Gameplay consumers of the
+manager (player movement speed, attack damage, etc.) are an explicit non-goal of
+121 (downstream change) and 012/014 are unmodified. Advance to 122.
+
+## Next change: 122 (pending artifacts)
+
+`122-potion-item-data` is named in `CHANGE_SEQUENCE.md` with scope "Potion contents
+in item components and consume/splash payload primitives." Per `AGENTS.md`, a change
+lacking full artifacts is a hard pre-implementation block. Author and validate those
+artifacts via `SPEC_AUTHORING_PROTOCOL.md` before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 120
-verification. Change 121 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 121
+verification. Change 122 is the next change; its artifacts must be authored and
 validated before implementation begins.

@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "120-enchanting-table",
+  "currentChange": "121-status-effect-runtime",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "120-enchanting-table",
-  "nextChange": "121-status-effect-runtime",
-  "completedTasks": 5,
-  "totalTasks": 5,
+  "lastCompletedChange": "121-status-effect-runtime",
+  "nextChange": "122-potion-item-data",
+  "completedTasks": 6,
+  "totalTasks": 6,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -15,11 +15,9 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "ba1d6754ceb928a0cfef840b524760f43b9afa0e",
-  "lastValidatedHead": "3d19ae7c290e51b9b27bb8679a7134c98a847cba",
-  "lastKnownHead": "3d19ae7c290e51b9b27bb8679a7134c98a847cba",
-  "lastCompletedTask": "120: all 5 task groups complete; enchanting-table VERIFIED. EnchantingTable core (slotCost/generateEnchantments/enchantCosts/createSession/apply with single SeedRng seeding + 'empty' reason); ItemRegistry ids 28-31 + enchantability seeds (WoodenPickaxe 15, StonePickaxe 5, WoodenAxe 15, Book 1); BlockRegistry ids 32-33 beyond item range to avoid legacy-id collision; ExperienceSystem.spendLevels; Inventory.setSelectedStack; PlayerInteraction 'use' action on table; Game.openEnchanting/countBookshelves/getEnchantingSession/applyEnchantingOffer. Full gate green (typecheck, lint, 1501 unit, build, 21 e2e).",
-  "nextExactAction": "Advance to 121-status-effect-runtime. Read it (and SPEC_AUTHORING_PROTOCOL.md if artifacts incomplete), author/validate proposal/design/tasks/specs/verification, implement effect ticking, duration/amplifier stacking, and attribute hooks using original data, verify full gate, commit + push, advance program state.",
+  "sessionStartHead": "94a31ae6d87229d501b95800757017ec8ee8ebb1",
+  "lastCompletedTask": "121: all 6 task groups complete; status-effect-runtime VERIFIED. StatusEffectManager (src/data/StatusEffectManager.ts) with strict type resolution, duration/amplifier clamping, max-amplifier duration-refresh stacking rule, default effect->attribute hook table (speed/slowness/strength/weakness/health_boost/haste/mining_fatigue), tick+expire+unhook, INSTANT surfacing, atomic serialize/deserialize, and 21 unit tests. 012/014 contracts unchanged. Full gate green (typecheck, lint, 1522 unit, build, 21 e2e).",
+  "nextExactAction": "Advance to 122-potion-item-data. Read its artifacts (and SPEC_AUTHORING_PROTOCOL.md if incomplete); author/validate proposal/design/tasks/specs/verification; implement potion contents in item components and consume/splash payload primitives; verify full gate; commit + push; advance program state.",
   "blockers": [],
   "validationResults": [
     {
@@ -1181,8 +1179,20 @@
       "e2e": "PASS 21/21",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "120 VERIFIED 5/5 (100%). EnchantingTable core (slotCost bounded 1..255, generateEnchantments with applicable/level/conflict invariants + [] for non-enchantable, enchantCosts clamp 1..30, createSession with single SeedRng seeded by world seed + 'enchanting_table' stream + item/bookshelf/level, 3 offers, apply atomic with 'empty' reason); ItemRegistry ids 28-31 (lapis/book/bookshelf/enchanting_table) + enchantability seeds; BlockRegistry ids 32-33 placed beyond item range 1..31 to avoid legacy-id collision; ExperienceSystem.spendLevels (preserves progress fraction, no-op on bad/insufficient); Inventory.setSelectedStack; PlayerInteraction 'use' action emits on enchanting_table; Game.openEnchanting/countBookshelves(5x5x2 shell, cap 15)/getEnchantingSession/applyEnchantingOffer. DOM panel explicit non-goal (deferred). 25 new unit tests; full gate green (typecheck, lint, 1501 unit, build, 21 e2e)."
+    },
+    {
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 1522/1522 (prior 1501 + 21 new: StatusEffectManager)",
+      "build": "PASS via tsc --noEmit && vite build (68 modules)",
+      "e2e": "PASS 21/21",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "121 VERIFIED 6/6 tasks; attribute-hook runtime for status effects; no consumer wiring (downstream).",
+      "head": "63412f2d911d96adef6820aa7a5f1de0daead3fb"
     }
   ],
   "publishedHead": "3d19ae7c290e51b9b27bb8679a7134c98a847cba",
-  "publishedAt": "2026-08-15T04:27:31Z"
+  "publishedAt": "2026-08-15T04:27:31Z",
+  "lastValidatedHead": "63412f2d911d96adef6820aa7a5f1de0daead3fb",
+  "lastKnownHead": "63412f2d911d96adef6820aa7a5f1de0daead3fb"
 }
