@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **109-furnace-block-entity — VERIFIED 100%**
-- Active implementation change: **109-furnace-block-entity — VERIFIED**
-- Next change: **110-furnace-recipes-and-fuels — NOT YET ACTIVE (artifacts pending)**
-- 109 task ledger: **5 total tasks, 5 completed**
-- 109 completion: **100%**
-- 109 mandatory furnace-block-entity requirements: **PASS**
-- 109 required-test gate: **PASS — unit 1253/1253, E2E 19/19**
-- 109 advancement allowed: **Yes**
-- Session-start head: `d282bbb01b4eabbdc76daaa05e78ccff81f2d685`
-- Validated head: `8e6070dd45b747d60ddc5b93d87005e48eb2d500`
-- Next exact action: **Advance to 110-furnace-recipes-and-fuels. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (110 artifacts NOT yet present — authoring is a hard pre-implementation block), validate, implement smelting recipes, fuel values, XP output, and transactional behavior (a default `FurnaceContext` consumed by 109's `tickFurnace`; XP accumulation and output transaction semantics), verify full gate, commit + push, advance program state.**
+- Last completed change: **110-furnace-recipes-and-fuels — VERIFIED 100%**
+- Active implementation change: **110-furnace-recipes-and-fuels — VERIFIED**
+- Next change: **111-item-entity-drops — NOT YET ACTIVE (artifacts pending)**
+- 110 task ledger: **6 total tasks, 6 completed**
+- 110 completion: **100%**
+- 110 mandatory furnace-recipes-and-fuels requirements: **PASS**
+- 110 required-test gate: **PASS — unit 1267/1267, E2E 19/19**
+- 110 advancement allowed: **Yes**
+- Session-start head: `e715b661b40b252baf64d7abe190eee40eb4836f`
+- Validated head: `e715b661b40b252baf64d7abe190eee40eb4836f`
+- Next exact action: **Advance to 111-item-entity-drops. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (111 artifacts must be authored before implementation), validate, implement world item entity spawning for block/entity drops, verify full gate, commit + push, advance program state.**
 
 ## What 109 implemented
 

@@ -143,7 +143,7 @@ describe('createDefaultTypedRecipes', () => {
   it('registers exactly the documented defaults deterministically', () => {
     const a = createDefaultTypedRecipes();
     const b = createDefaultTypedRecipes();
-    expect(a.size).toBe(4);
+    expect(a.size).toBe(5);
     expect(a.get('wooden_pickaxe')).toEqual({
       kind: 'shaped',
       key: 'wooden_pickaxe',
@@ -172,6 +172,14 @@ describe('createDefaultTypedRecipes', () => {
       result: { item: 'minecraft:stone', count: 1 },
       cookingTime: 200,
       experience: 0.1,
+    });
+    expect(a.get('smelt_raw_iron')).toEqual({
+      kind: 'processing',
+      key: 'smelt_raw_iron',
+      input: 'minecraft:raw_iron',
+      result: { item: 'minecraft:iron_ingot', count: 1 },
+      cookingTime: 200,
+      experience: 0.7,
     });
     expect(b).toEqual(a);
     // Every default re-validates.

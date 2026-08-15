@@ -49,6 +49,7 @@ export const TILE_INDEX = {
   rawIron: 26,
   chest: 27,
   furnace: 28,
+  ironIngot: 29,
 } as const;
 
 export function tileUV(tile: number): { u0: number; v0: number; u1: number; v1: number } {
@@ -562,6 +563,27 @@ export class TextureAtlas {
       ctx.fillRect(8, 7, 2, 2);
       ctx.fillStyle = '#f2a33c';
       ctx.fillRect(6, 8, 2, 1);
+    });
+    // 29: iron_ingot — a metallic ingot bar with beveled edges and a bright highlight.
+    this.drawTile(TILE_INDEX.ironIngot, (ctx) => {
+      ctx.clearRect(0, 0, TILE_SIZE, TILE_SIZE);
+      // Darker base plate behind the bar for contrast.
+      ctx.fillStyle = '#2b2e33';
+      ctx.fillRect(2, 4, TILE_SIZE - 4, TILE_SIZE - 8);
+      // Main ingot body with a vertical gradient feel via stacked bands.
+      ctx.fillStyle = '#b8bcc4';
+      ctx.fillRect(4, 6, TILE_SIZE - 8, TILE_SIZE - 12);
+      ctx.fillStyle = '#d7dbe2';
+      ctx.fillRect(4, 6, TILE_SIZE - 8, 2);
+      ctx.fillStyle = '#9aa0aa';
+      ctx.fillRect(4, TILE_SIZE - 8, TILE_SIZE - 8, 2);
+      // Specular highlight along the upper edge.
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(6, 7, TILE_SIZE - 12, 1);
+      // Tapered end shadows for the classic ingot silhouette.
+      ctx.fillStyle = '#7e848e';
+      ctx.fillRect(4, 6, 2, TILE_SIZE - 12);
+      ctx.fillRect(TILE_SIZE - 6, 6, 2, TILE_SIZE - 12);
     });
   }
 

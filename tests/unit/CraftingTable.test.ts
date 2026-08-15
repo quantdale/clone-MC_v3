@@ -38,7 +38,7 @@ describe('session lifecycle', () => {
     expect(session.grid.width).toBe(3);
     expect(session.grid.height).toBe(3);
     expect(session.grid.slots.every((s) => s === null)).toBe(true);
-    expect(session.recipes.length).toBe(4);
+    expect(session.recipes.length).toBe(5);
   });
 
   it('updates immutably and rejects invalid cells/slots', () => {

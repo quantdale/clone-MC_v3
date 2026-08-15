@@ -79,6 +79,7 @@ describe('furnace state construction and validation', () => {
       burnTimeTotal: 0,
       smeltTime: 0,
       smeltTimeTotal: 0,
+      xp: 0,
     });
     expect(validateFurnaceState(s)).toEqual(s);
     expect(furnaceIsLit(s)).toBe(false);

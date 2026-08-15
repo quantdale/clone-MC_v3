@@ -247,5 +247,13 @@ export function createDefaultTypedRecipes(): TypedRecipeRegistry {
     cookingTime: 200,
     experience: 0.1,
   });
+  registry.register({
+    kind: 'processing',
+    key: 'smelt_raw_iron',
+    input: 'minecraft:raw_iron',
+    result: { item: 'minecraft:iron_ingot', count: 1 },
+    cookingTime: 200,
+    experience: 0.7,
+  });
   return registry;
 }

@@ -106,6 +106,7 @@ describe('block/item registry separation', () => {
       [24, null, 'raw_iron'],
       [25, null, 'chest'],
       [26, null, 'furnace'],
+      [27, null, 'iron_ingot'],
     ];
     for (const [id, blockPath, itemPath] of table) {
       if (blockPath !== null) {
@@ -165,7 +166,7 @@ describe('block/item registry separation', () => {
     for (const item of itemRegistry.all()) {
       if (item.placeBlock === undefined) {
         // Non-placeable items (food, tools, raw materials) carry no placeBlock.
-        expect(item.isFood === true || item.toolKind !== undefined || ['stick', 'coal', 'raw_iron', 'bedrock'].includes(item.key)).toBe(true);
+        expect(item.isFood === true || item.toolKind !== undefined || ['stick', 'coal', 'raw_iron', 'iron_ingot', 'bedrock'].includes(item.key)).toBe(true);
         continue;
       }
       const placed = blockRegistry.getByResourceId(item.placeBlock);

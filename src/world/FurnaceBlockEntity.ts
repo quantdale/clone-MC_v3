@@ -55,7 +55,7 @@ export const FURNACE_OUTPUT_SLOT = 2;
 /** Default per-slot stack cap for furnace slots. */
 export const DEFAULT_FURNACE_SLOT_MAX_STACK = 64;
 
-/** A validated furnace state: three slots plus burn/smelt timers. */
+/** A validated furnace state: three slots plus burn/smelt timers and experience. */
 export interface FurnaceState {
   input: MenuSlot;
   fuel: MenuSlot;
@@ -68,6 +68,11 @@ export interface FurnaceState {
   smeltTime: number;
   /** Total ticks required to cook the current input (0 when no cook). */
   smeltTimeTotal: number;
+  /**
+   * Accumulated experience from completed cooks (finite >= 0; 110). Payloads without this
+   * field validate as 0 for backward compatibility.
+   */
+  xp: number;
 }
 
 /** Recipe/fuel values injected into the tick engine (110 supplies real data). */
@@ -78,6 +83,11 @@ export interface FurnaceContext {
   cookTicks(item: string): number;
   /** The smelting result of the given input, or null when not smeltable. */
   resultOf(item: string): { item: string; count: number } | null;
+  /**
+   * Experience granted per completed cook of the given input (110). Absent contexts grant 0,
+   * preserving 109 behavior.
+   */
+  experienceOf?(item: string): number;
 }
 
 function isPositiveInteger(v: unknown): v is number {
@@ -86,6 +96,10 @@ function isPositiveInteger(v: unknown): v is number {
 
 function isNonNegativeInteger(v: unknown): v is number {
   return typeof v === 'number' && Number.isInteger(v) && v >= 0;
+}
+
+function isFiniteNumber(v: unknown): v is number {
+  return typeof v === 'number' && Number.isFinite(v);
 }
 
 function validateSlot(slot: MenuSlot, what: string): void {
@@ -130,6 +144,7 @@ export function createFurnaceState(): FurnaceState {
     burnTimeTotal: 0,
     smeltTime: 0,
     smeltTimeTotal: 0,
+    xp: 0,
   };
 }
 
@@ -150,6 +165,7 @@ export function validateFurnaceState(input: unknown): FurnaceState {
     burnTimeTotal: r.burnTimeTotal as number,
     smeltTime: r.smeltTime as number,
     smeltTimeTotal: r.smeltTimeTotal as number,
+    xp: r.xp === undefined ? 0 : (r.xp as number),
   };
   for (const key of ['burnTime', 'burnTimeTotal', 'smeltTime', 'smeltTimeTotal'] as const) {
     if (!isNonNegativeInteger(state[key])) {
@@ -167,6 +183,9 @@ export function validateFurnaceState(input: unknown): FurnaceState {
   }
   if (state.smeltTime > state.smeltTimeTotal) {
     throw new Error('FurnaceBlockEntity: smeltTime must not exceed smeltTimeTotal');
+  }
+  if (!isFiniteNumber(state.xp) || state.xp < 0) {
+    throw new Error(`FurnaceBlockEntity: xp must be a finite number >= 0, got ${String(state.xp)}`);
   }
   return state;
 }
@@ -217,6 +236,7 @@ function tickOnce(state: FurnaceState, ctx: FurnaceContext): FurnaceState {
   const input = state.input;
   const fuel = state.fuel;
   const output = state.output;
+  // No input: progress resets.
   if (input.item === null) {
     return {
       input,
@@ -226,12 +246,15 @@ function tickOnce(state: FurnaceState, ctx: FurnaceContext): FurnaceState {
       burnTimeTotal: state.burnTimeTotal,
       smeltTime: 0,
       smeltTimeTotal: 0,
+      xp: state.xp,
     };
   }
 
   const result = ctx.resultOf(input.item);
   const cookTicks = result === null ? 0 : ctx.cookTicks(input.item);
   const canSmelt = result !== null && cookTicks > 0 && outputAccepts(output, result);
+  // Experience is captured before consumption so it keys off the cooked input (110).
+  const experience = ctx.experienceOf?.(input.item) ?? 0;
 
   // Input present but blocked (output full/mismatch or unsmeltable): paused.
   if (!canSmelt) {
@@ -243,6 +266,7 @@ function tickOnce(state: FurnaceState, ctx: FurnaceContext): FurnaceState {
       burnTimeTotal: state.burnTimeTotal,
       smeltTime: state.smeltTime,
       smeltTimeTotal: state.smeltTimeTotal,
+      xp: state.xp,
     };
   }
 
@@ -266,7 +290,8 @@ function tickOnce(state: FurnaceState, ctx: FurnaceContext): FurnaceState {
     burnTime -= 1;
     smeltTime = Math.min(smeltTimeTotal, smeltTime + 1);
     if (smeltTime >= smeltTimeTotal) {
-      // Cook complete: consume one input, merge the result into the output.
+      // Cook complete: consume one input, merge the result into the output, and grant the
+      // recipe's experience atomically (110).
       const nextInput = consumeOne(input);
       const nextOutput = addOne(output, result.item, result.count);
       return {
@@ -277,6 +302,7 @@ function tickOnce(state: FurnaceState, ctx: FurnaceContext): FurnaceState {
         burnTimeTotal,
         smeltTime: 0,
         smeltTimeTotal: 0,
+        xp: state.xp + experience,
       };
     }
   }
@@ -289,6 +315,7 @@ function tickOnce(state: FurnaceState, ctx: FurnaceContext): FurnaceState {
     burnTimeTotal,
     smeltTime,
     smeltTimeTotal,
+    xp: state.xp,
   };
 }
 
@@ -303,6 +330,7 @@ export function serializeFurnaceState(state: FurnaceState): unknown {
     burnTimeTotal: valid.burnTimeTotal,
     smeltTime: valid.smeltTime,
     smeltTimeTotal: valid.smeltTimeTotal,
+    xp: valid.xp,
   };
 }
 
@@ -320,6 +348,7 @@ export function deserializeFurnaceState(data: unknown): FurnaceState {
     burnTimeTotal: r.burnTimeTotal as number,
     smeltTime: r.smeltTime as number,
     smeltTimeTotal: r.smeltTimeTotal as number,
+    xp: r.xp === undefined ? 0 : (r.xp as number),
   };
   return validateFurnaceState(state);
 }
@@ -389,6 +418,7 @@ export function withFurnaceSlots(
     burnTimeTotal: valid.burnTimeTotal,
     smeltTime: valid.smeltTime,
     smeltTimeTotal: valid.smeltTimeTotal,
+    xp: valid.xp,
   };
   return validateFurnaceState(next);
 }
