@@ -22,6 +22,7 @@ import { type ResourceId, createResourceId } from '../data/ResourceId';
 import { type TagRegistry } from '../data/TagRegistry';
 import { type BlockTypeDefinition, ToolKind } from './BlockRegistry';
 import { type ItemTypeDefinition } from '../inventory/ItemRegistry';
+import { efficiencySpeedMultiplier } from '../inventory/EnchantmentApplication';
 
 /** The three tool kinds this game models. */
 const TOOL_KINDS: readonly ToolKind[] = [ToolKind.Pickaxe, ToolKind.Axe, ToolKind.Shovel];
@@ -111,12 +112,22 @@ export class HarvestRules {
   /**
    * Effective break duration in seconds. An effective tool divides `hardness` by
    * its `toolPower`; otherwise the base `hardness` applies. The result is floored
-   * at `MIN_BREAK_DURATION`.
+   * at `MIN_BREAK_DURATION`. When `efficiencyLevel > 0` (an Efficiency-enchanted
+   * tool), the effective duration is further divided by
+   * `efficiencySpeedMultiplier(efficiencyLevel)` (change 119).
    */
-  getBreakDuration(def: BlockTypeDefinition, tool: ItemTypeDefinition | undefined): number {
+  getBreakDuration(
+    def: BlockTypeDefinition,
+    tool: ItemTypeDefinition | undefined,
+    efficiencyLevel = 0,
+  ): number {
     const base = def.hardness;
     if (this.isEffectiveTool(def, tool) && tool?.toolPower !== undefined) {
-      return Math.max(MIN_BREAK_DURATION, base / tool.toolPower);
+      const effective = base / tool.toolPower;
+      if (efficiencyLevel > 0) {
+        return Math.max(MIN_BREAK_DURATION, effective / efficiencySpeedMultiplier(efficiencyLevel));
+      }
+      return Math.max(MIN_BREAK_DURATION, effective);
     }
     return Math.max(MIN_BREAK_DURATION, base);
   }

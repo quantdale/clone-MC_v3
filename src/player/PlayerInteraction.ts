@@ -7,6 +7,12 @@ import { BlockRegistry, BlockId, type BlockTypeDefinition } from '../world/Block
 import { ItemTypeRegistry, ItemId } from '../inventory/ItemRegistry';
 import { type HarvestRules } from '../world/HarvestRules';
 import { BlockSelector } from '../inventory/BlockSelector';
+import {
+  getEnchantmentLevel,
+  silkTouchActive,
+  fortuneBonusCount,
+} from '../inventory/EnchantmentApplication';
+import type { EnchantmentRegistry } from '../inventory/EnchantmentRegistry';
 import { type LootTableRegistry, type RandomSource, type LootContext, type LootStack, evaluate } from '../inventory/LootTable';
 import { raycastVoxel, RaycastResult } from '../math/DDA';
 import type { ItemEntityManager } from '../simulation/ItemEntityManager';
@@ -42,6 +48,8 @@ export class PlayerInteraction {
   private readonly harvestRules?: HarvestRules;
   private readonly xpOrbs?: XpOrbManager;
   private readonly xpOrbValue: number;
+  /** Optional enchantment registry (119) used to read selected-stack enchantments. */
+  private readonly enchantmentRegistry?: EnchantmentRegistry;
 
   private readonly eyePos = new THREE.Vector3();
   private readonly dir = new THREE.Vector3();
@@ -73,6 +81,7 @@ export class PlayerInteraction {
     harvestRules?: HarvestRules;
     xpOrbs?: XpOrbManager;
     xpOrbValue?: number;
+    enchantmentRegistry?: EnchantmentRegistry;
   }) {
     this.world = opts.world;
     this.registry = opts.registry;
@@ -90,6 +99,7 @@ export class PlayerInteraction {
     this.harvestRules = opts.harvestRules;
     this.xpOrbs = opts.xpOrbs;
     this.xpOrbValue = opts.xpOrbValue ?? 0;
+    this.enchantmentRegistry = opts.enchantmentRegistry;
 
     // A centered unit-cube wireframe marks the targeted block. Keeping the
     // geometry centered and placing it at block + 0.5 avoids the classic
@@ -230,7 +240,7 @@ export class PlayerInteraction {
       this.resetBreakProgress();
       return;
     }
-    const duration = this.getBreakDuration(def);
+    const duration = this.getBreakDuration(def, this.selectedEnchantLevel('efficiency'));
     this.breakProgress = Math.min(1, this.breakProgress + dt / duration);
     this.onBreakProgress?.(this.breakProgress);
     if (this.breakProgress >= 1) {
@@ -242,6 +252,7 @@ export class PlayerInteraction {
   private finishBreak(blockId: number): void {
     if (!this.target) return;
     const selectedTool = this.itemRegistry.getByLegacyId(this.selector.getSelectedItemId());
+    const selectedStack = this.selector.getSelectedStack?.() ?? null;
     this.world.setBlock(this.target.blockX, this.target.blockY, this.target.blockZ, BlockId.Air);
 
     const def = this.registry.get(blockId);
@@ -277,6 +288,29 @@ export class PlayerInteraction {
       }
     }
 
+    // Enchantment application (119): Silk Touch replaces the drops with the block
+    // itself; Fortune adds extra items to the primary drop. Silk Touch and Fortune
+    // are mutually exclusive enchantments, so they never both apply. All reads are
+    // guarded by `enchantmentRegistry` and `getSelectedStack` so legacy/no-enchant
+    // callers keep the prior behavior.
+    if (canHarvest && selectedStack && this.enchantmentRegistry) {
+      const silkLevel = getEnchantmentLevel(selectedStack, 'silk_touch', this.enchantmentRegistry);
+      if (silkTouchActive(silkLevel)) {
+        const blockItemId = this.blockItemId(def);
+        if (blockItemId !== undefined) {
+          stacks.length = 0;
+          stacks.push({ item: blockItemId, count: 1 });
+        }
+      } else {
+        const fortuneLevel = getEnchantmentLevel(selectedStack, 'fortune', this.enchantmentRegistry);
+        if (fortuneLevel > 0 && stacks.length > 0) {
+          const bonus = fortuneBonusCount(fortuneLevel, this.rng ?? Math.random);
+          const first = stacks[0]!;
+          stacks[0] = { item: first.item, count: first.count + bonus };
+        }
+      }
+    }
+
     // Spawn the resolved drops as world item entities at the block center.
     const primaryDropId = stacks[0]?.item;
     if (this.itemEntities && stacks.length > 0) {
@@ -290,7 +324,10 @@ export class PlayerInteraction {
     }
 
     if (selectedTool?.maxDurability !== undefined && this.selector.damageSelectedItem) {
-      if (this.selector.damageSelectedItem(1, selectedTool.maxDurability)) {
+      const unbreakingLevel = selectedStack && this.enchantmentRegistry
+        ? getEnchantmentLevel(selectedStack, 'unbreaking', this.enchantmentRegistry)
+        : 0;
+      if (this.selector.damageSelectedItem(1, selectedTool.maxDurability, unbreakingLevel, this.rng ?? Math.random)) {
         this.onToolBreak?.();
       }
     }
@@ -299,11 +336,28 @@ export class PlayerInteraction {
     this.resetBreakProgress();
   }
 
-  /** Resolve the effective break duration, applying the selected tool bonus. */
-  private getBreakDuration(def: BlockTypeDefinition): number {
+  /** Level of `key` on the selected stack, or 0 when no registry/stack enchant. */
+  private selectedEnchantLevel(key: string): number {
+    if (!this.enchantmentRegistry) return 0;
+    const stack = this.selector.getSelectedStack?.() ?? null;
+    if (!stack) return 0;
+    return getEnchantmentLevel(stack, key, this.enchantmentRegistry);
+  }
+
+  /** Item id for a block's own item form, or undefined when it has none. */
+  private blockItemId(def: BlockTypeDefinition): number | undefined {
+    try {
+      return this.itemRegistry.getByResourceId(def.resourceId).id;
+    } catch {
+      return undefined;
+    }
+  }
+
+  /** Resolve the effective break duration, applying the selected tool + Efficiency bonus. */
+  private getBreakDuration(def: BlockTypeDefinition, efficiencyLevel = 0): number {
     const tool = this.itemRegistry.getByLegacyId(this.selector.getSelectedItemId());
     if (this.harvestRules) {
-      return this.harvestRules.getBreakDuration(def, tool);
+      return this.harvestRules.getBreakDuration(def, tool, efficiencyLevel);
     }
     // Legacy fallback retained for callers that do not inject harvest rules
     // (prior behavior: speed bonus only for the exact preferred tool with a

@@ -28,6 +28,7 @@ import type { InteractionAction } from '../player/PlayerInteraction';
 import { ItemEntityManager } from '../simulation/ItemEntityManager';
 import { XpOrbManager } from '../simulation/XpOrbManager';
 import { LootTableRegistry, buildCurrentLootTables } from '../inventory/LootTable';
+import { createDefaultEnchantmentRegistry, type EnchantmentRegistry } from '../inventory/EnchantmentRegistry';
 import { Inventory } from '../inventory/Inventory';
 import type { InventorySnapshot } from '../inventory/Inventory';
 import { Hotbar } from '../inventory/Hotbar';
@@ -86,6 +87,8 @@ export class Game {
   private readonly experience: ExperienceSystem;
   private readonly xpOrbs: XpOrbManager;
   private readonly interaction: PlayerInteraction;
+  /** Enchantment definitions (118); fed to PlayerInteraction (119) for enchant reads. */
+  private readonly enchantmentRegistry: EnchantmentRegistry;
   private readonly lootTables: LootTableRegistry;
   /** Harvest rules (114): tier/mineability-aware break speed and drop gating. */
   private readonly harvestRules: HarvestRules;
@@ -138,6 +141,7 @@ export class Game {
     this.registry = this.itemRegistry;
     validateItemBlockCrossReferences(this.blockRegistry, this.itemRegistry);
     this.lootTables = new LootTableRegistry(buildCurrentLootTables(this.blockRegistry, this.itemRegistry), this.itemRegistry);
+    this.enchantmentRegistry = createDefaultEnchantmentRegistry();
     const blockTags = createDefaultBlockTags(this.blockRegistry);
     const itemTags = createDefaultItemTags(this.itemRegistry);
     this.harvestRules = new HarvestRules(blockTags, itemTags);
@@ -222,6 +226,7 @@ export class Game {
       },
       lootTables: this.lootTables,
       harvestRules: this.harvestRules,
+      enchantmentRegistry: this.enchantmentRegistry,
       rng: Math.random,
       itemEntities: this.itemEntities,
       xpOrbs: this.xpOrbs,

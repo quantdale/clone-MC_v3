@@ -1,13 +1,17 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
+import { createResourceId } from '../../src/data/ResourceId';
 import { Player } from '../../src/player/Player';
 import { PlayerInteraction } from '../../src/player/PlayerInteraction';
 import type { InputState } from '../../src/engine/InputTypes';
 import { BlockId, createDefaultBlockRegistry, createDefaultBlockTags } from '../../src/world/BlockRegistry';
 import { ItemId, createDefaultItemRegistry, createDefaultItemTags } from '../../src/inventory/ItemRegistry';
+import { createDefaultEnchantmentRegistry, type EnchantmentRegistry } from '../../src/inventory/EnchantmentRegistry';
+import { setStackEnchantments } from '../../src/inventory/EnchantmentApplication';
 import { HarvestRules } from '../../src/world/HarvestRules';
 import { ItemEntityManager } from '../../src/simulation/ItemEntityManager';
 import { XpOrbManager } from '../../src/simulation/XpOrbManager';
+import type { ItemStack } from '../../src/inventory/Inventory';
 
 function makeWorld(): import('../../src/world/WorldAccess').WorldAccess {
   return {
@@ -327,6 +331,182 @@ describe('player interaction selection', () => {
     expect(itemEntities.size).toBe(1);
     // The supplied manager was never handed to the interaction, so no orb appears.
     expect(xpOrbs.getXpOrbs()).toHaveLength(0);
+    interaction.dispose();
+  });
+});
+
+describe('player interaction enchantment application (119)', () => {
+  const rid = (k: string) => createResourceId('minecraft', k);
+  const enchantReg: EnchantmentRegistry = createDefaultEnchantmentRegistry();
+
+  function enchanted(id: number, key: string, level: number): ItemStack {
+    return setStackEnchantments({ id, count: 1 }, [{ id: rid(key), level }], enchantReg);
+  }
+
+  function aim(player: Player, camera: THREE.PerspectiveCamera): void {
+    camera.position.copy(player.eyePosition);
+    camera.lookAt(10, player.eyePosition.y, player.eyePosition.z);
+    camera.updateMatrixWorld(true);
+  }
+
+  it('replaces the drop with the block item under silk touch', () => {
+    const player = new Player({ position: new THREE.Vector3(0.5, 0, 0.5) });
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 20);
+    aim(player, camera);
+    const world = makeMutableWorld(BlockId.Dirt);
+    const itemEntities = new ItemEntityManager({ itemRegistry: createDefaultItemRegistry() });
+    const harvestRules = new HarvestRules(
+      createDefaultBlockTags(createDefaultBlockRegistry()),
+      createDefaultItemTags(createDefaultItemRegistry()),
+    );
+    const interaction = new PlayerInteraction({
+      world,
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
+      selector: {
+        getSelectedItemId: () => ItemId.Dirt,
+        getSlotCount: () => 1,
+        getSelectedStack: () => enchanted(ItemId.Dirt, 'silk_touch', 1),
+      },
+      player,
+      camera,
+      input: makeInput({ breakRequested: true, held: false }),
+      itemEntities,
+      harvestRules,
+      enchantmentRegistry: enchantReg,
+    });
+
+    interaction.update(0.016);
+
+    expect(world.getBlock(2, 1, 0)).toBe(BlockId.Air);
+    expect(itemEntities.size).toBe(1);
+    expect(itemEntities.getItemEntities()[0]!.item).toBe(ItemId.Dirt);
+    expect(itemEntities.getItemEntities()[0]!.count).toBe(1);
+    interaction.dispose();
+  });
+
+  it('adds fortune bonus items to the primary drop', () => {
+    const player = new Player({ position: new THREE.Vector3(0.5, 0, 0.5) });
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 20);
+    aim(player, camera);
+    const world = makeMutableWorld(BlockId.Dirt);
+    const itemEntities = new ItemEntityManager({ itemRegistry: createDefaultItemRegistry() });
+    const harvestRules = new HarvestRules(
+      createDefaultBlockTags(createDefaultBlockRegistry()),
+      createDefaultItemTags(createDefaultItemRegistry()),
+    );
+    const interaction = new PlayerInteraction({
+      world,
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
+      selector: {
+        getSelectedItemId: () => ItemId.Dirt,
+        getSlotCount: () => 1,
+        getSelectedStack: () => enchanted(ItemId.Dirt, 'fortune', 3),
+      },
+      player,
+      camera,
+      input: makeInput({ breakRequested: true, held: false }),
+      itemEntities,
+      harvestRules,
+      enchantmentRegistry: enchantReg,
+      rng: () => 0.99, // floor(0.99 * 4) = 3 extra
+    });
+
+    interaction.update(0.016);
+
+    expect(itemEntities.size).toBe(1);
+    const drop = itemEntities.getItemEntities()[0]!;
+    expect(drop.item).toBe(ItemId.Dirt);
+    expect(drop.count).toBe(4); // 1 base + 3 fortune
+    interaction.dispose();
+  });
+
+  it('passes the unbreaking level into tool durability wear', () => {
+    const player = new Player({ position: new THREE.Vector3(0.5, 0, 0.5) });
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 20);
+    aim(player, camera);
+    const world = makeMutableWorld(BlockId.Stone);
+    const harvestRules = new HarvestRules(
+      createDefaultBlockTags(createDefaultBlockRegistry()),
+      createDefaultItemTags(createDefaultItemRegistry()),
+    );
+    const captured: {
+      amount: number;
+      maxDur: number;
+      unbreaking: number | undefined;
+      rng: (() => number) | undefined;
+    } = {
+      amount: -1,
+      maxDur: -1,
+      unbreaking: undefined,
+      rng: undefined,
+    };
+    const interaction = new PlayerInteraction({
+      world,
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
+      selector: {
+        getSelectedItemId: () => ItemId.WoodenPickaxe,
+        getSlotCount: () => 1,
+        getSelectedStack: () => enchanted(ItemId.WoodenPickaxe, 'unbreaking', 3),
+        damageSelectedItem: (amount, maxDur, unbreaking, rng) => {
+          captured.amount = amount;
+          captured.maxDur = maxDur;
+          captured.unbreaking = unbreaking;
+          captured.rng = rng;
+          return false;
+        },
+      },
+      player,
+      camera,
+      input: makeInput({ breakRequested: true, held: false }),
+      harvestRules,
+      enchantmentRegistry: enchantReg,
+      rng: () => 0.5,
+    });
+
+    interaction.update(0.016);
+
+    expect(world.getBlock(2, 1, 0)).toBe(BlockId.Air);
+    expect(captured.amount).toBe(1);
+    expect(captured.maxDur).toBe(59);
+    expect(captured.unbreaking).toBe(3);
+    expect(captured.rng).toBeTypeOf('function');
+    interaction.dispose();
+  });
+
+  it('ignores enchantment effects when no registry is supplied', () => {
+    const player = new Player({ position: new THREE.Vector3(0.5, 0, 0.5) });
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 20);
+    aim(player, camera);
+    const world = makeMutableWorld(BlockId.Dirt);
+    const itemEntities = new ItemEntityManager({ itemRegistry: createDefaultItemRegistry() });
+    const harvestRules = new HarvestRules(
+      createDefaultBlockTags(createDefaultBlockRegistry()),
+      createDefaultItemTags(createDefaultItemRegistry()),
+    );
+    const interaction = new PlayerInteraction({
+      world,
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
+      selector: {
+        getSelectedItemId: () => ItemId.Dirt,
+        getSlotCount: () => 1,
+        getSelectedStack: () => enchanted(ItemId.Dirt, 'silk_touch', 1),
+      },
+      player,
+      camera,
+      input: makeInput({ breakRequested: true, held: false }),
+      itemEntities,
+      harvestRules,
+      // No enchantmentRegistry -> silk touch must not apply.
+    });
+
+    interaction.update(0.016);
+
+    // Without the registry the normal single drop is produced, not a silk drop.
+    expect(itemEntities.getItemEntities()[0]!.count).toBe(1);
     interaction.dispose();
   });
 });

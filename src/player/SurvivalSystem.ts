@@ -135,7 +135,7 @@ export class SurvivalSystem {
     if (this.dead || this.invulnerability > 0) return;
     let appliedAmount = amount;
     if (this.armor && !this.isBypass(reason)) {
-      const { reduced, absorbed } = this.armor.reduce(amount, false);
+      const { reduced, absorbed } = this.armor.reduce(amount, false, reason);
       appliedAmount = reduced;
       if (absorbed > 0) this.armor.applyWear(absorbed);
     }

@@ -77,6 +77,34 @@ describe('DurabilityRules.applyDamage', () => {
   });
 });
 
+describe('DurabilityRules.applyDamage unbreaking (119)', () => {
+  it('skips wear when the unbreaking roll clears the wear threshold', () => {
+    // level 1 -> wear probability 0.5 -> skip when rng() >= 0.5.
+    const before = tool(20, 2);
+    const result = applyDamage(59, before, 1, 1, () => 0.9);
+    expect(result.broke).toBe(false);
+    expect(result.stack.components?.get<DamageComponentValue>(DAMAGE_COMPONENT)?.damage).toBe(2);
+    expect(result.stack).toBe(before);
+  });
+
+  it('applies wear when the unbreaking roll falls below the threshold', () => {
+    const result = applyDamage(59, PRISTINE_TOOL, 1, 1, () => 0.1);
+    expect(result.broke).toBe(false);
+    expect(result.stack.components?.get<DamageComponentValue>(DAMAGE_COMPONENT)?.damage).toBe(1);
+  });
+
+  it('wears normally without an rng even when unbreaking is set', () => {
+    const result = applyDamage(59, PRISTINE_TOOL, 1, 3);
+    expect(result.broke).toBe(false);
+    expect(result.stack.components?.get<DamageComponentValue>(DAMAGE_COMPONENT)?.damage).toBe(1);
+  });
+
+  it('wears normally at unbreaking level 0', () => {
+    const result = applyDamage(59, PRISTINE_TOOL, 1, 0, () => 0.99);
+    expect(result.stack.components?.get<DamageComponentValue>(DAMAGE_COMPONENT)?.damage).toBe(1);
+  });
+});
+
 describe('DurabilityRules.isBroken', () => {
   it('returns false for a full tool', () => {
     expect(isBroken(59, tool(20, 0))).toBe(false);

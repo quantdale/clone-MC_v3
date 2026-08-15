@@ -302,18 +302,29 @@ export class Inventory implements BlockSelector {
     return Math.max(0, Math.min(maxDurability, maxDurability - damage));
   }
 
+  /** The full stack in the currently selected hotbar slot, or null when empty. */
+  getSelectedStack(): ItemStack | null {
+    return this.slots[this.selected] ?? null;
+  }
+
   /**
    * Damage the selected tool; returns true when the tool breaks. Delegates the
    * wear math to {@link applyDamage} (change 115) with identical observable
    * behavior: a break at zero zeros the stack and clears its components (so
-   * existing durability tests stay green).
+   * existing durability tests stay green). The optional `unbreakingLevel`/`rng`
+   * (change 119) let Unbreaking probabilistically skip wear.
    */
-  damageSelectedItem(amount: number, maxDurability: number): boolean {
+  damageSelectedItem(
+    amount: number,
+    maxDurability: number,
+    unbreakingLevel = 0,
+    rng?: () => number,
+  ): boolean {
     const stack = this.slots[this.selected];
     if (maxDurability <= 0 || !stack || stack.count <= 0) {
       return false;
     }
-    const result = applyDamage(maxDurability, stack, amount);
+    const result = applyDamage(maxDurability, stack, amount, unbreakingLevel, rng);
     this.slots[this.selected] = result.stack;
     return result.broke;
   }

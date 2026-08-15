@@ -13,6 +13,8 @@ import { ARMOR_SLOTS, type PlayerEquipment } from '../inventory/Equipment';
 import type { ItemTypeRegistry } from '../inventory/ItemRegistry';
 import type { ItemStack } from '../inventory/Inventory';
 import { applyDamage } from '../inventory/DurabilityRules';
+import { armorEnchantEPF, applyArmorEnchantReduction } from '../inventory/EnchantmentApplication';
+import type { EnchantmentRegistry } from '../inventory/EnchantmentRegistry';
 
 /** Aggregated worn-armor protection. Each field is clamped to [0, 20]. */
 export interface ArmorStats {
@@ -123,6 +125,7 @@ export class ArmorProtection {
   constructor(
     private readonly equipment: PlayerEquipment,
     private readonly registry: ItemTypeRegistry,
+    private readonly enchantRegistry?: EnchantmentRegistry,
   ) {}
 
   /** Current aggregated armor stats from the worn pieces. */
@@ -130,9 +133,17 @@ export class ArmorProtection {
     return computeArmorStats(this.equipment.getArmorStacks(), this.registry);
   }
 
-  /** Reduce `rawDamage` using the current worn stats. */
-  reduce(rawDamage: number, bypassArmor: boolean): ArmorReduction {
-    return reduceDamage(rawDamage, this.getStats(), bypassArmor);
+  /**
+   * Reduce `rawDamage` using the current worn stats and the protection-family
+   * enchantment EPF for `damageType` (change 119). Without an `enchantRegistry`
+   * the result matches the prior EPF-less reduction. The armor `absorbed` value
+   * (durability wear driver) is preserved unchanged.
+   */
+  reduce(rawDamage: number, bypassArmor: boolean, damageType?: string): ArmorReduction {
+    const base = reduceDamage(rawDamage, this.getStats(), bypassArmor);
+    if (bypassArmor || !this.enchantRegistry) return base;
+    const epf = armorEnchantEPF(this.equipment.getArmorStacks(), this.enchantRegistry, damageType);
+    return { reduced: applyArmorEnchantReduction(base.reduced, epf), absorbed: base.absorbed };
   }
 
   /**

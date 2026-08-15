@@ -102,6 +102,17 @@ describe('harvest break speed', () => {
     const fastTool: ItemTypeDefinition = { ...woodenPickaxe, toolPower: 100 };
     expect(rules.getBreakDuration(fastBlock, fastTool)).toBe(MIN_BREAK_DURATION);
   });
+
+  it('divides the effective duration by the Efficiency multiplier (119)', () => {
+    // stone hardness 1.5, wooden pickaxe power 2.2 => 0.6818; /(1 + 0.3*3) => 0.3588.
+    expect(rules.getBreakDuration(stoneDef, woodenPickaxe, 3)).toBeCloseTo(1.5 / 2.2 / 1.9, 4);
+  });
+
+  it('floors the efficiency-boosted duration at MIN_BREAK_DURATION', () => {
+    const fastBlock: BlockTypeDefinition = { ...stoneDef, miningLevel: 0, hardness: 0.1 };
+    const fastTool: ItemTypeDefinition = { ...woodenPickaxe, toolPower: 100 };
+    expect(rules.getBreakDuration(fastBlock, fastTool, 3)).toBe(MIN_BREAK_DURATION);
+  });
 });
 
 describe('harvest drop rule', () => {

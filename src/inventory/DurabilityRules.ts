@@ -72,8 +72,15 @@ export function applyDamage(
   maxDurability: number,
   stack: ItemStack,
   amount: number,
+  unbreakingLevel = 0,
+  rng?: () => number,
 ): DamageResult {
   if (maxDurability <= 0 || !stack || stack.count <= 0) {
+    return { stack, broke: false };
+  }
+  // Unbreaking (119): with probability `level/(level+1)` wear is skipped. The
+  // wear-avoidance threshold is `1/(level+1)`; above it the item takes no damage.
+  if (unbreakingLevel > 0 && rng !== undefined && rng() >= 1 / (unbreakingLevel + 1)) {
     return { stack, broke: false };
   }
   const damage = stack.components?.get<DamageComponentValue>(DAMAGE_COMPONENT)?.damage ?? 0;

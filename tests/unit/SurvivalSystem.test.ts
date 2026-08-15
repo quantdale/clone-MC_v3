@@ -14,6 +14,11 @@ import {
   DAMAGE_COMPONENT,
   type DamageComponentValue,
 } from '../../src/inventory/StackDataComponents';
+import {
+  createDefaultEnchantmentRegistry,
+  type EnchantmentRegistry,
+} from '../../src/inventory/EnchantmentRegistry';
+import { setStackEnchantments } from '../../src/inventory/EnchantmentApplication';
 import { ArmorProtection } from '../../src/player/ArmorProtection';
 import { Player } from '../../src/player/Player';
 import { SurvivalSystem } from '../../src/player/SurvivalSystem';
@@ -138,5 +143,75 @@ describe('survival system armor integration (116)', () => {
     const { survival } = armoredSurvival();
     survival.damage(20, 'mystery');
     expect(survival.health).toBeLessThan(20);
+  });
+});
+
+describe('survival system enchantment routing (119)', () => {
+  const rid = (k: string) => createResourceId('minecraft', k);
+  const enchantReg: EnchantmentRegistry = createDefaultEnchantmentRegistry();
+
+  // Two non-bypass damage types so armor always applies; only 'fire' maps to
+  // fire_protection. Both prove the `reason` string reaches ArmorProtection.reduce.
+  const fireCombatRegistry = new DamageTypeRegistry([
+    ...createDefaultDamageTypeRegistry().entries(),
+    {
+      id: rid('damage/combat'),
+      key: 'combat',
+      name: 'Combat',
+      flags: ['ENVIRONMENTAL'],
+      kind: 'periodic',
+      amount: 1,
+      interval: 1,
+    },
+    {
+      id: rid('damage/fire'),
+      key: 'fire',
+      name: 'Fire',
+      flags: ['ENVIRONMENTAL'],
+      kind: 'periodic',
+      amount: 1,
+      interval: 1,
+    },
+  ]);
+
+  const fireChest = setStackEnchantments(
+    { id: 100, count: 1 },
+    [{ id: rid('fire_protection'), level: 4 }],
+    enchantReg,
+  );
+
+  const itemRegistry = new ItemTypeRegistry([
+    {
+      id: 100,
+      resourceId: rid('chestplate'),
+      key: 'chestplate',
+      name: 'Chestplate',
+      iconTile: 0,
+      stackSize: 1,
+      defensePoints: 12,
+      toughness: 4,
+      maxDurability: 100,
+    } satisfies ItemTypeDefinition,
+  ]);
+
+  function fireSurvival(): SurvivalSystem {
+    const equipment = new PlayerEquipment();
+    equipment.setEquipment(EquipmentSlot.Chest, fireChest);
+    const survival = new SurvivalSystem(fireCombatRegistry);
+    survival.armor = new ArmorProtection(equipment, itemRegistry, enchantReg);
+    survival.health = 20;
+    return survival;
+  }
+
+  it('routes the reason into the armor EPF (fire damage mitigated harder)', () => {
+    const fire = fireSurvival();
+    fire.damage(20, 'fire');
+    const afterFire = fire.health;
+
+    const combat = fireSurvival();
+    combat.damage(20, 'combat');
+    const afterCombat = combat.health;
+
+    expect(afterFire).toBeGreaterThan(afterCombat);
   });
 });

@@ -12,11 +12,27 @@ import {
 } from '../../src/inventory/StackDataComponents';
 import type { ItemStack } from '../../src/inventory/Inventory';
 import {
+  createDefaultEnchantmentRegistry,
+  type EnchantmentRegistry,
+} from '../../src/inventory/EnchantmentRegistry';
+import {
+  applyArmorEnchantReduction,
+  setStackEnchantments,
+} from '../../src/inventory/EnchantmentApplication';
+import {
   ArmorProtection,
   applyArmorWear,
   computeArmorStats,
   reduceDamage,
 } from '../../src/player/ArmorProtection';
+
+const enchantReg: EnchantmentRegistry = createDefaultEnchantmentRegistry();
+const erid = (k: string) => createResourceId('minecraft', k);
+
+/** Attach a single enchantment to an existing stack for armor tests. */
+function enchanted(stack: ItemStack, key: string, level: number): ItemStack {
+  return setStackEnchantments(stack, [{ id: erid(key), level }], enchantReg);
+}
 
 const rid = (k: string) => createResourceId('minecraft', k);
 
@@ -160,5 +176,56 @@ describe('ArmorProtection class', () => {
     expect(equipment.getEquipment(EquipmentSlot.Head)).toBeNull();
     const chest = equipment.getEquipment(EquipmentSlot.Chest);
     expect(chest?.components?.get<DamageComponentValue>(DAMAGE_COMPONENT)?.damage).toBe(2);
+  });
+});
+
+describe('ArmorProtection EPF integration (119)', () => {
+  it('reduces damage and leaves absorbed/armor wear unchanged for protection', () => {
+    const equipment = new PlayerEquipment();
+    equipment.setEquipment(EquipmentSlot.Chest, enchanted(stack(100), 'protection', 4));
+    const armor = new ArmorProtection(equipment, registry, enchantReg);
+    const base = reduceDamage(20, armor.getStats(), false);
+    const result = armor.reduce(20, false, 'fall');
+    expect(result.absorbed).toBe(base.absorbed);
+    expect(result.reduced).toBeCloseTo(applyArmorEnchantReduction(base.reduced, 4), 6);
+    expect(result.reduced).toBeLessThan(base.reduced);
+  });
+
+  it('applies fire_protection for fire damage but not for generic damage', () => {
+    const equipment = new PlayerEquipment();
+    equipment.setEquipment(EquipmentSlot.Chest, enchanted(stack(100), 'fire_protection', 4));
+    const armor = new ArmorProtection(equipment, registry, enchantReg);
+    const base = reduceDamage(20, armor.getStats(), false);
+    const fire = armor.reduce(20, false, 'fire');
+    const generic = armor.reduce(20, false, 'combat');
+    // fire: epf 8 -> further reduction; generic: epf 0 -> no EPF change.
+    expect(fire.reduced).toBeCloseTo(applyArmorEnchantReduction(base.reduced, 8), 6);
+    expect(generic.reduced).toBeCloseTo(base.reduced, 6);
+  });
+
+  it('caps the summed EPF at 20', () => {
+    const equipment = new PlayerEquipment();
+    equipment.setEquipment(EquipmentSlot.Head, enchanted(stack(100), 'fire_protection', 4));
+    equipment.setEquipment(EquipmentSlot.Chest, enchanted(stack(101), 'fire_protection', 4));
+    equipment.setEquipment(EquipmentSlot.Legs, enchanted(stack(102), 'fire_protection', 4));
+    const armor = new ArmorProtection(equipment, registry, enchantReg);
+    const base = reduceDamage(20, armor.getStats(), false);
+    const result = armor.reduce(20, false, 'fire'); // 8 + 8 + 8 = 24 -> capped 20
+    expect(result.reduced).toBeCloseTo(applyArmorEnchantReduction(base.reduced, 20), 6);
+  });
+
+  it('ignores enchantments when no enchant registry is supplied (EPF-less)', () => {
+    const equipment = new PlayerEquipment();
+    equipment.setEquipment(EquipmentSlot.Chest, enchanted(stack(100), 'protection', 4));
+    const armor = new ArmorProtection(equipment, registry);
+    const base = reduceDamage(20, armor.getStats(), false);
+    expect(armor.reduce(20, false, 'fall')).toEqual(base);
+  });
+
+  it('bypasses armor entirely for bypass damage, ignoring enchants', () => {
+    const equipment = new PlayerEquipment();
+    equipment.setEquipment(EquipmentSlot.Chest, enchanted(stack(100), 'protection', 4));
+    const armor = new ArmorProtection(equipment, registry, enchantReg);
+    expect(armor.reduce(20, true, 'fall')).toEqual({ reduced: 20, absorbed: 0 });
   });
 });

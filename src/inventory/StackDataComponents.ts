@@ -194,9 +194,36 @@ export const damageComponentType: StackComponentType = {
   defaultValue: { damage: 0 },
 };
 
+/** ResourceId of the enchantment component. */
+export const ENCHANTMENTS_COMPONENT: ResourceId = createResourceId('minecraft', 'enchantments');
+
+/**
+ * Enchantment component value: a flat map of enchantment resource-id string to
+ * level. Values MUST be finite integers `>= 1` (validated by the component type).
+ */
+export type EnchantmentsComponentValue = Readonly<Record<string, number>>;
+
+/** Component type for item enchantments, validated as a non-null object whose
+ * every value is a finite integer `>= 1`. */
+export const enchantmentsComponentType: StackComponentType = {
+  id: ENCHANTMENTS_COMPONENT,
+  description: 'Enchantments applied to an item stack',
+  validate: (value: unknown): boolean => {
+    if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
+    const candidate = value as Record<string, unknown>;
+    for (const key of Object.keys(candidate)) {
+      const level = candidate[key];
+      if (typeof level !== 'number' || !Number.isFinite(level) || !Number.isInteger(level) || level < 1) {
+        return false;
+      }
+    }
+    return true;
+  },
+};
+
 /** Default component registry with the base component types for current tools. */
 export function createDefaultStackComponentRegistry(): StackComponentRegistry {
-  return new StackComponentRegistry([damageComponentType]);
+  return new StackComponentRegistry([damageComponentType, enchantmentsComponentType]);
 }
 
 /** Convenience: an empty component map for a stack using the default registry. */
