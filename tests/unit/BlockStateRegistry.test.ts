@@ -243,8 +243,8 @@ describe('block-state runtime registry', () => {
   it('keeps current simple blocks at one state each; wheat/farmland enumerate 8, fire 16, redstone wire 1296 (125/126/128/155)', () => {
     const blockRegistry = createDefaultBlockRegistry();
     const stateRegistry = createDefaultBlockStateRegistry();
-    // Single-state blocks + 8 wheat + 8 farmland + 16 fire + 1296 redstone-wire + 10 hopper states.
-    expect(stateRegistry.size).toBe(blockRegistry.all().length - 17 + 8 + 8 + 16 + 1296 + 8 + 64 + 16 + 12 + 6 + 12 + 12 + 10);
+    // Single-state blocks + 8 wheat + 8 farmland + 16 fire + 1296 redstone-wire + 10 hopper + 10 dropper states.
+    expect(stateRegistry.size).toBe(blockRegistry.all().length - 18 + 8 + 8 + 16 + 1296 + 8 + 64 + 16 + 12 + 6 + 12 + 12 + 10 + 10);
     for (const defn of blockRegistry.all()) {
       const states = stateRegistry.statesForBlock(defn.id);
       if (defn.key === 'wheat') {
@@ -283,6 +283,11 @@ describe('block-state runtime registry', () => {
         expect(def.getProperty('extended')).toBe('false');
       } else if (defn.key === 'hopper') {
         expect(states.length).toBe(10); // 5 facings x 2 enabled
+        const def = stateRegistry.getDefaultState(defn.id);
+        expect(def.getProperty('facing')).toBe('down');
+        expect(def.getProperty('enabled')).toBe('true');
+      } else if (defn.key === 'dropper') {
+        expect(states.length).toBe(10); // 5 facings x 2 enabled (same shape as hopper)
         const def = stateRegistry.getDefaultState(defn.id);
         expect(def.getProperty('facing')).toBe('down');
         expect(def.getProperty('enabled')).toBe('true');

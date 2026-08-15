@@ -54,6 +54,7 @@ export const enum BlockId {
   Piston = 48,
   StickyPiston = 49,
   Hopper = 50,
+  Dropper = 51,
 }
 
 /**
@@ -178,6 +179,16 @@ export const PISTON_SCHEMA = new BlockPropertySchema([
  * Enumerates 5 x 2 = 10 states.
  */
 export const HOPPER_SCHEMA = new BlockPropertySchema([
+  { kind: 'named', name: 'facing', values: ['down', 'north', 'south', 'east', 'west'] },
+  { kind: 'boolean', name: 'enabled' },
+]);
+
+/**
+ * Dropper property schema (167): identical shape to 166's `HOPPER_SCHEMA` (five-way `facing` ×
+ * boolean `enabled`, 10 states) — a dropper and a hopper share the same facing/enabled blockstate;
+ * the difference is purely behavioral (drop vs. container-transfer). Enumerates 5 x 2 = 10 states.
+ */
+export const DROPPER_SCHEMA = new BlockPropertySchema([
   { kind: 'named', name: 'facing', values: ['down', 'north', 'south', 'east', 'west'] },
   { kind: 'boolean', name: 'enabled' },
 ]);
@@ -1029,6 +1040,25 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       miningLevel: 1,
       dropItem: rid('hopper'),
       propertySchema: HOPPER_SCHEMA,
+      defaultState: { facing: 'down', enabled: true },
+    },
+    {
+      id: BlockId.Dropper,
+      resourceId: rid('dropper'),
+      key: 'dropper',
+      name: 'Dropper',
+      solid: false,
+      opaque: false,
+      breakable: true,
+      renderCategory: RenderCategory.Transparent,
+      topTile: 0,
+      bottomTile: 0,
+      sideTile: 0,
+      hardness: 3,
+      preferredTool: ToolKind.Pickaxe,
+      miningLevel: 1,
+      dropItem: rid('dropper'),
+      propertySchema: DROPPER_SCHEMA,
       defaultState: { facing: 'down', enabled: true },
     },
   ];
