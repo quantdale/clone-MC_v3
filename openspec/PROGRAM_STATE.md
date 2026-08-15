@@ -3,17 +3,61 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **115-item-durability-repair — VERIFIED 100%**
-- Active implementation change: **115-item-durability-repair — VERIFIED**
-- Next change: **116-armor-protection — NOT YET ACTIVE (artifacts pending)**
-- 115 task ledger: **5 total tasks, 5 completed**
-- 115 completion: **100%**
-- 115 mandatory item-durability-repair requirements: **PASS**
-- 115 required-test gate: **PASS — unit 1374/1374, E2E 21/21**
-- 115 advancement allowed: **Yes**
-- Session-start head: `e715b661b40b252baf64d7abe190eee40eb4836f`
-- Validated head: `74f311c` (115 feature commit; state advanced to 116)
-- Next exact action: **Advance to 116-armor-protection. Read it (and SPEC_AUTHORING_PROTOCOL.md if artifacts incomplete), author/validate proposal/design/tasks/specs/verification, implement armor points/toughness/durability into the damage calculation, verify full gate, commit + push, advance program state.**
+- Last completed change: **116-armor-protection — VERIFIED 100%**
+- Active implementation change: **116-armor-protection — VERIFIED**
+- Next change: **117-player-experience — NOT YET ACTIVE (artifacts pending)**
+- 116 task ledger: **6 total tasks, 6 completed**
+- 116 completion: **100%**
+- 116 mandatory armor-protection requirements: **PASS**
+- 116 required-test gate: **PASS — unit 1391/1391, E2E 21/21**
+- 116 advancement allowed: **Yes**
+- Session-start head: `d8a03a3d2432ea58c3ac0d60f143f3a41115a719`
+- Validated head: `eb370dec0be458df786c5945ce9d562640fa9bfd` (116 feature commit; state advanced to 117)
+- Next exact action: **Advance to 117-player-experience. Read it (and SPEC_AUTHORING_PROTOCOL.md if artifacts incomplete), author/validate proposal/design/tasks/specs/verification, implement XP orbs/points/levels and persistence, verify full gate, commit + push, advance program state.**
+
+## What 116 implemented
+
+Change 116 integrates worn armor (points + toughness) into the damage calculation
+as a reusable, testable rule, and wears armor durability when it absorbs a hit. It
+is the calculation plus its data model — not the armor catalog (that is 215) or
+enchantment protection (119).
+
+- `src/inventory/ItemRegistry.ts` (EDIT) — `defensePoints?: number` and
+  `toughness?: number` on `ItemTypeDefinition` (default `0`).
+- `src/player/ArmorProtection.ts` (NEW) — pure functions on worn stacks + a bound class:
+  - `computeArmorStats(stacks, registry)` → `{ points, toughness }`, summing
+    `defensePoints`/`toughness` (missing def ⇒ 0) and clamping each to `[0, 20]`.
+  - `reduceDamage(raw, stats, bypass)` → `{ reduced, absorbed }`; non-positive or
+    bypass returns input unchanged; otherwise `armor=min(20,points)`, `cap=armor/25`,
+    `tf=min(20,toughness)`, `retained=max(0,1 - sqrt(raw)/(sqrt(raw)+4+tf*2))`,
+    `absorbed=raw*cap*retained`, `reduced=raw-absorbed`. ~80% cap at low damage;
+    toughness preserves protection at high damage; zero armor ⇒ no reduction.
+  - `applyArmorWear(stacks, absorbed, registry)` → `(ItemStack|null)[]`; each durable
+    piece loses `max(1, ceil(absorbed/pieceCount))` via `DurabilityRules.applyDamage`;
+    non-durable skipped; broken piece ⇒ `null`.
+  - `ArmorProtection` class bound to `PlayerEquipment` + `ItemTypeRegistry`:
+    `getStats()`, `reduce(raw, bypass)`, `applyWear(absorbed)` (mutates slots, clears
+    broken pieces).
+- `src/player/SurvivalSystem.ts` (EDIT) — stores the `DamageTypeRegistry`; optional
+  `armor?` field; `isBypass(reason)` (unrecognized reason ⇒ non-bypass, fail-safe);
+  `damage()` consults `armor` for non-bypass reasons, applies `ceil(reduced)` health
+  loss, and calls `armor.applyWear(absorbed)` when `absorbed > 0`.
+- `src/data/DamageType.ts` (EDIT) — `fall`, `drowning`, `lava`, `starvation` default
+  definitions gain `BYPASS_ARMOR` (environmental damage ignores armor, parity).
+
+## Validation evidence (116)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1391/1391 (prior 1374 + 14 new ArmorProtection + 3 SurvivalSystem integration; DamageType flag assertions updated)
+- production build: PASS (`tsc --noEmit && vite build`)
+- E2E: PASS 21/21 (no new e2e needed — rule-only change; survival/damage tests stay green)
+
+## Advancement decision
+
+Change 116 is **VERIFIED** at 6/6 (100%). All gates are green: typecheck, lint,
+the new 1391-unit suite, production build, and the required E2E suite (21/21).
+No advancement exception was needed. Advance to 117.
 
 ## What 115 implemented
 
@@ -214,16 +258,15 @@ Change 111 is **VERIFIED** at 6/6 (100%). All gates are green: typecheck, lint, 
 1290-unit suite, production build, and the required E2E suite (20/20). No advancement
 exception was needed. Advance to 112.
 
-## Next change: 116 (pending artifacts)
+## Next change: 117 (pending artifacts)
 
-`116-armor-protection` is named in `CHANGE_SEQUENCE.md` with scope "Armor
-points/toughness/durability integrated into damage calculation." Per `AGENTS.md`,
-a change lacking full artifacts is a hard pre-implementation block. Author and
-validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md` before any production
-code.
+`117-player-experience` is named in `CHANGE_SEQUENCE.md` with scope "XP orbs/points/
+levels and persistence." Per `AGENTS.md`, a change lacking full artifacts is a hard
+pre-implementation block. Author and validate those artifacts via
+`SPEC_AUTHORING_PROTOCOL.md` before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 115
-verification. Change 116 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 116
+verification. Change 117 is the next change; its artifacts must be authored and
 validated before implementation begins.

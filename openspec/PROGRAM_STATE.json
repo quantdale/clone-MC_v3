@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "115-item-durability-repair",
+  "currentChange": "116-armor-protection",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "115-item-durability-repair",
-  "nextChange": "116-armor-protection",
-  "completedTasks": 5,
-  "totalTasks": 5,
+  "lastCompletedChange": "116-armor-protection",
+  "nextChange": "117-player-experience",
+  "completedTasks": 6,
+  "totalTasks": 6,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -15,11 +15,11 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "e715b661b40b252baf64d7abe190eee40eb4836f",
-  "lastValidatedHead": "74f311c",
-  "lastKnownHead": "74f311c",
-  "lastCompletedTask": "115: all 5 task groups complete; item-durability-repair VERIFIED. Added DurabilityRules (remaining/apply/break/repair) pure module; Inventory.damageSelectedItem delegates to applyDamage (identical behavior, existing durability tests green); Inventory.repairSelectedItem added. Full gate green (typecheck, lint, 1374 unit, build, 21 e2e).",
-  "nextExactAction": "Advance to 116-armor-protection. Read it (and SPEC_AUTHORING_PROTOCOL.md if artifacts incomplete), author/validate proposal/design/tasks/specs/verification, implement armor points/toughness/durability into the damage calculation, verify full gate, commit + push, advance program state.",
+  "sessionStartHead": "d8a03a3d2432ea58c3ac0d60f143f3a41115a719",
+  "lastValidatedHead": "eb370dec0be458df786c5945ce9d562640fa9bfd",
+  "lastKnownHead": "eb370dec0be458df786c5945ce9d562640fa9bfd",
+  "lastCompletedTask": "116: all 6 task groups complete; armor-protection VERIFIED. Added defensePoints/toughness to ItemTypeDefinition; new pure ArmorProtection (computeArmorStats/reduceDamage/applyArmorWear + class) reduces non-bypass damage via a deterministic, toughness-aware curve and wears durable pieces via DurabilityRules; SurvivalSystem.damage consults an optional ArmorProtection; fall/drowning/lava/starvation carry BYPASS_ARMOR. 17 new unit tests (ArmorProtection 14 + SurvivalSystem integration 3) + DamageType flag assertions; full gate green (typecheck, lint, 1391 unit, build, 21 e2e).",
+  "nextExactAction": "Advance to 117-player-experience. Read it (and SPEC_AUTHORING_PROTOCOL.md if artifacts incomplete), author/validate proposal/design/tasks/specs/verification, implement XP orbs/points/levels and persistence, verify full gate, commit + push, advance program state.",
   "blockers": [],
   "validationResults": [
     {
@@ -1141,8 +1141,18 @@
       "e2e": "PASS 21/21",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "115 VERIFIED 5/5 (100%). Added pure DurabilityRules (getRemainingDurability, isBroken, applyDamage, repair) operating on maxDurability + DAMAGE_COMPONENT; Inventory.damageSelectedItem delegates to applyDamage (identical behavior), new Inventory.repairSelectedItem delegates to repair. 18 new DurabilityRules unit tests + 2 new Inventory repair cases; full gate green (typecheck, lint, 1374 unit, build, 21 e2e)."
+    },
+    {
+      "head": "eb370dec0be458df786c5945ce9d562640fa9bfd",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 1391/1391; +17 (ArmorProtection 14, SurvivalSystem integration 3)",
+      "build": "PASS via vite build",
+      "e2e": "PASS 21/21",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "116 VERIFIED 6/6 (100%). Added defensePoints/toughness to ItemTypeDefinition; new pure ArmorProtection (computeArmorStats/reduceDamage/applyArmorWear + class) reduces non-bypass damage via a deterministic, toughness-aware curve and wears durable pieces via DurabilityRules; SurvivalSystem.damage consults an optional ArmorProtection; fall/drowning/lava/starvation carry BYPASS_ARMOR. 17 new unit tests; full gate green (typecheck, lint, 1391 unit, build, 21 e2e)."
     }
   ],
-  "publishedHead": "74f311c",
+  "publishedHead": "eb370dec0be458df786c5945ce9d562640fa9bfd",
   "publishedAt": "2026-08-15T02:36:52.809Z"
 }
