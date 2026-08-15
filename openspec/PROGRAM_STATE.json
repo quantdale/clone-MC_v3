@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "105-crafting-table-3x3",
+  "currentChange": "106-container-menu-transaction-core",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "105-crafting-table-3x3",
-  "nextChange": "106-container-menu-transaction-core",
+  "lastCompletedChange": "106-container-menu-transaction-core",
+  "nextChange": "107-chest-block-entity",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "6f09be531d0f0b18e6c51fa9501442f9b15a2d21",
-  "lastKnownHead": "6f09be531d0f0b18e6c51fa9501442f9b15a2d21",
-  "lastCompletedTask": "105: all 4 tasks complete; crafting-table-3x3 VERIFIED. New src/inventory/CraftingTable.ts (CraftingTableSession 3x3 grid over a readonly recipe snapshot; immutable createCraftingTableSession/setCraftingTableSlot with bounds and slot validation; craftingTableMatch/craftingTableResult via the 104 evaluator; takeCraftingTableResult consumes exactly the matched cells and returns the result slot, unchanged session + null on no match, never throws; CRAFTING_TABLE_BLOCK_ID 13 documented reserved); 10 new unit tests; 1172 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 106-container-menu-transaction-core. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (106 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement slot/menu transaction rules reusable by crafting and storage screens, verify full gate, commit + push, advance.",
+  "lastValidatedHead": "758745df325fd890b4c7e3948f35dad130701ed8",
+  "lastKnownHead": "758745df325fd890b4c7e3948f35dad130701ed8",
+  "lastCompletedTask": "106: all 4 tasks complete; container-menu-transaction-core VERIFIED. New src/inventory/MenuTransaction.ts (MenuSlot {item,count,maxStack in [1,64]}, MenuCursor {item,count in [0,64]}, ContainerMenu with 1+ slots and playerSlotStart in (0,len); createContainerMenu/validateContainerMenu with strict validation; MenuTransaction union leftClick pick-up/merge/swap, rightClick split-half ceil or place-one, placeOne, quickMove first-fit merge-then-empty with remainder; deterministic immutable applyMenuTransaction, out-of-bounds throws); 20 new unit tests; 1192 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 107-chest-block-entity. Read src/world/BlockRegistry.ts (BlockId enum, block 13 reserved for crafting table; check ids 15-18 assignment) and src/player/PlayerInteraction.ts interaction conventions; author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (107 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement single chest inventory persistence and interaction (27-slot inventory, open/close, block placement), verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -1051,6 +1051,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "105 VERIFIED 4/4 (100%). Crafting table 3x3: src/inventory/CraftingTable.ts (3x3 session over a recipe snapshot with immutable updates; match/result via the 104 evaluator; takeCraftingTableResult consumes exactly the matched cells; CRAFTING_TABLE_BLOCK_ID 13 documented); 10 new unit tests; 1172 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "758745df325fd890b4c7e3948f35dad130701ed8",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 1192/1192; MenuTransaction 20/20",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "106 VERIFIED 4/4 (100%). Container menu transaction core: src/inventory/MenuTransaction.ts (MenuSlot/MenuCursor/ContainerMenu strict construction; leftClick/rightClick/placeOne/quickMove immutable deterministic transactions with merge/swap/split-half ceil/first-fit quick-move; out-of-bounds throws); 20 new unit tests; 1192 unit + 19 e2e pass, stable."
     }
   ]
 }
