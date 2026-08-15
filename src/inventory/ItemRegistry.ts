@@ -58,6 +58,7 @@ export const enum ItemId {
   StoneButton = 39,
   PressurePlate = 40,
   RedstoneTorch = 41,
+  RedstoneRepeater = 42,
 }
 
 /**
@@ -585,6 +586,15 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       iconTile: 43,
       stackSize: 64,
       placeBlock: rid('redstone_torch'),
+    },
+    {
+      id: ItemId.RedstoneRepeater,
+      resourceId: rid('redstone_repeater'),
+      key: 'redstone_repeater',
+      name: 'Redstone Repeater',
+      iconTile: 44,
+      stackSize: 64,
+      placeBlock: rid('redstone_repeater'),
     },
   ];
   return new ItemTypeRegistry(defs);

@@ -45,6 +45,7 @@ export const enum BlockId {
   StoneButton = 39,
   PressurePlate = 40,
   RedstoneTorch = 41,
+  RedstoneRepeater = 42,
 }
 
 /**
@@ -102,6 +103,19 @@ export const POWERED_SCHEMA = new BlockPropertySchema([{ kind: 'boolean', name: 
  * driving it — a torch is lit precisely when its attachment is *un*powered.
  */
 export const LIT_SCHEMA = new BlockPropertySchema([{ kind: 'boolean', name: 'lit' }]);
+
+/**
+ * Redstone repeater property schema (159): `facing` (4-way, behavioral — determines input/output
+ * vs. lock sides, unlike prior blocks' purely-visual facing), `delay` (1-4 redstone-tick setting),
+ * `locked` (frozen by a perpendicular neighbour), and `powered` (current output). Enumerates
+ * 4 x 4 x 2 x 2 = 64 states.
+ */
+export const REPEATER_SCHEMA = new BlockPropertySchema([
+  { kind: 'named', name: 'facing', values: ['north', 'south', 'east', 'west'] },
+  { kind: 'integer', name: 'delay', min: 1, max: 4 },
+  { kind: 'boolean', name: 'locked' },
+  { kind: 'boolean', name: 'powered' },
+]);
 
 /** Tool families used for preferred-tool mining bonuses. */
 export const enum ToolKind {
@@ -794,6 +808,23 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       dropItem: rid('redstone_torch'),
       propertySchema: LIT_SCHEMA,
       defaultState: { lit: false },
+    },
+    {
+      id: BlockId.RedstoneRepeater,
+      resourceId: rid('redstone_repeater'),
+      key: 'redstone_repeater',
+      name: 'Redstone Repeater',
+      solid: false,
+      opaque: false,
+      breakable: true,
+      renderCategory: RenderCategory.Transparent,
+      topTile: 0,
+      bottomTile: 0,
+      sideTile: 0,
+      hardness: 0,
+      dropItem: rid('redstone_repeater'),
+      propertySchema: REPEATER_SCHEMA,
+      defaultState: { facing: 'north', delay: 1, locked: false, powered: false },
     },
   ];
   return new BlockTypeRegistry(defs);
