@@ -51,6 +51,7 @@ export const enum BlockId {
   RedstoneLamp = 45,
   Door = 46,
   Trapdoor = 47,
+  Piston = 48,
 }
 
 /**
@@ -157,6 +158,16 @@ export const LAMP_SCHEMA = new BlockPropertySchema([{ kind: 'boolean', name: 'li
  * scope).
  */
 export const OPEN_SCHEMA = new BlockPropertySchema([{ kind: 'boolean', name: 'open' }]);
+
+/**
+ * Piston property schema (164): `facing` is six-way (north/south/east/west/up/down) — behavioral,
+ * since it determines the push direction, the same reasoning 161's observer applied — and
+ * `extended`. Enumerates 6 x 2 = 12 states. Non-sticky only; `sticky_piston` is 165's scope.
+ */
+export const PISTON_SCHEMA = new BlockPropertySchema([
+  { kind: 'named', name: 'facing', values: ['north', 'south', 'east', 'west', 'up', 'down'] },
+  { kind: 'boolean', name: 'extended' },
+]);
 
 /** Tool families used for preferred-tool mining bonuses. */
 export const enum ToolKind {
@@ -953,6 +964,23 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       dropItem: rid('trapdoor'),
       propertySchema: OPEN_SCHEMA,
       defaultState: { open: false },
+    },
+    {
+      id: BlockId.Piston,
+      resourceId: rid('piston'),
+      key: 'piston',
+      name: 'Piston',
+      solid: true,
+      opaque: true,
+      breakable: true,
+      renderCategory: RenderCategory.Opaque,
+      topTile: 36,
+      bottomTile: 36,
+      sideTile: 36,
+      hardness: 1.5,
+      dropItem: rid('piston'),
+      propertySchema: PISTON_SCHEMA,
+      defaultState: { facing: 'north', extended: false },
     },
   ];
   return new BlockTypeRegistry(defs);
