@@ -3,17 +3,85 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **145-passive-mob-baseline — VERIFIED 100%**
-- Active implementation change: **145-passive-mob-baseline — VERIFIED**
-- Next change: **146-hostile-mob-baseline — NOT YET ACTIVE (artifacts pending)**
-- 145 task ledger: **19 total tasks, 19 completed**
-- 145 completion: **100%**
-- 145 mandatory passive-mob-baseline requirements: **PASS**
-- 145 required-test gate: **PASS — unit 1883/1883, E2E 22/22**
-- 145 advancement allowed: **Yes**
-- Session-start head: `40877d5b286baeca6502379620bbd61800522c9a`
-- Validated head: `929e3adcb85f13d15c2ea9e92e3c9c25ead0a0ba` (145 feature commit)
-- Next exact action: **Advance to 146-hostile-mob-baseline. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (first fully interactive hostile mob end-to-end, likely reusing/generalizing PassiveMobWorldAdapter and composing HostileTargetAI/MeleeCombat with EntityDataTracker health); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **146-hostile-mob-baseline — VERIFIED 100%**
+- Active implementation change: **146-hostile-mob-baseline — VERIFIED**
+- Next change: **147-animal-breeding — NOT YET ACTIVE (artifacts pending)**
+- 146 task ledger: **20 total tasks, 20 completed**
+- 146 completion: **100%**
+- 146 mandatory hostile-mob-baseline requirements: **PASS**
+- 146 required-test gate: **PASS — unit 1896/1896, E2E 22/22**
+- 146 advancement allowed: **Yes**
+- Session-start head: `59267b96829bd23822eadc903f3d834d839d7a3c`
+- Validated head: `0cdcf7a9651dc962dc26b9395350d542e0694504` (146 feature commit)
+- Next exact action: **Advance to 147-animal-breeding. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (love state, food triggers, child spawn, cooldown — building on 145's PassiveMobSystem/pig population); implement; verify full gate; commit + push; advance program state.**
+
+## What 146 implemented
+
+Change 146 is the first change to wire the dormant hostile-mob primitives (140
+`HostileTargetAI`, 141 `MeleeCombat`) together with the reused entity-simulation stack
+(129-139) into `Game.ts`: a real, live, target-acquiring/chasing zombie that melee-attacks
+the player once in range. It mirrors 145's exact system/renderer/Game-wiring shape and
+reuses 145's `PassiveMobWorldAdapter` instance unmodified — not a second adapter — via a
+structurally-identical, independently-declared `HostileMobWorld` interface. It is a
+baseline vertical slice — not player-initiated combat against a mob, not zombie
+health/death, not knockback applied to the player, not breeding/loot/despawn/persistence
+(all documented non-goals, several deferred to 147/148 or a future combat-wiring change).
+
+- `src/simulation/HostileMobBaseline.ts` (NEW) — `HostileMobWorld` interface (structurally
+  identical to 145's `PassiveMobWorld`, declared independently so this module has no
+  import-time dependency on `PassiveMobBaseline.ts`; the same stateless adapter instance
+  satisfies both at the `Game` call site via TypeScript's structural typing);
+  `ZOMBIE_BOUNDING_BOX`/`HOSTILE_SPAWN_CAP=8`/`HOSTILE_SPAWN_ATTEMPTS_PER_CHUNK=2`/
+  `HOSTILE_SPAWN_CYCLE_INTERVAL_TICKS=100`/`HOSTILE_DETECTION_RADIUS=16`/
+  `HOSTILE_FORGET_RADIUS=32`/`HOSTILE_ATTACK_RANGE=2`/`HOSTILE_CHASE_SPEED=2.6`/
+  `HOSTILE_KNOCKBACK_STRENGTH=0.4`/`DEFAULT_HOSTILE_ATTACK_DAMAGE=3`/
+  `HOSTILE_ATTACKS_PER_SECOND=1`/`HOSTILE_ATTACK_TICKS_SINCE_LAST=20`/`PLAYER_SENTINEL_ID=-1`;
+  `HostileMobSystem` (owns its own `EntityManager`, separate id-space from 145's pig
+  system; `spawnCycle` runs 138's `runSpawnCycleForChunk` for zombie only, `MONSTER`
+  category; `tick` restricts to 132's `selectTickingEntities`, lazily assigns each zombie a
+  goal bundle — `TargetAcquisitionGoal` (priority 0) + `ChaseGoal` (priority 1) from 140,
+  `WanderGoal` (priority 2) + `LookGoal` (priority 3) from 139, one `GoalSelector`, seeded
+  per-entity via `SeedRng` — then runs one `EntityPhysics` step, then resolves a melee
+  attack against a caller-supplied player-target position via 141's `resolveMeleeAttack`
+  once the acquired target is within `HOSTILE_ATTACK_RANGE`, using a shared
+  `InvulnerabilityTracker` keyed by the negative `PLAYER_SENTINEL_ID` — the player has no
+  `EntityManager` record — so only one hit lands per invulnerability window regardless of
+  how many zombies attempt one that tick; attack damage read from the registry's
+  `zombie.attackDamage`; `ticksSinceLastAttack`/`attacksPerSecond` constants chosen so
+  141's cooldown-charge scaling always saturates to full damage — the target's own
+  invulnerability window is the only pacing mechanism; knockback is computed, per
+  `resolveMeleeAttack`'s signature, but intentionally discarded, not applied to the player;
+  `getActiveZombies` exposes the live set).
+- `src/rendering/HostileMobRenderer.ts` (NEW) — per-entity-id `THREE.Group` mesh pool,
+  mirroring `PassiveMobRenderer`'s pattern with a taller, darker/green silhouette.
+- `src/engine/Game.ts` (EDIT) — constructs `HostileMobSystem`/`HostileMobRenderer` once,
+  reusing the existing `passiveMobWorld` adapter instance (no second adapter); a throttled
+  spawn-cycle sweep (reusing the same enumerated ticking-chunk-list pattern as the passive
+  sweep) plus a per-frame `tick`/`sync` call inside the existing `update(dt)`;
+  `onPlayerDamaged` wired to `SurvivalSystem.damage(amount, 'mob')`.
+
+## Validation evidence (146)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1896/1896 (prior 1883 + 13 new: HostileMobBaseline constructor/spawn-cap/
+  ticking-gating/goal-and-physics composition/melee-attack in-range+out-of-range/
+  shared-invulnerability-window cases (10), HostileMobRenderer sync/dispose scene-graph
+  bookkeeping (3))
+- production build: PASS (`tsc --noEmit && vite build`, 102 modules, up from 98 — confirms
+  `Game.ts` now consumes the new modules)
+- E2E: PASS 22/22 (all pre-existing assertions unaffected; no natural-zombie-spawn
+  assertion added — `MONSTER` spawning requires darkness not guaranteed near the fixed
+  e2e seed's spawn point within a short test window, so the mob→player combat path is
+  fully covered by deterministic unit tests instead, matching how 137/138's own
+  spawn-rule tests avoid depending on real terrain)
+
+## Advancement decision (146)
+
+Advance. 100% task completion, full gate green, no MUST/SHALL requirement unmet, no
+regression. Player-initiated combat against a mob remains an explicit, flagged non-goal
+for a future change (no titled change between 146 and 153 currently covers it). Next
+change: 147-animal-breeding.
 
 ## What 145 implemented
 
