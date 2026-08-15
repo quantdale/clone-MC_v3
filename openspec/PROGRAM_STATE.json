@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "108-double-chest-composition",
+  "currentChange": "109-furnace-block-entity",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "108-double-chest-composition",
-  "nextChange": "109-furnace-block-entity",
+  "lastCompletedChange": "109-furnace-block-entity",
+  "nextChange": "110-furnace-recipes-and-fuels",
   "completedTasks": 4,
   "totalTasks": 4,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d282bbb01b4eabbdc76daaa05e78ccff81f2d685",
-  "lastValidatedHead": "f1d75084a8c46f6d961386349e676681a138b65b",
-  "lastKnownHead": "f1d75084a8c46f6d961386349e676681a138b65b",
-  "lastCompletedTask": "108: all 4 tasks complete; double-chest-composition VERIFIED. New src/world/DoubleChest.ts (isHorizontalAdjacent same-Y |dx|+|dz|==1; order-independent canonical chestPairKey; doubleChestOrder primary = lexicographic min by x then z; createDoubleChestMenu 90 slots primary 0-26 secondary 27-53 player 54-89 playerSlotStart 54 over 106 core; extractDoubleChestHalves/extractDoubleChestPlayerSlots; unpairDoubleChest returns surviving half, unknown removed throws); each half persists as its own 107 27-slot envelope; 13 new unit tests; 1229 unit + 19 e2e pass, stable.",
-  "nextExactAction": "Advance to 109-furnace-block-entity. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (109 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement furnace inventory, timers, lit state, and persistence (018 furnace type tickable; 052 tick hook; 036 envelope), verify full gate, commit + push, advance.",
+  "lastValidatedHead": "8e6070dd45b747d60ddc5b93d87005e48eb2d500",
+  "lastKnownHead": "8e6070dd45b747d60ddc5b93d87005e48eb2d500",
+  "lastCompletedTask": "109: all 5 tasks complete; furnace-block-entity VERIFIED. New src/world/FurnaceBlockEntity.ts (FurnaceState 3 slots + burn/smelt timers with strict validation and invariants; deterministic immutable tickFurnace over injected FurnaceContext: fuel consumed only on progress, lit = burnTime>0, blocked output pauses, input removal resets smelt, cook completion consumes input and merges result; furnaceIsLit; 036-envelope serialize/deserialize; 39-slot menu bridge playerSlotStart 3 with extraction and withFurnaceSlots; 052 entity lifecycle create/read/update tickable; furnaceTickProgress/furnaceBurnFraction); furnace block id 20 + item id 26 + atlas tile 28; 24 new unit tests; registry enumeration tests updated; 1253 unit + 19 e2e pass, stable.",
+  "nextExactAction": "Advance to 110-furnace-recipes-and-fuels. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (110 artifacts NOT yet present; authoring is a hard pre-implementation block), validate, implement smelting recipes, fuel values, XP output, and transactional behavior (a default FurnaceContext consumed by 109's tickFurnace; XP accumulation and output transaction semantics), verify full gate, commit + push, advance.",
   "blockers": [],
   "validationResults": [
     {
@@ -1081,6 +1081,16 @@
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "108 VERIFIED 4/4 (100%). Double chest composition: src/world/DoubleChest.ts (horizontal adjacency; order-independent canonical pair key; lexicographic primary order; 90-slot menu bridge playerSlotStart 54; half extraction; unpairing to surviving half; per-half 107 envelopes); 13 new unit tests; 1229 unit + 19 e2e pass, stable."
+    },
+    {
+      "head": "8e6070dd45b747d60ddc5b93d87005e48eb2d500",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 1253/1253; FurnaceBlockEntity 24/24",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 19/19",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "109 VERIFIED 5/5 (100%). Furnace block entity: src/world/FurnaceBlockEntity.ts (FurnaceState strict validation; deterministic tickFurnace over injected FurnaceContext; lit = burnTime>0; blocked-output pause; input-removal reset; cook completion merge; 036 envelope; 39-slot menu bridge; 052 lifecycle; progress fractions); furnace block id 20 + item id 26 + tile 28; 24 new unit tests; 1253 unit + 19 e2e pass, stable."
     }
   ]
 }

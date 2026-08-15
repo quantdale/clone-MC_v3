@@ -3,62 +3,75 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **108-double-chest-composition — VERIFIED 100%**
-- Active implementation change: **108-double-chest-composition — VERIFIED**
-- Next change: **109-furnace-block-entity — NOT YET ACTIVE (artifacts pending)**
-- 108 task ledger: **4 total tasks, 4 completed**
-- 108 completion: **100%**
-- 108 mandatory double-chest-composition requirements: **PASS**
-- 108 required-test gate: **PASS — unit 1229/1229, E2E 19/19**
-- 108 advancement allowed: **Yes**
+- Last completed change: **109-furnace-block-entity — VERIFIED 100%**
+- Active implementation change: **109-furnace-block-entity — VERIFIED**
+- Next change: **110-furnace-recipes-and-fuels — NOT YET ACTIVE (artifacts pending)**
+- 109 task ledger: **5 total tasks, 5 completed**
+- 109 completion: **100%**
+- 109 mandatory furnace-block-entity requirements: **PASS**
+- 109 required-test gate: **PASS — unit 1253/1253, E2E 19/19**
+- 109 advancement allowed: **Yes**
 - Session-start head: `d282bbb01b4eabbdc76daaa05e78ccff81f2d685`
-- Validated head: `f1d75084a8c46f6d961386349e676681a138b65b`
-- Next exact action: **Advance to 109-furnace-block-entity. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (109 artifacts NOT yet present — authoring is a hard pre-implementation block), validate, implement furnace inventory, timers, lit state, and persistence (018 furnace type tickable; 052 tick hook; 036 envelope), verify full gate, commit + push, advance program state.**
+- Validated head: `8e6070dd45b747d60ddc5b93d87005e48eb2d500`
+- Next exact action: **Advance to 110-furnace-recipes-and-fuels. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (110 artifacts NOT yet present — authoring is a hard pre-implementation block), validate, implement smelting recipes, fuel values, XP output, and transactional behavior (a default `FurnaceContext` consumed by 109's `tickFurnace`; XP accumulation and output transaction semantics), verify full gate, commit + push, advance program state.**
 
-## What 108 implemented
+## What 109 implemented
 
-Change 108 adds deterministic double-chest composition over the 107 model.
+Change 109 adds the furnace block-entity core and its registry data.
 
-- `src/world/DoubleChest.ts` (NEW) — `isHorizontalAdjacent` (same Y, distinct, |dx|+|dz| == 1);
-  `chestPairKey` (canonical, argument-order-independent pair identity); `doubleChestOrder`
-  (`[primary, secondary]`, primary = lexicographically smaller by x then z); `ChestPosition`;
-  `createDoubleChestMenu` (90 slots: primary 0-26, secondary 27-53, player 54-89,
-  `playerSlotStart` 54, over the 106 transaction core); `applyDoubleChestMenuTransaction`;
-  `extractDoubleChestHalves` / `extractDoubleChestPlayerSlots` (reject foreign menus);
-  `unpairDoubleChest` (returns the surviving half's inventory for any argument/assignment
-  order; unknown removed positions throw). Each half remains its own 107 27-slot
-  `ChestInventory`, matching Minecraft's per-block-entity persistence.
-- `tests/unit/DoubleChest.test.ts` (NEW) — 13 tests: adjacency matrix, pair-key/order
-  determinism across argument orders, menu construction and validation, a full cross-region
-  transaction vector (pickup, merge-limit, quick-move first-fit with remainder, placeOne),
-  extraction round-trips, unpairing vectors, immutability/determinism, and a 052 manager
-  chunk round-trip of two adjacent chest entities.
+- `src/world/FurnaceBlockEntity.ts` (NEW) — constants (`FURNACE_BLOCK_ID 20`,
+  `FURNACE_ITEM_ID 26`, `FURNACE_TYPE_KEY 'furnace'`, `FURNACE_SLOT_COUNT 3`,
+  `FURNACE_MENU_SLOT_COUNT 39`, `FURNACE_PLAYER_SLOT_START 3`, slot indices); `FurnaceState`
+  (input/fuel/output slots + `burnTime`/`burnTimeTotal`/`smeltTime`/`smeltTimeTotal`) with
+  strict validation and time invariants (`time <= total`, total 0 implies time 0);
+  `createFurnaceState` / `validateFurnaceState`; the deterministic immutable tick engine
+  `tickFurnace` over an injected `FurnaceContext` (`fuelBurnTicks`/`cookTicks`/`resultOf`;
+  110 supplies real values): fuel consumed only while smelting can progress, lit =
+  `burnTime > 0`, blocked output pauses everything, input removal resets smelt progress,
+  cook completion consumes one input and merges the result; `furnaceIsLit`; lossless
+  036-envelope `serializeFurnaceState`/`deserializeFurnaceState`; the 39-slot menu bridge
+  `createFurnaceMenu` (input 0, fuel 1, output 2, player 3-38) / `applyFurnaceMenuTransaction`
+  / `extractFurnaceSlots` / `extractFurnacePlayerSlots` / `withFurnaceSlots`; the 052 entity
+  lifecycle `createFurnaceBlockEntity` (tickable true) / `readFurnaceState` /
+  `updateFurnaceState`; `furnaceTickProgress` / `furnaceBurnFraction`.
+- `src/world/BlockRegistry.ts` — furnace block id 20 (tile 28, hardness 3.5, pickaxe-
+  preferred, drops `minecraft:furnace`, auto `loot/furnace` table).
+- `src/inventory/ItemRegistry.ts` — furnace item id 26 (iconTile 28, stackSize 64, places
+  the furnace block).
+- `src/rendering/TextureAtlas.ts` — original procedural furnace tile (index 28): stone base
+  with a dark rimmed mouth and ember glow.
+- `tests/unit/FurnaceBlockEntity.test.ts` (NEW) — 24 tests: state validation matrix, envelope
+  round-trips and rejects, tick vectors (burn start/fuel consumption, no fuel, non-fuel
+  items, blocked-output pause, input-removal reset, cook completion with near-full output
+  merge, full fuel run 8 smelts, multi-tick determinism, invalid tick counts, immutability),
+  menu bridge and extraction, timer-preserving slot updates, entity lifecycle, manager chunk
+  round-trip, registry cross-references. Registry enumeration and separation tests updated
+  for the new block.
 
-## Validation evidence (108)
+## Validation evidence (109)
 
 - typecheck: PASS (`tsc --noEmit`)
 - lint: PASS (`eslint .`)
-- unit: PASS 1229/1229 (prior 1216 + 13 new), stable across consecutive runs
+- unit: PASS 1253/1253 (prior 1229 + 24 new), stable across repeated runs
 - production build: PASS (`tsc --noEmit && vite build`)
 - E2E: PASS 19/19
 
 ## Advancement decision
 
-Change 108 is **VERIFIED** at 4/4 (100%). All gates are green: typecheck, lint, the new 108
-suites, the full unit suite (1229/1229, stable across consecutive runs), production build, and
-the required E2E suite (19/19). No advancement exception was needed.
+Change 109 is **VERIFIED** at 5/5 (100%). All gates are green: typecheck, lint, the new 109
+suites, the full unit suite (1253/1253, stable across repeated runs), production build, and the
+required E2E suite (19/19). No advancement exception was needed.
 
-## Next change: 109 (pending artifacts)
+## Next change: 110 (pending artifacts)
 
-`109-furnace-block-entity` is named in `CHANGE_SEQUENCE.md` with scope "Furnace inventory,
-timers, lit state, persistence." Per `AGENTS.md`, a change lacking full artifacts is a hard
-pre-implementation block. Author and validate those artifacts via
-`SPEC_AUTHORING_PROTOCOL.md` before any production code. The 018 registry declares the
-`furnace` block-entity type as tickable; the 052 `BlockEntityInstance` tick hook and the 036
-envelope are the persistence path.
+`110-furnace-recipes-and-fuels` is named in `CHANGE_SEQUENCE.md` with scope "Smelting recipes,
+fuel values, XP output, transactional behavior." Per `AGENTS.md`, a change lacking full
+artifacts is a hard pre-implementation block. Author and validate those artifacts via
+`SPEC_AUTHORING_PROTOCOL.md` before any production code. It supplies the real `FurnaceContext`
+values consumed by 109's tick engine.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 108 verification.
-Change 109 is the next change; its artifacts must be authored and validated before implementation
+A future session must first inspect current `origin/main`, this state, and the 109 verification.
+Change 110 is the next change; its artifacts must be authored and validated before implementation
 begins.
