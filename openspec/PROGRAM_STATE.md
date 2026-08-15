@@ -3,18 +3,40 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **178-nether-portal-linking — VERIFIED 100%**
-- Active implementation change: **178-nether-portal-linking — VERIFIED**
-- Next change: **179-nether-content-baseline — NOT YET ACTIVE (artifacts pending)**
-- 178 task ledger: **24 total tasks, 24 completed**
-- 178 completion: **100%**
-- 178 mandatory nether-portal-linking requirements: **PASS**
-- 178 required-test gate: **PASS — unit 2418/2418, E2E 22/22**
-- 178 advancement allowed: **Yes**
-- Session-start head: `ba47305c89fce463236500bb5e95adee5d9d5248`
-- Validated head: `912a4e595d108f1954131f246f8614d3393531cd` (178 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension container (174), canonical types (175), Nether terrain (176), portal blocks (177), and portal linking (178) are COMPLETE.**
-- Next exact action: **Advance to 179-nether-content-baseline. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: core Nether blocks/resources/mobs required for progression — the content change that registers netherrack (fulfilling 176's documented id placeholder), obsidian (fulfilling 177/178's frame seam), and the first Nether mobs through the existing 129-148 entity/AI primitives).**
+- Last completed change: **179-nether-content-baseline — VERIFIED 100%**
+- Active implementation change: **179-nether-content-baseline — VERIFIED**
+- Next change: **180-end-dimension-type — NOT YET ACTIVE (artifacts pending)**
+- 179 task ledger: **20 total tasks, 20 completed**
+- 179 completion: **100%**
+- 179 mandatory nether-content-baseline requirements: **PASS**
+- 179 required-test gate: **PASS — unit 2424/2424, E2E 22/22**
+- 179 advancement allowed: **Yes**
+- Session-start head: `279cdb122cdcd099120018af3d666a035e96f5d2`
+- Validated head: `8341b7546cde640746347059fddd9b5ab8ff8c31` (179 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension container (174), canonical types (175), Nether terrain (176), portal blocks (177), portal linking (178), and Nether content (179) are COMPLETE.**
+- Next exact action: **Advance to 180-end-dimension-type. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: End bounds/skylight/ambient/save rules — mirrors 175's nether-dimension-type for the End).**
+
+## What 179 implemented
+
+Change 179 registers the core Nether **blocks and resources** (the mob element is a documented
+deferral to 218 — see below).
+
+- `src/world/BlockRegistry.ts`/`src/inventory/ItemRegistry.ts` (EDIT) — `BlockId/ItemId` 56..59:
+  `netherrack` (stateless, pickaxe, miningLevel 0), `obsidian` (stateless, **hardness 50,
+  miningLevel 3** — the diamond-pickaxe block the 177/178 frame seams identify), `soul_sand`
+  (stateless, shovel), and `nether_wart` (`NETHER_WART_SCHEMA` `age` 0..3, 4 states, default 0 — the
+  brewing ingredient for 123). All four items place their blocks; `validateItemBlockCrossReferences`
+  passes.
+- `src/worldgen/NetherTerrain.ts` (EDIT) — **fulfills the 176 handoff**:
+  `DEFAULT_NETHER_TERRAIN_BLOCK_IDS.netherrack` moves from the documented placeholder (1) to
+  `BlockId.Netherrack` (56), pinned end-to-end by a test asserting default `generateNetherColumn`
+  output carries `BlockId.Netherrack` in the terrain band.
+- **Mobs deferral**: the narrow outcome's "mobs" element is explicitly documented as deferred to 218
+  (`mob-content-expansion`) — `HostileMobSystem` is zombie-hard-wired and a blaze needs a new
+  ranged-attack path; the End-progression changes (180-184) model eyes-of-ender as item
+  requirements. Stated in the proposal/design/spec, not silently dropped.
+- Tests: `tests/unit/NetherContent.test.ts` (NEW, 6 tests) plus three characterization updates
+  (nether_wart: 22nd multi-state block, +4 states).
 
 ## What 178 implemented
 
