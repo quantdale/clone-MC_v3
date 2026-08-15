@@ -41,7 +41,7 @@ describe('block registry', () => {
       expect(registry.getByKey(def.key)?.id).toBe(id);
     }
     // The ids are unique and map back to the same definitions.
-    expect(registry.all()).toHaveLength(42);
+    expect(registry.all()).toHaveLength(43);
   });
 
   it('registers the enchanting-table and bookshelf blocks (120)', () => {

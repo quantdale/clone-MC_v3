@@ -12,6 +12,7 @@ import { type ResourceId, createResourceId, resourceIdToString } from '../data/R
 import { RegistryError } from '../data/Registry';
 import { TagRegistry, type TagDefinition, type TagMember } from '../data/TagRegistry';
 import { BlockPropertySchema, EMPTY_SCHEMA } from './BlockPropertySchema';
+import { RAIL_SHAPES } from '../simulation/RailBlockStates';
 
 /** Block ids are stable numeric identifiers for world blocks only. */
 export const enum BlockId {
@@ -57,6 +58,7 @@ export const enum BlockId {
   Dropper = 51,
   Dispenser = 52,
   Tnt = 53,
+  Rail = 54,
 }
 
 /**
@@ -204,6 +206,14 @@ export const DROPPER_SCHEMA = new BlockPropertySchema([
 export const DISPENSER_SCHEMA = new BlockPropertySchema([
   { kind: 'named', name: 'facing', values: ['down', 'north', 'south', 'east', 'west'] },
   { kind: 'boolean', name: 'enabled' },
+]);
+
+/**
+ * Rail property schema (171): a single `shape` named property with the ten vanilla rail shapes.
+ * The default is `north_south` (vanilla's default, and the dead-end shape). Enumerates 10 states.
+ */
+export const RAIL_SCHEMA = new BlockPropertySchema([
+  { kind: 'named', name: 'shape', values: [...RAIL_SHAPES] },
 ]);
 
 /** Tool families used for preferred-tool mining bonuses. */
@@ -1107,6 +1117,23 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       sideTile: 55,
       hardness: 0,
       dropItem: rid('tnt'),
+    },
+    {
+      id: BlockId.Rail,
+      resourceId: rid('rail'),
+      key: 'rail',
+      name: 'Rail',
+      solid: false,
+      opaque: false,
+      breakable: true,
+      renderCategory: RenderCategory.Transparent,
+      topTile: 56,
+      bottomTile: 56,
+      sideTile: 56,
+      hardness: 0.7,
+      dropItem: rid('rail'),
+      propertySchema: RAIL_SCHEMA,
+      defaultState: { shape: 'north_south' },
     },
   ];
   return new BlockTypeRegistry(defs);

@@ -70,6 +70,7 @@ export const enum ItemId {
   Dropper = 51,
   Dispenser = 52,
   Tnt = 53,
+  Rail = 54,
 }
 
 /**
@@ -705,6 +706,15 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       iconTile: 55,
       stackSize: 64,
       placeBlock: rid('tnt'),
+    },
+    {
+      id: ItemId.Rail,
+      resourceId: rid('rail'),
+      key: 'rail',
+      name: 'Rail',
+      iconTile: 56,
+      stackSize: 64,
+      placeBlock: rid('rail'),
     },
   ];
   return new ItemTypeRegistry(defs);
