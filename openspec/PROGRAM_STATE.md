@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **126-farmland-moisture — VERIFIED 100%**
-- Active implementation change: **126-farmland-moisture — VERIFIED**
-- Next change: **127-bonemeal-growth-hooks — NOT YET ACTIVE (artifacts pending)**
-- 126 task ledger: **6 total task groups, 6 completed**
-- 126 completion: **100%**
-- 126 mandatory farmland-moisture requirements: **PASS**
-- 126 required-test gate: **PASS — unit 1631/1631, E2E 21/21**
-- 126 advancement allowed: **Yes**
+- Last completed change: **127-bonemeal-growth-hooks — VERIFIED 100%**
+- Active implementation change: **127-bonemeal-growth-hooks — VERIFIED**
+- Next change: **128-fire-block-simulation — NOT YET ACTIVE (artifacts pending)**
+- 127 task ledger: **6 total task groups, 6 completed**
+- 127 completion: **100%**
+- 127 mandatory bonemeal-growth-hooks requirements: **PASS**
+- 127 required-test gate: **PASS — unit 1654/1654, E2E 21/21**
+- 127 advancement allowed: **Yes**
 - Session-start head: `e2c8066d1b178d01baf6f0775133e8fbb6cd581a`
-- Validated head: `c97dbd963f65416099ff96f18a4affcb1fb4124f` (126 feature commit)
-- Next exact action: **Advance to 127-bonemeal-growth-hooks. Read its artifacts (and SPEC_AUTHORING_PROTOCOL.md if incomplete); author/validate proposal/design/tasks/specs/verification; implement fertilization interface and first crop/tree bonemeal behavior; verify full gate; commit + push; advance program state.**
+- Validated head: `5a23ee3ed7dd76620e832b7aff53779456dba1b3` (127 feature commit)
+- Next exact action: **Advance to 128-fire-block-simulation. Read its artifacts (and SPEC_AUTHORING_PROTOCOL.md if incomplete); author/validate proposal/design/tasks/specs/verification; implement ignition, age, burn/spread/extinguish with bounded scheduled/random ticks; verify full gate; commit + push; advance program state.**
 
 ## What 119 implemented
 
@@ -735,15 +735,49 @@ the 1631-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Bonemeal (127), hoe tilling, and a rain/weather hook are explicit non-goals
 (documented). Advance to 127.
 
-## Next change: 127 (pending artifacts)
+## What 127 implemented
 
-`127-bonemeal-growth-hooks` is named in `CHANGE_SEQUENCE.md` with scope "Fertilization interface and
-first crop/tree behavior." Per `AGENTS.md`, a change lacking full artifacts is a hard
-pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md`
+Change 127 adds the bonemeal (fertilization) interface and the first crop bonemeal behavior. It is the
+fertilization plumbing + Wheat bonemeal — not a sapling/tree bonemeal behavior (deferred: no Sapling
+block exists in the catalog; `FertilizerRegistry` is the documented extension point for it), and not
+redstone/item-stack persistence of bone meal.
+
+- `src/inventory/ItemRegistry.ts` (EDIT) — `ItemId.BoneMeal = 34` with a definition (stack 64, icon tile,
+  no `placeBlock`/food/tool/enchantment).
+- `src/simulation/Bonemeal.ts` (NEW) — `WHEAT_GROW_STEP = 2`, `bonemealNextAge`, `fertilizeWheat`,
+  `FertilizerRegistry`, `createDefaultFertilizerRegistry` (wheat → `fertilizeWheat`), `applyBonemeal`,
+  `bonemealTarget`. Wheat growth is deterministic: age advances by `WHEAT_GROW_STEP`, clamped at
+  `MAX_AGE` (7); mature/non-fertilizable/air are no-ops returning false.
+- `src/player/PlayerInteraction.ts` (EDIT) — bone-meal `'use'` branch (blocks placement, mirrors the
+  enchanting-table `'use'` path).
+- `src/engine/Game.ts` (EDIT) — `isBonemealSelected`, `useBonemeal`, and `onInteractionAction('use')`
+  branching that calls `applyBonemeal` at the targeted block and consumes one bone meal on success.
+- Tests: `Bonemeal.test.ts` (21) + `PlayerInteraction.test.ts` (+2 `'use'`-emission tests).
+
+## Validation evidence (127)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1654/1654 (prior 1631 + 23 new: Bonemeal 21, PlayerInteraction 2)
+- production build: PASS (`tsc --noEmit && vite build`, 82 modules)
+- E2E: PASS 21/21 (use/place/harvest paths unaffected)
+
+## Advancement decision
+
+Change 127 is **VERIFIED** at 6/6 task groups (100%). All gates are green: typecheck, lint,
+the 1654-unit suite, production build, and the required E2E suite (21/21). No advancement
+exception was needed. Sapling/tree bonemeal is an explicit non-goal (deferred; no Sapling block
+exists) and the `FertilizerRegistry` extension point is documented. Advance to 128.
+
+## Next change: 128 (pending artifacts)
+
+`128-fire-block-simulation` is named in `CHANGE_SEQUENCE.md` with scope "Ignition, age, burn/spread/
+extinguish with bounded scheduled/random ticks." Per `AGENTS.md`, a change lacking full artifacts is a
+hard pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md`
 before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 126
-verification. Change 127 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 127
+verification. Change 128 is the next change; its artifacts must be authored and
 validated before implementation begins.
