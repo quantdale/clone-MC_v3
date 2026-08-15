@@ -29,6 +29,11 @@ import { ItemEntityManager } from '../simulation/ItemEntityManager';
 import { XpOrbManager } from '../simulation/XpOrbManager';
 import { LootTableRegistry, buildCurrentLootTables } from '../inventory/LootTable';
 import { createDefaultEnchantmentRegistry, type EnchantmentRegistry } from '../inventory/EnchantmentRegistry';
+import {
+  createSession,
+  type EnchantingTableSession,
+  type EnchantApplyResult,
+} from '../inventory/EnchantingTable';
 import { Inventory } from '../inventory/Inventory';
 import type { InventorySnapshot } from '../inventory/Inventory';
 import { Hotbar } from '../inventory/Hotbar';
@@ -90,6 +95,8 @@ export class Game {
   /** Enchantment definitions (118); fed to PlayerInteraction (119) for enchant reads. */
   private readonly enchantmentRegistry: EnchantmentRegistry;
   private readonly lootTables: LootTableRegistry;
+  /** Active enchanting session opened via a `use` interaction, or null. */
+  private enchantingSession: EnchantingTableSession | null = null;
   /** Harvest rules (114): tier/mineability-aware break speed and drop gating. */
   private readonly harvestRules: HarvestRules;
   /** Live world item-entity store (111); mined blocks drop into this. */
@@ -699,7 +706,82 @@ export class Game {
       case 'blocked':
         this.showToast('That action is not possible here');
         break;
+      case 'use':
+        this.openEnchanting();
+        break;
     }
+  }
+
+  /**
+   * Open an enchanting session for the currently held item by right-clicking an
+   * enchanting table. The deferred DOM panel (a later change) will consume the
+   * resulting {@link EnchantingTableSession}; here we build it and expose it for
+   * headless consumers via {@link getEnchantingSession} / {@link applyEnchantingOffer}.
+   */
+  private openEnchanting(): void {
+    const target = this.interaction.getTarget();
+    const held = this.inventory.getSelectedStack();
+    if (!target || !held || held.count <= 0) return;
+    const itemDef = this.itemRegistry.getByLegacyId(held.id);
+    if (!itemDef) return;
+    const bookShelves = this.countBookshelves(target.blockX, target.blockY, target.blockZ);
+    this.enchantingSession = createSession({
+      stack: held,
+      itemDef,
+      bookShelves,
+      playerLevel: this.experience.level,
+      seed: this.seed,
+      registry: this.enchantmentRegistry,
+    });
+  }
+
+  /**
+   * Count bookshelf blocks in the simplified 5×5×2 shell around an enchanting table
+   * (clamped to 15). Kept in the interaction layer so the pure core stays
+   * geometry-free; a more faithful occlusion-aware scan can replace it later.
+   */
+  private countBookshelves(cx: number, cy: number, cz: number): number {
+    let count = 0;
+    for (let dx = -2; dx <= 2; dx++) {
+      for (let dz = -2; dz <= 2; dz++) {
+        if (dx === 0 && dz === 0) continue;
+        for (let dy = 0; dy <= 1; dy++) {
+          if (this.world.getBlock(cx + dx, cy + dy, cz + dz) === BlockId.Bookshelf) {
+            count += 1;
+          }
+        }
+      }
+    }
+    return Math.min(15, count);
+  }
+
+  /** The active enchanting session, or null when none is open. */
+  getEnchantingSession(): EnchantingTableSession | null {
+    return this.enchantingSession;
+  }
+
+  /**
+   * Apply an offer from the active enchanting session. Returns the {@link
+   * EnchantApplyResult}; on success the enchanted stack is written back to the held
+   * slot and the spent lapis is removed from the inventory. No-op (null) when no
+   * session is open.
+   */
+  applyEnchantingOffer(offerIndex: number): EnchantApplyResult | null {
+    const session = this.enchantingSession;
+    if (!session) return null;
+    const lapisAvailable = this.inventory.getItemCount(ItemId.LapisLazuli);
+    const result = session.apply(offerIndex, {
+      experience: this.experience,
+      lapisAvailable,
+      registry: this.enchantmentRegistry,
+    });
+    if (result.ok && result.stack) {
+      this.inventory.setSelectedStack(result.stack);
+      if (result.lapisSpent && result.lapisSpent > 0) {
+        this.inventory.removeItem(ItemId.LapisLazuli, result.lapisSpent);
+      }
+    }
+    return result;
   }
 
   private setBreakProgress(progress: number): void {

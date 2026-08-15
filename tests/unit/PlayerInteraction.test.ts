@@ -509,4 +509,50 @@ describe('player interaction enchantment application (119)', () => {
     expect(itemEntities.getItemEntities()[0]!.count).toBe(1);
     interaction.dispose();
   });
+
+  it('emits a use action when right-clicking an enchanting table', () => {
+    const player = new Player({ position: new THREE.Vector3(0.5, 0, 0.5) });
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 20);
+    aim(player, camera);
+    const world = makeMutableWorld(BlockId.EnchantingTable);
+    const actions: string[] = [];
+    const interaction = new PlayerInteraction({
+      world,
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
+      selector: { getSelectedItemId: () => ItemId.WoodenPickaxe },
+      player,
+      camera,
+      input: { ...makeInput({ breakRequested: false, held: false }), consumePlace: () => true },
+      onAction: (action) => actions.push(action),
+    });
+
+    interaction.update(0.016);
+
+    expect(actions).toContain('use');
+    interaction.dispose();
+  });
+
+  it('does not emit use for a non-table block', () => {
+    const player = new Player({ position: new THREE.Vector3(0.5, 0, 0.5) });
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 20);
+    aim(player, camera);
+    const world = makeMutableWorld(BlockId.Stone);
+    const actions: string[] = [];
+    const interaction = new PlayerInteraction({
+      world,
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
+      selector: { getSelectedItemId: () => ItemId.WoodenPickaxe },
+      player,
+      camera,
+      input: { ...makeInput({ breakRequested: false, held: false }), consumePlace: () => true },
+      onAction: (action) => actions.push(action),
+    });
+
+    interaction.update(0.016);
+
+    expect(actions).not.toContain('use');
+    interaction.dispose();
+  });
 });

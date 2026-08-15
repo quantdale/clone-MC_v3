@@ -103,3 +103,38 @@ describe('ExperienceSystem snapshot and restore', () => {
     expect(sys.xp).toBe(6);
   });
 });
+
+describe('ExperienceSystem.spendLevels', () => {
+  it('removes n levels when available', () => {
+    const sys = new ExperienceSystem();
+    sys.level = 10;
+    sys.spendLevels(3);
+    expect(sys.level).toBe(7);
+  });
+
+  it('spends only the levels owned (never negative)', () => {
+    const sys = new ExperienceSystem();
+    sys.level = 2;
+    sys.spendLevels(5);
+    expect(sys.level).toBe(0);
+  });
+
+  it('is a no-op on non-integer, zero, or negative input', () => {
+    const sys = new ExperienceSystem();
+    sys.level = 5;
+    sys.spendLevels(-1);
+    sys.spendLevels(0);
+    sys.spendLevels(1.5);
+    expect(sys.level).toBe(5);
+  });
+
+  it('preserves the xp-fraction invariant after spending', () => {
+    const sys = new ExperienceSystem();
+    sys.level = 20;
+    sys.xp = 10; // some in-level progress
+    sys.spendLevels(7);
+    expect(sys.level).toBe(13);
+    expect(sys.xp).toBeGreaterThanOrEqual(0);
+    expect(sys.xp).toBeLessThan(sys.xpToNext);
+  });
+});

@@ -27,6 +27,8 @@ describe('block registry', () => {
       [BlockId.Lava, 'lava'],
       [BlockId.Chest, 'chest'],
       [BlockId.Furnace, 'furnace'],
+      [BlockId.EnchantingTable, 'enchanting_table'],
+      [BlockId.Bookshelf, 'bookshelf'],
     ];
     for (const [id, key] of required) {
       const def = registry.get(id);
@@ -36,7 +38,23 @@ describe('block registry', () => {
       expect(registry.getByKey(def.key)?.id).toBe(id);
     }
     // The ids are unique and map back to the same definitions.
-    expect(registry.all()).toHaveLength(20);
+    expect(registry.all()).toHaveLength(22);
+  });
+
+  it('registers the enchanting-table and bookshelf blocks (120)', () => {
+    const table = registry.get(BlockId.EnchantingTable);
+    expect(table.key).toBe('enchanting_table');
+    expect(table.solid).toBe(true);
+    expect(table.opaque).toBe(true);
+    expect(table.breakable).toBe(true);
+    expect(table.dropItem !== undefined).toBe(true);
+
+    const shelf = registry.get(BlockId.Bookshelf);
+    expect(shelf.key).toBe('bookshelf');
+    expect(shelf.solid).toBe(true);
+    expect(shelf.opaque).toBe(true);
+    expect(shelf.breakable).toBe(true);
+    expect(shelf.dropItem !== undefined).toBe(true);
   });
 
   it('pins the full block-property contract per block', () => {

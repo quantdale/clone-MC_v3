@@ -35,6 +35,8 @@ export const enum BlockId {
   Lava = 18,
   Chest = 19,
   Furnace = 20,
+  EnchantingTable = 32,
+  Bookshelf = 33,
 }
 
 /** Tool families used for preferred-tool mining bonuses. */
@@ -557,6 +559,39 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       miningLevel: 1,
       dropItem: rid('furnace'),
       lootTable: rid('loot/furnace'),
+    },
+    {
+      id: BlockId.EnchantingTable,
+      resourceId: rid('enchanting_table'),
+      key: 'enchanting_table',
+      name: 'Enchanting Table',
+      solid: true,
+      opaque: true,
+      breakable: true,
+      renderCategory: RenderCategory.Opaque,
+      topTile: 33,
+      bottomTile: 33,
+      sideTile: 33,
+      hardness: 5.0,
+      preferredTool: ToolKind.Pickaxe,
+      miningLevel: 1,
+      dropItem: rid('enchanting_table'),
+    },
+    {
+      id: BlockId.Bookshelf,
+      resourceId: rid('bookshelf'),
+      key: 'bookshelf',
+      name: 'Bookshelf',
+      solid: true,
+      opaque: true,
+      breakable: true,
+      renderCategory: RenderCategory.Opaque,
+      topTile: 32,
+      bottomTile: 32,
+      sideTile: 32,
+      hardness: 0.8,
+      preferredTool: ToolKind.Axe,
+      dropItem: rid('bookshelf'),
     },
   ];
   return new BlockTypeRegistry(defs);

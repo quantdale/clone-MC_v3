@@ -19,7 +19,7 @@ import type { ItemEntityManager } from '../simulation/ItemEntityManager';
 import type { XpOrbManager } from '../simulation/XpOrbManager';
 import { createSpawnPosition } from '../world/ItemEntity';
 
-export type InteractionAction = 'break' | 'place' | 'blocked' | 'empty';
+export type InteractionAction = 'break' | 'place' | 'blocked' | 'empty' | 'use';
 
 /**
  * Player interaction.
@@ -179,8 +179,15 @@ export class PlayerInteraction {
       }
 
       if (!breakRequested && this.elapsed >= this.lastActionTime + CONFIG.actionCooldown && this.input.consumePlace()) {
-        if (this.placeBlock()) {
-          this.lastActionTime = this.elapsed;
+        if (this.target) {
+          const targetBlockId = this.world.getBlock(this.target.blockX, this.target.blockY, this.target.blockZ);
+          // Right-clicking an enchanting table opens a session instead of placing.
+          if (targetBlockId === BlockId.EnchantingTable) {
+            this.onAction?.('use', targetBlockId);
+            this.lastActionTime = this.elapsed;
+          } else if (this.placeBlock()) {
+            this.lastActionTime = this.elapsed;
+          }
         }
       }
     }

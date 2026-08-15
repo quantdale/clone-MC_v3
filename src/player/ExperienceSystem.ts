@@ -36,9 +36,10 @@ export function computeXpToNext(level: number): number {
 }
 
 /**
- * Lightweight experience rules: an `xp`/`level` state, XP accrual via `addXp`, and
- * a strict `snapshot()`/`restore()` pair. Independent of rendering so the same
- * rules can be exercised in unit tests and later surfaced through a HUD bar (205).
+ * Lightweight experience rules: an `xp`/`level` state, XP accrual via `addXp`,
+ * level spending via `spendLevels` (120), and a strict `snapshot()`/`restore()`
+ * pair. Independent of rendering so the same rules can be exercised in unit tests
+ * and later surfaced through a HUD bar (205).
  */
 export class ExperienceSystem {
   /** Current non-negative integer level. Starts at `0`. */
@@ -72,6 +73,25 @@ export class ExperienceSystem {
   get progress(): number {
     if (this.xpToNext <= 0) return 0;
     return this.xp / this.xpToNext;
+  }
+
+  /**
+   * Spend `n` levels (120). Reduces `level` by `min(n, level)` (so it can never go
+   * negative) and preserves the current progress *fraction* within the level, so the
+   * `0 <= xp < xpToNext` invariant always holds afterward. Non-integer, zero, or
+   * negative `n` is ignored (no-op), and spending more levels than owned simply
+   * spends all owned levels.
+   */
+  spendLevels(n: number): void {
+    if (!Number.isInteger(n) || n <= 0) return;
+    const toSpend = Math.min(n, this.level);
+    if (toSpend <= 0) return;
+    const fraction = this.xpToNext > 0 ? this.xp / this.xpToNext : 0;
+    this.level -= toSpend;
+    this.xpToNext = computeXpToNext(this.level);
+    this.xp = Math.floor(fraction * this.xpToNext);
+    if (this.xp >= this.xpToNext) this.xp = this.xpToNext - 1;
+    if (this.xp < 0) this.xp = 0;
   }
 
   /** Capture the current state for persistence. */

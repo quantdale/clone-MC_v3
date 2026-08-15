@@ -44,6 +44,10 @@ export const enum ItemId {
   Chest = 25,
   Furnace = 26,
   IronIngot = 27,
+  LapisLazuli = 28,
+  Book = 29,
+  Bookshelf = 30,
+  EnchantingTable = 31,
 }
 
 /** An inventory-item definition. */
@@ -80,6 +84,8 @@ export interface ItemTypeDefinition {
   isBow?: boolean;
   /** Whether this item is a fishing rod. Reserved enchantment target; none set yet. */
   isFishingRod?: boolean;
+  /** Enchanting-table "enchantability" — biases offer strength; undefined ⇒ 0 (not enchantable). Added in 120. */
+  enchantability?: number;
   /** Hunger restored when eaten. */
   foodHunger?: number;
   /** Saturation restored when eaten. */
@@ -356,6 +362,7 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       toolPower: 2.2,
       toolTier: 1,
       maxDurability: 59,
+      enchantability: 15,
     },
     {
       id: ItemId.StonePickaxe,
@@ -368,6 +375,7 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       toolPower: 4,
       toolTier: 2,
       maxDurability: 131,
+      enchantability: 5,
     },
     {
       id: ItemId.WoodenAxe,
@@ -380,6 +388,7 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       toolPower: 2.4,
       toolTier: 1,
       maxDurability: 59,
+      enchantability: 15,
     },
     {
       id: ItemId.Coal,
@@ -422,6 +431,41 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       name: 'Iron Ingot',
       iconTile: 29,
       stackSize: 64,
+    },
+    {
+      id: ItemId.LapisLazuli,
+      resourceId: rid('lapis_lazuli'),
+      key: 'lapis_lazuli',
+      name: 'Lapis Lazuli',
+      iconTile: 30,
+      stackSize: 64,
+    },
+    {
+      id: ItemId.Book,
+      resourceId: rid('book'),
+      key: 'book',
+      name: 'Book',
+      iconTile: 31,
+      stackSize: 64,
+      enchantability: 1,
+    },
+    {
+      id: ItemId.Bookshelf,
+      resourceId: rid('bookshelf'),
+      key: 'bookshelf',
+      name: 'Bookshelf',
+      iconTile: 32,
+      stackSize: 64,
+      placeBlock: rid('bookshelf'),
+    },
+    {
+      id: ItemId.EnchantingTable,
+      resourceId: rid('enchanting_table'),
+      key: 'enchanting_table',
+      name: 'Enchanting Table',
+      iconTile: 33,
+      stackSize: 64,
+      placeBlock: rid('enchanting_table'),
     },
   ];
   return new ItemTypeRegistry(defs);

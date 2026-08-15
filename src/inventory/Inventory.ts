@@ -307,6 +307,11 @@ export class Inventory implements BlockSelector {
     return this.slots[this.selected] ?? null;
   }
 
+  /** Replace the selected hotbar slot's stack (used after an enchanting apply). */
+  setSelectedStack(stack: ItemStack): void {
+    this.slots[this.selected] = stack;
+  }
+
   /**
    * Damage the selected tool; returns true when the tool breaks. Delegates the
    * wear math to {@link applyDamage} (change 115) with identical observable
