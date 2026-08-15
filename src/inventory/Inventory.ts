@@ -8,6 +8,7 @@ import {
   createDefaultStackComponentRegistry,
   emptyStackComponents,
 } from './StackDataComponents';
+import { applyDamage, repair } from './DurabilityRules';
 
 /**
  * One unified occupied-slot value: item identity, quantity, and the immutable
@@ -301,24 +302,40 @@ export class Inventory implements BlockSelector {
     return Math.max(0, Math.min(maxDurability, maxDurability - damage));
   }
 
-  /** Damage the selected tool; returns true when the tool breaks. */
+  /**
+   * Damage the selected tool; returns true when the tool breaks. Delegates the
+   * wear math to {@link applyDamage} (change 115) with identical observable
+   * behavior: a break at zero zeros the stack and clears its components (so
+   * existing durability tests stay green).
+   */
   damageSelectedItem(amount: number, maxDurability: number): boolean {
     const stack = this.slots[this.selected];
     if (maxDurability <= 0 || !stack || stack.count <= 0) {
       return false;
     }
-    const damage = stack.components?.get<DamageComponentValue>(DAMAGE_COMPONENT)?.damage ?? 0;
-    const remaining = maxDurability - damage;
-    const next = remaining - Math.max(1, Math.trunc(amount));
-    if (next <= 0) {
-      stack.count = 0;
-      stack.components = undefined;
-      return true;
+    const result = applyDamage(maxDurability, stack, amount);
+    this.slots[this.selected] = result.stack;
+    return result.broke;
+  }
+
+  /**
+   * Repair the selected tool, reducing accumulated damage via {@link repair}
+   * (change 115). Returns true when the selected stack actually changed. A tool
+   * whose `maxDurability <= 0` is not repairable and yields no change.
+   */
+  repairSelectedItem(amount: number): boolean {
+    const stack = this.slots[this.selected];
+    if (!stack || stack.count <= 0) {
+      return false;
     }
-    const newDamage = maxDurability - next;
-    const base = stack.components ?? emptyStackComponents();
-    stack.components = base.with(DAMAGE_COMPONENT, { damage: newDamage });
-    return false;
+    const max = this.registry.getByLegacyId(stack.id)?.maxDurability ?? 0;
+    if (max <= 0) {
+      return false;
+    }
+    const repaired = repair(max, stack, amount);
+    const changed = repaired !== stack;
+    this.slots[this.selected] = repaired;
+    return changed;
   }
 
   /** Compact save representation for browser persistence. */

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Inventory } from '../../src/inventory/Inventory';
 import { ItemId } from '../../src/inventory/ItemRegistry';
-import { DAMAGE_COMPONENT } from '../../src/inventory/StackDataComponents';
+import { DAMAGE_COMPONENT, emptyStackComponents } from '../../src/inventory/StackDataComponents';
 
 describe('inventory hotbar selection', () => {
   it('defaults to the first slot selected', () => {
@@ -202,6 +202,23 @@ describe('inventory hotbar selection', () => {
     inv.consumeSelected();
     expect(inv.getSlotCount(0)).toBe(0);
     expect(inv.slots[0]!.components).toBeUndefined();
+  });
+
+  it('repairs the selected tool and reports a change', () => {
+    const inv = new Inventory([ItemId.WoodenPickaxe], [1]);
+    // Seed accumulated wear of 10 directly on the selected slot (maxDurability 59).
+    inv.slots[0]!.components = emptyStackComponents().with(DAMAGE_COMPONENT, { damage: 10 });
+    expect(inv.getSelectedDurability(59)).toBe(49);
+    expect(inv.repairSelectedItem(4)).toBe(true);
+    expect(inv.getSelectedDurability(59)).toBe(53);
+    expect(inv.slots[0]!.components?.get<{ damage: number }>(DAMAGE_COMPONENT)?.damage).toBe(6);
+  });
+
+  it('does not change a pristine selected tool on repair', () => {
+    const inv = new Inventory([ItemId.WoodenPickaxe], [1]);
+    expect(inv.getSelectedDurability(59)).toBe(59);
+    expect(inv.repairSelectedItem(4)).toBe(false);
+    expect(inv.getSelectedDurability(59)).toBe(59);
   });
 
   it('restores a legacy snapshot that omits wear data as full tools', () => {
