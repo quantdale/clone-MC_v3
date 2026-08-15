@@ -3,18 +3,42 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **167-dropper — VERIFIED 100%**
-- Active implementation change: **167-dropper — VERIFIED**
-- Next change: **168-dispenser — NOT YET ACTIVE (artifacts pending)**
-- 167 task ledger: **33 total tasks, 33 completed**
-- 167 completion: **100%**
-- 167 mandatory dropper-eject requirements: **PASS**
-- 167 required-test gate: **PASS — unit 2280/2280, E2E 22/22**
-- 167 advancement allowed: **Yes**
-- Session-start head: `28b2fab770693e44cf8bbaa2c7e71e1553527e24`
-- Validated head: `ce41847b1e1ddc617984754658ba4758a2809e39` (167 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress — the 157-161 logic-component trio, 162's first consumers, the piston sub-arc (163-165), 166's item-moving hopper, and 167's item-moving dropper are all COMPLETE.**
-- Next exact action: **Advance to 168-dispenser. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: data/behavior-driven dispenser actions for initial items — the third and final 'item-moving redstone consumer' after 166's hopper and 167's dropper; the first place a behavior table (item -> action) is needed, since a dispenser fires arrows/eggs/snowballs/etc. rather than dropping the raw item).**
+- Last completed change: **168-dispenser — VERIFIED 100%**
+- Active implementation change: **168-dispenser — VERIFIED**
+- Next change: **169-explosion-core — NOT YET ACTIVE (artifacts pending)**
+- 168 task ledger: **33 total tasks, 33 completed**
+- 168 completion: **100%**
+- 168 mandatory dispenser-behavior requirements: **PASS**
+- 168 required-test gate: **PASS — unit 2298/2298, E2E 22/22**
+- 168 advancement allowed: **Yes**
+- Session-start head: `5485f29cb4ab80bdf0df41a4ce6bd76adbbd1513`
+- Validated head: `f1d6dcb2887d88f820a4dfeb49f8dade0e96abc5` (168 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress — the 157-161 logic-component trio, 162's first consumers, the piston sub-arc (163-165), the item-moving trio (166 hopper, 167 dropper, 168 dispenser) are all COMPLETE.**
+- Next exact action: **Advance to 169-explosion-core. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: deterministic ray/strength block destruction, entity damage, drops — the first destruction-path module after the item-moving consumers, and the first place 168's behavior-descriptor model meets real world mutation).**
+
+## What 168 implemented
+
+Change 168 is the third and final **item-moving** redstone consumer, and the first with a
+**data-driven** item→action table.
+
+- `src/simulation/DispenserBehavior.ts` (NEW) — `DISPENSER_ITEM_BEHAVIORS`: a data-driven table
+  mapping item resource id → `DispenserItemBehavior` (kind `shoot_projectile` / `spawn_entity` /
+  `place_block`, with the projectile/entity/block payload). `getDispenserBehavior(item)` is the only
+  lookup; `dispenseFromDispenser` contains **no item-name branches** — adding a dispenser action is a
+  table row, not a code branch. A special item yields `kind: 'behavior'` (consume one, carry the
+  `DispenserItemBehavior` descriptor); a plain item delegates to 167's `ejectFromDropper`
+  (`container` / `drop` / `none`, no spill on a full container). `dispenserShouldTransfer` is the same
+  inverse-of-162 `!powered` lockout as 166/167; `dispenserOutputPosition` uses 154's `offsetInDirection`;
+  `scheduleDispenserEject`/`dueDispenserEjects` bridge 047; `dispenserStateProperties` projects
+  `facing`+`enabled`.
+- `src/world/BlockRegistry.ts`/`src/inventory/ItemRegistry.ts` (EDIT) — `BlockId.Dispenser = 52`/
+  `ItemId.Dispenser = 52`; `DISPENSER_SCHEMA` is five-way `facing` × boolean `enabled` = **10 states**,
+  default `{ facing: 'down', enabled: true }` (same shape as 166/167); the placing item cross-references
+  cleanly.
+- Tests: `tests/unit/DispenserBehavior.test.ts` (NEW, 18 tests) plus three characterization updates
+  (`BlockRegistry` `all()` 40→41; `BlockStateRegistry` total formula + explicit `dispenser` 10-state
+  branch; `BlockPropertySchema` `STATEFUL_BLOCK_KEYS` adds `dispenser`). No `Game`/`World` wiring, no
+  real projectile/entity/block spawn.
 
 ## What 167 implemented
 
