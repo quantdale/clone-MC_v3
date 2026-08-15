@@ -3,17 +3,71 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **144-shield-blocking — VERIFIED 100%**
-- Active implementation change: **144-shield-blocking — VERIFIED**
-- Next change: **145-passive-mob-baseline — NOT YET ACTIVE (artifacts pending)**
-- 144 task ledger: **20 total tasks, 20 completed**
-- 144 completion: **100%**
-- 144 mandatory shield-blocking requirements: **PASS**
-- 144 required-test gate: **PASS — unit 1866/1866, E2E 21/21**
-- 144 advancement allowed: **Yes**
-- Session-start head: `5aa7bc0f72b32349619ffbf0344890c6c8fe8c37`
-- Validated head: `40877d5b286baeca6502379620bbd61800522c9a` (144 feature commit)
-- Next exact action: **Advance to 145-passive-mob-baseline. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (first fully interactive passive mob end-to-end — likely the first change since 128 to wire simulation primitives into Game.ts/a live consumer); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **145-passive-mob-baseline — VERIFIED 100%**
+- Active implementation change: **145-passive-mob-baseline — VERIFIED**
+- Next change: **146-hostile-mob-baseline — NOT YET ACTIVE (artifacts pending)**
+- 145 task ledger: **19 total tasks, 19 completed**
+- 145 completion: **100%**
+- 145 mandatory passive-mob-baseline requirements: **PASS**
+- 145 required-test gate: **PASS — unit 1883/1883, E2E 22/22**
+- 145 advancement allowed: **Yes**
+- Session-start head: `40877d5b286baeca6502379620bbd61800522c9a`
+- Validated head: `929e3adcb85f13d15c2ea9e92e3c9c25ead0a0ba` (145 feature commit)
+- Next exact action: **Advance to 146-hostile-mob-baseline. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (first fully interactive hostile mob end-to-end, likely reusing/generalizing PassiveMobWorldAdapter and composing HostileTargetAI/MeleeCombat with EntityDataTracker health); implement; verify full gate; commit + push; advance program state.**
+
+## What 145 implemented
+
+Change 145 is the first change since 128 to wire the dormant entity-simulation primitives
+(129-139) into `Game.ts`: a real, live, AI-driven, physics-collided, spawned, and rendered
+passive mob (pig). It builds a `PassiveMobWorldAdapter` bridging `World`/`TerrainGenerator`/
+`BiomeRegistry` to the `ShapeWorld`/`NavigationWorld`/`SpawnWorld` interfaces those primitives
+require (since `World` itself exposed none of them), a `PassiveMobSystem` orchestrating spawn/
+tick, and a `PassiveMobRenderer` giving each live pig a visible mesh. It is a baseline vertical
+slice — not combat/damage/health/death, not breeding/feeding/taming, not despawning, and not
+save/load persistence (all documented non-goals, deferred to 146/147/148 or a future
+persistence-wiring change).
+
+- `src/simulation/PassiveMobBaseline.ts` (NEW) — `PassiveMobWorld` interface (the full
+  world-access surface `PassiveMobSystem` needs, so tests can supply a plain object instead of a
+  real `World`); `PassiveMobWorldAdapter implements PassiveMobWorld` (`getCollisionShape` via
+  `World.isSolid` — full cube or empty, no partial-shape fidelity; `getSkyLight` via a simplified
+  open-sky-column scan up to `CONFIG.chunk.height`, block light always 0 — the real dormant
+  light-engine stack (`LightStorage`/`SkyLightEngine`/`BlockLightEngine`/`LightUpdateEngine`)
+  remains unconsumed; `getBiomeDefinition` bridges `TerrainGenerator`'s legacy 4-key `Biome`
+  string to `data/Biome.ts`'s `BiomeRegistry`; `getSurfaceHeightAt` wraps `getHeightAt`);
+  `PIG_BOUNDING_BOX`/`SPAWN_CAP=12`/`SPAWN_ATTEMPTS_PER_CHUNK=2`/`SPAWN_CYCLE_INTERVAL_TICKS=100`;
+  `PassiveMobSystem` (owns an `EntityManager` constructed with `createDefaultEntityRegistry()`;
+  `spawnCycle` runs 138's `runSpawnCycleForChunk` for pig only over a caller-supplied chunk list;
+  `tick` restricts to 132's `selectTickingEntities`, lazily assigns each pig a `GoalSelector`
+  running 139's `WanderGoal`+`LookGoal` seeded per-entity via `SeedRng`, then runs one
+  `EntityPhysics` step; `getActivePigs` exposes the live set).
+- `src/rendering/PassiveMobRenderer.ts` (NEW) — per-entity-id `THREE.Group` mesh pool, mirroring
+  `WorldLife`'s low-poly box aesthetic and its real-`THREE.Scene`, GL-free unit-test pattern;
+  `sync(pigs)` adds/updates/removes meshes to match the live set; `dispose()` clears all.
+- `src/engine/Game.ts` (EDIT) — constructs the adapter/system/renderer once; a throttled
+  spawn-cycle sweep (every `SPAWN_CYCLE_INTERVAL_TICKS` frames, over the currently-simulating
+  chunk set, reusing `tickRandomBlocks`'s own enumeration pattern) plus a per-frame `tick`/`sync`
+  call inside the existing `update(dt)`, alongside `worldLife.update`. `WorldLife` itself is
+  untouched (kept as a separate, simpler visual layer with its own passing e2e coverage).
+- `tests/e2e/game.spec.ts` (EDIT) — new "spawns a live, simulated pig entity near the player"
+  assertion polling `window.__voxelGame`'s render scene for a `passive-mob-pig`-named mesh,
+  confirming a real pig actually spawns, ticks, and renders in the live production build.
+
+## Validation evidence (145)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1883/1883 (prior 1866 + 17 new: PassiveMobBaseline adapter collision/light/biome
+  bridging + spawn-cap enforcement + tick ticking-set gating/gravity composition (14),
+  PassiveMobRenderer sync/dispose scene-graph bookkeeping (3))
+- production build: PASS (`tsc --noEmit && vite build`, 98 modules, up from 83 — confirms
+  `Game.ts` now consumes the new modules)
+- E2E: PASS 22/22 (21 pre-existing + the new pig-spawn-visibility assertion)
+
+## Advancement decision (145)
+
+Advance. 100% task completion, full gate green, no MUST/SHALL requirement unmet, no regression.
+Next change: 146-hostile-mob-baseline.
 
 ## What 144 implemented
 
@@ -1426,6 +1480,6 @@ before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 144
-verification. Change 145 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 145
+verification. Change 146 is the next change; its artifacts must be authored and
 validated before implementation begins.
