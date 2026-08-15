@@ -3,18 +3,39 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **172-minecart-physics — VERIFIED 100%**
-- Active implementation change: **172-minecart-physics — VERIFIED**
-- Next change: **173-redstone-regression-worlds — NOT YET ACTIVE (artifacts pending)**
-- 172 task ledger: **24 total tasks, 24 completed**
-- 172 completion: **100%**
-- 172 mandatory minecart-physics requirements: **PASS**
-- 172 required-test gate: **PASS — unit 2360/2360, E2E 22/22**
-- 172 advancement allowed: **Yes**
-- Session-start head: `b368fe62520d3d78f3eb7adb8045fcf053fd2333`
-- Validated head: `6237621bf704470403ddf64dbffefb9738f32297` (172 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress — everything through 172 (signals, components, consumers, pistons, item movers, destruction, rails, minecarts) COMPLETE; 173 (regression worlds) is the section-closing change.**
-- Next exact action: **Advance to 173-redstone-regression-worlds — the change that CLOSES the Redstone and automation section (154-173). Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: headless canonical circuit fixtures and timing assertions).**
+- Last completed change: **173-redstone-regression-worlds — VERIFIED 100%**
+- Active implementation change: **173-redstone-regression-worlds — VERIFIED**
+- Next change: **174-dimension-manager — NOT YET ACTIVE (artifacts pending)**
+- 173 task ledger: **22 total tasks, 22 completed**
+- 173 completion: **100%**
+- 173 mandatory redstone-regression-worlds requirements: **PASS**
+- 173 required-test gate: **PASS — unit 2371/2371, E2E 22/22**
+- 173 advancement allowed: **Yes**
+- Session-start head: `13afbcb8304884f644c7088be31db0b88ad9a36c`
+- Validated head: `24947756b4fd27c7f6bc03a40c88ac1cb78529ec` (173 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE (closed by 173's canonical fixtures F1-F8); "Dimensions and major progression" (174-195) begins next.**
+- Next exact action: **Advance to 174-dimension-manager — the FIRST change of the 'Dimensions and major progression' section (174-195). Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: multiple loaded dimensions with independent world/chunk/tick state).**
+
+## What 173 implemented
+
+Change 173 **closes the Redstone and automation section (154-173)** with a test-only regression
+suite.
+
+- `tests/unit/RedstoneRegressionWorlds.test.ts` (NEW, 11 tests) — eight canonical headless fixtures
+  (F1-F8) with tick-exact timelines composing the section's pure modules against in-memory worlds
+  and 047 queues: F1 a two-repeater chain fires at ticks 2/4 for a tick-0 input (159); F2 comparator
+  compare/subtract outputs plus the exact 2-tick update delay (160); F3 torch inversion
+  (`!attachmentPowered`), full 15 signal when lit, and the tracker's strict-exceeds burnout rule
+  (9 toggles burn out, exactly 8 do not) (158); F4 a three-block piston chain plans farthest-first
+  `[[3,0,0],[2,0,0],[1,0,0]]` and executes atomically with the farthest block landing at the push
+  target (163/164); F5 a hopper→dropper item pipeline transfers one item at tick 8 and produces a
+  `DroppedItem` at tick 16 (166/167); F6 a dispenser with a plain item merges into a container
+  exactly like a dropper (168); F7 redstone-primed TNT is not due at fuse 1 and detonates exactly at
+  fuse 0, destroying the stone one block east with its drop (169/170); F8 a `north_south` rail zeros
+  `vx` and keeps `vz` at `MINECART_MAX_SPEED`, while `corner_north_east` turns a north-bound cart
+  onto the east axis (171/172).
+- Test-only change: zero production files, zero registry changes. These fixtures are the section's
+  regression baseline for 243's redstone-automation-e2e and 248's parity matrix.
 
 ## What 172 implemented
 
