@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **139-passive-wander-ai — VERIFIED 100%**
-- Active implementation change: **139-passive-wander-ai — VERIFIED**
-- Next change: **140-hostile-target-ai — NOT YET ACTIVE (artifacts pending)**
-- 139 task ledger: **5 total task groups, 5 completed**
-- 139 completion: **100%**
-- 139 mandatory passive-wander-ai requirements: **PASS**
-- 139 required-test gate: **PASS — unit 1798/1798, E2E 21/21**
-- 139 advancement allowed: **Yes**
-- Session-start head: `d53e6fb591885576b7a793b8e456de78a08be19a`
-- Validated head: `221a52c37e07c42c6c62c0cc27666bc06f6a2a47` (139 feature commit)
-- Next exact action: **Advance to 140-hostile-target-ai. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (target acquisition, chase, attack-range baseline behavior, building on 136 GoalSelector + 135 AStarPathfinding); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **140-hostile-target-ai — VERIFIED 100%**
+- Active implementation change: **140-hostile-target-ai — VERIFIED**
+- Next change: **141-melee-combat-cooldown — NOT YET ACTIVE (artifacts pending)**
+- 140 task ledger: **5 total task groups, 5 completed**
+- 140 completion: **100%**
+- 140 mandatory hostile-target-ai requirements: **PASS**
+- 140 required-test gate: **PASS — unit 1808/1808, E2E 21/21**
+- 140 advancement allowed: **Yes**
+- Session-start head: `221a52c37e07c42c6c62c0cc27666bc06f6a2a47`
+- Validated head: `69e0f84d5369fa3584e683b3f0fce40be07bf4a8` (140 feature commit)
+- Next exact action: **Advance to 141-melee-combat-cooldown. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (Java-like attack cooldown, damage, knockback, invulnerability frames, building on 140 HostileTargetAI + existing damage/attribute registries); implement; verify full gate; commit + push; advance program state.**
 
 ## What 119 implemented
 
@@ -735,6 +735,45 @@ the 1631-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Bonemeal (127), hoe tilling, and a rain/weather hook are explicit non-goals
 (documented). Advance to 127.
 
+## What 140 implemented
+
+Change 140 adds the hostile analog to 139's baseline: target acquisition and chase. It is the
+behaviors only — no obstacle-aware pathfinding, no line-of-sight checks, no actual attack/damage, and
+no `Game`/mob-spawning wiring.
+
+- `src/simulation/HostileTargetAI.ts` (NEW) — `TargetAcquisitionGoal` (`Target`-flagged; `canUse`
+  acquires a target within `detectionRadius` via an injected `findNearestTarget` callback;
+  `canContinueToUse` re-queries the callback every call, updating `getTarget()` to the live position
+  and dropping the target once it's `null` or beyond `forgetRadius`, which defaults larger than
+  `detectionRadius` for acquire/drop hysteresis) and `ChaseGoal` (`Move`-flagged; depends purely on
+  `targetSource.getTarget()`; `tick` steers `vx`/`vz` toward the target scaled by `speed` while
+  farther than `attackRange`, or zeroes horizontal velocity within range — handing off to a future
+  attack goal — never touching `vy`).
+- Tests: `tests/unit/HostileTargetAI.test.ts` (NEW, 10) — detection-radius in/out-of-range
+  acquisition; live tracking of a moving target; both drop paths (beyond forget radius, callback
+  returns `null`); `ChaseGoal` requiring a real acquired target from a wired `TargetAcquisitionGoal`;
+  steer vs. stop-in-range (`vy` untouched in both); full determinism across independent instances.
+
+## Validation evidence (140)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1808/1808 (prior 1798 + 10 new `HostileTargetAI.test.ts`). The session's machine hit
+  transient heavy CPU load causing unrelated, pre-existing compute-heavy tests (terrain generation,
+  cave carving, greedy meshing, coordinate sweeps) to intermittently exceed vitest's default 5000ms
+  timeout across two full runs; isolating those files individually passed every time, and a full run
+  with `--testTimeout=30000` passed cleanly at 1808/1808 — confirmed environmental, not a regression.
+- production build: PASS (`tsc --noEmit && vite build`, 83 modules — unchanged, no consumer yet)
+- E2E: PASS 21/21 (no existing file touched; nothing consumes the new module)
+
+## Advancement decision
+
+Change 140 is **VERIFIED** at 5/5 task groups (100%). All gates are green: typecheck, lint, the
+1808-unit suite (confirmed clean after ruling out transient environmental timeout contention),
+production build, and the required E2E suite (21/21). No advancement exception was needed.
+Obstacle-aware pathfinding, line-of-sight, actual attack/damage, and `Game`/mob-spawning wiring are
+explicit non-goals (documented, deferred to 141+). Advance to 141.
+
 ## What 139 implemented
 
 Change 139 adds the first two concrete 136 `Goal` implementations. It is the behaviors only — no
@@ -1225,15 +1264,15 @@ the 1654-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Sapling/tree bonemeal is an explicit non-goal (deferred; no Sapling block
 exists) and the `FertilizerRegistry` extension point is documented. Advance to 128.
 
-## Next change: 140 (pending artifacts)
+## Next change: 141 (pending artifacts)
 
-`140-hostile-target-ai` is named in `CHANGE_SEQUENCE.md` with scope "Target acquisition, chase,
-attack-range baseline behavior." Per `AGENTS.md`, a change lacking full artifacts is
+`141-melee-combat-cooldown` is named in `CHANGE_SEQUENCE.md` with scope "Java-like attack cooldown,
+damage, knockback, invulnerability frames." Per `AGENTS.md`, a change lacking full artifacts is
 a hard pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md`
 before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 139
-verification. Change 140 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 140
+verification. Change 141 is the next change; its artifacts must be authored and
 validated before implementation begins.
