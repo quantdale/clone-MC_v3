@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **140-hostile-target-ai — VERIFIED 100%**
-- Active implementation change: **140-hostile-target-ai — VERIFIED**
-- Next change: **141-melee-combat-cooldown — NOT YET ACTIVE (artifacts pending)**
-- 140 task ledger: **5 total task groups, 5 completed**
-- 140 completion: **100%**
-- 140 mandatory hostile-target-ai requirements: **PASS**
-- 140 required-test gate: **PASS — unit 1808/1808, E2E 21/21**
-- 140 advancement allowed: **Yes**
-- Session-start head: `221a52c37e07c42c6c62c0cc27666bc06f6a2a47`
-- Validated head: `69e0f84d5369fa3584e683b3f0fce40be07bf4a8` (140 feature commit)
-- Next exact action: **Advance to 141-melee-combat-cooldown. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (Java-like attack cooldown, damage, knockback, invulnerability frames, building on 140 HostileTargetAI + existing damage/attribute registries); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **141-melee-combat-cooldown — VERIFIED 100%**
+- Active implementation change: **141-melee-combat-cooldown — VERIFIED**
+- Next change: **142-projectile-core — NOT YET ACTIVE (artifacts pending)**
+- 141 task ledger: **5 total task groups, 5 completed**
+- 141 completion: **100%**
+- 141 mandatory melee-combat-cooldown requirements: **PASS**
+- 141 required-test gate: **PASS — unit 1821/1821, E2E 21/21**
+- 141 advancement allowed: **Yes**
+- Session-start head: `69e0f84d5369fa3584e683b3f0fce40be07bf4a8`
+- Validated head: `8a88586dcec301218b0e1f790bb8684ac578a0f1` (141 feature commit)
+- Next exact action: **Advance to 142-projectile-core. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (projectile motion, collision, ownership, damage/event hooks, building on 130 EntityPhysics + 129 EntityManager); implement; verify full gate; commit + push; advance program state.**
 
 ## What 119 implemented
 
@@ -735,6 +735,46 @@ the 1631-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Bonemeal (127), hoe tilling, and a rain/weather hook are explicit non-goals
 (documented). Advance to 127.
 
+## What 141 implemented
+
+Change 141 adds Java 1.9+-style attack-cooldown damage scaling, knockback, and per-target
+invulnerability-frame tracking. It is the pure combat math only — no critical hits, no
+`SurvivalSystem`/`EntityManager` application, no attribute-registry lookups, and no `Game`/mob-AI
+wiring.
+
+- `src/simulation/MeleeCombat.ts` (NEW) — `attackCooldownProgress` (vanilla `(t+0.5)/duration`
+  formula, clamped `[0,1]`); `cooldownDamageMultiplier` (`0.2 + p²×0.8`, so `0.2` at zero charge,
+  `1.0` at full charge); `computeAttackDamage` (composes both); `computeKnockback` (halved existing
+  velocity, plus a unit-direction horizontal impulse scaled by `strength` and a fixed `+0.4` vertical
+  pop, with a safe same-position fallback that still halves velocity and pops vertically);
+  `InvulnerabilityTracker` (per-target-id last-hit-tick map; `canDamage`/`registerHit`/`clear`);
+  `resolveMeleeAttack` (composes all of the above — blocked during invulnerability with no hit
+  registered, otherwise computes damage/knockback and registers exactly one hit).
+- Tests: `tests/unit/MeleeCombat.test.ts` (NEW, 13) — cooldown-progress monotonicity/bounds
+  including a negative-tick clamp; the multiplier's three named vanilla reference points; knockback
+  direction/halving plus the degenerate same-position fallback; tracker window boundaries
+  (`window-1` blocked, `window` open), never-hit/clear/default-window cases; `resolveMeleeAttack`'s
+  full composition cross-checked against the underlying formulas, with both the blocked (no new hit)
+  and successful (exactly one hit registered) paths verified.
+
+## Validation evidence (141)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1821/1821 (prior 1808 + 13 new `MeleeCombat.test.ts`)
+- production build: PASS (`tsc --noEmit && vite build`, 83 modules — unchanged, no consumer yet)
+- E2E: PASS 21/21 (an initial e2e run was killed by an environment resource limit, leaving an
+  orphaned preview-server process bound to port 4173 that blocked a retry; the stray process was
+  identified via `netstat`/`tasklist` and terminated, after which a clean rerun passed 21/21 —
+  confirmed unrelated to this change)
+
+## Advancement decision
+
+Change 141 is **VERIFIED** at 5/5 task groups (100%). All gates are green: typecheck, lint, the
+1821-unit suite, production build, and the required E2E suite (21/21). No advancement exception was
+needed. Critical hits, `SurvivalSystem`/`EntityManager` application, attribute-registry lookups, and
+`Game`/mob-AI wiring are explicit non-goals (documented, deferred). Advance to 142.
+
 ## What 140 implemented
 
 Change 140 adds the hostile analog to 139's baseline: target acquisition and chase. It is the
@@ -1264,15 +1304,15 @@ the 1654-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Sapling/tree bonemeal is an explicit non-goal (deferred; no Sapling block
 exists) and the `FertilizerRegistry` extension point is documented. Advance to 128.
 
-## Next change: 141 (pending artifacts)
+## Next change: 142 (pending artifacts)
 
-`141-melee-combat-cooldown` is named in `CHANGE_SEQUENCE.md` with scope "Java-like attack cooldown,
-damage, knockback, invulnerability frames." Per `AGENTS.md`, a change lacking full artifacts is
+`142-projectile-core` is named in `CHANGE_SEQUENCE.md` with scope "Projectile motion, collision,
+ownership, damage/event hooks." Per `AGENTS.md`, a change lacking full artifacts is
 a hard pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md`
 before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 140
-verification. Change 141 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 141
+verification. Change 142 is the next change; its artifacts must be authored and
 validated before implementation begins.
