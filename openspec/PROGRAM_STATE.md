@@ -3,18 +3,61 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **163-piston-move-planner — VERIFIED 100%**
-- Active implementation change: **163-piston-move-planner — VERIFIED**
-- Next change: **164-piston-execution — NOT YET ACTIVE (artifacts pending)**
-- 163 task ledger: **26 total tasks, 26 completed**
-- 163 completion: **100%**
-- 163 mandatory piston-move-planner requirements: **PASS**
-- 163 required-test gate: **PASS — unit 2218/2218, E2E 22/22**
-- 163 advancement allowed: **Yes**
+- Last completed change: **164-piston-execution — VERIFIED 100%**
+- Active implementation change: **164-piston-execution — VERIFIED**
+- Next change: **165-slime-honey-move-groups — NOT YET ACTIVE (artifacts pending)**
+- 164 task ledger: **28 total tasks, 28 completed**
+- 164 completion: **100%**
+- 164 mandatory piston-execution requirements: **PASS**
+- 164 required-test gate: **PASS — unit 2231/2231, E2E 22/22**
+- 164 advancement allowed: **Yes**
 - Session-start head: `89017135263a9122a8981c3f0a7c0fad8d25ed94`
-- Validated head: `4a6ca8d78fc5638048d1853aef9a81b670d5a29c` (163 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress — the 157-161 logic-component trio and 162's first consumers are both COMPLETE; 163 opens the piston sub-arc (163-165).**
-- Next exact action: **Advance to 164-piston-execution. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: atomic block-state/block-entity moves and neighbor updates — this change actually applies 163's `PistonPushPlan` against a real `World`. Also the first natural point `BlockId.Piston`/`ItemId.Piston` would need to exist, since something must finally exist to execute the plan against — decide explicitly whether to add the block/item now); implement; verify full gate; commit + push; advance program state.**
+- Validated head: `05c5718051d0fd10a995d0c52f3a250f900af169` (164 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress — the 157-161 logic-component trio and 162's first consumers are both COMPLETE; the piston sub-arc (163-165) is two-thirds done.**
+- Next exact action: **Advance to 165-slime-honey-move-groups. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: sticky adjacency rules and push grouping — this closes the piston sub-arc. Add `BlockId.StickyPiston` alongside a slime/honey-block adjacency rule and extend the push-chain algorithm to validate a pull chain on retract, reusing 164's `PistonExecutionWorld<TState>`/`executePistonPush` shape wherever the same snapshot-then-apply discipline applies. A slime block sticks blocks on all six faces — a genuinely different shape than 163's linear walk, not a trivial reuse — so scope the adjacency graph narrowly and document what is deferred); implement; verify full gate; commit + push; advance program state.**
+
+## What 164 implemented
+
+Change 164 closes 163's `PistonPushPlan` into an effect.
+
+- `src/simulation/PistonExecution.ts` (NEW) — `executePistonPush<TState>(world, plan, facing)` is
+  generic over the block-state representation itself (mirroring 022's `PalettedContainer<T>` — this
+  module only ever copies opaque values between positions, never interprets them). A no-op — zero
+  `PistonExecutionWorld` calls at all — when `plan.canPush` is `false` (verified via a
+  call-recording world asserting an empty call list). Otherwise: every `blocksToMove` source state
+  is snapshotted *before* any write (defensive against a caller's real `World` ever observing an
+  in-progress write); any `blocksToDestroy` position is cleared first (always safe — it is always
+  exactly some later move's destination, per 163's own contract); then each snapshot is written to
+  its destination and its source cleared, in 163's existing farthest-first order.
+  `pistonAffectedPositions(plan, x, y, z, facing)` derives every position whose block identity
+  changed — empty for a blocked plan — for a future wiring change to feed into 156's
+  `RedstonePropagator.markNeighborsDirty`, **without this module importing 156 directly**.
+- `src/world/BlockRegistry.ts`/`ItemRegistry.ts` (EDIT) — `PISTON_SCHEMA` (`facing` 6-way ×
+  `extended` = 12 states, facing modeled since it is behavioral — determines push direction, 161's
+  observer precedent); `BlockId.Piston = 48`/`ItemId.Piston = 48`. **Non-sticky only** —
+  `sticky_piston` and pull-on-retract behavior are explicitly 165's separate titled scope.
+  `pistonShouldBeExtended`/`pistonStateProperties` mirror 162's consumer shape for the piston's own
+  extend/retract state; the piston's own position is never itself a member of a plan's
+  `blocksToMove`/`blocksToDestroy` (163's walk starts one block away), so toggling its `extended`
+  flag is left as a one-line caller operation rather than folded into `executePistonPush`.
+
+## Validation evidence (164)
+
+- typecheck: PASS; lint: PASS (full project)
+- unit: PASS 2231/2231 (prior 2218 + 13 new, including exact-final-state assertions for
+  multi-block chains and a call-recording no-op check)
+- production build: PASS (103 modules, unchanged — registry edits live, simulation module has no
+  `Game.ts` consumer yet)
+- E2E: PASS 22/22 (all pre-existing assertions unaffected)
+- Four characterization tests updated (resuming after 163's registry-free change): block count
+  36 → 37, stateful-block set + `piston`, state-count formula base-block offset -14 → -15 plus a
+  total +12 with a new per-block exact-12-state assertion, one new legacy-id row
+
+## Advancement decision (164)
+
+Advance. 100% task completion, full gate green, no MUST/SHALL requirement unmet, no regression.
+Loot generation for destroyed blocks, direct 156 composition, and all sticky/pull behavior deferred
+as documented non-goals. Next change: 165-slime-honey-move-groups.
 
 ## What 163 implemented
 
