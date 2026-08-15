@@ -3,18 +3,61 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **160-comparator — VERIFIED 100%**
-- Active implementation change: **160-comparator — VERIFIED**
-- Next change: **161-observer — NOT YET ACTIVE (artifacts pending)**
-- 160 task ledger: **29 total tasks, 29 completed**
-- 160 completion: **100%**
-- 160 mandatory comparator requirements: **PASS**
-- 160 required-test gate: **PASS — unit 2176/2176, E2E 22/22**
-- 160 advancement allowed: **Yes**
+- Last completed change: **161-observer — VERIFIED 100%**
+- Active implementation change: **161-observer — VERIFIED**
+- Next change: **162-redstone-consumer-blocks — NOT YET ACTIVE (artifacts pending)**
+- 161 task ledger: **29 total tasks, 29 completed**
+- 161 completion: **100%**
+- 161 mandatory observer requirements: **PASS**
+- 161 required-test gate: **PASS — unit 2188/2188, E2E 22/22**
+- 161 advancement allowed: **Yes**
 - Session-start head: `89017135263a9122a8981c3f0a7c0fad8d25ed94`
-- Validated head: `85c61f2f6f8e39ccf7672a096c68d4100c6da563` (160 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress.**
-- Next exact action: **Advance to 161-observer. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (the observer block: detects a state change in the block it faces — comparator-like short-pulse output — without needing direct power input, e.g. a crop's growth-stage change, a comparator's output change, a furnace's lit-state change. Decide explicitly which detectable-state-change sources are in scope given how few titled changes have wired real block behavior into a shared change-detection hook yet, and document deferred sources as non-goals); implement; verify full gate; commit + push; advance program state.**
+- Validated head: `e207ad9db4208b74da9c2e4ec55a75b00ff3f48c` (161 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress — the 157-161 logic-component trio is now COMPLETE.**
+- Next exact action: **Advance to 162-redstone-consumer-blocks. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (the first change where a redstone signal actually drives a visible/behavioral block-state change on the *receiving* end: lamps that light when powered, doors/trapdoors that open when powered. Check CHANGE_SEQUENCE.md for whether a dedicated doors change exists later before deciding how much door/trapdoor open-state modeling belongs here. Also the first natural point a real `RedstonePowerSource` adapter over the live `World` could plausibly start being built, given 154-161 are all additive/unconsumed so far — decide explicitly whether to scope that bridge in now or continue deferring it, and document the decision either way); implement; verify full gate; commit + push; advance program state.**
+
+## What 161 implemented
+
+Change 161 adds the redstone observer, closing out the 157-161 logic-component trio: a block that
+watches the neighbour it faces and, on a caller-detected change, emits a short two-phase pulse out
+its back.
+
+- `src/simulation/RedstoneObserver.ts` (NEW) — `observedNeighborPosition`/`emissionNeighborPosition`
+  derive the watched and emission neighbours directly from 154's `offsetInDirection`/
+  `OPPOSITE_DIRECTION` (their first consumer among the redstone components — 159/160 each needed
+  only a horizontal subset, but an observer can validly watch straight up or down too, so `facing`
+  is 6-way, the first non-horizontal-only facing schema in this series). The pulse is genuinely
+  two-phase (turn on, then turn off) and — uniquely among 157-161 — needs **two independent** 047
+  `ScheduledTickQueue` instances rather than one: 047 dedups by position (at most one pending entry
+  per block), so a single shared queue could never hold both a pending turn-on and a pending
+  turn-off for the same block at once. `scheduleObserverPulseStart`/`dueObserverPulseStarts` (phase
+  1) and `scheduleObserverPulseEnd`/`dueObserverPulseEnds` (phase 2) each mirror 157-160's
+  single-queue bridge shape exactly, just doubled. `observerSignalStrength` mirrors 158's
+  `torchSignalStrength` (full signal while powered, none otherwise).
+- `src/world/BlockRegistry.ts`/`ItemRegistry.ts` (EDIT) — `OBSERVER_SCHEMA` (`facing` × `powered` =
+  12 states); `BlockId.Observer = 44`/`ItemId.Observer = 44`. Unlike the flat/transparent 157-160
+  components, the observer is modeled as a solid opaque block (matching vanilla's full cube),
+  reusing furnace's hardness/tool convention (3.5, pickaxe, level 1).
+- Explicitly out of scope: change-detection itself (did the watched neighbour's state actually
+  change) and re-trigger suppression, both deferred to a future wiring change — matching 159's
+  identical deferral of input-change tracking.
+
+## Validation evidence (161)
+
+- typecheck: PASS; lint: PASS (full project)
+- unit: PASS 2188/2188 (prior 2176 + 12 new, including all-six-facings neighbour-position coverage
+  and two-independent-queue scheduling)
+- production build: PASS (registry edits live; simulation module has no `Game.ts` consumer yet)
+- E2E: PASS 22/22 (all pre-existing assertions unaffected)
+- Four characterization tests updated: block count 32 → 33, stateful-block set + `observer`,
+  state-count formula +12 (base-block offset -10 → -11) plus a per-block exact-12-state assertion,
+  one new legacy-id row
+
+## Advancement decision (161)
+
+Advance. 100% task completion, full gate green, no MUST/SHALL requirement unmet, no regression.
+Change-detection and re-trigger suppression deferred as documented non-goals. Next change:
+162-redstone-consumer-blocks.
 
 ## What 160 implemented
 
