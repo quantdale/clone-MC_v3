@@ -3,18 +3,36 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **174-dimension-manager — VERIFIED 100%**
-- Active implementation change: **174-dimension-manager — VERIFIED**
-- Next change: **175-nether-dimension-type — NOT YET ACTIVE (artifacts pending)**
-- 174 task ledger: **22 total tasks, 22 completed**
-- 174 completion: **100%**
-- 174 mandatory dimension-manager requirements: **PASS**
-- 174 required-test gate: **PASS — unit 2381/2381, E2E 22/22**
-- 174 advancement allowed: **Yes**
-- Session-start head: `4130ef61f854fcec056dbe6d27dc4077d81a47b9`
-- Validated head: `feb7b3b346e847d87bc4997a53bb7dce23c264e9` (174 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — 174's multi-dimension container is COMPLETE.**
-- Next exact action: **Advance to 175-nether-dimension-type. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Nether bounds, no skylight, ambient rules and save namespace — the first real dimension type beyond the overworld, registered through 174's DimensionManager).**
+- Last completed change: **175-nether-dimension-type — VERIFIED 100%**
+- Active implementation change: **175-nether-dimension-type — VERIFIED**
+- Next change: **176-nether-world-generation — NOT YET ACTIVE (artifacts pending)**
+- 175 task ledger: **18 total tasks, 18 completed**
+- 175 completion: **100%**
+- 175 mandatory nether-dimension-type requirements: **PASS**
+- 175 required-test gate: **PASS — unit 2386/2386, E2E 22/22**
+- 175 advancement allowed: **Yes**
+- Session-start head: `5f941d7222f54145d9b6c4304e05bb808e888df4`
+- Validated head: `34583a178e5226718af212eeb7a80e40d0895a4a` (175 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — 174's container and 175's canonical dimension types (overworld + Nether) are COMPLETE.**
+- Next exact action: **Advance to 176-nether-world-generation. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Nether density/surface/biome baseline through existing worldgen pipeline — the first dimension-specific worldgen, consuming 175's NETHER_DIMENSION_TYPE and the 085-102 worldgen pipeline).**
+
+## What 175 implemented
+
+Change 175 adds the canonical dimension types and the save-namespace rule.
+
+- `src/data/DimensionTypes.ts` (NEW) — `OVERWORLD_DIMENSION_TYPE` (`minecraft:overworld`, minY −64,
+  height 384 / 24 sections, skylight, natural, no fixed time — vanilla 1.18+ parameters, defined
+  here so the standard dimensions share one module) and `NETHER_DIMENSION_TYPE`
+  (`minecraft:the_nether`, minY 0, height 256 / 16 sections, **no skylight**, ultrawarm (the
+  ambient rule), non-natural, `fixedTime 18000` — vanilla's noon lock). Every parameter is pinned by
+  tests, including the exact `containsY` edges (0/255 in, 256/−1 out for the Nether; −64/319 in, 320
+  out for the overworld). `dimensionSaveNamespace(key)` encodes the save-namespace rule: a
+  dimension's storage namespace IS its key, validated via `tryParseResourceId` (a legal full
+  `namespace:path` required) and returned unchanged, throwing `INVALID_ID` for malformed keys so a
+  bad key can never reach the persistence layer.
+- The Nether registers through 174's `DimensionManager` under `minecraft:the_nether` with a fresh
+  queue (integration-tested).
+- Tests: `tests/unit/DimensionTypes.test.ts` (NEW, 5 tests). No registry changes.
 
 ## What 174 implemented
 
