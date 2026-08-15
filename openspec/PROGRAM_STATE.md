@@ -3,17 +3,59 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **111-item-entity-drops — VERIFIED 100%**
-- Active implementation change: **111-item-entity-drops — VERIFIED**
-- Next change: **112-item-pickup-and-despawn — NOT YET ACTIVE (artifacts pending)**
-- 111 task ledger: **6 total tasks, 6 completed**
-- 111 completion: **100%**
-- 111 mandatory item-entity-drops requirements: **PASS**
-- 111 required-test gate: **PASS — unit 1290/1290, E2E 20/20**
-- 111 advancement allowed: **Yes**
+- Last completed change: **112-item-pickup-and-despawn — VERIFIED 100%**
+- Active implementation change: **112-item-pickup-and-despawn — VERIFIED**
+- Next change: **113-equipment-slots — NOT YET ACTIVE (artifacts pending)**
+- 112 task ledger: **6 total tasks, 6 completed**
+- 112 completion: **100%**
+- 112 mandatory item-pickup-and-despawn requirements: **PASS**
+- 112 required-test gate: **PASS — unit 1306/1306, E2E 21/21**
+- 112 advancement allowed: **Yes**
 - Session-start head: `e715b661b40b252baf64d7abe190eee40eb4836f`
-- Validated head: `6a7c34a23131999eaa02a4d8f33034895944c152` (111 feature commit; state advanced to 112)
-- Next exact action: **Advance to 112-item-pickup-and-despawn. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (112 artifacts must be authored before implementation), validate, implement item pickup + despawn/merge, verify full gate, commit + push, advance program state.**
+- Validated head: `4f7d0e7bb3586590b783ba340814122952664159` (112 feature commit; state advanced to 113)
+- Next exact action: **Advance to 113-equipment-slots. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (113 artifacts must be authored before implementation), validate, implement armor/offhand/mainhand equipment state and inventory integration, verify full gate, commit + push, advance program state.**
+
+## What 112 implemented
+
+Change 112 makes mined-block item entities collectible and self-managing: pickup
+delay, merge policy, inventory insertion, and a despawn timer, wired into the
+per-tick simulation.
+
+- `src/world/ItemEntity.ts` — `ItemEntity.count` is now mutable; the manager is
+  the sole owner of quantity (merge + partial pickup adjust it; `createItemEntity`
+  still validates the initial value). Value domain unchanged (`1..stackSize`).
+- `src/simulation/ItemEntityManager.ts` — constants `PICKUP_DELAY_TICKS = 10`
+  (0.5s), `DESPAWN_AGE_TICKS = 6000` (5 min), `MERGE_RADIUS = 0.25`,
+  `PICKUP_RADIUS = 1.5`, and three methods:
+  - `mergeEntities(radius)` — folds overlapping same-item entities into one up to
+    `stackSize`; iterates a stable id snapshot so 3+ overlaps fold idempotently
+    into a single entity; returns removed count.
+  - `despawnExpired(maxAgeTicks)` — removes entities with `ageTicks >= cap`
+    (inclusive); returns removed count.
+  - `collectPlayerDrops(px,py,pz, insert, pickupRadius)` — for each deliverable
+    drop (past delay AND within radius), offers `insert(item,count)` (mirrors
+    `Inventory.addItem`'s leftover contract); removes on full insert, reduces
+    `count` on partial; returns total collected; iterates a snapshot.
+- `src/engine/Game.ts` — in the active-simulation block after
+  `tickItemEntities(dt)`, runs `mergeEntities()`, `despawnExpired()`, and
+  `collectPlayerDrops(player.position…, (id,n)=>inventory.addItem(id,n))`, and
+  re-renders the hotbar when collection returns > 0.
+
+## Validation evidence (112)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1306/1306 (prior 1290 + 16 new ItemPickup)
+- production build: PASS (`tsc --noEmit && vite build`)
+- E2E: PASS 21/21 (new `breaking a block drops an item the player collects`; 111
+  `breaking a block spawns a world item entity` regression stays green)
+
+## Advancement decision
+
+Change 112 is **VERIFIED** at 6/6 (100%). All gates are green: typecheck, lint,
+the new 1306-unit suite, production build, and the required E2E suite (21/21,
+including the new collect test and the preserved 111 spawn test). No advancement
+exception was needed. Advance to 113.
 
 ## What 111 implemented
 
@@ -55,63 +97,15 @@ Change 111 is **VERIFIED** at 6/6 (100%). All gates are green: typecheck, lint, 
 1290-unit suite, production build, and the required E2E suite (20/20). No advancement
 exception was needed. Advance to 112.
 
-## What 109 implemented
+## Next change: 113 (pending artifacts)
 
-Change 109 adds the furnace block-entity core and its registry data.
-
-- `src/world/FurnaceBlockEntity.ts` (NEW) — constants (`FURNACE_BLOCK_ID 20`,
-  `FURNACE_ITEM_ID 26`, `FURNACE_TYPE_KEY 'furnace'`, `FURNACE_SLOT_COUNT 3`,
-  `FURNACE_MENU_SLOT_COUNT 39`, `FURNACE_PLAYER_SLOT_START 3`, slot indices); `FurnaceState`
-  (input/fuel/output slots + `burnTime`/`burnTimeTotal`/`smeltTime`/`smeltTimeTotal`) with
-  strict validation and time invariants (`time <= total`, total 0 implies time 0);
-  `createFurnaceState` / `validateFurnaceState`; the deterministic immutable tick engine
-  `tickFurnace` over an injected `FurnaceContext` (`fuelBurnTicks`/`cookTicks`/`resultOf`;
-  110 supplies real values): fuel consumed only while smelting can progress, lit =
-  `burnTime > 0`, blocked output pauses everything, input removal resets smelt progress,
-  cook completion consumes one input and merges the result; `furnaceIsLit`; lossless
-  036-envelope `serializeFurnaceState`/`deserializeFurnaceState`; the 39-slot menu bridge
-  `createFurnaceMenu` (input 0, fuel 1, output 2, player 3-38) / `applyFurnaceMenuTransaction`
-  / `extractFurnaceSlots` / `extractFurnacePlayerSlots` / `withFurnaceSlots`; the 052 entity
-  lifecycle `createFurnaceBlockEntity` (tickable true) / `readFurnaceState` /
-  `updateFurnaceState`; `furnaceTickProgress` / `furnaceBurnFraction`.
-- `src/world/BlockRegistry.ts` — furnace block id 20 (tile 28, hardness 3.5, pickaxe-
-  preferred, drops `minecraft:furnace`, auto `loot/furnace` table).
-- `src/inventory/ItemRegistry.ts` — furnace item id 26 (iconTile 28, stackSize 64, places
-  the furnace block).
-- `src/rendering/TextureAtlas.ts` — original procedural furnace tile (index 28): stone base
-  with a dark rimmed mouth and ember glow.
-- `tests/unit/FurnaceBlockEntity.test.ts` (NEW) — 24 tests: state validation matrix, envelope
-  round-trips and rejects, tick vectors (burn start/fuel consumption, no fuel, non-fuel
-  items, blocked-output pause, input-removal reset, cook completion with near-full output
-  merge, full fuel run 8 smelts, multi-tick determinism, invalid tick counts, immutability),
-  menu bridge and extraction, timer-preserving slot updates, entity lifecycle, manager chunk
-  round-trip, registry cross-references. Registry enumeration and separation tests updated
-  for the new block.
-
-## Validation evidence (109)
-
-- typecheck: PASS (`tsc --noEmit`)
-- lint: PASS (`eslint .`)
-- unit: PASS 1253/1253 (prior 1229 + 24 new), stable across repeated runs
-- production build: PASS (`tsc --noEmit && vite build`)
-- E2E: PASS 19/19
-
-## Advancement decision
-
-Change 109 is **VERIFIED** at 5/5 (100%). All gates are green: typecheck, lint, the new 109
-suites, the full unit suite (1253/1253, stable across repeated runs), production build, and the
-required E2E suite (19/19). No advancement exception was needed.
-
-## Next change: 110 (pending artifacts)
-
-`110-furnace-recipes-and-fuels` is named in `CHANGE_SEQUENCE.md` with scope "Smelting recipes,
-fuel values, XP output, transactional behavior." Per `AGENTS.md`, a change lacking full
-artifacts is a hard pre-implementation block. Author and validate those artifacts via
-`SPEC_AUTHORING_PROTOCOL.md` before any production code. It supplies the real `FurnaceContext`
-values consumed by 109's tick engine.
+`113-equipment-slots` is named in `CHANGE_SEQUENCE.md` with scope "Armor/offhand/
+mainhand equipment state and inventory integration." Per `AGENTS.md`, a change lacking
+full artifacts is a hard pre-implementation block. Author and validate those artifacts
+via `SPEC_AUTHORING_PROTOCOL.md` before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 109 verification.
-Change 110 is the next change; its artifacts must be authored and validated before implementation
-begins.
+A future session must first inspect current `origin/main`, this state, and the 112
+verification. Change 113 is the next change; its artifacts must be authored and
+validated before implementation begins.

@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "111-item-entity-drops",
+  "currentChange": "112-item-pickup-and-despawn",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "111-item-entity-drops",
-  "nextChange": "112-item-pickup-and-despawn",
+  "lastCompletedChange": "112-item-pickup-and-despawn",
+  "nextChange": "113-equipment-slots",
   "completedTasks": 6,
   "totalTasks": 6,
   "completionPercentage": 100,
@@ -16,10 +16,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "e715b661b40b252baf64d7abe190eee40eb4836f",
-  "lastValidatedHead": "6a7c34a23131999eaa02a4d8f33034895944c152",
-  "lastKnownHead": "6a7c34a23131999eaa02a4d8f33034895944c152",
-  "lastCompletedTask": "111: all 6 tasks complete; item-entity-drops VERIFIED. ItemEntity.ts (ItemEntity type, ITEM_ENTITY_TYPE_KEY, createSpawnPosition, strict createItemEntity). ItemEntityManager.ts (id minting, spawnItemEntity validation, spawnLootStacks splitting+jitter, removeItemEntity, query/in-chunk, tickItemEntities round(dt*20), clear, serializeAll/deserializeAll to 037 envelope, atomic reject). PlayerInteraction.finishBreak routes drops through itemEntities.spawnLootStacks; removed selector.addItem drop path. Game.ts constructs+ticks+exposes ItemEntityManager. 23 new unit tests + PlayerInteraction rewrite + new e2e; full suite 1290 unit + 20 e2e green.",
-  "nextExactAction": "Advance to 112-item-pickup-and-despawn. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (112 artifacts must be authored before implementation), validate, implement item pickup + despawn/merge, verify full gate, commit impl+test+dir, update PROGRAM_STATE, push to origin/main, advance.",
+  "lastValidatedHead": "4f7d0e7bb3586590b783ba340814122952664159",
+  "lastKnownHead": "4f7d0e7bb3586590b783ba340814122952664159",
+  "lastCompletedTask": "112: all 6 tasks complete; item-pickup-and-despawn VERIFIED. ItemEntity.count made mutable (manager-owned quantity). ItemEntityManager adds constants PICKUP_DELAY_TICKS(10)/DESPAWN_AGE_TICKS(6000)/MERGE_RADIUS(0.25)/PICKUP_RADIUS(1.5) and methods mergeEntities (idempotent overlap fold up to stackSize), despawnExpired (inclusive age cap), collectPlayerDrops (delay + radius gated inventory insertion via injected insert, full/partial handling, snapshot iteration). Game.update runs merge->despawn->collect each simulation tick and re-renders hotbar on collection. 16 new unit tests (ItemPickup.test.ts) + break->collect e2e; full suite 1306 unit + 21 e2e green.",
+  "nextExactAction": "Advance to 113-equipment-slots. Author proposal/design/tasks/specs/verification via SPEC_AUTHORING_PROTOCOL.md (113 artifacts must be authored before implementation), validate, implement armor/offhand/mainhand equipment state and inventory integration, verify full gate, commit + push, advance program state.",
   "blockers": [],
   "validationResults": [
     {
@@ -1101,8 +1101,18 @@
       "e2e": "PASS 20/20; new break->entity world item entity test",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "111 VERIFIED 100/100 (100%). ItemEntity + ItemEntityManager (037 envelope serialize/deserialize), PlayerInteraction.finishBreak routes drops through manager, Game.ts constructs+ticks+exposes it. 23 new unit tests + PlayerInteraction rewrite + new e2e; full gate green."
+    },
+    {
+      "head": "4f7d0e7bb3586590b783ba340814122952664159",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 1306/1306",
+      "build": "PASS via Playwright production webServer",
+      "e2e": "PASS 21/21",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "112 VERIFIED 6/6 (100%)."
     }
   ],
-  "publishedHead": "6a7c34a23131999eaa02a4d8f33034895944c152",
-  "publishedAt": "2026-08-15T01:18:24.067Z"
+  "publishedHead": "4f7d0e7bb3586590b783ba340814122952664159",
+  "publishedAt": "2026-08-15T01:51:01.389Z"
 }
