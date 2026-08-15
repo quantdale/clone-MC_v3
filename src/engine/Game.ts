@@ -72,6 +72,11 @@ import {
   type ChunkCoord,
 } from '../simulation/PassiveMobBaseline';
 import { PassiveMobRenderer } from '../rendering/PassiveMobRenderer';
+import {
+  HostileMobSystem,
+  HOSTILE_SPAWN_CYCLE_INTERVAL_TICKS,
+} from '../simulation/HostileMobBaseline';
+import { HostileMobRenderer } from '../rendering/HostileMobRenderer';
 
 interface GameSaveSnapshot {
   version: 1;
@@ -121,6 +126,9 @@ export class Game {
   private readonly passiveMobWorld: PassiveMobWorldAdapter;
   private readonly passiveMobs: PassiveMobSystem;
   private readonly passiveMobRenderer: PassiveMobRenderer;
+  /** Hostile mob baseline (146): entity/AI/physics/melee system and mesh renderer, reusing passiveMobWorld. */
+  private readonly hostileMobs: HostileMobSystem;
+  private readonly hostileMobRenderer: HostileMobRenderer;
   private readonly overworldDimension: ResourceId;
   private readonly audio: GameAudio;
 
@@ -249,6 +257,9 @@ export class Game {
     this.passiveMobs = new PassiveMobSystem(createDefaultEntityRegistry(), this.seed);
     this.passiveMobRenderer = new PassiveMobRenderer(this.renderer.scene);
     this.resources.track(this.passiveMobRenderer);
+    this.hostileMobs = new HostileMobSystem(createDefaultEntityRegistry(), this.seed);
+    this.hostileMobRenderer = new HostileMobRenderer(this.renderer.scene);
+    this.resources.track(this.hostileMobRenderer);
 
     this.player = new Player();
     this.spawnPlayerSafely(generator);
@@ -467,6 +478,8 @@ export class Game {
       this.worldLife.update(dt, this.player.position);
       this.tickPassiveMobs(dt);
       this.passiveMobRenderer.sync(this.passiveMobs.getActivePigs());
+      this.tickHostileMobs(dt);
+      this.hostileMobRenderer.sync(this.hostileMobs.getActiveZombies());
       const headY = Math.floor(this.player.position.y + CONFIG.player.eyeHeight);
       const headSubmerged = this.world.getBlock(
         Math.floor(this.player.position.x),
@@ -621,6 +634,36 @@ export class Game {
       );
     }
     this.passiveMobs.tick(dt, this.passiveMobWorld, (cx, cz) => this.world.isChunkSimulating(cx, cz));
+  }
+
+  /**
+   * Hostile mob baseline (146): throttled spawn-cycle sweep over currently-simulating chunks
+   * (every {@link HOSTILE_SPAWN_CYCLE_INTERVAL_TICKS} frames), then a per-frame AI/physics/melee
+   * tick over the live zombie set restricted to the chunk-ticking set. Reuses `passiveMobWorld`
+   * (stateless, interface-shaped identically for both systems) rather than a second adapter.
+   */
+  private tickHostileMobs(dt: number): void {
+    if (this.simTick % HOSTILE_SPAWN_CYCLE_INTERVAL_TICKS === 0) {
+      const seen = new Set<string>();
+      const chunks: ChunkCoord[] = [];
+      this.world.forEachLoadedChunk((cx, _cy, cz) => {
+        const key = `${cx},${cz}`;
+        if (!seen.has(key) && this.world.isChunkSimulating(cx, cz)) {
+          seen.add(key);
+          chunks.push({ cx, cz });
+        }
+      });
+      this.hostileMobs.spawnCycle(this.passiveMobWorld, this.overworldDimension, chunks, (x, y, z) =>
+        Math.hypot(x - this.player.position.x, y - this.player.position.y, z - this.player.position.z),
+      );
+    }
+    this.hostileMobs.tick(
+      dt,
+      this.passiveMobWorld,
+      (cx, cz) => this.world.isChunkSimulating(cx, cz),
+      () => ({ x: this.player.position.x, y: this.player.position.y, z: this.player.position.z }),
+      (amount) => this.survival.damage(amount, 'mob'),
+    );
   }
 
   /** Whether the block at (x, y, z) has a registered `onRandomTick` behavior. */
