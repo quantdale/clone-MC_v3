@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **141-melee-combat-cooldown — VERIFIED 100%**
-- Active implementation change: **141-melee-combat-cooldown — VERIFIED**
-- Next change: **142-projectile-core — NOT YET ACTIVE (artifacts pending)**
-- 141 task ledger: **5 total task groups, 5 completed**
-- 141 completion: **100%**
-- 141 mandatory melee-combat-cooldown requirements: **PASS**
-- 141 required-test gate: **PASS — unit 1821/1821, E2E 21/21**
-- 141 advancement allowed: **Yes**
-- Session-start head: `69e0f84d5369fa3584e683b3f0fce40be07bf4a8`
-- Validated head: `8a88586dcec301218b0e1f790bb8684ac578a0f1` (141 feature commit)
-- Next exact action: **Advance to 142-projectile-core. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (projectile motion, collision, ownership, damage/event hooks, building on 130 EntityPhysics + 129 EntityManager); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **142-projectile-core — VERIFIED 100%**
+- Active implementation change: **142-projectile-core — VERIFIED**
+- Next change: **143-bow-and-arrow — NOT YET ACTIVE (artifacts pending)**
+- 142 task ledger: **5 total task groups, 5 completed**
+- 142 completion: **100%**
+- 142 mandatory projectile-core requirements: **PASS**
+- 142 required-test gate: **PASS — unit 1827/1827, E2E 21/21**
+- 142 advancement allowed: **Yes**
+- Session-start head: `8a88586dcec301218b0e1f790bb8684ac578a0f1`
+- Validated head: `cc12b8bfad9e9d3e1d2ebcfe7304084238c4efaf` (142 feature commit)
+- Next exact action: **Advance to 143-bow-and-arrow. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (charge/fire arrows, ammo, pickup behavior, damage, building on 142 ProjectileCore + 111/112 ItemEntity pickup pattern); implement; verify full gate; commit + push; advance program state.**
 
 ## What 119 implemented
 
@@ -735,6 +735,45 @@ the 1631-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Bonemeal (127), hoe tilling, and a rain/weather hook are explicit non-goals
 (documented). Advance to 127.
 
+## What 142 implemented
+
+Change 142 adds a pure per-tick projectile physics/collision step over 057's `CollisionResolver`. It
+is the motion/collision/ownership/event-hook substrate only — no damage computation (143's scope),
+no entity/item representation, and no `Game`/spawning wiring.
+
+- `src/simulation/ProjectileCore.ts` (NEW) — `ProjectileState`/`ProjectileOptions`/
+  `ProjectileTarget`/`ProjectileStepResult`; `stepProjectile` (gravity `0.05` subtracted from `vy`,
+  position integrated, then drag `0.99` applied to velocity for the next tick, only on a clear-flight
+  tick; entity-hit detection against caller-supplied targets checked first — against the tick's raw
+  destination point, excluding the owner for `ownerImmunityTicks` (default 5) — taking priority over
+  block collision; block collision via `CollisionResolver.move` with a small (`0.25`) cube hitbox,
+  embedding and zeroing velocity, reporting `hitBlock` as the floor of the resolved resting position;
+  age-based expiration past `maxAgeTicks` (default 1200) freezes physics for that tick, changing only
+  `ageTicks`).
+- Tests: `tests/unit/ProjectileCore.test.ts` (NEW, 6) — gravity/drag ordering on a clear tick; block
+  collision (self-consistency between `hitBlock` and the resolved position, plus a sanity check that
+  the projectile rests at/above the actual floor surface); entity-vs-block priority (target placed
+  exactly at the tick's raw destination, floor would otherwise also collide); both sides of the
+  owner-immunity boundary; a full structural equality check that expiration changes only `ageTicks`.
+
+## Validation evidence (142)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1827/1827 (prior 1821 + 6 new `ProjectileCore.test.ts`)
+- production build: PASS (`tsc --noEmit && vite build`, 83 modules — unchanged, no consumer yet)
+- E2E: PASS 21/21 (no existing file touched; nothing consumes the new module)
+
+## Advancement decision
+
+Change 142 is **VERIFIED** at 5/5 task groups (100%). All gates are green: typecheck, lint, the
+1827-unit suite, production build, and the required E2E suite (21/21). No advancement exception was
+needed. A minor spec-wording refinement (clarifying `hitBlock` as the embedded resting cell rather
+than assuming it always names the specific solid neighbor) was made to `design.md`/`spec.md` during
+implementation, per AGENTS.md's "amend the spec first" rule — a documentation correction, not a
+behavior change. Damage computation, entity/item representation, and `Game`/spawning wiring are
+explicit non-goals (documented, deferred to 143+). Advance to 143.
+
 ## What 141 implemented
 
 Change 141 adds Java 1.9+-style attack-cooldown damage scaling, knockback, and per-target
@@ -1304,15 +1343,15 @@ the 1654-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Sapling/tree bonemeal is an explicit non-goal (deferred; no Sapling block
 exists) and the `FertilizerRegistry` extension point is documented. Advance to 128.
 
-## Next change: 142 (pending artifacts)
+## Next change: 143 (pending artifacts)
 
-`142-projectile-core` is named in `CHANGE_SEQUENCE.md` with scope "Projectile motion, collision,
-ownership, damage/event hooks." Per `AGENTS.md`, a change lacking full artifacts is
+`143-bow-and-arrow` is named in `CHANGE_SEQUENCE.md` with scope "Charge/fire arrows, ammo, pickup
+behavior, damage." Per `AGENTS.md`, a change lacking full artifacts is
 a hard pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md`
 before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 141
-verification. Change 142 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 142
+verification. Change 143 is the next change; its artifacts must be authored and
 validated before implementation begins.
