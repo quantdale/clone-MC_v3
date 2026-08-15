@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **119-enchantment-application — VERIFIED 100%**
-- Active implementation change: **119-enchantment-application — VERIFIED**
-- Next change: **120-enchanting-table — NOT YET ACTIVE (artifacts pending)**
-- 119 task ledger: **7 total task groups, 7 completed**
-- 119 completion: **100%**
-- 119 mandatory enchantment-application requirements: **PASS**
-- 119 required-test gate: **PASS — unit 1476/1476, E2E 21/21**
-- 119 advancement allowed: **Yes**
-- Session-start head: `e6a03cb164862d40763b1aed3973a07c781f444e`
-- Validated head: `6abc3db1acf52be0d09d1e1e61afee2d18716239` (119 feature commit)
-- Next exact action: **Advance to 120-enchanting-table. Read it (and SPEC_AUTHORING_PROTOCOL.md if artifacts incomplete), author/validate proposal/design/tasks/specs/verification, implement enchanting-table interaction, cost/offer generation, and XP/lapis-like payment using original data, verify full gate, commit + push, advance program state.**
+- Last completed change: **120-enchanting-table — VERIFIED 100%**
+- Active implementation change: **120-enchanting-table — VERIFIED**
+- Next change: **121-status-effect-runtime — NOT YET ACTIVE (artifacts pending)**
+- 120 task ledger: **5 total task groups, 5 completed**
+- 120 completion: **100%**
+- 120 mandatory enchanting-table requirements: **PASS**
+- 120 required-test gate: **PASS — unit 1501/1501, E2E 21/21**
+- 120 advancement allowed: **Yes**
+- Session-start head: `ba1d6754ceb928a0cfef840b524760f43b9afa0e`
+- Validated head: `3d19ae7c290e51b9b27bb8679a7134c98a847cba` (120 feature commit)
+- Next exact action: **Advance to 121-status-effect-runtime. Read it (and SPEC_AUTHORING_PROTOCOL.md if artifacts incomplete), author/validate proposal/design/tasks/specs/verification, implement effect ticking, duration/amplifier stacking, and attribute hooks using original data, verify full gate, commit + push, advance program state.**
 
 ## What 119 implemented
 
@@ -419,16 +419,73 @@ Change 111 is **VERIFIED** at 6/6 (100%). All gates are green: typecheck, lint, 
 1290-unit suite, production build, and the required E2E suite (20/20). No advancement
 exception was needed. Advance to 112.
 
-## Next change: 120 (pending artifacts)
+## What 120 implemented
 
-`120-enchanting-table` is named in `CHANGE_SEQUENCE.md` with scope "Table
-interaction, cost generation, XP/lapis-like payment using original data." Per
-`AGENTS.md`, a change lacking full artifacts is a hard pre-implementation block.
-Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md` before any
-production code.
+Change 120 adds the enchanting-table logic surface: registering the enchanting
+items/blocks and `enchantability`, the XP-spend primitive, the pure
+offer-generation + session core, and the logic-level `use` interaction that opens
+a session for the held item. It is the table core + session + payment — not the
+DOM `EnchantingPanel` (deferred change) or persisted-schema changes.
+
+- `src/inventory/ItemRegistry.ts` (EDIT) — ids `LapisLazuli=28, Book=29,
+  Bookshelf=30, EnchantingTable=31`; optional `enchantability?: number` on
+  `ItemTypeDefinition`; seeded on `WoodenPickaxe`(15), `StonePickaxe`(5),
+  `WoodenAxe`(15), `Book`(1); `ItemTypeDefinition` entries for the four items
+  (bookshelf + enchanting_table carry `placeBlock`).
+- `src/world/BlockRegistry.ts` (EDIT) — block ids `EnchantingTable=32,
+  Bookshelf=33` placed **beyond** the item-id range `1..31` to avoid colliding
+  with the shared legacy numeric id space (a collision with `StonePickaxe=21` /
+  `WoodenAxe=22` was caught and fixed). `dropItem` links, no `lootTable`.
+- `src/player/ExperienceSystem.ts` (EDIT) — `spendLevels(n)` removes
+  `min(n, level)` levels, preserves the in-level progress fraction via
+  `computeXpToNext`, and is a no-op on non-integer/negative/`n<=0`/insufficient.
+- `src/inventory/EnchantingTable.ts` (NEW) — `slotCost` (bounds 1..255),
+  `generateEnchantments` (applicable + level∈[1,max] + pairwise non-conflict +
+  valid resource id; `[]` for non-enchantable), `enchantCosts` (xp==lapis==
+  clamp 1..30), `createSession` (single `SeedRng` seeded from world seed +
+  `'enchanting_table'` stream + item/bookshelf/level; 3 offers),
+  `EnchantingTableSession.apply` (atomic; `'empty'` reason when offer
+  enchantments are `[]`).
+- `src/inventory/Inventory.ts` (EDIT) — `setSelectedStack(stack)` for write-back.
+- `src/player/PlayerInteraction.ts` (EDIT) — `InteractionAction` gains `'use'`;
+  right-click on `BlockId.EnchantingTable` emits `'use'` instead of placing.
+- `src/engine/Game.ts` (EDIT) — `openEnchanting()` builds the session (clamped
+  bookshelf count via `countBookshelves` 5×5×2 shell scan, capped 15),
+  `getEnchantingSession()`, `applyEnchantingOffer(index)` (writes the enchanted
+  stack back to the selected slot, removes the spent lapis).
+- Tests: `tests/unit/EnchantingTable.test.ts` (NEW, 14),
+  `tests/unit/ItemRegistry.test.ts` (NEW, 4), and extensions in
+  `ExperienceSystem.test.ts` (+4), `BlockRegistry.test.ts` (+1),
+  `PlayerInteraction.test.ts` (+2), `BlockItemSeparation.test.ts` (id-table
+  update). 25 new unit tests total.
+
+## Validation evidence (120)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1501/1501 (prior 1476 + 25: EnchantingTable 14, ItemRegistry 4,
+  ExperienceSystem 4, BlockRegistry 1, PlayerInteraction 2)
+- production build: PASS (`tsc --noEmit && vite build`, 68 modules)
+- E2E: PASS 21/21
+
+## Advancement decision
+
+Change 120 is **VERIFIED** at 5/5 task groups (100%). All gates are green:
+typecheck, lint, the 1501-unit suite, production build, and the required E2E
+suite (21/21). No advancement exception was needed. The DOM `EnchantingPanel` is
+an explicit non-goal of 120 (deferred change) and consumes the
+`EnchantingTableSession` produced here; no persisted-schema change was required.
+Advance to 121.
+
+## Next change: 121 (pending artifacts)
+
+`121-status-effect-runtime` is named in `CHANGE_SEQUENCE.md` with scope "Effect
+ticking, duration/amplifier stacking, attribute hooks." Per `AGENTS.md`, a change
+lacking full artifacts is a hard pre-implementation block. Author and validate
+those artifacts via `SPEC_AUTHORING_PROTOCOL.md` before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 119
-verification. Change 120 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 120
+verification. Change 121 is the next change; its artifacts must be authored and
 validated before implementation begins.

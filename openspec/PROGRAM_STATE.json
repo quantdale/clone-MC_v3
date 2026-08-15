@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "119-enchantment-application",
+  "currentChange": "120-enchanting-table",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "119-enchantment-application",
-  "nextChange": "120-enchanting-table",
-  "completedTasks": 7,
-  "totalTasks": 7,
+  "lastCompletedChange": "120-enchanting-table",
+  "nextChange": "121-status-effect-runtime",
+  "completedTasks": 5,
+  "totalTasks": 5,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -15,11 +15,11 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "e6a03cb164862d40763b1aed3973a07c781f444e",
-  "lastValidatedHead": "6abc3db1acf52be0d09d1e1e61afee2d18716239",
-  "lastKnownHead": "6abc3db1acf52be0d09d1e1e61afee2d18716239",
-  "lastCompletedTask": "119: all 7 task groups complete; enchantment-application VERIFIED. ENCHANTMENTS_COMPONENT registered/validated; EnchantmentApplication storage + effect primitives (efficiency/silk/fortune/weaponDamage/unbreaking/protection-EPF); HarvestRules efficiency, PlayerInteraction silk/fortune/unbreaking, DurabilityRules unbreaking, ArmorProtection EPF fold (import fixed), SurvivalSystem damage reason, Game registry injection. Full gate green (typecheck, lint, 1476 unit, build, 21 e2e).",
-  "nextExactAction": "Advance to 120-enchanting-table. Read it (and SPEC_AUTHORING_PROTOCOL.md if artifacts incomplete), author/validate proposal/design/tasks/specs/verification, implement enchanting-table interaction, cost/offer generation, and XP/lapis-like payment using original data, verify full gate, commit + push, advance program state.",
+  "sessionStartHead": "ba1d6754ceb928a0cfef840b524760f43b9afa0e",
+  "lastValidatedHead": "3d19ae7c290e51b9b27bb8679a7134c98a847cba",
+  "lastKnownHead": "3d19ae7c290e51b9b27bb8679a7134c98a847cba",
+  "lastCompletedTask": "120: all 5 task groups complete; enchanting-table VERIFIED. EnchantingTable core (slotCost/generateEnchantments/enchantCosts/createSession/apply with single SeedRng seeding + 'empty' reason); ItemRegistry ids 28-31 + enchantability seeds (WoodenPickaxe 15, StonePickaxe 5, WoodenAxe 15, Book 1); BlockRegistry ids 32-33 beyond item range to avoid legacy-id collision; ExperienceSystem.spendLevels; Inventory.setSelectedStack; PlayerInteraction 'use' action on table; Game.openEnchanting/countBookshelves/getEnchantingSession/applyEnchantingOffer. Full gate green (typecheck, lint, 1501 unit, build, 21 e2e).",
+  "nextExactAction": "Advance to 121-status-effect-runtime. Read it (and SPEC_AUTHORING_PROTOCOL.md if artifacts incomplete), author/validate proposal/design/tasks/specs/verification, implement effect ticking, duration/amplifier stacking, and attribute hooks using original data, verify full gate, commit + push, advance program state.",
   "blockers": [],
   "validationResults": [
     {
@@ -1171,8 +1171,18 @@
       "e2e": "PASS 21/21",
       "productionAudit": "PASS 0 vulnerabilities",
       "note": "119 VERIFIED 7/7 (100%). ENCHANTMENTS_COMPONENT registered/validated; EnchantmentApplication storage + effect primitives (efficiencySpeedMultiplier, silkTouchActive, fortuneBonusCount, weaponDamageBonus, unbreakingWearChance, protectionEPF, protectionEnchantKeysFor, armorEnchantEPF, applyArmorEnchantReduction); HarvestRules efficiency divides duration; PlayerInteraction silk/fortune/unbreaking via registry; DurabilityRules unbreaking skip/wear; ArmorProtection folds armor EPF (broken import fixed); SurvivalSystem routes damage reason; Game injects default enchantment registry. ArmorProtection intentionally NOT wired into live Player.armor (pre-existing 116 gap). Full gate green (typecheck, lint, 1476 unit, build, 21 e2e)."
+    },
+    {
+      "head": "3d19ae7c290e51b9b27bb8679a7134c98a847cba",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 1501/1501 (prior 1476 + 25: EnchantingTable 14, ItemRegistry 4, ExperienceSystem 4, BlockRegistry 1, PlayerInteraction 2)",
+      "build": "PASS via tsc --noEmit && vite build (68 modules)",
+      "e2e": "PASS 21/21",
+      "productionAudit": "PASS 0 vulnerabilities",
+      "note": "120 VERIFIED 5/5 (100%). EnchantingTable core (slotCost bounded 1..255, generateEnchantments with applicable/level/conflict invariants + [] for non-enchantable, enchantCosts clamp 1..30, createSession with single SeedRng seeded by world seed + 'enchanting_table' stream + item/bookshelf/level, 3 offers, apply atomic with 'empty' reason); ItemRegistry ids 28-31 (lapis/book/bookshelf/enchanting_table) + enchantability seeds; BlockRegistry ids 32-33 placed beyond item range 1..31 to avoid legacy-id collision; ExperienceSystem.spendLevels (preserves progress fraction, no-op on bad/insufficient); Inventory.setSelectedStack; PlayerInteraction 'use' action emits on enchanting_table; Game.openEnchanting/countBookshelves(5x5x2 shell, cap 15)/getEnchantingSession/applyEnchantingOffer. DOM panel explicit non-goal (deferred). 25 new unit tests; full gate green (typecheck, lint, 1501 unit, build, 21 e2e)."
     }
   ],
-  "publishedHead": "6abc3db1acf52be0d09d1e1e61afee2d18716239",
-  "publishedAt": "2026-08-15T02:55:09.702Z"
+  "publishedHead": "3d19ae7c290e51b9b27bb8679a7134c98a847cba",
+  "publishedAt": "2026-08-15T04:27:31Z"
 }
