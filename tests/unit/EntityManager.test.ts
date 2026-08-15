@@ -327,3 +327,33 @@ describe('EntityManager.deserializeChunk rejections', () => {
     expect(target.get(7)).toEqual(existing);
   });
 });
+
+describe('EntityManager.forgetChunk', () => {
+  it('evicts both an active and a removed entity in the target chunk, leaving other chunks untouched', () => {
+    const m = manager();
+    const removed = m.spawn(ZOMBIE, OVERWORLD, IN_CHUNK_00);
+    m.remove(removed.id);
+    const active = m.spawn(PIG, OVERWORLD, { ...IN_CHUNK_00, x: 6 });
+    const elsewhere = m.spawn(PIG, OVERWORLD, IN_CHUNK_10);
+
+    const count = m.forgetChunk(0, 0);
+
+    expect(count).toBe(2);
+    expect(m.get(removed.id)).toBeUndefined();
+    expect(m.get(active.id)).toBeUndefined();
+    expect(m.get(elsewhere.id)).toEqual(elsewhere);
+    expect(m.getAll()).toEqual([elsewhere]);
+  });
+
+  it('returns 0 for a chunk with no entities', () => {
+    const m = manager();
+    expect(m.forgetChunk(9, 9)).toBe(0);
+  });
+
+  it('frees an evicted id for reuse, unlike a removed (not forgotten) id', () => {
+    const m = manager();
+    m.spawn(ZOMBIE, OVERWORLD, IN_CHUNK_00, { id: 9 });
+    m.forgetChunk(0, 0);
+    expect(() => m.spawn(PIG, OVERWORLD, IN_CHUNK_00, { id: 9 })).not.toThrow();
+  });
+});

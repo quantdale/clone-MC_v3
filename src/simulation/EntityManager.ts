@@ -267,4 +267,23 @@ export class EntityManager {
     }
     return pending.length;
   }
+
+  /**
+   * Permanently evict every entity (whether `ACTIVE` or retained `REMOVED`)
+   * whose last-known transform's chunk equals `(cx, cz)`. Unlike `remove()`,
+   * this frees the id for reuse by a later `spawn`/`deserializeChunk` (132's
+   * "chunk unloaded, forget it" operation, distinct from "entity died").
+   * Returns the number of entities evicted. Never throws.
+   */
+  forgetChunk(cx: number, cz: number): number {
+    let removed = 0;
+    for (const [id, entity] of [...this.byId.entries()]) {
+      if (sectionIndex(entity.transform.x) !== cx || sectionIndex(entity.transform.z) !== cz) continue;
+      this.byId.delete(id);
+      const index = this.order.indexOf(id);
+      if (index >= 0) this.order.splice(index, 1);
+      removed++;
+    }
+    return removed;
+  }
 }
