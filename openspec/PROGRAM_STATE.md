@@ -3,18 +3,38 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **177-nether-portal-blocks — VERIFIED 100%**
-- Active implementation change: **177-nether-portal-blocks — VERIFIED**
-- Next change: **178-nether-portal-linking — NOT YET ACTIVE (artifacts pending)**
-- 177 task ledger: **22 total tasks, 22 completed**
-- 177 completion: **100%**
-- 177 mandatory nether-portal-blocks requirements: **PASS**
-- 177 required-test gate: **PASS — unit 2407/2407, E2E 22/22**
-- 177 advancement allowed: **Yes**
-- Session-start head: `93b75e64594862f8c09b04fcd8488fe0e9ab8c0f`
-- Validated head: `8fa9438f2af6169eeb2bdb5d13620596fa930dd6` (177 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension container (174), canonical types (175), Nether terrain (176), and portal blocks/frame validation (177) are COMPLETE.**
-- Next exact action: **Advance to 178-nether-portal-linking. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: coordinate scale, destination search/create, cooldown, safe placement — the first teleportation logic, consuming 177's validatePortalFrame/portalBlockPositions).**
+- Last completed change: **178-nether-portal-linking — VERIFIED 100%**
+- Active implementation change: **178-nether-portal-linking — VERIFIED**
+- Next change: **179-nether-content-baseline — NOT YET ACTIVE (artifacts pending)**
+- 178 task ledger: **24 total tasks, 24 completed**
+- 178 completion: **100%**
+- 178 mandatory nether-portal-linking requirements: **PASS**
+- 178 required-test gate: **PASS — unit 2418/2418, E2E 22/22**
+- 178 advancement allowed: **Yes**
+- Session-start head: `ba47305c89fce463236500bb5e95adee5d9d5248`
+- Validated head: `912a4e595d108f1954131f246f8614d3393531cd` (178 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension container (174), canonical types (175), Nether terrain (176), portal blocks (177), and portal linking (178) are COMPLETE.**
+- Next exact action: **Advance to 179-nether-content-baseline. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: core Nether blocks/resources/mobs required for progression — the content change that registers netherrack (fulfilling 176's documented id placeholder), obsidian (fulfilling 177/178's frame seam), and the first Nether mobs through the existing 129-148 entity/AI primitives).**
+
+## What 178 implemented
+
+Change 178 is the first **teleportation logic**, consuming 177's `PortalShape` — pure functions over
+a `PortalLinkingWorld` seam.
+
+- `src/simulation/NetherPortalLinking.ts` (NEW) — `scalePortalPosition` is vanilla's 1:8 rule
+  (`NETHER_PORTAL_SCALE = 8`): toward the nether it floors (`floor(x/8)`, negatives included — pinned
+  by `-100 → -13`), toward the overworld it multiplies (`x*8`). `findNearestPortal` does a
+  deterministic box scan (y ascending 0 then ±dy, then x, then z) for an existing portal block, with
+  vanilla radii per direction (`PORTAL_SEARCH_RADIUS_NETHER = 16`, `OVERWORLD = 128`).
+  `portalCreationSite` finds a deterministic minimal 4×5 build site (downward 0..64, then outward
+  ±8): four below-bar cells solid and all 14 ring + 6 interior cells air — the wiring places them
+  via `portalFrameCells` (14 ring + `width×height` interior, corners included). `portalCooldownRemaining`
+  is vanilla's 300-tick cooldown clamped at 0 (non-finite inputs yield the full cooldown).
+  `portalSpawnPoint` centers along the axis at the bottom interior row; `portalSpawnIsSafe` requires
+  two blocks of clearance (spawn cell + the cell above non-solid).
+- Tests: `tests/unit/NetherPortalLinking.test.ts` (NEW, 11 tests): scale both directions +
+  negatives, radii, scan order, spawn/safety both ways, cooldown boundaries, frame cells, and
+  creation-site success/failure. Zero registry changes.
 
 ## What 177 implemented
 
