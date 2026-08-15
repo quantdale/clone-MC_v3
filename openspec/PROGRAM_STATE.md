@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **125-crop-growth — VERIFIED 100%**
-- Active implementation change: **125-crop-growth — VERIFIED**
-- Next change: **126-farmland-moisture — NOT YET ACTIVE (artifacts pending)**
-- 125 task ledger: **7 total task groups, 7 completed**
-- 125 completion: **100%**
-- 125 mandatory crop-growth requirements: **PASS**
-- 125 required-test gate: **PASS — unit 1601/1601, E2E 21/21**
-- 125 advancement allowed: **Yes**
+- Last completed change: **126-farmland-moisture — VERIFIED 100%**
+- Active implementation change: **126-farmland-moisture — VERIFIED**
+- Next change: **127-bonemeal-growth-hooks — NOT YET ACTIVE (artifacts pending)**
+- 126 task ledger: **6 total task groups, 6 completed**
+- 126 completion: **100%**
+- 126 mandatory farmland-moisture requirements: **PASS**
+- 126 required-test gate: **PASS — unit 1631/1631, E2E 21/21**
+- 126 advancement allowed: **Yes**
 - Session-start head: `e2c8066d1b178d01baf6f0775133e8fbb6cd581a`
-- Validated head: `08569a73b19ea4bc3b41da8ed184faaf6bbe7813` (125 feature commit)
-- Next exact action: **Advance to 126-farmland-moisture. Read its artifacts (and SPEC_AUTHORING_PROTOCOL.md if incomplete); author/validate proposal/design/tasks/specs/verification; implement farmland hydration, trampling/reversion rules, and crop support; verify full gate; commit + push; advance program state.**
+- Validated head: `c97dbd963f65416099ff96f18a4affcb1fb4124f` (126 feature commit)
+- Next exact action: **Advance to 127-bonemeal-growth-hooks. Read its artifacts (and SPEC_AUTHORING_PROTOCOL.md if incomplete); author/validate proposal/design/tasks/specs/verification; implement fertilization interface and first crop/tree bonemeal behavior; verify full gate; commit + push; advance program state.**
 
 ## What 119 implemented
 
@@ -697,15 +697,53 @@ the 1601-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Farmland hydration/trampling (126), bonemeal (127), and persisting crop
 `age` across page reload are explicit non-goals (documented). Advance to 126.
 
-## Next change: 126 (pending artifacts)
+## What 126 implemented
 
-`126-farmland-moisture` is named in `CHANGE_SEQUENCE.md` with scope "Hydration, trampling/
-reversion rules, crop support." Per `AGENTS.md`, a change lacking full artifacts is a hard
+Change 126 adds farmland moisture: a Farmland block with a `moisture` (0..7) state, deterministic
+hydration detection, moisture dynamics, reversion-to-dirt rules, trampling, and crop-support growth.
+It is farmland only — not bonemeal (127), hoe tilling, or a weather/rain system (which 126 treats as
+absent); crop `age` persistence remains session-transient.
+
+- `src/world/BlockRegistry.ts` (EDIT) — `BlockId.Farmland = 35`; `FARMLAND_SCHEMA` integer `moisture` 0..7;
+  Farmland def (solid/opaque/breakable, Shovel, `dropItem: dirt`, `lootTable: loot/dirt`, default `{moisture:0}`).
+- `src/simulation/FarmlandBehavior.ts` (NEW) — pure `isFarmlandHydrated(x,y,z,world)` (water within
+  `|dx|<=4`, `|dz|<=4`, `dy in {-1,0}`), `nextMoisture`, `parseMoisture`, `isCropAbove`,
+  `hasSolidCoverAbove`, `shouldRevertToDirt`, `trampleFarmland`; `FarmlandBlockBehavior.onRandomTick`
+  (moisten when hydrated / dry when not; revert to dirt when dry+uncovered or solid-covered) and
+  `onNeighborChanged` (solid-cover reversion).
+- `src/simulation/CropBehavior.ts` (EDIT) — extracted/shared `growCropAt` growth step; `onRandomTick`
+  delegates to it; hydrated farmland triggers an extra growth tick.
+- `src/player/PlayerPhysics.ts` (EDIT) — on a downward (landing) Y collision, calls
+  `trampleFarmland(world, x, y, z)` so the player reverts farmland to dirt when landing on it.
+- `src/engine/Game.ts` (EDIT) — registers `FarmlandBlockBehavior`; `isRandomTickEligible` now also
+  matches farmland for random-tick dispatch.
+- Tests: `FarmlandBehavior.test.ts` (24), `FarmlandMoistureState.test.ts` (6); updates to
+  `BlockRegistry`/`BlockStateRegistry`/`BlockPropertySchema`/`BlockItemSeparation` tests.
+
+## Validation evidence (126)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1631/1631 (prior 1601 + 30 new: FarmlandBehavior 24, FarmlandMoistureState 6)
+- production build: PASS (`tsc --noEmit && vite build`, 81 modules)
+- E2E: PASS 21/21 (break/place/craft/harvest/trample paths unaffected)
+
+## Advancement decision
+
+Change 126 is **VERIFIED** at 6/6 task groups (100%). All gates are green: typecheck, lint,
+the 1631-unit suite, production build, and the required E2E suite (21/21). No advancement
+exception was needed. Bonemeal (127), hoe tilling, and a rain/weather hook are explicit non-goals
+(documented). Advance to 127.
+
+## Next change: 127 (pending artifacts)
+
+`127-bonemeal-growth-hooks` is named in `CHANGE_SEQUENCE.md` with scope "Fertilization interface and
+first crop/tree behavior." Per `AGENTS.md`, a change lacking full artifacts is a hard
 pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md`
 before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 125
-verification. Change 126 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 126
+verification. Change 127 is the next change; its artifacts must be authored and
 validated before implementation begins.
