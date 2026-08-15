@@ -145,6 +145,7 @@ describe('PlayerStateRepository (in-memory mock)', () => {
       pitch: -30,
       inventory: { slots: [] },
       survival: { hunger: 20 },
+      experience: { version: 1, level: 0, xp: 0 },
     };
     await repo.putPlayerState(rec);
     expect((await repo.getPlayerState('w'))?.yaw).toBe(45);
@@ -167,6 +168,7 @@ describe('PlayerStateRepository (in-memory mock)', () => {
       pitch: -30,
       inventory: {},
       survival: {},
+      experience: { version: 1, level: 0, xp: 0 },
     };
     await expect(repo.putPlayerState(rec)).rejects.toThrow();
     expect(await repo.listPlayerStates()).toHaveLength(0);

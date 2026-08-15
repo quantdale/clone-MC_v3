@@ -199,6 +199,7 @@ export function toPlayerStateRecord(snapshot: LegacyPlayerSnapshot, worldId: str
     pitch: snapshot.player.pitch,
     inventory: snapshot.inventory,
     survival: snapshot.survival,
+    experience: { version: 1, level: 0, xp: 0 },
   });
 }
 

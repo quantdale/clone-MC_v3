@@ -23,6 +23,8 @@ export interface PlayerStateRecord {
   inventory: unknown;
   /** Opaque survival snapshot payload (restored/validated by the game). */
   survival: unknown;
+  /** Opaque experience snapshot payload (restored/validated by the game). */
+  experience: unknown;
 }
 
 function isFiniteNumber(v: unknown): v is number {
@@ -68,6 +70,9 @@ export function validatePlayerStateRecord(input: unknown): PlayerStateRecord {
   if (r.survival === undefined) {
     throw new Error('PlayerStateRecord: survival must be present');
   }
+  if (r.experience === undefined) {
+    throw new Error('PlayerStateRecord: experience must be present');
+  }
 
   return {
     key: typeof r.key === 'string' && r.key.length > 0 ? (r.key as string) : (r.worldId as string),
@@ -78,5 +83,6 @@ export function validatePlayerStateRecord(input: unknown): PlayerStateRecord {
     pitch: r.pitch as number,
     inventory: r.inventory,
     survival: r.survival,
+    experience: r.experience,
   };
 }

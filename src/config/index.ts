@@ -123,6 +123,22 @@ export const CONFIG = {
     /** Seconds for a full day. */
     dayLength: 600,
   },
+
+  /** Player experience (117): XP orbs + leveling. */
+  xp: {
+    /** Blocks within which an XP orb is pulled toward the player. */
+    orbAttractionRadius: 8,
+    /** Blocks within which an XP orb is collected into the experience total. */
+    orbCollectRadius: 1.0,
+    /** Orb pull speed (blocks/second). */
+    orbAttractionSpeed: 8,
+    /** Ticks before an uncollected orb despawns (5 min at 20 TPS). */
+    orbDespawnTicks: 6000,
+    /** Upward velocity seeded on spawn (blocks/second) for future physics. */
+    orbSpawnUpVelocity: 0.2,
+    /** XP granted by a single orb spawned on a productive block break. */
+    orbValue: 3,
+  },
 } as const;
 
 // Freeze the config at runtime so accidental mutations are caught immediately.
@@ -133,5 +149,6 @@ Object.freeze(CONFIG.fog);
 Object.freeze(CONFIG.rendering);
 Object.freeze(CONFIG.headless);
 Object.freeze(CONFIG.dayNight);
+Object.freeze(CONFIG.xp);
 
 export type GameConfig = typeof CONFIG;

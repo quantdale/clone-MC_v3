@@ -66,6 +66,7 @@ async function populateWorld(deps: WorldArchiverDeps, worldId: string): Promise<
     pitch: -30,
     inventory: { slots: [] },
     survival: { hunger: 20 },
+    experience: { version: 1, level: 0, xp: 0 },
   });
 }
 

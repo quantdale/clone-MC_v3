@@ -26,6 +26,7 @@ import { PlayerPhysics } from '../player/PlayerPhysics';
 import { PlayerInteraction } from '../player/PlayerInteraction';
 import type { InteractionAction } from '../player/PlayerInteraction';
 import { ItemEntityManager } from '../simulation/ItemEntityManager';
+import { XpOrbManager } from '../simulation/XpOrbManager';
 import { LootTableRegistry, buildCurrentLootTables } from '../inventory/LootTable';
 import { Inventory } from '../inventory/Inventory';
 import type { InventorySnapshot } from '../inventory/Inventory';
@@ -38,6 +39,8 @@ import { CraftingPanel } from '../ui/CraftingPanel';
 import type { CraftingRecipe } from '../inventory/Crafting';
 import { SurvivalSystem } from '../player/SurvivalSystem';
 import type { SurvivalEvent, SurvivalSnapshot } from '../player/SurvivalSystem';
+import { ExperienceSystem } from '../player/ExperienceSystem';
+import type { ExperienceSnapshot } from '../player/ExperienceSystem';
 import { worldToChunk } from '../world/WorldCoordinates';
 import { GameAudio } from '../audio/GameAudio';
 import { WorldLife } from '../world/WorldLife';
@@ -52,6 +55,7 @@ interface GameSaveSnapshot {
   };
   inventory: InventorySnapshot;
   survival: SurvivalSnapshot;
+  experience: ExperienceSnapshot;
 }
 
 /**
@@ -79,6 +83,8 @@ export class Game {
   private readonly controller: PlayerController;
   private readonly physics: PlayerPhysics;
   private readonly survival: SurvivalSystem;
+  private readonly experience: ExperienceSystem;
+  private readonly xpOrbs: XpOrbManager;
   private readonly interaction: PlayerInteraction;
   private readonly lootTables: LootTableRegistry;
   /** Harvest rules (114): tier/mineability-aware break speed and drop gating. */
@@ -198,6 +204,8 @@ export class Game {
     this.controller = new PlayerController(this.player, this.input);
     this.physics = new PlayerPhysics(this.world, this.blockRegistry);
     this.itemEntities = new ItemEntityManager({ itemRegistry: this.itemRegistry, rng: Math.random });
+    this.experience = new ExperienceSystem();
+    this.xpOrbs = new XpOrbManager({ rng: Math.random });
     this.interaction = new PlayerInteraction({
       world: this.world,
       registry: this.blockRegistry,
@@ -216,6 +224,8 @@ export class Game {
       harvestRules: this.harvestRules,
       rng: Math.random,
       itemEntities: this.itemEntities,
+      xpOrbs: this.xpOrbs,
+      xpOrbValue: CONFIG.xp.orbValue,
     });
     this.resources.track(this.interaction);
 
@@ -367,6 +377,13 @@ export class Game {
         (id, count) => this.inventory.addItem(id, count),
       );
       if (collected > 0) this.hotbar.render();
+      this.xpOrbs.tickItemEntities(
+        dt,
+        this.player.position.x,
+        this.player.position.y,
+        this.player.position.z,
+        this.experience,
+      );
       this.worldLife.update(dt, this.player.position);
       const headY = Math.floor(this.player.position.y + CONFIG.player.eyeHeight);
       const headSubmerged = this.world.getBlock(
@@ -733,6 +750,7 @@ export class Game {
         (id) => this.itemRegistry.getByLegacyId(id)?.maxDurability ?? 0,
       );
       this.survival.restore(snapshot.survival);
+      this.experience.restore(snapshot.experience);
     } catch {
       // A missing, corrupt, or unavailable browser save falls back to the
       // deterministic spawn state without preventing the game from starting.
@@ -762,6 +780,7 @@ export class Game {
         },
         inventory: this.inventory.snapshot(),
         survival: this.survival.snapshot(),
+        experience: this.experience.snapshot(),
       };
       window.localStorage.setItem(this.stateStorageKey(), JSON.stringify(snapshot));
     } catch {
@@ -793,6 +812,8 @@ export class Game {
       candidate.inventory !== null &&
       typeof candidate.survival === 'object' &&
       candidate.survival !== null &&
+      typeof candidate.experience === 'object' &&
+      candidate.experience !== null &&
       player.position[1] >= CONFIG.bedrockY &&
       player.position[1] < CONFIG.chunk.height
     );

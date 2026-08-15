@@ -10,6 +10,7 @@ import { BlockSelector } from '../inventory/BlockSelector';
 import { type LootTableRegistry, type RandomSource, type LootContext, type LootStack, evaluate } from '../inventory/LootTable';
 import { raycastVoxel, RaycastResult } from '../math/DDA';
 import type { ItemEntityManager } from '../simulation/ItemEntityManager';
+import type { XpOrbManager } from '../simulation/XpOrbManager';
 import { createSpawnPosition } from '../world/ItemEntity';
 
 export type InteractionAction = 'break' | 'place' | 'blocked' | 'empty';
@@ -39,6 +40,8 @@ export class PlayerInteraction {
   private readonly rng?: RandomSource;
   private readonly itemEntities?: ItemEntityManager;
   private readonly harvestRules?: HarvestRules;
+  private readonly xpOrbs?: XpOrbManager;
+  private readonly xpOrbValue: number;
 
   private readonly eyePos = new THREE.Vector3();
   private readonly dir = new THREE.Vector3();
@@ -68,6 +71,8 @@ export class PlayerInteraction {
     rng?: RandomSource;
     itemEntities?: ItemEntityManager;
     harvestRules?: HarvestRules;
+    xpOrbs?: XpOrbManager;
+    xpOrbValue?: number;
   }) {
     this.world = opts.world;
     this.registry = opts.registry;
@@ -83,6 +88,8 @@ export class PlayerInteraction {
     this.rng = opts.rng;
     this.itemEntities = opts.itemEntities;
     this.harvestRules = opts.harvestRules;
+    this.xpOrbs = opts.xpOrbs;
+    this.xpOrbValue = opts.xpOrbValue ?? 0;
 
     // A centered unit-cube wireframe marks the targeted block. Keeping the
     // geometry centered and placing it at block + 0.5 avoids the classic
@@ -275,6 +282,11 @@ export class PlayerInteraction {
     if (this.itemEntities && stacks.length > 0) {
       const spawn = createSpawnPosition(this.target.blockX, this.target.blockY, this.target.blockZ);
       this.itemEntities.spawnLootStacks(stacks, spawn.x, spawn.y, spawn.z, this.rng);
+      if (this.xpOrbs && this.xpOrbValue > 0) {
+        this.xpOrbs.spawnXpOrb(this.xpOrbValue, spawn.x, spawn.y, spawn.z, {
+          vy: CONFIG.xp.orbSpawnUpVelocity,
+        });
+      }
     }
 
     if (selectedTool?.maxDurability !== undefined && this.selector.damageSelectedItem) {

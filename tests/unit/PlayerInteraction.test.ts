@@ -7,6 +7,7 @@ import { BlockId, createDefaultBlockRegistry, createDefaultBlockTags } from '../
 import { ItemId, createDefaultItemRegistry, createDefaultItemTags } from '../../src/inventory/ItemRegistry';
 import { HarvestRules } from '../../src/world/HarvestRules';
 import { ItemEntityManager } from '../../src/simulation/ItemEntityManager';
+import { XpOrbManager } from '../../src/simulation/XpOrbManager';
 
 function makeWorld(): import('../../src/world/WorldAccess').WorldAccess {
   return {
@@ -267,6 +268,65 @@ describe('player interaction selection', () => {
 
     expect(world.getBlock(2, 1, 0)).toBe(BlockId.Air);
     expect(spawnSpy).not.toHaveBeenCalled();
+    interaction.dispose();
+  });
+
+  it('spawns one xp orb on a productive break when an xpOrbs manager is supplied', () => {
+    const player = new Player({ position: new THREE.Vector3(0.5, 0, 0.5) });
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 20);
+    camera.position.copy(player.eyePosition);
+    camera.lookAt(10, player.eyePosition.y, player.eyePosition.z);
+    camera.updateMatrixWorld(true);
+    const world = makeMutableWorld(BlockId.CoalOre);
+    const itemEntities = new ItemEntityManager({ itemRegistry: createDefaultItemRegistry() });
+    const xpOrbs = new XpOrbManager();
+    const interaction = new PlayerInteraction({
+      world,
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
+      selector: { getSelectedItemId: () => BlockId.Stone },
+      player,
+      camera,
+      input: makeInput({ breakRequested: true, held: false }),
+      itemEntities,
+      xpOrbs,
+      xpOrbValue: 3,
+    });
+
+    interaction.update(0.016);
+
+    expect(itemEntities.size).toBe(1);
+    expect(xpOrbs.getXpOrbs()).toHaveLength(1);
+    expect(xpOrbs.getXpOrbs()[0]!.value).toBe(3);
+    interaction.dispose();
+  });
+
+  it('spawns no xp orb when no xpOrbs manager is supplied', () => {
+    const player = new Player({ position: new THREE.Vector3(0.5, 0, 0.5) });
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 20);
+    camera.position.copy(player.eyePosition);
+    camera.lookAt(10, player.eyePosition.y, player.eyePosition.z);
+    camera.updateMatrixWorld(true);
+    const world = makeMutableWorld(BlockId.CoalOre);
+    const itemEntities = new ItemEntityManager({ itemRegistry: createDefaultItemRegistry() });
+    const xpOrbs = new XpOrbManager();
+    const interaction = new PlayerInteraction({
+      world,
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
+      selector: { getSelectedItemId: () => BlockId.Stone },
+      player,
+      camera,
+      input: makeInput({ breakRequested: true, held: false }),
+      itemEntities,
+      xpOrbValue: 3,
+    });
+
+    interaction.update(0.016);
+
+    expect(itemEntities.size).toBe(1);
+    // The supplied manager was never handed to the interaction, so no orb appears.
+    expect(xpOrbs.getXpOrbs()).toHaveLength(0);
     interaction.dispose();
   });
 });
