@@ -1,17 +1,26 @@
 /**
- * General entity-core manager (129).
+ * General entity-core manager (129), extended with a chunk-scoped persistence
+ * bridge (131).
  *
  * Owns every live `EntityInstance` for one world: mints stable, strictly
  * increasing runtime ids; validates spawn inputs (registered 017 type,
  * finite transform/velocity, non-colliding explicit id); tracks lifecycle
  * (`ACTIVE`/`REMOVED`); and offers pure position/velocity/dimension setters.
- * This is the data/runtime substrate — collision/physics (130), persistence
- * (131), chunk-based activation (132), and the dirty data tracker (133) are
- * explicit non-goals; no existing entity kind (item entities, xp orbs) is
- * migrated onto it here.
+ * `serializeChunk`/`deserializeChunk` (131) bridge persistent entities to the
+ * already-generic 037 `SerializedEntity` envelope / 038 `'entities'`
+ * `SaveUnitKind` plumbing. Collision/physics (130) is a separate module;
+ * chunk-based activation (132) and the dirty data tracker (133) are explicit
+ * non-goals here; no existing entity kind (item entities, xp orbs) is
+ * migrated onto it.
  */
 import type { EntityRegistry } from '../data/EntityType';
-import { type ResourceId, resourceIdToString } from '../data/ResourceId';
+import { type ResourceId, resourceIdToString, tryParseResourceId } from '../data/ResourceId';
+import { sectionIndex } from '../math/SectionCoordinate';
+import {
+  ENTITY_RECORD_VERSION,
+  validateSerializedEntity,
+  type SerializedEntity,
+} from '../storage/EntityRecord';
 import {
   type EntityInstance,
   type EntityTransform,
@@ -160,5 +169,102 @@ export class EntityManager {
     this.byId.clear();
     this.order.length = 0;
     this.nextId = 0;
+  }
+
+  /**
+   * Serialize every `ACTIVE`, persistent (017 `isPersistent === true`) entity
+   * currently in chunk `(cx, cz)` to the 037 `SerializedEntity` envelope. Pure:
+   * never throws, never mutates the manager. Non-persistent, `REMOVED`, and
+   * out-of-chunk entities are excluded.
+   */
+  serializeChunk(cx: number, cz: number): SerializedEntity[] {
+    const out: SerializedEntity[] = [];
+    for (const e of this.getAll()) {
+      if (!this.registry.get(e.typeId).isPersistent) continue;
+      if (sectionIndex(e.transform.x) !== cx || sectionIndex(e.transform.z) !== cz) continue;
+      out.push({
+        schemaVersion: ENTITY_RECORD_VERSION,
+        typeKey: resourceIdToString(e.typeId),
+        x: Math.floor(e.transform.x),
+        y: Math.floor(e.transform.y),
+        z: Math.floor(e.transform.z),
+        data: {
+          id: e.id,
+          dimension: resourceIdToString(e.dimension),
+          transform: e.transform,
+          velocity: e.velocity,
+        },
+      });
+    }
+    return out;
+  }
+
+  /**
+   * Restore chunk `(cx, cz)`'s entities from 037 `SerializedEntity` payloads.
+   * The whole batch is validated first (envelope, chunk membership, registered
+   * `typeKey`, well-formed `dimension`/`transform`/`velocity`, no duplicate id
+   * within the batch or against the manager); on any rejection the manager is
+   * left unchanged and an `Error` is thrown. Returns the number of entities
+   * spawned.
+   */
+  deserializeChunk(cx: number, cz: number, entities: unknown[]): number {
+    const parsed = entities.map((e) => validateSerializedEntity(e));
+
+    interface Pending {
+      id: number;
+      typeId: ResourceId;
+      dimension: ResourceId;
+      transform: EntityTransform;
+      velocity: EntityVelocity;
+    }
+    const pending: Pending[] = [];
+    const seenIds = new Set<number>();
+
+    for (const record of parsed) {
+      if (sectionIndex(record.x) !== cx || sectionIndex(record.z) !== cz) {
+        throw new Error(`EntityManager: entity at ${record.x},${record.z} is outside chunk ${cx},${cz}`);
+      }
+      const typeId = tryParseResourceId(record.typeKey);
+      if (!typeId || !this.registry.has(typeId)) {
+        throw new Error(`EntityManager: unknown or malformed entity typeKey ${record.typeKey}`);
+      }
+      if (typeof record.data !== 'object' || record.data === null) {
+        throw new Error('EntityManager: malformed entity data payload');
+      }
+      const d = record.data as Record<string, unknown>;
+      if (!Number.isInteger(d.id) || (d.id as number) < 0) {
+        throw new Error('EntityManager: entity data.id must be a non-negative integer');
+      }
+      if (typeof d.dimension !== 'string') {
+        throw new Error('EntityManager: entity data.dimension must be a string');
+      }
+      const dimension = tryParseResourceId(d.dimension);
+      if (!dimension) {
+        throw new Error(`EntityManager: malformed entity dimension ${d.dimension}`);
+      }
+      if (typeof d.transform !== 'object' || d.transform === null || !isValidTransform(d.transform as EntityTransform)) {
+        throw new Error('EntityManager: malformed entity transform payload');
+      }
+      if (typeof d.velocity !== 'object' || d.velocity === null || !isValidVelocity(d.velocity as EntityVelocity)) {
+        throw new Error('EntityManager: malformed entity velocity payload');
+      }
+      const id = d.id as number;
+      if (seenIds.has(id) || this.byId.has(id)) {
+        throw new Error(`EntityManager: duplicate entity id ${id}`);
+      }
+      seenIds.add(id);
+      pending.push({
+        id,
+        typeId,
+        dimension,
+        transform: d.transform as EntityTransform,
+        velocity: d.velocity as EntityVelocity,
+      });
+    }
+
+    for (const p of pending) {
+      this.spawn(p.typeId, p.dimension, p.transform, { id: p.id, velocity: p.velocity });
+    }
+    return pending.length;
   }
 }

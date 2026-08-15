@@ -1,12 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { EntityManager } from '../../src/simulation/EntityManager';
 import { createDefaultEntityRegistry } from '../../src/data/EntityType';
-import { createResourceId } from '../../src/data/ResourceId';
+import { createResourceId, resourceIdToString } from '../../src/data/ResourceId';
 import { ZERO_VELOCITY, type EntityTransform } from '../../src/world/Entity';
 
 const registry = createDefaultEntityRegistry();
-const ZOMBIE = registry.getByKey('zombie')!.id;
-const PIG = registry.getByKey('pig')!.id;
+const ZOMBIE = registry.getByKey('zombie')!.id; // isPersistent: true
+const PIG = registry.getByKey('pig')!.id; // isPersistent: true
+const BAT = registry.getByKey('bat')!.id; // isPersistent: false
 const UNKNOWN_TYPE = createResourceId('minecraft', 'entity_type/does_not_exist');
 const OVERWORLD = createResourceId('minecraft', 'overworld');
 const NETHER = createResourceId('minecraft', 'nether');
@@ -183,5 +184,146 @@ describe('EntityManager.clear', () => {
     expect(m.get(10)).toBeUndefined();
     const e = m.spawn(PIG, OVERWORLD, T);
     expect(e.id).toBe(0);
+  });
+});
+
+// Chunk (0,0) covers x,z in [0,16); chunk (1,0) covers x in [16,32).
+const IN_CHUNK_00: EntityTransform = { x: 5, y: 2, z: 5, yaw: 0, pitch: 0 };
+const IN_CHUNK_10: EntityTransform = { x: 20, y: 2, z: 5, yaw: 0, pitch: 0 };
+
+describe('EntityManager.serializeChunk', () => {
+  it('includes an active persistent entity in the requested chunk', () => {
+    const m = manager();
+    const e = m.spawn(ZOMBIE, OVERWORLD, IN_CHUNK_00);
+    const out = m.serializeChunk(0, 0);
+    expect(out).toHaveLength(1);
+    expect(out[0]!.typeKey).toBe(resourceIdToString(ZOMBIE));
+    expect((out[0]!.data as { id: number }).id).toBe(e.id);
+  });
+
+  it('excludes a non-persistent entity', () => {
+    const m = manager();
+    m.spawn(BAT, OVERWORLD, IN_CHUNK_00);
+    expect(m.serializeChunk(0, 0)).toEqual([]);
+  });
+
+  it('excludes a removed entity and an out-of-chunk entity', () => {
+    const m = manager();
+    const removed = m.spawn(ZOMBIE, OVERWORLD, IN_CHUNK_00);
+    m.remove(removed.id);
+    m.spawn(PIG, OVERWORLD, IN_CHUNK_10);
+    expect(m.serializeChunk(0, 0)).toEqual([]);
+  });
+});
+
+describe('EntityManager persistence round trip', () => {
+  it('preserves id, typeId, dimension, transform, and velocity exactly', () => {
+    const source = manager();
+    const transform: EntityTransform = { x: 5, y: 2.5, z: 6, yaw: 123, pitch: -45 };
+    const velocity = { vx: 1.5, vy: -2.5, vz: 0.25 };
+    const original = source.spawn(ZOMBIE, NETHER, transform, { velocity });
+
+    const records = source.serializeChunk(0, 0);
+    const target = manager();
+    const count = target.deserializeChunk(0, 0, records);
+
+    expect(count).toBe(1);
+    const restored = target.get(original.id)!;
+    expect(restored.typeId).toEqual(ZOMBIE);
+    expect(restored.dimension).toEqual(NETHER);
+    expect(restored.transform).toEqual(transform);
+    expect(restored.velocity).toEqual(velocity);
+    expect(restored.state).toBe('ACTIVE');
+  });
+});
+
+describe('EntityManager.deserializeChunk rejections', () => {
+  it('rejects a record outside the requested chunk, atomically', () => {
+    const source = manager();
+    source.spawn(ZOMBIE, OVERWORLD, IN_CHUNK_00);
+    source.spawn(PIG, OVERWORLD, IN_CHUNK_10);
+    const combined = [...source.serializeChunk(0, 0), ...source.serializeChunk(1, 0)];
+
+    const target = manager();
+    expect(() => target.deserializeChunk(0, 0, combined)).toThrow();
+    expect(target.size).toBe(0);
+  });
+
+  it('rejects an unregistered typeKey', () => {
+    const source = manager();
+    source.spawn(ZOMBIE, OVERWORLD, IN_CHUNK_00);
+    const [record] = source.serializeChunk(0, 0);
+    const bad = { ...record!, typeKey: resourceIdToString(UNKNOWN_TYPE) };
+
+    const target = manager();
+    expect(() => target.deserializeChunk(0, 0, [bad])).toThrow();
+    expect(target.size).toBe(0);
+  });
+
+  it('rejects a malformed dimension', () => {
+    const source = manager();
+    source.spawn(ZOMBIE, OVERWORLD, IN_CHUNK_00);
+    const [record] = source.serializeChunk(0, 0);
+    const bad = { ...record!, data: { ...(record!.data as object), dimension: 'NOT A VALID ID!!' } };
+
+    const target = manager();
+    expect(() => target.deserializeChunk(0, 0, [bad])).toThrow();
+    expect(target.size).toBe(0);
+  });
+
+  it('rejects a non-finite transform field', () => {
+    const source = manager();
+    source.spawn(ZOMBIE, OVERWORLD, IN_CHUNK_00);
+    const [record] = source.serializeChunk(0, 0);
+    const data = record!.data as { transform: EntityTransform };
+    const bad = { ...record!, data: { ...record!.data as object, transform: { ...data.transform, y: NaN } } };
+
+    const target = manager();
+    expect(() => target.deserializeChunk(0, 0, [bad])).toThrow();
+    expect(target.size).toBe(0);
+  });
+
+  it('rejects a non-finite velocity field', () => {
+    const source = manager();
+    source.spawn(ZOMBIE, OVERWORLD, IN_CHUNK_00, { velocity: { vx: 1, vy: 2, vz: 3 } });
+    const [record] = source.serializeChunk(0, 0);
+    const data = record!.data as { velocity: { vx: number; vy: number; vz: number } };
+    const bad = {
+      ...record!,
+      data: { ...record!.data as object, velocity: { ...data.velocity, vz: Infinity } },
+    };
+
+    const target = manager();
+    expect(() => target.deserializeChunk(0, 0, [bad])).toThrow();
+    expect(target.size).toBe(0);
+  });
+
+  it('rejects a duplicate id within the same batch, atomically', () => {
+    const source = manager();
+    const a = source.spawn(ZOMBIE, OVERWORLD, IN_CHUNK_00);
+    const b = source.spawn(PIG, OVERWORLD, { ...IN_CHUNK_00, x: 6 });
+    const records = source.serializeChunk(0, 0);
+    const [recA, recB] = records;
+    const collided = { ...recB!, data: { ...(recB!.data as { id: number }), id: a.id } };
+    void b;
+
+    const target = manager();
+    expect(() => target.deserializeChunk(0, 0, [recA!, collided])).toThrow();
+    expect(target.size).toBe(0);
+  });
+
+  it('rejects a batch id colliding with an already-live entity, atomically (no partial spawn)', () => {
+    const target = manager();
+    const existing = target.spawn(ZOMBIE, OVERWORLD, IN_CHUNK_00, { id: 7 });
+
+    const source = manager();
+    const fresh = source.spawn(PIG, OVERWORLD, { ...IN_CHUNK_00, x: 6 });
+    const records = source.serializeChunk(0, 0);
+    const collided = { ...records[0]!, data: { ...(records[0]!.data as { id: number }), id: 7 } };
+    void fresh;
+
+    expect(() => target.deserializeChunk(0, 0, [collided])).toThrow();
+    expect(target.size).toBe(1);
+    expect(target.get(7)).toEqual(existing);
   });
 });
