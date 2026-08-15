@@ -39,6 +39,7 @@ export const enum BlockId {
   Bookshelf = 33,
   Wheat = 34,
   Farmland = 35,
+  Fire = 36,
 }
 
 /**
@@ -57,6 +58,15 @@ export const WHEAT_SCHEMA = new BlockPropertySchema([
  */
 export const FARMLAND_SCHEMA = new BlockPropertySchema([
   { kind: 'integer', name: 'moisture', min: 0, max: 7 },
+]);
+
+/**
+ * Burn-stage property schema for fire (128): a single integer `age` in [0, 15]
+ * (0 = freshly ignited, 15 = last live stage before extinguishing). Consumed by
+ * the 007 state registry to enumerate exactly 16 fire states.
+ */
+export const FIRE_SCHEMA = new BlockPropertySchema([
+  { kind: 'integer', name: 'age', min: 0, max: 15 },
 ]);
 
 /** Tool families used for preferred-tool mining bonuses. */
