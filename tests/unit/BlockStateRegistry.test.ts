@@ -243,8 +243,8 @@ describe('block-state runtime registry', () => {
   it('keeps current simple blocks at one state each; wheat/farmland enumerate 8, fire 16, redstone wire 1296 (125/126/128/155)', () => {
     const blockRegistry = createDefaultBlockRegistry();
     const stateRegistry = createDefaultBlockStateRegistry();
-    // Single-state blocks + 8 wheat + 8 farmland + 16 fire + 1296 redstone-wire + 10 hopper + 10 dropper + 10 dispenser + 10 rail + 2 nether_portal states.
-    expect(stateRegistry.size).toBe(blockRegistry.all().length - 21 + 8 + 8 + 16 + 1296 + 8 + 64 + 16 + 12 + 6 + 12 + 12 + 10 + 10 + 10 + 10 + 2);
+    // Single-state blocks + 8 wheat + 8 farmland + 16 fire + 1296 redstone-wire + 10 hopper + 10 dropper + 10 dispenser + 10 rail + 2 nether_portal + 4 nether_wart states.
+    expect(stateRegistry.size).toBe(blockRegistry.all().length - 22 + 8 + 8 + 16 + 1296 + 8 + 64 + 16 + 12 + 6 + 12 + 12 + 10 + 10 + 10 + 10 + 2 + 4);
     for (const defn of blockRegistry.all()) {
       const states = stateRegistry.statesForBlock(defn.id);
       if (defn.key === 'wheat') {
@@ -304,6 +304,9 @@ describe('block-state runtime registry', () => {
         expect(states.length).toBe(2); // axis x | z
         const def = stateRegistry.getDefaultState(defn.id);
         expect(def.getProperty('axis')).toBe('x');
+      } else if (defn.key === 'nether_wart') {
+        expect(states.length).toBe(4); // age 0..3
+        expect(stateRegistry.getDefaultState(defn.id).getProperty('age')).toBe('0');
       } else if (defn.key === 'redstone_repeater') {
         expect(states.length).toBe(64);
         const def = stateRegistry.getDefaultState(defn.id);

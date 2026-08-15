@@ -52,11 +52,12 @@ export const DEFAULT_NETHER_TERRAIN_CONFIG: Omit<NetherTerrainConfig, 'worldSeed
 };
 
 /**
- * Default ids: lava 20 (`BlockId.Lava`), bedrock 7 (`BlockId.Bedrock`), netherrack 1 — a
- * placeholder (179 registers the real netherrack block; callers pass its id).
+ * Default ids: lava 20 (`BlockId.Lava`), bedrock 7 (`BlockId.Bedrock`), netherrack 56
+ * (`BlockId.Netherrack`) — registered by 179 (`nether-content-baseline`), fulfilling the placeholder
+ * 176 documented.
  */
 export const DEFAULT_NETHER_TERRAIN_BLOCK_IDS: NetherTerrainBlockIds = {
-  netherrack: 1,
+  netherrack: 56,
   lava: 20,
   bedrock: 7,
 };

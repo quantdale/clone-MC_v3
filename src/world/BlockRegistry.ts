@@ -60,6 +60,10 @@ export const enum BlockId {
   Tnt = 53,
   Rail = 54,
   NetherPortal = 55,
+  Netherrack = 56,
+  Obsidian = 57,
+  SoulSand = 58,
+  NetherWart = 59,
 }
 
 /**
@@ -223,6 +227,14 @@ export const RAIL_SCHEMA = new BlockPropertySchema([
  */
 export const PORTAL_SCHEMA = new BlockPropertySchema([
   { kind: 'named', name: 'axis', values: ['x', 'z'] },
+]);
+
+/**
+ * Nether wart property schema (179): a single `age` integer property 0..3 (vanilla's four growth
+ * stages). Default 0. Enumerates 4 states.
+ */
+export const NETHER_WART_SCHEMA = new BlockPropertySchema([
+  { kind: 'integer', name: 'age', min: 0, max: 3 },
 ]);
 
 /** Tool families used for preferred-tool mining bonuses. */
@@ -1159,6 +1171,74 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       hardness: 0,
       propertySchema: PORTAL_SCHEMA,
       defaultState: { axis: 'x' },
+    },
+    {
+      id: BlockId.Netherrack,
+      resourceId: rid('netherrack'),
+      key: 'netherrack',
+      name: 'Netherrack',
+      solid: true,
+      opaque: true,
+      breakable: true,
+      renderCategory: RenderCategory.Opaque,
+      topTile: 58,
+      bottomTile: 58,
+      sideTile: 58,
+      hardness: 0.4,
+      preferredTool: ToolKind.Pickaxe,
+      miningLevel: 0,
+      dropItem: rid('netherrack'),
+    },
+    {
+      id: BlockId.Obsidian,
+      resourceId: rid('obsidian'),
+      key: 'obsidian',
+      name: 'Obsidian',
+      solid: true,
+      opaque: true,
+      breakable: true,
+      renderCategory: RenderCategory.Opaque,
+      topTile: 59,
+      bottomTile: 59,
+      sideTile: 59,
+      hardness: 50,
+      preferredTool: ToolKind.Pickaxe,
+      miningLevel: 3,
+      dropItem: rid('obsidian'),
+    },
+    {
+      id: BlockId.SoulSand,
+      resourceId: rid('soul_sand'),
+      key: 'soul_sand',
+      name: 'Soul Sand',
+      solid: true,
+      opaque: true,
+      breakable: true,
+      renderCategory: RenderCategory.Opaque,
+      topTile: 60,
+      bottomTile: 60,
+      sideTile: 60,
+      hardness: 0.5,
+      preferredTool: ToolKind.Shovel,
+      miningLevel: 0,
+      dropItem: rid('soul_sand'),
+    },
+    {
+      id: BlockId.NetherWart,
+      resourceId: rid('nether_wart'),
+      key: 'nether_wart',
+      name: 'Nether Wart',
+      solid: false,
+      opaque: false,
+      breakable: true,
+      renderCategory: RenderCategory.Transparent,
+      topTile: 61,
+      bottomTile: 61,
+      sideTile: 61,
+      hardness: 0,
+      dropItem: rid('nether_wart'),
+      propertySchema: NETHER_WART_SCHEMA,
+      defaultState: { age: 0 },
     },
   ];
   return new BlockTypeRegistry(defs);

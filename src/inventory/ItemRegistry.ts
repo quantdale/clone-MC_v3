@@ -71,6 +71,10 @@ export const enum ItemId {
   Dispenser = 52,
   Tnt = 53,
   Rail = 54,
+  Netherrack = 56,
+  Obsidian = 57,
+  SoulSand = 58,
+  NetherWart = 59,
 }
 
 /**
@@ -715,6 +719,42 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       iconTile: 56,
       stackSize: 64,
       placeBlock: rid('rail'),
+    },
+    {
+      id: ItemId.Netherrack,
+      resourceId: rid('netherrack'),
+      key: 'netherrack',
+      name: 'Netherrack',
+      iconTile: 58,
+      stackSize: 64,
+      placeBlock: rid('netherrack'),
+    },
+    {
+      id: ItemId.Obsidian,
+      resourceId: rid('obsidian'),
+      key: 'obsidian',
+      name: 'Obsidian',
+      iconTile: 59,
+      stackSize: 64,
+      placeBlock: rid('obsidian'),
+    },
+    {
+      id: ItemId.SoulSand,
+      resourceId: rid('soul_sand'),
+      key: 'soul_sand',
+      name: 'Soul Sand',
+      iconTile: 60,
+      stackSize: 64,
+      placeBlock: rid('soul_sand'),
+    },
+    {
+      id: ItemId.NetherWart,
+      resourceId: rid('nether_wart'),
+      key: 'nether_wart',
+      name: 'Nether Wart',
+      iconTile: 61,
+      stackSize: 64,
+      placeBlock: rid('nether_wart'),
     },
   ];
   return new ItemTypeRegistry(defs);
