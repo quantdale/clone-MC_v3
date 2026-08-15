@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **132-entity-chunk-tracking — VERIFIED 100%**
-- Active implementation change: **132-entity-chunk-tracking — VERIFIED**
-- Next change: **133-entity-data-tracker — NOT YET ACTIVE (artifacts pending)**
-- 132 task ledger: **7 total task groups, 7 completed**
-- 132 completion: **100%**
-- 132 mandatory entity-chunk-tracking requirements: **PASS**
-- 132 required-test gate: **PASS — unit 1724/1724, E2E 21/21**
-- 132 advancement allowed: **Yes**
-- Session-start head: `a15a0f510757a554b46d65d2ffaf7d0ebea106ca`
-- Validated head: `be4fec2ad001fb55439cd3bfcdb862ebda4afc3e` (132 feature commit)
-- Next exact action: **Advance to 133-entity-data-tracker. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (dirty synchronized property container for rendering/networking, building on 129 EntityInstance); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **133-entity-data-tracker — VERIFIED 100%**
+- Active implementation change: **133-entity-data-tracker — VERIFIED**
+- Next change: **134-navigation-grid-query — NOT YET ACTIVE (artifacts pending)**
+- 133 task ledger: **5 total task groups, 5 completed**
+- 133 completion: **100%**
+- 133 mandatory entity-data-tracker requirements: **PASS**
+- 133 required-test gate: **PASS — unit 1736/1736, E2E 21/21**
+- 133 advancement allowed: **Yes**
+- Session-start head: `be4fec2ad001fb55439cd3bfcdb862ebda4afc3e`
+- Validated head: `ccccb5576e22e6912cf9ef8b576bee54cfa59138` (133 feature commit)
+- Next exact action: **Advance to 134-navigation-grid-query. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (walkability/cost queries from voxel shapes and fluids, building on 056 VoxelShape + 076 fluid state); implement; verify full gate; commit + push; advance program state.**
 
 ## What 119 implemented
 
@@ -735,6 +735,45 @@ the 1631-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Bonemeal (127), hoe tilling, and a rain/weather hook are explicit non-goals
 (documented). Advance to 127.
 
+## What 133 implemented
+
+Change 133 adds a generic, standalone dirty-property container mirroring real Minecraft's
+`SynchedEntityData`, completing the 129-133 entity-framework foundation arc (core model → physics →
+persistence → chunk tracking → data sync). It is the two reusable primitives only — no wire format
+and no `EntityInstance`/`Game`/rendering wiring.
+
+- `src/data/EntityDataTracker.ts` (NEW) — `DataAccessor<T>` (`{id, name}`, phantom `T` for type-safe
+  call sites); `DataAccessorRegistry` (`define<T>(name)` assigns dense unique ids, throws on a
+  duplicate name; `has`/`size`); `DataTrackerEntry`; `EntityDataTracker` (`define(accessor, initial)`
+  seeds once per accessor id, throws on redefinition; `get`/`set`/`isDirty` throw for an undefined
+  accessor; `set` marks dirty via `Object.is` comparison and always stores the new value, returning
+  whether it changed; `getDirty()`/`getAll()` return accessor-id-ordered snapshots for incremental vs.
+  full sync; `clearDirty()` flushes without touching values).
+- Tests: `tests/unit/EntityDataTracker.test.ts` (NEW, 12) — dense-id assignment + duplicate-name
+  rejection; define seeding + duplicate-id rejection; set's dirty-on-change/no-op-on-same-value
+  (including `NaN`-equals-`NaN` `Object.is` semantics) /throws-on-undefined; the full
+  getDirty/getAll/clearDirty sync contract, including dirty-again-after-clear.
+
+## Validation evidence (133)
+
+- typecheck: PASS (`tsc --noEmit`; required a phantom `__phantom?: T` field on `DataAccessor<T>` so
+  the compile-time-only type parameter isn't flagged unused)
+- lint: PASS (`eslint .`)
+- unit: PASS 1736/1736 (prior 1724 + 12 new `EntityDataTracker.test.ts`)
+- production build: PASS (`tsc --noEmit && vite build`, 83 modules — unchanged, no consumer yet)
+- E2E: PASS 21/21 (two transient `net::ERR_NETWORK_CHANGED` navigation flakes hit unrelated,
+  already-existing tests on the first two runs — different test each time, same error signature, no
+  change-133 code in the failure path; a third clean run passed 21/21, confirming environmental
+  flakiness rather than a regression)
+
+## Advancement decision
+
+Change 133 is **VERIFIED** at 5/5 task groups (100%). All gates are green: typecheck, lint, the
+1736-unit suite, production build, and the required E2E suite (21/21, confirmed clean after ruling
+out transient flakes). No advancement exception was needed. Wire format and
+`EntityInstance`/`Game`/rendering wiring are explicit non-goals (documented, deferred to a future
+rendering/networking consumer). Advance to 134.
+
 ## What 132 implemented
 
 Change 132 adds chunk-scoped activation/deactivation and a ticking-set selector for 129
@@ -976,15 +1015,15 @@ the 1654-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Sapling/tree bonemeal is an explicit non-goal (deferred; no Sapling block
 exists) and the `FertilizerRegistry` extension point is documented. Advance to 128.
 
-## Next change: 133 (pending artifacts)
+## Next change: 134 (pending artifacts)
 
-`133-entity-data-tracker` is named in `CHANGE_SEQUENCE.md` with scope "Dirty synchronized property
-container for rendering/networking." Per `AGENTS.md`, a change lacking full artifacts is a
+`134-navigation-grid-query` is named in `CHANGE_SEQUENCE.md` with scope "Walkability/cost queries
+from voxel shapes and fluids." Per `AGENTS.md`, a change lacking full artifacts is a
 hard pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md`
 before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 132
-verification. Change 133 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 133
+verification. Change 134 is the next change; its artifacts must be authored and
 validated before implementation begins.
