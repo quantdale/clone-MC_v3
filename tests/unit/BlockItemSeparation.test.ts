@@ -128,6 +128,7 @@ describe('block/item registry separation', () => {
       [46, 'door', 'door'],
       [47, 'trapdoor', 'trapdoor'],
       [48, 'piston', 'piston'],
+      [49, 'sticky_piston', 'sticky_piston'],
     ];
     for (const [id, blockPath, itemPath] of table) {
       if (blockPath !== null) {

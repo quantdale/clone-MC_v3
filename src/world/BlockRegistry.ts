@@ -52,6 +52,7 @@ export const enum BlockId {
   Door = 46,
   Trapdoor = 47,
   Piston = 48,
+  StickyPiston = 49,
 }
 
 /**
@@ -979,6 +980,23 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       sideTile: 36,
       hardness: 1.5,
       dropItem: rid('piston'),
+      propertySchema: PISTON_SCHEMA,
+      defaultState: { facing: 'north', extended: false },
+    },
+    {
+      id: BlockId.StickyPiston,
+      resourceId: rid('sticky_piston'),
+      key: 'sticky_piston',
+      name: 'Sticky Piston',
+      solid: true,
+      opaque: true,
+      breakable: true,
+      renderCategory: RenderCategory.Opaque,
+      topTile: 37,
+      bottomTile: 37,
+      sideTile: 37,
+      hardness: 1.5,
+      dropItem: rid('sticky_piston'),
       propertySchema: PISTON_SCHEMA,
       defaultState: { facing: 'north', extended: false },
     },

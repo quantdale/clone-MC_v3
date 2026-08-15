@@ -244,7 +244,7 @@ describe('block-state runtime registry', () => {
     const blockRegistry = createDefaultBlockRegistry();
     const stateRegistry = createDefaultBlockStateRegistry();
     // Single-state blocks + 8 wheat + 8 farmland + 16 fire + 1296 redstone-wire states.
-    expect(stateRegistry.size).toBe(blockRegistry.all().length - 15 + 8 + 8 + 16 + 1296 + 8 + 64 + 16 + 12 + 6 + 12);
+    expect(stateRegistry.size).toBe(blockRegistry.all().length - 16 + 8 + 8 + 16 + 1296 + 8 + 64 + 16 + 12 + 6 + 12 + 12);
     for (const defn of blockRegistry.all()) {
       const states = stateRegistry.statesForBlock(defn.id);
       if (defn.key === 'wheat') {
@@ -276,7 +276,7 @@ describe('block-state runtime registry', () => {
       } else if (defn.key === 'door' || defn.key === 'trapdoor') {
         expect(states.length).toBe(2);
         expect(stateRegistry.getDefaultState(defn.id).getProperty('open')).toBe('false');
-      } else if (defn.key === 'piston') {
+      } else if (defn.key === 'piston' || defn.key === 'sticky_piston') {
         expect(states.length).toBe(12);
         const def = stateRegistry.getDefaultState(defn.id);
         expect(def.getProperty('facing')).toBe('north');
