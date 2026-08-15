@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **131-entity-persistence-runtime — VERIFIED 100%**
-- Active implementation change: **131-entity-persistence-runtime — VERIFIED**
-- Next change: **132-entity-chunk-tracking — NOT YET ACTIVE (artifacts pending)**
-- 131 task ledger: **5 total task groups, 5 completed**
-- 131 completion: **100%**
-- 131 mandatory entity-persistence-runtime requirements: **PASS**
-- 131 required-test gate: **PASS — unit 1713/1713, E2E 21/21**
-- 131 advancement allowed: **Yes**
-- Session-start head: `ed08458601c629aacae84771d6248472c403d3cc`
-- Validated head: `a15a0f510757a554b46d65d2ffaf7d0ebea106ca` (131 feature commit)
-- Next exact action: **Advance to 132-entity-chunk-tracking. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (activate/deactivate entities based on chunk tickets/simulation distance, building on 129 EntityManager + 031 ChunkTicketManager + 032 RenderSimulationDistance); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **132-entity-chunk-tracking — VERIFIED 100%**
+- Active implementation change: **132-entity-chunk-tracking — VERIFIED**
+- Next change: **133-entity-data-tracker — NOT YET ACTIVE (artifacts pending)**
+- 132 task ledger: **7 total task groups, 7 completed**
+- 132 completion: **100%**
+- 132 mandatory entity-chunk-tracking requirements: **PASS**
+- 132 required-test gate: **PASS — unit 1724/1724, E2E 21/21**
+- 132 advancement allowed: **Yes**
+- Session-start head: `a15a0f510757a554b46d65d2ffaf7d0ebea106ca`
+- Validated head: `be4fec2ad001fb55439cd3bfcdb862ebda4afc3e` (132 feature commit)
+- Next exact action: **Advance to 133-entity-data-tracker. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (dirty synchronized property container for rendering/networking, building on 129 EntityInstance); implement; verify full gate; commit + push; advance program state.**
 
 ## What 119 implemented
 
@@ -735,6 +735,46 @@ the 1631-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Bonemeal (127), hoe tilling, and a rain/weather hook are explicit non-goals
 (documented). Advance to 127.
 
+## What 132 implemented
+
+Change 132 adds chunk-scoped activation/deactivation and a ticking-set selector for 129
+`EntityInstance`s. It is the eviction/activation/selection primitives only — no `Game` wiring, no
+automatic loaded/unloaded chunk-diffing loop, and no hard dependency on either
+`ChunkTicketManager` (031) or `RenderSimulationDistance` (032, the mechanism `World` actually uses
+for block random-tick gating).
+
+- `src/simulation/EntityManager.ts` (EDIT, additive) — `forgetChunk(cx, cz): number` permanently
+  evicts every entity (any lifecycle state, `ACTIVE` or retained `REMOVED`) whose transform's chunk
+  equals `(cx, cz)` from the id map and insertion-order list, freeing their ids for reuse — distinct
+  from `remove()` (129), which deliberately retains a `REMOVED` record to block id reuse. After
+  `forgetChunk`, a `spawn`/`deserializeChunk` with that same explicit id succeeds.
+- `src/simulation/EntityChunkTracking.ts` (NEW) — `selectTickingEntities(manager, isChunkTicking)`
+  filters `getAll()` to entities whose chunk satisfies a caller-supplied `(cx, cz) => boolean`
+  predicate (decoupled from any specific chunk-liveness mechanism); `deactivateChunk(manager, cx, cz)`
+  composes `serializeChunk` (131) then `forgetChunk` into the "unload" step, returning the persistent
+  records for a caller to save; `activateChunk(manager, cx, cz, records)` is a thin, symmetric alias
+  for `deserializeChunk` (131), kept for the activate/deactivate naming pair.
+- Tests: `tests/unit/EntityManager.test.ts` (+3 `forgetChunk` cases) and
+  `tests/unit/EntityChunkTracking.test.ts` (NEW, 8) — predicate filtering/purity/propagation,
+  persist-then-forget behavior, `activateChunk`'s exact `deserializeChunk` contract, and a full
+  deactivate→activate round trip preserving identity/state.
+
+## Validation evidence (132)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1724/1724 (prior 1713 + 11 new: `EntityManager.forgetChunk` 3, `EntityChunkTracking` 8)
+- production build: PASS (`tsc --noEmit && vite build`, 83 modules — unchanged, no consumer yet)
+- E2E: PASS 21/21 (no existing file touched beyond the extended test file; nothing consumes the new
+  methods)
+
+## Advancement decision
+
+Change 132 is **VERIFIED** at 7/7 task groups (100%). All gates are green: typecheck, lint, the
+1724-unit suite, production build, and the required E2E suite (21/21). No advancement exception was
+needed. `Game` wiring, automatic chunk-diffing, and coupling to `ChunkTicketManager`/
+`RenderSimulationDistance` are explicit non-goals (documented, deferred). Advance to 133.
+
 ## What 131 implemented
 
 Change 131 bridges live 129 `EntityInstance`s to the already-generic 037/038 persistence store:
@@ -936,15 +976,15 @@ the 1654-unit suite, production build, and the required E2E suite (21/21). No ad
 exception was needed. Sapling/tree bonemeal is an explicit non-goal (deferred; no Sapling block
 exists) and the `FertilizerRegistry` extension point is documented. Advance to 128.
 
-## Next change: 132 (pending artifacts)
+## Next change: 133 (pending artifacts)
 
-`132-entity-chunk-tracking` is named in `CHANGE_SEQUENCE.md` with scope "Activate/deactivate entities
-based on chunk tickets/simulation distance." Per `AGENTS.md`, a change lacking full artifacts is a
+`133-entity-data-tracker` is named in `CHANGE_SEQUENCE.md` with scope "Dirty synchronized property
+container for rendering/networking." Per `AGENTS.md`, a change lacking full artifacts is a
 hard pre-implementation block. Author and validate those artifacts via `SPEC_AUTHORING_PROTOCOL.md`
 before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 131
-verification. Change 132 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 132
+verification. Change 133 is the next change; its artifacts must be authored and
 validated before implementation begins.
