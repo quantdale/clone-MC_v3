@@ -3,18 +3,59 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **158-redstone-torch — VERIFIED 100%**
-- Active implementation change: **158-redstone-torch — VERIFIED**
-- Next change: **159-repeater — NOT YET ACTIVE (artifacts pending)**
-- 158 task ledger: **29 total tasks, 29 completed**
-- 158 completion: **100%**
-- 158 mandatory redstone-torch requirements: **PASS**
-- 158 required-test gate: **PASS — unit 2142/2142, E2E 22/22**
-- 158 advancement allowed: **Yes**
-- Session-start head: `57b0d469cfff3f040c5ec2e918c21f0e033547d5`
-- Validated head: `d6e794e4defb0b8d4bb93864a42c6ec0c276645e` (158 feature commit)
+- Last completed change: **159-repeater — VERIFIED 100%**
+- Active implementation change: **159-repeater — VERIFIED**
+- Next change: **160-comparator — NOT YET ACTIVE (artifacts pending)**
+- 159 task ledger: **26 total tasks, 26 completed**
+- 159 completion: **100%**
+- 159 mandatory repeater requirements: **PASS**
+- 159 required-test gate: **PASS — unit 2157/2157, E2E 22/22**
+- 159 advancement allowed: **Yes**
+- Session-start head: `89017135263a9122a8981c3f0a7c0fad8d25ed94`
+- Validated head: `aadf454670bf9000ffc874ebe3d2a2939ed0dd3c` (159 feature commit)
 - Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) in progress.**
-- Next exact action: **Advance to 159-repeater. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (direction/delay/locking and scheduled output — the third consumer of 047's `ScheduledTickQueue`, joining 157/158. A repeater samples its input, holds it for a configurable 1-4 redstone-tick delay before re-emitting (pure delay-line semantics distinct from 158's inversion), and can be **locked** by a perpendicular repeater feeding it — the first component whose output depends on a *side* input, not just its front. Expect `redstone_repeater` with facing+delay+locked+powered state); implement; verify full gate; commit + push; advance program state.**
+- Next exact action: **Advance to 160-comparator. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (compare/subtract modes and container signal reads — an **analog** component, the first to output a signal strength other than 0 or MAX. Compare mode: output = input if input >= side, else 0. Subtract mode: output = max(0, input - side). Container signal reads (a chest/furnace's fullness as 0-15) need 106's container/inventory model — decide explicitly whether to scope that in or defer it as a documented non-goal given no titled change bridges redstone to inventories yet); implement; verify full gate; commit + push; advance program state.**
+
+## What 159 implemented
+
+Change 159 adds the redstone repeater: a delay line (1-4 redstone ticks, `REPEATER_DELAY_TICKS`
+2/4/6/8) that can be **locked** by a perpendicular neighbour — the first component whose output
+depends on more than its own front input.
+
+- `src/simulation/RedstoneRepeater.ts` (NEW) — `resolveRepeaterOutput(currentInput, locked,
+  currentPowered)` mirrors 158's `torchShouldBeLit` shape (a pure predicate the caller composes at
+  the scheduled tick): when locked, output is frozen at `currentPowered` regardless of
+  `currentInput` (asserted in **both** directions — proving the locked branch truly ignores
+  `currentInput` rather than happening to agree with it); when unlocked it follows `currentInput`.
+  `cycleRepeaterDelay` is a pure `1→2→3→4→1` bijection (not a stateful counter, so a caller can
+  preview the next delay without mutating). `repeaterShouldLock` is exactly the perpendicular
+  power, unchanged. `scheduleRepeaterOutput`/`dueRepeaterOutputs` ride on 047's
+  `ScheduledTickQueue` — its **third** redstone consumer after 157/158 — exercised for **all four
+  delay settings individually**, plus same-tick determinism.
+- `src/world/BlockRegistry.ts`/`ItemRegistry.ts` (EDIT) — `REPEATER_SCHEMA` (`facing` × `delay` ×
+  `locked` × `powered` = 64 states, the largest single-block count after 155's wire 1296);
+  `BlockId.RedstoneRepeater = 42`/`ItemId.RedstoneRepeater = 42`.
+- **`facing` is modeled here** — unlike 155/157/158's identical omission — because a repeater's
+  facing is *behavioral* (determines which side is input/output vs. lock), not purely visual.
+- Input-change tracking is deliberately left to a future wiring change, which already owns the real
+  `World` and would otherwise become a second source of truth for the same fact.
+
+## Validation evidence (159)
+
+- typecheck: PASS; lint: PASS (full project)
+- unit: PASS 2157/2157 (prior 2142 + 15 new, including all-four-delay-settings scheduling coverage
+  and both-directions locked-holds assertions)
+- production build: PASS (registry edits live; simulation module has no `Game.ts` consumer yet)
+- E2E: PASS 22/22 (all pre-existing assertions unaffected)
+- Four characterization tests updated: block count 30 → 31, stateful-block set +
+  `redstone_repeater`, state-count formula +64 plus a per-block exact-64-state assertion (registry
+  1358 → 1422 states), one new legacy-id row
+
+## Advancement decision (159)
+
+Advance. 100% task completion, full gate green, no MUST/SHALL requirement unmet, no regression. Not
+yet emitting into a live circuit — same integration surface 156-158 deferred. Next change:
+160-comparator.
 
 ## What 158 implemented
 
