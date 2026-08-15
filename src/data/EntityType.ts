@@ -185,6 +185,7 @@ export function createDefaultEntityRegistry(): EntityRegistry {
     def('sheep', 'CREATURE', 8, 0, true, true),
     def('squid', 'WATER_CREATURE', 10, 0, true, true),
     def('bat', 'AMBIENT', 6, 0, true, false),
+    def('villager', 'CREATURE', 20, 0, true, true),
     def('item', 'OTHER', undefined, undefined, false, false),
   ]);
 }

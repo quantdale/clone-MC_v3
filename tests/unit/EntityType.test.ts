@@ -17,13 +17,13 @@ function def(overrides: Partial<EntityTypeDefinition> & Pick<EntityTypeDefinitio
 }
 
 describe('entity registry validation', () => {
-  it('builds the default registry with eleven entities and finalizes', () => {
+  it('builds the default registry with twelve entities and finalizes', () => {
     const reg = createDefaultEntityRegistry();
-    expect(reg.size).toBe(11);
+    expect(reg.size).toBe(12);
     expect(reg.finalized).toBe(true);
     expect(reg.entries().map((d) => d.key).sort()).toEqual([
       'bat', 'chicken', 'cow', 'creeper', 'item', 'pig',
-      'sheep', 'skeleton', 'spider', 'squid', 'zombie',
+      'sheep', 'skeleton', 'spider', 'squid', 'villager', 'zombie',
     ]);
   });
 
@@ -65,6 +65,6 @@ describe('default entity data', () => {
   it('assigns runtime ids by registration order', () => {
     const reg = createDefaultEntityRegistry();
     expect(reg.getByRuntimeId(0).key).toBe('zombie');
-    expect(reg.getRuntimeId(reg.getByKey('item')!.id)).toBe(10);
+    expect(reg.getRuntimeId(reg.getByKey('item')!.id)).toBe(11);
   });
 });
