@@ -3,17 +3,55 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **143-bow-and-arrow — VERIFIED 100%**
-- Active implementation change: **143-bow-and-arrow — VERIFIED**
-- Next change: **144-shield-blocking — NOT YET ACTIVE (artifacts pending)**
-- 143 task ledger: **5 total task groups, 5 completed**
-- 143 completion: **100%**
-- 143 mandatory bow-and-arrow requirements: **PASS**
-- 143 required-test gate: **PASS — unit 1842/1842, E2E 21/21**
-- 143 advancement allowed: **Yes**
-- Session-start head: `cc12b8bfad9e9d3e1d2ebcfe7304084238c4efaf`
-- Validated head: `5aa7bc0f72b32349619ffbf0344890c6c8fe8c37` (143 feature commit)
-- Next exact action: **Advance to 144-shield-blocking. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (offhand shield use, directional blocking, durability/cooldown hooks, building on 113 Equipment + 115 DurabilityRules); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **144-shield-blocking — VERIFIED 100%**
+- Active implementation change: **144-shield-blocking — VERIFIED**
+- Next change: **145-passive-mob-baseline — NOT YET ACTIVE (artifacts pending)**
+- 144 task ledger: **20 total tasks, 20 completed**
+- 144 completion: **100%**
+- 144 mandatory shield-blocking requirements: **PASS**
+- 144 required-test gate: **PASS — unit 1866/1866, E2E 21/21**
+- 144 advancement allowed: **Yes**
+- Session-start head: `5aa7bc0f72b32349619ffbf0344890c6c8fe8c37`
+- Validated head: `40877d5b286baeca6502379620bbd61800522c9a` (144 feature commit)
+- Next exact action: **Advance to 145-passive-mob-baseline. Author/validate its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (first fully interactive passive mob end-to-end — likely the first change since 128 to wire simulation primitives into Game.ts/a live consumer); implement; verify full gate; commit + push; advance program state.**
+
+## What 144 implemented
+
+Change 144 adds directional shield-block geometry, durability-cost computation, the composed
+`resolveShieldBlock` outcome, and a per-entity shield-disable cooldown tracker. It builds on 141's
+`InvulnerabilityTracker` shape and sidesteps this codebase's yaw-unit inconsistency (`Player`
+radians/-Z-forward vs. 129 `EntityTransform` degrees) by defining its own self-contained bearing
+convention, documented so a caller converts once at its boundary — mirroring 143's precedent. It is
+pure geometry/durability-math and a small tracker class — not `Inventory`/`Equipment`/durability
+application, not damage-type-specific exceptions, not `SurvivalSystem`/`ArmorProtection` integration,
+and not `Game`/input wiring (all deferred to a future wiring change, per its documented non-goals).
+
+- `src/simulation/ShieldBlocking.ts` (NEW) — `SHIELD_BLOCK_ARC_DEGREES=90`,
+  `SHIELD_DISABLE_TICKS=100`, `SHIELD_BLOCK_DAMAGE_REDUCTION=1.0`; `bearingYawDegrees` (
+  `atan2(dx,dz)` in degrees, this module's own convention, range `(-180,180]`);
+  `angleBetweenYawDegrees` (smaller angular difference, `[0,180]`, wraparound-correct);
+  `isWithinBlockingArc` (true iff the angle between facing and bearing-to-attacker is `<=
+  arcDegrees/2`); `computeShieldDurabilityDamage` (`max(1, ceil(damage))`, floor of 1, monotonic);
+  `ShieldBlockResult`/`resolveShieldBlock` (fails to block — undiminished damage, zero durability
+  cost, no disable — when not raised, disabled, or attacker out of arc; otherwise blocks, reduces
+  damage per the reduction constant, charges durability cost, and echoes the caller-supplied
+  `isAxeAttack` as `shouldDisable`); `ShieldCooldownTracker` (`disable`/`isDisabled`/`clear`,
+  per-entity-id tick-window map, same shape as 141's tracker).
+
+## Validation evidence (144)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`)
+- unit: PASS 1866/1866 (prior 1842 + 24 new: ShieldBlocking bearing/angle math, arc boundary,
+  durability-damage floor/monotonicity, resolveShieldBlock composition, ShieldCooldownTracker
+  window gating + clear + multi-entity isolation)
+- production build: PASS (`tsc --noEmit && vite build`, 83 modules, unchanged — no consumer yet)
+- E2E: PASS 21/21 (no Game/input wiring touched)
+
+## Advancement decision (144)
+
+Advance. 100% task completion, full gate green, no MUST/SHALL requirement unmet, no regression.
+Next change: 145-passive-mob-baseline.
 
 ## What 119 implemented
 
@@ -1388,6 +1426,6 @@ before any production code.
 
 ## Resume rule
 
-A future session must first inspect current `origin/main`, this state, and the 143
-verification. Change 144 is the next change; its artifacts must be authored and
+A future session must first inspect current `origin/main`, this state, and the 144
+verification. Change 145 is the next change; its artifacts must be authored and
 validated before implementation begins.
