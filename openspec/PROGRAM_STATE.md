@@ -3,18 +3,67 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **153-boss-framework — VERIFIED 100%**
-- Active implementation change: **153-boss-framework — VERIFIED**
-- Next change: **154-redstone-signal-core — NOT YET ACTIVE (artifacts pending)**
-- 153 task ledger: **37 total tasks, 37 completed**
-- 153 completion: **100%**
-- 153 mandatory boss-framework requirements: **PASS**
-- 153 required-test gate: **PASS — unit 2034/2034, E2E 22/22**
-- 153 advancement allowed: **Yes**
-- Session-start head: `ed70425c29ee98340f70196d9ab96f111a742168`
-- Validated head: `699c6b4467b5d648f5f933346df2e5aba4324e71` (153 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) is COMPLETE.**
-- Next exact action: **Advance to 154-redstone-signal-core, which opens the "Redstone and automation" section (154-173). Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (directional weak/strong signal queries and 0-15 power values — the foundational primitive every later redstone change builds on; expect a pure signal-model module, likely additive/unconsumed until 155-157 add wire connectivity and input components); implement; verify full gate; commit + push; advance program state.**
+- Last completed change: **154-redstone-signal-core — VERIFIED 100%**
+- Active implementation change: **154-redstone-signal-core — VERIFIED**
+- Next change: **155-redstone-wire-connectivity — NOT YET ACTIVE (artifacts pending)**
+- 154 task ledger: **34 total tasks, 34 completed**
+- 154 completion: **100%**
+- 154 mandatory redstone-signal-core requirements: **PASS**
+- 154 required-test gate: **PASS — unit 2063/2063, E2E 22/22**
+- 154 advancement allowed: **Yes**
+- Session-start head: `ec0cb1c8fb020300e073a807347a825c9ca3bc5f`
+- Validated head: `e25ec07d9469eecd8121f39b4e410fec2315774c` (154 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) now open.**
+- Next exact action: **Advance to 155-redstone-wire-connectivity. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (wire block states, connection shapes, attenuation — the first consumer of 154's `attenuate`/`clampSignal`/direction helpers; needs a `redstone_wire` block with a power 0-15 property schema (006/007) plus connection-side state, and a pure connectivity/propagation resolver; decide explicitly whether to register the block now or keep it a pure model like 154); implement; verify full gate; commit + push; advance program state.**
+
+## What 154 implemented
+
+Change 154 **opens the "Redstone and automation" section (154-173)** with the foundational power
+model every later redstone change reads. Additive/unconsumed — no wire block, no propagation, no
+components, no block-registry additions.
+
+- `src/simulation/RedstoneSignal.ts` (NEW, **zero imports**) — `Direction` +
+  `DIRECTIONS`/`OPPOSITE_DIRECTION`/`DIRECTION_OFFSETS`/`offsetInDirection` (Minecraft convention:
+  north = −z, south = +z, east = +x, west = −x, up = +y, down = −y); `MIN_SIGNAL_STRENGTH` 0 /
+  `MAX_SIGNAL_STRENGTH` 15 + `clampSignal` (truncates fractions, clamps out-of-range, maps
+  **non-finite to `MIN`** i.e. no signal); `attenuate(signal, distance)` (decay floored at `MIN`;
+  a non-positive/non-finite distance is treated as `0`, so `attenuate(s, 0) === clampSignal(s)`;
+  takes an explicit distance so 155 can compute a wire value N blocks out in one call);
+  `strongestSignalFrom` (clamped max; an **empty list returns `MIN`** so a component with no inputs
+  reads unpowered rather than throwing); `RedstonePowerSource` (`getWeakPower`/`getStrongPower`/
+  `isConductive` — **injected** rather than imported, the same seam 145's `PassiveMobWorld` and
+  148's spawn sinks use, so tests supply a plain object literal and no `World`/`BlockRegistry`
+  dependency exists); `getDirectPower` (steps to each of the six neighbours and reads its
+  *facing-back* strong power via `OPPOSITE_DIRECTION`, returning the clamped max — reads **only**
+  `getStrongPower`; exactly 6 source calls); `getIndirectPower` (folds in each **conductive**
+  neighbour's own *direct* power — vanilla's "a strongly-powered solid block powers what touches
+  it"; recurses exactly **one** level, never on itself, so two adjacent conductive blocks cannot
+  infinite-loop; at most 42 source calls); `isBlockPowered`.
+- **Every** value read from the source passes through `clampSignal` before use, so a misbehaving
+  future `World` adapter returning `-5`/`99`/`NaN` can never produce an out-of-domain result.
+- **Deliberate documented choice**: `Direction` is re-declared locally rather than imported from
+  099's structurally identical `StructureTemplate.ts` type, avoiding a `simulation → worldgen`
+  dependency for a six-string union (146's precedent). Quasi-connectivity ("BUD") is **explicitly
+  excluded** from the core model and flagged for 163/164 to decide deliberately.
+
+## Validation evidence (154)
+
+- typecheck: PASS (`tsc --noEmit`)
+- lint: PASS (`eslint .`, full project)
+- unit: PASS 2063/2063 (prior 2034 + 29 new, including a direct assertion that the single-level
+  recursion bound **terminates** with every neighbour conductive — the failure mode design.md
+  rejected — a call-counter assertion pinning `getDirectPower`'s six-query bound, the
+  `getIndirectPower >= getDirectPower` invariant across four source arrangements, and proof that
+  weak power never leaks into `getDirectPower`)
+- production build: PASS (`tsc --noEmit && vite build`, 103 modules, unchanged from 153 — confirms
+  no `Game.ts` consumer, matching 148-153's own identical evidence)
+- E2E: PASS 22/22 (all pre-existing assertions unaffected — nothing wired into the live game)
+
+## Advancement decision (154)
+
+Advance. 100% task completion, full gate green, no MUST/SHALL requirement unmet, no regression.
+Additive/unconsumed pending 155 (wire) and 156-161 (update order, components). Next change:
+155-redstone-wire-connectivity.
 
 ## What 153 implemented
 
