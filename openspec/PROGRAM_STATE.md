@@ -3,18 +3,41 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **175-nether-dimension-type — VERIFIED 100%**
-- Active implementation change: **175-nether-dimension-type — VERIFIED**
-- Next change: **176-nether-world-generation — NOT YET ACTIVE (artifacts pending)**
-- 175 task ledger: **18 total tasks, 18 completed**
-- 175 completion: **100%**
-- 175 mandatory nether-dimension-type requirements: **PASS**
-- 175 required-test gate: **PASS — unit 2386/2386, E2E 22/22**
-- 175 advancement allowed: **Yes**
-- Session-start head: `5f941d7222f54145d9b6c4304e05bb808e888df4`
-- Validated head: `34583a178e5226718af212eeb7a80e40d0895a4a` (175 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — 174's container and 175's canonical dimension types (overworld + Nether) are COMPLETE.**
-- Next exact action: **Advance to 176-nether-world-generation. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Nether density/surface/biome baseline through existing worldgen pipeline — the first dimension-specific worldgen, consuming 175's NETHER_DIMENSION_TYPE and the 085-102 worldgen pipeline).**
+- Last completed change: **176-nether-world-generation — VERIFIED 100%**
+- Active implementation change: **176-nether-world-generation — VERIFIED**
+- Next change: **177-nether-portal-blocks — NOT YET ACTIVE (artifacts pending)**
+- 176 task ledger: **22 total tasks, 22 completed**
+- 176 completion: **100%**
+- 176 mandatory nether-world-generation requirements: **PASS**
+- 176 required-test gate: **PASS — unit 2394/2394, E2E 22/22**
+- 176 advancement allowed: **Yes**
+- Session-start head: `4b14e41121d6ac500542f0e0c50185653da78d1f`
+- Validated head: `7dce6006306f4b28091d5f7286c8a2eff27bbb1a` (176 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension container (174), canonical types (175), and Nether terrain (176) are COMPLETE.**
+- Next exact action: **Advance to 177-nether-portal-blocks. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: portal frame validation and portal block state/lifecycle — the first Nether block, and the first frame-validation logic).**
+
+## What 176 implemented
+
+Change 176 is the first **dimension-specific worldgen**: the Nether's terrain, consuming 175's
+bounds and reusing 088's exact output shape.
+
+- `src/worldgen/NetherTerrain.ts` (NEW) — `generateNetherColumn(seed, columnX, columnZ, config?,
+  ids?)` returns a sparse `TerrainColumn` with Nether rules: a full **bedrock floor** at `minY` (0)
+  and a full **bedrock roof** at `ceilingY` (127) with air above (the open roof area); **no water
+  anywhere** — lava fills every cell below `lavaLevel` (31) that is not terrain; and a **spongy
+  netherrack body** from a 3D density centered on the lava level
+  (`(lavaLevel − y)/64 + full-amplitude noise`), so the terrain is a lava-ocean floor rising into
+  caverns and petering out ~64 blocks up — always below the roof. Block ids are caller-configurable
+  like 088's `TerrainBlockIds` (`lava: 20`/`bedrock: 7` match the registry; `netherrack` defaults to
+  a documented placeholder `1` until 179 registers the real block). Defaults match 175's
+  `NETHER_DIMENSION_TYPE` (0..256); config validation requires `minY < lavaLevel < ceilingY < maxY`;
+  deterministic per (seed, columnX, columnZ).
+- The first implementation (landmass-style, surface-centered density) produced a solid block with
+  zero lava — the tests caught it (`lavaCells === 0`, topmost solid === 127) and the density was
+  re-centered on the lava level; the final suite pins lava existence, no-water, complete
+  floor/roof, and the roof-underside band (scanned explicitly below the roof, since
+  `surfaceHeightAt` reports the roof bedrock).
+- Tests: `tests/unit/NetherTerrain.test.ts` (NEW, 8 tests). Zero registry changes.
 
 ## What 175 implemented
 
