@@ -3,18 +3,35 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **208-accessibility-options — VERIFIED 100%**
-- Active implementation change: **208-accessibility-options — VERIFIED**
-- Next change: **209-gamepad-controls — NOT YET ACTIVE (artifacts pending)**
-- 208 task ledger: **18 total tasks, 18 completed**
-- 208 completion: **100%**
-- 208 mandatory accessibility-options requirements: **PASS**
-- 208 required-test gate: **PASS — unit 2743/2743, E2E 22/22**
-- 208 advancement allowed: **Yes**
-- Session-start head: `93e139bfcc7aa31250e49851d681e26aecbf787d`
-- Validated head: `97fcb13fd123dafcc128ede2396c9469afa1f0e8` (208 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), and accessibility (208) VERIFIED; 209 continues with gamepad controls.**
-- Next exact action: **Advance to 209-gamepad-controls. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Gamepad movement/look/actions/UI navigation — a pure gamepad input model mapping sticks/buttons to actions over 207's keybinding actions).**
+- Last completed change: **209-gamepad-controls — VERIFIED 100%**
+- Active implementation change: **209-gamepad-controls — VERIFIED**
+- Next change: **210-touch-controls — NOT YET ACTIVE (artifacts pending)**
+- 209 task ledger: **17 total tasks, 17 completed**
+- 209 completion: **100%**
+- 209 mandatory gamepad-controls requirements: **PASS**
+- 209 required-test gate: **PASS — unit 2753/2753, E2E 22/22**
+- 209 advancement allowed: **Yes**
+- Session-start head: `abce6f92a6be116f7e7c5ec03d28519de670eed5`
+- Validated head: `ecea1e4c0ee02f0e750e30c2e560c4315c9aaaa8` (209 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), and gamepad (209) VERIFIED; 210 continues with touch controls.**
+- Next exact action: **Advance to 210-touch-controls. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Mobile touch HUD, look/movement, inventory interaction and responsive layout — a pure touch input model (zones, gestures -> actions) over 207's actions).**
+
+## What 209 implemented
+
+Change 209 adds the pure **gamepad input model**.
+
+- `src/simulation/GamepadFramework.ts` (NEW) — `GAMEPAD_DEADZONE` 0.15; `applyDeadzone` maps
+  |value| ≤ threshold INCLUSIVE to 0 and passes everything else through; `movementVector`/
+  `lookVector` deadzone each stick axis. `GAMEPAD_BUTTON_MAP` (standard mapping): jump A=0,
+  sneak B=1, swapOffhand Y=3, drop RB=5, attack LT=6, use RT=7, inventory Back=8, chat Start=9.
+  `pressedActions` resolves pressed buttons to 207's actions in `KEYBINDING_ACTIONS` order
+  (missing indices unpressed; custom per-action map override). `uiNav` reports the raw dpad
+  (12-15) and face (confirm A=0, cancel B=1) states for the UI layer to edge-trigger. All
+  functions total, deterministic, and input-immutable; no Gamepad API access (the wiring feeds
+  raw arrays).
+- Tests: `tests/unit/GamepadFramework.test.ts` (NEW, 10 tests): deadzone inclusive boundary
+  (incl. negatives and custom thresholds), stick vectors, the button map, action resolution
+  (order/short arrays/custom map/none), all six navigation states.
 
 ## What 208 implemented
 
