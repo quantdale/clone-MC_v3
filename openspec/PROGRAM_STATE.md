@@ -3,18 +3,34 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **196-weather-state — VERIFIED 100%**
-- Active implementation change: **196-weather-state — VERIFIED**
-- Next change: **197-weather-rendering — NOT YET ACTIVE (artifacts pending)**
-- 196 task ledger: **19 total tasks, 19 completed**
-- 196 completion: **100%**
-- 196 mandatory weather-state requirements: **PASS**
-- 196 required-test gate: **PASS — unit 2592/2592, E2E 22/22**
-- 196 advancement allowed: **Yes**
-- Session-start head: `88baaad35a7cf89eabd70077c40f3cd736f9d309`
-- Validated head: `07cd1131fb07637cd0cdf39673a51c96642de578` (196 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE — the dimension arc (174-184), meta-progression trio (185-187), difficulty (188), gamerules (189), the command parser (190), the core commands (191), and the game-modes arc (192-195) are ALL VERIFIED; the weather arc continues: state (196) VERIFIED, rendering (197) next.**
-- Next exact action: **Advance to 197-weather-rendering. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Original rain/thunder visuals/audio without changing simulation truth — a rendering-layer weather presentation reading 196's WeatherState).**
+- Last completed change: **197-weather-rendering — VERIFIED 100%**
+- Active implementation change: **197-weather-rendering — VERIFIED**
+- Next change: **198-sleep-and-time-skip — NOT YET ACTIVE (artifacts pending)**
+- 197 task ledger: **14 total tasks, 14 completed**
+- 197 completion: **100%**
+- 197 mandatory weather-rendering requirements: **PASS**
+- 197 required-test gate: **PASS — unit 2597/2597, E2E 22/22**
+- 197 advancement allowed: **Yes**
+- Session-start head: `24d5de45814eb5941ba36379fa7d75a0ade2296d`
+- Validated head: `b990cecc274cc59031a28c3efb9b09903879c0a9` (197 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather arc (196-197) COMPLETE — simulation state and rendering presentation both VERIFIED; 198 continues the section with sleep and time skip.**
+- Next exact action: **Advance to 198-sleep-and-time-skip. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Bed interaction, spawn point, occupancy, night skipping rules — a pure sleep/bed framework over the fixed-tick time model).**
+
+## What 197 implemented
+
+Change 197 adds the pure **weather presentation** mapping (read-only over 196's simulation truth).
+
+- `src/rendering/WeatherPresentation.ts` (NEW) — `presentWeather(state)` derives an immutable
+  `WeatherPresentation` descriptor from 196's `WeatherState`, depending ONLY on `state.weather`
+  (timers never influence it, and the input is never mutated): clear →
+  `{ rainIntensity: 0, thunderIntensity: 0, skyDarkness: 0, rainSoundLevel: 0,
+  thunderSoundLevel: 0 }`; rain → `{ 1, 0, 0.25, 1, 0 }`; thunder → `{ 1, 1, 0.5, 1, 1 }` with the
+  exported constants `RAIN_SKY_DARKNESS` (0.25) and `THUNDER_SKY_DARKNESS` (0.5). Lightning flash
+  timing and smooth transitions stay with the rendering composition (RNG-owned), mirroring 196's
+  injected-rolls pattern.
+- Tests: `tests/unit/WeatherPresentation.test.ts` (NEW, 5 tests): the exact descriptor table,
+  timer independence, and the read-only contract (simulation truth never mutated). Zero registry
+  changes.
 
 ## What 196 implemented
 
