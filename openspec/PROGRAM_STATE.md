@@ -3,18 +3,34 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **220-recipe-loot-content-expansion — VERIFIED 100%**
-- Active implementation change: **220-recipe-loot-content-expansion — VERIFIED**
-- Next change: **221-current-release-delta — NOT YET ACTIVE (artifacts pending)**
-- 220 task ledger: **15 total tasks, 15 completed**
-- 220 completion: **100%**
-- 220 mandatory recipe-loot-content-expansion requirements: **PASS**
-- 220 required-test gate: **PASS — unit 2846/2846, E2E 22/22**
-- 220 advancement allowed: **Yes**
-- Session-start head: `3a6b6e7f0c53e11014491309d36372301b90ec27`
-- Validated head: `ac87e6a57bebf83bb7d23360f56ae1ca5311d97d` (220 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), and content expansion (215-220) VERIFIED; 221 continues with the current-release delta.**
-- Next exact action: **Advance to 221-current-release-delta. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Isolated current-Minecraft-release behavior/content delta without destabilizing baseline architecture — a pure release-delta overlay model over the expanded content).**
+- Last completed change: **221-current-release-delta — VERIFIED 100%**
+- Active implementation change: **221-current-release-delta — VERIFIED**
+- Next change: **222-shared-simulation-package-boundary — NOT YET ACTIVE (artifacts pending)**
+- 221 task ledger: **14 total tasks, 14 completed**
+- 221 completion: **100%**
+- 221 mandatory current-release-delta requirements: **PASS**
+- 221 required-test gate: **PASS — unit 2854/2854, E2E 22/22**
+- 221 advancement allowed: **Yes**
+- Session-start head: `bb95140f0874e256eb4daac67db01f35136c060f`
+- Validated head: `18ca4b696251f67cdd9c9962646cd81f9cc8b700` (221 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), and the release delta (221) VERIFIED; 222 continues with the shared-simulation package boundary.**
+- Next exact action: **Advance to 222-shared-simulation-package-boundary. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Extract deterministic simulation code so browser client and server can share it — a pure boundary/index model for the deterministic simulation modules).**
+
+## What 221 implemented
+
+Change 221 adds the isolated **current-release delta** overlay.
+
+- `src/data/ReleaseDelta.ts` (NEW) — `ReleaseDelta { release, content, behavior }`: `release`
+  non-empty; `content` maps the ten kinds from 215-220 (blocks/items/biomes/mobs/structures/
+  enchantments/effects/potions/recipes/loot) to non-empty-string lists (absent kinds read as
+  empty); `behavior` lists `BehaviorOverride { target, field, value }` with non-empty target/
+  field and boolean/finite-number/string values. `RELEASE_CONTENT_KINDS` exported constants.
+  `createReleaseDelta` validates with descriptive throws. Queries: `contentForKind` (never
+  undefined), `isEnabled`, `overridesFor` — all registration-ordered and total. The baseline
+  architecture is NEVER touched by construction; the runtime overlays the delta.
+- Tests: `tests/unit/ReleaseDelta.test.ts` (NEW, 8 tests): explicit/default creation, every
+  rejection class, per-kind content reads, enabled membership, per-target override ordering,
+  empty results.
 
 ## What 220 implemented
 
