@@ -3,18 +3,38 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **188-world-difficulty — VERIFIED 100%**
-- Active implementation change: **188-world-difficulty — VERIFIED**
-- Next change: **189-gamerule-framework — NOT YET ACTIVE (artifacts pending)**
-- 188 task ledger: **18 total tasks, 18 completed**
-- 188 completion: **100%**
-- 188 mandatory world-difficulty requirements: **PASS**
-- 188 required-test gate: **PASS — unit 2490/2490, E2E 22/22**
-- 188 advancement allowed: **Yes**
-- Session-start head: `003f69acdefaf4122b40a6e9e489fe07ee3b8108`
-- Validated head: `387a1cec0df51f1d4f1e352420d908bcbf1e79ab` (188 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension arc (174-184), the meta-progression trio (185-187), and the first difficulty system (188) are COMPLETE; 189-191 fill gamerules/commands.**
-- Next exact action: **Advance to 189-gamerule-framework. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Typed persisted gamerules queried by simulation — the rules layer: a typed gamerule registry with boolean/integer/string values, per-world versioned persistence, and typed get/set with validation).**
+- Last completed change: **189-gamerule-framework — VERIFIED 100%**
+- Active implementation change: **189-gamerule-framework — VERIFIED**
+- Next change: **190-command-parser — NOT YET ACTIVE (artifacts pending)**
+- 189 task ledger: **20 total tasks, 20 completed**
+- 189 completion: **100%**
+- 189 mandatory gamerule-framework requirements: **PASS**
+- 189 required-test gate: **PASS — unit 2499/2499, E2E 22/22**
+- 189 advancement allowed: **Yes**
+- Session-start head: `8db4d4b37904d819260ccd6b5411755137ad13d4`
+- Validated head: `549ae70653495b62344e67de89dcc2ddb39a42da` (189 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension arc (174-184), meta-progression trio (185-187), difficulty (188), and the gamerule rules layer (189) are COMPLETE; 190-191 fill the command layer.**
+- Next exact action: **Advance to 190-command-parser. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Headless-safe command syntax, permission context, typed arguments — the parser layer for 191's core commands).**
+
+## What 189 implemented
+
+Change 189 adds the **rules layer** for the difficulty/gamerule/command arc.
+
+- `src/simulation/GameRuleFramework.ts` (NEW) — the frozen registry defines 9 vanilla rules over
+  three kinds (boolean: `doDaylightCycle`/`doMobSpawning`/`keepInventory`/`mobGriefing`/
+  `doWeatherCycle`/`doFireTick`/`doImmediateRespawn`; integer: `randomTickSpeed` 3, `spawnRadius`
+  10). `createDefaultGameRules` is all-defaults; `setGameRule` validates the value against the
+  rule's kind at **runtime** (command-held values may be untyped) and identity-no-ops illegal values
+  and same-value sets (immutability pinned); `isValidGameRuleValue` lets callers check first.
+  `parseGameRuleValue` is 191's text entry point: booleans true/false case-insensitively with trim,
+  integers strict (negatives ok, `1.5`/`abc` rejected), strings verbatim, `null` for failures/
+  unknown keys. `serializeGameRules`/`deserializeGameRules` are the versioned, fully-validated
+  persistence pair: wrong version, wrong-kind values, missing known keys, and unknown keys all
+  throw — the unknown-key rejection is pinned explicitly with a payload that has ALL nine known
+  keys plus one extra.
+- Tests: `tests/unit/GameRuleFramework.test.ts` (NEW, 9 tests). Zero registry changes. 044/138/196/
+  198 wiring changes now have a typed rule store to query, and 190/191 have the parse/set entry
+  points.
 
 ## What 188 implemented
 
