@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "230-block-interaction-networking",
+  "currentChange": "231-inventory-network-transactions",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "230-block-interaction-networking",
-  "nextChange": "231-inventory-network-transactions",
-  "completedTasks": 12,
-  "totalTasks": 12,
+  "lastCompletedChange": "231-inventory-network-transactions",
+  "nextChange": "232-combat-networking",
+  "completedTasks": 15,
+  "totalTasks": 15,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -15,9 +15,9 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "1be2f68776bb2e8a21552e644c28b3e24880868d",
-  "lastCompletedTask": "230: block interaction networking complete; 230-block-interaction-networking VERIFIED. src/simulation/BlockInteractionNetworking.ts: pure headless server and client block interaction networking model. BlockCoord, PlayerPosition, Direction, BlockBreakAction, BlockBreakRequest, BlockPlaceRequest, BlockUseRequest, InteractionResult, BlockInteractionValidatorOptions, ClientRollbackDirective, offsetByFace, DIRECTION_OFFSETS. BlockInteractionValidator with reach distance check, break progression tracking (start, cancel, finish, instant, timing), place validation with face offset and canPlace predicate, use validation, and broadcast flagging. ClientBlockReconciler with prediction tracking, confirmation, and rollback resolution on rejection. 12 tasks complete; 21 unit tests (3028 total); gates: typecheck PASS, lint PASS, unit 3028/3028, build PASS, e2e 22/22.",
-  "nextExactAction": "Author openspec/changes/231-inventory-network-transactions/ (proposal, design, tasks, verification, spec) per SPEC_AUTHORING_PROTOCOL.md: revisioned container and inventory actions with rejection and resynchronization across the client/server network boundary; then implement, unit-test, and gate as usual.",
+  "sessionStartHead": "c426dd2664146c49b30c4a6b1169fc9de809a38b",
+  "lastCompletedTask": "231: inventory network transactions complete; 231-inventory-network-transactions VERIFIED 15/15 (100%). src/simulation/InventoryTransactionNetworking.ts: pure headless server-authoritative inventory/container transaction framework. ItemStack, SlotId, StateId, WindowSlots, SlotMutation, SlotClickRequest, HotbarSwapRequest, DropRequest, DragRequest, InventoryTransaction, TransactionResult, ClientRollbackDirective. InventoryTransactionValidator with stateId versioning (wrong_state_id rejection + authoritative snapshot), left/right slot click semantics, hotbar swap, drop, three-phase drag with duplicate-start rejection and deterministic ascending distribution (floor base + remainder to earliest eligible slots, unplaceable remainder stays on cursor). ClientInventoryReconciler with prediction tracking and rollback directives. 15 tasks complete; 38 unit tests (3066 total); gates: typecheck PASS, lint PASS, unit 3066/3066, build PASS, e2e 22/22.",
+  "nextExactAction": "Author openspec/changes/232-combat-networking/ (proposal, design, tasks, verification, spec) per SPEC_AUTHORING_PROTOCOL.md: authoritative attacks, projectiles, damage, and knockback across the client/server network boundary; then implement, unit-test, and gate as usual.",
   "blockers": [],
   "validationResults": [
     {
@@ -2252,6 +2252,15 @@
       "build": "PASS via vite production build (69 modules)",
       "e2e": "PASS 21/21",
       "note": "123 VERIFIED 6/6 task groups (100%). Brewing stand engine + recipe context + fuel/timing + persistence; MenuSlot.components additive."
+    },
+    {
+      "head": "c426dd2664146c49b30c4a6b1169fc9de809a38b",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 3066/3066 (prior 3028 + 38 new: InventoryTransactionNetworking)",
+      "build": "PASS via vite production build",
+      "e2e": "PASS 22/22",
+      "note": "231 VERIFIED 15/15 tasks (100%). src/simulation/InventoryTransactionNetworking.ts: InventoryTransactionValidator (stateId versioning, left/right click, hotbar swap, drop, three-phase drag with duplicate-start rejection and even remainder distribution) + ClientInventoryReconciler (prediction/rollback). REQ-6 divergences fixed: duplicate start rejects drag_not_started; left-drag spreads count%n remainder to earliest eligible slots."
     }
   ],
   "publishedHead": "3d19ae7c290e51b9b27bb8679a7134c98a847cba",

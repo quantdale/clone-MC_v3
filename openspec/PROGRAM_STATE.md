@@ -3,17 +3,44 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **230-block-interaction-networking — VERIFIED 100%**
-- Active implementation change: **230-block-interaction-networking — VERIFIED**
-- Next change: **231-inventory-network-transactions — NOT YET ACTIVE (artifacts pending)**
-- 230 task ledger: **12 total tasks, 12 completed**
-- 230 completion: **100%**
-- 230 mandatory block-interaction-networking requirements: **PASS**
-- 230 required-test gate: **PASS — unit 3028/3028, E2E 22/22**
-- 230 advancement allowed: **Yes**
-- Session-start head: `1be2f68776bb2e8a21552e644c28b3e24880868d`
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), and the block interaction networking (230) VERIFIED; 231 begins inventory network transactions.**
-- Next exact action: **Advance to 231-inventory-network-transactions. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: revisioned container and inventory actions with rejection and resynchronization across the client/server network boundary).**
+- Last completed change: **231-inventory-network-transactions — VERIFIED 100%**
+- Active implementation change: **231-inventory-network-transactions — VERIFIED**
+- Next change: **232-combat-networking — NOT YET ACTIVE (artifacts pending)**
+- 231 task ledger: **15 total tasks, 15 completed**
+- 231 completion: **100%**
+- 231 mandatory inventory-network-transactions requirements: **PASS**
+- 231 required-test gate: **PASS — unit 3066/3066, E2E 22/22**
+- 231 advancement allowed: **Yes**
+- Session-start head: `c426dd2664146c49b30c4a6b1169fc9de809a38b`
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), and the inventory network transactions (231) VERIFIED; 232 begins combat networking.**
+- Next exact action: **Advance to 232-combat-networking. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: authoritative attacks/projectiles/damage/knockback).**
+
+## What 231 implemented
+
+Change 231 adds the pure headless **inventory/container network transaction** framework across the network boundary.
+
+- `src/simulation/InventoryTransactionNetworking.ts` (NEW) — `ItemStack { id, count, maxCount }`;
+  `SlotId` and `StateId` (non-negative safe integers); `WindowSlots` (ordered array, null = empty);
+  `SlotMutation { slotId, stack }`; `SlotClickRequest { type: 'slot_click', windowId, stateId, slotId, button: 'left' | 'right' }`;
+  `HotbarSwapRequest`, `DropRequest { whole }`, `DragRequest { phase: 'start' | 'add' | 'end', button, slotId? }`;
+  `InventoryTransaction` union; `TransactionResult` (accepted with `stateId` + mutations, or rejected with
+  `reason` + `authoritativeSlots` + `authoritativeCursor`); `ClientRollbackDirective { authoritativeSlots, authoritativeCursor }`.
+  `InventoryTransactionValidator`: monotonic stateId versioning (mismatch → `wrong_state_id` rejection with
+  authoritative snapshot, no mutation), left-click semantics (no-op / pick up / place / merge / overflow-fill /
+  swap), right-click semantics (ceil-half pick / place 1 / swap), hotbar swap (slot ↔ hotbar[0..8]),
+  drop (whole or partial, last item empties slot), three-phase drag (duplicate `start` while active →
+  `drag_not_started` rejection that leaves drag and slot state untouched; `add`/`end` without `start` rejected;
+  end distributes by ascending slotId: left = `floor(count/n)` per slot with the first `count % n` eligible
+  slots receiving +1 and any unplaceable remainder staying on the cursor, right = 1 per compatible slot),
+  strict `InventoryTransaction: <detail>` input validation (non-negative safe integers, count in [1, maxCount],
+  slotId in range, hotbarSlot in [0, 8], unknown type/phase throws).
+  `ClientInventoryReconciler`: optimistic prediction recording, acceptance clears predictions and returns null,
+  rejection returns `ClientRollbackDirective` with authoritative slots/cursor.
+- Tests: `tests/unit/InventoryTransactionNetworking.test.ts` (NEW, 38 tests): stateId accept/reject/increment,
+  all left/right click permutations incl. full-slot and maxCount=1 swap-vs-merge, hotbar swap and drop variants,
+  drag lifecycle incl. duplicate-start rejection and remainder spread (10/3 → 4/3/3, 2/3 → 1/1/0,
+  incompatible-slot remainder on cursor), reconciler predict/accept/rollback/reset, input validation throws,
+  and determinism across repeated drag sequences. Total unit suite: 3066 tests.
 
 ## What 230 implemented
 
