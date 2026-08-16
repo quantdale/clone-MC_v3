@@ -3,18 +3,36 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **211-internal-resource-pack-format — VERIFIED 100%**
-- Active implementation change: **211-internal-resource-pack-format — VERIFIED**
-- Next change: **212-internal-data-pack-format — NOT YET ACTIVE (artifacts pending)**
-- 211 task ledger: **18 total tasks, 18 completed**
-- 211 completion: **100%**
-- 211 mandatory internal-resource-pack-format requirements: **PASS**
-- 211 required-test gate: **PASS — unit 2772/2772, E2E 22/22**
-- 211 advancement allowed: **Yes**
-- Session-start head: `ac2bf9a50f44256e037ab02723607ba52ab427fa`
-- Validated head: `9cd1a7a2baa3e22c523a21963d71c4066edce35e` (211 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), and the assets arc opener (211) VERIFIED; 212-213 continue the assets arc.**
-- Next exact action: **Advance to 212-internal-data-pack-format. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Namespaced recipes/loot/tags/worldgen/advancements loaded through registries — a pure data-pack manifest model over the existing registries).**
+- Last completed change: **212-internal-data-pack-format — VERIFIED 100%**
+- Active implementation change: **212-internal-data-pack-format — VERIFIED**
+- Next change: **213-resource-reload — NOT YET ACTIVE (artifacts pending)**
+- 212 task ledger: **17 total tasks, 17 completed**
+- 212 completion: **100%**
+- 212 mandatory internal-data-pack-format requirements: **PASS**
+- 212 required-test gate: **PASS — unit 2781/2781, E2E 22/22**
+- 212 advancement allowed: **Yes**
+- Session-start head: `b09339ed57eac7135adfc4cf1ef17d097bbbedb4`
+- Validated head: `a6c01c483512b269a87ba29e380da62a3bdb060e` (212 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), and the assets arc (211-212) VERIFIED; 213 closes the assets arc.**
+- Next exact action: **Advance to 213-resource-reload (closes the assets arc 211-213). Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Validate and atomically reload data/resources in development without corrupting runtime state — a pure reload transaction over 211's manifests and 212's resolution).**
+
+## What 212 implemented
+
+Change 212 adds the canonical **internal data-pack format** (assets arc 211-213).
+
+- `src/data/DataPackManifest.ts` (NEW) — `DataPackManifest { formatVersion: 1, name,
+  description, entries }` with `DataPackEntry { id: ResourceId, kind:
+  recipe|loot_table|tag|worldgen|advancement, path }`; an id may appear once per kind.
+  `createDataPackManifest`/`validateDataPackManifest`: validate-before-accept with descriptive
+  throws (version, fields, ids via 004, kinds, paths, duplicate id+kind, unknown keys).
+  Queries: `entryById`, `entriesOfKind`, `entriesByKind` (all five groups present),
+  `entryPath` = `data/<namespace>/<kind>/<path>`. `resolveEntries(manifest, hasEntry)` — the
+  registry check INJECTED as `(kind, id) => boolean` (the wiring adapts 103/005/186 and the
+  loot/worldgen registries) — returns the MISSING entries in registration order: the "loaded
+  through registries" contract, total and side-effect free.
+- Tests: `tests/unit/DataPackManifest.test.ts` (NEW, 9 tests): construction across all five
+  kinds, every rejection class, queries (incl. same-id-across-kinds allowed), resolution
+  (order, fully present, empty).
 
 ## What 211 implemented
 
