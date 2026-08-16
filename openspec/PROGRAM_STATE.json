@@ -2263,8 +2263,8 @@
       "note": "231 VERIFIED 15/15 tasks (100%). src/simulation/InventoryTransactionNetworking.ts: InventoryTransactionValidator (stateId versioning, left/right click, hotbar swap, drop, three-phase drag with duplicate-start rejection and even remainder distribution) + ClientInventoryReconciler (prediction/rollback). REQ-6 divergences fixed: duplicate start rejects drag_not_started; left-drag spreads count%n remainder to earliest eligible slots."
     }
   ],
-  "publishedHead": "3d19ae7c290e51b9b27bb8679a7134c98a847cba",
-  "publishedAt": "2026-08-15T04:27:31Z",
-  "lastValidatedHead": "0960771424c02173f662bd6ebec277fedce211fc",
-  "lastKnownHead": "0960771424c02173f662bd6ebec277fedce211fc"
+  "publishedHead": "803727dd144f8680c3d9664468d931c801a7b3da",
+  "publishedAt": "2026-08-16T11:31:18Z",
+  "lastValidatedHead": "803727dd144f8680c3d9664468d931c801a7b3da",
+  "lastKnownHead": "803727dd144f8680c3d9664468d931c801a7b3da"
 }
