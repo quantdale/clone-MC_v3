@@ -3,18 +3,36 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **202-inventory-screen-parity — VERIFIED 100%**
-- Active implementation change: **202-inventory-screen-parity — VERIFIED**
-- Next change: **203-container-screen-framework — NOT YET ACTIVE (artifacts pending)**
-- 202 task ledger: **19 total tasks, 19 completed**
-- 202 completion: **100%**
-- 202 mandatory inventory-screen-parity requirements: **PASS**
-- 202 required-test gate: **PASS — unit 2668/2668, E2E 22/22**
-- 202 advancement allowed: **Yes**
-- Session-start head: `05b401da29c0c71498020440564f109e10b87429`
-- Validated head: `f0e0993377aa798826870364f1fb74b8781829c5` (202 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), and the inventory-parity opener (202) VERIFIED; 203-205 continue the inventory-parity arc.**
-- Next exact action: **Advance to 203-container-screen-framework. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Reusable menu UI bound to transactional container state — a pure screen-framework binding 106's menu state and 202's interactions).**
+- Last completed change: **203-container-screen-framework — VERIFIED 100%**
+- Active implementation change: **203-container-screen-framework — VERIFIED**
+- Next change: **204-recipe-book — NOT YET ACTIVE (artifacts pending)**
+- 203 task ledger: **18 total tasks, 18 completed**
+- 203 completion: **100%**
+- 203 mandatory container-screen-framework requirements: **PASS**
+- 203 required-test gate: **PASS — unit 2679/2679, E2E 22/22**
+- 203 advancement allowed: **Yes**
+- Session-start head: `c54d1b0e4eecdc5743a6b28b7666fd40a804e6e0`
+- Validated head: `ef69243479b5172219ebeea516be73dfc0c2a995` (203 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), and inventory-parity (202-203) VERIFIED; 204-205 continue the inventory-parity arc.**
+- Next exact action: **Advance to 204-recipe-book. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Known recipes, filtering/search, recipe placement helper — recipe book state over 103's recipe registry, with search/filter and auto-placement into the crafting grid).**
+
+## What 203 implemented
+
+Change 203 adds the reusable **container screen framework** (inventory-parity arc).
+
+- `src/inventory/ContainerScreenFramework.ts` (NEW) — `ContainerScreenState { menu, drag,
+  selectedHotbar }`; `createContainerScreen(menu)` (drag inactive, hotbar 0);
+  `validateContainerScreen` validates the whole payload (menu via 106 with pass-through messages,
+  drag shape incl. unique in-bounds hovered, hotbar integer in [0, 8], unknown top-level keys).
+  The `ContainerScreenEvent` union (click left/right, dragStart/dragHover/dragEnd, doubleClick,
+  quickMove, hotbarSwap, selectHotbar) routes click/quickMove to 106's transactions, drag events
+  (with index validation BEFORE 202's dragEnd) to 202, doubleClick to gather, hotbarSwap to 202
+  (throwing for non-hotbar indices), and selectHotbar (range throw, same-value identity).
+  Menu-agnostic — any validated `ContainerMenu` (player inventory, chest, furnace).
+- Tests: `tests/unit/ContainerScreenFramework.test.ts` (NEW, 11 tests): creation, validation
+  accept + every rejection, clicks (left pickup/right split/out-of-bounds throw), the composed
+  pickup → drag → drop flow, quickMove, gather (41 across four slots), hotbarSwap + container-
+  index throw, selectHotbar set/identity/out-of-range, input immutability.
 
 ## What 202 implemented
 
