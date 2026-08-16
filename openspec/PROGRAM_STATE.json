@@ -2288,10 +2288,19 @@
       "build": "PASS via tsc --noEmit && vite build",
       "e2e": "PASS 22/22",
       "note": "235 VERIFIED 15/15 tasks (100%). src/simulation/ReconnectStateRecovery.ts: ReconnectStateManager (per-profile monotonic SessionEpoch, isReconnect detection, disconnect ending the active session, isSessionCurrent stale/replay/mid-transaction-disconnect rejection, bounded connect/disconnect history default 32, collectFullState with sorted de-duplicated chunk keys + same-order 226 ChunkSnapshots + ascending-id 229 EntitySpawnDescriptors + validated 231 inventory window, defensive copies) + compareSignatures (fixed check order, set-order-independent, epoch mismatch always forces resync) + ReconnectStateClient (record*/setInterest/setEntities/signature, applyFullState returning the 5-action ClientResyncDirective reset_movement/reset_inventory/clear_block_predictions/reset_chunks/reset_entities; current-epoch-gated, idempotent, summary replacement + resyncPending clearance) with strict Reconnect: <detail> validation; 225-231 components consumed only via existing reset()/reseed hooks (2 integration tests prove the reseed)."
+    },
+    {
+      "head": "d41ef1d9f84a5bdb8be11878d2a55c4e130e8f17",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 3265/3265 (prior 3191 + 74 new: PersistentWorldCodecs 35 + ServerSaveLifecycle 39)",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 22/22",
+      "note": "234 VERIFIED 15/15 tasks (100%). src/simulation/PersistentWorldCodecs.ts (shared codec seam: PersistentUnitKind/ServerWorldUnit/WorldSaveCodec/unitKey, strict PersistentWorldCodecs: <detail> validation, encode via shared validator, decode via injectable 041 migration chain, DOWNGRADE/UNKNOWN_VERSION/foreign-worldId rejection) + src/simulation/ServerSaveLifecycle.ts (WorldTickProcess.TickSystem state machine unloaded->loading->running->flushing->closed, all-or-nothing load, markDirty dedupe preserving FIFO, tick-paced bounded drain 64, autosaveEveryTicks 100, failure requeue without loss, storageGate, flush/saveAndClose zero-progress guard). SSL REQ-2 re-mark scenario amended to FIFO-consistent order."
     }
   ],
-  "publishedHead": "803727dd144f8680c3d9664468d931c801a7b3da",
-  "publishedAt": "2026-08-16T11:31:18Z",
-  "lastValidatedHead": "803727dd144f8680c3d9664468d931c801a7b3da",
-  "lastKnownHead": "803727dd144f8680c3d9664468d931c801a7b3da"
+  "publishedHead": "7c2e19aaf3906ee7d1ac1572c43da816618c6960",
+  "publishedAt": "2026-08-16T13:05:09.762Z",
+  "lastValidatedHead": "7c2e19aaf3906ee7d1ac1572c43da816618c6960",
+  "lastKnownHead": "7c2e19aaf3906ee7d1ac1572c43da816618c6960"
 }
