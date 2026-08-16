@@ -3,18 +3,36 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **203-container-screen-framework — VERIFIED 100%**
-- Active implementation change: **203-container-screen-framework — VERIFIED**
-- Next change: **204-recipe-book — NOT YET ACTIVE (artifacts pending)**
-- 203 task ledger: **18 total tasks, 18 completed**
-- 203 completion: **100%**
-- 203 mandatory container-screen-framework requirements: **PASS**
-- 203 required-test gate: **PASS — unit 2679/2679, E2E 22/22**
-- 203 advancement allowed: **Yes**
-- Session-start head: `c54d1b0e4eecdc5743a6b28b7666fd40a804e6e0`
-- Validated head: `ef69243479b5172219ebeea516be73dfc0c2a995` (203 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), and inventory-parity (202-203) VERIFIED; 204-205 continue the inventory-parity arc.**
-- Next exact action: **Advance to 204-recipe-book. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Known recipes, filtering/search, recipe placement helper — recipe book state over 103's recipe registry, with search/filter and auto-placement into the crafting grid).**
+- Last completed change: **204-recipe-book — VERIFIED 100%**
+- Active implementation change: **204-recipe-book — VERIFIED**
+- Next change: **205-hud-parity — NOT YET ACTIVE (artifacts pending)**
+- 204 task ledger: **18 total tasks, 18 completed**
+- 204 completion: **100%**
+- 204 mandatory recipe-book requirements: **PASS**
+- 204 required-test gate: **PASS — unit 2696/2696, E2E 22/22**
+- 204 advancement allowed: **Yes**
+- Session-start head: `5577e53e418711d7d9bd2be13a9d57346ec2147c`
+- Validated head: `e717f7b2f329d29f806af79b83ba2c581bf77a91` (204 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), and inventory-parity (202-204) VERIFIED; 205 closes the inventory-parity arc.**
+- Next exact action: **Advance to 205-hud-parity (closes the inventory-parity arc 202-205). Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Hearts, hunger, armor, air, XP, status effects, selected item and boss bars — a pure HUD state projection over the player systems).**
+
+## What 204 implemented
+
+Change 204 adds the player **recipe book** over 103's registry.
+
+- `src/inventory/RecipeBook.ts` (NEW) — `RecipeBookState { known }` (unique keys in unlock
+  order); `unlockRecipe`/`unlockRecipes` with identity no-ops (empty/already-known/nothing-new);
+  `hasRecipe`. `searchRecipes(registry, state, query)` returns KNOWN recipes in REGISTRY order:
+  blank = all known; otherwise a case-insensitive substring match against the recipe key, name,
+  or output item id; unknown known keys skipped. `layoutRecipe` fills the 9-cell 3x3 grid
+  row-major from the top-left (compacted): item cells `{ kind: 'item', item: path }`, tag cells
+  `{ kind: 'tag', tag: id }`; > 9 ingredients throws; `compactGrid` is the exact inverse.
+  `serializeRecipeBook`/`deserializeRecipeBook` (v1) validate-before-accept with named
+  rejections (non-object, bad version, non-array, empty/duplicate entries, unknown keys).
+- Tests: `tests/unit/RecipeBook.test.ts` (NEW, 17 tests) against the real default recipe
+  registry: unlock identity semantics, search (blank/case-insensitive key-name-output/unknown-
+  skip/no-match), layouts (1/4/9/tag/>9 throw), compact, every persistence rejection. 103
+  untouched.
 
 ## What 203 implemented
 
