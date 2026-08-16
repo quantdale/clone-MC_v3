@@ -3,18 +3,38 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **190-command-parser — VERIFIED 100%**
-- Active implementation change: **190-command-parser — VERIFIED**
-- Next change: **191-core-commands — NOT YET ACTIVE (artifacts pending)**
-- 190 task ledger: **22 total tasks, 22 completed**
-- 190 completion: **100%**
-- 190 mandatory command-parser requirements: **PASS**
-- 190 required-test gate: **PASS — unit 2512/2512, E2E 22/22**
-- 190 advancement allowed: **Yes**
-- Session-start head: `f7fe752baa3106057342487c262a5ab1adbfe6b5`
-- Validated head: `5e079102f92a4c083e2c991237bafc9d5cfef74a` (190 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension arc (174-184), meta-progression trio (185-187), difficulty (188), gamerules (189), and the command parser (190) are COMPLETE; 191 implements the first commands.**
-- Next exact action: **Advance to 191-core-commands. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Time/weather/gamemode/give/teleport-like original commands for testing/admin — the first command implementations over 190's parser).**
+- Last completed change: **191-core-commands — VERIFIED 100%**
+- Active implementation change: **191-core-commands — VERIFIED**
+- Next change: **192-creative-mode — NOT YET ACTIVE (artifacts pending)**
+- 191 task ledger: **23 total tasks, 23 completed**
+- 191 completion: **100%**
+- 191 mandatory core-commands requirements: **PASS**
+- 191 required-test gate: **PASS — unit 2525/2525, E2E 22/22**
+- 191 advancement allowed: **Yes**
+- Session-start head: `07e161c3f58211eae6556645ebcaa6567ba7770f`
+- Validated head: `7e33589e1346160dd8897e8bdb23e1aa28bba827` (191 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension arc (174-184), meta-progression trio (185-187), difficulty (188), gamerules (189), the command parser (190), and the core commands (191) are COMPLETE; 192 begins the game-modes arc (192-195).**
+- Next exact action: **Advance to 192-creative-mode. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Flight, instant break, creative inventory, no survival depletion — the game-modes arc opener and the target of 191's `set_gamemode` effect).**
+
+## What 191 implemented
+
+Change 191 adds the first command implementations over 190's parser.
+
+- `src/simulation/CoreCommands.ts` (NEW) — five `CommandSpec`s at operator level 2: `time set
+  <int>` / `time add <int>`, `weather clear|rain|thunder`, `gamemode
+  survival|creative|adventure|spectator`, `give <target> <item> [count]` (defaults to 1, must be
+  positive), `tp <target> <x> <y> <z>` (floats, integers valid). `executeCoreCommand(input,
+  permissionLevel)` runs split → spec lookup → permission check (**before** parse, so a denied
+  command never reaches handlers) → typed parse → semantic validation → pure effect. Effects are
+  `CommandEffect` descriptors (`set_time`/`add_time`/`set_weather`/`set_gamemode`/`give_item`/
+  `teleport`) that a later wiring applies — nothing mutates world state, fully headless-safe.
+  Results are structured `{ status: 'ok', effect }` | `{ status: 'error', error }` |
+  `{ status: 'denied', command }`; no throws anywhere. Semantic validation pins time actions to
+  set/add, weather/gamemode to their value sets, and give counts to positive integers.
+- Tests: `tests/unit/CoreCommands.test.ts` (NEW, 13 tests): registry shape (five commands, level 2),
+  every command's effect, each error's exact text (unknown action/weather/gamemode/command, parse
+  mismatch, non-positive count, empty input), and the denied-before-parse permission order. Zero
+  registry changes.
 
 ## What 190 implemented
 
