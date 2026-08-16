@@ -2,23 +2,25 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "239-long-session-memory-stress",
-  "currentChangeStatus": "VERIFIED",
+  "currentChange": "240-save-recovery-stress",
+  "currentChangeStatus": "VERIFYING",
   "lastCompletedChange": "239-long-session-memory-stress",
-  "nextChange": "240-save-recovery-stress",
-  "completedTasks": 16,
-  "totalTasks": 16,
+  "nextChange": "241-deterministic-replay-suite",
+  "completedTasks": 12,
+  "totalTasks": 12,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": true,
-  "requiredTestsPass": true,
-  "advancementAllowed": true,
+  "requiredTestsPass": false,
+  "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "39780587a5f449cdbcdd21e46f6cde60e3973b51",
-  "lastCompletedTask": "239: long-session memory stress complete; 239-long-session-memory-stress VERIFIED 16/16 (100%). src/rendering/MemoryResourceBudget.ts (NEW): MemoryResourceDimension, LiveResourceSnapshot, MemoryResourceConfig, MemoryResourceEntry, MemoryResourceReport, DEFAULT_MEMORY_RESOURCE_BUDGET (derived from runtime caps: maxLoadedChunks (2r+1)^2 with r=max(R,preloadRadius) -> desktop 169 / headless 49; maxPendingJobs 512+maxLoadedChunks; maxMeshGeometries 2*maxLoadedChunks+40; maxEditOverlayChunks 10_000; maxBlockEntities 4096; maxActiveEntities 12+256=268; maxItemEntities 1024; EDIT_OVERLAY_MAX_CHUNKS 10_000; PRELOAD_RADIUS 3; MAX_QUEUE_SIZE 512), deriveMemoryResourceBudget, computeRingCardinality, validateMemoryResourceConfig (rejects non-positive-integers + extra keys), evaluateResourceBudget (total, fixed 7-dimension order). src/world/World.ts: getEditOverlayChunkCount(). src/engine/Game.ts: getLiveResourceCounts() + test-only failSimulation() (explicit-flag-gated throw into the normal error path). playwright.config.ts: --js-flags=--expose-gc launch arg. 16 new unit tests (MemoryResourceBudget config/eval/derivation/determinism + headless BlockEntityManager away-and-back lifecycle). 9 new e2e scenarios (measurement, exploration, build/chunk-churn, idle, teleport, world-reload, block-entity baseline, GPU-context restore, failure). Full gate green (typecheck, lint, 3534+1 unit, build, 31 e2e). Observed teleport loadedChunks series 31,29,25,25,25,25 (settles to radius-3 preload ring 49); churn geometry plateau 27,26,32,29,24,31. Block entities not wired into single-player world (recorded gap; lifecycle validated headlessly); residency ceiling uses r=max(R,preloadRadius).",
-  "nextExactAction": "Advance to 239-long-session-memory-stress. Its artifacts are present; validate the package against actual code per SPEC_AUTHORING_PROTOCOL.md, then implement, unit-test, and gate as usual.",
-  "blockers": [],
+  "lastCompletedTask": "240: save-recovery-stress implemented 12/12 (100%) and verified in scope. src/storage/SaveRecoveryMatrix.ts (NEW): RecoveryAxis/RecoveryResult/RecoveryMatrixReport/SaveRecoveryFixture/SaveRecoveryMatrixDeps, createFaultySaveSink (failNextWrites/failAllWrites/corruptNextWrites/failKeys), withStorageFailure (quota/private-mode/unavailable), createGatedSaveSink (043 gate at 039 drain). 25 scenarios across 5 axes (abrupt-close/partial-write/migration/quota/import-export). 234 ServerSaveLifecycle reconciled (abrupt-close.server-save-lifecycle + saveAndClose/reload test). Static/unit/build gates green (typecheck, lint, 3574+1 unit, build); 40 new unit tests. Baseline e2e 30/31: the single failure is the pre-existing 239 memory-stress 'long exploration session' test (geometry drift 19>4, environment-specific; passes in CI/at 239's gate; 240 is storage/simulation-only additive files tree-shaken from the bundle, so not a 240 regression). Advancement held pending orchestrator resolution of that unrelated e2e flake.",
+  "nextExactAction": "Resolve the pre-existing baseline e2e flake before advancing 240: the 239 memory-stress 'long exploration session' test fails on this machine (geometry drift 19 > ceiling 4; passes in CI / at 239's own gate; 240 does not touch the production bundle). Once e2e is confirmed green (rerun in CI/lighter env) or the orchestrator waives the unrelated 239 flake as non-blocking, advance 240-save-recovery-stress to VERIFIED, push, and proceed to 241-deterministic-replay-suite.",
+  "blockers": [
+    "baseline e2e 30/31: 239 memory-stress 'long exploration session keeps heap and GPU-resource growth within ceilings' fails deterministically on this machine (meshGeometries drift 19 > ceiling 4). Pre-existing & environment-specific: 239's own gate logged e2e PASS 31/31 and it passes in CI; 240 is storage/simulation-only additive new files, tree-shaken from the production bundle (HEAD bundle unchanged), and the failure reproduces identically in isolation. Not a 240 regression and affects no 240 MUST/SHALL. Resolve by rerunning e2e in CI/lighter env or treat as non-blocking (orchestrator decision)."
+  ],
   "validationResults": [
     {
       "change": "230-block-interaction-networking",
@@ -2333,6 +2335,15 @@
       "build": "PASS via tsc --noEmit && vite build",
       "e2e": "PASS 31/31",
       "note": "239 VERIFIED 16/16 tasks (100%). src/rendering/MemoryResourceBudget.ts (NEW): MemoryResourceDimension, LiveResourceSnapshot, MemoryResourceConfig, MemoryResourceEntry, MemoryResourceReport, DEFAULT_MEMORY_RESOURCE_BUDGET (derived from runtime caps: maxLoadedChunks (2r+1)^2 with r=max(R,preloadRadius) -> desktop 169 / headless 49; maxPendingJobs 512+maxLoadedChunks; maxMeshGeometries 2*maxLoadedChunks+40; maxEditOverlayChunks 10_000; maxBlockEntities 4096; maxActiveEntities 12+256=268; maxItemEntities 1024), deriveMemoryResourceBudget, computeRingCardinality, validateMemoryResourceConfig, evaluateResourceBudget (total, fixed 7-dimension order). World.getEditOverlayChunkCount(); Game.getLiveResourceCounts() + test-only failSimulation(). playwright --js-flags=--expose-gc. 16 unit + 9 e2e scenarios. Full gate green (typecheck, lint, 3534+1 unit, build, 31 e2e: 22 game.spec + 9 memory-stress). Observed teleport loadedChunks series 31,29,25,25,25,25 (settles to radius-3 preload ring 49); churn geometry plateau 27,26,32,29,24,31. Block entities not wired into single-player world (recorded gap; lifecycle validated headlessly); residency ceiling uses r=max(R,preloadRadius)."
+    },
+    {
+      "head": "9fe5c1567dcbe8fa1682b4b5d4e418290a1a9fe7",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 3574/3574 + 1 skipped (prior 3534 + 40 new: save-recovery-matrix 4, abrupt-close 9, partial-write 6, migration 7, quota 7, import-export 7)",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "30/31 (only failure is the pre-existing 239 memory-stress 'long exploration session' test, geometry drift 19>4; passes in CI / at 239's gate; 240 is storage-only additive files tree-shaken from the bundle, not a 240 regression)",
+      "note": "240 save-recovery-stress implemented 12/12 (100%) and verified in scope. src/storage/SaveRecoveryMatrix.ts (NEW): 25 scenarios across 5 axes + failure-injection seams (createFaultySaveSink, withStorageFailure, createGatedSaveSink); 234 ServerSaveLifecycle reconciled. Static/unit/build gates green (typecheck, lint, 3574+1 unit, build); 40 new unit tests. Baseline e2e 30/31 held on unrelated pre-existing 239 memory-stress flake (see blockers); advancement pending orchestrator resolution."
     }
   ],
   "publishedHead": "86b80ff7d12668f698c03cb6684eb496d11ddb34",
