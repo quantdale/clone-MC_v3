@@ -3,18 +3,35 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **214-localization-framework — VERIFIED 100%**
-- Active implementation change: **214-localization-framework — VERIFIED**
-- Next change: **215-block-item-content-expansion — NOT YET ACTIVE (artifacts pending)**
-- 214 task ledger: **18 total tasks, 18 completed**
-- 214 completion: **100%**
-- 214 mandatory localization-framework requirements: **PASS**
-- 214 required-test gate: **PASS — unit 2797/2797, E2E 22/22**
-- 214 advancement allowed: **Yes**
-- Session-start head: `96505ad550049465ba20d2d49e4bb5ef0f7aac4a`
-- Validated head: `a5494cf392906cfd2218869ac3eaa4e794382c04` (214 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), and localization (214) VERIFIED; 215 continues with block/item content expansion.**
-- Next exact action: **Advance to 215-block-item-content-expansion. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Expand block/item catalog through data-driven definitions, not new architecture — data-driven block/item definitions over the existing registries).**
+- Last completed change: **215-block-item-content-expansion — VERIFIED 100%**
+- Active implementation change: **215-block-item-content-expansion — VERIFIED**
+- Next change: **216-biome-content-expansion — NOT YET ACTIVE (artifacts pending)**
+- 215 task ledger: **14 total tasks, 14 completed**
+- 215 completion: **100%**
+- 215 mandatory block-item-content-expansion requirements: **PASS**
+- 215 required-test gate: **PASS — unit 2805/2805, E2E 22/22**
+- 215 advancement allowed: **Yes**
+- Session-start head: `36df5bee6019e173616fd08882371ca36c010865`
+- Validated head: `4086cd1eaf6ab49486143b26faf6303a11682320` (215 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), and content expansion (215) VERIFIED; 216 continues with biome content expansion.**
+- Next exact action: **Advance to 216-biome-content-expansion. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Expand biome catalog and feature combinations through the biome/worldgen registries — data-driven biome definitions following 215's pattern).**
+
+## What 215 implemented
+
+Change 215 adds the data-driven **block/item content expansion** (no new architecture, no
+registry mutation).
+
+- `src/data/ContentExpansion.ts` (NEW) — `ContentDefinition { id, kind: block|item, name,
+  stackSize, hardness, tags }`: ids are valid namespaced ids whose path does NOT start with
+  `block/`/`item/` (the kind carries the prefix); `name` is a non-empty translation key (214);
+  `stackSize` integer [1, 64] default 64; `hardness` finite ≥ 0 default 0; `tags` non-empty
+  strings default []. `createContentDefinition` validates with descriptive throws.
+  `createContentExpansion` groups into `{ blocks, items }` (registration order) and rejects
+  duplicate ids; `contentById` (string or ResourceId); `contentsOfKind`. The wiring maps
+  definitions onto 004/006 — registries stay untouched with characterization pinned.
+- Tests: `tests/unit/ContentExpansion.test.ts` (NEW, 8 tests): explicit-field + default
+  definitions, every rejection class (incl. prefixed paths), grouping order, lookups,
+  duplicates, empty expansions.
 
 ## What 214 implemented
 
