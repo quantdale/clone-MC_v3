@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "237-network-adversarial-validation",
+  "currentChange": "238-worker-and-main-thread-stress",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "237-network-adversarial-validation",
-  "nextChange": "238-worker-and-main-thread-stress",
-  "completedTasks": 15,
-  "totalTasks": 15,
+  "lastCompletedChange": "238-worker-and-main-thread-stress",
+  "nextChange": "239-long-session-memory-stress",
+  "completedTasks": 16,
+  "totalTasks": 16,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -16,8 +16,8 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "39780587a5f449cdbcdd21e46f6cde60e3973b51",
-  "lastCompletedTask": "237: network adversarial validation complete; 237-network-adversarial-validation VERIFIED 15/15 (100%). src/simulation/NetworkAdversarialGuard.ts (NEW): MessageSequenceGuard (per-connection monotonic sequence replay/ordering detection -> 'duplicate'/'out_of_order', reset() fresh epoch aligned with 225), MessageRateLimiter (per-kind tick-window rate policy, sliding windows, per-kind overrides + defaultLimit, reject-without-count), bounded-domain helpers (boundedString/boundedArray/boundedCollection), and AdversarialMessageGuard.inspectIncoming(protocol, envelope, tick, sequence?) composing 223 decodeMessage + sequence + domain + rate into InspectResult ('unknown_message_id'/'malformed_fields'/'oversized_field'/'duplicate_message'/'out_of_order'/'rate_limited'/dispatch) as the transport-agnostic dispatch gate; strict NetworkAdversarial: <detail> validation; no DOM/IO. Handler hardening (additive, no reason changes): EntityReplication maxTrackedDataItems (229) and ChunkStreaming maxSectionsPerSnapshot/maxSectionDataLength (226). 52 new unit tests (guard + adversarial integrity describes across 227/231/232/230/229/226/225); full gate green (typecheck, lint, 3440+1 unit, build, 22 e2e).",
-  "nextExactAction": "Advance to 238-worker-and-main-thread-stress. Its artifacts are present; validate the package against actual code per SPEC_AUTHORING_PROTOCOL.md, then implement, unit-test, and gate as usual.",
+  "lastCompletedTask": "238: worker/main-thread stress complete; 238-worker-and-main-thread-stress VERIFIED 16/16 (100%). src/rendering/WorkerSaturationHarness.ts (NEW): WorkerSaturationConfig, DEFAULT_WORKER_SATURATION_BUDGET tuned {50,100,12000} ms (mean/p95/total; raised from {4,8,500} to sit above the measured dense-slab baseline), validateWorkerSaturationConfig/evaluateWorkerSaturation, runMeshSaturation/runWorldgenSaturation, and sync WorkerDispatch + createMeshDispatch/createWorldgenDispatch wrapping the real 064/086 clients (exactly-once, backpressure cap, stale/duplicate/identity-mismatch rejection). src/rendering/LightSaturation.ts (NEW): LightSaturationConfig, validate/evaluate, runLightSaturation + runLightEditSaturation over a generic LightEdit, DenseLightWorld, 069 equivalence under saturation. src/storage/SaveQueueSaturation.ts (NEW): config, validate/evaluate, runSaveSaturation (async, BATCH_LIMIT 64, MAX_DRAIN_PASSES 100000, no-loss/FIFO/bounded). src/simulation/PathfindSaturation.ts (NEW): config, validate/evaluate, runPathfindSaturation over NavigationWorld. src/simulation/TickBudgetMonitor.ts (NEW): DEFAULT_TICK_BUDGET {maxTickMillis 8.33}, validate/evaluate, TickBudgetMonitor overrun detection + 075 RenderPerformanceMonitor frame-budget enforcement under saturation. 78 new unit tests across five suites (worker 19, light 15, save 16, pathfind 14, tick 14); full gate green (typecheck, lint, 3518+1 unit, build, 22 e2e). Baseline: mesh 22.54 ms/job, worldgen 0.264 ms/job, light 0.245 ms/pass / 0.683 ms/edit, save 65.7 units/s, pathfind 0.008 ms/search.",
+  "nextExactAction": "Advance to 239-long-session-memory-stress. Its artifacts are present; validate the package against actual code per SPEC_AUTHORING_PROTOCOL.md, then implement, unit-test, and gate as usual.",
   "blockers": [],
   "validationResults": [
     {
@@ -2315,6 +2315,15 @@
       "build": "PASS via tsc --noEmit && vite build",
       "e2e": "PASS 22/22",
       "note": "237 VERIFIED 15/15 tasks (100%). src/simulation/NetworkAdversarialGuard.ts (NEW): MessageSequenceGuard (track/reset/lastAccepted, accept/duplicate/out_of_order, non-safe-int throws NetworkAdversarial: <detail>) + MessageRateLimiter (submit(kind,tick), sliding window, per-kind override + defaultLimit {40,20}, rejections not counted) + boundedString/boundedArray/boundedCollection + AdversarialMessageGuard.inspectIncoming(protocol,envelope,tick,sequence?) composing 223 decodeMessage + sequence + domain + rate into an InspectResult (unknown_message_id/malformed_fields/oversized_field/duplicate_message/out_of_order/rate_limited/dispatch) + reset(). Additive hardening (no rejection-reason changes): EntityReplication maxTrackedDataItems default 65536, ChunkStreaming maxSectionsPerSnapshot default 512 + maxSectionDataLength default 16384. No central dispatcher so inspectIncoming is the dispatch gate; 223 wire values are scalar so array bounds enforced at type level by the per-module caps (Wiring reconciliation recorded in design.md; spec REQ-M2 rewritten to scalar/array-bound semantics). 52 new unit tests; full gate green (typecheck, lint, 3440+1 unit, build, 22 e2e)."
+    },
+    {
+      "head": "7e0802109d85e3e9aecb24febd59bd9e44546540",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 3518/3518 + 1 skipped (prior 3440 + 78 new: WorkerSaturationHarness 19, LightSaturation 15, SaveQueueSaturation 16, PathfindSaturation 14, TickBudgetMonitor 14)",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 22/22",
+      "note": "238 VERIFIED 16/16 tasks (100%). src/rendering/WorkerSaturationHarness.ts (NEW): WorkerSaturationConfig, DEFAULT_WORKER_SATURATION_BUDGET tuned {50,100,12000} ms (raised from {4,8,500} to sit above the measured dense-slab baseline; documented in verification.md), validateWorkerSaturationConfig/evaluateWorkerSaturation (075 convention), runMeshSaturation/runWorldgenSaturation, and sync WorkerDispatch + createMeshDispatch/createWorldgenDispatch wrapping the real 064/086 clients (exactly-once, backpressure cap, stale/duplicate/identity-mismatch rejection). src/rendering/LightSaturation.ts (NEW): LightSaturationConfig, validate/evaluate, runLightSaturation + runLightEditSaturation over a generic LightEdit, DenseLightWorld, 069 equivalence under saturation (incl. 1000-edit). src/storage/SaveQueueSaturation.ts (NEW): config, validate/evaluate, runSaveSaturation (async, BATCH_LIMIT 64, MAX_DRAIN_PASSES 100000, no-loss/FIFO/bounded). src/simulation/PathfindSaturation.ts (NEW): config, validate/evaluate, runPathfindSaturation over NavigationWorld. src/simulation/TickBudgetMonitor.ts (NEW): DEFAULT_TICK_BUDGET {maxTickMillis 8.33}, validate/evaluate, TickBudgetMonitor overrun detection + 075 RenderPerformanceMonitor frame-budget enforcement under saturation. 78 new unit tests; full gate green (typecheck, lint, 3518+1 unit, build, 22 e2e). Baselines: mesh 22.54 ms/job, worldgen 0.264 ms/job, light 0.245 ms/pass / 0.683 ms/edit, save 65.7 units/s, pathfind 0.008 ms/search."
     }
   ],
   "publishedHead": "e7e62fbe167d3365fed33ecdfa4c42a31449f5bf",
