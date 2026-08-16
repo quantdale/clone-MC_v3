@@ -3,19 +3,48 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **224-dedicated-server-tick-loop — VERIFIED 100%**
-- Active implementation change: **224-dedicated-server-tick-loop — VERIFIED**
-- Next change: **225-connection-lifecycle — NOT YET ACTIVE (artifacts pending)**
-- 224 task ledger: **13 total tasks, 13 completed**
-- 224 completion: **100%**
-- 224 mandatory dedicated-server-tick-loop requirements: **PASS**
-- 224 required-test gate: **PASS — unit 2893/2893, E2E 22/22** (full-suite run taken at
+- Last completed change: **225-connection-lifecycle — VERIFIED 100%**
+- Active implementation change: **225-connection-lifecycle — VERIFIED**
+- Next change: **226-server-chunk-streaming — NOT YET ACTIVE (artifacts pending)**
+- 225 task ledger: **14 total tasks, 14 completed**
+- 225 completion: **100%**
+- 225 mandatory connection-lifecycle requirements: **PASS**
+- 225 required-test gate: **PASS — unit 2922/2922, E2E 22/22** (full-suite run taken at
   `--testTimeout=15000` to avoid the documented parallel-load grid-sweep flake)
-- 224 advancement allowed: **Yes**
-- Session-start head: `6981df5b7cfc41125e3a7231d92fff0b3deaa097`
-- Validated head: `17dd00f5b6345242e6051d31e0e8228bca1d4ce3` (224 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), and the dedicated-server tick loop (224) VERIFIED; 225 begins the connection lifecycle.**
-- Next exact action: **Advance to 225-connection-lifecycle. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: connect/handshake/login-like local profile/disconnect/keepalive state machine — a pure headless connection state machine with explicit states, transitions, timeouts, and validation, building on 223's codecs and 224's tick process conventions).**
+- 225 advancement allowed: **Yes**
+- Session-start head: `119eebba9f279e1f47e92212f760303cf5309dd4`
+- Validated head: `3d6678261cdffe05fbd6d52cc4e09f85e2d2cf8d` (225 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), and the connection lifecycle (225) VERIFIED; 226 begins server chunk streaming.**
+- Next exact action: **Advance to 226-server-chunk-streaming. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: interest-managed chunk/section snapshots and updates — a pure headless model of per-connection chunk interest, snapshot serialization, and change deltas, gated on 225's connected state).**
+
+## What 225 implemented
+
+Change 225 adds the **connection lifecycle** state machine — the model every later
+networking change gates on.
+
+- `src/simulation/ConnectionLifecycle.ts` (NEW) — pure headless state machine with five
+  states (`disconnected`, `connecting`, `handshaking`, `connected`, `disconnecting`).
+  `connect(profile?)` arms the connect timeout and stores the optional non-empty profile;
+  `connected()` moves to `handshaking` (handshake timeout armed);
+  `handshakeAccepted(profile?)` moves to `connected` (keepalive armed, profile updated when
+  provided); `handshakeRejected(reason)` returns to `disconnected`.
+  `keepAliveReceived()` refreshes the keepalive deadline and increments `keepAliveCount`
+  (valid only while `connected`). `disconnect()` → `disconnecting` with reason
+  `local disconnect`; `disconnectComplete()` → `disconnected` with reason `disconnected`;
+  `remoteDisconnect(reason)` → `disconnected` from any active state. `update(nowMs)`
+  expires phases at the inclusive `nowMs - deadline >= timeoutMs` boundary with exact
+  reasons (`connect timeout`, `handshake timeout`, `keepalive timeout`); non-finite or
+  backward timestamps are inert. Every wrong-state event throws
+  `ConnectionLifecycle: cannot <event> from <state>` and changes nothing; empty
+  profile/reason strings rejected. Bounded transition log (default 32, drop-oldest,
+  snapshot getter). Options validated (positive finite durations, positive integer
+  `historyLimit`; defaults 10000/10000/30000/32).
+- Tests: `tests/unit/ConnectionLifecycle.test.ts` (NEW, 29 tests): construction + option
+  rejections, happy-path chain with history `at`/from/to, wrong-state validation for every
+  event, empty-string rejections, failed-event immutability, graceful/remote disconnect
+  from every active state, reconnect cycle, keepalive deadline refresh, timeout expiry at
+  boundaries, inert non-finite/backward time, no expiry while disconnecting/disconnected,
+  reset, bounded/snapshot history, and schedule determinism.
 
 ## What 224 implemented
 
