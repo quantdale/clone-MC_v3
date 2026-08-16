@@ -3,19 +3,43 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **227-server-player-movement — VERIFIED 100%**
-- Active implementation change: **227-server-player-movement — VERIFIED**
-- Next change: **228-client-prediction-reconciliation — NOT YET ACTIVE (artifacts pending)**
-- 227 task ledger: **12 total tasks, 12 completed**
-- 227 completion: **100%**
-- 227 mandatory server-player-movement requirements: **PASS**
-- 227 required-test gate: **PASS — unit 2966/2966, E2E 22/22** (full-suite run taken at
+- Last completed change: **228-client-prediction-reconciliation — VERIFIED 100%**
+- Active implementation change: **228-client-prediction-reconciliation — VERIFIED**
+- Next change: **229-entity-replication — NOT YET ACTIVE (artifacts pending)**
+- 228 task ledger: **11 total tasks, 11 completed**
+- 228 completion: **100%**
+- 228 mandatory client-prediction-reconciliation requirements: **PASS**
+- 228 required-test gate: **PASS — unit 2985/2985, E2E 22/22** (full-suite run taken at
   `--testTimeout=15000` to avoid the documented parallel-load grid-sweep flake)
-- 227 advancement allowed: **Yes**
-- Session-start head: `84dc2f761ab92139f62a2ccd1fd51273b8c7c5c9`
-- Validated head: `90dcf9566a1a5eecc47fa1f620205d62acbd05cf` (227 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), and the server player movement (227) VERIFIED; 228 begins client prediction and reconciliation.**
-- Next exact action: **Advance to 228-client-prediction-reconciliation. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: local prediction with authoritative correction/interpolation — a pure headless model applying client-side prediction on accepted intents and reconciling against 227's authoritative corrections, building on 224 tick numbers and 226 interest centers).**
+- 228 advancement allowed: **Yes**
+- Session-start head: `2c39103eec70ec8dc9ccb004dbea7f9edba5ca62`
+- Validated head: `2c39103eec70ec8dc9ccb004dbea7f9edba5ca62`
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), and the client prediction and reconciliation (228) VERIFIED; 229 begins entity replication.**
+- Next exact action: **Advance to 229-entity-replication. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: spawn/despawn/tracked-data/transform replication across the shared simulation / network protocol boundary).**
+
+## What 228 implemented
+
+Change 228 adds the pure headless **client-side movement prediction and reconciliation** model.
+
+- `src/simulation/MovementReconciler.ts` (NEW) — `Position { x, y, z }`;
+  `PendingIntent { tick, position }`;
+  `MovementReconcilerOptions { maxPending? (default 1024) }`;
+  `MovementReconciler`. `predict(position, tick)` validates finite coordinates and a non-negative
+  safe-integer `tick` strictly greater than `confirmedTick` (`tick > confirmedTick`), checks the
+  buffer capacity (`pending.length < maxPending` else throws `MovementReconciler: pending buffer full`
+  before mutating), advances `predicted`, and appends `{ tick, position }` to `pending`.
+  `reconcile(authoritativePosition, authoritativeTick)` validates finite coordinates and a
+  non-negative safe-integer tick; stale corrections (`authoritativeTick <= confirmedTick`) are
+  silent no-ops; newer corrections advance `confirmedTick`, snap `predicted` to `authoritativePosition`,
+  drop buffer entries with `tick <= authoritativeTick`, and replay surviving buffer entries
+  (`tick > authoritativeTick`) in ascending tick order, updating `predicted` at each step.
+  Getters: `predicted` (copy), `confirmedTick`, `pendingCount`, `pending` (defensive copy snapshot).
+  `reset()` restores pristine state (`{0,0,0}`, 0, 0, `[]`).
+- Tests: `tests/unit/MovementReconciler.test.ts` (NEW, 19 tests): construction + option
+  rejections, prediction advancement + ordering + buffer-full throw + object immutability,
+  reconciliation confirmation matching prediction + correction snapping and replay + empty
+  surviving buffer + stale no-ops, malformed inputs (non-finite coords, negative/float ticks,
+  `tick <= confirmedTick`), reset and identical-schedule determinism. Total unit suite: 2985 tests.
 
 ## What 227 implemented
 
