@@ -3,18 +3,35 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **209-gamepad-controls — VERIFIED 100%**
-- Active implementation change: **209-gamepad-controls — VERIFIED**
-- Next change: **210-touch-controls — NOT YET ACTIVE (artifacts pending)**
-- 209 task ledger: **17 total tasks, 17 completed**
-- 209 completion: **100%**
-- 209 mandatory gamepad-controls requirements: **PASS**
-- 209 required-test gate: **PASS — unit 2753/2753, E2E 22/22**
-- 209 advancement allowed: **Yes**
-- Session-start head: `abce6f92a6be116f7e7c5ec03d28519de670eed5`
-- Validated head: `ecea1e4c0ee02f0e750e30c2e560c4315c9aaaa8` (209 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), and gamepad (209) VERIFIED; 210 continues with touch controls.**
-- Next exact action: **Advance to 210-touch-controls. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Mobile touch HUD, look/movement, inventory interaction and responsive layout — a pure touch input model (zones, gestures -> actions) over 207's actions).**
+- Last completed change: **210-touch-controls — VERIFIED 100%**
+- Active implementation change: **210-touch-controls — VERIFIED**
+- Next change: **211-internal-resource-pack-format — NOT YET ACTIVE (artifacts pending)**
+- 210 task ledger: **15 total tasks, 15 completed**
+- 210 completion: **100%**
+- 210 mandatory touch-controls requirements: **PASS**
+- 210 required-test gate: **PASS — unit 2763/2763, E2E 22/22**
+- 210 advancement allowed: **Yes**
+- Session-start head: `55fa8898417a8d1440ecfe78418ed1a627aff5d8`
+- Validated head: `0e225700a35903d0a34e672118cc2f2bc4f4fad5` (210 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), and touch (210) VERIFIED; 211 begins the assets arc (211-213).**
+- Next exact action: **Advance to 211-internal-resource-pack-format. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Original assets organized by namespaced textures/models/sounds/metadata — a pure resource-pack manifest model over namespaced asset paths).**
+
+## What 210 implemented
+
+Change 210 adds the pure **touch input model**.
+
+- `src/simulation/TouchFramework.ts` (NEW) — `TOUCH_ZONES`: 7 normalized (0..1) zones with
+  BUTTON zones first (they win where their rects overlap the half-screen zones): `jump`, `sneak`,
+  `attack`, `use`, `inventory` (each carrying its 207 action), then `move` and `look`.
+  `zoneAt(point)` returns the first containing zone (inclusive edges) or null. `dragVector` =
+  deadzone(clamp((current − start) × 4, −1, 1)) per axis (209's `applyDeadzone`); `dragDelta` =
+  the raw offset. `resolveTouches` maps `{ point, previous? }` touches to `TouchInputState {
+  actions, move, lookDelta }`: button zones push their actions (deduped), move/look zones set
+  vector/delta with the LAST touch winning, previous-less drags are zero, out-of-zone touches
+  skipped. Headless-safe: the wiring feeds normalized points.
+- Tests: `tests/unit/TouchFramework.test.ts` (NEW, 10 tests): zone rects + button-first
+  precedence (incl. the jump/use overlap), inclusive edges, drag scale/clamp/deadzone math, raw
+  deltas, action dedupe, last-wins, zero drags, empty resolutions.
 
 ## What 209 implemented
 
