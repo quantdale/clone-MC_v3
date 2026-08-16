@@ -3,17 +3,45 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **229-entity-replication — VERIFIED 100%**
-- Active implementation change: **229-entity-replication — VERIFIED**
-- Next change: **230-block-interaction-networking — NOT YET ACTIVE (artifacts pending)**
-- 229 task ledger: **11 total tasks, 11 completed**
-- 229 completion: **100%**
-- 229 mandatory entity-replication requirements: **PASS**
-- 229 required-test gate: **PASS — unit 3007/3007, E2E 22/22**
-- 229 advancement allowed: **Yes**
-- Session-start head: `252f6c5764c424058b06cd30dd0e0bfa8a789eb6`
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), and the entity replication (229) VERIFIED; 230 begins block interaction networking.**
-- Next exact action: **Advance to 230-block-interaction-networking. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: authoritative break/place/use request validation, result confirmation, and broadcast across the client/server network boundary).**
+- Last completed change: **230-block-interaction-networking — VERIFIED 100%**
+- Active implementation change: **230-block-interaction-networking — VERIFIED**
+- Next change: **231-inventory-network-transactions — NOT YET ACTIVE (artifacts pending)**
+- 230 task ledger: **12 total tasks, 12 completed**
+- 230 completion: **100%**
+- 230 mandatory block-interaction-networking requirements: **PASS**
+- 230 required-test gate: **PASS — unit 3028/3028, E2E 22/22**
+- 230 advancement allowed: **Yes**
+- Session-start head: `1be2f68776bb2e8a21552e644c28b3e24880868d`
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), and the block interaction networking (230) VERIFIED; 231 begins inventory network transactions.**
+- Next exact action: **Advance to 231-inventory-network-transactions. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: revisioned container and inventory actions with rejection and resynchronization across the client/server network boundary).**
+
+## What 230 implemented
+
+Change 230 adds the pure headless **block interaction networking** framework across the network boundary.
+
+- `src/simulation/BlockInteractionNetworking.ts` (NEW) — `BlockCoord { x, y, z }`;
+  `PlayerPosition { x, y, z }`; `Direction` ('north' | 'south' | 'east' | 'west' | 'up' | 'down');
+  `BlockBreakAction` ('start' | 'cancel' | 'finish' | 'instant');
+  `BlockBreakRequest { playerId, action, position, face, tick }`;
+  `BlockPlaceRequest { playerId, position, face, blockStateId, tick }`;
+  `BlockUseRequest { playerId, position, face, cursor?, tick }`;
+  `InteractionResult = { accepted: true, action, position, blockStateId, broadcast } | { accepted: false, action, position, authoritativeStateId, reason }`;
+  `BlockInteractionValidatorOptions { maxReachDistance? (default 6.0), minBreakTicks? (default 0) }`;
+  `ClientRollbackDirective { position, rollbackStateId }`;
+  `offsetByFace(pos, face)` and `DIRECTION_OFFSETS`.
+  `BlockInteractionValidator`: server-side validator checking 3D Euclidean reach distance to block center
+  (`isWithinReach`), break sequencing (`start` records active break, `cancel` clears, `finish` verifies
+  matching position and minimum break duration, `instant` breaks immediately to air), place validation
+  (checks reach to clicked block and offset placement position, plus optional `canPlace` predicate),
+  use validation (checks reach and target existence), and sets `broadcast: true` on world-mutating successes.
+  `ClientBlockReconciler`: client-side tracker for optimistic block predictions (`predict`), confirming
+  accepted results and returning rollback directives (`{ position, rollbackStateId }`) on server rejections.
+- Tests: `tests/unit/BlockInteractionNetworking.test.ts` (NEW, 21 tests): face offset math for all 6 directions,
+  reach distance calculations and boundary checks for break/place/use, break action sequencing (start, cancel,
+  finish with minBreakTicks timing, instant, no_active_break and break_too_fast rejections), placement validation
+  with face offset and canPlace predicate rejection, use validation within reach, ClientBlockReconciler
+  prediction tracking, confirmation, and rollback directives, input validation and strict error throws
+  (`BlockInteraction: <detail>`), and schedule determinism. Total unit suite: 3028 tests.
 
 ## What 229 implemented
 
