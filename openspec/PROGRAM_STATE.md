@@ -3,18 +3,39 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **195-spectator-mode — VERIFIED 100%**
-- Active implementation change: **195-spectator-mode — VERIFIED**
-- Next change: **196-weather-state — NOT YET ACTIVE (artifacts pending)**
-- 195 task ledger: **18 total tasks, 18 completed**
-- 195 completion: **100%**
-- 195 mandatory spectator-mode requirements: **PASS**
-- 195 required-test gate: **PASS — unit 2574/2574, E2E 22/22**
-- 195 advancement allowed: **Yes**
-- Session-start head: `0c2e7b69b288a74db7c7101b30011c71d0bfd142`
-- Validated head: `493d575fe37fbd3309255065abc964f8c41b43b8` (195 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE — the dimension arc (174-184), meta-progression trio (185-187), difficulty (188), gamerules (189), the command parser (190), the core commands (191), and the game-modes arc (192-195: game-mode framework, hardcore, adventure, spectator) are ALL VERIFIED; 196 continues the section with weather state.**
-- Next exact action: **Advance to 196-weather-state. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Persisted rain/thunder timers and gamerule/time integration — weather state over 189's gamerules and 191's weather/time command effects).**
+- Last completed change: **196-weather-state — VERIFIED 100%**
+- Active implementation change: **196-weather-state — VERIFIED**
+- Next change: **197-weather-rendering — NOT YET ACTIVE (artifacts pending)**
+- 196 task ledger: **19 total tasks, 19 completed**
+- 196 completion: **100%**
+- 196 mandatory weather-state requirements: **PASS**
+- 196 required-test gate: **PASS — unit 2592/2592, E2E 22/22**
+- 196 advancement allowed: **Yes**
+- Session-start head: `88baaad35a7cf89eabd70077c40f3cd736f9d309`
+- Validated head: `07cd1131fb07637cd0cdf39673a51c96642de578` (196 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE — the dimension arc (174-184), meta-progression trio (185-187), difficulty (188), gamerules (189), the command parser (190), the core commands (191), and the game-modes arc (192-195) are ALL VERIFIED; the weather arc continues: state (196) VERIFIED, rendering (197) next.**
+- Next exact action: **Advance to 197-weather-rendering. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Original rain/thunder visuals/audio without changing simulation truth — a rendering-layer weather presentation reading 196's WeatherState).**
+
+## What 196 implemented
+
+Change 196 adds the deterministic **weather state machine**.
+
+- `src/simulation/WeatherFramework.ts` (NEW) — `WeatherState { weather, rainTime, thunderTime }`
+  (191's `WeatherKind`; non-negative integer tick timers). `setWeather(state, weather, duration)`
+  is the `/weather` entry: clear → `{clear, d, 0}`, rain → `{rain, d, 0}`, thunder →
+  `{thunder, d, d}`; invalid weather or a non-integer/negative duration identity-no-ops.
+  `tickWeather(state, doWeatherCycle, rolls)` returns the IDENTICAL state when 189's
+  `doWeatherCycle` is false (timers frozen); otherwise timers count down and transitions fire on
+  the tick a timer reaches 0: clear → rain (rolling both the rain duration and a pending thunder
+  duration), rain → clear on `rainTime` expiry (precedence over a same-tick thunder start),
+  thunder starts within rain on `thunderTime` expiry preserving the rain timer, thunder → plain
+  rain on `thunderTime` expiry with a fresh pending thunder roll, rain ends during thunder on
+  `rainTime` expiry. Timers never go negative. Rolls are injected (the wiring owns RNG), keeping
+  the module fully deterministic. `isRaining`/`isThundering` queries; `serializeWeatherState`/
+  `deserializeWeatherState` (v1) validate-before-accept with named rejections.
+- Tests: `tests/unit/WeatherFramework.test.ts` (NEW, 18 tests): default/set shapes, identity no-ops,
+  the frozen gate, every transition tick-by-tick, a full 27001-tick deterministic cycle, queries,
+  and every persistence rejection. Zero registry changes.
 
 ## What 195 implemented
 
