@@ -3,18 +3,37 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **192-creative-mode — VERIFIED 100%**
-- Active implementation change: **192-creative-mode — VERIFIED**
-- Next change: **193-hardcore-mode — NOT YET ACTIVE (artifacts pending)**
-- 192 task ledger: **19 total tasks, 19 completed**
-- 192 completion: **100%**
-- 192 mandatory creative-mode requirements: **PASS**
-- 192 required-test gate: **PASS — unit 2541/2541, E2E 22/22**
-- 192 advancement allowed: **Yes**
-- Session-start head: `9f30983ae2b7df64e67ea3a293094213d07cb090`
-- Validated head: `74e5d63570fddc40dea742a440605a408d4666a5` (192 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension arc (174-184), meta-progression trio (185-187), difficulty (188), gamerules (189), the command parser (190), the core commands (191), and the game-mode framework (192) are COMPLETE; 193 continues the game-modes arc (192-195).**
-- Next exact action: **Advance to 193-hardcore-mode. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Hard difficulty lock and death-world semantics — extends 192's GameModeFramework with a hardcore flag, difficulty lock, and permanent-death behavior).**
+- Last completed change: **193-hardcore-mode — VERIFIED 100%**
+- Active implementation change: **193-hardcore-mode — VERIFIED**
+- Next change: **194-adventure-mode — NOT YET ACTIVE (artifacts pending)**
+- 193 task ledger: **18 total tasks, 18 completed**
+- 193 completion: **100%**
+- 193 mandatory hardcore-mode requirements: **PASS**
+- 193 required-test gate: **PASS — unit 2555/2555, E2E 22/22**
+- 193 advancement allowed: **Yes**
+- Session-start head: `37a75b67a5622e6fc2e7cbdde885b9e2302f3c13`
+- Validated head: `ccff2fb024d6e1ce82e6eba6d2da4c8680ef72b7` (193 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension arc (174-184), meta-progression trio (185-187), difficulty (188), gamerules (189), the command parser (190), the core commands (191), the game-mode framework (192), and hardcore (193) are COMPLETE; 194-195 close the game-modes arc (192-195).**
+- Next exact action: **Advance to 194-adventure-mode. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Restricted breaking/placing using item components/tags — adventure-mode interaction rules over 192's GameModeFramework).**
+
+## What 193 implemented
+
+Change 193 adds the **hardcore world setting** to the game-modes arc (192-195).
+
+- `src/simulation/HardcoreFramework.ts` (NEW) — immutable `HardcoreState { hardcore: boolean }`;
+  `createDefaultHardcoreState()` is disabled; `setHardcore` returns a NEW state on change and the
+  IDENTICAL state on same value (identity no-op). The vanilla **difficulty lock**:
+  `locksDifficulty` true exactly when enabled, and `effectiveDifficulty(state, level)` ALWAYS
+  returns `'hard'` for every configured level (188's `DifficultyLevel`) when enabled, passing the
+  level through verbatim when disabled. **Death-world semantics**: `forcesPermanentDeath` true
+  exactly when enabled, and `respawnModeAfterDeath(state, currentMode)` ALWAYS returns
+  `'spectator'` (192's `GameMode`) when enabled, passing the current mode through when disabled.
+  `serializeHardcoreState`/`deserializeHardcoreState` are versioned (v1) validate-before-accept:
+  non-object, bad version, non-boolean flag, and unknown keys all throw descriptive errors with no
+  partial acceptance.
+- Tests: `tests/unit/HardcoreFramework.test.ts` (NEW, 14 tests): identity no-op, the lock/death
+  rules for EVERY difficulty level and EVERY game mode, and every persistence rejection. Zero
+  registry changes.
 
 ## What 192 implemented
 
