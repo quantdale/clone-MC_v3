@@ -3,18 +3,36 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **198-sleep-and-time-skip — VERIFIED 100%**
-- Active implementation change: **198-sleep-and-time-skip — VERIFIED**
-- Next change: **199-particle-system — NOT YET ACTIVE (artifacts pending)**
-- 198 task ledger: **20 total tasks, 20 completed**
-- 198 completion: **100%**
-- 198 mandatory sleep-and-time-skip requirements: **PASS**
-- 198 required-test gate: **PASS — unit 2614/2614, E2E 22/22**
-- 198 advancement allowed: **Yes**
-- Session-start head: `0c66191e4ea249afa81e5a6359de1bc007e072cb`
-- Validated head: `b577842f6c9f9eaf2cc533b0b3e9204048dd2e60` (198 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather arc (196-197) and sleep (198) VERIFIED; 199 continues the section with the particle system.**
-- Next exact action: **Advance to 199-particle-system. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Pooled data-driven particles and gameplay event hooks — a pure pooled particle system with typed emitters and gameplay event hooks).**
+- Last completed change: **199-particle-system — VERIFIED 100%**
+- Active implementation change: **199-particle-system — VERIFIED**
+- Next change: **200-sound-event-system — NOT YET ACTIVE (artifacts pending)**
+- 199 task ledger: **22 total tasks, 22 completed**
+- 199 completion: **100%**
+- 199 mandatory particle-system requirements: **PASS**
+- 199 required-test gate: **PASS — unit 2627/2627, E2E 22/22**
+- 199 advancement allowed: **Yes**
+- Session-start head: `971a5e9ba2dd369fd5892535e1403ad4b1dc2425`
+- Validated head: `ae35ca53f3d32ff34aca415963a581a22a60d179` (199 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather arc (196-197), sleep (198), and particles (199) VERIFIED; 200 begins the sound arc (200-201).**
+- Next exact action: **Advance to 200-sound-event-system (the 200th change). Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Registry-driven positional/original sound events and categories — a pure sound-event framework with typed events and categories, mirroring 199's event-hook shape).**
+
+## What 199 implemented
+
+Change 199 adds the pooled, data-driven **particle system**.
+
+- `src/simulation/ParticleSystem.ts` (NEW) — fixed module-local `PARTICLE_KINDS` table
+  (gamerule-style, zero registry changes): `block_debris`, `explosion`, `rain_splash` with
+  gravity/drag/lifetime-range/speed/size/color; `particleKind` lookup. Immutable `ParticlePool {
+  capacity, particles, size }` (compact, no holes); `createParticlePool` throws for
+  non-positive/non-integer capacity. `spawnParticle` appends (life = maxLife = lifetimeMax) and
+  identity-no-ops on a full pool. `stepParticles` advances exactly one tick (drag, gravity,
+  integration, life −1, removal at life ≤ 0; empty pool identity no-op). `spawnBurst` spawns
+  min(count, free) with rng-driven velocity/lifetime (injected rng — deterministic); invalid
+  counts identity no-op. `emitParticleEvent` maps `block_break` → 8 debris, `explosion` → 24,
+  `rain` → 1 splash; unknown events identity no-op.
+- Tests: `tests/unit/ParticleSystem.test.ts` (NEW, 13 tests): kind table constraints, pool
+  validation, exact spawn/step physics, burst math with fixed rng `() => 0.5`, overflow behavior,
+  every hook mapping. Zero registry changes.
 
 ## What 198 implemented
 
