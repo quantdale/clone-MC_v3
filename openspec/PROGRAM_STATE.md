@@ -3,18 +3,38 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **182-end-portal-progression — VERIFIED 100%**
-- Active implementation change: **182-end-portal-progression — VERIFIED**
-- Next change: **183-ender-dragon-boss — NOT YET ACTIVE (artifacts pending)**
-- 182 task ledger: **20 total tasks, 20 completed**
-- 182 completion: **100%**
-- 182 mandatory end-portal-progression requirements: **PASS**
-- 182 required-test gate: **PASS — unit 2444/2444, E2E 22/22**
-- 182 advancement allowed: **Yes**
-- Session-start head: `e188daa98c692e2e68910941d9d18ac3017b5ecc`
-- Validated head: `090dc85e625f72a3ba714c518e9a1682701c52bb` (182 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — dimensions 174-182 (container, all three types, Nether arc, End type/terrain/progression) COMPLETE; the boss arc (183-184) begins with the Ender Dragon.**
-- Next exact action: **Advance to 183-ender-dragon-boss. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Dragon boss lifecycle, crystals, damage phases, victory state — consume 182's endReturnGatewayAllowed with a defeat state and 153's boss framework).**
+- Last completed change: **183-ender-dragon-boss — VERIFIED 100%**
+- Active implementation change: **183-ender-dragon-boss — VERIFIED**
+- Next change: **184-end-exit-progression — NOT YET ACTIVE (artifacts pending)**
+- 183 task ledger: **22 total tasks, 22 completed**
+- 183 completion: **100%**
+- 183 mandatory ender-dragon-boss requirements: **PASS**
+- 183 required-test gate: **PASS — unit 2452/2452, E2E 22/22**
+- 183 advancement allowed: **Yes**
+- Session-start head: `bc23580a27b222d36b8cd90f5d43ecbbf342df98`
+- Validated head: `bf7013f0a8653989d669021c0d00190d03b78eba` (183 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — dimensions 174-183 (container, all three types, Nether arc, End type/terrain/progression, dragon boss) COMPLETE; 184 (exit progression) closes the End arc.**
+- Next exact action: **Advance to 184-end-exit-progression. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: exit portal, boss completion persistence, post-boss state — the End arc's capstone: the exit portal spawns when 183's dragonReturnGatewayOpen flips true, teleports the player back to the overworld spawn, and the boss completion persists).**
+
+## What 183 implemented
+
+Change 183 adds the Ender Dragon — the largest single boss — as **vanilla-keyed data over 153's
+`BossFramework`** plus the dragon-specific lifecycle.
+
+- `src/simulation/EnderDragon.ts` (NEW) — `ENDER_DRAGON_DEFINITION` (`minecraft:ender_dragon`,
+  maxHealth 200, phases at 1/0.5/0.2, purple bar); the framework owns SPAWNING→ACTIVE→DEFEATED,
+  phase transitions, damage, and capped healing. `summonEndCrystals(healthFraction)` returns
+  1/4/7/10 crystals at the 80%/50%/20%/below fractions (vanilla's 0..10 progression; NaN clamps to
+  fully-summoned). `endCrystalHealAmount(liveCrystals)` is `END_CRYSTAL_HEAL_PER_TICK` (1) per tick
+  while any crystal lives, else 0. `dragonDamageTowardsPlayer(distance)` is 3 within the exclusive
+  `ENDER_DRAGON_BITE_RANGE` (4). `dragonDefeated` and `dragonReturnGatewayOpen` compose 182's
+  `endReturnGatewayAllowed` — the exit gate opens **exactly on defeat**.
+- Tests: `tests/unit/EnderDragon.test.ts` (NEW, 8 tests): vanilla definition fields; the builtin
+  dragon's presence in 153's default registry (a different resource id than this module's
+  vanilla-keyed definition — asserted as presence, not identity); the full lifecycle with exact
+  damage amounts (100→phase 1, 170→phase 2, full→defeat, no-revive); heal-back (30 → 90 restores
+  phase 1); crystal progression at every boundary; the exclusive bite range; the gateway flip. No
+  dragon entity/AI, no crystal registry entry (215), no fireball (documented non-goals).
 
 ## What 182 implemented
 
