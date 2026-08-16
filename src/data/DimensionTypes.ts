@@ -1,12 +1,15 @@
 /**
- * Dimension types (175): the canonical `DimensionType` instances beyond the overworld — starting
- * with the Nether — plus the save-namespace rule. The overworld type is defined here too so the
- * standard dimensions share one module (the overworld's parameters match vanilla 1.18+:
+ * Dimension types (175/180): the canonical `DimensionType` instances beyond the overworld — the
+ * Nether (175) and the End (180) — plus the save-namespace rule. The overworld type is defined here
+ * too so the standard dimensions share one module (the overworld's parameters match vanilla 1.18+:
  * minY -64, height 384).
  *
  * The Nether matches vanilla: 0..255 (16 sections), NO skylight, ultrawarm (constant warmth —
  * vanilla's "ambient rule" for the dimension), non-natural (no natural monster spawns without
  * spawners), and a fixed time of 18000 ticks (noon — vanilla locks the Nether's day cycle).
+ *
+ * The End matches vanilla: 0..255 (16 sections), NO skylight, non-natural, not ultrawarm, and a
+ * fixed time of 6000 ticks (vanilla locks the End at 6000 — its perpetual dawn).
  *
  * Save namespace: a dimension's storage namespace IS its key (e.g. `minecraft:the_nether`).
  * `dimensionSaveNamespace` validates that a key is a legal full resource id and returns it
@@ -38,6 +41,20 @@ export const NETHER_DIMENSION_TYPE = new DimensionType({
   ultrawarm: true,
   natural: false,
   fixedTime: 18000,
+});
+
+/**
+ * The End: minY 0, 256 blocks (16 sections), NO skylight, non-natural, fixed time 6000 (vanilla
+ * locks the End at 6000 ticks — the perpetual "dawn" of the End), not ultrawarm.
+ */
+export const END_DIMENSION_TYPE = new DimensionType({
+  id: createResourceId('minecraft', 'the_end'),
+  minY: 0,
+  height: 256,
+  logicalHeight: 256,
+  hasSkylight: false,
+  natural: false,
+  fixedTime: 6000,
 });
 
 /**
