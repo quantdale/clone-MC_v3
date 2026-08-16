@@ -3,18 +3,36 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **217-structure-content-expansion — VERIFIED 100%**
-- Active implementation change: **217-structure-content-expansion — VERIFIED**
-- Next change: **218-mob-content-expansion — NOT YET ACTIVE (artifacts pending)**
-- 217 task ledger: **14 total tasks, 14 completed**
-- 217 completion: **100%**
-- 217 mandatory structure-content-expansion requirements: **PASS**
-- 217 required-test gate: **PASS — unit 2822/2822, E2E 22/22**
-- 217 advancement allowed: **Yes**
-- Session-start head: `739f6dfb1106d7e6850bd697018ff2f44986662b`
-- Validated head: `7f53fa956510aff37115f88e3181f17b5fdfbe42` (217 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), and content expansion (215-217) VERIFIED; 218 continues with mob content expansion.**
-- Next exact action: **Advance to 218-mob-content-expansion. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Add additional passive/hostile/utility mobs through existing entity/AI primitives — data-driven mob definitions over 129-146's entity/AI primitives).**
+- Last completed change: **218-mob-content-expansion — VERIFIED 100%**
+- Active implementation change: **218-mob-content-expansion — VERIFIED**
+- Next change: **219-enchantment-potion-content-expansion — NOT YET ACTIVE (artifacts pending)**
+- 218 task ledger: **14 total tasks, 14 completed**
+- 218 completion: **100%**
+- 218 mandatory mob-content-expansion requirements: **PASS**
+- 218 required-test gate: **PASS — unit 2830/2830, E2E 22/22**
+- 218 advancement allowed: **Yes**
+- Session-start head: `72998e34708a87e38ae4d28dec773dd3e77a2d5a`
+- Validated head: `67379f88da3fa57147e7976191825345a6dbb308` (218 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), and content expansion (215-218) VERIFIED; 219 continues with enchantment/potion content expansion.**
+- Next exact action: **Advance to 219-enchantment-potion-content-expansion. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Fill enchantment/effect/potion catalogs through existing registries — data-driven enchantment/status-effect/potion definitions over 012/014/118/122).**
+
+## What 218 implemented
+
+Change 218 adds the data-driven **mob content expansion**.
+
+- `src/data/MobExpansion.ts` (NEW) — `MobDefinition { id, name, category, archetype, health,
+  speed, hostileToPlayer, spawns }`: ids valid namespaced ids without a `mob/` prefix; `name`
+  non-empty translation key (214); `category` passive|hostile|neutral|utility; `archetype`
+  melee|ranged|wanderer default wanderer; `health` positive integer; `speed` finite > 0;
+  `hostileToPlayer` boolean default `category === 'hostile'`; `spawns = { biomes (non-empty
+  known 216 categories), weight (positive integer), packSize ([min, max] positive, min ≤ max)
+  }`. `createMobDefinition` validates with descriptive throws. `createMobExpansion` preserves
+  registration order and rejects duplicate ids; `mobById`; `mobsByCategory`; `mobsInBiome`
+  (registration-order filters). 137-138's spawn cycle consumes the spawn data through 129-146's
+  primitives (untouched; 017's registry untouched).
+- Tests: `tests/unit/MobExpansion.test.ts` (NEW, 8 tests): defaults (archetype/hostile), every
+  rejection class, expansion order, lookups, duplicates, category/biome filters, empty
+  expansions.
 
 ## What 217 implemented
 
