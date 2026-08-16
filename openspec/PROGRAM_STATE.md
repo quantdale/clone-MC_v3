@@ -3,19 +3,42 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **226-server-chunk-streaming — VERIFIED 100%**
-- Active implementation change: **226-server-chunk-streaming — VERIFIED**
-- Next change: **227-server-player-movement — NOT YET ACTIVE (artifacts pending)**
-- 226 task ledger: **12 total tasks, 12 completed**
-- 226 completion: **100%**
-- 226 mandatory server-chunk-streaming requirements: **PASS**
-- 226 required-test gate: **PASS — unit 2950/2950, E2E 22/22** (full-suite run taken at
+- Last completed change: **227-server-player-movement — VERIFIED 100%**
+- Active implementation change: **227-server-player-movement — VERIFIED**
+- Next change: **228-client-prediction-reconciliation — NOT YET ACTIVE (artifacts pending)**
+- 227 task ledger: **12 total tasks, 12 completed**
+- 227 completion: **100%**
+- 227 mandatory server-player-movement requirements: **PASS**
+- 227 required-test gate: **PASS — unit 2966/2966, E2E 22/22** (full-suite run taken at
   `--testTimeout=15000` to avoid the documented parallel-load grid-sweep flake)
-- 226 advancement allowed: **Yes**
-- Session-start head: `c74d7973639a4ac454c7dfc34d27b9fffd2091a8`
-- Validated head: `78e11fc0278b1fead80258c3dcba7651e0a8cc73` (226 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), and the server chunk streaming (226) VERIFIED; 227 begins server player movement.**
-- Next exact action: **Advance to 227-server-player-movement. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: server-authoritative movement validation and teleport correction — a pure headless model validating client movement intents against constraints and producing authoritative corrections, building on 224 tick numbering and 226 interest centers).**
+- 227 advancement allowed: **Yes**
+- Session-start head: `84dc2f761ab92139f62a2ccd1fd51273b8c7c5c9`
+- Validated head: `90dcf9566a1a5eecc47fa1f620205d62acbd05cf` (227 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), and the server player movement (227) VERIFIED; 228 begins client prediction and reconciliation.**
+- Next exact action: **Advance to 228-client-prediction-reconciliation. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: local prediction with authoritative correction/interpolation — a pure headless model applying client-side prediction on accepted intents and reconciling against 227's authoritative corrections, building on 224 tick numbers and 226 interest centers).**
+
+## What 227 implemented
+
+Change 227 adds the **server-authoritative movement** validator — the server's trusted view
+of a player position and its correction authority.
+
+- `src/simulation/MovementAuthority.ts` (NEW) — `Position { x, y, z }`;
+  `MovementAuthorityOptions { maxSpeedPerTick (positive finite) }`;
+  `MovementResult = { accepted: true; position } | { accepted: false; correction; reason }`;
+  `RejectionInfo { tick, reason }`. `spawn(position, tick)` sets the authoritative state
+  (re-places on re-spawn); `submitIntent(position, tick)` validates finite coordinates and a
+  non-negative safe-integer tick (malformed → throws `MovementAuthority: <detail>` with no
+  state change), accepts only when `tick > lastTick` AND the Euclidean displacement is `<=
+  maxSpeedPerTick` (inclusive), otherwise returns a correction equal to the authoritative
+  position with exact reason `'stale tick'`/`'speed limit'` and leaves state untouched;
+  pre-spawn intents are deterministically stale against `lastTick` 0; `teleport(position, tick)`
+  repositions and resets tick ordering; getters `position`/`lastTick`/`acceptedCount`/
+  `lastRejection`; `reset()` restores pristine state.
+- Tests: `tests/unit/MovementAuthority.test.ts` (NEW, 16 tests): construction + option
+  rejections, spawn state + malformed rejections + re-spawn, acceptance incl. exact
+  speed-boundary and 3D displacement, stale-tick and speed-limit corrections with unchanged
+  state, pre-spawn staleness, malformed-intent throws, teleport + reset, and
+  identical-schedule determinism.
 
 ## What 226 implemented
 
