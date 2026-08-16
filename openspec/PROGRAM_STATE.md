@@ -3,18 +3,35 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **205-hud-parity — VERIFIED 100%**
-- Active implementation change: **205-hud-parity — VERIFIED**
-- Next change: **206-settings-persistence — NOT YET ACTIVE (artifacts pending)**
-- 205 task ledger: **20 total tasks, 20 completed**
-- 205 completion: **100%**
-- 205 mandatory hud-parity requirements: **PASS**
-- 205 required-test gate: **PASS — unit 2707/2707, E2E 22/22**
-- 205 advancement allowed: **Yes**
-- Session-start head: `5ddca765a07788263395c0f8efe74b104b6d4ced`
-- Validated head: `271adb3c877ac173cbbcbccb035ac0588df7a326` (205 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), and the inventory-parity arc (202-205) COMPLETE — all VERIFIED; 206 begins the settings arc (206-207).**
-- Next exact action: **Advance to 206-settings-persistence. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Graphics/audio/control/gameplay settings stored independently of worlds — a pure settings framework with typed categories and versioned persistence independent of world saves).**
+- Last completed change: **206-settings-persistence — VERIFIED 100%**
+- Active implementation change: **206-settings-persistence — VERIFIED**
+- Next change: **207-keybinding-remap — NOT YET ACTIVE (artifacts pending)**
+- 206 task ledger: **18 total tasks, 18 completed**
+- 206 completion: **100%**
+- 206 mandatory settings-persistence requirements: **PASS**
+- 206 required-test gate: **PASS — unit 2717/2717, E2E 22/22**
+- 206 advancement allowed: **Yes**
+- Session-start head: `4673ba041514822f9ef477faa3049a01283879b7`
+- Validated head: `e416eab5abdbf557bb63a20078f2012657c0c71d` (206 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), and settings (206) VERIFIED; 207 closes the settings arc (206-207).**
+- Next exact action: **Advance to 207-keybinding-remap (closes the settings arc 206-207). Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Conflict-aware remappable controls with persistence — keybinding state with conflict detection over 206's settings).**
+
+## What 206 implemented
+
+Change 206 (opening the settings arc 206-207) adds the typed **settings framework**.
+
+- `src/simulation/SettingsFramework.ts` (NEW) — `SETTING_DEFINITIONS`: 10 settings across
+  graphics (`renderDistance` integer [2,32] default 12, `fov` integer [30,110] default 70,
+  `brightness` float [0,1] default 0.5), audio (`masterVolume`/`musicVolume`/`sfxVolume` floats
+  [0,1] default 1), controls (`mouseSensitivity` float [0.1,2] default 0.5, `invertY` boolean
+  false), gameplay (`autoJump` true, `showCoordinates` false); `SETTING_KEYS` as a literal union.
+  Immutable `SettingsStore`; `createDefaultSettings`; `getSetting`; `isValidSettingValue`;
+  `setSetting` (NEW store on valid change, IDENTICAL store for invalid/same). `serializeSettings`/
+  `deserializeSettings` (v1) validate-before-accept with wrong-kind vs out-of-range-distinguished
+  messages; MISSING known keys default (forward-compatible). The wiring owns the standalone
+  storage key — settings are provably independent of world saves.
+- Tests: `tests/unit/SettingsFramework.test.ts` (NEW, 10 tests): table, boundary validation,
+  identity no-ops, distinct rejection messages, round-trip, missing-key defaults.
 
 ## What 205 implemented
 
