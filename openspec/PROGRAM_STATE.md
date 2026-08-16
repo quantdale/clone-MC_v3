@@ -3,18 +3,37 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **218-mob-content-expansion — VERIFIED 100%**
-- Active implementation change: **218-mob-content-expansion — VERIFIED**
-- Next change: **219-enchantment-potion-content-expansion — NOT YET ACTIVE (artifacts pending)**
-- 218 task ledger: **14 total tasks, 14 completed**
-- 218 completion: **100%**
-- 218 mandatory mob-content-expansion requirements: **PASS**
-- 218 required-test gate: **PASS — unit 2830/2830, E2E 22/22**
-- 218 advancement allowed: **Yes**
-- Session-start head: `72998e34708a87e38ae4d28dec773dd3e77a2d5a`
-- Validated head: `67379f88da3fa57147e7976191825345a6dbb308` (218 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), and content expansion (215-218) VERIFIED; 219 continues with enchantment/potion content expansion.**
-- Next exact action: **Advance to 219-enchantment-potion-content-expansion. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Fill enchantment/effect/potion catalogs through existing registries — data-driven enchantment/status-effect/potion definitions over 012/014/118/122).**
+- Last completed change: **219-enchantment-potion-content-expansion — VERIFIED 100%**
+- Active implementation change: **219-enchantment-potion-content-expansion — VERIFIED**
+- Next change: **220-recipe-loot-content-expansion — NOT YET ACTIVE (artifacts pending)**
+- 219 task ledger: **14 total tasks, 14 completed**
+- 219 completion: **100%**
+- 219 mandatory enchantment-potion-content-expansion requirements: **PASS**
+- 219 required-test gate: **PASS — unit 2838/2838, E2E 22/22**
+- 219 advancement allowed: **Yes**
+- Session-start head: `43b651387bb88395ef16f85fe14670c493f59477`
+- Validated head: `b9e68e1bc369f791747800a68d69ab2b7718b557` (219 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), and content expansion (215-219) VERIFIED; 220 continues with recipe/loot content expansion.**
+- Next exact action: **Advance to 220-recipe-loot-content-expansion. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Fill crafting/processing/loot coverage for the expanded content catalog — data-driven recipe/loot definitions referencing the expanded content).**
+
+## What 219 implemented
+
+Change 219 adds the data-driven **enchantment/effect/potion catalog expansion**.
+
+- `src/data/EnchantmentPotionExpansion.ts` (NEW) — three definition kinds with per-kind prefix
+  conventions (paths must NOT start with `enchantment/`, `effect/`, or `potion/`):
+  `EnchantmentDefinition { id, name, maxLevel (positive integer, default 1), appliesTo
+  (non-empty strings), incompatible (strings, default []) }`; `StatusEffectDefinition { id,
+  name, beneficial, maxAmplifier (integer ≥ 0, default 3) }`; `PotionDefinition { id, name,
+  effectId (non-empty status-effect reference), durationTicks (positive integer), amplifier
+  (integer ≥ 0) }`. Constructors validate with descriptive throws. `createCatalogExpansion`
+  groups into `{ enchantments, effects, potions }` (registration order) with PER-KIND duplicate
+  rejection; `enchantmentById`/`effectById`/`potionById`; `potionsForEffect` (dangling effect
+  ids allowed — runtime resolution). The runtime consumes the definitions through 012/014/118/122
+  (untouched).
+- Tests: `tests/unit/EnchantmentPotionExpansion.test.ts` (NEW, 8 tests): per-kind creation with
+  defaults, every rejection class (incl. all three prefix rules), catalog grouping/order,
+  per-kind duplicates, lookups, potionsForEffect incl. dangling references, empty catalogs.
 
 ## What 218 implemented
 
