@@ -21,7 +21,7 @@
   "blockers": [],
   "validationResults": [
     {
-      "head": "2c39103eec70ec8dc9ccb004dbea7f9edba5ca62",
+      "head": "40799198a4d9ef3cc0368e7792bc6ae9f3a77fe2",
       "change": "228-client-prediction-reconciliation",
       "status": "VERIFIED",
       "unitTests": 2985,
