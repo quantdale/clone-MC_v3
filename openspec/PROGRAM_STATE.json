@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "234-server-world-persistence",
+  "currentChange": "235-reconnect-state-recovery",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "234-server-world-persistence",
-  "nextChange": "235-reconnect-state-recovery",
+  "lastCompletedChange": "235-reconnect-state-recovery",
+  "nextChange": "236-multiplayer-load-tests",
   "completedTasks": 15,
   "totalTasks": 15,
   "completionPercentage": 100,
@@ -16,8 +16,8 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "39780587a5f449cdbcdd21e46f6cde60e3973b51",
-  "lastCompletedTask": "234: server world persistence complete; 234-server-world-persistence VERIFIED 15/15 (100%). src/simulation/PersistentWorldCodecs.ts: shared server save codec seam — PersistentUnitKind/ServerWorldUnit/WorldCodecMeta/WorldSaveCodec/unitKey (038 keying convention), strict validatePersistentUnit/validateWorldCodecMeta with PersistentWorldCodecs: <detail> errors, encode producing validator-passing shared payloads (SerializedChunkColumn / BlockEntityChunkRecord / EntityChunkRecord / WorldMetadata / PlayerStateRecord) for all five kinds, decode applying the injectable 041 migration chains (migrateColumn/migrateMetadata, defaults to the real identity chains) then validating and rejecting foreign worldId/coords and DOWNGRADE/UNKNOWN_VERSION. src/simulation/ServerSaveLifecycle.ts: pure headless WorldTickProcess TickSystem — unloaded->loading->running->flushing->closed state machine, all-or-nothing load with deterministic sorted restore, markDirty keyed dedupe with FIFO preservation and replace-on-remark, tick-cadence bounded drains (limitPerDrain 64, autosaveEveryTicks 100) serialized on a promise chain with idle(), remove-only-on-success identity check, re-queue-on-failure no-loss, storageGate fencing, flush/saveAndClose with zero-progress guard (3 runs), bounded classified SaveFailure log (32). 15 tasks complete; 74 unit tests (35 codec + 39 lifecycle incl. 2 WorldTickProcess-hosted integration round-trips with the production codec adapter; 3265 total); gates: typecheck PASS, lint PASS, unit 3265/3265, build PASS, e2e 22/22. Spec amendment: REQ-2 re-mark scenario corrected to keep FIFO position (recorded in design.md reconciliation notes).",
-  "nextExactAction": "Advance to 235-reconnect-state-recovery. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: clean disconnect/reconnect and client state resynchronization); then implement, unit-test, and gate as usual.",
+  "lastCompletedTask": "235: reconnect state recovery complete; 235-reconnect-state-recovery VERIFIED 15/15 (100%). src/simulation/ReconnectStateRecovery.ts: pure headless reconnect/state-resync framework — ReconnectStateManager (per-profile monotonic SessionEpoch from 1, isReconnect detection, disconnect ending the active session, isSessionCurrent stale/replay/mid-transaction-disconnect rejection, bounded connect/disconnect history (default 32, oldest dropped), collectFullState assembling a validated deterministic FullStateSnapshot: sorted de-duplicated chunk keys + same-order ChunkSnapshots (226), ascending-id EntitySpawnDescriptors (229), validated inventory window (231), defensive copies), standalone compareSignatures with fixed check order (profile/epoch/tick/position/inventory state/interest/entity set) and set-order-independent comparison (epoch mismatch always forces resync), ReconnectStateClient (connect/record*/setInterest/setEntities/signature, applyFullState returning a 5-action ClientResyncDirective: reset_movement/reset_inventory/clear_block_predictions/reset_chunks/reset_entities — current-epoch-gated, idempotent, summary replacement + resyncPending clearance), strict Reconnect: <detail> validation, no DOM/IO, consumes 225-231 components only via existing reset()/reseed hooks. 15 tasks complete; 81 unit tests incl. 2 integration scenarios (end-to-end reconnect flow reseeding MovementAuthority/MovementReconciler/InventoryTransactionValidator/ClientInventoryReconciler/ClientBlockReconciler/ChunkStreamManager/ClientEntityStore from the directive; mid-drag disconnect dropped at the session gate; 3346 total); gates: typecheck PASS, lint PASS, unit 3346/3346, build PASS, e2e 22/22. Reconciliation: all named payload types and reset() hooks verified against actual code; strictness additions (duplicate entity id rejection, input/signature/snapshot internal-consistency validation, not-connected client throws, sorted-unique interest/entity storage) recorded in design.md reconciliation notes.",
+  "nextExactAction": "Advance to 236-multiplayer-load-tests. Its artifacts exist; validate the package against actual code per SPEC_AUTHORING_PROTOCOL.md, then implement, unit-test, and gate as usual.",
   "blockers": [],
   "validationResults": [
     {
@@ -2279,6 +2279,15 @@
       "build": "PASS via tsc --noEmit && vite build",
       "e2e": "PASS 22/22",
       "note": "233 VERIFIED 16/16 tasks (100%). src/simulation/ChatCommandNetworking.ts: ChatCommandRouter (player registration with profile + permissionLevel 0-4, strict ChatCommand: <detail> validation, submitText rejected reasons never consume the strict-monotonic shared seq, chat broadcast to every connected player in registration order incl. self-echo, /-commands through 191 executeCoreCommand with embedded ChatCommandResult and exactly one feedback delivery, unregisterPlayer boolean) + ClientChatState (FIFO pending outbox, exact-once dedupe by seq, ascending bounded log with oldest drop, self-echo FIFO confirmation via localPlayerId, feedback without pending match). Wire contract chat_send/chat_broadcast/chat_feedback proven via 223 codec round-trip tests at test-local ids; no production message-id claim per the 232 convention (decision recorded in design.md)."
+    },
+    {
+      "head": "89a5900c2def53a243b7215179bc7ad24755bc37",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 3346/3346 (prior 3265 + 81 new: ReconnectStateRecovery)",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 22/22",
+      "note": "235 VERIFIED 15/15 tasks (100%). src/simulation/ReconnectStateRecovery.ts: ReconnectStateManager (per-profile monotonic SessionEpoch, isReconnect detection, disconnect ending the active session, isSessionCurrent stale/replay/mid-transaction-disconnect rejection, bounded connect/disconnect history default 32, collectFullState with sorted de-duplicated chunk keys + same-order 226 ChunkSnapshots + ascending-id 229 EntitySpawnDescriptors + validated 231 inventory window, defensive copies) + compareSignatures (fixed check order, set-order-independent, epoch mismatch always forces resync) + ReconnectStateClient (record*/setInterest/setEntities/signature, applyFullState returning the 5-action ClientResyncDirective reset_movement/reset_inventory/clear_block_predictions/reset_chunks/reset_entities; current-epoch-gated, idempotent, summary replacement + resyncPending clearance) with strict Reconnect: <detail> validation; 225-231 components consumed only via existing reset()/reseed hooks (2 integration tests prove the reseed)."
     }
   ],
   "publishedHead": "803727dd144f8680c3d9664468d931c801a7b3da",

@@ -3,17 +3,65 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **234-server-world-persistence — VERIFIED 100%**
-- Active implementation change: **234-server-world-persistence — VERIFIED**
-- Next change: **235-reconnect-state-recovery — NOT YET ACTIVE (artifacts pending)**
-- 234 task ledger: **15 total tasks, 15 completed**
-- 234 completion: **100%**
-- 234 mandatory persistent-codecs + save-lifecycle requirements: **PASS**
-- 234 required-test gate: **PASS — unit 3265/3265, E2E 22/22**
-- 234 advancement allowed: **Yes**
+- Last completed change: **235-reconnect-state-recovery — VERIFIED 100%**
+- Active implementation change: **235-reconnect-state-recovery — VERIFIED**
+- Next change: **236-multiplayer-load-tests — artifacts present, not yet ACTIVE**
+- 235 task ledger: **15 total tasks, 15 completed**
+- 235 completion: **100%**
+- 235 mandatory reconnect-session + state-resynchronization requirements: **PASS**
+- 235 required-test gate: **PASS — unit 3346/3346, E2E 22/22**
+- 235 advancement allowed: **Yes**
 - Session-start head: `39780587a5f449cdbcdd21e46f6cde60e3973b51`
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), the chat and command networking (233), and the server world persistence (234) VERIFIED; 235 begins reconnect state recovery.**
-- Next exact action: **Advance to 235-reconnect-state-recovery. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: clean disconnect/reconnect and client state resynchronization).**
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), the chat and command networking (233), the server world persistence (234), and the reconnect state recovery (235) VERIFIED; 236 begins multiplayer load tests.**
+- Next exact action: **Advance to 236-multiplayer-load-tests. Its artifacts exist (pre-authored package present); validate the package against actual code per SPEC_AUTHORING_PROTOCOL.md, then implement, unit-test, and gate as usual.**
+
+## What 235 implemented
+
+Change 235 adds the **reconnect state recovery** framework: server-side session-epoch tracking with
+stale/replay rejection and deterministic full-state snapshot assembly, plus client-side state summary,
+divergence detection, and full-state application returning a concrete resync directive.
+
+- `src/simulation/ReconnectStateRecovery.ts` (NEW) — `ReconnectStateManager` (server): per-profile monotonic
+  `SessionEpoch` starting at 1 (`connect(profile)` → `{ epoch, isReconnect }`, reconnect detection while active
+  or after disconnect), `disconnect(profile)` ending the active session (throws `Reconnect: profile has no
+  active session`), `hasActiveSession`/`currentEpoch`/`isSessionCurrent` (true iff the profile has an active
+  session AND the epoch equals it — rejecting previous-session replays, post-disconnect traffic, and
+  mid-transaction-disconnect messages), a bounded connect/disconnect `history` (default `historyLimit` 32,
+  oldest dropped), and `collectFullState(profile, input)`: current-epoch-gated, sorted de-duplicated chunk
+  keys with same-order 226 `ChunkSnapshot`s, ascending-id 229 `EntitySpawnDescriptor`s, validated 231
+  inventory window (hotbar exactly 9, valid stacks, non-negative `stateId`), deterministic and defensive-copy.
+  `compareSignatures(client, server)` → `ResyncVerdict`: fixed check order (profile, epoch, tick, position,
+  inventory state, interest, entity set) with set-order-independent interest/entity comparison; an epoch
+  difference always forces resync, so any reconnect requires a full snapshot. `ReconnectStateClient`:
+  `connect(profile, epoch)` (summary reset, `resyncPending = true`), `disconnect()`/`reset()`,
+  `recordTick`/`recordPosition`/`recordInventoryStateId`/`setInterest`/`setEntities` (sorted-unique storage),
+  `signature()`, and `applyFullState(snapshot)`: current-epoch-gated (stale snapshots throw `Reconnect:
+  snapshot epoch is not the current session`), internally-consistency-validated, idempotent, replaces the
+  summary wholesale, clears `resyncPending`, and returns a 5-action `ClientResyncDirective`
+  (`reset_movement` / `reset_inventory` / `clear_block_predictions` / `reset_chunks` / `reset_entities`) the
+  caller executes against the existing 225-231 components via their documented `reset()`/reseed hooks.
+  Strict `Reconnect: <detail>` validation everywhere; zero DOM/IO/transport; pure addition (no edits to any
+  existing module; payload types imported from 226/229/231).
+- Reconciliation (recorded in design.md): all referenced payload types and `reset()`/reseed hooks verified
+  against the actual code (`InventoryTransactionValidator.reset(slots, hotbar?, cursorItem?, stateId?)`,
+  `ChunkStreamManager.reset`/`putSnapshot`, `ClientEntityStore.reset`/`applyBatch`, `MovementAuthority.spawn`,
+  `MovementReconciler.reconcile`, `ClientBlockReconciler.reset`, `ClientInventoryReconciler.reset`);
+  strictness additions — duplicate-entity-id rejection in `collectFullState`, `input.profile` match
+  requirement, `compareSignatures` input validation, not-connected client throws, and snapshot internal
+  consistency (sorted-unique `chunkKeys` ↔ `chunkSnapshots` bijection, sorted-unique entity ids) — none
+  weakening a normative requirement. `ClientCombatReconciler` (232)/`ClientChatState` (233) expose `reset()`
+  but are not part of the normative directive.
+- Tests: `tests/unit/ReconnectStateRecovery.test.ts` (NEW, 81 tests): epoch issuance/reconnect/history
+  bounding (REQ-1/2/4), stale/replay and mid-transaction-disconnect rejection through a server dispatch gate
+  over the real 231 validator and 227 authority (REQ-3/5), one test per `compareSignatures` reason code with
+  order-independent set equality (REQ-2/3), snapshot assembly determinism and every validation throw (REQ-4),
+  signature recording with unchanged-summary throws (REQ-1), full-state application with directive contents,
+  idempotence, and stale rejection (REQ-5), plus 2 integration scenarios: an end-to-end reconnect flow
+  (stale-epoch signature → `epoch mismatch` verdict → `collectFullState` → `applyFullState` → directive
+  reseeding `MovementAuthority`/`MovementReconciler`/`InventoryTransactionValidator`/
+  `ClientInventoryReconciler`/`ClientBlockReconciler`/`ChunkStreamManager`/`ClientEntityStore` with
+  snapshot-consistent assertions and prior-session residue cleared) and a mid-drag disconnect dropped at the
+  session gate. Total unit suite: 3346 tests.
 
 ## What 231 implemented
 
