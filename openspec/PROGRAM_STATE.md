@@ -3,18 +3,36 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **210-touch-controls — VERIFIED 100%**
-- Active implementation change: **210-touch-controls — VERIFIED**
-- Next change: **211-internal-resource-pack-format — NOT YET ACTIVE (artifacts pending)**
-- 210 task ledger: **15 total tasks, 15 completed**
-- 210 completion: **100%**
-- 210 mandatory touch-controls requirements: **PASS**
-- 210 required-test gate: **PASS — unit 2763/2763, E2E 22/22**
-- 210 advancement allowed: **Yes**
-- Session-start head: `55fa8898417a8d1440ecfe78418ed1a627aff5d8`
-- Validated head: `0e225700a35903d0a34e672118cc2f2bc4f4fad5` (210 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), and touch (210) VERIFIED; 211 begins the assets arc (211-213).**
-- Next exact action: **Advance to 211-internal-resource-pack-format. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Original assets organized by namespaced textures/models/sounds/metadata — a pure resource-pack manifest model over namespaced asset paths).**
+- Last completed change: **211-internal-resource-pack-format — VERIFIED 100%**
+- Active implementation change: **211-internal-resource-pack-format — VERIFIED**
+- Next change: **212-internal-data-pack-format — NOT YET ACTIVE (artifacts pending)**
+- 211 task ledger: **18 total tasks, 18 completed**
+- 211 completion: **100%**
+- 211 mandatory internal-resource-pack-format requirements: **PASS**
+- 211 required-test gate: **PASS — unit 2772/2772, E2E 22/22**
+- 211 advancement allowed: **Yes**
+- Session-start head: `ac2bf9a50f44256e037ab02723607ba52ab427fa`
+- Validated head: `9cd1a7a2baa3e22c523a21963d71c4066edce35e` (211 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), and the assets arc opener (211) VERIFIED; 212-213 continue the assets arc.**
+- Next exact action: **Advance to 212-internal-data-pack-format. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Namespaced recipes/loot/tags/worldgen/advancements loaded through registries — a pure data-pack manifest model over the existing registries).**
+
+## What 211 implemented
+
+Change 211 (opening the assets arc 211-213) adds the canonical **internal resource-pack
+format**.
+
+- `src/data/ResourcePackManifest.ts` (NEW) — `ResourcePackManifest { formatVersion: 1, name,
+  description, assets }` with `ResourceAsset { id: ResourceId, type: texture|model|sound|
+  metadata, path (relative, no leading `/`, no `..` segments), metadata? (object, metadata-type
+  assets only) }`. `createResourcePackManifest`/`validateResourcePackManifest`:
+  validate-before-accept with descriptive throws for non-object payloads, unsupported version,
+  empty name/description, non-array assets, invalid namespaced ids (004's rules), unknown types,
+  malformed paths, metadata misuse, duplicate ids, and unknown keys. Organization queries:
+  `assetById` (string or ResourceId; undefined when missing), `assetsByNamespace` (registration
+  order), `assetsOfType`. `assetPath` = `assets/<namespace>/<type>/<path>` — the loader contract.
+- Tests: `tests/unit/ResourcePackManifest.test.ts` (NEW, 9 tests): construction + round-trip,
+  every rejection class, string/ResourceId lookups, grouping order, type filters,
+  empty-manifest totality, canonical path.
 
 ## What 210 implemented
 
