@@ -3,18 +3,37 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **191-core-commands — VERIFIED 100%**
-- Active implementation change: **191-core-commands — VERIFIED**
-- Next change: **192-creative-mode — NOT YET ACTIVE (artifacts pending)**
-- 191 task ledger: **23 total tasks, 23 completed**
-- 191 completion: **100%**
-- 191 mandatory core-commands requirements: **PASS**
-- 191 required-test gate: **PASS — unit 2525/2525, E2E 22/22**
-- 191 advancement allowed: **Yes**
-- Session-start head: `07e161c3f58211eae6556645ebcaa6567ba7770f`
-- Validated head: `7e33589e1346160dd8897e8bdb23e1aa28bba827` (191 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension arc (174-184), meta-progression trio (185-187), difficulty (188), gamerules (189), the command parser (190), and the core commands (191) are COMPLETE; 192 begins the game-modes arc (192-195).**
-- Next exact action: **Advance to 192-creative-mode. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Flight, instant break, creative inventory, no survival depletion — the game-modes arc opener and the target of 191's `set_gamemode` effect).**
+- Last completed change: **192-creative-mode — VERIFIED 100%**
+- Active implementation change: **192-creative-mode — VERIFIED**
+- Next change: **193-hardcore-mode — NOT YET ACTIVE (artifacts pending)**
+- 192 task ledger: **19 total tasks, 19 completed**
+- 192 completion: **100%**
+- 192 mandatory creative-mode requirements: **PASS**
+- 192 required-test gate: **PASS — unit 2541/2541, E2E 22/22**
+- 192 advancement allowed: **Yes**
+- Session-start head: `9f30983ae2b7df64e67ea3a293094213d07cb090`
+- Validated head: `74e5d63570fddc40dea742a440605a408d4666a5` (192 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension arc (174-184), meta-progression trio (185-187), difficulty (188), gamerules (189), the command parser (190), the core commands (191), and the game-mode framework (192) are COMPLETE; 193 continues the game-modes arc (192-195).**
+- Next exact action: **Advance to 193-hardcore-mode. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Hard difficulty lock and death-world semantics — extends 192's GameModeFramework with a hardcore flag, difficulty lock, and permanent-death behavior).**
+
+## What 192 implemented
+
+Change 192 adds the canonical **game-mode model** opening the game-modes arc (192-195).
+
+- `src/simulation/GameModeFramework.ts` (NEW) — `GAME_MODES =
+  ['survival','creative','adventure','spectator']` (a test deep-equals it with 191's
+  `CoreCommands.GAMEMODES`). Immutable `GameModeState { mode }`; `createDefaultGameModeState()` is
+  survival; `setGameMode` returns a NEW state on change and the IDENTICAL state on same/invalid
+  (identity no-op). `parseGameMode` is the text entry (trim + case-insensitive; `null` outside the
+  set). Four vanilla-inspired behavior predicates of mode: `canFly` (creative+spectator),
+  `instantBlockBreak` (creative only), `depletesItems` (survival+adventure — creative/spectator
+  have the creative inventory), `survivalStatsDeplete` (survival+adventure — no hunger/damage
+  depletion in creative/spectator). `serializeGameModeState`/`deserializeGameModeState` are
+  versioned (v1) validate-before-accept: non-object, bad version, unknown mode, and unknown keys
+  all throw descriptive errors with no partial acceptance.
+- Tests: `tests/unit/GameModeFramework.test.ts` (NEW, 16 tests): mode set + 191 equality, identity
+  no-op, parse variants, the 4-mode × 4-predicate rules table, and every persistence rejection.
+  Zero registry changes.
 
 ## What 191 implemented
 
