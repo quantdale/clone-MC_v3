@@ -3,18 +3,36 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **184-end-exit-progression — VERIFIED 100%**
-- Active implementation change: **184-end-exit-progression — VERIFIED**
-- Next change: **185-advancement-framework — NOT YET ACTIVE (artifacts pending)**
-- 184 task ledger: **20 total tasks, 20 completed**
-- 184 completion: **100%**
-- 184 mandatory end-exit-progression requirements: **PASS**
-- 184 required-test gate: **PASS — unit 2460/2460, E2E 22/22**
-- 184 advancement allowed: **Yes**
-- Session-start head: `5e4142d156aea185a6ca859f2dca9ca1ace3279c`
-- Validated head: `73c5df2d767fb74a4c59f905651afec9de027713` (184 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the full dimension arc (174-184: container, types, Nether, End, dragon, exit) is COMPLETE; the meta-progression arc (185-187) begins.**
-- Next exact action: **Advance to 185-advancement-framework. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: criteria/triggers/progress/rewards persistence — the meta-progression layer, consuming 184's completion record as one of its first trigger sources).**
+- Last completed change: **185-advancement-framework — VERIFIED 100%**
+- Active implementation change: **185-advancement-framework — VERIFIED**
+- Next change: **186-core-progression-advancements — NOT YET ACTIVE (artifacts pending)**
+- 185 task ledger: **22 total tasks, 22 completed**
+- 185 completion: **100%**
+- 185 mandatory advancement-framework requirements: **PASS**
+- 185 required-test gate: **PASS — unit 2467/2467, E2E 22/22**
+- 185 advancement allowed: **Yes**
+- Session-start head: `3606c1f482a89f35b1db0cef44ba4ff4adf0af11`
+- Validated head: `b07d56c65e814539345c601658d3eaba0c3afe23` (185 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension arc (174-184) is COMPLETE and the meta-progression framework (185) is COMPLETE; 186-187 fill the catalog.**
+- Next exact action: **Advance to 186-core-progression-advancements. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: advancement chain covering survival-to-End progression — the first advancement CATALOG over 185's framework).**
+
+## What 185 implemented
+
+Change 185 adds the **meta-progression core** that 186's catalog and 187's statistics build on.
+
+- `src/simulation/AdvancementFramework.ts` (NEW) — `AdvancementCriterion` is a typed trigger union
+  (`kill_mob`/`obtain_item`/`dimension_enter`/`boss_defeat`); `AdvancementReward` is definition data
+  (`none`/`experience`/`item`) — granting is wiring. `createAdvancementProgress` starts unachieved;
+  `applyAdvancementTrigger` flips exactly the **first matching unachieved criterion** (equal type AND
+  equal payload key), completes only when the **last** criterion fires (recording the tick), and
+  returns the **identical object** for a non-matching trigger or an achieved advancement — the cheap
+  "did anything change" contract asserted by object identity in tests. `advancementIsComplete`/
+  `advancementCriteriaRemaining` expose state. `serializeAdvancementProgress`/
+  `deserializeAdvancementProgress` are the versioned, fully-validated persistence pair (six
+  malformed classes rejected). The **184 integration is pinned end-to-end**: a real defeated-dragon
+  completion record drives the `boss_defeat` trigger to complete the advancement at the record's
+  tick.
+- Tests: `tests/unit/AdvancementFramework.test.ts` (NEW, 7 tests). Zero registry changes.
 
 ## What 184 implemented
 
