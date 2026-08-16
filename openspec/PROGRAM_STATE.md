@@ -3,18 +3,36 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **193-hardcore-mode — VERIFIED 100%**
-- Active implementation change: **193-hardcore-mode — VERIFIED**
-- Next change: **194-adventure-mode — NOT YET ACTIVE (artifacts pending)**
-- 193 task ledger: **18 total tasks, 18 completed**
-- 193 completion: **100%**
-- 193 mandatory hardcore-mode requirements: **PASS**
-- 193 required-test gate: **PASS — unit 2555/2555, E2E 22/22**
-- 193 advancement allowed: **Yes**
-- Session-start head: `37a75b67a5622e6fc2e7cbdde885b9e2302f3c13`
-- Validated head: `ccff2fb024d6e1ce82e6eba6d2da4c8680ef72b7` (193 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension arc (174-184), meta-progression trio (185-187), difficulty (188), gamerules (189), the command parser (190), the core commands (191), the game-mode framework (192), and hardcore (193) are COMPLETE; 194-195 close the game-modes arc (192-195).**
-- Next exact action: **Advance to 194-adventure-mode. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Restricted breaking/placing using item components/tags — adventure-mode interaction rules over 192's GameModeFramework).**
+- Last completed change: **194-adventure-mode — VERIFIED 100%**
+- Active implementation change: **194-adventure-mode — VERIFIED**
+- Next change: **195-spectator-mode — NOT YET ACTIVE (artifacts pending)**
+- 194 task ledger: **16 total tasks, 16 completed**
+- 194 completion: **100%**
+- 194 mandatory adventure-mode requirements: **PASS**
+- 194 required-test gate: **PASS — unit 2566/2566, E2E 22/22**
+- 194 advancement allowed: **Yes**
+- Session-start head: `3f8b43541ef49788cacdcae2c9ecd7ede6079cf4`
+- Validated head: `a5ca36f0d3e25ac9b83201f6a3a5c82289507a4c` (194 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension arc (174-184), meta-progression trio (185-187), difficulty (188), gamerules (189), the command parser (190), the core commands (191), the game-mode framework (192), hardcore (193), and adventure (194) are COMPLETE; 195 closes the game-modes arc (192-195).**
+- Next exact action: **Advance to 195-spectator-mode. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Noclip flight, no interaction, spectator camera semantics — the game-modes arc closer over 192's GameModeFramework and 194's rules).**
+
+## What 194 implemented
+
+Change 194 adds the **adventure-mode interaction rules** to the game-modes arc (192-195).
+
+- `src/simulation/AdventureModeRules.ts` (NEW) — `canBreakBlock(mode, blockId, allowed)` and
+  `canPlaceBlock(mode, blockId, allowed)` implement the vanilla permission table: survival and
+  creative ALWAYS break/place; spectator NEVER interacts; adventure is allowed ONLY for blocks in
+  the held item's declared set (`CanDestroy`/`CanPlaceOn` via components or tags) — an item with
+  no declarations breaks/places nothing. `resolveBlockPermissionSet(directIds, tagIds, lookupTag)`
+  unions component-declared ids with tag members (the lookup is injected, so `TagRegistry` is not
+  imported; unknown/missing tags contribute nothing; deduplicated; empty inputs → empty set; never
+  throws). Canonical string ids (`minecraft:stone` form). Zero registry changes — no new 008
+  components.
+- Tests: `tests/unit/AdventureModeRules.test.ts` (NEW, 11 tests): the break/place tables (all four
+  modes, empty allowed sets, spectator never-interact), resolution edge cases (direct/tag/mixed/
+  missing-tag/dedupe/empty), and the composed flow (a resolved set feeds both rules for an
+  adventure player). Zero registry changes.
 
 ## What 193 implemented
 
