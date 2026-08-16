@@ -3,19 +3,47 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **228-client-prediction-reconciliation — VERIFIED 100%**
-- Active implementation change: **228-client-prediction-reconciliation — VERIFIED**
-- Next change: **229-entity-replication — NOT YET ACTIVE (artifacts pending)**
-- 228 task ledger: **11 total tasks, 11 completed**
-- 228 completion: **100%**
-- 228 mandatory client-prediction-reconciliation requirements: **PASS**
-- 228 required-test gate: **PASS — unit 2985/2985, E2E 22/22** (full-suite run taken at
-  `--testTimeout=15000` to avoid the documented parallel-load grid-sweep flake)
-- 228 advancement allowed: **Yes**
-- Session-start head: `2c39103eec70ec8dc9ccb004dbea7f9edba5ca62`
-- Validated head: `40799198a4d9ef3cc0368e7792bc6ae9f3a77fe2` (228 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), and the client prediction and reconciliation (228) VERIFIED; 229 begins entity replication.**
-- Next exact action: **Advance to 229-entity-replication. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: spawn/despawn/tracked-data/transform replication across the shared simulation / network protocol boundary).**
+- Last completed change: **229-entity-replication — VERIFIED 100%**
+- Active implementation change: **229-entity-replication — VERIFIED**
+- Next change: **230-block-interaction-networking — NOT YET ACTIVE (artifacts pending)**
+- 229 task ledger: **11 total tasks, 11 completed**
+- 229 completion: **100%**
+- 229 mandatory entity-replication requirements: **PASS**
+- 229 required-test gate: **PASS — unit 3007/3007, E2E 22/22**
+- 229 advancement allowed: **Yes**
+- Session-start head: `252f6c5764c424058b06cd30dd0e0bfa8a789eb6`
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), and the entity replication (229) VERIFIED; 230 begins block interaction networking.**
+- Next exact action: **Advance to 230-block-interaction-networking. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: authoritative break/place/use request validation, result confirmation, and broadcast across the client/server network boundary).**
+
+## What 229 implemented
+
+Change 229 adds the pure headless **entity replication** framework across the network boundary.
+
+- `src/simulation/EntityReplication.ts` (NEW) — `EntityId` (non-negative safe integer);
+  `EntityPosition { x, y, z }`; `EntityRotation { yaw, pitch }`; `EntityVelocity { vx, vy, vz }`;
+  `TrackedDataValue { id, value }`;
+  `EntitySpawnDescriptor { id, type, position, yaw?, pitch?, velocity?, trackedData? }`;
+  `EntityTransformUpdate { id, position?, yaw?, pitch?, velocity? }`;
+  `EntityDataUpdate { id, entries }`;
+  `EntityReplicationBatch { tick, spawned, despawned, transforms, trackedData }`;
+  `EntityReplicationOptions { trackingRange? (default 64), maxTracked? (default 1024) }`;
+  `ClientEntityState { id, type, position, yaw, pitch, velocity, trackedData }`.
+  `EntityReplicationManager`: observer center management (`setCenter(x, y, z)`), 3D Euclidean
+  tracking range calculation (`dx^2 + dy^2 + dz^2 <= range^2`), entity registration/update
+  (`upsertEntity`), entity removal (`removeEntity`), transform tracking (`updateTransform`),
+  tracked data updates (`updateTrackedData`), and delta batch generation (`collectUpdates(tick)`).
+  Batches contain `spawned` (full descriptor for newly entered/registered entities in range),
+  `despawned` (entity IDs that left range or were removed), `transforms` (position/rotation/velocity
+  deltas for existing tracked entities), and `trackedData` (synched property deltas for existing
+  tracked entities), sorted deterministically by entity ID ascending.
+  `ClientEntityStore`: client-side mirror consuming batches via `applyBatch(batch)` and supporting
+  queries (`getEntity`, `hasEntity`, `getAll`, `size`, `reset`).
+- Tests: `tests/unit/EntityReplication.test.ts` (NEW, 22 tests): construction + options validation,
+  observer center management and 3D Euclidean range boundary checks, spawn and despawn transitions,
+  transform deltas (position, yaw, pitch, velocity) and non-tracked entity filtering, tracked-data
+  updates and dirty clearing, input validation and strict error throws (`EntityReplication: <detail>`),
+  maxTracked capacity limit, ClientEntityStore lifecycle and batch application, and schedule determinism.
+  Total unit suite: 3007 tests.
 
 ## What 228 implemented
 
