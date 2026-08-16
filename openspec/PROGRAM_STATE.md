@@ -3,18 +3,36 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **186-core-progression-advancements — VERIFIED 100%**
-- Active implementation change: **186-core-progression-advancements — VERIFIED**
-- Next change: **187-statistics-framework — NOT YET ACTIVE (artifacts pending)**
-- 186 task ledger: **20 total tasks, 20 completed**
-- 186 completion: **100%**
-- 186 mandatory core-progression-advancements requirements: **PASS**
-- 186 required-test gate: **PASS — unit 2474/2474, E2E 22/22**
-- 186 advancement allowed: **Yes**
-- Session-start head: `a8f9e4bb3a8f51e69b74a62cffdaa83f7a915ea9`
-- Validated head: `35815757e5050b70144186f30cdb729340c22b16` (186 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension arc (174-184) and the meta-progression core + catalog (185-186) are COMPLETE; 187 (statistics) closes the meta-progression trio.**
-- Next exact action: **Advance to 187-statistics-framework. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: typed counters, persistence, event hooks and UI data — the last meta-progression change).**
+- Last completed change: **187-statistics-framework — VERIFIED 100%**
+- Active implementation change: **187-statistics-framework — VERIFIED**
+- Next change: **188-world-difficulty — NOT YET ACTIVE (artifacts pending)**
+- 187 task ledger: **22 total tasks, 22 completed**
+- 187 completion: **100%**
+- 187 mandatory statistics-framework requirements: **PASS**
+- 187 required-test gate: **PASS — unit 2482/2482, E2E 22/22**
+- 187 advancement allowed: **Yes**
+- Session-start head: `5c3fc1fdb146fbf920274344dd716d2e35a0f47d`
+- Validated head: `94626aa703e02b6cd0f4f05b225ec46fb86778db` (187 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension arc (174-184) and the meta-progression trio (185-187) are COMPLETE; the difficulty/gamerule/command arc (188-191) begins.**
+- Next exact action: **Advance to 188-world-difficulty. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Peaceful/easy/normal/hard knobs applied to spawn/damage/survival — the first difficulty system).**
+
+## What 187 implemented
+
+Change 187 closes the **meta-progression trio (185-187)** with the statistics framework.
+
+- `src/simulation/StatisticsFramework.ts` (NEW) — typed immutable counters over the fixed 7-key set
+  (`walk_distance`, `mob_kills`, `blocks_broken`, `deaths`, `time_played`, `damage_taken`, `jumps`).
+  `incrementStatistic` floors a finite positive amount into a NEW store (immutability pinned: the
+  original stays 0 after +1+2); non-finite/non-positive amounts are **identity no-ops**.
+  `applyStatisticEvent` maps all seven typed events (walk 3.7 floors to 3 meters, damage floors,
+  kill/break/death/jump/tick +1), keeping counters integral so persistence is lossless by rule.
+  `statisticsSnapshot` is a fresh UI copy (mutation cannot leak — pinned).
+  `serializeStatisticStore`/`deserializeStatisticStore` are the versioned, fully-validated
+  persistence pair: null, wrong version, negative, non-integer, missing known keys, and unknown
+  keys all throw — the unknown-key rejection is pinned explicitly with a payload that has ALL known
+  keys plus one extra.
+- Tests: `tests/unit/StatisticsFramework.test.ts` (NEW, 8 tests). Zero registry changes. 205's HUD
+  and 242's e2e can now read typed counters.
 
 ## What 186 implemented
 
