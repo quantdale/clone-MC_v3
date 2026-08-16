@@ -3,20 +3,43 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **222-shared-simulation-package-boundary — VERIFIED 100%**
-- Active implementation change: **222-shared-simulation-package-boundary — VERIFIED**
-- Next change: **223-network-protocol-codecs — NOT YET ACTIVE (artifacts pending)**
-- 222 task ledger: **15 total tasks, 15 completed**
-- 222 completion: **100%**
-- 222 mandatory shared-simulation-package-boundary requirements: **PASS**
-- 222 required-test gate: **PASS — unit 2861/2861, E2E 22/22** (two concurrent-load runs showed
-  9-10 transient grid-sweep timeouts; idle-machine run and isolated re-runs are clean —
-  documented load flakiness)
-- 222 advancement allowed: **Yes**
-- Session-start head: `0a855a1d7503b2648df02384e8ff06f3f4e62a42`
-- Validated head: `b6ae08196173dd2f35f640574ceda50d7bbee952` (222 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), and the shared-simulation boundary (222) VERIFIED; 223 begins the networking arc.**
-- Next exact action: **Advance to 223-network-protocol-codecs. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Versioned message IDs/codecs/validation and protocol compatibility rules — a pure network-protocol codec framework over 222's shareable boundary).**
+- Last completed change: **223-network-protocol-codecs — VERIFIED 100%**
+- Active implementation change: **223-network-protocol-codecs — VERIFIED**
+- Next change: **224-dedicated-server-tick-loop — NOT YET ACTIVE (artifacts pending)**
+- 223 task ledger: **16 total tasks, 16 completed**
+- 223 completion: **100%**
+- 223 mandatory network-protocol-codecs requirements: **PASS**
+- 223 required-test gate: **PASS — unit 2872/2872, E2E 22/22** (one full-suite run showed 5
+  transient grid-sweep timeouts in pre-existing heavy terrain files under parallel load; isolated
+  re-runs and a full `--testTimeout=15000` rerun are clean — documented load flakiness)
+- 223 advancement allowed: **Yes**
+- Session-start head: `7d6373e3cf4e52fb7078d0bf89b8ffa511170528`
+- Validated head: `99a2105cda18e17039a068965720d137b4b6842f` (223 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), and the network-protocol codecs (223) VERIFIED; 224 begins the dedicated-server tick loop.**
+- Next exact action: **Advance to 224-dedicated-server-tick-loop. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: a headless authoritative world tick process — a pure fixed-timestep tick-loop model with deterministic tick counter over 222/223's shareable, headless-safe simulation surface, decoupled from the browser render loop).**
+
+## What 223 implemented
+
+Change 223 adds the **network protocol codecs** over 222's shareable boundary.
+
+- `src/simulation/NetworkProtocol.ts` (NEW) — `ProtocolFieldType` (`int` | `float` | `string` |
+  `bool`), `ProtocolField { name, type }`, `ProtocolMessage { id, name, fields }`,
+  `NetworkProtocol { version, messages }`, `WireEnvelope { messageId, values }`.
+  `createNetworkProtocol` rejects with descriptive `NetworkProtocol: ...` throws (non-integer/
+  non-positive version, duplicate or non-negative-integer message ids, duplicate or empty names,
+  empty or duplicate field names, unknown field types, unknown message keys).
+  `encodeMessage(protocol, name, values)` produces the wire envelope in field order, returning
+  `null` on unknown name, field-count mismatch, missing key, or type mismatch (int =
+  `Number.isSafeInteger`, float = `Number.isFinite`, string/bool by typeof).
+  `decodeMessage(protocol, wire)` reverses it, returning `null` on unknown id, count, or type.
+  `protocolCompatibility(a, b)` is bidirectional: `version mismatch (a != b)`, `missing message
+  id <id>`, and `message id <id> name mismatch (...)` — identical and empty protocols are
+  compatible. All codecs O(fields); compatibility O(messages).
+- Tests: `tests/unit/NetworkProtocol.test.ts` (NEW, 11 tests): creation + round-trip, every
+  rejection class, exact encode/decode acceptance and rejection per type, exact compatibility
+  reasons both directions. NOTE: one full-suite run hit 5 transient timeouts in pre-existing
+  heavy terrain grid-sweep files under parallel load; all passed in isolation and a full
+  `--testTimeout=15000` rerun is clean (2872/2872) — documented load flakiness.
 
 ## What 222 implemented
 
