@@ -3,18 +3,37 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **189-gamerule-framework — VERIFIED 100%**
-- Active implementation change: **189-gamerule-framework — VERIFIED**
-- Next change: **190-command-parser — NOT YET ACTIVE (artifacts pending)**
-- 189 task ledger: **20 total tasks, 20 completed**
-- 189 completion: **100%**
-- 189 mandatory gamerule-framework requirements: **PASS**
-- 189 required-test gate: **PASS — unit 2499/2499, E2E 22/22**
-- 189 advancement allowed: **Yes**
-- Session-start head: `8db4d4b37904d819260ccd6b5411755137ad13d4`
-- Validated head: `549ae70653495b62344e67de89dcc2ddb39a42da` (189 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension arc (174-184), meta-progression trio (185-187), difficulty (188), and the gamerule rules layer (189) are COMPLETE; 190-191 fill the command layer.**
-- Next exact action: **Advance to 190-command-parser. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Headless-safe command syntax, permission context, typed arguments — the parser layer for 191's core commands).**
+- Last completed change: **190-command-parser — VERIFIED 100%**
+- Active implementation change: **190-command-parser — VERIFIED**
+- Next change: **191-core-commands — NOT YET ACTIVE (artifacts pending)**
+- 190 task ledger: **22 total tasks, 22 completed**
+- 190 completion: **100%**
+- 190 mandatory command-parser requirements: **PASS**
+- 190 required-test gate: **PASS — unit 2512/2512, E2E 22/22**
+- 190 advancement allowed: **Yes**
+- Session-start head: `f7fe752baa3106057342487c262a5ab1adbfe6b5`
+- Validated head: `5e079102f92a4c083e2c991237bafc9d5cfef74a` (190 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension arc (174-184), meta-progression trio (185-187), difficulty (188), gamerules (189), and the command parser (190) are COMPLETE; 191 implements the first commands.**
+- Next exact action: **Advance to 191-core-commands. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Time/weather/gamemode/give/teleport-like original commands for testing/admin — the first command implementations over 190's parser).**
+
+## What 190 implemented
+
+Change 190 adds the headless-safe **command parsing layer** for 191's core commands.
+
+- `src/simulation/CommandParser.ts` (NEW) — `CommandSpec { name, permissionLevel, args }` with five
+  typed argument kinds: `string` (bare or quoted, quotes stripped), `integer` (`-?\d+` safe),
+  `float` (integers valid), `boolean` (true/false case-insensitive), `target` (any bare token —
+  `@p`-style selectors or names). The quote-aware tokenizer groups `"..."`/`'...'` spans and drops
+  empty tokens; `splitCommand` handles the optional leading slash, lowercases the name, and returns
+  `null` for empty/whitespace/slash-only input. `parseCommand` checks the name case-insensitively,
+  arity against the spec (required defaults true; missing-arg errors name the first missing arg by
+  position), and types — every failure is a descriptive `{ ok: false, error }` (unknown command,
+  missing/unexpected arguments, boolean/float mismatches) and empty input is `null`; no throws
+  anywhere. `hasCommandPermission(level, required)` is `level >= required` — the vanilla
+  operator-level context 191's command registry checks before dispatch.
+- Tests: `tests/unit/CommandParser.test.ts` (NEW, 13 tests): every type, quoting, case-
+  insensitivity, each error's exact text, empty-input null, and all four permission pairs. Zero
+  registry changes.
 
 ## What 189 implemented
 
