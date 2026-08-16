@@ -61,6 +61,41 @@ Advancement allowed: true
 - Full baseline gate green alongside the new unit + e2e tests: typecheck, lint, `npm test`
   (3534 + 1 skipped), build, and `npm run test:e2e` (31/31). No regression introduced.
 
+## Post-verification amendment (2026-08-16, discovered during 240's gate)
+
+During change 240's baseline gate, the e2e test "long exploration session keeps heap and GPU-resource
+growth within ceilings" failed **deterministically** on this machine: `finalGeometries - firstGeometries === 19`
+against a fixed `GEOMETRY_DRIFT` ceiling of 4. Investigation (orchestrator, with a throwaway probe run of the
+same session) established this is a **measurement-methodology defect, not a leak**:
+
+- A settled session is perfectly stable: two consecutive settled samples both read `loadedChunks=30,
+  meshGeometries=62` (zero drift at rest), i.e. ≈2 geometries per chunk (opaque + transparent layers).
+- The failing 19-drift came from comparing the first mid-stream sample (ring still growing, ~21 chunks →
+  ~42 geometries) against the post-settle full-ring sample (30 chunks → 62 geometries). The fixed ceiling
+  is structurally biased against legitimate footprint growth; a leak would grow geometry at constant chunk
+  count, which the settled data disproves.
+- The renderer disposes per-chunk meshes on unload (`World.ts` `mesh.geometry.dispose()`); the churn test
+  (constant chunk count, aggressive place/break cycles) and teleport plateau test both pass.
+
+Fix applied to `tests/e2e/memory-stress.spec.ts` (no normative requirement changed):
+- The geometry drift assertion is now **settled-to-settled**, matching the spec's "plateau at the end
+  differs from the plateau after settling the first minute by at most 4" wording: a pre-session
+  baseline (`settlePre`) is taken only after a queue-drain `waitSettled` plus a 20s mesh warm-up
+  (mesh creation reaches its plateau ~25-35s after world-ready under software WebGL), and the end
+  plateau (`settle2`) is compared against it.
+- A second full-suite gate (post chunk-normalization attempt) showed the naive first-sample baseline
+  is still invalid even at constant chunk count: the moving ring shifts, disposing and rebuilding
+  meshes, so `meshGeometries` oscillates ±3 around ~61 (`43 → 58 → 62 → 64 → 64 → 58`) while
+  `loadedChunks` stays 30 and heap stays flat — mid-churn samples are noise, not plateau points.
+- Allowance keeps the chunk-footprint term: `GEOMETRY_DRIFT + GEOMETRY_PER_CHUNK × max(0,
+  ΔloadedChunks)` between the two settled endpoints (`GEOMETRY_PER_CHUNK = 4`, ~2 meshes/chunk +
+  headroom); a leak grows geometry at constant chunk count (allowance would be just 4) and still fails.
+- Textures/programs baselines also moved from the first mid-stream sample to `settlePre` (the
+  first-settled value, per spec).
+- The failure message includes the full sample series plus the settled pre/post geometry.
+
+The corrected test passes in isolation and in the full suite (31/31), which also unblocks 240's gate.
+
 ## Incomplete tasks
 - None. All 16 tasks (1.1–4.4) are complete.
 
