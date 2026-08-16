@@ -3,18 +3,35 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **219-enchantment-potion-content-expansion — VERIFIED 100%**
-- Active implementation change: **219-enchantment-potion-content-expansion — VERIFIED**
-- Next change: **220-recipe-loot-content-expansion — NOT YET ACTIVE (artifacts pending)**
-- 219 task ledger: **14 total tasks, 14 completed**
-- 219 completion: **100%**
-- 219 mandatory enchantment-potion-content-expansion requirements: **PASS**
-- 219 required-test gate: **PASS — unit 2838/2838, E2E 22/22**
-- 219 advancement allowed: **Yes**
-- Session-start head: `43b651387bb88395ef16f85fe14670c493f59477`
-- Validated head: `b9e68e1bc369f791747800a68d69ab2b7718b557` (219 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), and content expansion (215-219) VERIFIED; 220 continues with recipe/loot content expansion.**
-- Next exact action: **Advance to 220-recipe-loot-content-expansion. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Fill crafting/processing/loot coverage for the expanded content catalog — data-driven recipe/loot definitions referencing the expanded content).**
+- Last completed change: **220-recipe-loot-content-expansion — VERIFIED 100%**
+- Active implementation change: **220-recipe-loot-content-expansion — VERIFIED**
+- Next change: **221-current-release-delta — NOT YET ACTIVE (artifacts pending)**
+- 220 task ledger: **15 total tasks, 15 completed**
+- 220 completion: **100%**
+- 220 mandatory recipe-loot-content-expansion requirements: **PASS**
+- 220 required-test gate: **PASS — unit 2846/2846, E2E 22/22**
+- 220 advancement allowed: **Yes**
+- Session-start head: `3a6b6e7f0c53e11014491309d36372301b90ec27`
+- Validated head: `ac87e6a57bebf83bb7d23360f56ae1ca5311d97d` (220 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), and content expansion (215-220) VERIFIED; 221 continues with the current-release delta.**
+- Next exact action: **Advance to 221-current-release-delta. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Isolated current-Minecraft-release behavior/content delta without destabilizing baseline architecture — a pure release-delta overlay model over the expanded content).**
+
+## What 220 implemented
+
+Change 220 adds the data-driven **recipe/loot content expansion**.
+
+- `src/data/RecipeLootExpansion.ts` (NEW) — two definition kinds with prefix conventions
+  (paths must NOT start with `recipe/` or `loot/`): `RecipeDefinition { id, name? (optional
+  non-empty), output, count (positive integer, default 1), ingredients (non-empty item ids),
+  category (crafting|smelting|brewing, default crafting) }`; `LootDefinition { id, source,
+  drops }` with per-drop `{ item, weight (positive integer), count ([min, max] positive, min ≤
+  max) }`. Constructors validate with descriptive throws. `createRecipeLootExpansion` groups
+  into `{ recipes, loot }` (registration order) with PER-KIND duplicate rejection;
+  `recipeById`/`lootById`; `recipesByOutput`; `lootForSource`. The runtime consumes the
+  definitions through 103/110 (untouched).
+- Tests: `tests/unit/RecipeLootExpansion.test.ts` (NEW, 8 tests): per-kind creation with
+  defaults, every rejection class (incl. both prefix rules and per-drop rules), expansion
+  grouping/order, per-kind duplicates, lookups, output/source filters, empty expansions.
 
 ## What 219 implemented
 
