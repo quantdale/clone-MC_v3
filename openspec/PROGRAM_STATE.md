@@ -3,18 +3,38 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **206-settings-persistence — VERIFIED 100%**
-- Active implementation change: **206-settings-persistence — VERIFIED**
-- Next change: **207-keybinding-remap — NOT YET ACTIVE (artifacts pending)**
-- 206 task ledger: **18 total tasks, 18 completed**
-- 206 completion: **100%**
-- 206 mandatory settings-persistence requirements: **PASS**
-- 206 required-test gate: **PASS — unit 2717/2717, E2E 22/22**
-- 206 advancement allowed: **Yes**
-- Session-start head: `4673ba041514822f9ef477faa3049a01283879b7`
-- Validated head: `e416eab5abdbf557bb63a20078f2012657c0c71d` (206 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), and settings (206) VERIFIED; 207 closes the settings arc (206-207).**
-- Next exact action: **Advance to 207-keybinding-remap (closes the settings arc 206-207). Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Conflict-aware remappable controls with persistence — keybinding state with conflict detection over 206's settings).**
+- Last completed change: **207-keybinding-remap — VERIFIED 100%**
+- Active implementation change: **207-keybinding-remap — VERIFIED**
+- Next change: **208-accessibility-options — NOT YET ACTIVE (artifacts pending)**
+- 207 task ledger: **19 total tasks, 19 completed**
+- 207 completion: **100%**
+- 207 mandatory keybinding-remap requirements: **PASS**
+- 207 required-test gate: **PASS — unit 2733/2733, E2E 22/22**
+- 207 advancement allowed: **Yes**
+- Session-start head: `199ea08f091022a58bac4faeef6593cb92c2d809`
+- Validated head: `d2425b8c8c50b07ada3eea741701246d452b9da5` (207 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), and the settings arc (206-207) COMPLETE — all VERIFIED; 208 continues with accessibility options.**
+- Next exact action: **Advance to 208-accessibility-options. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: UI scale, subtitles, reduced motion/screen effects, sensitivity and visibility options — accessibility settings extending 206's settings framework).**
+
+## What 207 implemented
+
+Change 207 (closing the settings arc 206-207) adds the **keybinding remap** framework.
+
+- `src/simulation/KeybindingFramework.ts` (NEW) — `KEYBINDING_ACTIONS`: 23 original actions with
+  default keys (movement `KeyW`/`KeyS`/`KeyA`/`KeyD`/`Space`/`ShiftLeft`/`ControlLeft`;
+  interaction `MouseLeft`/`MouseRight`/`MouseMiddle`; inventory `KeyE`/`KeyQ`/`KeyF`/`KeyT`;
+  hotbar1-9 `Digit1`-`Digit9`); `defaultKey` lookup. Immutable `KeybindingState { bindings }`
+  (every action bound to exactly one key); `createDefaultKeybindings`; `keyFor`; `actionForKey`
+  (first action bound to a key, or null). `remapKey` never throws and never unbinds: invalid keys
+  -> `{ ok: false, reason: 'invalid_key' }`; same-action rebinds identity no-op; free keys
+  rebind; cross-action rebinds SWAP (the displaced action receives the remapped action's previous
+  key, vanilla-style), reporting the displaced action. `resetKey`/`resetAll` with identity
+  no-ops. `serializeKeybindings`/`deserializeKeybindings` (v1) validate-before-accept:
+  non-object, bad version, non-object bindings, unknown actions, invalid keys, and unknown
+  top-level keys throw named errors; missing actions default (forward-compatible).
+- Tests: `tests/unit/KeybindingFramework.test.ts` (NEW, 16 tests): table, queries, invalid-key
+  rejection, same-action identity, free-key rebind, swap + displaced reporting, all-bound-after-
+  swap invariant, resets, round-trip, every rejection.
 
 ## What 206 implemented
 
