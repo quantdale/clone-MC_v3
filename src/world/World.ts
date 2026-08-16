@@ -395,6 +395,11 @@ export class World implements WorldAccess {
     return accepted;
   }
 
+  /** Number of distinct chunks currently tracked in the edit overlay. */
+  getEditOverlayChunkCount(): number {
+    return this.editOverlay.size;
+  }
+
   /** Number of sparse edit cells currently retained in memory. */
   getEditCount(): number {
     let count = 0;

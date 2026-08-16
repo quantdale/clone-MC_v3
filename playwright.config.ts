@@ -15,6 +15,12 @@ export default defineConfig({
     headless: true,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    // Test-only Chromium flags (239): expose `window.gc()` so the long-session
+    // memory suite can force GC before settled heap samples. Never affects the
+    // production build.
+    launchOptions: {
+      args: ['--js-flags=--expose-gc'],
+    },
   },
   webServer: {
     // Build and serve the exact production artifact used for release. The

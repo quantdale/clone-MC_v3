@@ -192,6 +192,10 @@ export class Game {
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
   private bobTime = 0;
 
+  /** Test-only hook (239): when true, the next `update` throws so the game
+   *  enters its recoverable error state. Never set in production gameplay. */
+  private failNextUpdate = false;
+
   /** The seed resolved from the URL ?seed= override, or the configured default. */
   readonly seed: number;
 
@@ -430,6 +434,27 @@ export class Game {
     return this.renderer.rendererCreated;
   }
 
+  /**
+   * Observability/test hook (239): live-resource counts for long-session leak
+   * validation. `blockEntities` is always 0 in the single-player world because
+   * block entities are not yet wired into it (see design.md reconciliation);
+   * `activeEntities` sums the live passive and hostile mobs; `itemEntities` is
+   * the live item-entity (+ xp-orb) set size. No gameplay behavior changes.
+   */
+  getLiveResourceCounts(): { blockEntities: number; activeEntities: number; itemEntities: number } {
+    return {
+      blockEntities: 0,
+      activeEntities:
+        this.passiveMobs.getActivePigs().length + this.hostileMobs.getActiveZombies().length,
+      itemEntities: this.itemEntities.size,
+    };
+  }
+
+  /** Test-only hook (239): force the next update to throw and enter the error state. */
+  failSimulation(): void {
+    this.failNextUpdate = true;
+  }
+
   /** Show the unrecoverable initialization error state. */
   showError(message: string): void {
     this.loop.stop();
@@ -450,6 +475,10 @@ export class Game {
   private update(dt: number): void {
     if (this.disposed) {
       return;
+    }
+    if (this.failNextUpdate) {
+      this.failNextUpdate = false;
+      throw new Error('239 test-injected simulation failure');
     }
 
     // Player chunk used for streaming + debug.
