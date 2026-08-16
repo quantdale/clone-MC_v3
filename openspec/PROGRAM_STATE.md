@@ -3,18 +3,33 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **204-recipe-book — VERIFIED 100%**
-- Active implementation change: **204-recipe-book — VERIFIED**
-- Next change: **205-hud-parity — NOT YET ACTIVE (artifacts pending)**
-- 204 task ledger: **18 total tasks, 18 completed**
-- 204 completion: **100%**
-- 204 mandatory recipe-book requirements: **PASS**
-- 204 required-test gate: **PASS — unit 2696/2696, E2E 22/22**
-- 204 advancement allowed: **Yes**
-- Session-start head: `5577e53e418711d7d9bd2be13a9d57346ec2147c`
-- Validated head: `e717f7b2f329d29f806af79b83ba2c581bf77a91` (204 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), and inventory-parity (202-204) VERIFIED; 205 closes the inventory-parity arc.**
-- Next exact action: **Advance to 205-hud-parity (closes the inventory-parity arc 202-205). Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Hearts, hunger, armor, air, XP, status effects, selected item and boss bars — a pure HUD state projection over the player systems).**
+- Last completed change: **205-hud-parity — VERIFIED 100%**
+- Active implementation change: **205-hud-parity — VERIFIED**
+- Next change: **206-settings-persistence — NOT YET ACTIVE (artifacts pending)**
+- 205 task ledger: **20 total tasks, 20 completed**
+- 205 completion: **100%**
+- 205 mandatory hud-parity requirements: **PASS**
+- 205 required-test gate: **PASS — unit 2707/2707, E2E 22/22**
+- 205 advancement allowed: **Yes**
+- Session-start head: `5ddca765a07788263395c0f8efe74b104b6d4ced`
+- Validated head: `271adb3c877ac173cbbcbccb035ac0588df7a326` (205 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), and the inventory-parity arc (202-205) COMPLETE — all VERIFIED; 206 begins the settings arc (206-207).**
+- Next exact action: **Advance to 206-settings-persistence. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Graphics/audio/control/gameplay settings stored independently of worlds — a pure settings framework with typed categories and versioned persistence independent of world saves).**
+
+## What 205 implemented
+
+Change 205 (closing the inventory-parity arc 202-205) adds the pure **HUD projection**.
+
+- `src/ui/HudParity.ts` (NEW) — `projectHud(inputs)` maps a plain `HudInputs` snapshot into the
+  immutable `HudState`: hearts/hunger/armor as half-icon `HudBars { full, half }` on the 0-20
+  scale (1 hp = half an icon) with clamps; `airBubbles = ceil(air/maxAir*10)` clamped [0, 10]
+  (0 for `maxAir <= 0`); experience `{ level, progress }` with clamps; effects passthrough with
+  `remainingFraction = clamp(durationTicks/600, 0, 1)` and `blinking = durationTicks < 200`;
+  `selectedSlot` clamped [0, 8]; boss bars with progress clamped [0, 1]. A total function — every
+  input is clamped, never thrown on.
+- Tests: `tests/unit/HudParity.test.ts` (NEW, 11 tests): half-icon boundaries, hunger/armor
+  scales, air ceil boundaries, experience clamps, blink threshold and fraction clamps, selection/
+  boss-bar clamps, empty lists, totality on NaN/negative inputs.
 
 ## What 204 implemented
 
