@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **236-multiplayer-load-tests — VERIFIED 100%**
-- Active implementation change: **236-multiplayer-load-tests — VERIFIED**
-- Next change: **237-network-adversarial-validation — artifacts present, not yet ACTIVE**
-- 236 task ledger: **14 total tasks, 14 completed**
-- 236 completion: **100%**
-- 236 mandatory multi-client correctness + performance budget requirements: **PASS**
-- 236 required-test gate: **PASS — unit 3388/3388 + 1 skipped (canonical perf test), E2E 22/22**
-- 236 advancement allowed: **Yes**
+- Last completed change: **237-network-adversarial-validation — VERIFIED 100%**
+- Active implementation change: **237-network-adversarial-validation — VERIFIED**
+- Next change: **238-worker-and-main-thread-stress — artifacts present, not yet ACTIVE**
+- 237 task ledger: **15 total tasks, 15 completed**
+- 237 completion: **100%**
+- 237 mandatory adversarial input validation + integrity requirements (REQ-M1..M5, D1..D7, R1..R6): **PASS**
+- 237 required-test gate: **PASS — unit 3440/3440 + 1 skipped, E2E 22/22**
+- 237 advancement allowed: **Yes**
 - Session-start head: `39780587a5f449cdbcdd21e46f6cde60e3973b51`
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), the chat and command networking (233), the server world persistence (234), the reconnect state recovery (235), and the multiplayer load tests (236) VERIFIED; 237 begins network adversarial validation.**
-- Next exact action: **Advance to 237-network-adversarial-validation. Its artifacts exist (pre-authored package present); validate the package against actual code per SPEC_AUTHORING_PROTOCOL.md, then implement, unit-test, and gate as usual.**
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), the chat and command networking (233), the server world persistence (234), the reconnect state recovery (235), the multiplayer load tests (236), and the network adversarial validation (237) VERIFIED; 238 begins worker/main-thread stress.**
+- Next exact action: **Advance to 238-worker-and-main-thread-stress. Its artifacts exist (pre-authored package present); validate the package against actual code per SPEC_AUTHORING_PROTOCOL.md, then implement, unit-test, and gate as usual.**
 
 ## What 235 implemented
 
