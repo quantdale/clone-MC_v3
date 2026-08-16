@@ -3,18 +3,35 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **187-statistics-framework — VERIFIED 100%**
-- Active implementation change: **187-statistics-framework — VERIFIED**
-- Next change: **188-world-difficulty — NOT YET ACTIVE (artifacts pending)**
-- 187 task ledger: **22 total tasks, 22 completed**
-- 187 completion: **100%**
-- 187 mandatory statistics-framework requirements: **PASS**
-- 187 required-test gate: **PASS — unit 2482/2482, E2E 22/22**
-- 187 advancement allowed: **Yes**
-- Session-start head: `5c3fc1fdb146fbf920274344dd716d2e35a0f47d`
-- Validated head: `94626aa703e02b6cd0f4f05b225ec46fb86778db` (187 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension arc (174-184) and the meta-progression trio (185-187) are COMPLETE; the difficulty/gamerule/command arc (188-191) begins.**
-- Next exact action: **Advance to 188-world-difficulty. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Peaceful/easy/normal/hard knobs applied to spawn/damage/survival — the first difficulty system).**
+- Last completed change: **188-world-difficulty — VERIFIED 100%**
+- Active implementation change: **188-world-difficulty — VERIFIED**
+- Next change: **189-gamerule-framework — NOT YET ACTIVE (artifacts pending)**
+- 188 task ledger: **18 total tasks, 18 completed**
+- 188 completion: **100%**
+- 188 mandatory world-difficulty requirements: **PASS**
+- 188 required-test gate: **PASS — unit 2490/2490, E2E 22/22**
+- 188 advancement allowed: **Yes**
+- Session-start head: `003f69acdefaf4122b40a6e9e489fe07ee3b8108`
+- Validated head: `387a1cec0df51f1d4f1e352420d908bcbf1e79ab` (188 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension arc (174-184), the meta-progression trio (185-187), and the first difficulty system (188) are COMPLETE; 189-191 fill gamerules/commands.**
+- Next exact action: **Advance to 189-gamerule-framework. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Typed persisted gamerules queried by simulation — the rules layer: a typed gamerule registry with boolean/integer/string values, per-world versioned persistence, and typed get/set with validation).**
+
+## What 188 implemented
+
+Change 188 adds the first **difficulty system** — the start of the difficulty/gamerule/command arc.
+
+- `src/simulation/WorldDifficulty.ts` (NEW) — `DIFFICULTY_LEVELS` (`peaceful`/`easy`/`normal`/`hard`)
+  and `DEFAULT_DIFFICULTY = 'normal'`. The frozen `DifficultyDefinition` table carries vanilla
+  knobs: peaceful (hostileSpawns false, hostileDamageMultiplier 0, hungerDepletionMultiplier 0,
+  canStarve false), easy 0.5/0.5, normal 1/1, hard 1.5/1.5 (spawns + starvation true except
+  peaceful) — the exact values 138's spawn rules, 141/116's damage resolution, and 124's food
+  runtime consult. Five pure accessors read the table. `parseDifficultyLevel` is the trimmed
+  case-insensitive text entry point (191's `/difficulty` command consumes it): `'  HARD '` → hard,
+  `'Normal'` → normal, unknown/empty/null → `null`. `serializeDifficulty`/`deserializeDifficulty`
+  are the versioned, validated persistence pair (wrong version or unknown/non-string level throws).
+- Tests: `tests/unit/WorldDifficulty.test.ts` (NEW, 8 tests): every knob per level, all accessors,
+  parsing variants, persistence round-trip + rejection. Zero registry changes. No integration into
+  138/141/116/124 yet (wiring), no command (191), no hardcore lock (193).
 
 ## What 187 implemented
 
