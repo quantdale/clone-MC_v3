@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "235-reconnect-state-recovery",
+  "currentChange": "236-multiplayer-load-tests",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "235-reconnect-state-recovery",
-  "nextChange": "236-multiplayer-load-tests",
-  "completedTasks": 15,
-  "totalTasks": 15,
+  "lastCompletedChange": "236-multiplayer-load-tests",
+  "nextChange": "237-network-adversarial-validation",
+  "completedTasks": 14,
+  "totalTasks": 14,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -16,7 +16,7 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "39780587a5f449cdbcdd21e46f6cde60e3973b51",
-  "lastCompletedTask": "235: reconnect state recovery complete; 235-reconnect-state-recovery VERIFIED 15/15 (100%). src/simulation/ReconnectStateRecovery.ts: pure headless reconnect/state-resync framework — ReconnectStateManager (per-profile monotonic SessionEpoch from 1, isReconnect detection, disconnect ending the active session, isSessionCurrent stale/replay/mid-transaction-disconnect rejection, bounded connect/disconnect history (default 32, oldest dropped), collectFullState assembling a validated deterministic FullStateSnapshot: sorted de-duplicated chunk keys + same-order ChunkSnapshots (226), ascending-id EntitySpawnDescriptors (229), validated inventory window (231), defensive copies), standalone compareSignatures with fixed check order (profile/epoch/tick/position/inventory state/interest/entity set) and set-order-independent comparison (epoch mismatch always forces resync), ReconnectStateClient (connect/record*/setInterest/setEntities/signature, applyFullState returning a 5-action ClientResyncDirective: reset_movement/reset_inventory/clear_block_predictions/reset_chunks/reset_entities — current-epoch-gated, idempotent, summary replacement + resyncPending clearance), strict Reconnect: <detail> validation, no DOM/IO, consumes 225-231 components only via existing reset()/reseed hooks. 15 tasks complete; 81 unit tests incl. 2 integration scenarios (end-to-end reconnect flow reseeding MovementAuthority/MovementReconciler/InventoryTransactionValidator/ClientInventoryReconciler/ClientBlockReconciler/ChunkStreamManager/ClientEntityStore from the directive; mid-drag disconnect dropped at the session gate; 3346 total); gates: typecheck PASS, lint PASS, unit 3346/3346, build PASS, e2e 22/22. Reconciliation: all named payload types and reset() hooks verified against actual code; strictness additions (duplicate entity id rejection, input/signature/snapshot internal-consistency validation, not-connected client throws, sorted-unique interest/entity storage) recorded in design.md reconciliation notes.",
+  "lastCompletedTask": "236: multiplayer load tests complete; 236-multiplayer-load-tests VERIFIED 14/14 (100%). src/simulation/MultiClientLoadHarness.ts: MultiClientHarness (one authoritative WorldTickProcess 224 plus N client sessions; per-session ConnectionLifecycle 225 connect/connected/handshakeAccepted, ChunkStreamManager 226, EntityReplicationManager 229 + ClientEntityStore, InventoryTransactionValidator + ClientInventoryReconciler 231; step/stepTo/update with per-tick consume chunks -> entities -> inventory and queued-transaction drain, reset(), log-based snapshot/restore replay; strict MultiClientHarness: <detail> validation) + MultiClientMetricsCollector (validated per-client per-tick counters; clientTickRecords/clientTotals/totals/perClientTickMaxes) + validateMultiClientBudgets/evaluateMultiClientBudgets (075 convention; boundary equality within budget; malformed actuals violate) + scenario presets BASELINE_LOAD/CHUNK_STRESS/ENTITY_CHURN/INVENTORY_BURST + DEFAULT_BASELINE_BUDGETS (200 tps/6000 ms/81/1024/64). Wall-clock verdicts come from the canonical isolated measurement (MC_CANONICAL=1; measured 661.8 tps / 1813.4 ms, withinBudget true); per-tick maxes 81/1024/4; 10k-tick run keeps chunk stores at maxSnapshots 16 and entity stores <= maxTracked 200 with reconciler predictions empty at quiescence.",
   "nextExactAction": "Advance to 236-multiplayer-load-tests. Its artifacts exist; validate the package against actual code per SPEC_AUTHORING_PROTOCOL.md, then implement, unit-test, and gate as usual.",
   "blockers": [],
   "validationResults": [
@@ -2297,6 +2297,15 @@
       "build": "PASS via tsc --noEmit && vite build",
       "e2e": "PASS 22/22",
       "note": "234 VERIFIED 15/15 tasks (100%). src/simulation/PersistentWorldCodecs.ts (shared codec seam: PersistentUnitKind/ServerWorldUnit/WorldSaveCodec/unitKey, strict PersistentWorldCodecs: <detail> validation, encode via shared validator, decode via injectable 041 migration chain, DOWNGRADE/UNKNOWN_VERSION/foreign-worldId rejection) + src/simulation/ServerSaveLifecycle.ts (WorldTickProcess.TickSystem state machine unloaded->loading->running->flushing->closed, all-or-nothing load, markDirty dedupe preserving FIFO, tick-paced bounded drain 64, autosaveEveryTicks 100, failure requeue without loss, storageGate, flush/saveAndClose zero-progress guard). SSL REQ-2 re-mark scenario amended to FIFO-consistent order."
+    },
+    {
+      "head": "735420ec30ca332aece2915b2893c171ddbb05d9",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 3388/3388 + 1 skipped (prior 3346 + 43 new: multi-client-correctness 31 + multi-client-performance 12; canonical throughput test self-skips in-suite)",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 22/22",
+      "note": "236 VERIFIED 14/14 tasks (100%). src/simulation/MultiClientLoadHarness.ts: MultiClientHarness (one authoritative WorldTickProcess + N client sessions over 225/226/229/231, per-tick consume chunks -> entities -> inventory, step/stepTo/update, reset, log-based snapshot/restore replay, strict MultiClientHarness: <detail> validation) + MultiClientMetricsCollector + validateMultiClientBudgets/evaluateMultiClientBudgets (075 convention) + presets + DEFAULT_BASELINE_BUDGETS (200 tps/6000 ms/81/1024/64). Spec amended (Measurement context): normative REQ-P3/P7 verdicts come from the canonical isolated run MC_CANONICAL=1 npx vitest run tests/unit/multi-client-performance.test.ts; measured 661.8 tps / 1813.4 ms, withinBudget true. Structural ceilings asserted in-suite (81/1024/4); 10k-tick run bounded at maxSnapshots 16 / maxTracked 200 with reconcilers empty. 31 correctness + 12 performance tests; full gate green."
     }
   ],
   "publishedHead": "7c2e19aaf3906ee7d1ac1572c43da816618c6960",
