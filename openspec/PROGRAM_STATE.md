@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **233-chat-and-command-networking — VERIFIED 100%**
-- Active implementation change: **233-chat-and-command-networking — VERIFIED**
-- Next change: **234-server-world-persistence — NOT YET ACTIVE (artifacts pending)**
-- 233 task ledger: **16 total tasks, 16 completed**
-- 233 completion: **100%**
-- 233 mandatory chat-and-command-networking requirements: **PASS**
-- 233 required-test gate: **PASS — unit 3191/3191, E2E 22/22**
-- 233 advancement allowed: **Yes**
+- Last completed change: **234-server-world-persistence — VERIFIED 100%**
+- Active implementation change: **234-server-world-persistence — VERIFIED**
+- Next change: **235-reconnect-state-recovery — NOT YET ACTIVE (artifacts pending)**
+- 234 task ledger: **15 total tasks, 15 completed**
+- 234 completion: **100%**
+- 234 mandatory persistent-codecs + save-lifecycle requirements: **PASS**
+- 234 required-test gate: **PASS — unit 3265/3265, E2E 22/22**
+- 234 advancement allowed: **Yes**
 - Session-start head: `39780587a5f449cdbcdd21e46f6cde60e3973b51`
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), and the chat and command networking (233) VERIFIED; 234 begins server world persistence.**
-- Next exact action: **Advance to 234-server-world-persistence. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: server-owned save lifecycle using shared persistent codecs).**
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), the chat and command networking (233), and the server world persistence (234) VERIFIED; 235 begins reconnect state recovery.**
+- Next exact action: **Advance to 235-reconnect-state-recovery. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: clean disconnect/reconnect and client state resynchronization).**
 
 ## What 231 implemented
 
@@ -115,6 +115,42 @@ Change 233 adds the pure headless **chat and command networking** framework acro
   two-router determinism (deep-equal results), client submit/applyDelivery exact-once dedupe/ascending order/
   FIFO duplicate-pending confirmation/localPlayerId/bounded-log trimming/snapshot isolation, `ClientChatState:
   <detail>` validation without corruption, and the 223 codec round-trip block. Total unit suite: 3191 tests.
+
+## What 234 implemented
+
+Change 234 adds the **server world persistence** seam: a shared save codec plus a headless save lifecycle
+consuming the existing persistence primitives (034-043) through an injected boundary.
+
+- `src/simulation/PersistentWorldCodecs.ts` (NEW) — `PersistentUnitKind` (the five unit kinds: `world-metadata`,
+  `player-state`, `chunk-sections`, `block-entities`, `entities`), `ServerWorldUnit { kind, worldId, chunkX,
+  chunkZ, value }`, `WorldCodecMeta`, `WorldSaveCodec { encode, decode }`, `unitKey` (the 038 keying convention
+  `kind|worldId|chunkX|chunkZ`); strict `validatePersistentUnit`/`validateWorldCodecMeta` with
+  `PersistentWorldCodecs: <detail>` errors (unknown kind, non-integer coords, missing `value`, non-zero
+  singleton coords for metadata/player-state). `encode` produces the exact shared validator-passing payloads
+  (035 `SerializedChunkColumn`, 036/037 chunk records, 034 `WorldMetadata`, 040 `PlayerStateRecord`); `decode`
+  applies the injectable 041 migration chains (`migrateColumn`/`migrateMetadata`, defaulting to the real,
+  currently-identity chains) then validates and rejects foreign `worldId`/coordinate mismatches and
+  `DOWNGRADE`/`UNKNOWN_VERSION` records.
+- `src/simulation/ServerSaveLifecycle.ts` (NEW) — pure headless `WorldTickProcess` `TickSystem` state machine
+  `unloaded -> loading -> running -> flushing -> closed` with `ServerSaveLifecycle: <detail>` throws for
+  invalid options/out-of-state operations. `load(worldId, restore)`: `readWorld` + decode all records with
+  deterministic sorted restore order and all-or-nothing rollback to `unloaded` (no unit restored on any
+  failure); `markDirty`: running-only, keyed de-duplication preserving FIFO position (re-mark replaces the
+  value); tick-cadence bounded drains (`tick % autosaveEveryTicks === 0`, `limitPerDrain` 64) serialized on a
+  promise chain with `idle()`; encode-at-drain with remove-only-on-success identity check and re-queue-on-
+  failure (no silent loss); `storageGate.canWrite()` fencing (no writes while down, units pending, classified
+  `SaveFailure` recording bounded at 32); `flush`/`saveAndClose` with a zero-progress guard (3 runs) and the
+  `closed` transition; `reset()` for recovery. Player-state writes route to `writePlayerState`; the four queue
+  kinds route to `write` as 038 `SaveUnit`s.
+- Spec amendment: SSL REQ-2's "Re-mark replaces value and keeps FIFO position" scenario originally stated the
+  re-marked unit drains after the other unit, contradicting its own FIFO invariant and the 038
+  `DirtySaveQueue` semantics; the scenario was corrected to drain the re-marked unit first with its newer
+  value (recorded in design.md reconciliation notes).
+- Tests: `tests/unit/PersistentWorldCodecs.test.ts` (NEW, 35 tests) + `tests/unit/ServerSaveLifecycle.test.ts`
+  (NEW, 39 tests incl. 2 `WorldTickProcess`-hosted integration round-trips using a test `SaveLoadBoundary` and
+  the production codec adapter: load creates -> mark all five units -> cadence drain persists them -> mutate +
+  re-mark drains newest only -> `saveAndClose` -> reload restores the identical world; deterministic runs
+  produce deep-equal write payloads). Total unit suite: 3265 tests.
 
 ## What 230 implemented
 
