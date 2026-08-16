@@ -3,18 +3,38 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **180-end-dimension-type — VERIFIED 100%**
-- Active implementation change: **180-end-dimension-type — VERIFIED**
-- Next change: **181-end-world-generation — NOT YET ACTIVE (artifacts pending)**
-- 180 task ledger: **14 total tasks, 14 completed**
-- 180 completion: **100%**
-- 180 mandatory end-dimension-type requirements: **PASS**
-- 180 required-test gate: **PASS — unit 2427/2427, E2E 22/22**
-- 180 advancement allowed: **Yes**
-- Session-start head: `4f53203432ab8582c5c18450b8bf077816c897d6`
-- Validated head: `f237b05c41a091857d47338a3a147c276bde8523` (180 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — dimensions 174-180 (container, types for all three standard dimensions, Nether terrain/portals/content) are COMPLETE; the End arc (181-184) begins.**
-- Next exact action: **Advance to 181-end-world-generation. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: main island/outer island baseline — the first End terrain, consuming 180's END_DIMENSION_TYPE and mirroring 176's nether-world-generation pattern).**
+- Last completed change: **181-end-world-generation — VERIFIED 100%**
+- Active implementation change: **181-end-world-generation — VERIFIED**
+- Next change: **182-end-portal-progression — NOT YET ACTIVE (artifacts pending)**
+- 181 task ledger: **22 total tasks, 22 completed**
+- 181 completion: **100%**
+- 181 mandatory end-world-generation requirements: **PASS**
+- 181 required-test gate: **PASS — unit 2436/2436, E2E 22/22**
+- 181 advancement allowed: **Yes**
+- Session-start head: `eb3f3f9c790d39105ff9fe9769e68c1811a03f34`
+- Validated head: `3659d570dafb8e87ef958921ef5adc8f5a73e8e7` (181 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — dimensions 174-181 (container, all three types, Nether arc, End type + terrain) COMPLETE; the End progression arc (182-184) begins.**
+- Next exact action: **Advance to 182-end-portal-progression. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: portal activation/teleport and return gateway behavior baseline — the End's entry/exit flow: the obsidian platform spawn (5x5 at the End origin, vanilla y=49), the End portal frame activation (eyes of ender as an item requirement per 179's deferral), teleport semantics into the main island, and the return-gateway rules).**
+
+## What 181 implemented
+
+Change 181 adds the End's terrain — the void dimension.
+
+- `src/worldgen/EndTerrain.ts` (NEW) — `generateEndColumn(seed, columnX, columnZ, config?, ids?)`
+  returns a sparse `TerrainColumn` (088's shape, 176's pattern) over the End void, consuming 180's
+  `END_DIMENSION_TYPE` bounds (0..256). The **main island** at the origin is an end-stone blob
+  centered on (0, 64) with radius `45 + 10·fbm` — the 4-octave `fbm3D` range (±1.875) bounds the
+  island to roughly y 0..127 (the profile test documents this honestly instead of assuming ±1).
+  **Outer islands** beyond `END_OUTER_ISLAND_DISTANCE = 1000` are seeded per-column blobs
+  (noise > 0.35, radius `12·(0.5 + 0.5·|noise|)`) around y=64; everything else is air. Near-but-
+  outside columns are **structurally pure void** (column (5,5)/world (80,80) is empty — pinned);
+  outer columns only ever contain bounded blobs (pinned); water never appears. `endStone` defaults
+  to a documented placeholder (1) with a 215 handoff — the exact 176→179 pattern; ids are
+  caller-configurable and validated. No obsidian platform/pillars (182/183), no end_stone registry
+  entry (215), no dragon (183).
+- Tests: `tests/unit/EndTerrain.test.ts` (NEW, 9 tests): defaults vs End bounds, origin island
+  presence, vertical profile, void, outer blobs, purity, determinism, custom ids, config validation.
+  Zero registry changes.
 
 ## What 180 implemented
 
