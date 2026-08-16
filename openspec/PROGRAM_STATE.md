@@ -3,18 +3,34 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **215-block-item-content-expansion — VERIFIED 100%**
-- Active implementation change: **215-block-item-content-expansion — VERIFIED**
-- Next change: **216-biome-content-expansion — NOT YET ACTIVE (artifacts pending)**
-- 215 task ledger: **14 total tasks, 14 completed**
-- 215 completion: **100%**
-- 215 mandatory block-item-content-expansion requirements: **PASS**
-- 215 required-test gate: **PASS — unit 2805/2805, E2E 22/22**
-- 215 advancement allowed: **Yes**
-- Session-start head: `36df5bee6019e173616fd08882371ca36c010865`
-- Validated head: `4086cd1eaf6ab49486143b26faf6303a11682320` (215 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), and content expansion (215) VERIFIED; 216 continues with biome content expansion.**
-- Next exact action: **Advance to 216-biome-content-expansion. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Expand biome catalog and feature combinations through the biome/worldgen registries — data-driven biome definitions following 215's pattern).**
+- Last completed change: **216-biome-content-expansion — VERIFIED 100%**
+- Active implementation change: **216-biome-content-expansion — VERIFIED**
+- Next change: **217-structure-content-expansion — NOT YET ACTIVE (artifacts pending)**
+- 216 task ledger: **14 total tasks, 14 completed**
+- 216 completion: **100%**
+- 216 mandatory biome-content-expansion requirements: **PASS**
+- 216 required-test gate: **PASS — unit 2814/2814, E2E 22/22**
+- 216 advancement allowed: **Yes**
+- Session-start head: `aec1b23b69df27e5c8596272631b685f2bbc2161`
+- Validated head: `849de25010401082ec70892c6d13745ae3671819` (216 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), and content expansion (215-216) VERIFIED; 217 continues with structure content expansion.**
+- Next exact action: **Advance to 217-structure-content-expansion. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Add progression-relevant structures via templates/placement rules — data-driven structure definitions over 099-101's structure systems).**
+
+## What 216 implemented
+
+Change 216 adds the data-driven **biome content expansion** (215's pattern).
+
+- `src/data/BiomeExpansion.ts` (NEW) — `BiomeDefinition { id, name, temperature,
+  precipitation, category, features }`: ids valid namespaced ids without a `biome/` prefix;
+  `name` a non-empty translation key (214); `temperature` finite in [-2, 2] default 0.5;
+  `precipitation` none|rain|snow default rain; `category` one of the eight documented values
+  default plains; `features` non-empty strings default []. `createBiomeDefinition` validates
+  with descriptive throws. `createBiomeExpansion` preserves registration order and rejects
+  duplicate ids; `biomeById` (string or ResourceId); `featuresFor`. The wiring maps definitions
+  onto 016 and the worldgen registries (094-101) — registries untouched.
+- Tests: `tests/unit/BiomeExpansion.test.ts` (NEW, 9 tests): defaults + temperature boundaries,
+  every rejection class (incl. the `biome/` prefix), expansion order, lookups, duplicates,
+  feature lists, empty expansions.
 
 ## What 215 implemented
 
