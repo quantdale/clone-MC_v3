@@ -3,18 +3,38 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **221-current-release-delta — VERIFIED 100%**
-- Active implementation change: **221-current-release-delta — VERIFIED**
-- Next change: **222-shared-simulation-package-boundary — NOT YET ACTIVE (artifacts pending)**
-- 221 task ledger: **14 total tasks, 14 completed**
-- 221 completion: **100%**
-- 221 mandatory current-release-delta requirements: **PASS**
-- 221 required-test gate: **PASS — unit 2854/2854, E2E 22/22**
-- 221 advancement allowed: **Yes**
-- Session-start head: `bb95140f0874e256eb4daac67db01f35136c060f`
-- Validated head: `18ca4b696251f67cdd9c9962646cd81f9cc8b700` (221 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), and the release delta (221) VERIFIED; 222 continues with the shared-simulation package boundary.**
-- Next exact action: **Advance to 222-shared-simulation-package-boundary. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Extract deterministic simulation code so browser client and server can share it — a pure boundary/index model for the deterministic simulation modules).**
+- Last completed change: **222-shared-simulation-package-boundary — VERIFIED 100%**
+- Active implementation change: **222-shared-simulation-package-boundary — VERIFIED**
+- Next change: **223-network-protocol-codecs — NOT YET ACTIVE (artifacts pending)**
+- 222 task ledger: **15 total tasks, 15 completed**
+- 222 completion: **100%**
+- 222 mandatory shared-simulation-package-boundary requirements: **PASS**
+- 222 required-test gate: **PASS — unit 2861/2861, E2E 22/22** (two concurrent-load runs showed
+  9-10 transient grid-sweep timeouts; idle-machine run and isolated re-runs are clean —
+  documented load flakiness)
+- 222 advancement allowed: **Yes**
+- Session-start head: `0a855a1d7503b2648df02384e8ff06f3f4e62a42`
+- Validated head: `b6ae08196173dd2f35f640574ceda50d7bbee952` (222 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), and the shared-simulation boundary (222) VERIFIED; 223 begins the networking arc.**
+- Next exact action: **Advance to 223-network-protocol-codecs. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Versioned message IDs/codecs/validation and protocol compatibility rules — a pure network-protocol codec framework over 222's shareable boundary).**
+
+## What 222 implemented
+
+Change 222 adds the **shared-simulation package boundary**.
+
+- `src/simulation/SimulationPackageBoundary.ts` (NEW) — `SimulationModule { name, deterministic,
+  headlessSafe, externalDeps (default []), checksum? }`; `SimulationPackageBoundary { version:
+  1, modules }`. `createSimulationPackageBoundary`/`validateSimulationPackageBoundary` validate
+  with descriptive throws (version, unique names, flags, deps, checksum, unknown keys). The
+  shareability rule: `deterministic && headlessSafe && externalDeps.length === 0`.
+  `boundaryViolations` reports, in registration order: `deterministic module must have no
+  external deps` and `headlessSafe module must not depend on dom or indexeddb` (both can fire
+  for one module). `sharableModules` filters the rule; `moduleByName`.
+- Tests: `tests/unit/SimulationPackageBoundary.test.ts` (NEW, 7 tests): creation + round-trip,
+  every rejection class, both violation classes incl. double-fire ordering, the shareable
+  filter, lookups, empty boundaries. NOTE: the gate run hit 9-10 transient timeouts in the
+  pre-existing heavy grid-sweep files during concurrent background load; all passed in isolation
+  and the idle-machine full run is clean (2861/2861) — documented load flakiness.
 
 ## What 221 implemented
 
