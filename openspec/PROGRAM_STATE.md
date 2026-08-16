@@ -3,19 +3,47 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **225-connection-lifecycle — VERIFIED 100%**
-- Active implementation change: **225-connection-lifecycle — VERIFIED**
-- Next change: **226-server-chunk-streaming — NOT YET ACTIVE (artifacts pending)**
-- 225 task ledger: **14 total tasks, 14 completed**
-- 225 completion: **100%**
-- 225 mandatory connection-lifecycle requirements: **PASS**
-- 225 required-test gate: **PASS — unit 2922/2922, E2E 22/22** (full-suite run taken at
+- Last completed change: **226-server-chunk-streaming — VERIFIED 100%**
+- Active implementation change: **226-server-chunk-streaming — VERIFIED**
+- Next change: **227-server-player-movement — NOT YET ACTIVE (artifacts pending)**
+- 226 task ledger: **12 total tasks, 12 completed**
+- 226 completion: **100%**
+- 226 mandatory server-chunk-streaming requirements: **PASS**
+- 226 required-test gate: **PASS — unit 2950/2950, E2E 22/22** (full-suite run taken at
   `--testTimeout=15000` to avoid the documented parallel-load grid-sweep flake)
-- 225 advancement allowed: **Yes**
-- Session-start head: `119eebba9f279e1f47e92212f760303cf5309dd4`
-- Validated head: `3d6678261cdffe05fbd6d52cc4e09f85e2d2cf8d` (225 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), and the connection lifecycle (225) VERIFIED; 226 begins server chunk streaming.**
-- Next exact action: **Advance to 226-server-chunk-streaming. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: interest-managed chunk/section snapshots and updates — a pure headless model of per-connection chunk interest, snapshot serialization, and change deltas, gated on 225's connected state).**
+- 226 advancement allowed: **Yes**
+- Session-start head: `c74d7973639a4ac454c7dfc34d27b9fffd2091a8`
+- Validated head: `78e11fc0278b1fead80258c3dcba7651e0a8cc73` (226 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), and the server chunk streaming (226) VERIFIED; 227 begins server player movement.**
+- Next exact action: **Advance to 227-server-player-movement. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: server-authoritative movement validation and teleport correction — a pure headless model validating client movement intents against constraints and producing authoritative corrections, building on 224 tick numbering and 226 interest centers).**
+
+## What 226 implemented
+
+Change 226 adds the **server chunk streaming** model — per-connection interest and
+exactly-once updates.
+
+- `src/simulation/ChunkStreaming.ts` (NEW) — `columnKey(x, z)` = `"x,z"`; `ChunkCoord`,
+  `SectionSnapshot { y, data }`, `ChunkSnapshot { key, x, z, sections, tick }`;
+  `ChunkStreamOptions { viewDistance, maxSnapshots? (default 1024) }`; `InterestDelta`,
+  `ChunkUpdate { tick, added, removed, updated }`. `ChunkStreamManager`:
+  `setCenter(x, z)` returns this move's fresh key-sorted entered/left delta (the first call
+  enters the whole Chebyshev interest set) while accumulating internally until consumed;
+  `isInterested`/`interest()` key-sorted. `putSnapshot` validates the envelope (key equals
+  `columnKey(x, z)`, integer coords, non-empty sections with unique integer `y`, non-empty
+  non-negative safe-integer data arrays, non-negative safe-integer `tick`), replaces any
+  previous snapshot, marks the key dirty, and evicts the oldest-inserted snapshot when the
+  bounded store is full. `pendingUpdates(tick)` consumes entered/left/dirty into key-sorted
+  `added` (entered with snapshots), `removed` (left), and `updated` (dirty inside interest,
+  excluding `added` — exactly-once); entered columns without a snapshot surface as
+  `updated` once their snapshot arrives inside the interest; invalid ticks are rejected
+  without consuming. Every rejection throws `ChunkStream: <detail>`. `reset()` restores
+  pristine state.
+- Tests: `tests/unit/ChunkStreaming.test.ts` (NEW, 28 tests): construction + option
+  rejections, Chebyshev membership incl. boundaries, sorted interest, fresh-move deltas and
+  accumulation via `pendingUpdates`, every snapshot rejection class, replacement/removal,
+  bounded eviction, first-update added-only, consumption, move-then-update removed, late
+  snapshot as updated, dirty-inside-interest updated, removed-not-sent, invalid tick
+  without consumption, reset, and identical-schedule determinism.
 
 ## What 225 implemented
 
