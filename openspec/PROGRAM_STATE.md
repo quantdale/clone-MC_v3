@@ -3,18 +3,35 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **185-advancement-framework — VERIFIED 100%**
-- Active implementation change: **185-advancement-framework — VERIFIED**
-- Next change: **186-core-progression-advancements — NOT YET ACTIVE (artifacts pending)**
-- 185 task ledger: **22 total tasks, 22 completed**
-- 185 completion: **100%**
-- 185 mandatory advancement-framework requirements: **PASS**
-- 185 required-test gate: **PASS — unit 2467/2467, E2E 22/22**
-- 185 advancement allowed: **Yes**
-- Session-start head: `3606c1f482a89f35b1db0cef44ba4ff4adf0af11`
-- Validated head: `b07d56c65e814539345c601658d3eaba0c3afe23` (185 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension arc (174-184) is COMPLETE and the meta-progression framework (185) is COMPLETE; 186-187 fill the catalog.**
-- Next exact action: **Advance to 186-core-progression-advancements. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: advancement chain covering survival-to-End progression — the first advancement CATALOG over 185's framework).**
+- Last completed change: **186-core-progression-advancements — VERIFIED 100%**
+- Active implementation change: **186-core-progression-advancements — VERIFIED**
+- Next change: **187-statistics-framework — NOT YET ACTIVE (artifacts pending)**
+- 186 task ledger: **20 total tasks, 20 completed**
+- 186 completion: **100%**
+- 186 mandatory core-progression-advancements requirements: **PASS**
+- 186 required-test gate: **PASS — unit 2474/2474, E2E 22/22**
+- 186 advancement allowed: **Yes**
+- Session-start head: `a8f9e4bb3a8f51e69b74a62cffdaa83f7a915ea9`
+- Validated head: `35815757e5050b70144186f30cdb729340c22b16` (186 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension arc (174-184) and the meta-progression core + catalog (185-186) are COMPLETE; 187 (statistics) closes the meta-progression trio.**
+- Next exact action: **Advance to 187-statistics-framework. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: typed counters, persistence, event hooks and UI data — the last meta-progression change).**
+
+## What 186 implemented
+
+Change 186 adds the first advancement **catalog** over 185's framework.
+
+- `src/simulation/CoreProgressionAdvancements.ts` (NEW) — a 7-advancement data chain in play order
+  covering survival → Nether → End: `stone_age` (obtain wooden_pickaxe), `acquire_hardware`
+  (stone_pickaxe), `iron_tools` (iron_pickaxe), `diamonds` (diamond), `enter_the_nether`
+  (`dimension_enter minecraft:the_nether`), `enter_the_end` (`dimension_enter minecraft:the_end`),
+  `free_the_end` (`boss_defeat ender_dragon` with the **vanilla experience-500 reward**; the other
+  six carry `none`). All criteria use only 185's typed union with non-empty payloads (pinned).
+  Accessors: `coreProgressionAdvancements()` (order), `getCoreProgressionAdvancement` (unknown →
+  `undefined`), `first`/`final`.
+- Completion is exercised through **185's real framework**: `enter_the_nether` completes at the
+  trigger tick, `free_the_end` completes via the dragon-defeat trigger, and a wrong-dimension
+  trigger is the identity no-op.
+- Tests: `tests/unit/CoreProgressionAdvancements.test.ts` (NEW, 7 tests). Zero registry changes.
 
 ## What 185 implemented
 
