@@ -3,18 +3,37 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **199-particle-system — VERIFIED 100%**
-- Active implementation change: **199-particle-system — VERIFIED**
-- Next change: **200-sound-event-system — NOT YET ACTIVE (artifacts pending)**
-- 199 task ledger: **22 total tasks, 22 completed**
-- 199 completion: **100%**
-- 199 mandatory particle-system requirements: **PASS**
-- 199 required-test gate: **PASS — unit 2627/2627, E2E 22/22**
-- 199 advancement allowed: **Yes**
-- Session-start head: `971a5e9ba2dd369fd5892535e1403ad4b1dc2425`
-- Validated head: `ae35ca53f3d32ff34aca415963a581a22a60d179` (199 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather arc (196-197), sleep (198), and particles (199) VERIFIED; 200 begins the sound arc (200-201).**
-- Next exact action: **Advance to 200-sound-event-system (the 200th change). Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Registry-driven positional/original sound events and categories — a pure sound-event framework with typed events and categories, mirroring 199's event-hook shape).**
+- Last completed change: **200-sound-event-system — VERIFIED 100%**
+- Active implementation change: **200-sound-event-system — VERIFIED**
+- Next change: **201-ambient-audio — NOT YET ACTIVE (artifacts pending)**
+- 200 task ledger: **20 total tasks, 20 completed**
+- 200 completion: **100%**
+- 200 mandatory sound-event-system requirements: **PASS**
+- 200 required-test gate: **PASS — unit 2643/2643, E2E 22/22**
+- 200 advancement allowed: **Yes**
+- Session-start head: `f8687834e8065ac339506d1db8757076c72109fd`
+- Validated head: `8a9501acfe6c73239061ba66c91db94270ab6599` (200 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather arc (196-197), sleep (198), particles (199), and the 200th change — the sound-event system (200) — VERIFIED; 201 continues the sound arc (200-201).**
+- Next exact action: **Advance to 201-ambient-audio. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Original biome/environment ambience and music scheduling — ambient scheduling over 200's categories and 196's weather).**
+
+## What 200 implemented
+
+Change 200 (the 200th change) adds the pure **sound-event system**.
+
+- `src/simulation/SoundEventFramework.ts` (NEW) — `SOUND_CATEGORIES` (master, music, weather,
+  blocks, hostile, neutral, players, ambient); `SOUND_EVENTS` — 18 original data-driven
+  definitions (id, category, default volume, pitch, range) incl. `block_break` (blocks 1.0/16),
+  `explosion` (blocks 4.0/24), `thunder` (weather 10.0/64); `soundEvent` lookup. `emitSound(event,
+  position, options?)` produces a `SoundEmission { event, category, x, y, z, volume, pitch, range
+  }` or `null` for unknown events; option volume ≥ 0, option pitch clamps to [0.5, 2].
+  `audibleVolume(emission, listener)` = `volume * max(0, 1 − dist/range)`, 0 at/over range.
+  Immutable `SoundMixState` (all 1); `setCategoryVolume` identity-no-ops on out-of-[0,1], unknown,
+  or same values; `effectiveVolume(mix, emission, listener)` scales by the emission category's mix
+  volume. `serializeSoundMix`/`deserializeSoundMix` (v1) validate-before-accept; missing
+  categories default to full volume.
+- Tests: `tests/unit/SoundEventFramework.test.ts` (NEW, 16 tests): categories/table, emission
+  defaults + clamps + null, attenuation distances, mix no-ops and scaling, every persistence
+  rejection. Zero registry changes.
 
 ## What 199 implemented
 
