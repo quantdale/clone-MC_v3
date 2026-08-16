@@ -3,18 +3,37 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **181-end-world-generation — VERIFIED 100%**
-- Active implementation change: **181-end-world-generation — VERIFIED**
-- Next change: **182-end-portal-progression — NOT YET ACTIVE (artifacts pending)**
-- 181 task ledger: **22 total tasks, 22 completed**
-- 181 completion: **100%**
-- 181 mandatory end-world-generation requirements: **PASS**
-- 181 required-test gate: **PASS — unit 2436/2436, E2E 22/22**
-- 181 advancement allowed: **Yes**
-- Session-start head: `eb3f3f9c790d39105ff9fe9769e68c1811a03f34`
-- Validated head: `3659d570dafb8e87ef958921ef5adc8f5a73e8e7` (181 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — dimensions 174-181 (container, all three types, Nether arc, End type + terrain) COMPLETE; the End progression arc (182-184) begins.**
-- Next exact action: **Advance to 182-end-portal-progression. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: portal activation/teleport and return gateway behavior baseline — the End's entry/exit flow: the obsidian platform spawn (5x5 at the End origin, vanilla y=49), the End portal frame activation (eyes of ender as an item requirement per 179's deferral), teleport semantics into the main island, and the return-gateway rules).**
+- Last completed change: **182-end-portal-progression — VERIFIED 100%**
+- Active implementation change: **182-end-portal-progression — VERIFIED**
+- Next change: **183-ender-dragon-boss — NOT YET ACTIVE (artifacts pending)**
+- 182 task ledger: **20 total tasks, 20 completed**
+- 182 completion: **100%**
+- 182 mandatory end-portal-progression requirements: **PASS**
+- 182 required-test gate: **PASS — unit 2444/2444, E2E 22/22**
+- 182 advancement allowed: **Yes**
+- Session-start head: `e188daa98c692e2e68910941d9d18ac3017b5ecc`
+- Validated head: `090dc85e625f72a3ba714c518e9a1682701c52bb` (182 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — dimensions 174-182 (container, all three types, Nether arc, End type/terrain/progression) COMPLETE; the boss arc (183-184) begins with the Ender Dragon.**
+- Next exact action: **Advance to 183-ender-dragon-boss. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Dragon boss lifecycle, crystals, damage phases, victory state — consume 182's endReturnGatewayAllowed with a defeat state and 153's boss framework).**
+
+## What 182 implemented
+
+Change 182 adds the End's **entry/exit baseline**, composed with 178's teleport machinery.
+
+- `src/simulation/EndPortalProgression.ts` (NEW) — `endObsidianPlatformPositions` returns the exact
+  25 obsidian cells of the 5×5 pad at `END_OBSIDIAN_PLATFORM_Y = 49` (x/z −2..2, vanilla) and
+  `endSpawnPosition` is `[0.5, 50, 0.5]` (standing on the platform center). The overworld End portal
+  frame is a 5×5 ring: `endPortalFrameCells` = 16 ring cells, `endPortalInteriorCells` = the 3×3
+  hole (9 cells, no overlap, union 25, corners in ring), `endPortalEyeCells` = the 12 edge-middle
+  eye slots (corners take no eyes), and `endPortalIsActivated` requires all `END_PORTAL_FRAME_COUNT
+  = 12` eyes — an **item requirement** per 179's documented eyes-of-ender deferral (the blaze that
+  makes them is 218's scope). `endPortalDestination` is the platform spawn; `endTeleportIsReady`
+  gates re-entry via 178's `portalCooldownRemaining` (300 ticks). `endReturnGatewayAllowed(
+  dragonDefeated)` is exactly `dragonDefeated` — the baseline answer is `false` before 183/184
+  establish any defeat state.
+- Tests: `tests/unit/EndPortalProgression.test.ts` (NEW, 8 tests): the platform set, frame
+  ring/interior/eye geometry set-theoretically, activation at 11/12/13, the destination, cooldown
+  gating, and the return-gateway both values. Zero registry changes.
 
 ## What 181 implemented
 
