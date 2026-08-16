@@ -3,18 +3,35 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **207-keybinding-remap — VERIFIED 100%**
-- Active implementation change: **207-keybinding-remap — VERIFIED**
-- Next change: **208-accessibility-options — NOT YET ACTIVE (artifacts pending)**
-- 207 task ledger: **19 total tasks, 19 completed**
-- 207 completion: **100%**
-- 207 mandatory keybinding-remap requirements: **PASS**
-- 207 required-test gate: **PASS — unit 2733/2733, E2E 22/22**
-- 207 advancement allowed: **Yes**
-- Session-start head: `199ea08f091022a58bac4faeef6593cb92c2d809`
-- Validated head: `d2425b8c8c50b07ada3eea741701246d452b9da5` (207 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), and the settings arc (206-207) COMPLETE — all VERIFIED; 208 continues with accessibility options.**
-- Next exact action: **Advance to 208-accessibility-options. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: UI scale, subtitles, reduced motion/screen effects, sensitivity and visibility options — accessibility settings extending 206's settings framework).**
+- Last completed change: **208-accessibility-options — VERIFIED 100%**
+- Active implementation change: **208-accessibility-options — VERIFIED**
+- Next change: **209-gamepad-controls — NOT YET ACTIVE (artifacts pending)**
+- 208 task ledger: **18 total tasks, 18 completed**
+- 208 completion: **100%**
+- 208 mandatory accessibility-options requirements: **PASS**
+- 208 required-test gate: **PASS — unit 2743/2743, E2E 22/22**
+- 208 advancement allowed: **Yes**
+- Session-start head: `93e139bfcc7aa31250e49851d681e26aecbf787d`
+- Validated head: `97fcb13fd123dafcc128ede2396c9469afa1f0e8` (208 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), and accessibility (208) VERIFIED; 209 continues with gamepad controls.**
+- Next exact action: **Advance to 209-gamepad-controls. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Gamepad movement/look/actions/UI navigation — a pure gamepad input model mapping sticks/buttons to actions over 207's keybinding actions).**
+
+## What 208 implemented
+
+Change 208 adds the typed **accessibility options**.
+
+- `src/simulation/AccessibilityFramework.ts` (NEW) — `ACCESSIBILITY_OPTIONS`: 7 entries —
+  `uiScale` (choice auto/small/normal/large, default auto), `subtitles` (boolean false),
+  `reducedMotion` (boolean false), `screenEffects` (choice fade/flash/none, default fade),
+  `textBackgroundOpacity` (float [0,1], 0.5), `chatVisibility` (choice full/commands/hidden,
+  default full), `flashLighting` (boolean true); kinds boolean/float (inclusive range)/choice
+  (ordered options list). Immutable `AccessibilityStore`; `createDefaultAccessibility`;
+  `getOption`; `isValidAccessibilityValue`; `setOption` (NEW store on valid change, IDENTICAL
+  store for invalid/same). `serializeAccessibility`/`deserializeAccessibility` (v1)
+  validate-before-accept with distinguished rejection messages; missing options default
+  (forward-compatible). Standalone world-independent payload (206/207 pattern).
+- Tests: `tests/unit/AccessibilityFramework.test.ts` (NEW, 10 tests): table, choice/float/
+  boolean validation, identity no-ops, distinct rejections, round-trip, missing-option defaults.
 
 ## What 207 implemented
 
