@@ -3,18 +3,40 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **201-ambient-audio — VERIFIED 100%**
-- Active implementation change: **201-ambient-audio — VERIFIED**
-- Next change: **202-inventory-screen-parity — NOT YET ACTIVE (artifacts pending)**
-- 201 task ledger: **19 total tasks, 19 completed**
-- 201 completion: **100%**
-- 201 mandatory ambient-audio requirements: **PASS**
-- 201 required-test gate: **PASS — unit 2653/2653, E2E 22/22**
-- 201 advancement allowed: **Yes**
-- Session-start head: `eeb10abfbc79b35cf32b26ca1faa38130884fd91`
-- Validated head: `6b665a4a56ef0a910e4e65e4a80ab3a179d70543` (201 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), and the sound arc (200-201) VERIFIED; 202 begins the inventory-parity arc (202-205).**
-- Next exact action: **Advance to 202-inventory-screen-parity. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Drag/click/shift-click/hotbar swap/stack splitting semantics — pure mouse-driven inventory transaction semantics over 106's container-menu-transaction-core).**
+- Last completed change: **202-inventory-screen-parity — VERIFIED 100%**
+- Active implementation change: **202-inventory-screen-parity — VERIFIED**
+- Next change: **203-container-screen-framework — NOT YET ACTIVE (artifacts pending)**
+- 202 task ledger: **19 total tasks, 19 completed**
+- 202 completion: **100%**
+- 202 mandatory inventory-screen-parity requirements: **PASS**
+- 202 required-test gate: **PASS — unit 2668/2668, E2E 22/22**
+- 202 advancement allowed: **Yes**
+- Session-start head: `05b401da29c0c71498020440564f109e10b87429`
+- Validated head: `f0e0993377aa798826870364f1fb74b8781829c5` (202 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), and the inventory-parity opener (202) VERIFIED; 203-205 continue the inventory-parity arc.**
+- Next exact action: **Advance to 203-container-screen-framework. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Reusable menu UI bound to transactional container state — a pure screen-framework binding 106's menu state and 202's interactions).**
+
+## What 202 implemented
+
+Change 202 (opening the inventory-parity arc 202-205) adds the pure **screen-level inventory
+interaction semantics**.
+
+- `src/inventory/InventoryScreenParity.ts` (NEW) — over 106's `ContainerMenu` (the core is
+  untouched): the drag state machine (`DragState { active, button, startSlot, hovered }`;
+  `createDragState` inactive; `dragStart` activates with a same-button/same-slot identity no-op;
+  `dragHover` adds unique indices). `dragEnd` distributes the CURSOR stack across the hovered
+  slots and clears the drag — **left drag in rounds** (one item per slot per round, cycling until
+  the cursor empties or nothing fits; remainder stays), **right drag evenly** (base =
+  floor(count/n), the first count%n slots get base+1, subject to fit); inactive dragEnd is an
+  identity no-op. `doubleClickGather` moves same-item stacks (slot order) into the cursor up to
+  64, draining slots; mismatched cursor or both-empty identity. `hotbarSwap` (player region's
+  first 9 slots): swap / move-to-empty / identity no-ops (same index, both empty); descriptive
+  throws for out-of-bounds and non-hotbar indices. Components preserved on slot copies; the cursor
+  never participates in swaps.
+- Tests: `tests/unit/InventoryScreenParity.test.ts` (NEW, 15 tests): drag lifecycle, left rounds
+  (plain/capped/mismatch), right distribution (plain/remainder/capped), inactive identity, gather
+  (51 across three slots, 64 cap, mismatched, both-empty), hotbar swap (swap/move/identity/throw),
+  input immutability.
 
 ## What 201 implemented
 
