@@ -2317,8 +2317,8 @@
       "note": "237 VERIFIED 15/15 tasks (100%). src/simulation/NetworkAdversarialGuard.ts (NEW): MessageSequenceGuard (track/reset/lastAccepted, accept/duplicate/out_of_order, non-safe-int throws NetworkAdversarial: <detail>) + MessageRateLimiter (submit(kind,tick), sliding window, per-kind override + defaultLimit {40,20}, rejections not counted) + boundedString/boundedArray/boundedCollection + AdversarialMessageGuard.inspectIncoming(protocol,envelope,tick,sequence?) composing 223 decodeMessage + sequence + domain + rate into an InspectResult (unknown_message_id/malformed_fields/oversized_field/duplicate_message/out_of_order/rate_limited/dispatch) + reset(). Additive hardening (no rejection-reason changes): EntityReplication maxTrackedDataItems default 65536, ChunkStreaming maxSectionsPerSnapshot default 512 + maxSectionDataLength default 16384. No central dispatcher so inspectIncoming is the dispatch gate; 223 wire values are scalar so array bounds enforced at type level by the per-module caps (Wiring reconciliation recorded in design.md; spec REQ-M2 rewritten to scalar/array-bound semantics). 52 new unit tests; full gate green (typecheck, lint, 3440+1 unit, build, 22 e2e)."
     }
   ],
-  "publishedHead": "7c2e19aaf3906ee7d1ac1572c43da816618c6960",
-  "publishedAt": "2026-08-16T13:05:09.762Z",
-  "lastValidatedHead": "7c2e19aaf3906ee7d1ac1572c43da816618c6960",
-  "lastKnownHead": "7c2e19aaf3906ee7d1ac1572c43da816618c6960"
+  "publishedHead": "e7e62fbe167d3365fed33ecdfa4c42a31449f5bf",
+  "publishedAt": "2026-08-16T14:03:43.555Z",
+  "lastValidatedHead": "e7e62fbe167d3365fed33ecdfa4c42a31449f5bf",
+  "lastKnownHead": "e7e62fbe167d3365fed33ecdfa4c42a31449f5bf"
 }
