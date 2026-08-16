@@ -3,18 +3,37 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **200-sound-event-system — VERIFIED 100%**
-- Active implementation change: **200-sound-event-system — VERIFIED**
-- Next change: **201-ambient-audio — NOT YET ACTIVE (artifacts pending)**
-- 200 task ledger: **20 total tasks, 20 completed**
-- 200 completion: **100%**
-- 200 mandatory sound-event-system requirements: **PASS**
-- 200 required-test gate: **PASS — unit 2643/2643, E2E 22/22**
-- 200 advancement allowed: **Yes**
-- Session-start head: `f8687834e8065ac339506d1db8757076c72109fd`
-- Validated head: `8a9501acfe6c73239061ba66c91db94270ab6599` (200 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather arc (196-197), sleep (198), particles (199), and the 200th change — the sound-event system (200) — VERIFIED; 201 continues the sound arc (200-201).**
-- Next exact action: **Advance to 201-ambient-audio. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Original biome/environment ambience and music scheduling — ambient scheduling over 200's categories and 196's weather).**
+- Last completed change: **201-ambient-audio — VERIFIED 100%**
+- Active implementation change: **201-ambient-audio — VERIFIED**
+- Next change: **202-inventory-screen-parity — NOT YET ACTIVE (artifacts pending)**
+- 201 task ledger: **19 total tasks, 19 completed**
+- 201 completion: **100%**
+- 201 mandatory ambient-audio requirements: **PASS**
+- 201 required-test gate: **PASS — unit 2653/2653, E2E 22/22**
+- 201 advancement allowed: **Yes**
+- Session-start head: `eeb10abfbc79b35cf32b26ca1faa38130884fd91`
+- Validated head: `6b665a4a56ef0a910e4e65e4a80ab3a179d70543` (201 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), and the sound arc (200-201) VERIFIED; 202 begins the inventory-parity arc (202-205).**
+- Next exact action: **Advance to 202-inventory-screen-parity. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Drag/click/shift-click/hotbar swap/stack splitting semantics — pure mouse-driven inventory transaction semantics over 106's container-menu-transaction-core).**
+
+## What 201 implemented
+
+Change 201 (closing the sound arc 200-201) adds the deterministic **ambient audio scheduler**.
+
+- `src/simulation/AmbientAudioFramework.ts` (NEW) — `AMBIENT_ENVIRONMENTS`: six original
+  definitions (cave `ambient_cave` [200,600] 0.5, forest [300,900] 0.4, plains [400,1000] 0.3,
+  ocean [300,800] 0.35, nether [150,500] 0.5, end [250,700] 0.45); `ambientEnvironment` lookup.
+  Music: `MUSIC_INTERVAL_MIN` 12000 / `MAX` 24000, `music_day`/`music_night`. Immutable
+  `AmbientState { environment, musicDelay, cueDelay }`; `createDefaultAmbientState(rng)` rolls
+  both delays via the injected rng. `tickAmbient(state, { environment, weather, isDay, rng })`
+  fires at most one cue per tick (decrement-then-fire): music (volume 1, day/night by `isDay`)
+  takes precedence when both delays hit 0; cues are `rain` 0.5 / `thunder` 1.0 during weather,
+  else the environment's cue at its volume; fired delays re-roll. An environment change re-rolls
+  `cueDelay` immediately (not decremented on the change tick) while `musicDelay` keeps
+  decrementing. Rolls: `min + floor(rng()*(max-min+1))`. Input never mutated.
+- Tests: `tests/unit/AmbientAudioFramework.test.ts` (NEW, 10 tests): table/constants, default
+  roll math, music firing + precedence, weather/environment cues, environment-change re-roll,
+  quiet ticks, immutability. Zero registry changes.
 
 ## What 200 implemented
 
