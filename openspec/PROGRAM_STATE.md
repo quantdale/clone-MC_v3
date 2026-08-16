@@ -3,18 +3,32 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **179-nether-content-baseline — VERIFIED 100%**
-- Active implementation change: **179-nether-content-baseline — VERIFIED**
-- Next change: **180-end-dimension-type — NOT YET ACTIVE (artifacts pending)**
-- 179 task ledger: **20 total tasks, 20 completed**
-- 179 completion: **100%**
-- 179 mandatory nether-content-baseline requirements: **PASS**
-- 179 required-test gate: **PASS — unit 2424/2424, E2E 22/22**
-- 179 advancement allowed: **Yes**
-- Session-start head: `279cdb122cdcd099120018af3d666a035e96f5d2`
-- Validated head: `8341b7546cde640746347059fddd9b5ab8ff8c31` (179 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension container (174), canonical types (175), Nether terrain (176), portal blocks (177), portal linking (178), and Nether content (179) are COMPLETE.**
-- Next exact action: **Advance to 180-end-dimension-type. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: End bounds/skylight/ambient/save rules — mirrors 175's nether-dimension-type for the End).**
+- Last completed change: **180-end-dimension-type — VERIFIED 100%**
+- Active implementation change: **180-end-dimension-type — VERIFIED**
+- Next change: **181-end-world-generation — NOT YET ACTIVE (artifacts pending)**
+- 180 task ledger: **14 total tasks, 14 completed**
+- 180 completion: **100%**
+- 180 mandatory end-dimension-type requirements: **PASS**
+- 180 required-test gate: **PASS — unit 2427/2427, E2E 22/22**
+- 180 advancement allowed: **Yes**
+- Session-start head: `4f53203432ab8582c5c18450b8bf077816c897d6`
+- Validated head: `f237b05c41a091857d47338a3a147c276bde8523` (180 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — dimensions 174-180 (container, types for all three standard dimensions, Nether terrain/portals/content) are COMPLETE; the End arc (181-184) begins.**
+- Next exact action: **Advance to 181-end-world-generation. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: main island/outer island baseline — the first End terrain, consuming 180's END_DIMENSION_TYPE and mirroring 176's nether-world-generation pattern).**
+
+## What 180 implemented
+
+Change 180 adds the canonical End dimension type, mirroring 175's Nether change and completing the
+standard-dimension type trio.
+
+- `src/data/DimensionTypes.ts` (EDIT) — `END_DIMENSION_TYPE`: `minecraft:the_end`, minY 0, height
+  256 (16 sections), logicalHeight 256, **no skylight**, **not ultrawarm**, non-natural, and
+  `fixedTime 6000` (vanilla locks the End at 6000 ticks — its perpetual dawn). Every field is pinned
+  by tests including the exact `containsY` edges (0/255 in, 256/−1 out). Registers through 174's
+  `DimensionManager` under `minecraft:the_end` with a fresh queue; `dimensionSaveNamespace(
+  'minecraft:the_end')` passes through (the rule is key-generic). Module doc updated to cover both
+  non-overworld types.
+- Tests: `tests/unit/EndDimensionType.test.ts` (NEW, 3 tests). Zero registry changes.
 
 ## What 179 implemented
 
