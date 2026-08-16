@@ -40,6 +40,10 @@ export interface ChunkStreamOptions {
   readonly viewDistance: number;
   /** Bounded snapshot store size; positive integer (default 1024). */
   readonly maxSnapshots?: number;
+  /** Max sections per column snapshot (adversarial bound; default 512). */
+  readonly maxSectionsPerSnapshot?: number;
+  /** Max block-id entries per section `data` array (adversarial bound; default 16384). */
+  readonly maxSectionDataLength?: number;
 }
 
 /** Result of a center move: key-sorted entered/left column keys (accumulated until consumed). */
@@ -60,6 +64,8 @@ export interface ChunkUpdate {
 }
 
 const DEFAULT_MAX_SNAPSHOTS = 1024;
+const DEFAULT_MAX_SECTIONS_PER_SNAPSHOT = 512;
+const DEFAULT_MAX_SECTION_DATA_LENGTH = 16384;
 
 function validateViewDistance(value: number): number {
   if (!Number.isInteger(value) || value <= 0) {
@@ -76,13 +82,25 @@ function validateMaxSnapshots(value: number | undefined): number {
   return v;
 }
 
+function validatePositiveInt(value: number | undefined, fallback: number, label: string): number {
+  const v = value ?? fallback;
+  if (!Number.isInteger(v) || v <= 0) {
+    throw new Error(`ChunkStream: ${label} must be a positive integer`);
+  }
+  return v;
+}
+
 function validateTick(tick: number): void {
   if (!Number.isSafeInteger(tick) || tick < 0) {
     throw new Error('ChunkStream: tick must be a non-negative safe integer');
   }
 }
 
-function validateSnapshot(snapshot: ChunkSnapshot): void {
+function validateSnapshot(
+  snapshot: ChunkSnapshot,
+  maxSectionsPerSnapshot = DEFAULT_MAX_SECTIONS_PER_SNAPSHOT,
+  maxSectionDataLength = DEFAULT_MAX_SECTION_DATA_LENGTH,
+): void {
   if (typeof snapshot !== 'object' || snapshot === null) {
     throw new Error('ChunkStream: snapshot must be an object');
   }
@@ -96,6 +114,11 @@ function validateSnapshot(snapshot: ChunkSnapshot): void {
   validateTick(tick);
   if (!Array.isArray(sections) || sections.length === 0) {
     throw new Error('ChunkStream: snapshot sections must be a non-empty array');
+  }
+  if (sections.length > maxSectionsPerSnapshot) {
+    throw new Error(
+      `ChunkStream: snapshot exceeds maxSectionsPerSnapshot (${maxSectionsPerSnapshot})`,
+    );
   }
   const seenY = new Set<number>();
   for (const section of sections) {
@@ -112,6 +135,11 @@ function validateSnapshot(snapshot: ChunkSnapshot): void {
     if (!Array.isArray(section.data) || section.data.length === 0) {
       throw new Error('ChunkStream: section data must be a non-empty array');
     }
+    if (section.data.length > maxSectionDataLength) {
+      throw new Error(
+        `ChunkStream: section data exceeds maxSectionDataLength (${maxSectionDataLength})`,
+      );
+    }
     for (const value of section.data) {
       if (!Number.isSafeInteger(value) || value < 0) {
         throw new Error('ChunkStream: section data must be non-negative safe integers');
@@ -124,6 +152,8 @@ function validateSnapshot(snapshot: ChunkSnapshot): void {
 export class ChunkStreamManager {
   private readonly viewDistance: number;
   private readonly maxSnapshots: number;
+  private readonly maxSectionsPerSnapshot: number;
+  private readonly maxSectionDataLength: number;
 
   private center_: ChunkCoord | null = null;
   private readonly store = new Map<ChunkKey, ChunkSnapshot>();
@@ -134,6 +164,16 @@ export class ChunkStreamManager {
   constructor(options: ChunkStreamOptions) {
     this.viewDistance = validateViewDistance(options.viewDistance);
     this.maxSnapshots = validateMaxSnapshots(options.maxSnapshots);
+    this.maxSectionsPerSnapshot = validatePositiveInt(
+      options.maxSectionsPerSnapshot,
+      DEFAULT_MAX_SECTIONS_PER_SNAPSHOT,
+      'maxSectionsPerSnapshot',
+    );
+    this.maxSectionDataLength = validatePositiveInt(
+      options.maxSectionDataLength,
+      DEFAULT_MAX_SECTION_DATA_LENGTH,
+      'maxSectionDataLength',
+    );
   }
 
   /**
@@ -205,7 +245,7 @@ export class ChunkStreamManager {
   /** Validate and store a snapshot; replaces any previous snapshot for the key and marks
    *  it dirty. Evicts the oldest-inserted snapshot when the store is full. */
   putSnapshot(snapshot: ChunkSnapshot): void {
-    validateSnapshot(snapshot);
+    validateSnapshot(snapshot, this.maxSectionsPerSnapshot, this.maxSectionDataLength);
     if (!this.store.has(snapshot.key) && this.store.size >= this.maxSnapshots) {
       const oldest = this.store.keys().next().value as ChunkKey;
       this.store.delete(oldest);

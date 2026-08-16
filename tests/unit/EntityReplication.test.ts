@@ -500,4 +500,42 @@ describe('EntityReplication', () => {
       expect(result1).toEqual(result2);
     });
   });
+
+  describe('adversarial tracked-data bounds (237)', () => {
+    const desc = (trackedData: { id: number; value: unknown }[]): EntitySpawnDescriptor => ({
+      id: 1,
+      type: 'zombie',
+      position: { x: 0, y: 0, z: 0 },
+      trackedData,
+    });
+
+    it('rejects an oversized trackedData array on upsert without mutating the pool', () => {
+      const m = new EntityReplicationManager({ maxTrackedDataItems: 2 });
+      expect(() =>
+        m.upsertEntity(desc([{ id: 1, value: 1 }, { id: 2, value: 2 }, { id: 3, value: 3 }])),
+      ).toThrow('EntityReplication: trackedData exceeds maxTrackedDataItems (2)');
+      expect(m.authoritativeCount).toBe(0);
+      expect(m.hasEntity(1)).toBe(false);
+    });
+
+    it('rejects an oversized trackedData update on an existing entity', () => {
+      const m = new EntityReplicationManager({ maxTrackedDataItems: 2 });
+      m.upsertEntity(desc([]));
+      expect(() =>
+        m.updateTrackedData(1, [{ id: 1, value: 1 }, { id: 2, value: 2 }, { id: 3, value: 3 }]),
+      ).toThrow('EntityReplication: trackedData exceeds maxTrackedDataItems (2)');
+    });
+
+    it('accepts trackedData at the boundary', () => {
+      const m = new EntityReplicationManager({ maxTrackedDataItems: 2 });
+      m.upsertEntity(desc([{ id: 1, value: 1 }, { id: 2, value: 2 }]));
+      expect(m.getEntity(1)?.trackedData?.length).toBe(2);
+    });
+
+    it('rejects an invalid maxTrackedDataItems at construction', () => {
+      expect(() => new EntityReplicationManager({ maxTrackedDataItems: 0 })).toThrow(
+        'EntityReplication: maxTrackedDataItems must be a positive integer',
+      );
+    });
+  });
 });

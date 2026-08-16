@@ -380,4 +380,43 @@ describe('ConnectionLifecycle', () => {
       expect(b.history).toEqual(a.history);
     });
   });
+
+  describe('adversarial integrity (237)', () => {
+    it('bounds the transition history to historyLimit', () => {
+      const c = new ConnectionLifecycle({ historyLimit: 3 });
+      c.update(100);
+      c.connect('a');
+      c.connected();
+      c.handshakeAccepted();
+      c.disconnect();
+      c.disconnectComplete();
+      expect(c.history.length).toBe(3);
+      expect(c.state).toBe('disconnected');
+    });
+
+    it('rejects empty profile/reason without changing state', () => {
+      const c = new ConnectionLifecycle();
+      expect(() => c.connect('')).toThrow('ConnectionLifecycle: profile must be a non-empty string');
+      expect(c.state).toBe('disconnected');
+      c.update(100);
+      c.connect('alice');
+      c.connected();
+      expect(() => c.handshakeRejected('')).toThrow('ConnectionLifecycle: reason must be a non-empty string');
+      expect(c.state).toBe('handshaking');
+      expect(c.reason).toBeNull();
+    });
+
+    it('reset restores a pristine disconnected state', () => {
+      const c = new ConnectionLifecycle({ historyLimit: 3 });
+      c.update(1000);
+      c.connect('alice');
+      c.connected();
+      c.handshakeAccepted();
+      c.reset();
+      expect(c.state).toBe('disconnected');
+      expect(c.profile).toBeNull();
+      expect(c.keepAliveCount).toBe(0);
+      expect(c.history).toEqual([]);
+    });
+  });
 });

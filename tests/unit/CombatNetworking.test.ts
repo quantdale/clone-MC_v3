@@ -1031,4 +1031,37 @@ describe('CombatNetworking', () => {
       expect(run()).toEqual(run());
     });
   });
+
+  describe('adversarial cooldown/cap integrity (237)', () => {
+    it('cooldown rejection does not advance the attacker cooldown', () => {
+      const v = new CombatValidator({ minAttackIntervalTicks: 10 });
+      attack(v, { tick: 100 });
+      const fast = attack(v, { tick: 102 });
+      expect(fast).toMatchObject({ accepted: false, reason: 'attack_cooldown' });
+      const later = attack(v, { tick: 110 });
+      expect(later).toMatchObject({ accepted: true });
+    });
+
+    it('projectile cap rejection leaves projectileCount unchanged', () => {
+      const v = new CombatValidator({ maxProjectiles: 1 });
+      const first = fire(v, { tick: 400 });
+      expect(first.result.accepted).toBe(true);
+      const second = fire(v, { tick: 410, chargeTicks: 10 });
+      expect(second.result).toMatchObject({
+        accepted: false,
+        kind: 'projectile_fire',
+        reason: 'max_projectiles',
+      });
+      expect(v.projectileCount).toBe(1);
+    });
+
+    it('malformed seam target output throws without regressing the tracker', () => {
+      const v = new CombatValidator();
+      expect(() =>
+        attack(v, { tick: 100 }, { getTarget: () => ({ ...makeTarget(), x: Number.NaN }) }),
+      ).toThrow('Combat: target.x must be a finite number');
+      const r = attack(v, { tick: 100 });
+      expect(r.accepted).toBe(true);
+    });
+  });
 });

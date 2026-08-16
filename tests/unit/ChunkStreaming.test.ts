@@ -329,4 +329,49 @@ describe('ChunkStreamManager', () => {
       expect(columnKey(-3, 7)).toBe('-3,7');
     });
   });
+
+  describe('adversarial section/data bounds (237)', () => {
+    it('rejects a snapshot exceeding maxSectionsPerSnapshot without storing it', () => {
+      const m = new ChunkStreamManager({ viewDistance: 2, maxSectionsPerSnapshot: 2 });
+      const key = '0,0';
+      const sections = [0, 1, 2].map((y) => ({ y, data: [y + 1] }));
+      expect(() => m.putSnapshot({ key, x: 0, z: 0, sections, tick: 0 })).toThrow(
+        'ChunkStream: snapshot exceeds maxSectionsPerSnapshot (2)',
+      );
+      expect(m.hasSnapshot(key)).toBe(false);
+    });
+
+    it('rejects a section data array exceeding maxSectionDataLength without storing it', () => {
+      const m = new ChunkStreamManager({ viewDistance: 2, maxSectionDataLength: 2 });
+      const key = '0,0';
+      const sections = [{ y: 0, data: [1, 2, 3] }];
+      expect(() => m.putSnapshot({ key, x: 0, z: 0, sections, tick: 0 })).toThrow(
+        'ChunkStream: section data exceeds maxSectionDataLength (2)',
+      );
+      expect(m.hasSnapshot(key)).toBe(false);
+    });
+
+    it('accepts a snapshot at the section/data boundary', () => {
+      const m = new ChunkStreamManager({
+        viewDistance: 2,
+        maxSectionsPerSnapshot: 2,
+        maxSectionDataLength: 2,
+      });
+      const sections = [
+        { y: 0, data: [1, 2] },
+        { y: 1, data: [3, 4] },
+      ];
+      m.putSnapshot({ key: '0,0', x: 0, z: 0, sections, tick: 0 });
+      expect(m.hasSnapshot('0,0')).toBe(true);
+    });
+
+    it('rejects invalid section/data bounds at construction', () => {
+      expect(() => new ChunkStreamManager({ viewDistance: 1, maxSectionsPerSnapshot: 0 })).toThrow(
+        'ChunkStream: maxSectionsPerSnapshot must be a positive integer',
+      );
+      expect(() => new ChunkStreamManager({ viewDistance: 1, maxSectionDataLength: 0 })).toThrow(
+        'ChunkStream: maxSectionDataLength must be a positive integer',
+      );
+    });
+  });
 });

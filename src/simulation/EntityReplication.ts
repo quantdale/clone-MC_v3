@@ -67,6 +67,8 @@ export interface EntityReplicationOptions {
   readonly trackingRange?: number;
   /** Maximum number of entities tracked simultaneously (default 1024). */
   readonly maxTracked?: number;
+  /** Maximum tracked-data entries per entity spawn/update (adversarial bound; default 65536). */
+  readonly maxTrackedDataItems?: number;
 }
 
 export interface ClientEntityState {
@@ -81,6 +83,7 @@ export interface ClientEntityState {
 
 const DEFAULT_TRACKING_RANGE = 64;
 const DEFAULT_MAX_TRACKED = 1024;
+const DEFAULT_MAX_TRACKED_DATA_ITEMS = 65536;
 
 function validateEntityId(id: unknown): EntityId {
   if (typeof id !== 'number' || !Number.isSafeInteger(id) || id < 0) {
@@ -193,6 +196,14 @@ function validateMaxTracked(max?: number): number {
   return m;
 }
 
+function validateMaxTrackedDataItems(max?: number): number {
+  const m = max ?? DEFAULT_MAX_TRACKED_DATA_ITEMS;
+  if (typeof m !== 'number' || !Number.isSafeInteger(m) || m <= 0) {
+    throw new Error('EntityReplication: maxTrackedDataItems must be a positive integer');
+  }
+  return m;
+}
+
 interface ServerEntityRecord {
   id: EntityId;
   type: string;
@@ -209,6 +220,7 @@ interface ServerEntityRecord {
 export class EntityReplicationManager {
   private readonly trackingRange: number;
   private readonly maxTracked: number;
+  private readonly maxTrackedDataItems: number;
 
   private center_: EntityPosition | null = null;
   private readonly entities = new Map<EntityId, ServerEntityRecord>();
@@ -221,6 +233,7 @@ export class EntityReplicationManager {
   constructor(options: EntityReplicationOptions = {}) {
     this.trackingRange = validateTrackingRange(options.trackingRange);
     this.maxTracked = validateMaxTracked(options.maxTracked);
+    this.maxTrackedDataItems = validateMaxTrackedDataItems(options.maxTrackedDataItems);
   }
 
   /**
@@ -290,6 +303,11 @@ export class EntityReplicationManager {
     const { yaw, pitch } = validateRotation(descriptor.yaw, descriptor.pitch);
     const velocity = validateVelocity(descriptor.velocity);
     const trackedDataList = validateTrackedData(descriptor.trackedData);
+    if (trackedDataList.length > this.maxTrackedDataItems) {
+      throw new Error(
+        `EntityReplication: trackedData exceeds maxTrackedDataItems (${this.maxTrackedDataItems})`,
+      );
+    }
 
     if (!this.entities.has(id) && this.entities.size >= this.maxTracked) {
       throw new Error('EntityReplication: maxTracked limit exceeded');
@@ -374,6 +392,11 @@ export class EntityReplicationManager {
     }
     const validatedEntries = validateTrackedData(entries);
     if (validatedEntries.length === 0) return;
+    if (validatedEntries.length > this.maxTrackedDataItems) {
+      throw new Error(
+        `EntityReplication: trackedData exceeds maxTrackedDataItems (${this.maxTrackedDataItems})`,
+      );
+    }
 
     let deltaMap = this.dirtyTrackedData.get(id);
     if (!deltaMap) {

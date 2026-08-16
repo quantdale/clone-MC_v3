@@ -421,4 +421,53 @@ describe('BlockInteractionNetworking', () => {
       expect(run()).toEqual(run());
     });
   });
+
+  describe('adversarial break-sequence integrity (237)', () => {
+    const noBlocks = () => 0;
+    const playerPos = { x: 0, y: 0, z: 0 };
+    // A reachable block distinct from the active break (active break at (1,2,3)).
+    const OTHER: BlockCoord = { x: 3, y: 0, z: 0 };
+
+    it('rejects finish without start as no_active_break leaving the map empty', () => {
+      const v = new BlockInteractionValidator({ minBreakTicks: 5 });
+      const result = v.validateBreak(playerPos, {
+        playerId: 1, action: 'finish', position: OTHER, face: 'up', tick: 100,
+      }, noBlocks);
+      expect(result.accepted).toBe(false);
+      if (!result.accepted) expect(result.reason).toBe('no_active_break');
+      expect(v.activeBreakingCount).toBe(0);
+    });
+
+    it('rejects finish for a different reachable block, preserving the active break', () => {
+      const v = new BlockInteractionValidator({ minBreakTicks: 5 });
+      v.validateBreak(playerPos, {
+        playerId: 1, action: 'start', position: { x: 1, y: 2, z: 3 }, face: 'up', tick: 100,
+      }, noBlocks);
+      const r = v.validateBreak(playerPos, {
+        playerId: 1, action: 'finish', position: OTHER, face: 'up', tick: 105,
+      }, noBlocks);
+      expect(r.accepted).toBe(false);
+      if (!r.accepted) expect(r.reason).toBe('no_active_break');
+      expect(v.getBreakProgress(1)?.position).toEqual({ x: 1, y: 2, z: 3 });
+    });
+
+    it('rejects finishes inside minBreakTicks as break_too_fast and preserves the active break', () => {
+      const v = new BlockInteractionValidator({ minBreakTicks: 5 });
+      v.validateBreak(playerPos, {
+        playerId: 1, action: 'start', position: { x: 1, y: 2, z: 3 }, face: 'up', tick: 100,
+      }, noBlocks);
+      for (const t of [101, 102, 103]) {
+        const r = v.validateBreak(playerPos, {
+          playerId: 1, action: 'finish', position: { x: 1, y: 2, z: 3 }, face: 'up', tick: t,
+        }, noBlocks);
+        expect(r.accepted).toBe(false);
+        if (!r.accepted) expect(r.reason).toBe('break_too_fast');
+      }
+      expect(v.getBreakProgress(1)).not.toBeNull();
+      const ok = v.validateBreak(playerPos, {
+        playerId: 1, action: 'finish', position: { x: 1, y: 2, z: 3 }, face: 'up', tick: 105,
+      }, noBlocks);
+      expect(ok.accepted).toBe(true);
+    });
+  });
 });

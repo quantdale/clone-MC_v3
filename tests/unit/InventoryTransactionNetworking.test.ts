@@ -395,4 +395,38 @@ describe('InventoryTransactionNetworking', () => {
       expect(v.currentCursorItem).toEqual(bucket(1));
     });
   });
+
+  describe('adversarial replay/ordering integrity (237)', () => {
+    it('rejects a replayed stateId as wrong_state_id leaving state unchanged', () => {
+      const v = new InventoryTransactionValidator({ slots: makeSlots(9) });
+      v.processTransaction({ type: 'slot_click', windowId: 0, stateId: 0, slotId: 0, button: 'left' });
+      const before = v.currentSlots;
+      const result = v.processTransaction({ type: 'slot_click', windowId: 0, stateId: 0, slotId: 0, button: 'left' });
+      expect(result.accepted).toBe(false);
+      if (!result.accepted) expect(result.reason).toBe('wrong_state_id');
+      expect(v.currentStateId).toBe(1);
+      expect(v.currentSlots).toEqual(before);
+    });
+
+    it('rejects drag end without start as drag_not_started leaving slots unchanged', () => {
+      const v = new InventoryTransactionValidator({ slots: makeSlots(9) });
+      const before = v.currentSlots;
+      const end = v.processTransaction({ type: 'drag', windowId: 0, stateId: 0, phase: 'end', button: 'left' });
+      expect(end.accepted).toBe(false);
+      if (!end.accepted) expect(end.reason).toBe('drag_not_started');
+      expect(v.currentStateId).toBe(0);
+      expect(v.currentSlots).toEqual(before);
+    });
+
+    it('rejects a duplicate drag start without disturbing the active drag', () => {
+      const v = new InventoryTransactionValidator({ slots: makeSlots(9) });
+      v.processTransaction({ type: 'drag', windowId: 0, stateId: 0, phase: 'start', button: 'left' });
+      const dup = v.processTransaction({ type: 'drag', windowId: 0, stateId: 0, phase: 'start', button: 'left' });
+      expect(dup.accepted).toBe(false);
+      if (!dup.accepted) expect(dup.reason).toBe('drag_not_started');
+      v.processTransaction({ type: 'drag', windowId: 0, stateId: 0, phase: 'add', slotId: 2, button: 'left' });
+      const end = v.processTransaction({ type: 'drag', windowId: 0, stateId: 0, phase: 'end', button: 'left' });
+      expect(end.accepted).toBe(true);
+    });
+  });
 });

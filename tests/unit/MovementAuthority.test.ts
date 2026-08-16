@@ -205,4 +205,32 @@ describe('MovementAuthority', () => {
       expect(b.lastRejection).toEqual(a.lastRejection);
     });
   });
+
+  describe('adversarial replay/ordering integrity (237)', () => {
+    it('rejects replayed and out-of-order ticks as stale without mutating state', () => {
+      const a = new MovementAuthority({ maxSpeedPerTick: 1 });
+      a.spawn(P(0, 0, 0), 100);
+      const accepted = a.submitIntent(P(0.5, 0, 0), 110);
+      expect(accepted.accepted).toBe(true);
+      const posAfter = a.position;
+      const tickAfter = a.lastTick;
+      for (const t of [110, 109]) {
+        const r = a.submitIntent(P(1, 0, 0), t);
+        expect(r.accepted).toBe(false);
+        if (isCorrection(r)) expect(r.reason).toBe('stale tick');
+      }
+      expect(a.position).toEqual(posAfter);
+      expect(a.lastTick).toBe(tickAfter);
+    });
+
+    it('a teleport legitimately resets tick ordering', () => {
+      const a = new MovementAuthority({ maxSpeedPerTick: 1 });
+      a.spawn(P(0, 0, 0), 100);
+      a.submitIntent(P(0.5, 0, 0), 110);
+      a.teleport(P(5, 0, 0), 200);
+      const r = a.submitIntent(P(5.5, 0, 0), 201);
+      expect(r.accepted).toBe(true);
+      expect(a.position).toEqual(P(5.5, 0, 0));
+    });
+  });
 });
