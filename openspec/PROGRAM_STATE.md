@@ -3,18 +3,38 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **183-ender-dragon-boss — VERIFIED 100%**
-- Active implementation change: **183-ender-dragon-boss — VERIFIED**
-- Next change: **184-end-exit-progression — NOT YET ACTIVE (artifacts pending)**
-- 183 task ledger: **22 total tasks, 22 completed**
-- 183 completion: **100%**
-- 183 mandatory ender-dragon-boss requirements: **PASS**
-- 183 required-test gate: **PASS — unit 2452/2452, E2E 22/22**
-- 183 advancement allowed: **Yes**
-- Session-start head: `bc23580a27b222d36b8cd90f5d43ecbbf342df98`
-- Validated head: `bf7013f0a8653989d669021c0d00190d03b78eba` (183 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — dimensions 174-183 (container, all three types, Nether arc, End type/terrain/progression, dragon boss) COMPLETE; 184 (exit progression) closes the End arc.**
-- Next exact action: **Advance to 184-end-exit-progression. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: exit portal, boss completion persistence, post-boss state — the End arc's capstone: the exit portal spawns when 183's dragonReturnGatewayOpen flips true, teleports the player back to the overworld spawn, and the boss completion persists).**
+- Last completed change: **184-end-exit-progression — VERIFIED 100%**
+- Active implementation change: **184-end-exit-progression — VERIFIED**
+- Next change: **185-advancement-framework — NOT YET ACTIVE (artifacts pending)**
+- 184 task ledger: **20 total tasks, 20 completed**
+- 184 completion: **100%**
+- 184 mandatory end-exit-progression requirements: **PASS**
+- 184 required-test gate: **PASS — unit 2460/2460, E2E 22/22**
+- 184 advancement allowed: **Yes**
+- Session-start head: `5e4142d156aea185a6ca859f2dca9ca1ace3279c`
+- Validated head: `73c5df2d767fb74a4c59f905651afec9de027713` (184 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the full dimension arc (174-184: container, types, Nether, End, dragon, exit) is COMPLETE; the meta-progression arc (185-187) begins.**
+- Next exact action: **Advance to 185-advancement-framework. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: criteria/triggers/progress/rewards persistence — the meta-progression layer, consuming 184's completion record as one of its first trigger sources).**
+
+## What 184 implemented
+
+Change 184 closes the **End arc (181-184)** with the exit portal, the return, and the persisted
+completion.
+
+- `src/simulation/EndExitProgression.ts` (NEW) — `endExitPortalCells` returns the 21 cells of
+  vanilla's exit portal (5×5 of end-portal blocks with the four corners missing — edges and
+  interior present, corners absent, pinned set-theoretically); `endExitPortalSpawns(gatewayOpen)` is
+  the explicit spawn condition (the wiring passes 183's `dragonReturnGatewayOpen`) and
+  `endExitPortalRemains(record)` keeps the portal present after a defeated completion record.
+  `endExitDestination(worldSpawn)` is the return teleport — the overworld spawn passed through
+  unchanged when finite, `null` otherwise (the inverse of 182's entry). `markDragonDefeated(state,
+  tick)` produces the `DragonCompletionRecord` (`dragonKey`/`defeated`/`defeatedTick`) exactly when
+  183's `dragonDefeated` is true; `dragonCompletionIsDefeated` reads it;
+  `serializeDragonCompletion`/`deserializeDragonCompletion` are the versioned, fully-validated
+  persistence pair (mirroring 153): null/non-object input, wrong version, empty key, non-boolean
+  `defeated`, and negative/non-integer tick all throw before anything is accepted.
+- Tests: `tests/unit/EndExitProgression.test.ts` (NEW, 8 tests). The survival loop — overworld →
+  Nether → End → exit — is now fully modeled.
 
 ## What 183 implemented
 
