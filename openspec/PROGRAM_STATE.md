@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **238-worker-and-main-thread-stress — VERIFIED 100%**
-- Active implementation change: **238-worker-and-main-thread-stress — VERIFIED**
-- Next change: **239-long-session-memory-stress — artifacts present, not yet ACTIVE**
-- 238 task ledger: **16 total tasks, 16 completed**
-- 238 completion: **100%**
-- 238 mandatory worker/mesh/worldgen/light/save/path/frame-tick saturation requirements: **PASS**
-- 238 required-test gate: **PASS — unit 3518/3518 + 1 skipped, E2E 22/22**
-- 238 advancement allowed: **Yes**
+- Last completed change: **239-long-session-memory-stress — VERIFIED 100%**
+- Active implementation change: **239-long-session-memory-stress — VERIFIED**
+- Next change: **240-save-recovery-stress — artifacts present, not yet ACTIVE**
+- 239 task ledger: **16 total tasks, 16 completed**
+- 239 completion: **100%**
+- 239 mandatory memory-resource-budgets + long-session-leak-validation requirements: **PASS**
+- 239 required-test gate: **PASS — unit 3534/3534 + 1 skipped, E2E 31/31**
+- 239 advancement allowed: **Yes**
 - Session-start head: `39780587a5f449cdbcdd21e46f6cde60e3973b51`
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), the chat and command networking (233), the server world persistence (234), the reconnect state recovery (235), the multiplayer load tests (236), the network adversarial validation (237), and the worker and main-thread stress (238) VERIFIED; 239 begins long-session-memory-stress.**
-- Next exact action: **Advance to 239-long-session-memory-stress. Its artifacts exist (pre-authored package present); validate the package against actual code per SPEC_AUTHORING_PROTOCOL.md, then implement, unit-test, and gate as usual.**
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), the chat and command networking (233), the server world persistence (234), the reconnect state recovery (235), the multiplayer load tests (236), the network adversarial validation (237), the worker and main-thread stress (238), and the long-session memory stress (239) VERIFIED; 240 begins save-recovery-stress.**
+- Next exact action: **Advance to 240-save-recovery-stress. Its artifacts exist (pre-authored package present); validate the package against actual code per SPEC_AUTHORING_PROTOCOL.md, then implement, unit-test, and gate as usual.**
 
 ## What 235 implemented
 

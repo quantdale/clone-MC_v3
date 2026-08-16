@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "238-worker-and-main-thread-stress",
+  "currentChange": "239-long-session-memory-stress",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "238-worker-and-main-thread-stress",
-  "nextChange": "239-long-session-memory-stress",
+  "lastCompletedChange": "239-long-session-memory-stress",
+  "nextChange": "240-save-recovery-stress",
   "completedTasks": 16,
   "totalTasks": 16,
   "completionPercentage": 100,
@@ -16,7 +16,7 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "39780587a5f449cdbcdd21e46f6cde60e3973b51",
-  "lastCompletedTask": "238: worker/main-thread stress complete; 238-worker-and-main-thread-stress VERIFIED 16/16 (100%). src/rendering/WorkerSaturationHarness.ts (NEW): WorkerSaturationConfig, DEFAULT_WORKER_SATURATION_BUDGET tuned {50,100,12000} ms (mean/p95/total; raised from {4,8,500} to sit above the measured dense-slab baseline), validateWorkerSaturationConfig/evaluateWorkerSaturation, runMeshSaturation/runWorldgenSaturation, and sync WorkerDispatch + createMeshDispatch/createWorldgenDispatch wrapping the real 064/086 clients (exactly-once, backpressure cap, stale/duplicate/identity-mismatch rejection). src/rendering/LightSaturation.ts (NEW): LightSaturationConfig, validate/evaluate, runLightSaturation + runLightEditSaturation over a generic LightEdit, DenseLightWorld, 069 equivalence under saturation. src/storage/SaveQueueSaturation.ts (NEW): config, validate/evaluate, runSaveSaturation (async, BATCH_LIMIT 64, MAX_DRAIN_PASSES 100000, no-loss/FIFO/bounded). src/simulation/PathfindSaturation.ts (NEW): config, validate/evaluate, runPathfindSaturation over NavigationWorld. src/simulation/TickBudgetMonitor.ts (NEW): DEFAULT_TICK_BUDGET {maxTickMillis 8.33}, validate/evaluate, TickBudgetMonitor overrun detection + 075 RenderPerformanceMonitor frame-budget enforcement under saturation. 78 new unit tests across five suites (worker 19, light 15, save 16, pathfind 14, tick 14); full gate green (typecheck, lint, 3518+1 unit, build, 22 e2e). Baseline: mesh 22.54 ms/job, worldgen 0.264 ms/job, light 0.245 ms/pass / 0.683 ms/edit, save 65.7 units/s, pathfind 0.008 ms/search.",
+  "lastCompletedTask": "239: long-session memory stress complete; 239-long-session-memory-stress VERIFIED 16/16 (100%). src/rendering/MemoryResourceBudget.ts (NEW): MemoryResourceDimension, LiveResourceSnapshot, MemoryResourceConfig, MemoryResourceEntry, MemoryResourceReport, DEFAULT_MEMORY_RESOURCE_BUDGET (derived from runtime caps: maxLoadedChunks (2r+1)^2 with r=max(R,preloadRadius) -> desktop 169 / headless 49; maxPendingJobs 512+maxLoadedChunks; maxMeshGeometries 2*maxLoadedChunks+40; maxEditOverlayChunks 10_000; maxBlockEntities 4096; maxActiveEntities 12+256=268; maxItemEntities 1024; EDIT_OVERLAY_MAX_CHUNKS 10_000; PRELOAD_RADIUS 3; MAX_QUEUE_SIZE 512), deriveMemoryResourceBudget, computeRingCardinality, validateMemoryResourceConfig (rejects non-positive-integers + extra keys), evaluateResourceBudget (total, fixed 7-dimension order). src/world/World.ts: getEditOverlayChunkCount(). src/engine/Game.ts: getLiveResourceCounts() + test-only failSimulation() (explicit-flag-gated throw into the normal error path). playwright.config.ts: --js-flags=--expose-gc launch arg. 16 new unit tests (MemoryResourceBudget config/eval/derivation/determinism + headless BlockEntityManager away-and-back lifecycle). 9 new e2e scenarios (measurement, exploration, build/chunk-churn, idle, teleport, world-reload, block-entity baseline, GPU-context restore, failure). Full gate green (typecheck, lint, 3534+1 unit, build, 31 e2e). Observed teleport loadedChunks series 31,29,25,25,25,25 (settles to radius-3 preload ring 49); churn geometry plateau 27,26,32,29,24,31. Block entities not wired into single-player world (recorded gap; lifecycle validated headlessly); residency ceiling uses r=max(R,preloadRadius).",
   "nextExactAction": "Advance to 239-long-session-memory-stress. Its artifacts are present; validate the package against actual code per SPEC_AUTHORING_PROTOCOL.md, then implement, unit-test, and gate as usual.",
   "blockers": [],
   "validationResults": [
@@ -2324,6 +2324,15 @@
       "build": "PASS via tsc --noEmit && vite build",
       "e2e": "PASS 22/22",
       "note": "238 VERIFIED 16/16 tasks (100%). src/rendering/WorkerSaturationHarness.ts (NEW): WorkerSaturationConfig, DEFAULT_WORKER_SATURATION_BUDGET tuned {50,100,12000} ms (raised from {4,8,500} to sit above the measured dense-slab baseline; documented in verification.md), validateWorkerSaturationConfig/evaluateWorkerSaturation (075 convention), runMeshSaturation/runWorldgenSaturation, and sync WorkerDispatch + createMeshDispatch/createWorldgenDispatch wrapping the real 064/086 clients (exactly-once, backpressure cap, stale/duplicate/identity-mismatch rejection). src/rendering/LightSaturation.ts (NEW): LightSaturationConfig, validate/evaluate, runLightSaturation + runLightEditSaturation over a generic LightEdit, DenseLightWorld, 069 equivalence under saturation (incl. 1000-edit). src/storage/SaveQueueSaturation.ts (NEW): config, validate/evaluate, runSaveSaturation (async, BATCH_LIMIT 64, MAX_DRAIN_PASSES 100000, no-loss/FIFO/bounded). src/simulation/PathfindSaturation.ts (NEW): config, validate/evaluate, runPathfindSaturation over NavigationWorld. src/simulation/TickBudgetMonitor.ts (NEW): DEFAULT_TICK_BUDGET {maxTickMillis 8.33}, validate/evaluate, TickBudgetMonitor overrun detection + 075 RenderPerformanceMonitor frame-budget enforcement under saturation. 78 new unit tests; full gate green (typecheck, lint, 3518+1 unit, build, 22 e2e). Baselines: mesh 22.54 ms/job, worldgen 0.264 ms/job, light 0.245 ms/pass / 0.683 ms/edit, save 65.7 units/s, pathfind 0.008 ms/search."
+    },
+    {
+      "head": "13addf490f2023d26638761604e596ed54dc3dc3",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 3534/3534 + 1 skipped (prior 3518 + 16 new: MemoryResourceBudget)",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 31/31",
+      "note": "239 VERIFIED 16/16 tasks (100%). src/rendering/MemoryResourceBudget.ts (NEW): MemoryResourceDimension, LiveResourceSnapshot, MemoryResourceConfig, MemoryResourceEntry, MemoryResourceReport, DEFAULT_MEMORY_RESOURCE_BUDGET (derived from runtime caps: maxLoadedChunks (2r+1)^2 with r=max(R,preloadRadius) -> desktop 169 / headless 49; maxPendingJobs 512+maxLoadedChunks; maxMeshGeometries 2*maxLoadedChunks+40; maxEditOverlayChunks 10_000; maxBlockEntities 4096; maxActiveEntities 12+256=268; maxItemEntities 1024), deriveMemoryResourceBudget, computeRingCardinality, validateMemoryResourceConfig, evaluateResourceBudget (total, fixed 7-dimension order). World.getEditOverlayChunkCount(); Game.getLiveResourceCounts() + test-only failSimulation(). playwright --js-flags=--expose-gc. 16 unit + 9 e2e scenarios. Full gate green (typecheck, lint, 3534+1 unit, build, 31 e2e: 22 game.spec + 9 memory-stress). Observed teleport loadedChunks series 31,29,25,25,25,25 (settles to radius-3 preload ring 49); churn geometry plateau 27,26,32,29,24,31. Block entities not wired into single-player world (recorded gap; lifecycle validated headlessly); residency ceiling uses r=max(R,preloadRadius)."
     }
   ],
   "publishedHead": "1ea0a5b4810d72451bbe382525539cb63f541e12",
