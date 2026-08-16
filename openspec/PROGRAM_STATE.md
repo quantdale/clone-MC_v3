@@ -3,18 +3,35 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **216-biome-content-expansion — VERIFIED 100%**
-- Active implementation change: **216-biome-content-expansion — VERIFIED**
-- Next change: **217-structure-content-expansion — NOT YET ACTIVE (artifacts pending)**
-- 216 task ledger: **14 total tasks, 14 completed**
-- 216 completion: **100%**
-- 216 mandatory biome-content-expansion requirements: **PASS**
-- 216 required-test gate: **PASS — unit 2814/2814, E2E 22/22**
-- 216 advancement allowed: **Yes**
-- Session-start head: `aec1b23b69df27e5c8596272631b685f2bbc2161`
-- Validated head: `849de25010401082ec70892c6d13745ae3671819` (216 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), and content expansion (215-216) VERIFIED; 217 continues with structure content expansion.**
-- Next exact action: **Advance to 217-structure-content-expansion. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Add progression-relevant structures via templates/placement rules — data-driven structure definitions over 099-101's structure systems).**
+- Last completed change: **217-structure-content-expansion — VERIFIED 100%**
+- Active implementation change: **217-structure-content-expansion — VERIFIED**
+- Next change: **218-mob-content-expansion — NOT YET ACTIVE (artifacts pending)**
+- 217 task ledger: **14 total tasks, 14 completed**
+- 217 completion: **100%**
+- 217 mandatory structure-content-expansion requirements: **PASS**
+- 217 required-test gate: **PASS — unit 2822/2822, E2E 22/22**
+- 217 advancement allowed: **Yes**
+- Session-start head: `739f6dfb1106d7e6850bd697018ff2f44986662b`
+- Validated head: `7f53fa956510aff37115f88e3181f17b5fdfbe42` (217 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), and content expansion (215-217) VERIFIED; 218 continues with mob content expansion.**
+- Next exact action: **Advance to 218-mob-content-expansion. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Add additional passive/hostile/utility mobs through existing entity/AI primitives — data-driven mob definitions over 129-146's entity/AI primitives).**
+
+## What 217 implemented
+
+Change 217 adds the data-driven **structure content expansion** (template + placement rules).
+
+- `src/data/StructureExpansion.ts` (NEW) — `StructureDefinition { id, name, template,
+  placement }` with `placement = { biomeCategories, spacing, separation, rarity, yRange }`:
+  ids valid namespaced ids without a `structure/` prefix; `name`/`template` non-empty;
+  `biomeCategories` non-empty known 216 categories (216 now exports `BIOME_CATEGORIES` as the
+  runtime guard); `spacing` positive integer; `separation` integer in [0, spacing) default 0;
+  `rarity` finite in (0, 1] default 1; `yRange` integer `[min, max]` pair with min ≤ max.
+  `createStructureDefinition` validates with descriptive throws. `createStructureExpansion`
+  preserves registration order and rejects duplicate ids; `structureById`;
+  `structuresInCategory` (registration-order filter for biome placement). The placement pipeline
+  consumes the rules through 099-101 (untouched).
+- Tests: `tests/unit/StructureExpansion.test.ts` (NEW, 8 tests): defaults, every rejection
+  class, expansion order, lookups, duplicates, the category filter, empty expansions.
 
 ## What 216 implemented
 
