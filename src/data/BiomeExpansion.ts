@@ -35,7 +35,9 @@ export type BiomeCategory =
   | 'mountain';
 
 const PRECIPITATIONS: readonly string[] = ['none', 'rain', 'snow'];
-const CATEGORIES: readonly string[] = [
+
+/** The known biome categories (runtime guard for consumers). */
+export const BIOME_CATEGORIES: readonly string[] = [
   'plains',
   'forest',
   'desert',
@@ -109,7 +111,7 @@ export function createBiomeDefinition(input: BiomeDefinitionInput): BiomeDefinit
     throw new Error('BiomeExpansion: precipitation must be none, rain, or snow');
   }
   const category = input.category ?? 'plains';
-  if (!CATEGORIES.includes(category)) {
+  if (!BIOME_CATEGORIES.includes(category)) {
     throw new Error(
       'BiomeExpansion: category must be one of plains, forest, desert, snowy, ocean, nether, end, or mountain',
     );
