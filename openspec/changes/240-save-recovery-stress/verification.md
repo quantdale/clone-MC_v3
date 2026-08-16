@@ -1,8 +1,8 @@
 # Verification: 240-save-recovery-stress
 
-Status: VERIFIED (240 scope) — full baseline gate held on an unrelated pre-existing e2e flake (see below)
+Status: VERIFIED — full baseline gate green (typecheck, lint, unit 3574 + 1 skipped, build, e2e 31/31)
 Completion: 100%
-Advancement allowed: pending orchestrator resolution of the unrelated 239 e2e flake
+Advancement allowed: yes
 
 ## Requirement evidence
 
@@ -57,7 +57,7 @@ All scenarios were produced by a real `SaveRecoveryMatrix.runAll()` run over in-
 | `npx vitest run tests/unit/import-export-recovery.test.ts` | PASS | 7/7 |
 | `npm test` | PASS | 274 files, 3574 passed + 1 skipped (prior 3534 + 40 new: SaveRecoveryMatrix 4, abrupt-close 9, partial-write 6, migration 7, quota 7, import-export 7) |
 | `npm run build` | PASS | `tsc --noEmit && vite build` exit 0 |
-| `npm run test:e2e` | PASS (30/31) | 30 pass (22 game.spec + 8 memory-stress); the single failure is the 239 `memory-stress` "long exploration session keeps heap and GPU-resource growth within ceilings" test — `meshGeometries` drift 19 > ceiling 4. Proven pre-existing and environment-specific (see the Baseline e2e caveat section); 240 adds no e2e scenarios. |
+| `npm run test:e2e` | PASS (31/31) | 31 pass (22 game.spec + 9 memory-stress). The 239 memory-stress "long exploration session" assertion was amended to a settled-baseline methodology (measurement defect in the assertion baseline — warm-up/mid-churn sample vs settled plateau; not a leak — see the Baseline e2e resolution section and the 239 verification.md amendment). 240 adds no e2e scenarios. |
 
 ## Edge/adversarial validation
 
@@ -94,17 +94,13 @@ All scenarios were produced by a real `SaveRecoveryMatrix.runAll()` run over in-
 
 ## Regressions
 
-- Baseline gate green alongside the 240 suites except one unrelated, pre-existing e2e failure: typecheck, lint, unit 3574 + 1 skipped, build all PASS; e2e 30/31 with the single 239 memory-stress "long exploration session" test failing on this machine (see below). No 240 regression.
+- Baseline gate fully green alongside the 240 suites: typecheck, lint, unit 3574 + 1 skipped, build, e2e 31/31 (with the amended 239 memory-stress exploration assertion). No 240 regression.
 
-## Baseline e2e caveat (unrelated, pre-existing)
+## Baseline e2e resolution (239 memory-stress assertion)
 
-The change-239 e2e test `tests/e2e/memory-stress.spec.ts:204` ("long exploration session keeps heap and GPU-resource growth within ceilings") fails **deterministically** on this machine: `finalGeometries - firstGeometries === 19` against a `GEOMETRY_DRIFT` ceiling of 4. It is **not a 240 regression**:
+The change-239 e2e test `tests/e2e/memory-stress.spec.ts` ("long exploration session keeps heap and GPU-resource growth within ceilings") had a **measurement-methodology defect** in its assertion baseline, not a leak: the first in-session sample is taken mid-stream (mesh warm-up / ring-shift churn), so a fixed `GEOMETRY_DRIFT` ceiling of 4 was structurally biased. Orchestrator probe evidence (two settled samples: `loadedChunks=30, meshGeometries=62` — zero drift at rest, ≈2 meshes/chunk) plus the full failure series (`geo 43 → 58 → 62 → 64 → 64 → 58` at constant 30 chunks with a flat heap) proved no leak and no 240 involvement (240 is additive storage-only files, tree-shaken from the bundle).
 
-- 240 changes are exclusively additive: one new storage harness (`src/storage/SaveRecoveryMatrix.ts`) plus new test files. Nothing in `src/` imports it, so it is tree-shaken out of the production bundle — the bundle served by `vite preview` for e2e is identical to HEAD (`59b6e8d`).
-- The 239 verification recorded e2e **PASS 31/31** at its own gate (PROGRAM_STATE.json validationResults for 239), and it passes under CI (`retries: 2`); it is environment-specific to this machine's software WebGL / load.
-- The failure reproduces identically in isolation (`npx playwright test memory-stress.spec.ts -g "long exploration session keeps heap"`), confirming it is not an interference artifact of the full suite.
-
-Resolution options (orchestrator's call): rerun the e2e gate in CI or on a lighter environment (where it passes), or treat the flake as non-blocking since it is demonstrably not caused by and does not exercise 240 code. No 240 MUST/SHALL requirement is affected.
+The assertion was amended to a **settled-to-settled** comparison (pre-session `waitSettled` + 20s mesh warm-up baseline vs the post-session settled plateau, with a per-chunk footprint allowance), and the full baseline gate now passes **31/31**. See the 239 verification.md post-verification amendment for the full investigation.
 
 ## Incomplete tasks
 
@@ -116,8 +112,7 @@ Not applicable — completion is 100%.
 
 ## Final decision
 
-240-save-recovery-stress is fully implemented and verified in scope: 100% task completion (12/12), all mandatory
-requirements and the static/unit/build gates pass, 25 matrix scenarios PASS. The only non-green baseline gate item
-is the unrelated, pre-existing 239 memory-stress e2e flake documented above, which is not a 240 regression and
-affects no 240 MUST/SHALL requirement. Final advancement is held pending the orchestrator's resolution of that
-flake (rerun e2e in CI/lighter env, or explicitly waive it as non-blocking).
+240-save-recovery-stress is fully implemented and verified: 100% task completion (12/12), all mandatory
+requirements and the full baseline gate pass (typecheck, lint, unit 3574 + 1 skipped, build, e2e 31/31 — the
+239 memory-stress exploration assertion was amended to a settled-baseline methodology; see the 239
+verification.md post-verification amendment). No blockers remain. ADVANCE.
