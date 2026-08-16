@@ -3,18 +3,37 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **197-weather-rendering — VERIFIED 100%**
-- Active implementation change: **197-weather-rendering — VERIFIED**
-- Next change: **198-sleep-and-time-skip — NOT YET ACTIVE (artifacts pending)**
-- 197 task ledger: **14 total tasks, 14 completed**
-- 197 completion: **100%**
-- 197 mandatory weather-rendering requirements: **PASS**
-- 197 required-test gate: **PASS — unit 2597/2597, E2E 22/22**
-- 197 advancement allowed: **Yes**
-- Session-start head: `24d5de45814eb5941ba36379fa7d75a0ade2296d`
-- Validated head: `b990cecc274cc59031a28c3efb9b09903879c0a9` (197 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather arc (196-197) COMPLETE — simulation state and rendering presentation both VERIFIED; 198 continues the section with sleep and time skip.**
-- Next exact action: **Advance to 198-sleep-and-time-skip. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Bed interaction, spawn point, occupancy, night skipping rules — a pure sleep/bed framework over the fixed-tick time model).**
+- Last completed change: **198-sleep-and-time-skip — VERIFIED 100%**
+- Active implementation change: **198-sleep-and-time-skip — VERIFIED**
+- Next change: **199-particle-system — NOT YET ACTIVE (artifacts pending)**
+- 198 task ledger: **20 total tasks, 20 completed**
+- 198 completion: **100%**
+- 198 mandatory sleep-and-time-skip requirements: **PASS**
+- 198 required-test gate: **PASS — unit 2614/2614, E2E 22/22**
+- 198 advancement allowed: **Yes**
+- Session-start head: `0c66191e4ea249afa81e5a6359de1bc007e072cb`
+- Validated head: `b577842f6c9f9eaf2cc533b0b3e9204048dd2e60` (198 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather arc (196-197) and sleep (198) VERIFIED; 199 continues the section with the particle system.**
+- Next exact action: **Advance to 199-particle-system. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Pooled data-driven particles and gameplay event hooks — a pure pooled particle system with typed emitters and gameplay event hooks).**
+
+## What 198 implemented
+
+Change 198 adds the pure **sleep framework** over the fixed-tick day.
+
+- `src/simulation/SleepFramework.ts` (NEW) — `DAY_TICKS` (24000), `NIGHT_START_TICK` (12542),
+  `NIGHT_END_TICK` (23459); `isNight` is membership in [12542, 23459] inclusive and
+  `canSleep(timeOfDay, isStorm)` is night OR storm (vanilla). Immutable `SleepState { sleeping,
+  spawnSet, spawn }`; `enterBed(state, bedPosition, occupied)` rejects occupied beds
+  (`{ ok: false, reason: 'occupied' }`), identity-no-ops on re-entering the same bed, and otherwise
+  sets `sleeping` plus the spawn point to the bed; `leaveBed` clears sleeping but keeps the spawn.
+  `canSkipNight(sleeping, total)` = `total > 0 && sleeping >= total` (all players must sleep).
+  `skipNight(t)` = `{ timeOfDay: 0, skippedTicks: 24000 - t }`; `spawnPoint(state)` returns `null`
+  until set. `serializeSleepState`/`deserializeSleepState` (v1) validate-before-accept: non-object,
+  bad version, non-boolean flags, malformed spawn (incl. NaN), and unknown keys all throw named
+  errors.
+- Tests: `tests/unit/SleepFramework.test.ts` (NEW, 17 tests): night boundaries, sleep matrix, bed
+  entry/leave/spawn, occupancy edges, skip ticks, every persistence rejection. Zero registry
+  changes.
 
 ## What 197 implemented
 
