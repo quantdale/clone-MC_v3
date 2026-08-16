@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "232-combat-networking",
+  "currentChange": "233-chat-and-command-networking",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "232-combat-networking",
-  "nextChange": "233-chat-and-command-networking",
-  "completedTasks": 20,
-  "totalTasks": 20,
+  "lastCompletedChange": "233-chat-and-command-networking",
+  "nextChange": "234-server-world-persistence",
+  "completedTasks": 16,
+  "totalTasks": 16,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -16,8 +16,8 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "39780587a5f449cdbcdd21e46f6cde60e3973b51",
-  "lastCompletedTask": "232: combat networking complete; 232-combat-networking VERIFIED 20/20 (100%). src/simulation/CombatNetworking.ts: pure server-authoritative combat framework — CombatValidator (submitMeleeAttack with reach/no_target/target_dead/stale/cooldown validation and 141 resolveMeleeAttack damage/knockback plus 144 shield routing, submitShieldBlock with stale rejection, submitProjectileFire with charge clamp, ammo, origin, direction, and cap validation and 143 velocity math, stepProjectiles with 142 per-tick stepping, i-frame gate, entity/block/expiry despawns, and exactly-once deterministic CombatReplicationBatch assembly), ClientCombatReconciler (prediction/rollback directives: confirm, reject, invulnerable, blocked), ClientCombatStore (batch-applied projectile mirror). 20 tasks complete; 59 unit tests (3125 total); gates: typecheck PASS, lint PASS, unit 3125/3125, build PASS, e2e 22/22.",
-  "nextExactAction": "Author openspec/changes/233-chat-and-command-networking/ (proposal, design, tasks, verification, spec) per SPEC_AUTHORING_PROTOCOL.md: chat messages and server commands over the network boundary; then implement, unit-test, and gate as usual.",
+  "lastCompletedTask": "233: chat and command networking complete; 233-chat-and-command-networking VERIFIED 16/16 (100%). src/simulation/ChatCommandNetworking.ts: pure headless server-routed chat and command framework — ChatCommandRouter (per-player registration with profile + vanilla permissionLevel 0-4, strict ChatCommand: <detail> validation on register/unregister/options, submitText with not_connected/empty_message/message_too_long rejections that never consume the strict-monotonic shared seq, chat broadcast of one delivery per connected player in registration order incl. self-echo, /-commands routed through 191 executeCoreCommand under the sender's permission level returning the embedded ChatCommandResult plus exactly one feedback delivery to the sender with sender=0), ClientChatState (FIFO pending outbox with maxMessageLength cap, exact-once delivery dedupe by seq, ascending bounded log with maxLogSize oldest-drop, FIFO self-echo pending confirmation via localPlayerId, feedback without pending match). Wire contract chat_send/chat_broadcast/chat_feedback proven via 223 codec round-trip tests; no numeric message-id claim in production code (232 convention; decision recorded in design.md). 16 tasks complete; 66 unit tests (3191 total); gates: typecheck PASS, lint PASS, unit 3191/3191, build PASS, e2e 22/22.",
+  "nextExactAction": "Advance to 234-server-world-persistence. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: server-owned save lifecycle using shared persistent codecs); then implement, unit-test, and gate as usual.",
   "blockers": [],
   "validationResults": [
     {
@@ -2270,6 +2270,15 @@
       "build": "PASS via tsc --noEmit && vite build",
       "e2e": "PASS 22/22",
       "note": "232 VERIFIED 20/20 tasks (100%). src/simulation/CombatNetworking.ts: CombatValidator (server-authoritative melee/fire/shield validation, 141 damage/knockback, 144 shield routing, 142 stepping, 143 arrow math, deterministic exactly-once CombatReplicationBatch) + ClientCombatReconciler (prediction/rollback) + ClientCombatStore (batch-applied projectile mirror). Spec REQ-2 knockback scenario amended to in-reach distance 3."
+    },
+    {
+      "head": "1ebacc417ef3dca9cb6f86b1095ff6d12e0e0d75",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 3191/3191 (prior 3125 + 66 new: ChatCommandNetworking)",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 22/22",
+      "note": "233 VERIFIED 16/16 tasks (100%). src/simulation/ChatCommandNetworking.ts: ChatCommandRouter (player registration with profile + permissionLevel 0-4, strict ChatCommand: <detail> validation, submitText rejected reasons never consume the strict-monotonic shared seq, chat broadcast to every connected player in registration order incl. self-echo, /-commands through 191 executeCoreCommand with embedded ChatCommandResult and exactly one feedback delivery, unregisterPlayer boolean) + ClientChatState (FIFO pending outbox, exact-once dedupe by seq, ascending bounded log with oldest drop, self-echo FIFO confirmation via localPlayerId, feedback without pending match). Wire contract chat_send/chat_broadcast/chat_feedback proven via 223 codec round-trip tests at test-local ids; no production message-id claim per the 232 convention (decision recorded in design.md)."
     }
   ],
   "publishedHead": "803727dd144f8680c3d9664468d931c801a7b3da",

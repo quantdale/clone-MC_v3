@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **232-combat-networking — VERIFIED 100%**
-- Active implementation change: **232-combat-networking — VERIFIED**
-- Next change: **233-chat-and-command-networking — NOT YET ACTIVE (artifacts pending)**
-- 232 task ledger: **20 total tasks, 20 completed**
-- 232 completion: **100%**
-- 232 mandatory combat-networking requirements: **PASS**
-- 232 required-test gate: **PASS — unit 3125/3125, E2E 22/22**
-- 232 advancement allowed: **Yes**
+- Last completed change: **233-chat-and-command-networking — VERIFIED 100%**
+- Active implementation change: **233-chat-and-command-networking — VERIFIED**
+- Next change: **234-server-world-persistence — NOT YET ACTIVE (artifacts pending)**
+- 233 task ledger: **16 total tasks, 16 completed**
+- 233 completion: **100%**
+- 233 mandatory chat-and-command-networking requirements: **PASS**
+- 233 required-test gate: **PASS — unit 3191/3191, E2E 22/22**
+- 233 advancement allowed: **Yes**
 - Session-start head: `39780587a5f449cdbcdd21e46f6cde60e3973b51`
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), and the combat networking (232) VERIFIED; 233 begins chat and command networking.**
-- Next exact action: **Advance to 233-chat-and-command-networking. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: chat and command networking).**
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), and the chat and command networking (233) VERIFIED; 234 begins server world persistence.**
+- Next exact action: **Advance to 234-server-world-persistence. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: server-owned save lifecycle using shared persistent codecs).**
 
 ## What 231 implemented
 
@@ -76,6 +76,45 @@ Change 232 adds the pure headless **combat networking** framework across the net
   with exactly-once drain and id-ascending order, reconciler confirm/rollback/no-op/reset, store application,
   real-`SurvivalSystem` damage routing with armor stub, `Combat: <detail>` throws, and determinism. Total unit
   suite: 3125 tests.
+
+## What 233 implemented
+
+Change 233 adds the pure headless **chat and command networking** framework across the network boundary.
+
+- `src/simulation/ChatCommandNetworking.ts` (NEW) — `ChatDelivery { to, kind: 'chat'|'feedback', seq, sender, text }`;
+  `ChatDeliveryKind`; `ChatCommandResult` (`ok` with `effect` / `denied` with `command` / `error` with `error`);
+  `ChatRejectReason` (`not_connected` | `empty_message` | `message_too_long`); `ChatRouteResult` (chat | command
+  with embedded `ChatCommandResult` + exactly one feedback delivery | rejected); `ChatCommandRouterOptions`;
+  `PlayerRegistration { profile, permissionLevel }`; `ChatEntry`; `ClientChatStateOptions`.
+  `ChatCommandRouter`: server-side player registration (`playerId -> { profile, permissionLevel 0-4 }`) with
+  strict `ChatCommand: <detail>` validation (duplicate/full-set registration, `maxPlayers` cap, invalid
+  playerId/profile/permissionLevel/options all throw before mutation); `submitText` returns `rejected:
+  'not_connected' | 'empty_message' | 'message_too_long'` (never throws) for sender/size/text failures while
+  rejected input consumes no `seq`; accepted messages get a strict monotonic shared `seq` (chat and commands
+  share one counter, first accepted = 1); chat broadcasts one `kind: 'chat'` delivery per connected player in
+  registration order (self-echo included); `/`-commands route through 191 `executeCoreCommand` under the
+  sender's permission level, returning the structured `ChatCommandResult` plus exactly one `kind: 'feedback'`
+  delivery to the sender (`to` = sender, `sender` = 0, deterministic non-empty text: `command '<name>' executed` /
+  `command '<name>' denied: insufficient permission level` / `command error: <error>`); `unregisterPlayer`
+  returns true/false; `connectedCount`/`currentSeq`/`isConnected` observability.
+  `ClientChatState`: FIFO pending outbox (`submit` with `ClientChatState: <detail>` validation, `maxMessageLength`
+  cap), exact-once delivery application (dedupe by server `seq`, re-deliveries ignored even with different
+  content), ascending-`seq` insertion, self-echo confirmation of pending outbounds (FIFO matching, `fromSelf:
+  true`, `localPlayerId` configurable), feedback entries appended without pending match, bounded seq-ordered log
+  (`maxLogSize`, oldest dropped), snapshot getters that cannot corrupt internal state.
+- Wire contract: `chat_send` (client→server: sender int, text string), `chat_broadcast` (server→client: seq int,
+  sender int, text string), `chat_feedback` (server→client: seq int, text string). Per the recorded
+  id-allocation decision (design.md), no numeric message ids are claimed in production code — following the
+  230/231/232 convention there is no shared game protocol registry yet; tests register the three messages with
+  223's `createNetworkProtocol` at test-local ids and prove encode/decode round-trips and
+  `protocolCompatibility`.
+- Tests: `tests/unit/ChatCommandNetworking.test.ts` (NEW, 66 tests): registration/connection context incl.
+  duplicate/full-set/maxPlayers throws, input validation (empty/whitespace/over-length/boundary), chat broadcast
+  self-echo/multi-player/disconnected-exclusion/registration-order, command routing ok/denied/error + permission
+  boundaries, exactly-one feedback delivery with `sender: 0`, strict monotonic `seq` + rejected-input-no-seq,
+  two-router determinism (deep-equal results), client submit/applyDelivery exact-once dedupe/ascending order/
+  FIFO duplicate-pending confirmation/localPlayerId/bounded-log trimming/snapshot isolation, `ClientChatState:
+  <detail>` validation without corruption, and the 223 codec round-trip block. Total unit suite: 3191 tests.
 
 ## What 230 implemented
 
