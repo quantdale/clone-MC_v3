@@ -3,20 +3,45 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **223-network-protocol-codecs — VERIFIED 100%**
-- Active implementation change: **223-network-protocol-codecs — VERIFIED**
-- Next change: **224-dedicated-server-tick-loop — NOT YET ACTIVE (artifacts pending)**
-- 223 task ledger: **16 total tasks, 16 completed**
-- 223 completion: **100%**
-- 223 mandatory network-protocol-codecs requirements: **PASS**
-- 223 required-test gate: **PASS — unit 2872/2872, E2E 22/22** (one full-suite run showed 5
-  transient grid-sweep timeouts in pre-existing heavy terrain files under parallel load; isolated
-  re-runs and a full `--testTimeout=15000` rerun are clean — documented load flakiness)
-- 223 advancement allowed: **Yes**
-- Session-start head: `7d6373e3cf4e52fb7078d0bf89b8ffa511170528`
-- Validated head: `99a2105cda18e17039a068965720d137b4b6842f` (223 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), and the network-protocol codecs (223) VERIFIED; 224 begins the dedicated-server tick loop.**
-- Next exact action: **Advance to 224-dedicated-server-tick-loop. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: a headless authoritative world tick process — a pure fixed-timestep tick-loop model with deterministic tick counter over 222/223's shareable, headless-safe simulation surface, decoupled from the browser render loop).**
+- Last completed change: **224-dedicated-server-tick-loop — VERIFIED 100%**
+- Active implementation change: **224-dedicated-server-tick-loop — VERIFIED**
+- Next change: **225-connection-lifecycle — NOT YET ACTIVE (artifacts pending)**
+- 224 task ledger: **13 total tasks, 13 completed**
+- 224 completion: **100%**
+- 224 mandatory dedicated-server-tick-loop requirements: **PASS**
+- 224 required-test gate: **PASS — unit 2893/2893, E2E 22/22** (full-suite run taken at
+  `--testTimeout=15000` to avoid the documented parallel-load grid-sweep flake)
+- 224 advancement allowed: **Yes**
+- Session-start head: `6981df5b7cfc41125e3a7231d92fff0b3deaa097`
+- Validated head: `17dd00f5b6345242e6051d31e0e8228bca1d4ce3` (224 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), and the dedicated-server tick loop (224) VERIFIED; 225 begins the connection lifecycle.**
+- Next exact action: **Advance to 225-connection-lifecycle. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: connect/handshake/login-like local profile/disconnect/keepalive state machine — a pure headless connection state machine with explicit states, transitions, timeouts, and validation, building on 223's codecs and 224's tick process conventions).**
+
+## What 224 implemented
+
+Change 224 adds the **headless authoritative world tick process** — the production
+counterpart to the test-side `SimulationHarness` (055).
+
+- `src/simulation/WorldTickProcess.ts` (NEW) — `TickSystem { tick(tick) }`, ticked in
+  registration order exactly once per fixed tick with monotonic 1-based tick numbers.
+  `WorldTickProcess` owns a `SimulationClock` (044; injectable via `options.clock`, default
+  fresh instance) and a completed-tick counter. `update(nowMs)` feeds the clock and runs
+  exactly the emitted ticks (bounded catch-up via the clock's `maxTicksPerFrame`; first call
+  anchors returning 0; non-finite/backward timestamps no-op). `step(times = 1)` runs ticks
+  directly, with non-integer/`<= 0` counts as a no-op returning 0. A throwing system stops
+  the process: the failed tick is never counted, `lastError` records the error, the error is
+  rethrown from the driving call, and every later driving call rethrows the same value until
+  `reset()` (which clears error/stopped, zeroes the counter, and re-anchors the clock).
+  Construction rejects with descriptive `WorldTickProcess: <detail>` throws (non-array
+  systems, non-tickable entry with index, invalid clock surface). Deterministic: identical
+  systems + identical scripted schedules produce identical call sequences. Per tick O(systems)
+  with zero allocation.
+- Tests: `tests/unit/WorldTickProcess.test.ts` (NEW, 21 tests): construction + every
+  rejection class, anchoring/batching/ordering/non-finite+backward no-ops, catch-up cap and
+  capped remainder, step counts/default/invalid no-ops/interleaving, counter/isRunning/reset
+  incl. numbering restart at 1, mid-tick failure (uncounted tick, later systems skipped,
+  rethrow persistence until reset, resume after reset, throwing injected clock), and
+  schedule-determinism.
 
 ## What 223 implemented
 
