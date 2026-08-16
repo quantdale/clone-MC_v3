@@ -3,17 +3,17 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **231-inventory-network-transactions — VERIFIED 100%**
-- Active implementation change: **231-inventory-network-transactions — VERIFIED**
-- Next change: **232-combat-networking — NOT YET ACTIVE (artifacts pending)**
-- 231 task ledger: **15 total tasks, 15 completed**
-- 231 completion: **100%**
-- 231 mandatory inventory-network-transactions requirements: **PASS**
-- 231 required-test gate: **PASS — unit 3066/3066, E2E 22/22**
-- 231 advancement allowed: **Yes**
-- Session-start head: `c426dd2664146c49b30c4a6b1169fc9de809a38b`
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), and the inventory network transactions (231) VERIFIED; 232 begins combat networking.**
-- Next exact action: **Advance to 232-combat-networking. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: authoritative attacks/projectiles/damage/knockback).**
+- Last completed change: **232-combat-networking — VERIFIED 100%**
+- Active implementation change: **232-combat-networking — VERIFIED**
+- Next change: **233-chat-and-command-networking — NOT YET ACTIVE (artifacts pending)**
+- 232 task ledger: **20 total tasks, 20 completed**
+- 232 completion: **100%**
+- 232 mandatory combat-networking requirements: **PASS**
+- 232 required-test gate: **PASS — unit 3125/3125, E2E 22/22**
+- 232 advancement allowed: **Yes**
+- Session-start head: `39780587a5f449cdbcdd21e46f6cde60e3973b51`
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), and the combat networking (232) VERIFIED; 233 begins chat and command networking.**
+- Next exact action: **Advance to 233-chat-and-command-networking. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: chat and command networking).**
 
 ## What 231 implemented
 
@@ -41,6 +41,41 @@ Change 231 adds the pure headless **inventory/container network transaction** fr
   drag lifecycle incl. duplicate-start rejection and remainder spread (10/3 → 4/3/3, 2/3 → 1/1/0,
   incompatible-slot remainder on cursor), reconciler predict/accept/rollback/reset, input validation throws,
   and determinism across repeated drag sequences. Total unit suite: 3066 tests.
+
+## What 232 implemented
+
+Change 232 adds the pure headless **combat networking** framework across the network boundary.
+
+- `src/simulation/CombatNetworking.ts` (NEW) — `MeleeAttackRequest { playerId, requestId, tick, targetId }`;
+  `ProjectileFireRequest { playerId, requestId, tick, origin, direction, chargeTicks }`;
+  `ShieldBlockRequest { playerId, requestId, tick, raised }`;
+  `CombatTarget { id, x, y, z, radius, velocity, alive, facingYawDegrees }`; `AttackStats { baseDamage, isAxeAttack }`;
+  `CombatSinks { applyDamage, applyShieldDurabilityDamage }`; `MeleeHitEvent`, `ProjectileSpawnDescriptor`,
+  `ProjectileStepUpdate`, `ProjectileHitEvent`; `CombatResult` union (accepted melee/fire/shield with event, or
+  rejected with one of 11 reasons: out_of_reach, no_target, target_dead, stale_tick, attack_cooldown, no_ammo,
+  not_charged, fire_too_fast, origin_mismatch, invalid_direction, max_projectiles);
+  `CombatReplicationBatch { tick, meleeHits, projectileSpawns, projectileSteps, projectileHits, projectileDespawns }`;
+  `CombatRollbackDirective`; `CombatValidatorOptions`.
+  `CombatValidator`: server-authoritative melee (3D reach `<= maxAttackReach + target.radius` inclusive,
+  no_target, target_dead, stale/cooldown tick gates, 141 `resolveMeleeAttack` damage/knockback, 144 shield
+  routing with arc check and axe disable, damage sink with zero post-block amounts skipped), shield raise/lower
+  with stale rejection, fire (charge clamp, stale/fire_too_fast/ammo/3D origin-offset/direction/cap validation,
+  143 `computeFireVelocity`, spawn seam + ammo consumption), `stepProjectiles` (142 per-tick stepping
+  id-ascending, i-frame gate, arrow damage from pre-impact speed, shield/knockback/sink routing,
+  block/entity/expiry despawns, exactly-once queue drain into a deterministic batch),
+  strict `Combat: <detail>` validation on requests, options, and seam outputs.
+  `ClientCombatReconciler`: `predictAttack`/`predictFire` keyed by requestId; `reconcile` returns null on
+  confirmation or an attack/fire rollback directive on rejection, invulnerable, or blocked hits; unknown ids
+  are a lenient no-op; duplicate prediction throws.
+  `ClientCombatStore`: `applyBatch` maintains the client projectile mirror (spawns/steps/hits/despawns);
+  `hasProjectile`/`getProjectile`/`getAll`/`size`/`reset`.
+- Tests: `tests/unit/CombatNetworking.test.ts` (NEW, 59 tests): melee validation incl. exact reach boundary,
+  cooldown-scaled damage vs `computeAttackDamage`, knockback vs `computeKnockback`, i-frame absorption and
+  cooldown consumption, shield block/arc-miss/axe-disable/projectile-block, fire validation incl. charge clamp
+  and max_projectiles, step equivalence with 142, entity/block/expiry/owner-immunity despawns, batch assembly
+  with exactly-once drain and id-ascending order, reconciler confirm/rollback/no-op/reset, store application,
+  real-`SurvivalSystem` damage routing with armor stub, `Combat: <detail>` throws, and determinism. Total unit
+  suite: 3125 tests.
 
 ## What 230 implemented
 

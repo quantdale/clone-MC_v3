@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "231-inventory-network-transactions",
+  "currentChange": "232-combat-networking",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "231-inventory-network-transactions",
-  "nextChange": "232-combat-networking",
-  "completedTasks": 15,
-  "totalTasks": 15,
+  "lastCompletedChange": "232-combat-networking",
+  "nextChange": "233-chat-and-command-networking",
+  "completedTasks": 20,
+  "totalTasks": 20,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -15,9 +15,9 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "c426dd2664146c49b30c4a6b1169fc9de809a38b",
-  "lastCompletedTask": "231: inventory network transactions complete; 231-inventory-network-transactions VERIFIED 15/15 (100%). src/simulation/InventoryTransactionNetworking.ts: pure headless server-authoritative inventory/container transaction framework. ItemStack, SlotId, StateId, WindowSlots, SlotMutation, SlotClickRequest, HotbarSwapRequest, DropRequest, DragRequest, InventoryTransaction, TransactionResult, ClientRollbackDirective. InventoryTransactionValidator with stateId versioning (wrong_state_id rejection + authoritative snapshot), left/right slot click semantics, hotbar swap, drop, three-phase drag with duplicate-start rejection and deterministic ascending distribution (floor base + remainder to earliest eligible slots, unplaceable remainder stays on cursor). ClientInventoryReconciler with prediction tracking and rollback directives. 15 tasks complete; 38 unit tests (3066 total); gates: typecheck PASS, lint PASS, unit 3066/3066, build PASS, e2e 22/22.",
-  "nextExactAction": "Author openspec/changes/232-combat-networking/ (proposal, design, tasks, verification, spec) per SPEC_AUTHORING_PROTOCOL.md: authoritative attacks, projectiles, damage, and knockback across the client/server network boundary; then implement, unit-test, and gate as usual.",
+  "sessionStartHead": "39780587a5f449cdbcdd21e46f6cde60e3973b51",
+  "lastCompletedTask": "232: combat networking complete; 232-combat-networking VERIFIED 20/20 (100%). src/simulation/CombatNetworking.ts: pure server-authoritative combat framework — CombatValidator (submitMeleeAttack with reach/no_target/target_dead/stale/cooldown validation and 141 resolveMeleeAttack damage/knockback plus 144 shield routing, submitShieldBlock with stale rejection, submitProjectileFire with charge clamp, ammo, origin, direction, and cap validation and 143 velocity math, stepProjectiles with 142 per-tick stepping, i-frame gate, entity/block/expiry despawns, and exactly-once deterministic CombatReplicationBatch assembly), ClientCombatReconciler (prediction/rollback directives: confirm, reject, invulnerable, blocked), ClientCombatStore (batch-applied projectile mirror). 20 tasks complete; 59 unit tests (3125 total); gates: typecheck PASS, lint PASS, unit 3125/3125, build PASS, e2e 22/22.",
+  "nextExactAction": "Author openspec/changes/233-chat-and-command-networking/ (proposal, design, tasks, verification, spec) per SPEC_AUTHORING_PROTOCOL.md: chat messages and server commands over the network boundary; then implement, unit-test, and gate as usual.",
   "blockers": [],
   "validationResults": [
     {
@@ -2261,6 +2261,15 @@
       "build": "PASS via vite production build",
       "e2e": "PASS 22/22",
       "note": "231 VERIFIED 15/15 tasks (100%). src/simulation/InventoryTransactionNetworking.ts: InventoryTransactionValidator (stateId versioning, left/right click, hotbar swap, drop, three-phase drag with duplicate-start rejection and even remainder distribution) + ClientInventoryReconciler (prediction/rollback). REQ-6 divergences fixed: duplicate start rejects drag_not_started; left-drag spreads count%n remainder to earliest eligible slots."
+    },
+    {
+      "head": "8426b93ee73b9cde10757a1a5f00b575f1ff3a1a",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit": "PASS 3125/3125 (prior 3066 + 59 new: CombatNetworking)",
+      "build": "PASS via tsc --noEmit && vite build",
+      "e2e": "PASS 22/22",
+      "note": "232 VERIFIED 20/20 tasks (100%). src/simulation/CombatNetworking.ts: CombatValidator (server-authoritative melee/fire/shield validation, 141 damage/knockback, 144 shield routing, 142 stepping, 143 arrow math, deterministic exactly-once CombatReplicationBatch) + ClientCombatReconciler (prediction/rollback) + ClientCombatStore (batch-applied projectile mirror). Spec REQ-2 knockback scenario amended to in-reach distance 3."
     }
   ],
   "publishedHead": "803727dd144f8680c3d9664468d931c801a7b3da",
