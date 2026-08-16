@@ -2335,8 +2335,8 @@
       "note": "239 VERIFIED 16/16 tasks (100%). src/rendering/MemoryResourceBudget.ts (NEW): MemoryResourceDimension, LiveResourceSnapshot, MemoryResourceConfig, MemoryResourceEntry, MemoryResourceReport, DEFAULT_MEMORY_RESOURCE_BUDGET (derived from runtime caps: maxLoadedChunks (2r+1)^2 with r=max(R,preloadRadius) -> desktop 169 / headless 49; maxPendingJobs 512+maxLoadedChunks; maxMeshGeometries 2*maxLoadedChunks+40; maxEditOverlayChunks 10_000; maxBlockEntities 4096; maxActiveEntities 12+256=268; maxItemEntities 1024), deriveMemoryResourceBudget, computeRingCardinality, validateMemoryResourceConfig, evaluateResourceBudget (total, fixed 7-dimension order). World.getEditOverlayChunkCount(); Game.getLiveResourceCounts() + test-only failSimulation(). playwright --js-flags=--expose-gc. 16 unit + 9 e2e scenarios. Full gate green (typecheck, lint, 3534+1 unit, build, 31 e2e: 22 game.spec + 9 memory-stress). Observed teleport loadedChunks series 31,29,25,25,25,25 (settles to radius-3 preload ring 49); churn geometry plateau 27,26,32,29,24,31. Block entities not wired into single-player world (recorded gap; lifecycle validated headlessly); residency ceiling uses r=max(R,preloadRadius)."
     }
   ],
-  "publishedHead": "1ea0a5b4810d72451bbe382525539cb63f541e12",
-  "publishedAt": "2026-08-16T14:32:38.466Z",
-  "lastValidatedHead": "1ea0a5b4810d72451bbe382525539cb63f541e12",
-  "lastKnownHead": "1ea0a5b4810d72451bbe382525539cb63f541e12"
+  "publishedHead": "86b80ff7d12668f698c03cb6684eb496d11ddb34",
+  "publishedAt": "2026-08-16T15:18:33.876Z",
+  "lastValidatedHead": "86b80ff7d12668f698c03cb6684eb496d11ddb34",
+  "lastKnownHead": "86b80ff7d12668f698c03cb6684eb496d11ddb34"
 }
