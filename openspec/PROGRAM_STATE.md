@@ -3,18 +3,34 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **212-internal-data-pack-format — VERIFIED 100%**
-- Active implementation change: **212-internal-data-pack-format — VERIFIED**
-- Next change: **213-resource-reload — NOT YET ACTIVE (artifacts pending)**
-- 212 task ledger: **17 total tasks, 17 completed**
-- 212 completion: **100%**
-- 212 mandatory internal-data-pack-format requirements: **PASS**
-- 212 required-test gate: **PASS — unit 2781/2781, E2E 22/22**
-- 212 advancement allowed: **Yes**
-- Session-start head: `b09339ed57eac7135adfc4cf1ef17d097bbbedb4`
-- Validated head: `a6c01c483512b269a87ba29e380da62a3bdb060e` (212 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), and the assets arc (211-212) VERIFIED; 213 closes the assets arc.**
-- Next exact action: **Advance to 213-resource-reload (closes the assets arc 211-213). Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Validate and atomically reload data/resources in development without corrupting runtime state — a pure reload transaction over 211's manifests and 212's resolution).**
+- Last completed change: **213-resource-reload — VERIFIED 100%**
+- Active implementation change: **213-resource-reload — VERIFIED**
+- Next change: **214-localization-framework — NOT YET ACTIVE (artifacts pending)**
+- 213 task ledger: **16 total tasks, 16 completed**
+- 213 completion: **100%**
+- 213 mandatory resource-reload requirements: **PASS**
+- 213 required-test gate: **PASS — unit 2788/2788, E2E 22/22**
+- 213 advancement allowed: **Yes**
+- Session-start head: `3edb5617a4ac69fe46cc3d68b8c0c0e747dfa15b`
+- Validated head: `87a7f2fa7f63b92e85edb69e28206efb5a8e9611` (213 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), and the assets arc (211-213) COMPLETE — all VERIFIED; 214 begins the localization arc (214-215).**
+- Next exact action: **Advance to 214-localization-framework. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Translation keys, fallback locale, formatted parameters — a pure localization framework with catalog lookups, fallback, and parameter formatting).**
+
+## What 213 implemented
+
+Change 213 (closing the assets arc 211-213) adds the atomic **resource reload** transaction.
+
+- `src/data/ResourceReload.ts` (NEW) — `ResourceState { version, resources, data }` with
+  `createInitialResourceState()` (version 0). `proposeReload(current, { resources?, data?,
+  hasEntry })` validates: at least one manifest present; defensive `formatVersion === 1` checks;
+  every data entry resolved through the INJECTED `(kind, id) => boolean` registry check (212's
+  `resolveEntries`) with structured `{ ok: false, reason }` failures (exact unresolved ids in
+  registration order). `commitReload` is the ONLY mutation point — stamps `version + 1`
+  (monotonic); `abortReload` returns the current state (identity) — failed proposals NEVER touch
+  runtime state, and a commit accepts only a successful proposal (type-level).
+- Tests: `tests/unit/ResourceReload.test.ts` (NEW, 7 tests): initial state, all three success
+  shapes, every failure reason, commit version math (1 then 2), abort identity, input
+  immutability.
 
 ## What 212 implemented
 
