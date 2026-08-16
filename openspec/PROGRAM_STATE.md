@@ -3,18 +3,33 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **194-adventure-mode — VERIFIED 100%**
-- Active implementation change: **194-adventure-mode — VERIFIED**
-- Next change: **195-spectator-mode — NOT YET ACTIVE (artifacts pending)**
-- 194 task ledger: **16 total tasks, 16 completed**
-- 194 completion: **100%**
-- 194 mandatory adventure-mode requirements: **PASS**
-- 194 required-test gate: **PASS — unit 2566/2566, E2E 22/22**
-- 194 advancement allowed: **Yes**
-- Session-start head: `3f8b43541ef49788cacdcae2c9ecd7ede6079cf4`
-- Validated head: `a5ca36f0d3e25ac9b83201f6a3a5c82289507a4c` (194 feature commit)
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) in progress — the dimension arc (174-184), meta-progression trio (185-187), difficulty (188), gamerules (189), the command parser (190), the core commands (191), the game-mode framework (192), hardcore (193), and adventure (194) are COMPLETE; 195 closes the game-modes arc (192-195).**
-- Next exact action: **Advance to 195-spectator-mode. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Noclip flight, no interaction, spectator camera semantics — the game-modes arc closer over 192's GameModeFramework and 194's rules).**
+- Last completed change: **195-spectator-mode — VERIFIED 100%**
+- Active implementation change: **195-spectator-mode — VERIFIED**
+- Next change: **196-weather-state — NOT YET ACTIVE (artifacts pending)**
+- 195 task ledger: **18 total tasks, 18 completed**
+- 195 completion: **100%**
+- 195 mandatory spectator-mode requirements: **PASS**
+- 195 required-test gate: **PASS — unit 2574/2574, E2E 22/22**
+- 195 advancement allowed: **Yes**
+- Session-start head: `0c2e7b69b288a74db7c7101b30011c71d0bfd142`
+- Validated head: `493d575fe37fbd3309255065abc964f8c41b43b8` (195 feature commit)
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE — the dimension arc (174-184), meta-progression trio (185-187), difficulty (188), gamerules (189), the command parser (190), the core commands (191), and the game-modes arc (192-195: game-mode framework, hardcore, adventure, spectator) are ALL VERIFIED; 196 continues the section with weather state.**
+- Next exact action: **Advance to 196-weather-state. Author its OpenSpec artifacts per SPEC_AUTHORING_PROTOCOL.md (per CHANGE_SEQUENCE.md: Persisted rain/thunder timers and gamerule/time integration — weather state over 189's gamerules and 191's weather/time command effects).**
+
+## What 195 implemented
+
+Change 195 adds the **spectator-mode semantics**, closing the game-modes arc (192-195).
+
+- `src/simulation/SpectatorFramework.ts` (NEW) — five pure predicates of `GameMode`, each true
+  ONLY for `'spectator'`: `noclip` (passes through blocks and entities), `hasGravity` and
+  `hasCollision` (false only for spectator — free flight without falling or solid collision),
+  `canInteract` (no blocks, entities, or items), `isAttackable` (mobs neither target nor damage
+  spectators), and `spectatorCameraAvailable` (the free camera with entity attachment). Complements
+  192's `canFly` (spectator flies) and 194's rules (spectator never breaks/places).
+- Tests: `tests/unit/SpectatorFramework.test.ts` (NEW, 8 tests): every predicate's 4-mode table and
+  the composed spectator profile (fly + noclip + no gravity/collision + no interaction + not
+  attackable + camera + break/place denial), plus a negative check that no other mode gains any
+  spectator privilege. Zero registry changes.
 
 ## What 194 implemented
 
