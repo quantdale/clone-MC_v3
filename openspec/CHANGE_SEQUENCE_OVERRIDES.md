@@ -1,5 +1,22 @@
 # Change Sequence Overrides
 
+## Mandatory pre-241 repository hardening interlock
+
+Before Change 241 (`241-deterministic-replay-suite`) may become ACTIVE or any numbered implementation at 241+ may proceed, the repository MUST complete and VERIFY:
+
+`openspec/hardening/2026-08-17-pre-241-repository-hardening/`
+
+This is an out-of-band safety interlock, not a new numbered parity change. It does **not** renumber or delete Changes 241-250. Ahead-of-time specification artifacts for 241-250 may remain, but production/test implementation for inactive future changes is forbidden by the normal autonomy rules and this interlock.
+
+While the interlock is incomplete:
+
+- numbered advancement is frozen before 241;
+- a fresh `/goal`/continue session MUST resume the hardening package rather than activate 241;
+- stale `PROGRAM_STATE` “next action” text that would start 241 is subordinate to this interlock;
+- the executor MUST rebaseline against current `origin/main`, because SHAs/run IDs recorded in the hardening package are audit observations, not immutable targets.
+
+The interlock may be marked VERIFIED only after its tasks/specs/verification gates are fully evidenced, every tracked path is accounted for by its file audit, blocking findings are closed, the completed hardening commit is published to `origin/main`, and canonical GitHub Actions for that exact SHA is green.
+
 ## Directory-name overrides
 
 | Number | Sequence name | Use this directory |
