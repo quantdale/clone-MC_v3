@@ -36,8 +36,10 @@ MUST reject, with a descriptive `ReplayRecording: <detail>` error and no partial
 with an invalid `version`, `schema`, `initialSeed`, or `maxTick`.
 
 #### Scenario: valid recording
-- **GIVEN** a recording with `version: 1`, a non-empty `schema`, `initialSeed: 42`, `maxTick: 3`, and
-  empty `inputs`/`tickSeeds` arrays
+- **GIVEN** a recording with `version: 1`, a non-empty `schema`, `initialSeed: 42`, `maxTick: 3`,
+  empty `inputs`, and `tickSeeds` carrying exactly one `{ stream, state }` entry for each tick in
+  `[1, maxTick]` — for example
+  `[{ tick: 1, seeds: [{ stream: 'mob-spawn', state: 100 }] }, { tick: 2, seeds: [{ stream: 'mob-spawn', state: 200 }] }, { tick: 3, seeds: [{ stream: 'mob-spawn', state: 300 }] }]`
 - **WHEN** `validateReplayRecording` runs
 - **THEN** it returns the recording unchanged (narrowed to `ReplayRecording`).
 

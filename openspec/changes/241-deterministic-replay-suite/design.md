@@ -186,6 +186,20 @@ hash reflects a stable point-in-time state and does not capture later live mutat
 
 ### Seeding semantics
 
+**Recorded tick seeds are pre-tick states**: each `tickSeeds[T].seeds[i].state` is the `SeedRng.state`
+captured at the **start** of tick `T`, before that tick runs. This is the single, explicit seed-state
+model; there is no separate "initialization seed" vs "per-tick reseed" vs "post-tick expected state"
+ambiguity — the recorded `state` is always the value the stream holds at the moment tick `T` begins.
+
+**Shared ownership / injection**: the verifier obtains every named stream through one governed source —
+the injectable `seedStreams(stream, state) => SeedRng` factory on `ReplayRunnerOptions`. The verifier
+calls `seedStreams` once per `(stream, state)` at the start of each tick, and the **same** returned
+`SeedRng` instance is handed to the simulation systems that consume that stream during the tick.
+Systems MUST NOT build or read named streams through any other closure (for example a verifier-local
+`Map` invisible to production code). Production systems obtain their streams from this same factory, so
+the replay integration path is identical to the one production would use, and a passing verifier cannot
+mask a system reading a divergent stream instance.
+
 Before tick 1, named streams present in `tickSeeds[1]` are created at the recorded `state`
 (`new SeedRng(state)` by default, or via the injectable `seedStreams`). Before each tick `T > 1`, the
 same is done from `tickSeeds[T]`. Streams not listed in a tick's seeds are unconstrained. If, while

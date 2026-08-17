@@ -55,10 +55,29 @@ no longer matches the state the authoritative run derives at that point, the ver
 `seed_mismatch` divergence (determinism break) at that tick with the stream name, expected, and actual —
 never a silent pass.
 
+### Requirement: shared stream ownership and injection
+The recorded tick seeds are **pre-tick states** (the named-stream `SeedRng.state` captured at the start
+of each tick, before that tick runs). The verifier MUST expose a single, explicit ownership API — the
+injectable `seedStreams(stream, state) => SeedRng` factory in `ReplayRunnerOptions` — through which
+**both** the verifier and the simulation systems obtain every named stream. Systems MUST NOT construct
+or consume named streams through an unrelated closure or a verifier-local map invisible to production
+code. The `seedStreams` factory is the governed source of truth: the verifier calls it once per
+`(stream, state)` at the start of each tick, and the same returned `SeedRng` instance is the one the
+systems consume during that tick. This makes the integration path identical to the one production
+systems would use, so a test passing on the verifier cannot mask a system that reads a different stream
+instance.
+
 #### Scenario: correct seeding
 - **GIVEN** a recording whose tick seeds record `{ stream: 'mob-spawn', state: 12345 }` at tick 2
 - **WHEN** `runRecording` replays it and the harness exposes the `mob-spawn` stream used during tick 2
 - **THEN** that stream's state equals `12345`.
+
+#### Scenario: systems consume the governed stream
+- **GIVEN** a `ReplayRunnerOptions.seedStreams` factory that records every `(stream, state)` it is asked
+  to create
+- **WHEN** a system reads its named stream during a tick
+- **THEN** the system receives the exact `SeedRng` instance the verifier created from that factory for
+  that tick's recorded state, not a separately constructed stream.
 
 #### Scenario: recorded seed no longer reproduces
 - **GIVEN** a recording whose recorded seed for a stream at tick `T` does not match what the authoritative
@@ -82,6 +101,30 @@ traces (zero ticks) MUST be handled without error.
 - **WHEN** `compareHashes` runs on each pair
 - **THEN** the identical pair reports `identical: true` with no divergence, and the empty pair reports
   `identical: true` without error.
+
+### Requirement: expected-failure versus unexpected-success comparison
+A recording/fixture whose expected outcome is a failure (for example an expected `system_failure`,
+`seed_mismatch`, or `version_mismatch` divergence) MUST NOT compare as `identical` to an actual run that
+completes successfully with matching per-tick hashes. The comparison MUST inspect the outcome class
+(failure vs success), not only the hash sequence: if the expected trace is a failure but the actual
+trace is a success (or vice versa), `compareHashes` MUST report a divergence whose `kind` reflects the
+mismatch in outcome class, even when every produced hash is equal. Hash alignment alone is never
+sufficient to call a failure-expecting recording "identical".
+
+#### Scenario: expected failure cannot equal unexpected success
+- **GIVEN** an expected trace that ends in a `system_failure` at tick `T`, and an actual trace that runs
+  to completion with per-tick hashes identical to the expected trace's pre-failure hashes
+- **WHEN** `compareHashes` runs
+- **THEN** it reports `identical: false` with a divergence whose `kind` distinguishes the failure outcome
+  from the successful outcome (for example `system_failure` vs a `success_mismatch`), never `identical:
+  true`.
+
+#### Scenario: success cannot satisfy a failure-expecting recording
+- **GIVEN** a fixture whose `expectedHashes` assume a full successful run but whose recording is marked
+  as expecting a `seed_mismatch` at tick `T`
+- **WHEN** `runRecording`/`compareHashes` execute against a world that actually completes successfully
+- **THEN** the comparison reports a divergence in outcome class rather than declaring the recording
+  verified.
 
 ### Requirement: failure and version handling
 A system throwing during replay MUST be surfaced as a `system_failure` divergence naming the tick where

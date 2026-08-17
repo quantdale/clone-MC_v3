@@ -4,16 +4,16 @@
 
 - Program: **ACTIVE**
 - Last completed change: **240-save-recovery-stress — VERIFIED 100%**
-- Active implementation change: **241-deterministic-replay-suite — artifacts present, not yet ACTIVE**
-- Next change: **242-survival-progression-e2e — artifacts present, not yet ACTIVE**
+- Active implementation change: **None (hardening interlock active; numbered advancement frozen before 241)**
+- Next change: **241-deterministic-replay-suite — blocked by hardening interlock**
 - 240 task ledger: **12 total tasks, 12 completed**
 - 240 completion: **100%**
 - 240 mandatory save-recovery-stress requirements: **PASS** (25/25 matrix scenarios, 5 axes)
 - 240 required-test gate: **PASS — typecheck, lint, unit 3574/3574 + 1 skipped (40 new), build, e2e 31/31** (the 239 memory-stress "long exploration session" assertion was amended to a settled-baseline methodology — measurement defect, not a leak; see the 239 verification.md post-verification amendment)
-- 240 advancement allowed: **yes**
-- Session-start head: `39780587a5f449cdbcdd21e46f6cde60e3973b51`
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), the chat and command networking (233), the server world persistence (234), the reconnect state recovery (235), the multiplayer load tests (236), the network adversarial validation (237), the worker and main-thread stress (238), the long-session memory stress (239) VERIFIED, and the save recovery stress (240) VERIFIED 12/12 (100%) with the full baseline gate green (e2e 31/31 after the 239 assertion amendment); 241 begins deterministic-replay-suite.**
-- Next exact action: **Begin 241-deterministic-replay-suite: read AGENTS.md + openspec/AUTONOMOUS_GOAL.md + PROGRAM_STATE.json/.md + CHANGE_SEQUENCE.md (+OVERRIDES) + REVIEW_HANDOFF.md + SPEC_AUTHORING_PROTOCOL.md + the pre-authored package openspec/changes/241-deterministic-replay-suite/, implement the recorded-input/tick-seed replay suite (ReplayRecording, StateHasher, ReplayVerifier, ReplayFixtures) per its specs, run the five gates (typecheck, lint, unit, build, e2e), update verification.md + PROGRAM_STATE.json/.md, commit (feat + state sync, explicit paths), do not push.**
+- 240 advancement allowed: **blocked by hardening interlock**
+- Session-start head: `e034c49413adadad142ebec3c4262f6be0653a74`
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), the chat and command networking (233), the server world persistence (234), the reconnect state recovery (235), the multiplayer load tests (236), the network adversarial validation (237), the worker and main-thread stress (238), the long-session memory stress (239) VERIFIED, and the save recovery stress (240) VERIFIED 12/12 (100%) with the full baseline gate green (e2e 31/31 after the 239 assertion amendment); Hardening interlock active; 241 blocked.**
+- Next exact action: **Continue hardening interlock Task 3: reconcile governance and state. Do not activate Change 241 until interlock is VERIFIED.**
 
 ## What 235 implemented
 

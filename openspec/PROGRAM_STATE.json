@@ -4,7 +4,7 @@
   "status": "ACTIVE",
   "currentChange": "240-save-recovery-stress",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "239-long-session-memory-stress",
+  "lastCompletedChange": "240-save-recovery-stress",
   "nextChange": "241-deterministic-replay-suite",
   "completedTasks": 12,
   "totalTasks": 12,
@@ -13,12 +13,14 @@
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": true,
   "requiredTestsPass": true,
-  "advancementAllowed": true,
+  "advancementAllowed": false,
   "exceptionUsed": false,
-  "sessionStartHead": "39780587a5f449cdbcdd21e46f6cde60e3973b51",
-  "lastCompletedTask": "240: save-recovery-stress VERIFIED 12/12 (100%). src/storage/SaveRecoveryMatrix.ts (NEW): 25 scenarios across 5 axes (abrupt-close/partial-write/migration/quota/import-export) + failure-injection seams (createFaultySaveSink, withStorageFailure, createGatedSaveSink); 234 ServerSaveLifecycle reconciled. Full baseline gate green: typecheck, lint, unit 3574/3574 + 1 skipped (40 new), build, e2e 31/31. The 239 memory-stress \"long exploration session\" e2e assertion was amended to a settled-baseline methodology (measurement defect in the assertion baseline - warm-up/mid-churn sample vs settled plateau; probe evidence: settled 30 chunks / 62 geometries / zero drift at rest) - see the 239 verification.md post-verification amendment.",
-  "nextExactAction": "Begin 241-deterministic-replay-suite: read AGENTS.md + AUTONOMOUS_GOAL.md + PROGRAM_STATE.json/.md + CHANGE_SEQUENCE.md (+OVERRIDES) + REVIEW_HANDOFF.md + SPEC_AUTHORING_PROTOCOL.md + openspec/changes/241-deterministic-replay-suite/, implement the recorded-input/tick-seed replay suite (ReplayRecording, StateHasher, ReplayVerifier, ReplayFixtures) per its specs, run the five gates, update verification.md + PROGRAM_STATE.json/.md, commit (feat + state sync, explicit paths), do not push.",
-  "blockers": [],
+  "sessionStartHead": "e034c49413adadad142ebec3c4262f6be0653a74",
+  "lastCompletedTask": "Hardening interlock: pre-241 repository hardening in progress. Task 2 complete: canonical Change-240 baseline recovered (all 31 E2E pass).",
+  "nextExactAction": "Continue hardening interlock Task 3: reconcile governance and state. Do not activate Change 241 until interlock is VERIFIED.",
+  "blockers": [
+    "Hardening interlock: pre-241 repository hardening not yet VERIFIED"
+  ],
   "validationResults": [
     {
       "change": "230-block-interaction-networking",

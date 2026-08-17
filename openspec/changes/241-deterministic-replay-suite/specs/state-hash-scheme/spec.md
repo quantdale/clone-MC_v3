@@ -37,6 +37,12 @@ object keys were inserted, using exactly the pinned encodings: `null`→`N`, `un
 string→`s<length>:<utf16>`, array→`[<elem>*]`, and object→`{<key-sorted-ascending-by-utf16>` +
 `<encoded key>:<encoded value>;` per key + `}`.
 
+**Numeric zero normalization:** `-0` and `+0` MUST produce identical encodings. The canonical form passes
+every number through `Number(v)` before encoding, which collapses `-0` to `+0`; integer zero therefore
+always encodes as `i0` and never as a distinct negative-zero token. This removes a determinism
+ambiguity where `-0` and `0` would otherwise be distinct values but equal in every arithmetic and
+serialization sense.
+
 #### Scenario: insertion-order independence
 - **GIVEN** two objects with identical key/value pairs but constructed in different key insertion orders
 - **WHEN** `canonicalize` runs on each
@@ -48,6 +54,11 @@ string→`s<length>:<utf16>`, array→`[<elem>*]`, and object→`{<key-sorted-as
 - **WHEN** `canonicalize` runs
 - **THEN** it produces the documented concatenated encoding with object keys emitted in ascending UTF-16
   code-unit order and arrays in element order.
+
+#### Scenario: negative-zero normalization
+- **GIVEN** the values `-0` and `0`
+- **WHEN** `canonicalize` runs on each
+- **THEN** both produce the identical encoding `i0`, and `hashState` returns the same uint32 for both.
 
 ### Requirement: hash function
 `hashState` MUST compute FNV-1a 32-bit over the UTF-16 code units of `canonicalize(value)` and return

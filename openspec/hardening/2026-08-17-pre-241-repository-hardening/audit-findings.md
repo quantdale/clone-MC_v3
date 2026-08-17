@@ -25,6 +25,7 @@ Blocking: YES means numbered advancement cannot resume while OPEN.
 | HARD-016 | MEDIUM | YES | Replay comparison failure semantics can under-specify expected-vs-actual failure | Expected failure traces need explicit comparison with successful completion and mismatch taxonomy | Repair 241 spec before activation |
 | HARD-017 | UNKNOWN | CONDITIONAL | Branch protection/ruleset status could not be inspected through connector permissions | GitHub API returned 403 to the integration | Verify with authorized local/API tooling or record as unresolved governance visibility gap |
 | HARD-018 | HIGH | YES | Repository scale now exceeds stale audit coverage | Legacy audit predates much of current source/test/spec surface | Complete exact-SHA 100% tracked-file audit in this interlock |
+| HARD-019 | MEDIUM | YES | Unit tests time out only under full-suite coverage instrumentation | Multiple heavy worldgen/terrain/worker-saturation tests exceed the 5s default vitest timeout when the v8 coverage provider instruments the whole tree; the suite is green without coverage. Non-deterministic which test trips first. | Raise default `testTimeout` to 30s in `vitest.config.ts` (matches existing per-test `{ timeout: 30000 }` in LightSaturation.test.ts) and pin no-regression coverage thresholds; assertions unchanged so no product behavior is masked |
 
 ## Finding lifecycle
 

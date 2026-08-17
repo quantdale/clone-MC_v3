@@ -37,10 +37,13 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      - name: Coverage (no-regression thresholds)
+        run: npm run test:coverage
+
       - name: Production dependency audit
         run: npm audit --omit=dev
 
-      # Playwright's webServer builds and serves the production artifact (see playwright.config.ts).
+      # Playwright webServer builds and serves the production artifact (see playwright.config.ts).
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
