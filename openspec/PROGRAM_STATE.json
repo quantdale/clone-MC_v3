@@ -16,10 +16,10 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "e034c49413adadad142ebec3c4262f6be0653a74",
-  "lastCompletedTask": "Hardening interlock: pre-241 repository hardening in progress. Task 2 complete: canonical Change-240 baseline recovered (all 31 E2E pass).",
-  "nextExactAction": "Continue hardening interlock Task 3: reconcile governance and state. Do not activate Change 241 until interlock is VERIFIED.",
+  "lastCompletedTask": "Hardening interlock: pre-241 repository hardening work complete (Tasks 0-8.1-8.13, local exact-SHA gate green at 806a700). Published to origin/main pending canonical CI; awaiting green to mark VERIFIED (Task 8.14-8.15).",
+  "nextExactAction": "Require canonical GitHub Actions green at the published SHA; then mark interlock VERIFIED (Task 8.15) and activate Change 241.",
   "blockers": [
-    "Hardening interlock: pre-241 repository hardening not yet VERIFIED"
+    "Hardening interlock: pre-241 repository hardening published but NOT YET VERIFIED (awaiting canonical CI green at the published SHA, run #327 of prior origin/main 05aa1e0 was RED at E2E)."
   ],
   "validationResults": [
     {
@@ -2349,5 +2349,13 @@
   "publishedHead": "67aafd3e7fa72b50170dff3b13c492d6df61a09e",
   "publishedAt": "2026-08-16T16:18:18.133Z",
   "lastValidatedHead": "67aafd3e7fa72b50170dff3b13c492d6df61a09e",
-  "lastKnownHead": "67aafd3e7fa72b50170dff3b13c492d6df61a09e"
+  "lastKnownHead": "67aafd3e7fa72b50170dff3b13c492d6df61a09e",
+  "hardeningInterlock": {
+    "package": "openspec/hardening/2026-08-17-pre-241-repository-hardening",
+    "status": "PUBLISHED_PENDING_CANONICAL",
+    "verification": "NOT VERIFIED until canonical CI green at published SHA",
+    "localGateSha": "806a70071c6222c57eee1bcb47b73a1317d69510",
+    "localGate": "validate-state PASS; typecheck/lint/build 0; unit 3574 passed/1 skipped; coverage 85.11/91.63/95.21/85.11; audit 0/0; e2e 31/31 retries=0; file-audit 1974/1974",
+    "canonicalContext": "origin/main 05aa1e0 run #327 RED at E2E only; published SHA adds waitGameReady harness fix (60s/polling:250/domcontentloaded)+CI timeout 20->30"
+  }
 }

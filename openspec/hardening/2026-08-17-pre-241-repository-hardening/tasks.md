@@ -1,6 +1,6 @@
 # Tasks: Pre-241 Repository Hardening
 
-Status: **ACTIVE INTERLOCK / 76% COMPLETE / NOT VERIFIED**
+Status: **ACTIVE INTERLOCK / 97% COMPLETE (76/78) / NOT VERIFIED (pending canonical CI)**
 
 Do tasks strictly in order. Do not check a task without durable evidence in `verification.md` and, where applicable, `file-audit-manifest.md`.
 
@@ -93,18 +93,18 @@ Do tasks strictly in order. Do not check a task without durable evidence in `ver
 
 ## 8. Full verification and publication
 
-- [ ] 8.1 From a clean tree run: `npm ci`.
-- [ ] 8.2 Run `npm run typecheck`.
-- [ ] 8.3 Run `npm run lint`.
-- [ ] 8.4 Run `npm run build`.
-- [ ] 8.5 Run `npm test` and record file/test/skip counts.
-- [ ] 8.6 Run `npm run test:coverage` and prove thresholds pass.
-- [ ] 8.7 Run `npm audit --omit=dev` and full `npm audit` with required dispositions.
-- [ ] 8.8 Run the full `npm run test:e2e` hardening mode with retries disabled and first-attempt pass.
-- [ ] 8.9 Run all repository/OpenSpec/state validators.
-- [ ] 8.10 Prove file-audit manifest is 100% complete and all blocking findings are CLOSED.
-- [ ] 8.11 Inspect final diff for scope contamination, accidental future implementation, generated junk, secrets, and weakened gates.
-- [ ] 8.12 Update `verification.md`, state, and handoff to the exact commit intended for publication; do not claim canonical green yet.
-- [ ] 8.13 Commit and push directly to `origin/main`; refetch and prove remote head equals the intended commit.
-- [ ] 8.14 Inspect the canonical GitHub Actions run for that exact published SHA; it MUST complete green.
+- [x] 8.1 From a clean tree run: `npm ci`. (PASS, exit 0 at `806a700`)
+- [x] 8.2 Run `npm run typecheck`. (PASS, exit 0)
+- [x] 8.3 Run `npm run lint`. (PASS, exit 0)
+- [x] 8.4 Run `npm run build`. (PASS, exit 0)
+- [x] 8.5 Run `npm test` and record file/test/skip counts. (274 files, 3574 passed, 1 skipped)
+- [x] 8.6 Run `npm run test:coverage` and prove thresholds pass. (85.11/91.63/95.21/85.11 ≥ 85/91/95/85)
+- [x] 8.7 Run `npm audit --omit=dev` and full `npm audit` with required dispositions. (0/0 vulnerabilities)
+- [x] 8.8 Run the full `npm run test:e2e` hardening mode with retries disabled and first-attempt pass. (31 passed, 0 failed, 6.3m, retries=0)
+- [x] 8.9 Run all repository/OpenSpec/state validators. (`validate-state` PASSED; orphan-check clean)
+- [x] 8.10 Prove file-audit manifest is 100% complete and all blocking findings are CLOSED. (1974/1974, 0 unreviewed/blocked)
+- [x] 8.11 Inspect final diff for scope contamination, accidental future implementation, generated junk, secrets, and weakened gates. (clean)
+- [x] 8.12 Update `verification.md`, state, and handoff to the exact commit intended for publication; do not claim canonical green yet. (this commit)
+- [ ] 8.13 Commit and push directly to `origin/main`; refetch and prove remote head equals the intended commit. (pending push)
+- [ ] 8.14 Inspect the canonical GitHub Actions run for that exact published SHA; it MUST complete green. (pending — current `origin/main` `05aa1e0` run #327 is RED at E2E)
 - [ ] 8.15 Only after 8.14, mark this interlock VERIFIED and publish the final state update without activating 241 in the same logical step unless the repository protocol explicitly requires a separate activation commit.

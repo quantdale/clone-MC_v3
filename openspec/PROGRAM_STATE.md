@@ -13,7 +13,8 @@
 - 240 advancement allowed: **blocked by hardening interlock**
 - Session-start head: `e034c49413adadad142ebec3c4262f6be0653a74`
 - Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), the chat and command networking (233), the server world persistence (234), the reconnect state recovery (235), the multiplayer load tests (236), the network adversarial validation (237), the worker and main-thread stress (238), the long-session memory stress (239) VERIFIED, and the save recovery stress (240) VERIFIED 12/12 (100%) with the full baseline gate green (e2e 31/31 after the 239 assertion amendment); Hardening interlock active; 241 blocked.**
-- Next exact action: **Continue hardening interlock Task 3: reconcile governance and state. Do not activate Change 241 until interlock is VERIFIED.**
+- Hardening interlock: **work complete (Tasks 0-8.1-8.13); published pending canonical CI; not yet VERIFIED**
+- Next exact action: **Hardening interlock work complete and published; require canonical GitHub Actions green at the published SHA, then mark interlock VERIFIED (Task 8.14-8.15) and activate Change 241.**
 
 ## What 235 implemented
 

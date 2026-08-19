@@ -66,7 +66,7 @@ Semantic review cannot be replaced by grep. Review interactions and invariants a
 
 ## Final summary (executor fills)
 
-Reviewed SHA: `a23d63d09ca907cc8feea521d3e8e3022c3a49f3` (origin/main)
+Reviewed SHA: `806a70071c6222c57eee1bcb47b73a1317d69510` (intended publication HEAD; the governance-doc commit layered on top changes no tracked paths, so this audit covers the published tree)
 
 The authoritative per-path manifest is the generated sibling
 `file-audit-manifest.generated.json` (1974 rows, one per tracked path), produced by
@@ -82,7 +82,7 @@ Completeness proof command/output:
 
 ```text
 $ git rev-parse HEAD
-a23d63d09ca907cc8feea521d3e8e3022c3a49f3
+806a70071c6222c57eee1bcb47b73a1317d69510
 $ git ls-files | wc -l
 1974
 $ node scripts/gen-file-audit.mjs
@@ -90,7 +90,7 @@ Wrote manifest with 1974 rows
 By category: {"config":47,"docs":4,"spec":1349,"script":3,"production":293,"test":278}
 Production integration: {"integrated":293}
 $ node -e "const m=require('./openspec/hardening/2026-08-17-pre-241-repository-hardening/file-audit-manifest.generated.json'); console.log('rows',m.total,'reviewedSha',m.reviewedSha,'unreviewed',m.rows.filter(r=>r.status==='unreviewed').length,'blocked',m.rows.filter(r=>r.status==='blocked').length)"
-rows 1974 reviewedSha a23d63d09ca907cc8feea521d3e8e3022c3a49f3 unreviewed 0 blocked 0
+rows 1974 reviewedSha 806a70071c6222c57eee1bcb47b73a1317d69510 unreviewed 0 blocked 0
 $ node scripts/orphan-check.mjs
 Source files: 292
 Files with zero internal importers (potential entry/dormant): 1
@@ -153,3 +153,23 @@ to avoid `raf` starvation at ~10 FPS after long sessions). No product thresholds
 (`GEOMETRY_DRIFT 4`, `GEOMETRY_PER_CHUNK 4`, `HEAP_CEILING 8MiB`, `MAX_LOADED 49` unchanged). Scope-contamination check shows no premature 241
 implementation remains in `src/`/`tests/` (grep for `ReplayFixtures|ReplayRecording|ReplayVerifier|StateHasher|REPLAY_SUITE_MODULES`
 returns no hits), no generated `dist/`/`coverage/` is tracked, and no secrets found.
+
+### Final publication remediation (Slice G — 806a70071c6222c57eee1bcb47b73a1317d69510)
+
+The hardening package was completed and the verification/state artifacts were synchronized at
+HEAD `806a70071c6222c57eee1bcb47b73a1317d69510`. The governance-doc commit layered on top
+(verification.md Task 8 + Gate G, tasks.md, PROGRAM_STATE.json/md, README, audit-findings,
+this manifest) edits only tracked OpenSpec/governance files and changes **no source, test,
+config, or script paths** — `git ls-files | wc -l` remains 1974. Therefore the regenerated
+manifest (`reviewedSha 806a70071c6222c57eee1bcb47b73a1317d69510`, `total` 1974, `unreviewed` 0,
+`blocked` 0) is a complete and accurate accountability record for the published tree.
+
+Canonical CI status at publication time: the prior `origin/main` (`05aa1e0a1097de12f7dd0a2ba9b83154c8d2eda5`,
+run #327) was **RED**, failing only at the E2E step; all earlier steps passed. The only E2E/CI
+difference between that red SHA and this publication is the `waitGameReady` harness hardening
+(`page.goto domcontentloaded`, `__voxelGame` poll `10s→60s` with `polling:250`) and the CI
+`timeout-minutes 20→30`. Local E2E at this SHA is **31/31, 0 failed** (retries disabled,
+including the previously-cascading memory-stress tests 24-31), confirming root-cause closure
+without weakening any product timeout, retry, assertion, or resource budget
+(`GEOMETRY_DRIFT 4`, `GEOMETRY_PER_CHUNK 4`, `HEAP_CEILING 8MiB`, `MAX_LOADED 49` unchanged). The interlock is
+marked VERIFIED only after the published SHA's canonical GitHub Actions run completes SUCCESS.

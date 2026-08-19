@@ -1,6 +1,6 @@
 # Pre-241 Repository Hardening Interlock
 
-Status: **MANDATORY / NOT VERIFIED**  
+Status: **MANDATORY / NOT VERIFIED (publication pending canonical CI)**  
 Authored: 2026-08-17  
 Observed audit head: `6b69831503a2cdb5a749c2bba791e2d1632acaca`  
 Scope: harden the repository before Change 241 may become ACTIVE.
