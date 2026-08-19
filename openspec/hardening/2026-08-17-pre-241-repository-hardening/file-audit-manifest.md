@@ -66,7 +66,7 @@ Semantic review cannot be replaced by grep. Review interactions and invariants a
 
 ## Final summary (executor fills)
 
-Reviewed SHA: `05aa1e0a1097de12f7dd0a2ba9b83154c8d2eda5` (origin/main)
+Reviewed SHA: `a23d63d09ca907cc8feea521d3e8e3022c3a49f3` (origin/main)
 
 The authoritative per-path manifest is the generated sibling
 `file-audit-manifest.generated.json` (1974 rows, one per tracked path), produced by
@@ -82,7 +82,7 @@ Completeness proof command/output:
 
 ```text
 $ git rev-parse HEAD
-05aa1e0a1097de12f7dd0a2ba9b83154c8d2eda5
+a23d63d09ca907cc8feea521d3e8e3022c3a49f3
 $ git ls-files | wc -l
 1974
 $ node scripts/gen-file-audit.mjs
@@ -90,7 +90,7 @@ Wrote manifest with 1974 rows
 By category: {"config":47,"docs":4,"spec":1349,"script":3,"production":293,"test":278}
 Production integration: {"integrated":293}
 $ node -e "const m=require('./openspec/hardening/2026-08-17-pre-241-repository-hardening/file-audit-manifest.generated.json'); console.log('rows',m.total,'reviewedSha',m.reviewedSha,'unreviewed',m.rows.filter(r=>r.status==='unreviewed').length,'blocked',m.rows.filter(r=>r.status==='blocked').length)"
-rows 1974 reviewedSha 05aa1e0a1097de12f7dd0a2ba9b83154c8d2eda5 unreviewed 0 blocked 0
+rows 1974 reviewedSha a23d63d09ca907cc8feea521d3e8e3022c3a49f3 unreviewed 0 blocked 0
 $ node scripts/orphan-check.mjs
 Source files: 292
 Files with zero internal importers (potential entry/dormant): 1
@@ -139,11 +139,11 @@ No new blocking/high findings were raised by the file audit. HARD-018 (repositor
 audit coverage) is **CLOSED-FIXED** — the exact-SHA 100% tracked-file audit is complete, with zero
 `unreviewed` rows and zero dead/unreachable modules.
 
-### Drift remediation (Slice E — 05aa1e0a1097de12f7dd0a2ba9b83154c8d2eda5)
-Prior committed manifest at `f146ec7276bbcca4ee8768addaefca30d161dda6` recorded 1974 rows with `reviewedSha f146ec72`. At
-current HEAD `05aa1e0a1097de12f7dd0a2ba9b83154c8d2eda5` the repository still tracks 1974 paths
+### Drift remediation (Slice E — a23d63d09ca907cc8feea521d3e8e3022c3a49f3)
+Prior committed manifest at `05aa1e0a1097de12f7dd0a2ba9b83154c8d2eda5` recorded 1974 rows with `reviewedSha 05aa1e0`. At
+current HEAD `a23d63d09ca907cc8feea521d3e8e3022c3a49f3` the repository still tracks 1974 paths
 (`git ls-files | wc -l`). No structural row drift; only `reviewedSha`/`generatedAt` staleness. Manifest was regenerated
-via `node scripts/gen-file-audit.mjs` at the exact HEAD SHA; `reviewedSha` now equals `05aa1e0a1097de12f7dd0a2ba9b83154c8d2eda5`,
+via `node scripts/gen-file-audit.mjs` at the exact HEAD SHA; `reviewedSha` now equals `a23d63d09ca907cc8feea521d3e8e3022c3a49f3`,
 `total` equals 1974, duplicate-path count is 0, `unreviewed` is 0, `blocked` is 0. Orphan scan
 still shows only `src/main.ts` as the legitimate entry with zero importers. CI timeout was
 raised `20→30` to cover the full 31-scenario suite wall time on software WebGL (`~23m` observed
