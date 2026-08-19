@@ -18,14 +18,15 @@ jobs:
     runs-on: ubuntu-latest
     # The full required gate (validate-state, typecheck, lint, build, the 3574-test
     # unit suite, coverage thresholds, both dependency audits, a cold Playwright
-    # browser install, and the 31-test E2E suite) must complete without weakening any
-    # test, threshold, or audit requirement. The previous run was cancelled at the
-    # 60-minute limit because `npx playwright install --with-deps chromium` hung in
-    # the apt dependency step (~58 min, step 14 never completed). GitHub's ubuntu-latest
-    # runners already provide the chromium system libraries, so the install is now a
-    # fast, cacheable browser download (no --with-deps). 90 minutes gives headroom for
-    # a cold-cache download plus the E2E suite.
-    timeout-minutes: 90
+    # browser install with --with-deps, and the 31-test E2E suite) must complete
+    # without weakening any test, threshold, or audit requirement. Run #329 was
+    # cancelled at the 60-minute limit because the apt dependency step of
+    # `npx playwright install --with-deps chromium` is slow on a cold cache (~58 min);
+    # run #327 proved the same step DOES complete given enough time. The chromium
+    # system libraries are required for E2E (removing --with-deps made E2E fail to
+    # launch), so --with-deps is kept. 120 minutes covers a slow cold-cache apt step
+    # plus the E2E suite; the browser cache is then warm for subsequent runs.
+    timeout-minutes: 120
     permissions:
       contents: read
     steps:
@@ -73,7 +74,7 @@ jobs:
 
       # Playwright webServer builds and serves the production artifact (see playwright.config.ts).
       - name: Install Playwright browsers
-        run: npx playwright install chromium
+        run: npx playwright install --with-deps chromium
 
       - name: E2E tests
         run: npm run test:e2e
