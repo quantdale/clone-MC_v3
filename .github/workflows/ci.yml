@@ -5,10 +5,20 @@ on:
     branches: [main]
   pull_request:
 
+# Deterministic concurrency: serialize per ref, never cancel in-progress main builds
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
 jobs:
   ci:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,11 +38,17 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
+      - name: Validate repository state
+        run: npm run validate-state
+
       - name: Typecheck
         run: npm run typecheck
 
       - name: Lint
         run: npm run lint
+
+      - name: Build
+        run: npm run build
 
       - name: Unit tests
         run: npm test
@@ -40,8 +56,11 @@ jobs:
       - name: Coverage (no-regression thresholds)
         run: npm run test:coverage
 
-      - name: Production dependency audit
+      - name: Production dependency audit (block high/critical)
         run: npm audit --omit=dev
+
+      - name: Full dependency audit (block high/critical)
+        run: npm audit
 
       # Playwright webServer builds and serves the production artifact (see playwright.config.ts).
       - name: Install Playwright browsers
@@ -49,3 +68,21 @@ jobs:
 
       - name: E2E tests
         run: npm run test:e2e
+
+      - name: Upload coverage report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 14
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
