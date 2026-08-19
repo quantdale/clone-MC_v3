@@ -16,19 +16,18 @@ permissions:
 jobs:
   ci:
     runs-on: ubuntu-latest
-    container:
-      image: mcr.microsoft.com/playwright:v1.62.1-jammy
     # The full required gate (validate-state, typecheck, lint, build, the 3574-test
     # unit suite, coverage thresholds, both dependency audits, a Playwright browser
     # install, and the 31-test E2E suite) must complete without weakening any test,
     # threshold, or audit requirement. Runs #329 and #331 were cancelled at their
     # job timeouts (60m and 120m) because `npx playwright install --with-deps
-    # chromium` vendors the Chromium apt dependencies on the runner and hangs on a
-    # cold cache. The mcr.microsoft.com/playwright container image already bundles
-    # Chromium and its system libraries (matching the pinned Playwright 1.62.1), so
-    # no runner apt step is needed and the browser is available via the existing
-    # cache/install step. 45 minutes gives the required gate headroom.
-    timeout-minutes: 45
+    # chromium` vendors the Chromium apt dependencies on a cold cache. Run #332-#333
+    # used mcr.microsoft.com/playwright:v1.62.1-jammy to bundle deps but E2E still
+    # failed (container sandbox / webServer routing difference). This revision runs
+    # host-native with `xvfb-run -a` for headless WebGL and retries the apt install
+    # on the host runner; 60 minutes gives headroom for a cold-cache install plus
+    # the suite.
+    timeout-minutes: 60
     permissions:
       contents: read
     steps:
@@ -74,10 +73,9 @@ jobs:
       - name: Full dependency audit (block high/critical)
         run: npm audit
 
-      # In the Playwright container the browser and its system deps are preinstalled;
-      # a plain install is a fast cacheable idempotent check.
+      # Host runner: install Chromium plus its system deps (cached via actions/cache).
       - name: Install Playwright browsers
-        run: npx playwright install chromium
+        run: npx playwright install --with-deps chromium
 
       - name: E2E tests
         run: xvfb-run -a npm run test:e2e
