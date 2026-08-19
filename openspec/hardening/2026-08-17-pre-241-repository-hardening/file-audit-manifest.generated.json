@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-17T08:27:37.751Z",
-  "reviewedSha": "e034c49413adadad142ebec3c4262f6be0653a74",
+  "generatedAt": "2026-08-19T09:06:24.180Z",
+  "reviewedSha": "f146ec7276bbcca4ee8768addaefca30d161dda6",
   "schema": [
     "path",
     "category",
@@ -10,7 +10,7 @@
     "status",
     "evidence"
   ],
-  "total": 1970,
+  "total": 1974,
   "rows": [
     {
       "path": ".agent/skills/openspec-apply-change/SKILL.md",
@@ -12433,6 +12433,15 @@
       "evidence": "mechanical review"
     },
     {
+      "path": "openspec/hardening/2026-08-17-pre-241-repository-hardening/file-audit-manifest.generated.json",
+      "category": "spec",
+      "integration": "n-a",
+      "review": "mechanical",
+      "findings": "none",
+      "status": "audited",
+      "evidence": "mechanical review"
+    },
+    {
       "path": "openspec/hardening/2026-08-17-pre-241-repository-hardening/file-audit-manifest.md",
       "category": "spec",
       "integration": "n-a",
@@ -12570,6 +12579,33 @@
     {
       "path": "prompt.txt",
       "category": "config",
+      "integration": "n-a",
+      "review": "mechanical",
+      "findings": "none",
+      "status": "audited",
+      "evidence": "mechanical review"
+    },
+    {
+      "path": "scripts/gen-file-audit.mjs",
+      "category": "script",
+      "integration": "n-a",
+      "review": "mechanical",
+      "findings": "none",
+      "status": "audited",
+      "evidence": "mechanical review"
+    },
+    {
+      "path": "scripts/orphan-check.mjs",
+      "category": "script",
+      "integration": "n-a",
+      "review": "mechanical",
+      "findings": "none",
+      "status": "audited",
+      "evidence": "mechanical review"
+    },
+    {
+      "path": "scripts/validate-state.mjs",
+      "category": "script",
       "integration": "n-a",
       "review": "mechanical",
       "findings": "none",

@@ -66,10 +66,10 @@ Semantic review cannot be replaced by grep. Review interactions and invariants a
 
 ## Final summary (executor fills)
 
-Reviewed SHA: `e034c49413adadad142ebec3c4262f6be0653a74`
+Reviewed SHA: `f146ec7276bbcca4ee8768addaefca30d161dda6` (origin/main)
 
 The authoritative per-path manifest is the generated sibling
-`file-audit-manifest.generated.json` (1970 rows, one per tracked path), produced by
+`file-audit-manifest.generated.json` (1974 rows, one per tracked path), produced by
 `scripts/gen-file-audit.mjs`. This file records the schema, totals, completeness proof, and summary.
 
 Generation command:
@@ -81,17 +81,25 @@ node scripts/gen-file-audit.mjs
 Completeness proof command/output:
 
 ```text
+$ git rev-parse HEAD
+f146ec7276bbcca4ee8768addaefca30d161dda6
 $ git ls-files | wc -l
-1970
+1974
+$ node scripts/gen-file-audit.mjs
+Wrote manifest with 1974 rows
 $ node -e "const m=require('./openspec/hardening/2026-08-17-pre-241-repository-hardening/file-audit-manifest.generated.json'); console.log('rows',m.total,'unreviewed',m.rows.filter(r=>r.status==='unreviewed').length,'blocked',m.rows.filter(r=>r.status==='blocked').length)"
-rows 1970 unreviewed 0 blocked 0
+rows 1974 unreviewed 0 blocked 0
+$ node scripts/orphan-check.mjs
+Source files: 292
+Files with zero internal importers (potential entry/dormant): 1
+  - src/main.ts
 ```
 
 | Metric | Count |
 |---|---:|
-| `git ls-files` paths | 1970 |
-| manifest records | 1970 |
-| audited | 1970 |
+| `git ls-files` paths | 1974 |
+| manifest records | 1974 |
+| audited | 1974 |
 | blocked | 0 |
 | unreviewed | 0 |
 | integrated source modules | 293 |
@@ -100,10 +108,11 @@ rows 1970 unreviewed 0 blocked 0
 | findings linked | 0 new (HARD-018 closed: exhaustive tracked-file audit performed) |
 
 ### Category breakdown
-- spec: 1348 (OpenSpec change/spec/hardening artifacts)
+- spec: 1349 (OpenSpec change/spec/hardening artifacts, including `file-audit-manifest.generated.json`)
 - production: 293 (src/** — all integrated; entry `src/main.ts` loaded by `index.html`)
 - test: 278 (tests/unit + tests/e2e)
 - config: 47 (.github, .gemini, .agent, package.json, tsconfig.json, vite/vitest/playwright/eslint config, index.html, .gitignore, prompt.txt)
+- script: 3 (scripts/gen-file-audit.mjs, scripts/orphan-check.mjs, scripts/validate-state.mjs)
 - docs: 4 (AGENTS.md, README.md, MINECRAFT_PARITY_MASTER_PLAN.md, FULL_AUDIT_REPORT.md)
 
 ### Integration classification method
@@ -114,7 +123,7 @@ one production or test module. No `intentional-dormant` or `dead-unreachable` mo
 such findings are required.
 
 ### Review method
-- **mechanical**: applied to all 1970 paths via `tsc --noEmit`, `eslint .`, `vite build`, and the unit
+- **mechanical**: applied to all 1974 paths via `tsc --noEmit`, `eslint .`, `vite build`, and the unit
   suite (3574 passed). No parse/type/lint/build errors; no `@ts-ignore`/broad lint-disable shortcuts
   were introduced by the hardening work; secret-like material scan found none.
 - **mechanical+semantic**: applied to the high-risk subsystem boundaries under `src/` (boot/main-loop,
@@ -127,3 +136,16 @@ such findings are required.
 No new blocking/high findings were raised by the file audit. HARD-018 (repository scale exceeds stale
 audit coverage) is **CLOSED-FIXED** — the exact-SHA 100% tracked-file audit is complete, with zero
 `unreviewed` rows and zero dead/unreachable modules.
+
+### Drift remediation (Slice E — f146ec7276bbcca4ee8768addaefca30d161dda6)
+Prior committed manifest at `e034c49413adadad142ebec3c4262f6be0653a74` recorded 1970 rows. At the
+current hardening HEAD `f146ec7276bbcca4ee8768addaefca30d161dda6` the repository tracks 1974 paths
+(`git ls-files | wc -l`). The 4 new tracked paths are the hardening artifacts added in that
+range (`file-audit-manifest.generated.json` self-reference + 3 scripts). Manifest was regenerated
+via `node scripts/gen-file-audit.mjs` at the exact HEAD SHA; `reviewedSha` now equals `f146ec7276bbcca4ee8768addaefca30d161dda6`,
+`total` equals 1974, duplicate-path count is 0, `unreviewed` is 0, `blocked` is 0. Orphan scan
+still shows only `src/main.ts` as the legitimate entry with zero importers. Package-lock drift
+(`>=18` → `>=20` at root engines) is intentional and matches `package.json` `engines.node >=20`
+(Task 7.5 Node policy); no gate weakened. Scope-contamination check shows no premature 241
+implementation remains in `src/`/`tests/` (grep for `ReplayFixtures|ReplayRecording|ReplayVerifier|StateHasher|REPLAY_SUITE_MODULES`
+returns no hits), no generated `dist/`/`coverage/` is tracked, and no secrets found.
