@@ -16,7 +16,13 @@ permissions:
 jobs:
   ci:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # The full required gate (validate-state, typecheck, lint, build, the 3574-test
+    # unit suite, coverage thresholds, both dependency audits, a cold Playwright
+    # browser install with --with-deps, and the 31-test E2E suite) needs well over
+    # 30 minutes on a cold cache; the previous 30-minute limit killed the job during
+    # the Playwright install step. 60 minutes gives the required gate headroom to
+    # complete without weakening any test, threshold, or audit requirement.
+    timeout-minutes: 60
     permissions:
       contents: read
     steps:
