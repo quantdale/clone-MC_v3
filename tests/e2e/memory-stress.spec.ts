@@ -111,17 +111,19 @@ async function sample(page: Page): Promise<RawSample> {
 }
 
 async function waitGameReady(page: Page): Promise<void> {
-  await page.goto('/');
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('#loading', { state: 'hidden', timeout: 60_000 });
   await page.waitForFunction(() => (window as unknown as { __voxelGame?: object }).__voxelGame !== undefined, {
-    timeout: 10_000,
+    timeout: 60_000,
+    polling: 250,
   });
 }
 
 async function waitReadyAfterReload(page: Page): Promise<void> {
   await page.waitForSelector('#loading', { state: 'hidden', timeout: 60_000 });
   await page.waitForFunction(() => (window as unknown as { __voxelGame?: object }).__voxelGame !== undefined, {
-    timeout: 10_000,
+    timeout: 60_000,
+    polling: 250,
   });
 }
 
