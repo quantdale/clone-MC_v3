@@ -5,6 +5,7 @@ import {
   moduleByName,
   sharableModules,
   validateSimulationPackageBoundary,
+  SHARED_SIMULATION_REPLAY_MODULES,
   type SimulationModule,
 } from '../../src/simulation/SimulationPackageBoundary';
 
@@ -103,5 +104,31 @@ describe('queries', () => {
     expect(sharableModules(empty)).toEqual([]);
     expect(boundaryViolations(empty)).toEqual([]);
     expect(moduleByName(empty, 'a')).toBeUndefined();
+  });
+});
+
+describe('shared-simulation replay modules (241)', () => {
+  it('declares the four replay modules with zero violations', () => {
+    expect(SHARED_SIMULATION_REPLAY_MODULES).toHaveLength(4);
+    const boundary = createSimulationPackageBoundary(SHARED_SIMULATION_REPLAY_MODULES);
+    expect(boundaryViolations(boundary)).toEqual([]);
+    expect(sharableModules(boundary).map((m) => m.name)).toEqual([
+      'simulation/ReplayRecording',
+      'simulation/StateHasher',
+      'simulation/ReplayVerifier',
+      'simulation/ReplayFixtures',
+    ]);
+    for (const name of [
+      'simulation/ReplayRecording',
+      'simulation/StateHasher',
+      'simulation/ReplayVerifier',
+      'simulation/ReplayFixtures',
+    ]) {
+      const m = moduleByName(boundary, name);
+      expect(m).toBeDefined();
+      expect(m!.deterministic).toBe(true);
+      expect(m!.headlessSafe).toBe(true);
+      expect(m!.externalDeps).toEqual([]);
+    }
   });
 });

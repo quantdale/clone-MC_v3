@@ -152,4 +152,16 @@ export function moduleByName(
   return boundary.modules.find((m) => m.name === name);
 }
 
+/**
+ * The shared-simulation replay modules introduced by change 241
+ * (deterministic-replay-suite). They are deterministic, headless-safe, and have
+ * no external deps, so they are client/server-shareable under the boundary rule.
+ */
+export const SHARED_SIMULATION_REPLAY_MODULES: readonly SimulationModule[] = [
+  { name: 'simulation/ReplayRecording', deterministic: true, headlessSafe: true, externalDeps: [] },
+  { name: 'simulation/StateHasher', deterministic: true, headlessSafe: true, externalDeps: [] },
+  { name: 'simulation/ReplayVerifier', deterministic: true, headlessSafe: true, externalDeps: [] },
+  { name: 'simulation/ReplayFixtures', deterministic: true, headlessSafe: true, externalDeps: [] },
+];
+
 
