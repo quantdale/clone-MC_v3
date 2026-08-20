@@ -3,18 +3,18 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **241-deterministic-replay-suite — VERIFIED 100%**
-- Active implementation change: **241-deterministic-replay-suite — VERIFIED 100% (242 activation now permitted)**
-- Next change: **242-survival-progression-e2e — ready for activation (241 VERIFIED)**
-- 241 task ledger: **19 total tasks, 19 completed**
-- 241 completion: **100%**
-- 240 mandatory save-recovery-stress requirements: **PASS** (25/25 matrix scenarios, 5 axes)
-- 240 required-test gate: **PASS — typecheck, lint, unit 3574/3574 + 1 skipped (40 new), build, e2e 31/31** (the 239 memory-stress "long exploration session" assertion was amended to a settled-baseline methodology — measurement defect, not a leak; see the 239 verification.md post-verification amendment)
-- 240 advancement allowed: **yes**
-- Session-start head: `e034c49413adadad142ebec3c4262f6be0653a74`
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), the chat and command networking (233), the server world persistence (234), the reconnect state recovery (235), the multiplayer load tests (236), the network adversarial validation (237), the worker and main-thread stress (238), the long-session memory stress (239) VERIFIED, and the save recovery stress (240) VERIFIED 12/12 (100%) with the full baseline gate green (e2e 31/31 after the 239 assertion amendment); Hardening interlock active; 241 blocked.**
+- Last completed change: **242-survival-progression-e2e — VERIFIED 100%**
+- Active implementation change: **242-survival-progression-e2e — VERIFIED 100% (243 activation now permitted)**
+- Next change: **243-redstone-automation-e2e — ready for activation (242 VERIFIED)**
+- 242 task ledger: **24 total tasks, 24 completed**
+- 242 completion: **100%**
+- 242 mandatory survival-progression-e2e requirements: **PASS** (all capability-spec requirements in progression-harness / survival-progression / nether-progression / end-progression evidenced)
+- 242 required-test gate: **PASS — typecheck, lint, unit 3648/3648 + 1 skipped (35 new across 4 harness files), build, e2e 35/35 (4 new `survival-progression foundation (242 e2e seam)` tests + 31 existing)**
+- 242 advancement allowed: **yes**
+- Session-start head: `35da2f195029ced1bbd3687d677a7d8b9ca6c0d1`
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), the chat and command networking (233), the server world persistence (234), the reconnect state recovery (235), the multiplayer load tests (236), the network adversarial validation (237), the worker and main-thread stress (238), the long-session memory stress (239) VERIFIED, the save recovery stress (240) VERIFIED, and the deterministic-replay-suite (241) VERIFIED 100%, and now survival-progression-e2e (242) VERIFIED 100% (headless ProgressionHarness drives the real modules 0→6 deterministically, with save/reload at every stage boundary, atomic abort, and a deterministic state hash; browser E2E foundation seam); Hardening interlock active.**
 - Hardening interlock: **VERIFIED at e3ecf86c28553c558459c855a3aee3b003bcb157 (run 32320823336 #337 SUCCESS; 78/78 tasks 100%; all gates green)**
-- Next exact action: **Activate Change 242 (242-survival-progression-e2e)**
+- Next exact action: **Activate Change 243 (243-redstone-automation-e2e)**
 
 ## What 235 implemented
 

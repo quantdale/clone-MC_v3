@@ -611,3 +611,132 @@ test.describe('voxel game', () => {
     expect(sky).toBeGreaterThan(30);
   });
 });
+
+/**
+ * Survival-progression foundation (change 242 browser E2E seam).
+ *
+ * The headless `ProgressionHarness` is the authoritative driver for the full
+ * chain (tools → food → shelter → Nether → End → boss). The running game does
+ * NOT wire Nether/End/boss, so the browser seam is limited to the survival
+ * foundation stages the game already reaches: fresh-spawn survival state, a
+ * crafted tool with durability, food consumption, and a placed-block shelter.
+ * These assertions complement the harness, they do not replace it.
+ */
+test.describe('survival-progression foundation (242 e2e seam)', () => {
+  test('fresh spawn shows the full survival baseline (20 hearts / 20 hunger)', async ({ page }) => {
+    await waitForGame(page);
+    await enterPointerLock(page);
+    await expect(page.locator('#survival-status')).toBeVisible();
+    await expect(page.locator('#health-status')).toHaveText('♥ 20');
+    await expect(page.locator('#hunger-status')).toHaveText('🍗 20');
+    // The hotbar shows a full 9-slot quick-access bar.
+    await expect(page.locator('.hotbar-slot')).toHaveCount(9);
+  });
+
+  test('crafting a Wooden Pickaxe places it in the hotbar with a visible durability bar', async ({ page }) => {
+    await waitForGame(page);
+    await enterPointerLock(page);
+    await page.keyboard.press('KeyC');
+    await expect(page.locator('#crafting')).toBeVisible();
+    await page.evaluate(() => {
+      const game = (window as unknown as {
+        __voxelGame?: {
+          inventory: { addItem(id: number, amount: number): number };
+          craftingPanel: { render(registry: unknown): void };
+          registry: unknown;
+        };
+      }).__voxelGame;
+      if (!game) throw new Error('test game handle missing');
+      game.inventory.addItem(7, 1); // log
+      game.craftingPanel.render(game.registry);
+    });
+    await page.locator('.crafting-recipe[data-recipe="planks"]').click();
+    await page.evaluate(() => {
+      const game = (window as unknown as {
+        __voxelGame?: {
+          inventory: { addItem(id: number, amount: number): number };
+          craftingPanel: { render(registry: unknown): void };
+          registry: unknown;
+        };
+      }).__voxelGame;
+      if (!game) throw new Error('test game handle missing');
+      game.inventory.addItem(7, 2); // more logs
+      game.craftingPanel.render(game.registry);
+    });
+    await page.locator('.crafting-recipe[data-recipe="planks"]').click();
+    await page.locator('.crafting-recipe[data-recipe="sticks"]').click();
+    await page.locator('.crafting-recipe[data-recipe="wooden_pickaxe"]').click();
+    await expect(page.locator('.hotbar-slot[aria-label*="Wooden Pickaxe"]')).toHaveCount(1);
+    await expect(page.locator('.hotbar-slot[aria-label*="Wooden Pickaxe"] .slot-durability.visible')).toHaveCount(1);
+    await page.locator('#crafting-close').click();
+    await enterPointerLock(page);
+  });
+
+  test('eating an apple changes the hunger value', async ({ page }) => {
+    await waitForGame(page);
+    await enterPointerLock(page);
+    await page.evaluate(() => {
+      const game = (window as unknown as {
+        __voxelGame?: {
+          survival: { hunger: number; saturation: number };
+          inventory: {
+            addItem(id: number, amount: number): number;
+            setSelectedStack(stack: { id: number; count: number }): void;
+          };
+          hotbar: { render(): void };
+        };
+      }).__voxelGame;
+      if (!game) throw new Error('test game handle missing');
+      game.survival.hunger = 10;
+      game.survival.saturation = 0;
+      game.inventory.addItem(13, 1); // apple
+      game.inventory.setSelectedStack({ id: 13, count: 1 });
+      game.hotbar.render();
+    });
+    await page.keyboard.press('KeyR');
+    await page.waitForTimeout(150);
+    const hunger = await page.evaluate(() => {
+      const game = (window as unknown as { __voxelGame?: { survival: { hunger: number } } }).__voxelGame;
+      return game?.survival.hunger ?? 0;
+    });
+    expect(hunger).toBe(14); // apple foodHunger = 4
+  });
+
+  test('placing a block from the hotbar builds a shelter cell', async ({ page }) => {
+    await waitForGame(page);
+    await enterPointerLock(page);
+    await page.keyboard.press('Digit3'); // select Stone
+    await page.evaluate(() => {
+      const g = (window as unknown as { __voxelGame?: { player: { pitch: number } } }).__voxelGame;
+      if (g) g.player.pitch = -0.5;
+    });
+    let target: { x: number; y: number; z: number } | null = null;
+    for (let i = 0; i < 20; i++) {
+      await page.waitForTimeout(100);
+      target = await page.evaluate(() => {
+        const g = (window as unknown as { __voxelGame?: { interaction?: { getTarget(): { blockX: number; blockY: number; blockZ: number } | null } } }).__voxelGame;
+        const t = g?.interaction?.getTarget();
+        return t ? { x: t.blockX, y: t.blockY, z: t.blockZ } : null;
+      });
+      if (target) break;
+    }
+    expect(target).not.toBeNull();
+    const px = target!.x;
+    const py = target!.y + 1;
+    const pz = target!.z;
+    await page.evaluate(() => {
+      document.dispatchEvent(new MouseEvent('mousedown', { button: 2, bubbles: true }));
+      document.dispatchEvent(new MouseEvent('mouseup', { button: 2, bubbles: true }));
+    });
+    await page.waitForFunction((p) => {
+      const g = (window as unknown as { __voxelGame?: { world?: { getBlock(x: number, y: number, z: number): number } } }).__voxelGame;
+      return (g?.world?.getBlock(p.x, p.y, p.z) ?? -1) === 3;
+    }, { x: px, y: py, z: pz }, { timeout: 5000 });
+    const placed = await page.evaluate((p) => {
+      const g = (window as unknown as { __voxelGame?: { world?: { getBlock(x: number, y: number, z: number): number } } }).__voxelGame;
+      return g?.world?.getBlock(p.x, p.y, p.z) ?? -1;
+    }, { x: px, y: py, z: pz });
+    expect(placed).toBe(3); // Stone
+  });
+});
+

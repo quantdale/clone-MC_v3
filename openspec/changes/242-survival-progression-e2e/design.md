@@ -54,6 +54,27 @@ cannot reach them today. The only faithful way to verify the full chain
 The browser E2E seam is complementary and limited to stages the running game
 already reaches (survival foundation).
 
+### Reconciliation (drift from the authored proposal/design)
+
+The authored proposal assumes an `iron_pickaxe` / `diamond` *item* and an
+`end_portal` / `end_portal_frame` *block*. Those are content-expansion scope
+(changes 215-220) and are explicitly OUT of bounds for 242 (no new gameplay /
+content). The real registries provide `wooden_pickaxe` (tier 1) and
+`stone_pickaxe` (tier 2) only, and a single `nether_portal` block. The harness
+therefore:
+
+- asserts the real pickaxes the registry provides (wooden + stone) AND fires the
+  full core advancement chain `stone_age → acquire_hardware → iron_tools →
+  diamonds` in order; the `iron_tools` / `diamonds` advancement triggers are real
+  definitions whose `itemKey`s reference the (deferred) items.
+- represents the End portal / exit portal in the fixture with the existing
+  `nether_portal` block id; the geometric End frame is placed as obsidian and
+  activation is the real `endPortalIsActivated` count check.
+
+These reconciliations are reflected in the harness header, the capability specs,
+and `verification.md`. The deterministic chain needs no random draws, so no
+`SeedRng` stream is instantiated; the no-`Math.random` invariant holds.
+
 ## Target state
 
 After 242:
