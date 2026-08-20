@@ -17,7 +17,7 @@ describe('redstone-automation: torch-burnout circuit (3.5)', () => {
     // One more toggle (9th, at tick 18) trips burnout.
     h.step(TORCH_UPDATE_DELAY_TICKS);
     expect(h.isTorchBurnedOut(1)).toBe(true);
-    expect(h.isTorchLit(1)).toBe(false);
+    expect(h.isTorchLit(0, 64, 0)).toBe(false);
   });
 
   it('a burnt-out torch stays unlit, then recovers after BURNOUT_RECOVERY_TICKS of quiet', () => {
@@ -42,7 +42,7 @@ describe('redstone-automation: torch-burnout circuit (3.5)', () => {
     const hashBefore = h.stateHash();
     await h.saveReload();
     expect(h.isTorchBurnedOut(1)).toBe(false);
-    expect(h.isTorchLit(1)).toBe(true); // 4 toggles (even) → lit again
+    expect(h.isTorchLit(0, 64, 0)).toBe(true); // 4 toggles (even) → lit again
     expect(h.stateHash()).toBe(hashBefore);
   });
 
