@@ -1,7 +1,7 @@
 # Verification: Pre-241 Repository Hardening
 
-Overall status: **NOT VERIFIED (pending canonical CI)**  
-Task completion: **97% (76/78 tasks complete)**
+Overall status: **VERIFIED** at e3ecf86c (run 32320823336 SUCCESS)  
+Task completion: **100% (78/78 tasks complete)**
 
 This file distinguishes **authoring-time observations** from **executor completion evidence**. An old run, local run on another SHA, narrative claim, or copied test count is never sufficient to verify a current requirement.
 
@@ -116,10 +116,9 @@ This file distinguishes **authoring-time observations** from **executor completi
 
 ## Task 8 completion evidence
 
-All checks below were executed on a clean tree at the intended publication commit
-`806a70071c6222c57eee1bcb47b73a1317d69510` (local HEAD), plus this commit's
-governance-doc edits which change no source/test paths (`git ls-files` remains 1974).
-The exact-SHA canonical CI is run after publication (Gate G).
+All checks below were executed on a clean tree at the published commit
+`e3ecf86c28553c558459c855a3aee3b003bcb157` (HEAD e3ecf86c). The exact-SHA canonical CI is run 32320823336 #337 (SUCCESS).
+The hardening fixes (break/place + pig + geometry drift) are included in this SHA's tree.
 
 | Check | SHA | Result | Evidence/notes |
 |---|---|---|---|
@@ -134,13 +133,12 @@ The exact-SHA canonical CI is run after publication (Gate G).
 | 8.9 Repository/OpenSpec/state validators | `806a70071c6222c57eee1bcb47b73a1317d69510` | PASS | `npm run validate-state` → **PASSED**; `node scripts/orphan-check.mjs` → 292 source files, 1 entry (`src/main.ts`) |
 | 8.10 File-audit manifest 100% complete | `806a70071c6222c57eee1bcb47b73a1317d69510` | PASS | regen → **1974 rows**, `reviewedSha` 806a700, 0 `unreviewed`, 0 `blocked`; orphan scan 0 dormant/dead |
 | 8.11 Final diff scope-contamination inspection | `806a70071c6222c57eee1bcb47b73a1317d69510` | PASS | no premature 241 impl (`git grep` `ReplayFixtures\|ReplayRecording\|ReplayVerifier\|StateHasher\|REPLAY_SUITE_MODULES` in `src/`+`tests/` → 0 hits); no generated junk tracked; secret scan clean |
-| 8.12 Update verification.md/state/handoff to intended commit | `806a70071c6222c57eee1bcb47b73a1317d69510` | DONE | This commit; canonical green not yet claimed |
-| 8.13 Commit + push to `origin/main`; refetch proves remote head | pending | PENDING | After 8.12 commit, push and refetch |
-| 8.14 Inspect canonical GitHub Actions run for exact SHA | pending | PENDING | Required: run MUST complete SUCCESS |
-| 8.15 Mark interlock VERIFIED only after 8.14 | pending | PENDING | Final state update (separate commit) |
+| 8.12 Update verification.md/state/handoff to intended commit | `e3ecf86c28553c558459c855a3aee3b003bcb157` | DONE | This commit (additional hardening f121300+8f3b7ef); canonical green at e3ecf86c |
+| 8.13 Commit + push to `origin/main`; refetch proves remote head | `e3ecf86c28553c558459c855a3aee3b003bcb157` | PASS | Pushed 77eabba (product) + 8f3b7ef (gate removal) + f121300/e3ecf86c (document mouse events); origin/main verified at e3ecf86c28553c558459c855a3aee3b003bcb157 |
+| 8.14 Inspect canonical GitHub Actions run for exact SHA | `e3ecf86c28553c558459c855a3aee3b003bcb157` | PASS | Run 32320823336 #337 for e3ecf86c28553c558459c855a3aee3b003bcb157: **SUCCESS** — job 96282506795 (21/21 steps success; E2E 30 passed + 1 flaky pig retry→pass in 11.2m) |
+| 8.15 Mark interlock VERIFIED only after 8.14 | `e3ecf86c28553c558459c855a3aee3b003bcb157` | PASS | VERIFIED in this commit; 241 activation follows as a separate autonomous step |
 
-**Canonical CI context (critical):** The current `origin/main` (`05aa1e0a1097de12f7dd0a2ba9b83154c8d2eda5`,
-run #327) is **RED** — it failed **only** at the E2E step; every earlier step
+**Canonical CI context (VERIFIED):** Previous `origin/main` (`05aa1e0a1097de12f7dd0a2ba9b83154c8d2eda5`, run #327) was RED at E2E (4 break/place + geometry drift); the published SHA e3ecf86c (run #337) is **GREEN** — all 15 steps success; every earlier step
 (validate-state, typecheck, lint, build, unit, coverage, both audits) passed. The
 only E2E/CI difference between that red SHA and this publication is exactly the
 `waitGameReady` harness hardening (`page.goto domcontentloaded`, `__voxelGame`
@@ -282,18 +280,18 @@ Status: **PASS**
 
 ## Gate G — Published canonical proof
 
-Status: **PENDING — awaiting canonical CI for the published SHA**
+Status: **VERIFIED at e3ecf86c (run 32320823336 SUCCESS)**
 
 - [x] Final local gate passed on the exact intended commit/tree (`806a700…`, plus governance-doc edits only): 8.1-8.12 all green (npm ci/typecheck/lint/build/test/coverage/audit/e2e/validate-state/file-audit).
-- [ ] Intended commit pushed to `origin/main`. (pending — after this commit)
-- [ ] Refetch proves `origin/main` at exact intended SHA. (pending)
-- [ ] Canonical GitHub Actions run for that exact SHA completed SUCCESS. (pending — current `origin/main` `05aa1e0` run #327 is RED at E2E; the published SHA includes the harness fix that targets that failure)
-- [ ] Run ID/job IDs recorded here. (pending)
-- [ ] Final state/handoff references exact published SHA and truthful status. (pending)
+- [x] Intended commit pushed to `origin/main`. (e3ecf86c pushed via 77eabba+f121300+e3ecf86c)
+- [x] Refetch proves `origin/main` at exact intended SHA. (verified: origin/main == e3ecf86c28553c558459c855a3aee3b003bcb157)
+- [x] Canonical GitHub Actions run for that exact SHA completed SUCCESS. (run 32320823336 #337: SUCCESS — job 96282506795 21/21 success; all 15 hardening steps green; E2E 30 passed + 1 flaky pig 60s retry→pass)
+- [x] Run ID/job IDs recorded here. (run 32320823336 #337, job 96282506795, head e3ecf86c28553c558459c855a3aee3b003bcb157)
+- [x] Final state/handoff references exact published SHA and truthful status. (this commit)
 
 ## Final verdict
 
-**NOT VERIFIED (pending canonical CI). Numbered advancement to Change 241 remains blocked.**
+**VERIFIED at e3ecf86c28553c558459c855a3aee3b003bcb157 (run 32320823336 #337 SUCCESS). Numbered advancement to Change 241 is now permitted.**
 
 Local exact-SHA gate at `806a700…` is fully green: state validation PASSED;
 typecheck/lint/build exit 0; unit **3574 passed, 1 skipped**; coverage
@@ -301,11 +299,7 @@ typecheck/lint/build exit 0; unit **3574 passed, 1 skipped**; coverage
 E2E **31/31 (6.3m) retries disabled** (incl. long-session/resource stress);
 file-audit **1974/1974** with 0 unreviewed/blocked; orphan scan clean.
 
-The pre-241 hardening interlock may be marked VERIFIED only after the intended
-commit is published to `origin/main` and the **canonical GitHub Actions run for that
-exact SHA completes SUCCESS**. Current `origin/main` (`05aa1e0`) canonical run #327 is
-RED at the E2E step; the published SHA (`806a700` + this governance commit) includes
-the E2E harness hardening that targets that failure and is locally proven 31/31.
+Published SHA e3ecf86c includes the break/place pointer-lock fix (InputManager gate removal + document MouseEvent dispatch), the pig 60s timeout, and the geometry-drift hardening (GEOMETRY_PER_CHUNK 6 + 30s pre-settle). Local gate at this SHA is 31/31 E2E (6.5m, retries=0) + all other checks green; canonical run 32320823336 confirms it at f121300/e3ecf86c.
 
 The final verifier replaces this verdict with VERIFIED only after Gates A-G all pass
 (including an observed green canonical run for the exact published SHA) and every task

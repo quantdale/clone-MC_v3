@@ -1,6 +1,6 @@
 # Tasks: Pre-241 Repository Hardening
 
-Status: **ACTIVE INTERLOCK / 97% COMPLETE (76/78) / NOT VERIFIED (pending canonical CI)**
+Status: **VERIFIED / 100% COMPLETE (78/78) — hardening interlock VERIFIED at e3ecf86c (run 32320823336 SUCCESS)**
 
 Do tasks strictly in order. Do not check a task without durable evidence in `verification.md` and, where applicable, `file-audit-manifest.md`.
 
@@ -105,6 +105,6 @@ Do tasks strictly in order. Do not check a task without durable evidence in `ver
 - [x] 8.10 Prove file-audit manifest is 100% complete and all blocking findings are CLOSED. (1974/1974, 0 unreviewed/blocked)
 - [x] 8.11 Inspect final diff for scope contamination, accidental future implementation, generated junk, secrets, and weakened gates. (clean)
 - [x] 8.12 Update `verification.md`, state, and handoff to the exact commit intended for publication; do not claim canonical green yet. (this commit)
-- [ ] 8.13 Commit and push directly to `origin/main`; refetch and prove remote head equals the intended commit. (pending push)
-- [ ] 8.14 Inspect the canonical GitHub Actions run for that exact published SHA; it MUST complete green. (pending — current `origin/main` `05aa1e0` run #327 is RED at E2E)
-- [ ] 8.15 Only after 8.14, mark this interlock VERIFIED and publish the final state update without activating 241 in the same logical step unless the repository protocol explicitly requires a separate activation commit.
+- [x] 8.13 Commit and push directly to `origin/main`; refetch and prove remote head equals the intended commit. (pushed 77eabba+f121300+e3ecf86c; origin/main verified at e3ecf86c)
+- [x] 8.14 Inspect the canonical GitHub Actions run for that exact published SHA; it MUST complete green. (run 32320823336 #337 for e3ecf86c: SUCCESS — all 15 steps green, E2E 30 passed + 1 flaky pig retry→pass; job 96282506795 21/21 steps success)
+- [x] 8.15 Only after 8.14, mark this interlock VERIFIED and publish the final state update without activating 241 in the same logical step unless the repository protocol explicitly requires a separate activation commit. (VERIFIED in this commit; 241 activation follows as a separate autonomous step)
