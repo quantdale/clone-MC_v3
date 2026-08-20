@@ -289,12 +289,6 @@ export class InputManager implements InputState {
   };
 
   private readonly onMouseDown = (event: MouseEvent): void => {
-    // Headless Playwright can deliver mousedown before the async
-    // pointerlockchange event flips `locked` (software WebGL at ~5 FPS
-    // on CI lags RAF). Accept clicks when the live DOM already shows
-    // the canvas as the lock element so break/place is not raced out.
-    const domLocked = document.pointerLockElement === this.canvas;
-    if (!this.locked && !domLocked) return;
     if (event.button === 0) {
       this.breakQueued = true;
       this.breakHeld = true;
@@ -314,8 +308,6 @@ export class InputManager implements InputState {
   };
 
   private readonly onWheel = (event: WheelEvent): void => {
-    const domLocked2 = document.pointerLockElement === this.canvas;
-    if (!this.locked && !domLocked2) return;
     this.hotbarDelta += Math.sign(event.deltaY);
   };
 
