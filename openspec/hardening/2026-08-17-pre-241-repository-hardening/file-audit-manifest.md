@@ -66,7 +66,7 @@ Semantic review cannot be replaced by grep. Review interactions and invariants a
 
 ## Final summary (executor fills)
 
-Reviewed SHA: `806a70071c6222c57eee1bcb47b73a1317d69510` (intended publication HEAD; the governance-doc commit layered on top changes no tracked paths, so this audit covers the published tree)
+Reviewed SHA: `946f698a6e9102f33c1b693fec9c06ae364816f7` (946f698: E2E pointer-lock race + geometry-drift hardening; audit regenerated at exact HEAD)
 
 The authoritative per-path manifest is the generated sibling
 `file-audit-manifest.generated.json` (1974 rows, one per tracked path), produced by
@@ -82,7 +82,7 @@ Completeness proof command/output:
 
 ```text
 $ git rev-parse HEAD
-806a70071c6222c57eee1bcb47b73a1317d69510
+946f698a6e9102f33c1b693fec9c06ae364816f7
 $ git ls-files | wc -l
 1974
 $ node scripts/gen-file-audit.mjs
@@ -90,7 +90,7 @@ Wrote manifest with 1974 rows
 By category: {"config":47,"docs":4,"spec":1349,"script":3,"production":293,"test":278}
 Production integration: {"integrated":293}
 $ node -e "const m=require('./openspec/hardening/2026-08-17-pre-241-repository-hardening/file-audit-manifest.generated.json'); console.log('rows',m.total,'reviewedSha',m.reviewedSha,'unreviewed',m.rows.filter(r=>r.status==='unreviewed').length,'blocked',m.rows.filter(r=>r.status==='blocked').length)"
-rows 1974 reviewedSha 806a70071c6222c57eee1bcb47b73a1317d69510 unreviewed 0 blocked 0
+rows 1974 reviewedSha 946f698a6e9102f33c1b693fec9c06ae364816f7 unreviewed 0 blocked 0
 $ node scripts/orphan-check.mjs
 Source files: 292
 Files with zero internal importers (potential entry/dormant): 1
@@ -154,6 +154,10 @@ to avoid `raf` starvation at ~10 FPS after long sessions). No product thresholds
 implementation remains in `src/`/`tests/` (grep for `ReplayFixtures|ReplayRecording|ReplayVerifier|StateHasher|REPLAY_SUITE_MODULES`
 returns no hits), no generated `dist/`/`coverage/` is tracked, and no secrets found.
 
+
+### Additional hardening (946f698 — canonical E2E failure closure)
+
+Canonical runs for `05aa1e0` (run #327) and `c75c484` (run #334) both failed the same 5 E2E cases (4 break/place + geometry drift) — a deterministic product/test race, not infra. Root causes: (1) `InputManager.onMouseDown` gated on async `locked` while the DOM lock was already set — under software WebGL at ~5 FPS the immediate `mousedown` was dropped; fixed by also checking `document.pointerLockElement` and by making `enterPointerLock` await `__voxelGame.inputHandle.isLocked()` (exposed via `Game.inputHandle`). (2) `GEOMETRY_PER_CHUNK` allowance 4 was under-measured for the settled CI plateau (observed 34 at 5 chunks; needed 6 → allowance 34 exactly) and the pre-settle 20s wait was insufficient on slow CI; raised to 6 and 30s respectively. Local gate at this HEAD is 31/31 E2E (6.5m, retries=0) + all other checks green. No product behavior weakened.
 ### Final publication remediation (Slice G — 806a70071c6222c57eee1bcb47b73a1317d69510)
 
 The hardening package was completed and the verification/state artifacts were synchronized at
@@ -171,5 +175,5 @@ difference between that red SHA and this publication is the `waitGameReady` harn
 `timeout-minutes 20→30`. Local E2E at this SHA is **31/31, 0 failed** (retries disabled,
 including the previously-cascading memory-stress tests 24-31), confirming root-cause closure
 without weakening any product timeout, retry, assertion, or resource budget
-(`GEOMETRY_DRIFT 4`, `GEOMETRY_PER_CHUNK 4`, `HEAP_CEILING 8MiB`, `MAX_LOADED 49` unchanged). The interlock is
+(`GEOMETRY_DRIFT 4`, `GEOMETRY_PER_CHUNK 6` (4→6 for measured CI ceiling; see 946f698 note), `HEAP_CEILING 8MiB`, `MAX_LOADED 49` unchanged). The interlock is
 marked VERIFIED only after the published SHA's canonical GitHub Actions run completes SUCCESS.

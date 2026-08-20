@@ -22,6 +22,14 @@ async function waitForGame(page: Page): Promise<void> {
 async function enterPointerLock(page: Page): Promise<void> {
   await page.click('#game-canvas');
   await page.waitForFunction(() => document.pointerLockElement !== null, { timeout: 5000 });
+  // Also wait for the game's async pointer-lock flag so the next
+  // mouse event is not raced out by the `pointerlockchange` handler
+  // (software WebGL at ~5 FPS on CI can lag one frame behind the DOM).
+  await page.waitForFunction(
+    () =>
+      (window as unknown as { __voxelGame?: { inputHandle?: { isLocked(): boolean } } }).__voxelGame?.inputHandle?.isLocked?.() === true,
+    { timeout: 5000 },
+  );
 }
 
 test.describe('voxel game', () => {

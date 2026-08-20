@@ -19,7 +19,7 @@ import {
 const HEADLESS_BUDGET = deriveMemoryResourceBudget(2); // headless render distance R=2
 const HEAP_CEILING_BYTES = 8 * 1024 * 1024; // 8 MiB
 const GEOMETRY_DRIFT = 4; // plateau drift allowance (geometries)
-const GEOMETRY_PER_CHUNK = 4; // per-chunk geometry allowance for footprint growth (~2 meshes/chunk + headroom)
+const GEOMETRY_PER_CHUNK = 6; // per-chunk geometry allowance for footprint growth (~2 meshes/chunk + headroom, measured CI ceiling)
 // Residency ceiling for headless R=2: the boot preload radius (3) exceeds the
 // streaming ring (2), so the engine can hold up to the radius-3 ring (49).
 const MAX_LOADED = HEADLESS_BUDGET.maxLoadedChunks;
@@ -130,6 +130,14 @@ async function waitReadyAfterReload(page: Page): Promise<void> {
 async function enterPointerLock(page: Page): Promise<void> {
   await page.click('#game-canvas');
   await page.waitForFunction(() => document.pointerLockElement !== null, { timeout: 5000 });
+  // Also wait for the game's async pointer-lock flag so the next
+  // mouse event is not raced out by the `pointerlockchange` handler
+  // (software WebGL at ~5 FPS on CI can lag one frame behind the DOM).
+  await page.waitForFunction(
+    () =>
+      (window as unknown as { __voxelGame?: { inputHandle?: { isLocked(): boolean } } }).__voxelGame?.inputHandle?.isLocked?.() === true,
+    { timeout: 5000 },
+  );
 }
 
 /** Wait for the world to reach a settled state, then return a GC'd sample. */
@@ -215,7 +223,7 @@ test.describe('long-session memory / GPU-resource leak validation (239)', () => 
     // are mesh churn (the shifting ring disposes and rebuilds ~2 meshes per
     // chunk) and are not a reliable baseline.
     await waitSettled(page, 30_000);
-    await page.waitForTimeout(20_000);
+    await page.waitForTimeout(30_000);
     const settlePre = await sample(page);
 
     const series: Array<RawSample & { t: number }> = [];

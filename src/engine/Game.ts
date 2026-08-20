@@ -119,6 +119,8 @@ export class Game {
   private readonly materials: Materials;
   private readonly renderer: Renderer;
   private readonly input: InputManager;
+  /** E2E helper: exposes InputManager so tests can await the async lock flag. */
+  get inputHandle(): InputManager { return this.input; }
   private readonly loop: GameLoop;
   private readonly resources: ResourceManager;
   private readonly lighting: Lighting;
