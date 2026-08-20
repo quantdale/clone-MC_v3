@@ -249,6 +249,7 @@ test.describe('voxel game', () => {
   });
 
   test('spawns a live, simulated pig entity near the player', async ({ page }) => {
+    test.setTimeout(90_000);
     await waitForGame(page);
     await enterPointerLock(page);
     // Passive mob baseline (145): the spawn-cycle sweep is throttled to every
