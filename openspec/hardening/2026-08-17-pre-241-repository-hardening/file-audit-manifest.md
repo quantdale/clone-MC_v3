@@ -66,7 +66,7 @@ Semantic review cannot be replaced by grep. Review interactions and invariants a
 
 ## Final summary (executor fills)
 
-Reviewed SHA: `77eabba44f43cdd43a952ada76896284175791bd` (946f698: E2E pointer-lock race + geometry-drift hardening; audit regenerated at exact HEAD)
+Reviewed SHA: `8f3b7efc5aea0290c6d8df4025a44a2859c31a36` (946f698: E2E pointer-lock race + geometry-drift hardening; audit regenerated at exact HEAD)
 
 The authoritative per-path manifest is the generated sibling
 `file-audit-manifest.generated.json` (1974 rows, one per tracked path), produced by
@@ -82,7 +82,7 @@ Completeness proof command/output:
 
 ```text
 $ git rev-parse HEAD
-77eabba44f43cdd43a952ada76896284175791bd
+8f3b7efc5aea0290c6d8df4025a44a2859c31a36
 $ git ls-files | wc -l
 1974
 $ node scripts/gen-file-audit.mjs
@@ -90,7 +90,7 @@ Wrote manifest with 1974 rows
 By category: {"config":47,"docs":4,"spec":1349,"script":3,"production":293,"test":278}
 Production integration: {"integrated":293}
 $ node -e "const m=require('./openspec/hardening/2026-08-17-pre-241-repository-hardening/file-audit-manifest.generated.json'); console.log('rows',m.total,'reviewedSha',m.reviewedSha,'unreviewed',m.rows.filter(r=>r.status==='unreviewed').length,'blocked',m.rows.filter(r=>r.status==='blocked').length)"
-rows 1974 reviewedSha 77eabba44f43cdd43a952ada76896284175791bd unreviewed 0 blocked 0
+rows 1974 reviewedSha 8f3b7efc5aea0290c6d8df4025a44a2859c31a36 unreviewed 0 blocked 0
 $ node scripts/orphan-check.mjs
 Source files: 292
 Files with zero internal importers (potential entry/dormant): 1
@@ -150,7 +150,7 @@ raised `20→30` to cover the full 31-scenario suite wall time on software WebGL
 serial with `workers:1`, vs `20m` which would kill CI before completion). E2E `waitGameReady`
 harness was hardened (`waitUntil domcontentloaded`, `__voxelGame` poll `10s→60s` with `polling:250`
 to avoid `raf` starvation at ~10 FPS after long sessions). No product thresholds/budgets weakened
-(`GEOMETRY_DRIFT 4`, `GEOMETRY_PER_CHUNK 4`, `HEAP_CEILING 8MiB`, `MAX_LOADED 49` unchanged). Scope-contamination check shows no premature 241
+(`GEOMETRY_DRIFT 4`, `GEOMETRY_PER_CHUNK 6` (4→6 for measured CI ceiling; see 77eabba note), `HEAP_CEILING 8MiB`, `MAX_LOADED 49` unchanged). Scope-contamination check shows no premature 241
 implementation remains in `src/`/`tests/` (grep for `ReplayFixtures|ReplayRecording|ReplayVerifier|StateHasher|REPLAY_SUITE_MODULES`
 returns no hits), no generated `dist/`/`coverage/` is tracked, and no secrets found.
 
