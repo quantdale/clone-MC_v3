@@ -82,3 +82,19 @@ VERIFIED. The full gate is green: typecheck clean, lint clean, 3613 unit tests p
 46 new 241 tests, production build succeeds, coverage 85.12/91.5/95.12/85.12 meets the no-regression
 thresholds, `npm run validate-state` PASSES, and the Playwright E2E gate is included in the canonical
 CI run on the published SHA. Change 242 (`survival-progression-e2e`) is now permitted to activate.
+
+## Canonical CI evidence (published-proof gate)
+
+- Published SHA: `64bb69327a261842437650e3d3c6fdbfde509465`
+- Workflow: `CI` (`.github/workflows/ci.yml`), job `ci` (id `96299186147`)
+- Run: **32326656949** — https://github.com/quantdale/clone-MC_v3/actions/runs/32326656949
+- Conclusion: **SUCCESS** (all 21 steps completed)
+- Steps (all `success`): Checkout → Setup Node.js → Install dependencies → Cache Playwright browsers →
+  **Validate repository state** → **Typecheck** → **Lint** → **Build** → **Unit tests** → **Coverage
+  (no-regression thresholds)** → **Production dependency audit** → **Full dependency audit** → Install
+  Playwright browsers → **E2E tests** → (failure-only uploads skipped).
+- Test counts: unit 3613 passed / 1 skipped (incl. 46 new 241 tests); E2E 31 (in CI gate).
+- Audits: production and full `npm audit` clean (no high/critical). Coverage 85.12/91.5/95.12/85.12 ≥
+  thresholds (85/91/95/85). `npm run validate-state` PASSED.
+- Outcome: Change 241 is VERIFIED with canonical CI green on the exact published SHA. Advancement to
+  Change 242 is permitted.
