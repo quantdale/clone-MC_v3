@@ -66,7 +66,7 @@ Semantic review cannot be replaced by grep. Review interactions and invariants a
 
 ## Final summary (executor fills)
 
-Reviewed SHA: `15b538e4366ecd98fe7f6f0cc2f6780f114e4938` (946f698: E2E pointer-lock race + geometry-drift hardening; audit regenerated at exact HEAD)
+Reviewed SHA: `f121300e37894ab3335b1b5a23f3ca0bbc1d87c5` (946f698: E2E pointer-lock race + geometry-drift hardening; audit regenerated at exact HEAD)
 
 The authoritative per-path manifest is the generated sibling
 `file-audit-manifest.generated.json` (1974 rows, one per tracked path), produced by
@@ -82,7 +82,7 @@ Completeness proof command/output:
 
 ```text
 $ git rev-parse HEAD
-15b538e4366ecd98fe7f6f0cc2f6780f114e4938
+f121300e37894ab3335b1b5a23f3ca0bbc1d87c5
 $ git ls-files | wc -l
 1974
 $ node scripts/gen-file-audit.mjs
@@ -90,7 +90,7 @@ Wrote manifest with 1974 rows
 By category: {"config":47,"docs":4,"spec":1349,"script":3,"production":293,"test":278}
 Production integration: {"integrated":293}
 $ node -e "const m=require('./openspec/hardening/2026-08-17-pre-241-repository-hardening/file-audit-manifest.generated.json'); console.log('rows',m.total,'reviewedSha',m.reviewedSha,'unreviewed',m.rows.filter(r=>r.status==='unreviewed').length,'blocked',m.rows.filter(r=>r.status==='blocked').length)"
-rows 1974 reviewedSha 15b538e4366ecd98fe7f6f0cc2f6780f114e4938 unreviewed 0 blocked 0
+rows 1974 reviewedSha f121300e37894ab3335b1b5a23f3ca0bbc1d87c5 unreviewed 0 blocked 0
 $ node scripts/orphan-check.mjs
 Source files: 292
 Files with zero internal importers (potential entry/dormant): 1
