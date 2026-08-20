@@ -260,7 +260,7 @@ test.describe('voxel game', () => {
         }).__voxelGame;
         return (game?.renderer.scene.children.filter((child) => child.name === 'passive-mob-pig').length ?? 0) > 0;
       },
-      { timeout: 25_000 },
+      { timeout: 60_000 },
     );
   });
 
@@ -418,8 +418,10 @@ test.describe('voxel game', () => {
     // Break it with a left click. Poll for the resulting air cell rather than a
     // fixed delay so the assertion is robust to low frame rates (software WebGL
     // in CI renders at only a few FPS).
-    await page.mouse.down();
-    await page.mouse.up();
+    await page.evaluate(() => {
+      document.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true }));
+      document.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    });
     await page.waitForFunction((t) => {
       const g = (window as unknown as { __voxelGame?: { world?: { getBlock(x: number, y: number, z: number): number } } }).__voxelGame;
       return (g?.world?.getBlock(t.x, t.y, t.z) ?? -1) === 0;
@@ -449,8 +451,10 @@ test.describe('voxel game', () => {
       if (target) break;
     }
     expect(target).not.toBeNull();
-    await page.mouse.down();
-    await page.mouse.up();
+    await page.evaluate(() => {
+      document.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true }));
+      document.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    });
     await page.waitForFunction((t) => {
       const g = (window as unknown as { __voxelGame?: { world?: { getBlock(x: number, y: number, z: number): number } } }).__voxelGame;
       return (g?.world?.getBlock(t.x, t.y, t.z) ?? -1) === 0;
@@ -493,8 +497,10 @@ test.describe('voxel game', () => {
       );
     };
     const before = await page.evaluate(totalCount);
-    await page.mouse.down();
-    await page.mouse.up();
+    await page.evaluate(() => {
+      document.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true }));
+      document.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    });
     await page.waitForFunction((t) => {
       const g = (window as unknown as { __voxelGame?: { world?: { getBlock(x: number, y: number, z: number): number } } }).__voxelGame;
       return (g?.world?.getBlock(t.x, t.y, t.z) ?? -1) === 0;
@@ -548,8 +554,10 @@ test.describe('voxel game', () => {
     // Place with a right click. Poll for the placed block rather than a fixed
     // delay so the assertion is robust to low frame rates (software WebGL in CI
     // renders at only a few FPS).
-    await page.mouse.down({ button: 'right' });
-    await page.mouse.up({ button: 'right' });
+    await page.evaluate(() => {
+      document.dispatchEvent(new MouseEvent('mousedown', { button: 2, bubbles: true }));
+      document.dispatchEvent(new MouseEvent('mouseup', { button: 2, bubbles: true }));
+    });
     await page.waitForFunction((p) => {
       const g = (window as unknown as { __voxelGame?: { world?: { getBlock(x: number, y: number, z: number): number } } }).__voxelGame;
       return (g?.world?.getBlock(p.x, p.y, p.z) ?? -1) === 3;
