@@ -3,15 +3,34 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **248-parity-matrix-reconciliation — VERIFIED 100% (15/15 tasks)**
-- Active implementation change: **249-whole-codebase-adversarial-audit — ACTIVE (0/15 tasks, just activated)**
-- Next change: **250-final-program-verification — ready after 249 VERIFIED**
-- 248 required-test gate: **PASS — typecheck, lint, unit 292 files / 3827 passed + 1 skipped (= baseline; docs-only), build, e2e 40/40 (12.8m after visual-threshold fix)**
-- 248 advancement allowed: **yes (VERIFIED; no exception used)**
-- Session-start head: `d2e9770e532f17aacc213f7132ead798cd83328d` (this session); published head recorded in the session report
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), the chat and command networking (233), the server world persistence (234), the reconnect state recovery (235), the multiplayer load tests (236), the network adversarial validation (237), the worker and main-thread stress (238), the long-session memory stress (239) VERIFIED, the save recovery stress (240) VERIFIED, the deterministic-replay-suite (241) VERIFIED 100%, survival-progression-e2e (242) VERIFIED 100%, redstone-automation-e2e (243) VERIFIED 100%, worldgen-regression-matrix (244) VERIFIED 100%, visual-regression-matrix (245) VERIFIED 100%, input-accessibility-matrix (246) VERIFIED 100%, performance-release-gate (247) VERIFIED 100%, and parity-matrix-reconciliation (248) VERIFIED 100% (PARITY_MATRIX.md: 252 rows — 238 exact / 4 equivalent / 5 approx / 3 deferred / 1 out-of-scope / 1 n/a — with C001-C250 bijection verified); Hardening interlock VERIFIED.**
+- Last completed change: **249-whole-codebase-adversarial-audit — VERIFIED 100% (15/15 tasks)**
+- Active implementation change: **250-final-program-verification — ACTIVE (0/15 tasks, just activated; final numbered change)**
+- Next change: **none — 250 is the last planned change**
+- 249 required-test gate: **PASS — typecheck/lint/test re-run at audit commit (292 files / 3827 passed + 1 skipped); build/e2e cited at byte-identical tree b56529e (build PASS, e2e 40/40); src/tests untouched by the audit**
+- 249 advancement allowed: **yes (VERIFIED; no exception used)**
+- Session-start head: `b56529e6459ad2348545c359bdcdceb1477607c5` (this session); published head recorded in the session report
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), the chat and command networking (233), the server world persistence (234), the reconnect state recovery (235), the multiplayer load tests (236), the network adversarial validation (237), the worker and main-thread stress (238), the long-session memory stress (239) VERIFIED, the save recovery stress (240) VERIFIED, the deterministic-replay-suite (241) VERIFIED 100%, survival-progression-e2e (242) VERIFIED 100%, redstone-automation-e2e (243) VERIFIED 100%, worldgen-regression-matrix (244) VERIFIED 100%, visual-regression-matrix (245) VERIFIED 100%, input-accessibility-matrix (246) VERIFIED 100%, performance-release-gate (247) VERIFIED 100%, parity-matrix-reconciliation (248) VERIFIED 100%, and whole-codebase-adversarial-audit (249) VERIFIED 100% (report.md: 45 findings — 2 blocking data-loss DL-001/DL-002 tracked to 250 — all seven categories minimumMet, AUDIT-001..030 reconciled); Hardening interlock VERIFIED.**
 - Hardening interlock: **VERIFIED at e3ecf86c28553c558459c855a3aee3b003bcb157 (run 32320823336 #337 SUCCESS; 78/78 tasks 100%; all gates green)**
-- Next exact action: **Begin 249-whole-codebase-adversarial-audit: read its artifacts, record baseline into its verification.md, then implement per its tasks**
+- Next exact action: **Begin 250-final-program-verification: read its artifacts, consume report.md findings as decision inputs (esp. blocking DL-001/DL-002), record baseline into its verification.md, then implement per its tasks**
+
+## What 249 implemented
+
+Change 249 is a read-only adversarial audit producing
+`openspec/changes/249-whole-codebase-adversarial-audit/report.md` plus four per-category
+fragment files under `fragments/`. No production source changed (`git status src/ tests/`
+clean).
+
+- Four parallel auditors covered all seven categories (security, correctness, reliability,
+  data-loss, concurrency, performance, architecture) with static file:line citations,
+  prior-change evidence (237-248), and read-only probes.
+- **45 findings: 2 blocking** — DL-001 (production save path silently swallows quota/
+  private-mode failures, Game.ts:1523-1552) and DL-002 (edit-overlay LRU eviction silently
+  discards unsaved edits, World.ts:784-790) — both tracked forward to 250 per this change's
+  non-goals. Root context: DL-005 records the transactional IndexedDB stack is unwired from
+  the shipped game (localStorage-only live saves).
+- `npm audit`: 0 vulnerabilities. Deterministic replay probe: 22/22 PASS. Legacy
+  FULL_AUDIT_REPORT.md AUDIT-001..030 fully reconciled with current-tree citations.
+- All seven categories recorded `minimumMet: true` with honest coverage gaps documented.
 
 ## What 248 implemented
 

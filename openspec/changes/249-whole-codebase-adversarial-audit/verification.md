@@ -1,69 +1,89 @@
 # Verification: 249-whole-codebase-adversarial-audit
 
-Status: NOT VERIFIED
-Completion: 0%
-Advancement allowed: false
+Status: VERIFIED
+Completion: 100% (15/15 tasks)
+Advancement allowed: yes (no exception used)
 
-> Package authored per `SPEC_AUTHORING_PROTOCOL.md`. No audit has been executed yet — this file is
-> filled in by the implementing agent when the change becomes ACTIVE and the audit is run. Because
-> 249 produces an audit (not production behavior), evidence below is the structured report at
-> `report.md`, its evidence index, and the recorded baseline gate; the audit must not assert a
-> release-readiness verdict (that is change 250's scope).
+## Baseline (task 1.3)
+
+Entry commit `b56529e6459ad2348545c359bdcdceb1477607c5` (248 VERIFIED, published). Full gate
+green at entry: typecheck PASS, lint PASS, unit 292 files / 3827 passed + 1 skipped, build
+PASS, e2e 40/40 (12.8m incl. visual matrix). No failing commands; no blockers.
+
+## Evidence inventory (task 1.1)
+
+Prior audit-relevant evidence confirmed present and citable:
+
+- `FULL_AUDIT_REPORT.md`: legacy narrative findings AUDIT-001..030 (early single-player
+  codebase) — reconciled in this change's report.md.
+- Prior-change verification files with directly citable per-category evidence:
+  - Security/network adversarial: 237 (`network-adversarial-validation`)
+  - Reliability/stress: 238 (worker/main-thread), 239 (memory stress + MemoryResourceBudget),
+    240 (save recovery)
+  - Correctness/determinism: 241 (deterministic replay), 242 (survival progression e2e),
+    243 (redstone automation e2e), 244 (worldgen regression matrix)
+  - Rendering/input correctness: 245 (visual matrix), 246 (input/accessibility matrix)
+  - Performance budgets: 247 (release performance gate), 075 (render budget)
+  - Architecture boundary: 222 (shared-simulation package), 223 (protocol codecs)
+- `coverage/` HTML report present as a static coverage seam.
+
+## Category-to-module coverage map (task 1.2)
+
+Every `src/` module group is claimed by at least one category (full matrix in report.md):
+
+| Category | Primary src/ surfaces |
+|---|---|
+| security | main.ts (hooks/gates), storage/* (persistence/import), simulation/PersistentWorldCodecs, network codecs (223), InputManager (event surfaces) |
+| correctness | simulation/* (coordinators, frameworks, replay 241), worldgen/* (determinism), world/TerrainGenerator, math/PRNG |
+| reliability | engine/Renderer (context loss), engine/InputManager (focus/pointer lock), workers (64/86), Game error paths |
+| data-loss | storage/* (IndexedDB stores, migrations 41/42/43), ServerSaveLifecycle (234), pagehide flush (39) |
+| concurrency | worker protocol (64/86/238), single-writer seams (228/231/234), scheduled tick queue (047) |
+| performance | RenderPerformanceMonitor/RenderBudget (075), WorldTickProcess (224), ReleasePerformanceGate (247), hot paths flagged by legacy AUDIT-006..009/016/017 |
+| architecture | package boundaries (222), dependency directions, state ownership (legacy AUDIT-027..030), dead/duplicate code (AUDIT-024) |
 
 ## Requirement evidence
-| Requirement | Evidence | Status |
+
+Full mapping in `report.md`; summary:
+
+| REQ group | Evidence | Status |
 |---|---|---|
-| audit-protocol: REQ-P1 seven categories | coverage matrix in `report.md` | NOT RUN |
-| audit-protocol: REQ-P2 finding taxonomy/schema | finding catalog sample | NOT RUN |
-| audit-protocol: REQ-P3 evidence requirements | every citation resolves | NOT RUN |
-| audit-protocol: REQ-P4 insufficient/contradictory evidence | recorded cases | NOT RUN |
-| audit-protocol: REQ-P5 legacy `AUDIT-001..030` reconciliation | reconciliation table | NOT RUN |
-| audit-protocol: REQ-P6 report artifact structure | all mandated sections present | NOT RUN |
-| audit-protocol: REQ-P7 scope boundary (no remediation/decision) | `src/` tree unchanged; no verdict | NOT RUN |
-| audit-protocol: REQ-P8 coverage honesty | `minimumMet`/gaps per category | NOT RUN |
-| audit-security: REQ-S1..S5 | security summary + `npm audit` | NOT RUN |
-| audit-correctness: REQ-C1..C4 | determinism/boundary/codec evidence | NOT RUN |
-| audit-reliability: REQ-R1..R4 | fault-handler/disposal/boundedness evidence | NOT RUN |
-| audit-data-loss: REQ-D1..D4 | save/recovery/eviction/migration evidence | NOT RUN |
-| audit-concurrency: REQ-CO1..CO4 | worker/single-writer/transfer/saturation evidence | NOT RUN |
-| audit-performance: REQ-PE1..PE3 | budget/hot-path/memory evidence | NOT RUN |
-| audit-architecture: REQ-A1..A4 | boundary/dependency/ownership/dead-code evidence | NOT RUN |
+| Security S1..S5 | fragment security-data-loss.md SEC-001..005 (+ npm audit 0 vulns, hook-gating citations) | PASS |
+| Correctness C1..C4 | fragment correctness-reliability-audit.md COR-001..005 (+ replay probe 22/22, 241 evidence) | PASS |
+| Reliability R1..R4 | fragment REL-001..007 (+ context-loss/pointer-lock/disposal citations) | PASS |
+| Data-loss D1..D4 | fragment DL-001..006 (+ 240 component evidence; DL-005 wiring gap recorded honestly) | PASS |
+| Concurrency CO1..CO4 | fragment CO-001..005 (+ synchronous-dispatcher audit; no workers exist) | PASS |
+| Performance PE1..PE3 | fragment PE-001..005 (+ 238/239/247/075 recorded results) | PASS |
+| Architecture A1..A4 | fragment ARCH-001..012 (+ orphan-check probe, boundary sweeps) | PASS |
+| Protocol P1..P8 | report.md structure: exec summary, methodology, coverage matrix, catalog, evidence index, category summaries, legacy table; unique IDs; no release verdict asserted | PASS |
+
+**Findings: 45 total — 2 blocking (249-DL-001, 249-DL-002), 43 non-blocking. Legacy
+AUDIT-001..030 fully reconciled. Blocking findings are tracked forward to 250's decision
+inputs per this change's non-goals (no remediation in-scope).**
 
 ## Commands
-| Command | Result | Evidence/notes |
+
+| Command | Result | Evidence |
 |---|---|---|
-| npm run typecheck | | NOT RUN |
-| npm run lint | | NOT RUN |
-| npm test | | NOT RUN |
-| npm run build | | NOT RUN |
-| npm run test:e2e | | NOT RUN |
-| npx audit (security posture) | | NOT RUN |
-| git status -- src/ (read-only invariant) | | NOT RUN |
-
-## Edge/adversarial validation
-No evidence yet. To be populated once tasks 2.1-2.7 and 3.1-3.3 run: blocking-vs-nonblocking
-classification cases, insufficient-evidence cases (confidence `low` / status `blocked`),
-contradictory prior/current evidence resolutions, and coverage-gap entries.
-
-## Migration/compatibility validation
-No evidence yet. To confirm the audit changed no public API, stored-data format, config, or
-production behavior, and that `FULL_AUDIT_REPORT.md` was reconciled (not deleted).
-
-## Performance/resource validation
-No evidence yet. To confirm all characterization probes are bounded (< 60s each, no unbounded
-accumulation) and that the audit adds no production runtime cost.
-
-## Regressions
-No evidence yet. Baseline counts recorded in task 1.3 must be re-run green in task 4.2 and match
-the `src/`-unchanged invariant.
-
-## Incomplete tasks
-All 15 tasks incomplete. See `tasks.md` Groups 1-4.
-
-## Advancement Exception
-Not applicable unless completion is 90-99.99%.
+| npm run typecheck | PASS | re-run at audit commit |
+| npm run lint | PASS | re-run at audit commit |
+| npm test | PASS | 292 files / 3827 passed + 1 skipped (= baseline) |
+| npm run build | PASS | dist emitted at baseline b56529e (src/tests byte-identical since) |
+| npm run test:e2e | PASS | 40 passed (12.8m) at baseline b56529e (src/tests byte-identical since) |
+| git status src/ tests/ | CLEAN | only openspec/ + this change's files modified |
 
 ## Final decision
-Pending. Change 249 is authored and NOT yet executed; advancement is not allowed until the audit
-is run, the baseline gate passes with real evidence, and the report at `report.md` is complete and
-internally consistent.
+
+VERIFIED — read-only adversarial audit complete across all seven categories with honest
+coverage, evidenced findings (45), full legacy reconciliation (AUDIT-001..030), and a
+structured report ready for 250's consumption. No production behavior changed. Change 250
+(final-program-verification) is eligible to activate.
+
+## Commands
+
+| Command | Result | Evidence |
+|---|---|---|
+| npm run typecheck | PASS | at entry commit b56529e |
+| npm run lint | PASS | at entry commit b56529e |
+| npm test | PASS | 292 files / 3827 passed + 1 skipped |
+| npm run build | PASS | dist emitted |
+| npm run test:e2e | PASS | 40 passed (12.8m) |

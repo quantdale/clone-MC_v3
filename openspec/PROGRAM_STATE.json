@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "249-whole-codebase-adversarial-audit",
+  "currentChange": "250-final-program-verification",
   "currentChangeStatus": "ACTIVE",
-  "lastCompletedChange": "248-parity-matrix-reconciliation",
-  "nextChange": "250-final-program-verification",
+  "lastCompletedChange": "249-whole-codebase-adversarial-audit",
+  "nextChange": null,
   "completedTasks": 0,
   "totalTasks": null,
   "completionPercentage": 0,
@@ -16,10 +16,16 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "6e606e19f78e4212f3150300374f6ec6308032be",
-  "lastCompletedTask": "248 parity-matrix-reconciliation VERIFIED (15/15 tasks; PARITY_MATRIX.md 252 rows; full gate green incl. e2e 40/40)",
-  "nextExactAction": "Begin 249-whole-codebase-adversarial-audit: read its artifacts, record baseline into its verification.md, then implement per its tasks",
+  "lastCompletedTask": "249 whole-codebase-adversarial-audit VERIFIED (15/15 tasks; report.md 45 findings — 2 blocking data-loss; AUDIT-001..030 reconciled; full gate green)",
+  "nextExactAction": "Begin 250-final-program-verification: read its artifacts, consume 249 report.md findings as decision inputs, record baseline into its verification.md, then implement per its tasks",
   "blockers": [],
   "validationResults": [
+    {
+      "change": "249-whole-codebase-adversarial-audit",
+      "status": "VERIFIED",
+      "unitTests": 3827,
+      "e2eTests": 40
+    },
     {
       "change": "248-parity-matrix-reconciliation",
       "status": "VERIFIED",
