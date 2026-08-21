@@ -31,6 +31,14 @@ function faceAxis(face: OpaqueFaceQuad['face']): 0 | 1 | 2 {
   return 2;
 }
 
+/** Optional metadata stamped onto emitted fluid quads. */
+export interface FluidMeshOptions {
+  /** Animation class id for the merge signature (animated fluid frames). */
+  animationClass?: number;
+  /** Version token of the build producing these quads. */
+  inputVersion?: number;
+}
+
 /**
  * Push one shaded quad. `(x, y, z)` is the quad's min corner; width/height extend along the
  * face's in-plane axes (062 conventions). `cellX/Y/Z` is the face's own cell; `planeCoord` the
@@ -50,6 +58,7 @@ function pushShaded(
   cellY: number,
   cellZ: number,
   planeCoord: number,
+  options?: FluidMeshOptions,
 ): void {
   const axis = faceAxis(face);
   const isMax = face === 'up' || face === 'east' || face === 'south';
@@ -67,6 +76,9 @@ function pushShaded(
     blockId: fluidId,
     vertexLights: quadVertexLights(light, ctx, minU, minV, width, height),
     vertexAO: quadVertexAO(light, ctx, minU, minV, width, height),
+    animationClass: options?.animationClass ?? 0,
+    transparencyClass: 1,
+    inputVersion: options?.inputVersion,
   });
 }
 
@@ -78,18 +90,38 @@ export function meshFluidSurface(
   x: number,
   y: number,
   z: number,
+  options?: FluidMeshOptions,
 ): OpaqueFaceQuad[] {
-  const state = world.getFluidState(x, y, z);
-  if (state === null || state.fluidId !== fluidId) return [];
-
   const out: OpaqueFaceQuad[] = [];
+  meshFluidSurfaceInto(world, fluidId, light, x, y, z, out, options);
+  return out;
+}
+
+/**
+ * Append-only variant of `meshFluidSurface`: pushes the cell's surface quads
+ * onto the caller's `out` array (the fluid stream's quad scratch) without
+ * allocating a fresh list per cell.
+ */
+export function meshFluidSurfaceInto(
+  world: FluidSurfaceWorld,
+  fluidId: number,
+  light: LightSampler,
+  x: number,
+  y: number,
+  z: number,
+  out: OpaqueFaceQuad[],
+  options?: FluidMeshOptions,
+): void {
+  const state = world.getFluidState(x, y, z);
+  if (state === null || state.fluidId !== fluidId) return;
+
   const surface = fluidSurfaceHeight(state);
   const ownTop = y + surface;
 
   // Top face: emitted only when the cell above is not the same fluid.
   const above = world.getFluidState(x, y + 1, z);
   if (above === null || above.fluidId !== fluidId) {
-    pushShaded(out, fluidId, light, 'up', x, ownTop, z, 1, 1, x, y, z, ownTop);
+    pushShaded(out, fluidId, light, 'up', x, ownTop, z, 1, 1, x, y, z, ownTop, options);
   }
 
   // Side faces in fixed order.
@@ -107,15 +139,13 @@ export function meshFluidSurface(
     if (side.face === 'west' || side.face === 'east') {
       const plane = x + (side.face === 'east' ? 1 : 0);
       // west/east: plane on x; quad spans y ∈ [neighborTop, ownTop], z ∈ [z, z+1].
-      pushShaded(out, fluidId, light, side.face, plane, neighborTop, z, 1, height, x, y, z, plane);
+      pushShaded(out, fluidId, light, side.face, plane, neighborTop, z, 1, height, x, y, z, plane, options);
     } else {
       const plane = z + (side.face === 'south' ? 1 : 0);
       // north/south: plane on z; quad spans x ∈ [x, x+1], y ∈ [neighborTop, ownTop].
-      pushShaded(out, fluidId, light, side.face, x, neighborTop, plane, 1, height, x, y, z, plane);
+      pushShaded(out, fluidId, light, side.face, x, neighborTop, plane, 1, height, x, y, z, plane, options);
     }
   }
-
-  return out;
 }
 
 /** Mesh a batch of positions in input order (deterministic). */
@@ -124,10 +154,23 @@ export function meshFluidSurfaces(
   fluidId: number,
   light: LightSampler,
   positions: ReadonlyArray<[number, number, number]>,
+  options?: FluidMeshOptions,
 ): OpaqueFaceQuad[] {
   const out: OpaqueFaceQuad[] = [];
-  for (const [x, y, z] of positions) {
-    out.push(...meshFluidSurface(world, fluidId, light, x, y, z));
-  }
+  meshFluidSurfacesInto(world, fluidId, light, positions, out, options);
   return out;
+}
+
+/** Append-only batch variant of `meshFluidSurfaces`. */
+export function meshFluidSurfacesInto(
+  world: FluidSurfaceWorld,
+  fluidId: number,
+  light: LightSampler,
+  positions: ReadonlyArray<[number, number, number]>,
+  out: OpaqueFaceQuad[],
+  options?: FluidMeshOptions,
+): void {
+  for (const [x, y, z] of positions) {
+    meshFluidSurfaceInto(world, fluidId, light, x, y, z, out, options);
+  }
 }

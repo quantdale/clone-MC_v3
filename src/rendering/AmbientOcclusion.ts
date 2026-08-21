@@ -56,12 +56,29 @@ export function quadVertexAO(
   width: number,
   height: number,
 ): [AOLevel, AOLevel, AOLevel, AOLevel] {
+  const out: [AOLevel, AOLevel, AOLevel, AOLevel] = [0, 0, 0, 0];
+  quadVertexAOInto(light, ctx, minU, minV, width, height, out);
+  return out;
+}
+
+/**
+ * Allocation-light variant of `quadVertexAO`: writes the four corner AO levels
+ * into the caller-supplied `out` array (mesher-time scratch) instead of
+ * allocating. Corner order matches `quadVertexLights`.
+ */
+export function quadVertexAOInto(
+  light: LightSampler,
+  ctx: FaceLightContext,
+  minU: number,
+  minV: number,
+  width: number,
+  height: number,
+  out: [AOLevel, AOLevel, AOLevel, AOLevel] | AOLevel[],
+): void {
   const maxU = minU + width;
   const maxV = minV + height;
-  return [
-    sampleCornerAO(light, ctx, minU, minV),
-    sampleCornerAO(light, ctx, maxU, minV),
-    sampleCornerAO(light, ctx, minU, maxV),
-    sampleCornerAO(light, ctx, maxU, maxV),
-  ];
+  out[0] = sampleCornerAO(light, ctx, minU, minV);
+  out[1] = sampleCornerAO(light, ctx, maxU, minV);
+  out[2] = sampleCornerAO(light, ctx, minU, maxV);
+  out[3] = sampleCornerAO(light, ctx, maxU, maxV);
 }

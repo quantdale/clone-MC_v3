@@ -6,6 +6,7 @@
  * are pure and never mutate their inputs.
  */
 import type { RenderLayer } from './RenderLayer';
+import { streamForRenderLayer } from './RenderLayer';
 import type { ModelFace } from '../data/BlockModel';
 import type { OpaqueFaceQuad } from './GreedyMesher';
 import { inPlaneAxes } from './VertexLighting';
@@ -74,4 +75,50 @@ export function sortTranslucentBackToFront(
   });
   decorated.sort((a, b) => b.distanceSq - a.distanceSq || a.index - b.index);
   return decorated.map((entry) => entry.quad);
+}
+
+/**
+ * Per-quad translucent sort keys (audit 03: "sorting policy explicit"). Key `i`
+ * is the squared centroid distance of quad `i` from the camera; larger = draw
+ * first (far-to-near painter's order). Ties fall back to input order, so the
+ * keys are stable when consumed by an index-based stable sort. Returns a plain
+ * `Float64Array` — no per-quad objects.
+ */
+export function translucentSortKeys(
+  quads: readonly OpaqueFaceQuad[],
+  cameraX: number,
+  cameraY: number,
+  cameraZ: number,
+): Float64Array {
+  const keys = new Float64Array(quads.length);
+  for (let i = 0; i < quads.length; i++) {
+    const [cx, cy, cz] = quadCentroid(quads[i]!);
+    const dx = cx - cameraX;
+    const dy = cy - cameraY;
+    const dz = cz - cameraZ;
+    keys[i] = dx * dx + dy * dy + dz * dz;
+  }
+  return keys;
+}
+
+/**
+ * Partition a quad batch into the four canonical mesh streams by render layer
+ * (`streamForRenderLayer`), preserving input order within each stream. Fluid
+ * quads do not flow through here — they come from `FluidSurfaceMesher` and are
+ * routed to the `'fluid'` stream directly.
+ */
+export function partitionQuadsByStream(
+  quads: readonly OpaqueFaceQuad[],
+  layerOf: QuadLayerResolver,
+): Record<'opaque' | 'cutout' | 'translucent' | 'fluid', OpaqueFaceQuad[]> {
+  const out: Record<'opaque' | 'cutout' | 'translucent' | 'fluid', OpaqueFaceQuad[]> = {
+    opaque: [],
+    cutout: [],
+    translucent: [],
+    fluid: [],
+  };
+  for (const quad of quads) {
+    out[streamForRenderLayer(layerOf(quad.blockId))].push(quad);
+  }
+  return out;
 }

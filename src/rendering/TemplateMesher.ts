@@ -31,10 +31,23 @@ const FACE_ORDER: readonly FaceSpec[] = [
   { face: 'west', axis: 0, isMax: false },
 ];
 
+/** Optional metadata stamped onto emitted template quads. */
+export interface TemplateMeshOptions {
+  /** Biome tint class id (072) for the merge signature. */
+  tintClass?: number;
+  /** Animation class id for the merge signature. */
+  animationClass?: number;
+  /** Transparency class id for the merge signature. */
+  transparencyClass?: number;
+  /** Version token of the build producing these quads. */
+  inputVersion?: number;
+}
+
 /**
  * Mesh a block model at cell `(x, y, z)` into world-unit quads. `blockId` is stamped on every quad.
  * Boundary faces whose outward neighbor is opaque are culled. Every quad carries per-corner light
- * sampled from `light` (070).
+ * sampled from `light` (070). Template (irregular/model-like) blocks are never greedy-merged; their
+ * quads feed the same stream model as the greedy path via `emitQuadCorners`.
  */
 export function meshBlockModel(
   model: BlockModel,
@@ -44,6 +57,7 @@ export function meshBlockModel(
   z: number,
   isOpaqueCell: OpaqueCellPredicate,
   light: LightSampler,
+  options?: TemplateMeshOptions,
 ): OpaqueFaceQuad[] {
   const out: OpaqueFaceQuad[] = [];
 
@@ -104,6 +118,10 @@ export function meshBlockModel(
         blockId,
         vertexLights: quadVertexLights(light, ctx, minU, minV, width, height),
         vertexAO: quadVertexAO(light, ctx, minU, minV, width, height),
+        tintClass: options?.tintClass ?? 0,
+        animationClass: options?.animationClass ?? 0,
+        transparencyClass: options?.transparencyClass ?? 0,
+        inputVersion: options?.inputVersion,
       });
     }
   }

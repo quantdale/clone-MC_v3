@@ -105,12 +105,42 @@ export function quadVertexLights(
   width: number,
   height: number,
 ): [VertexLight, VertexLight, VertexLight, VertexLight] {
+  const out: [VertexLight, VertexLight, VertexLight, VertexLight] = [
+    { sky: 0, block: 0 },
+    { sky: 0, block: 0 },
+    { sky: 0, block: 0 },
+    { sky: 0, block: 0 },
+  ];
+  quadVertexLightsInto(light, ctx, minU, minV, width, height, out);
+  return out;
+}
+
+/**
+ * Allocation-light variant of `quadVertexLights`: writes the four corner lights
+ * into the caller-supplied `out` array of reusable `VertexLight` objects
+ * (mesher-time scratch) instead of allocating. Corner order is unchanged.
+ */
+export function quadVertexLightsInto(
+  light: LightSampler,
+  ctx: FaceLightContext,
+  minU: number,
+  minV: number,
+  width: number,
+  height: number,
+  out: readonly [VertexLight, VertexLight, VertexLight, VertexLight] | VertexLight[],
+): void {
   const maxU = minU + width;
   const maxV = minV + height;
-  return [
-    sampleCornerLight(light, ctx, minU, minV),
-    sampleCornerLight(light, ctx, maxU, minV),
-    sampleCornerLight(light, ctx, minU, maxV),
-    sampleCornerLight(light, ctx, maxU, maxV),
-  ];
+  const c0 = sampleCornerLight(light, ctx, minU, minV);
+  out[0].sky = c0.sky;
+  out[0].block = c0.block;
+  const c1 = sampleCornerLight(light, ctx, maxU, minV);
+  out[1].sky = c1.sky;
+  out[1].block = c1.block;
+  const c2 = sampleCornerLight(light, ctx, minU, maxV);
+  out[2].sky = c2.sky;
+  out[2].block = c2.block;
+  const c3 = sampleCornerLight(light, ctx, maxU, maxV);
+  out[3].sky = c3.sky;
+  out[3].block = c3.block;
 }

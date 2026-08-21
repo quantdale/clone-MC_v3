@@ -3,7 +3,19 @@ import { BlockId, BlockRegistry, RenderCategory } from './BlockRegistry';
 import { Chunk } from './Chunk';
 import { CHUNK_DIMENSIONS } from './WorldCoordinates';
 import type { TextureAtlas } from '../rendering/TextureAtlas';
-import type { ChunkMeshResult } from './MeshingTypes';
+import type { LightSampler, VertexLight } from '../rendering/GreedyMesher';
+import { quadVertexAOInto } from '../rendering/AmbientOcclusion';
+import { inPlaneAxes, quadVertexLightsInto } from '../rendering/VertexLighting';
+import {
+  MeshBuildResultBuilder,
+  emitQuad,
+  emptyMeshStream,
+  type MeshStreamName,
+  type UvRect,
+  type ChunkMeshResult,
+  type MeshBuildResult,
+  type MeshStreamData,
+} from './MeshingTypes';
 
 /**
  * A single cube face: its outward direction (used to look up the neighbor),
@@ -33,14 +45,63 @@ const FACES: Face[] = [
   { dir: [0, 0, -1], normal: [0, 0, -1], corners: [[0, 0, 0], [0, 1, 0], [1, 1, 0], [1, 0, 0]] },
 ];
 
-/** Per-face UV corner: c0→(u0,v0), c1→(u1,v0), c2→(u1,v1), c3→(u0,v1). */
-const VERTEX_U_INDEX = [0, 1, 1, 0];
-const VERTEX_V_INDEX = [0, 0, 1, 1];
+/** Normal axis of a face: x/y/z → 0/1/2. */
+function faceAxis(face: Face): 0 | 1 | 2 {
+  if (face.dir[0] !== 0) return 0;
+  if (face.dir[1] !== 0) return 1;
+  return 2;
+}
 
 /**
- * Builds Indexed BufferGeometry for a chunk's visible faces using
- * face-culled meshing. Produces one opaque geometry and one transparent
- * geometry (each null when the chunk has no faces of that category).
+ * Optional per-build extensions. All fields are optional so existing callers
+ * (`Game.ts`, `World.ts`) keep working unchanged:
+ *
+ * - `inputVersion`: version token stamped onto `streams.inputVersion` for
+ *   stale-result rejection at integration time (audit 04 "Meshing strategy");
+ * - `renderLayerOf`: block id → stream override; defaults to
+ *   `RenderCategory.Transparent ? 'translucent' : 'opaque'` and may route any
+ *   block to `'cutout'` or `'fluid'`;
+ * - `lightSampler`: world-coordinate sky/block-light + opacity sampler (the
+ *   same interface the greedy path uses). When omitted, neutral shading
+ *   (sky 15, block 0, AO 3) is emitted so geometry stays valid;
+ * - `tintRgbOf`: block id → linear RGB tint (0-1 per channel); default white.
+ */
+export interface ChunkMeshOptions {
+  inputVersion?: number;
+  renderLayerOf?(id: number): MeshStreamName;
+  lightSampler?: LightSampler;
+  tintRgbOf?(id: number): [number, number, number];
+}
+
+// Grow-only shared scratch: one builder set reused across every mesh() call so
+// steady-state chunk remeshing allocates only the frozen output snapshots.
+const SCRATCH = new MeshBuildResultBuilder();
+const SCRATCH_LIGHTS: VertexLight[] = [
+  { sky: 15, block: 0 },
+  { sky: 15, block: 0 },
+  { sky: 15, block: 0 },
+  { sky: 15, block: 0 },
+];
+const SCRATCH_AO: (0 | 1 | 2 | 3)[] = [3, 3, 3, 3];
+// Reused per-face scratch: corner positions and the atlas UV rectangle.
+const SCRATCH_CORNERS: [number, number, number][] = [
+  [0, 0, 0],
+  [0, 0, 0],
+  [0, 0, 0],
+  [0, 0, 0],
+];
+const SCRATCH_UV: UvRect = { u0: 0, v0: 0, u1: 0, v1: 0 };
+
+/**
+ * Builds indexed BufferGeometry streams for a chunk's visible faces using
+ * face-culled meshing. The build routes through the consolidated four-stream
+ * model (`opaque` / `cutout` / `translucent` / `fluid`, see MeshingTypes):
+ * every face is classified into exactly one stream, shaded per-corner via the
+ * optional injectable samplers, and emitted into grow-only typed-array
+ * builders. The historical two-field result shape is preserved — `opaque` and
+ * `transparent` geometries are derived from the same stream build, with
+ * `transparent` aliasing the translucent stream — while cutout/fluid streams
+ * are exposed alongside for the extended material setup.
  */
 export class ChunkMesher {
   private readonly registry: BlockRegistry;
@@ -52,23 +113,26 @@ export class ChunkMesher {
     this.atlas = opts.atlas;
   }
 
-  mesh(chunk: Chunk, getNeighbor: (cx: number, cy: number, cz: number) => Chunk | undefined): ChunkMeshResult {
+  mesh(
+    chunk: Chunk,
+    getNeighbor: (cx: number, cy: number, cz: number) => Chunk | undefined,
+    options?: ChunkMeshOptions,
+  ): ChunkMeshResult {
     this.getNeighbor = getNeighbor;
+    const inputVersion = options?.inputVersion ?? 0;
+    const light = options?.lightSampler;
+    const renderLayerOf =
+      options?.renderLayerOf ??
+      ((id: number): MeshStreamName =>
+        this.registry.get(id).renderCategory === RenderCategory.Transparent ? 'translucent' : 'opaque');
 
-    const opaque = {
-      positions: [] as number[],
-      normals: [] as number[],
-      uvs: [] as number[],
-      indices: [] as number[],
-    };
-    const transparent = {
-      positions: [] as number[],
-      normals: [] as number[],
-      uvs: [] as number[],
-      indices: [] as number[],
-    };
+    SCRATCH.reset();
 
     const { width, height, depth } = CHUNK_DIMENSIONS;
+    // Chunk origin in world coordinates (light sampling crosses chunk borders).
+    const ox = chunk.cx * width;
+    const oy = chunk.cy * height;
+    const oz = chunk.cz * depth;
 
     for (let y = 0; y < height; y++) {
       for (let z = 0; z < depth; z++) {
@@ -101,28 +165,80 @@ export class ChunkMesher {
             }
 
             const tile = face.dir[1] === 1 ? def.topTile : face.dir[1] === -1 ? def.bottomTile : def.sideTile;
-            const uv = this.atlas.uv(tile);
-            const target = isTransparent ? transparent : opaque;
-            const base = target.positions.length / 3;
+            const uvRaw = this.atlas.uv(tile);
+            SCRATCH_UV.u0 = uvRaw.u0;
+            SCRATCH_UV.v0 = uvRaw.v0;
+            SCRATCH_UV.u1 = uvRaw.u1;
+            SCRATCH_UV.v1 = uvRaw.v1;
+
+            this.sampleCornerShading(light, face, ox + x, oy + y, oz + z);
+
+            let tintR = 1;
+            let tintG = 1;
+            let tintB = 1;
+            if (options?.tintRgbOf) {
+              const rgb = options.tintRgbOf(id);
+              tintR = rgb[0];
+              tintG = rgb[1];
+              tintB = rgb[2];
+            }
 
             for (let c = 0; c < 4; c++) {
               const corner = face.corners[c]!;
-              target.positions.push(x + corner[0], y + corner[1], z + corner[2]);
-              target.normals.push(face.normal[0], face.normal[1], face.normal[2]);
-              const u = VERTEX_U_INDEX[c] === 1 ? uv.u1 : uv.u0;
-              const v = VERTEX_V_INDEX[c] === 1 ? uv.v1 : uv.v0;
-              target.uvs.push(u, v);
+              SCRATCH_CORNERS[c]![0] = x + corner[0];
+              SCRATCH_CORNERS[c]![1] = y + corner[1];
+              SCRATCH_CORNERS[c]![2] = z + corner[2];
             }
-            target.indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
+
+            const streamName = renderLayerOf(id);
+            emitQuad(
+              SCRATCH.builder(streamName),
+              SCRATCH_CORNERS,
+              face.normal[0],
+              face.normal[1],
+              face.normal[2],
+              SCRATCH_UV,
+              SCRATCH_LIGHTS,
+              SCRATCH_AO,
+              tintR,
+              tintG,
+              tintB,
+            );
           }
         }
       }
     }
 
+    const streams: MeshBuildResult = SCRATCH.build(inputVersion);
     return {
-      opaque: this.buildGeometry(opaque),
-      transparent: this.buildGeometry(transparent),
+      opaque: buildGeometry(streams.streams.opaque),
+      transparent: buildGeometry(streams.streams.translucent),
+      cutout: buildGeometry(streams.streams.cutout),
+      translucent: buildGeometry(streams.streams.translucent),
+      fluid: buildGeometry(streams.streams.fluid),
+      streams,
     };
+  }
+
+  /**
+   * Fill the reusable corner-shading scratch for one face. When no sampler is
+   * supplied the neutral values already in the scratch are kept (sky 15,
+   * block 0, AO 3), matching an unshaded build.
+   */
+  private sampleCornerShading(light: LightSampler | undefined, face: Face, wx: number, wy: number, wz: number): void {
+    if (!light) {
+      return;
+    }
+    const axis = faceAxis(face);
+    const isMax = face.dir[axis]! > 0;
+    const planeCoord = (axis === 0 ? wx : axis === 1 ? wy : wz) + (isMax ? 1 : 0);
+    // In-plane axes (062 conventions): up/down → u=x,v=z; north/south → u=x,v=y; east/west → u=z,v=y.
+    const [uAxis, vAxis] = inPlaneAxes(axis);
+    const minU = uAxis === 0 ? wx : uAxis === 1 ? wy : wz;
+    const minV = vAxis === 0 ? wx : vAxis === 1 ? wy : wz;
+    const ctx = { axis, isMax, planeCoord, cellX: wx, cellY: wy, cellZ: wz };
+    quadVertexLightsInto(light, ctx, minU, minV, 1, 1, SCRATCH_LIGHTS);
+    quadVertexAOInto(light, ctx, minU, minV, 1, 1, SCRATCH_AO);
   }
 
   /** Resolve the block id adjacent to a local block, crossing into neighboring chunks. */
@@ -149,22 +265,24 @@ export class ChunkMesher {
     }
     return neighbor.getLocal(lx, ly, lz);
   }
-
-  /** Build an indexed BufferGeometry, or null when there are no faces. */
-  private buildGeometry(data: {
-    positions: number[];
-    normals: number[];
-    uvs: number[];
-    indices: number[];
-  }): THREE.BufferGeometry | null {
-    if (data.indices.length === 0) {
-      return null;
-    }
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(data.positions), 3));
-    geometry.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(data.normals), 3));
-    geometry.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(data.uvs), 2));
-    geometry.setIndex(data.indices);
-    return geometry;
-  }
 }
+
+/** Build an indexed BufferGeometry from a finished stream, or null when empty. */
+function buildGeometry(data: MeshStreamData): THREE.BufferGeometry | null {
+  if (data.indexCount === 0) {
+    return null;
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(data.positions, 3));
+  geometry.setAttribute('normal', new THREE.BufferAttribute(data.normals, 3));
+  geometry.setAttribute('uv', new THREE.BufferAttribute(data.uvs, 2));
+  geometry.setAttribute('skylight', new THREE.BufferAttribute(data.skyLight, 1));
+  geometry.setAttribute('blocklight', new THREE.BufferAttribute(data.blockLight, 1));
+  geometry.setAttribute('ao', new THREE.BufferAttribute(data.ao, 1));
+  geometry.setAttribute('tint', new THREE.BufferAttribute(data.tint, 3));
+  geometry.setIndex(new THREE.BufferAttribute(data.indices, 1));
+  return geometry;
+}
+
+/** Re-exported so integration code can build geometries from raw streams without duplicating logic. */
+export { buildGeometry as geometryFromMeshStream, emptyMeshStream };

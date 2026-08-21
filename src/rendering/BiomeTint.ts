@@ -40,3 +40,12 @@ export function biomeTint(biome: BiomeTypeDefinition, kind: TintKind): BiomeTint
   const color = colorField(biome, kind);
   return { kind, color, rgb: biomeColorToRGB(color) };
 }
+
+/**
+ * The merge-signature tint class id for a biome and kind (072): the resolved
+ * 24-bit biome color itself. Faces of the same kind in the same biome share a
+ * class; different colors never merge. Pure, allocation-free.
+ */
+export function biomeTintClassId(biome: BiomeTypeDefinition, kind: TintKind): number {
+  return colorField(biome, kind);
+}
