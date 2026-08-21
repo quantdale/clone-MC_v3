@@ -49,7 +49,7 @@ import { Crosshair } from '../ui/Crosshair';
 import { HUD } from '../ui/HUD';
 import { SaveStatusIndicator } from '../ui/SaveStatusIndicator';
 import { LoadingIndicator } from '../ui/LoadingIndicator';
-import { DebugOverlay } from '../ui/DebugOverlay';
+import { DebugOverlay, formatPerfLine } from '../ui/DebugOverlay';
 import { CraftingPanel } from '../ui/CraftingPanel';
 import type { CraftingRecipe } from '../inventory/Crafting';
 import { SurvivalSystem } from '../player/SurvivalSystem';
@@ -593,6 +593,8 @@ export class Game {
     this.hud = new HUD(this.requireElement('hud'));
     this.loading = new LoadingIndicator(this.requireElement('loading'));
     this.debugOverlay = new DebugOverlay(this.requireElement('debug-overlay'));
+    // Phase 11.5: surface the ring-buffered perf summary as an additive overlay line.
+    this.debugOverlay.setPerfSource(() => formatPerfLine(this.perfMonitor.exportJSON()));
     this.breakProgressEl = this.requireElement('break-progress');
     this.breakProgressBarEl = this.requireElement('break-progress-bar');
     this.toastEl = this.requireElement('toast');
