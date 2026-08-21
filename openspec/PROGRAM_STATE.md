@@ -2,16 +2,44 @@
 
 ## Current checkpoint
 
-- Program: **ACTIVE**
-- Last completed change: **249-whole-codebase-adversarial-audit — VERIFIED 100% (15/15 tasks)**
-- Active implementation change: **250-final-program-verification — ACTIVE (0/15 tasks, just activated; final numbered change)**
-- Next change: **none — 250 is the last planned change**
-- 249 required-test gate: **PASS — typecheck/lint/test re-run at audit commit (292 files / 3827 passed + 1 skipped); build/e2e cited at byte-identical tree b56529e (build PASS, e2e 40/40); src/tests untouched by the audit**
-- 249 advancement allowed: **yes (VERIFIED; no exception used)**
-- Session-start head: `b56529e6459ad2348545c359bdcdceb1477607c5` (this session); published head recorded in the session report
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), the chat and command networking (233), the server world persistence (234), the reconnect state recovery (235), the multiplayer load tests (236), the network adversarial validation (237), the worker and main-thread stress (238), the long-session memory stress (239) VERIFIED, the save recovery stress (240) VERIFIED, the deterministic-replay-suite (241) VERIFIED 100%, survival-progression-e2e (242) VERIFIED 100%, redstone-automation-e2e (243) VERIFIED 100%, worldgen-regression-matrix (244) VERIFIED 100%, visual-regression-matrix (245) VERIFIED 100%, input-accessibility-matrix (246) VERIFIED 100%, performance-release-gate (247) VERIFIED 100%, parity-matrix-reconciliation (248) VERIFIED 100%, and whole-codebase-adversarial-audit (249) VERIFIED 100% (report.md: 45 findings — 2 blocking data-loss DL-001/DL-002 tracked to 250 — all seven categories minimumMet, AUDIT-001..030 reconciled); Hardening interlock VERIFIED.**
+- Program: **COMPLETE** (terminal state — no change 251 exists)
+- Last completed change: **250-final-program-verification — VERIFIED 100% (documentation-only; final numbered change)**
+- All changes 001–250: **VERIFIED** — zero DEFERRED, zero UNCLASSIFIED (`openspec/evidence/checklist/final-verification-checklist.md`)
+- 250 required-test gate: **PASS — typecheck/lint/test re-run at head 502d021 (292 files / 3827 passed + 1 skipped); build/e2e cited at byte-identical tree b56529e (build PASS, e2e 40/40, 12.8m); no src/tests file created or modified by 250**
+- Release-readiness decision: **READY** (`openspec/evidence/release-readiness.md`, RC-1..RC-9 all PASS)
+- Final parity audit: **PASS** (`openspec/evidence/parity/final-parity-audit.md`; 249-DL-001/249-DL-002 dispositioned `accepted` with recorded product decision — remediation via DL-005 transactional-stack wiring tracked forward as post-release work; dispositions accepted 33 / resolved 12 / open 0)
+- Evidence archive: **complete** (`openspec/evidence/` — README manifest, checklist, 250 per-change records, parity audit, suite record, release decision; provenance-backed to validationResults + source verification.md files)
+- Session-start head: `502d0215f88f31868f6bc7067efe4326d2f7fb26`; published head recorded in the session report after push
+- Section milestone: **PROGRAM COMPLETE — every planned change 001–250 VERIFIED**: program control (001), data/registry foundation (002–020), vertical world/chunk storage (021–033), persistent storage (034–043), fixed-tick simulation (044–055), block geometry/rendering (056–075), fluids (076–084), worldgen (085–102), crafting/containers/progression (103–128), entity framework/mobs (129–153), redstone/automation (154–173), dimensions/major progression (174–195), environment/UX/accessibility (196–210), resource/data packs/content breadth (211–221), multiplayer (222–237), hardening/verification matrices (238–247), parity matrix reconciliation (248), whole-codebase adversarial audit (249), final program verification (250). Hardening interlock VERIFIED.
 - Hardening interlock: **VERIFIED at e3ecf86c28553c558459c855a3aee3b003bcb157 (run 32320823336 #337 SUCCESS; 78/78 tasks 100%; all gates green)**
-- Next exact action: **Begin 250-final-program-verification: read its artifacts, consume report.md findings as decision inputs (esp. blocking DL-001/DL-002), record baseline into its verification.md, then implement per its tasks**
+- Next exact action: **Publish this terminal checkpoint to origin/main per openspec/REVIEW_HANDOFF.md and record the published head for RC-9; the autonomous loop stops here.**
+
+## What 250 implemented
+
+Change 250 is documentation-only: it created the consolidated evidence archive and the terminal
+program artifacts, touching no `src/` or `tests/` file and rewriting no per-change
+`verification.md` and not `PARITY_MATRIX.md`.
+
+- `openspec/evidence/` archive: `README.md` manifest (purpose/catalog/provenance rule/
+  completeness statement), `checklist/final-verification-checklist.md` (one row per change
+  001–250: 250 VERIFIED / 0 DEFERRED / 0 UNCLASSIFIED), `changes/<NNN>.md` ×250 (provenance-
+  backed consolidations of `validationResults` + source verification.md records; generated by
+  `scripts/build-evidence-archive.mjs`).
+- `parity/final-parity-audit.md`: matrix re-derivation over all 252 rows (categories match the
+  248 summary; all 246 verification.md citations resolve to VERIFIED changes; 3 superseded-status
+  discrepancies dispositioned `accepted`) + dispositions for all 45 change-249 findings
+  (accepted 33 / resolved 12 / open 0). Key product decision: blocking data-loss findings
+  249-DL-001 and 249-DL-002 dispositioned `accepted` (documentation-only scope; failures manifest
+  only under quota pressure / >10k-chunk edit sessions as silent degradation of unsaved work;
+  complete remediation = wiring the transactional IndexedDB stack, 249-DL-005, tracked forward as
+  post-release work).
+- `suites/final-regression-suite.md`: overall PASS — typecheck/lint/unit re-run at 502d021
+  (292 files / 3827 passed + 1 skipped), build/e2e cited from byte-identical tree b56529e
+  (40/40, 12.8m), 247 release performance gate budgets PASS via ReleaseGateMeasurements.test.ts;
+  no documented exceptions.
+- `release-readiness.md`: verdict **READY**, RC-1..RC-9 all PASS.
+- `PROGRAM_STATE.json` marked COMPLETE (completionPercentage 100, mandatory/required tests pass,
+  advancementAllowed true, 250 validationResults entry {VERIFIED, unitTests 3827, e2eTests 40}).
 
 ## What 249 implemented
 
