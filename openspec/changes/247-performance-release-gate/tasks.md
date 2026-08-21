@@ -2,9 +2,9 @@
 
 ## 1. Baseline & characterization
 
-- [ ] 1.1 Record the 246 baseline gate result (`npm run typecheck`, `npm run lint`, `npm test`,
+- [x] 1.1 Record the 246 baseline gate result (`npm run typecheck`, `npm run lint`, `npm test`,
       `npm run build`, `npm run test:e2e`) and confirm change 246 is VERIFIED / advancement allowed.
-- [ ] 1.2 Confirm the current state of the measurement seams (075 `RenderPerformanceMonitor`/
+- [x] 1.2 Confirm the current state of the measurement seams (075 `RenderPerformanceMonitor`/
       `RenderBudget`, 224 `WorldTickProcess`/044 `SimulationClock`, 234 `ServerSaveLifecycle`/
       `SaveLoadBoundary`, 055 `SimulationHarness`) and that 236 `MultiClientLoadHarness` is
       unimplemented (specs-only) so the network domain is wired by contract.
@@ -15,41 +15,41 @@
 
 ## 2. Release gate implementation & unit tests
 
-- [ ] 2.1 Implement `src/simulation/ReleasePerformanceGate.ts`: closed `RELEASE_TIERS`
+- [x] 2.1 Implement `src/simulation/ReleasePerformanceGate.ts`: closed `RELEASE_TIERS`
       (`Low | Medium | High | Ultra`), the domain/dimension type unions, `ReleaseBudgetConfig`,
       and `DEFAULT_RELEASE_BUDGETS` with the concrete matrix from `design.md`.
-- [ ] 2.2 Implement `validateReleaseBudgetConfig(input)` — full-matrix shape validation and
+- [x] 2.2 Implement `validateReleaseBudgetConfig(input)` — full-matrix shape validation and
       positive-finite value validation, throwing `ReleasePerformanceGate: <field>` on any
       missing/extra/unknown/non-positive/non-finite value.
-- [ ] 2.3 Implement `ReleaseMeasurementBundle`, `ReleaseBudgetEntry`, `ReleaseGateReport`, and
+- [x] 2.3 Implement `ReleaseMeasurementBundle`, `ReleaseBudgetEntry`, `ReleaseGateReport`, and
       `evaluateReleaseGate(config, tier, bundle)` — per-dimension `actual <= budget` (sustained
       rates as `actual >= min`), boundary-equality-within, missing/non-finite/negative actuals as
       violations, unknown-tier throw, fail-closed overall verdict.
-- [ ] 2.4 Unit tests for REQ-G1..REQ-G3: tier-set enumeration, invalid-tier rejection, full-matrix
+- [x] 2.4 Unit tests for REQ-G1..REQ-G3: tier-set enumeration, invalid-tier rejection, full-matrix
       acceptance, missing/extra/unknown-field and non-positive/non-finite/non-numeric rejection
       naming the field.
-- [ ] 2.5 Unit tests for REQ-G4..REQ-G6: all-within pass, single-violation fail, boundary equality,
+- [x] 2.5 Unit tests for REQ-G4..REQ-G6: all-within pass, single-violation fail, boundary equality,
       missing/malformed actual, per-tier row isolation, deterministic evaluation.
 
 ## 3. Domain measurement drivers & fixtures
 
-- [ ] 3.1 Frame: measurement driver over 075 `RenderPerformanceMonitor` (`CANONICAL_RENDER`) and
+- [x] 3.1 Frame: measurement driver over 075 `RenderPerformanceMonitor` (`CANONICAL_RENDER`) and
       tests for REQ-F1..REQ-F4 (per-tier ceilings, bundle completeness, unbalanced-lifecycle throw
       with no measurement, frame-time/mesh-build overrun failures, scripted-clock determinism).
-- [ ] 3.2 Tick: measurement driver over 224 `WorldTickProcess` (`CANONICAL_SIM`, `step(1200)`,
+- [x] 3.2 Tick: measurement driver over 224 `WorldTickProcess` (`CANONICAL_SIM`, `step(1200)`,
       wall-clock elapsed) and tests for REQ-T1..REQ-T4 (per-tier row, stopped-process invalidity,
       rate/run-ceiling failures, scripted determinism).
-- [ ] 3.3 Load/save: timing `SaveLoadBoundary` wrapper over 234 `ServerSaveLifecycle`
+- [x] 3.3 Load/save: timing `SaveLoadBoundary` wrapper over 234 `ServerSaveLifecycle`
       (`CANONICAL_WORLD_SNAPSHOT` load; `CANONICAL_SAVE_DIRTY` `flush()`+`saveAndClose()`) and tests
       for REQ-LS1..REQ-LS4 (per-tier rows, `'created'`/throwing-load invalidity, failed-drain
       invalidity, overrun failures).
-- [ ] 3.4 Network: budget validation/evaluation with fixture bundles now (REQ-N1..REQ-N4); wire the
+- [x] 3.4 Network: budget validation/evaluation with fixture bundles now (REQ-N1..REQ-N4); wire the
       236 `MultiClientHarness`/`MultiClientBudgets` measurement path by name and reconcile exact
       symbols/types per `SPEC_AUTHORING_PROTOCOL.md` once 236's implementation is present.
 
 ## 4. Integration, regression & final gate
 
-- [ ] 4.1 Integration: produce a complete `ReleaseMeasurementBundle` for at least one tier per
+- [x] 4.1 Integration: produce a complete `ReleaseMeasurementBundle` for at least one tier per
       domain (frame, tick, load, save, network) and demonstrate a full `evaluateReleaseGate` verdict
       per domain; record actuals.
 - [ ] 4.2 Update `openspec/PROGRAM_STATE.json` / `PROGRAM_STATE.md`, mark `tasks.md` checkboxes, and

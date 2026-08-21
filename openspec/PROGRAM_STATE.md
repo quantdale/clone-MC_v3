@@ -3,15 +3,41 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **246-input-accessibility-matrix — VERIFIED 100% (15/15 tasks)**
-- Active implementation change: **247-performance-release-gate — ACTIVE (0/15 tasks, just activated)**
-- Next change: **248-parity-matrix-reconciliation — ready after 247 VERIFIED**
-- 246 required-test gate: **PASS — typecheck, lint, unit 290 files / 3805 passed + 1 skipped (+46 tests), build, e2e 40/40 (12.4m incl. 4 new device-input cases)**
-- 246 advancement allowed: **yes (VERIFIED; no exception used)**
-- Session-start head: `b915d5bc522977adc2788bcc30d9b8cd37f22f2e` (this session); published head recorded in the session report
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), the chat and command networking (233), the server world persistence (234), the reconnect state recovery (235), the multiplayer load tests (236), the network adversarial validation (237), the worker and main-thread stress (238), the long-session memory stress (239) VERIFIED, the save recovery stress (240) VERIFIED, the deterministic-replay-suite (241) VERIFIED 100%, survival-progression-e2e (242) VERIFIED 100%, redstone-automation-e2e (243) VERIFIED 100%, worldgen-regression-matrix (244) VERIFIED 100%, visual-regression-matrix (245) VERIFIED 100%, and input-accessibility-matrix (246) VERIFIED 100% (InputCoordinator arbitrates keyboard/mouse/gamepad/touch into one ResolvedInputFrame; remap-aware dispatch, gamepad/touch lock-free play, unified focus-loss recovery, 206/208 settings applied); Hardening interlock VERIFIED.**
+- Last completed change: **247-performance-release-gate — VERIFIED 100% (15/15 tasks)**
+- Active implementation change: **248-parity-matrix-reconciliation — ACTIVE (0/15 tasks, just activated)**
+- Next change: **249-whole-codebase-adversarial-audit — ready after 248 VERIFIED**
+- 247 required-test gate: **PASS — typecheck, lint, unit 292 files / 3827 passed + 1 skipped (+22 tests), build, e2e 40/40 (12.7m)**
+- 247 advancement allowed: **yes (VERIFIED; no exception used)**
+- Session-start head: `411fe082780628fe7dc149edf59172a7dba10b52` (this session); published head recorded in the session report
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), the chat and command networking (233), the server world persistence (234), the reconnect state recovery (235), the multiplayer load tests (236), the network adversarial validation (237), the worker and main-thread stress (238), the long-session memory stress (239) VERIFIED, the save recovery stress (240) VERIFIED, the deterministic-replay-suite (241) VERIFIED 100%, survival-progression-e2e (242) VERIFIED 100%, redstone-automation-e2e (243) VERIFIED 100%, worldgen-regression-matrix (244) VERIFIED 100%, visual-regression-matrix (245) VERIFIED 100%, input-accessibility-matrix (246) VERIFIED 100%, and performance-release-gate (247) VERIFIED 100% (ReleasePerformanceGate: 4-tier x 5-domain budget matrix, fail-closed evaluation, real headless tick/load/save measurement drivers); Hardening interlock VERIFIED.**
 - Hardening interlock: **VERIFIED at e3ecf86c28553c558459c855a3aee3b003bcb157 (run 32320823336 #337 SUCCESS; 78/78 tasks 100%; all gates green)**
-- Next exact action: **Begin 247-performance-release-gate: read its artifacts, record baseline into its verification.md, then implement per its tasks**
+- Next exact action: **Begin 248-parity-matrix-reconciliation: read its artifacts, record baseline into its verification.md, then implement per its tasks**
+
+## What 247 implemented
+
+Change 247 adds the **release performance gate**: `src/simulation/ReleasePerformanceGate.ts`
+(NEW, additive; no production module modified).
+
+- Closed tier set `Low | Medium | High | Ultra`; per-tier x per-dimension budget matrix
+  (`DEFAULT_RELEASE_BUDGETS`) exactly per design.md covering frame (5 dims), tick (2), load (1),
+  save (1), network (5 incl. three tier-independent structural ceilings).
+- Strict full-matrix `validateReleaseBudgetConfig` (field-naming throws for missing/extra/
+  unknown keys and non-positive/non-finite values).
+- Fail-closed `evaluateReleaseGate`: 14 ordered entries; sustained-rate dimensions evaluated as
+  minimums (`actual >= budget`), all others as ceilings (`actual <= budget`); boundary equality
+  within; missing/non-numeric/non-finite/negative actuals are violations without throwing;
+  unknown tier throws before entries.
+- Headless measurement drivers over the REAL seams: `measureCanonicalTickRun` (224
+  WorldTickProcess, CANONICAL_SIM 289 columns/64 entities/1200 ticks), `measureCanonicalLoad`
+  + `measureCanonicalSaveFlush` (234 ServerSaveLifecycle over a timing in-memory boundary with
+  programmatic CANONICAL_WORLD_SNAPSHOT / CANONICAL_SAVE_DIRTY fixtures). Frame/network use
+  contract fixture builders (`syntheticFrameBundle`/`syntheticNetworkBundle`); the network
+  harness is wired by name once 236 lands.
+- Tests: `tests/unit/release-performance-gate.test.ts` (10) +
+  `tests/unit/ReleaseGateMeasurements.test.ts` (5): validation rejections naming fields,
+  boundary-equality passes across all tiers, single-violation fail naming budget vs actual,
+  rate-minimum semantics, malformed-actual violations, per-tier isolation, determinism,
+  unknown-tier throw, real-measurement integration producing a complete 14-entry report.
 
 ## What 246 implemented
 
