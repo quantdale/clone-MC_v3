@@ -61,6 +61,13 @@ jobs:
       - name: Build
         run: npm run build
 
+      # SEC-001 (249 hardening): the plain release bundle must never inherit the
+      # E2E-only window.__voxelGame hook. Runs against the clean build artifact
+      # BEFORE the E2E step rebuilds with VITE_E2E=true (where the hook is
+      # legitimately present for the specs).
+      - name: Release bundle assertion (no E2E hook)
+        run: node scripts/check-release-bundle.mjs
+
       - name: Unit tests
         run: npm test
 

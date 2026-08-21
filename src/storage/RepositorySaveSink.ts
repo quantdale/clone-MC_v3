@@ -14,6 +14,9 @@ import { BlockEntityRepository } from './BlockEntityRepository';
 import type { SerializedBlockEntity } from './BlockEntityRecord';
 import { EntityRepository } from './EntityRepository';
 import type { SerializedEntity } from './EntityRecord';
+import { ChunkEditRepository } from './ChunkEditRepository';
+import { PlayerStateRepository } from './PlayerStateRepository';
+import type { PlayerStateRecord } from './PlayerStateRecord';
 
 /** The repositories a {@link RepositorySaveSink} may route to. Each is optional. */
 export interface RepositorySaveSinkDeps {
@@ -21,20 +24,26 @@ export interface RepositorySaveSinkDeps {
   chunkSections?: ChunkSectionRepository;
   blockEntities?: BlockEntityRepository;
   entities?: EntityRepository;
+  chunkEdits?: ChunkEditRepository;
+  playerStates?: PlayerStateRepository;
 }
 
-/** Routes drained {@link SaveUnit}s to the matching 034-037 repository. */
+/** Routes drained {@link SaveUnit}s to the matching 034-040 repository. */
 export class RepositorySaveSink implements SaveSink {
   private readonly metadata?: WorldMetadataRepository;
   private readonly chunkSections?: ChunkSectionRepository;
   private readonly blockEntities?: BlockEntityRepository;
   private readonly entities?: EntityRepository;
+  private readonly chunkEdits?: ChunkEditRepository;
+  private readonly playerStates?: PlayerStateRepository;
 
   constructor(deps: RepositorySaveSinkDeps) {
     this.metadata = deps.metadata;
     this.chunkSections = deps.chunkSections;
     this.blockEntities = deps.blockEntities;
     this.entities = deps.entities;
+    this.chunkEdits = deps.chunkEdits;
+    this.playerStates = deps.playerStates;
   }
 
   /** Persist one unit through its kind's repository. Rejects if the kind/repository is unavailable. */
@@ -68,6 +77,22 @@ export class RepositorySaveSink implements SaveSink {
           unit.chunkZ,
           unit.payload as SerializedEntity[],
         );
+        return;
+      }
+      case 'chunk-edits': {
+        if (!this.chunkEdits) throw new Error('RepositorySaveSink: no chunk-edits repository for chunk-edits unit');
+        await this.chunkEdits.putChunkEdits(
+          unit.worldId,
+          unit.chunkX,
+          unit.chunkY ?? 0,
+          unit.chunkZ,
+          unit.payload as Array<[number, number]>,
+        );
+        return;
+      }
+      case 'player-state': {
+        if (!this.playerStates) throw new Error('RepositorySaveSink: no player-state repository for player-state unit');
+        await this.playerStates.putPlayerState(unit.payload as PlayerStateRecord);
         return;
       }
       default: {

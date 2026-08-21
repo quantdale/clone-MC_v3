@@ -11,6 +11,7 @@ import {
   type LegacyPlayerSnapshot,
 } from '../../src/storage/LegacyLocalStorageMigrator';
 import { PlayerStateRepository } from '../../src/storage/PlayerStateRepository';
+import { ChunkEditRepository } from '../../src/storage/ChunkEditRepository';
 import { validatePlayerStateRecord, type PlayerStateRecord } from '../../src/storage/PlayerStateRecord';
 import { ChunkSectionRepository } from '../../src/storage/ChunkSectionRepository';
 import { WorldMetadataRepository } from '../../src/storage/WorldMetadataRepository';
@@ -179,23 +180,32 @@ describe('LegacyLocalStorageMigrator (in-memory storage + mocks)', () => {
   it('imports edits and player state for a seed', async () => {
     const mock: MockIdbFactory = createIdbFactoryMock();
     const chunkRepo = new ChunkSectionRepository({ factory: mock, dbName: WORLD_DB_NAME, dbVersion: WORLD_DB_VERSION });
+    const editRepo = new ChunkEditRepository({ factory: mock, dbName: WORLD_DB_NAME, dbVersion: WORLD_DB_VERSION });
     const playerRepo = new PlayerStateRepository({ factory: mock, dbName: WORLD_DB_NAME, dbVersion: WORLD_DB_VERSION });
     const storage = makeStorage({
       [`${LEGACY_EDIT_STORAGE_PREFIX}7`]: JSON.stringify(makeEditSnapshot()),
       [`${LEGACY_STATE_STORAGE_PREFIX}7`]: JSON.stringify(makePlayerSnapshot()),
     });
-    const migrator = new LegacyLocalStorageMigrator({ storage, chunkSections: chunkRepo, playerStates: playerRepo });
+    const migrator = new LegacyLocalStorageMigrator({ storage, chunkSections: chunkRepo, chunkEdits: editRepo, playerStates: playerRepo });
 
     const report = await migrator.migrate(7);
     expect(report.importedColumns).toBe(1);
     expect(report.importedEdits).toBe(3);
     expect(report.playerStateImported).toBe(true);
+    expect(report.importedEditRecords).toBe(2);
+    expect(report.verifiedRecords).toBe(3); // 2 chunk-edit records + 1 player state
     expect(report.errors).toEqual([]);
 
     const column = await chunkRepo.getColumn('world-7', 1, 2);
     expect(column).not.toBeNull();
+    // Entry (1,0,2) decodes to section 0; entry (1,1,2) index 4095 -> local y=15, sectionY=0,
+    // placed at column section 1*4+0=4. minSectionY=0, sectionCount=5.
     expect(column!.minSectionY).toBe(0);
-    expect(column!.sectionCount).toBe(2);
+    expect(column!.sectionCount).toBe(5);
+
+    // Faithful records: exact source pairs per distinct (cx,cy,cz).
+    expect(await editRepo.getChunkEdits('world-7', 1, 0, 2)).toEqual([[0, 1], [100, 2]]);
+    expect(await editRepo.getChunkEdits('world-7', 1, 1, 2)).toEqual([[4095, 3]]);
 
     const state = await playerRepo.getPlayerState('world-7');
     expect(state).not.toBeNull();
@@ -207,12 +217,13 @@ describe('LegacyLocalStorageMigrator (in-memory storage + mocks)', () => {
   it('reports malformed state without partial writes; edits still import', async () => {
     const mock: MockIdbFactory = createIdbFactoryMock();
     const chunkRepo = new ChunkSectionRepository({ factory: mock, dbName: WORLD_DB_NAME, dbVersion: WORLD_DB_VERSION });
+    const editRepo = new ChunkEditRepository({ factory: mock, dbName: WORLD_DB_NAME, dbVersion: WORLD_DB_VERSION });
     const playerRepo = new PlayerStateRepository({ factory: mock, dbName: WORLD_DB_NAME, dbVersion: WORLD_DB_VERSION });
     const storage = makeStorage({
       [`${LEGACY_EDIT_STORAGE_PREFIX}7`]: JSON.stringify(makeEditSnapshot()),
       [`${LEGACY_STATE_STORAGE_PREFIX}7`]: 'not-json{{{',
     });
-    const migrator = new LegacyLocalStorageMigrator({ storage, chunkSections: chunkRepo, playerStates: playerRepo });
+    const migrator = new LegacyLocalStorageMigrator({ storage, chunkSections: chunkRepo, chunkEdits: editRepo, playerStates: playerRepo });
 
     const report = await migrator.migrate(7);
     expect(report.importedColumns).toBe(1);
@@ -225,13 +236,16 @@ describe('LegacyLocalStorageMigrator (in-memory storage + mocks)', () => {
 
   it('missing legacy keys produce an empty report without errors', async () => {
     const chunkRepo = new ChunkSectionRepository({ factory: createIdbFactoryMock() });
+    const editRepo = new ChunkEditRepository({ factory: createIdbFactoryMock() });
     const playerRepo = new PlayerStateRepository({ factory: createIdbFactoryMock() });
-    const migrator = new LegacyLocalStorageMigrator({ storage: makeStorage({}), chunkSections: chunkRepo, playerStates: playerRepo });
+    const migrator = new LegacyLocalStorageMigrator({ storage: makeStorage({}), chunkSections: chunkRepo, chunkEdits: editRepo, playerStates: playerRepo });
 
     const report = await migrator.migrate(999);
     expect(report.importedColumns).toBe(0);
     expect(report.importedEdits).toBe(0);
     expect(report.playerStateImported).toBe(false);
+    expect(report.importedEditRecords).toBe(0);
+    expect(report.verifiedRecords).toBe(0);
     expect(report.errors).toEqual([]);
   });
 
@@ -245,11 +259,128 @@ describe('LegacyLocalStorageMigrator (in-memory storage + mocks)', () => {
     const migrator = new LegacyLocalStorageMigrator({
       storage,
       chunkSections: new ChunkSectionRepository({ factory: createIdbFactoryMock() }),
+      chunkEdits: new ChunkEditRepository({ factory: createIdbFactoryMock() }),
       playerStates: new PlayerStateRepository({ factory: createIdbFactoryMock() }),
     });
     await migrator.migrate(7);
     expect(storage.getItem(`${LEGACY_EDIT_STORAGE_PREFIX}7`)).toBe(editsRaw);
     expect(storage.getItem(`${LEGACY_STATE_STORAGE_PREFIX}7`)).toBe(stateRaw);
+  });
+
+  it('preserves edits at indices >= 4096 in faithful records (truncation regression)', async () => {
+    const mock: MockIdbFactory = createIdbFactoryMock();
+    const chunkRepo = new ChunkSectionRepository({ factory: mock, dbName: WORLD_DB_NAME, dbVersion: WORLD_DB_VERSION });
+    const editRepo = new ChunkEditRepository({ factory: mock, dbName: WORLD_DB_NAME, dbVersion: WORLD_DB_VERSION });
+    const playerRepo = new PlayerStateRepository({ factory: mock, dbName: WORLD_DB_NAME, dbVersion: WORLD_DB_VERSION });
+    const snapshot = makeEditSnapshot({
+      edits: [{ chunk: [0, 0, 0], changes: [[16000, 9], [5, 1]] }],
+    });
+    const storage = makeStorage({ [`${LEGACY_EDIT_STORAGE_PREFIX}7`]: JSON.stringify(snapshot) });
+    const migrator = new LegacyLocalStorageMigrator({ storage, chunkSections: chunkRepo, chunkEdits: editRepo, playerStates: playerRepo });
+
+    const report = await migrator.migrate(7);
+    expect(report.errors).toEqual([]);
+    // The old column-only path silently dropped index 16000 (local y=62); the faithful record must keep it.
+    expect(await editRepo.getChunkEdits('world-7', 0, 0, 0)).toEqual([[5, 1], [16000, 9]]);
+    expect(report.importedEditRecords).toBe(1);
+    expect(report.importedEdits).toBe(2);
+  });
+
+  it('decodes full-chunk indices into multiple sections (local y=0 and y=63)', async () => {
+    const mock: MockIdbFactory = createIdbFactoryMock();
+    const chunkRepo = new ChunkSectionRepository({ factory: mock, dbName: WORLD_DB_NAME, dbVersion: WORLD_DB_VERSION });
+    const editRepo = new ChunkEditRepository({ factory: mock, dbName: WORLD_DB_NAME, dbVersion: WORLD_DB_VERSION });
+    const playerRepo = new PlayerStateRepository({ factory: mock, dbName: WORLD_DB_NAME, dbVersion: WORLD_DB_VERSION });
+    // index for (lx=0, ly=0, lz=0) = 0; index for (lx=1, ly=63, lz=2) = 1 + 2*16 + 63*256 = 16241.
+    const snapshot = makeEditSnapshot({
+      edits: [{ chunk: [3, 0, 4], changes: [[0, 1], [16241, 2]] }],
+    });
+    const storage = makeStorage({ [`${LEGACY_EDIT_STORAGE_PREFIX}7`]: JSON.stringify(snapshot) });
+    const migrator = new LegacyLocalStorageMigrator({ storage, chunkSections: chunkRepo, chunkEdits: editRepo, playerStates: playerRepo });
+
+    const report = await migrator.migrate(7);
+    expect(report.errors).toEqual([]);
+    const column = await chunkRepo.getColumn('world-7', 3, 4);
+    expect(column).not.toBeNull();
+    expect(column!.minSectionY).toBe(0);
+    expect(column!.sectionCount).toBeGreaterThanOrEqual(2);
+    expect(column!.sectionCount).toBe(4); // sections 0 and 3 present
+    expect(column!.sections[0]).toBeDefined();
+    expect(column!.sections[3]).toBeDefined();
+  });
+
+  it('deduplicates duplicate indices with last-wins and persists a single pair', async () => {
+    const mock: MockIdbFactory = createIdbFactoryMock();
+    const editRepo = new ChunkEditRepository({ factory: mock, dbName: WORLD_DB_NAME, dbVersion: WORLD_DB_VERSION });
+    const snapshot = makeEditSnapshot({
+      edits: [{ chunk: [0, 0, 0], changes: [[10, 1], [10, 2], [3, 5], [10, 3]] }],
+    });
+    const storage = makeStorage({ [`${LEGACY_EDIT_STORAGE_PREFIX}7`]: JSON.stringify(snapshot) });
+    const migrator = new LegacyLocalStorageMigrator({
+      storage,
+      chunkSections: new ChunkSectionRepository({ factory: mock, dbName: WORLD_DB_NAME, dbVersion: WORLD_DB_VERSION }),
+      chunkEdits: editRepo,
+      playerStates: new PlayerStateRepository({ factory: mock, dbName: WORLD_DB_NAME, dbVersion: WORLD_DB_VERSION }),
+    });
+
+    const report = await migrator.migrate(7);
+    expect(report.errors).toEqual([]);
+    expect(await editRepo.getChunkEdits('world-7', 0, 0, 0)).toEqual([[3, 5], [10, 3]]);
+  });
+
+  it('is idempotent: two runs produce identical records', async () => {
+    const mock: MockIdbFactory = createIdbFactoryMock();
+    const chunkRepo = new ChunkSectionRepository({ factory: mock, dbName: WORLD_DB_NAME, dbVersion: WORLD_DB_VERSION });
+    const editRepo = new ChunkEditRepository({ factory: mock, dbName: WORLD_DB_NAME, dbVersion: WORLD_DB_VERSION });
+    const playerRepo = new PlayerStateRepository({ factory: mock, dbName: WORLD_DB_NAME, dbVersion: WORLD_DB_VERSION });
+    const storage = makeStorage({
+      [`${LEGACY_EDIT_STORAGE_PREFIX}7`]: JSON.stringify(makeEditSnapshot()),
+      [`${LEGACY_STATE_STORAGE_PREFIX}7`]: JSON.stringify(makePlayerSnapshot()),
+    });
+    const migrator = new LegacyLocalStorageMigrator({ storage, chunkSections: chunkRepo, chunkEdits: editRepo, playerStates: playerRepo });
+
+    const first = await migrator.migrate(7);
+    const editsAfterFirst = await editRepo.getChunkEdits('world-7', 1, 0, 2);
+    const stateAfterFirst = await playerRepo.getPlayerState('world-7');
+    const second = await migrator.migrate(7);
+
+    expect(second.importedColumns).toBe(first.importedColumns);
+    expect(second.importedEditRecords).toBe(first.importedEditRecords);
+    expect(second.verifiedRecords).toBe(first.verifiedRecords);
+    expect(second.errors).toEqual([]);
+    expect(await editRepo.getChunkEdits('world-7', 1, 0, 2)).toEqual(editsAfterFirst);
+    expect(await playerRepo.getPlayerState('world-7')).toEqual(stateAfterFirst);
+  });
+
+  it('deletes and reports a chunk-edits record whose read-back is corrupted', async () => {
+    const mock: MockIdbFactory = createIdbFactoryMock();
+    const chunkRepo = new ChunkSectionRepository({ factory: mock, dbName: WORLD_DB_NAME, dbVersion: WORLD_DB_VERSION });
+    const realEditRepo = new ChunkEditRepository({ factory: mock, dbName: WORLD_DB_NAME, dbVersion: WORLD_DB_VERSION });
+    await realEditRepo.open();
+    const playerRepo = new PlayerStateRepository({ factory: mock, dbName: WORLD_DB_NAME, dbVersion: WORLD_DB_VERSION });
+    const stored = new Map<string, Array<[number, number]>>();
+    const corruptingEditRepo = {
+      open: async () => {},
+      putChunkEdits: async (_w: string, cx: number, cy: number, cz: number, _changes: Array<[number, number]>) => {
+        // Simulate partial/corrupt persistence: drop every pair.
+        stored.set(`${_w}|${cx}|${cy}|${cz}`, []);
+      },
+      getChunkEdits: async (w: string, cx: number, cy: number, cz: number) =>
+        stored.get(`${w}|${cx}|${cy}|${cz}`) ?? null,
+      deleteChunkEdits: async (w: string, cx: number, cy: number, cz: number) => {
+        stored.delete(`${w}|${cx}|${cy}|${cz}`);
+      },
+    } as unknown as ChunkEditRepository;
+    const snapshot = makeEditSnapshot();
+    const storage = makeStorage({ [`${LEGACY_EDIT_STORAGE_PREFIX}7`]: JSON.stringify(snapshot) });
+    const migrator = new LegacyLocalStorageMigrator({ storage, chunkSections: chunkRepo, chunkEdits: corruptingEditRepo, playerStates: playerRepo });
+
+    const report = await migrator.migrate(7);
+    expect(report.importedEditRecords).toBe(0);
+    expect(report.verifiedRecords).toBe(0);
+    expect(report.errors).toHaveLength(2);
+    expect(report.errors[0]).toContain('read-back mismatch');
+    expect(stored.size).toBe(0); // bad records deleted
   });
 });
 

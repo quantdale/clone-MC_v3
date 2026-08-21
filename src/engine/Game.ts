@@ -20,6 +20,7 @@ import { HarvestRules } from '../world/HarvestRules';
 import { TerrainGenerator } from '../world/TerrainGenerator';
 import { ChunkMesher } from '../world/ChunkMesher';
 import { World } from '../world/World';
+import type { WorldEditSnapshot } from '../world/World';
 import { BlockStateRegistry, createDefaultBlockStateRegistry } from '../world/BlockStateRegistry';
 import { BlockBehaviorRegistry } from '../simulation/BlockBehavior';
 import { CropBlockBehavior } from '../simulation/CropBehavior';
@@ -43,24 +44,27 @@ import {
   type EnchantApplyResult,
 } from '../inventory/EnchantingTable';
 import { Inventory } from '../inventory/Inventory';
-import type { InventorySnapshot } from '../inventory/Inventory';
 import { Hotbar } from '../inventory/Hotbar';
 import { Crosshair } from '../ui/Crosshair';
 import { HUD } from '../ui/HUD';
+import { SaveStatusIndicator } from '../ui/SaveStatusIndicator';
 import { LoadingIndicator } from '../ui/LoadingIndicator';
 import { DebugOverlay } from '../ui/DebugOverlay';
 import { CraftingPanel } from '../ui/CraftingPanel';
 import type { CraftingRecipe } from '../inventory/Crafting';
 import { SurvivalSystem } from '../player/SurvivalSystem';
-import type { SurvivalEvent, SurvivalSnapshot } from '../player/SurvivalSystem';
+import type { SurvivalEvent } from '../player/SurvivalSystem';
 import { resolveFoodConsume, applyConsumeEffects } from '../player/FoodComponentRuntime';
 import { StatusEffectManager } from '../data/StatusEffectManager';
 import { createDefaultStatusEffectRegistry } from '../data/StatusEffect';
 import { createDefaultAttributeRegistry } from '../data/AttributeRegistry';
 import { ExperienceSystem } from '../player/ExperienceSystem';
-import type { ExperienceSnapshot } from '../player/ExperienceSystem';
 import { worldToChunk } from '../world/WorldCoordinates';
 import { GameAudio } from '../audio/GameAudio';
+import {
+  GamePersistence,
+  type GamePlayerSnapshot,
+} from '../storage/GamePersistence';
 import { WorldLife } from '../world/WorldLife';
 import { createDefaultEntityRegistry } from '../data/EntityType';
 import { createDefaultBiomeRegistry } from '../data/Biome';
@@ -107,23 +111,36 @@ import {
 } from '../simulation/AccessibilityFramework';
 import { resolveTouches, type TouchPoint } from '../simulation/TouchFramework';
 
-interface GameSaveSnapshot {
-  version: 1;
-  seed: number;
-  player: {
-    position: [number, number, number];
-    yaw: number;
-    pitch: number;
-  };
-  inventory: InventorySnapshot;
-  survival: SurvivalSnapshot;
-  experience: ExperienceSnapshot;
-}
-
 /**
  * Wires the entire game together: renderer, world, player, interaction, UI, and
  * the main loop. Owns the app lifecycle and disposes all resources on stop.
+ *
+ * Persistence (249-DL-001 / 249-DL-005): localStorage is no longer an
+ * authoritative save path. All durable state flows through the
+ * {@link GamePersistence} facade — either injected pre-opened via the
+ * `bootstrap.persistence` option (the production `main.ts` path) or composed
+ * internally via `createProductionGamePersistence` with `start()` gated on its
+ * async open. Save failures surface through the `#save-status` banner instead
+ * of failing silently.
  */
+
+/**
+ * The seed resolved from the URL ?seed= override, or the configured default.
+ * Module-level so `main.ts` can resolve the same seed before constructing the
+ * Game (it must open persistence with it first).
+ */
+export function resolveGameSeed(): number {
+  const params = new URLSearchParams(window.location.search);
+  const seedParam = params.get('seed');
+  if (seedParam !== null && seedParam !== '') {
+    const n = Number(seedParam);
+    if (Number.isFinite(n)) {
+      return n >>> 0;
+    }
+  }
+  return CONFIG.seed;
+}
+
 /** Test-only render-quality overrides (245), applied only by the VITE_E2E boot seam. */
 export interface GameQualityOverrides {
   /** Integer chunk radius applied to World/Environment creation. */
@@ -212,8 +229,31 @@ export class Game {
   private readonly overlayMessageEl: HTMLElement;
   private readonly errorEl: HTMLElement;
   private readonly errorMessageEl: HTMLElement;
-  private readonly saveStorageKey: string;
   private readonly spawnPosition: THREE.Vector3;
+
+  // ── Durable persistence (249-DL-001 / 249-DL-005) ─────────────────────────
+  /**
+   * The production persistence facade, or null when storage composition failed.
+   * Injected pre-opened via `bootstrap.persistence` (main.ts path) or composed
+   * internally and opened asynchronously (see {@link selfOpenPromise}).
+   */
+  private readonly persistenceImpl: GamePersistence | null;
+  /**
+   * Pending open of a self-composed facade; null when persistence was injected
+   * already open. Settles after the bulk-loaded initial state has been applied.
+   */
+  private readonly selfOpenPromise: Promise<void> | null;
+  /** Persistent save-health banner driven by the facade's health surface. */
+  private readonly saveStatusIndicator: SaveStatusIndicator;
+  /** Unsubscribe for the facade's `onHealthChange` subscription. */
+  private unsubscribeHealth: (() => void) | null = null;
+  /**
+   * Sticky degraded flag from boot-time load/migration problems; cleared only
+   * by a later verified durable commit (SAVE-FAIL-3).
+   */
+  private bootSaveDegraded = false;
+  /** Milliseconds since the last periodic durable player-state autosave. */
+  private saveTimer = 0;
 
   // The interaction target outline is scene-owned; track it for cleanup.
   private readonly targetOutline: THREE.LineSegments | null;
@@ -286,9 +326,41 @@ export class Game {
     canvas: HTMLCanvasElement,
     seed?: number,
     quality?: GameQualityOverrides,
+    bootstrap?: { persistence?: GamePersistence },
   ) {
-    this.seed = seed ?? this.resolveSeed();
+    this.seed = seed ?? resolveGameSeed();
     this.gameCanvas = canvas;
+
+    // Persistence composition happens first (249-DL-005): it has no
+    // dependencies, and the World below must be constructed with the
+    // durability bridge attached so every committed edit is captured.
+    // An injected facade is ALREADY OPEN (main.ts awaited open()); its
+    // bulk-loaded state is applied synchronously at the old load call sites.
+    // Otherwise the production default is composed here and opened
+    // asynchronously; `start()` gates the loop on that promise settling.
+    if (bootstrap?.persistence) {
+      this.persistenceImpl = bootstrap.persistence;
+      this.selfOpenPromise = null;
+    } else {
+      const composed = GamePersistence.createProductionGamePersistence(this.seed);
+      this.persistenceImpl = composed;
+      this.selfOpenPromise = composed
+        .open()
+        .then((result) => {
+          this.applyInitialEdits(result.initialEdits);
+          this.applyInitialPlayerState(result.initialPlayerState);
+          if (result.status !== 'ok') {
+            this.bootSaveDegraded = true;
+            this.refreshSaveStatus();
+          }
+        })
+        .catch(() => {
+          // Offline-first: an unusable storage layer degrades visibly instead
+          // of preventing the game from starting (memory-only play).
+          this.bootSaveDegraded = true;
+          this.refreshSaveStatus();
+        });
+    }
 
     this.blockRegistry = createDefaultBlockRegistry();
     this.itemRegistry = createDefaultItemRegistry();
@@ -347,10 +419,14 @@ export class Game {
       renderDistance,
       simulationDistance: this.runtimeSimulationDistance(),
       stateRegistry: this.stateRegistry,
+      editDurability: this.persistenceImpl ?? undefined,
     });
     this.worldBlockAccess = new WorldBlockAccess(this.world);
-    this.saveStorageKey = `voxel-game-edits-v1:${this.seed}`;
-    this.loadSavedEdits();
+    // Injected persistence is already open: apply its bulk-loaded edits now.
+    // The self-composed path applies them when its open promise settles.
+    if (this.selfOpenPromise === null) {
+      this.applyInitialEdits(this.persistenceImpl?.initialEdits ?? null);
+    }
 
     this.overworldDimension = createResourceId('minecraft', 'overworld');
     this.passiveMobWorld = new PassiveMobWorldAdapter({
@@ -377,7 +453,15 @@ export class Game {
       createDefaultStatusEffectRegistry(),
       createDefaultAttributeRegistry(),
     );
-    this.loadPlayerState();
+    // Experience must exist before persisted player state is applied below —
+    // the restore path calls this.experience.restore (249-DL-001 follow-up:
+    // failures here are surfaced, not swallowed, so ordering must be correct).
+    this.experience = new ExperienceSystem();
+    // Injected persistence is already open: apply its bulk-loaded player
+    // state now. The self-composed path applies it when its promise settles.
+    if (this.selfOpenPromise === null) {
+      this.applyInitialPlayerState(this.persistenceImpl?.initialPlayerState ?? null);
+    }
 
     // Queue the spawn area before the loop starts. World work is then spread
     // across frames so the browser can paint the loading screen immediately.
@@ -409,7 +493,6 @@ export class Game {
     this.controller = new PlayerController(this.player, this.input);
     this.physics = new PlayerPhysics(this.world, this.blockRegistry);
     this.itemEntities = new ItemEntityManager({ itemRegistry: this.itemRegistry, rng: Math.random });
-    this.experience = new ExperienceSystem();
     this.xpOrbs = new XpOrbManager({ rng: Math.random });
     this.interaction = new PlayerInteraction({
       world: this.world,
@@ -447,6 +530,11 @@ export class Game {
     this.breakProgressEl = this.requireElement('break-progress');
     this.breakProgressBarEl = this.requireElement('break-progress-bar');
     this.toastEl = this.requireElement('toast');
+    this.saveStatusIndicator = new SaveStatusIndicator(this.requireElement('save-status'));
+    if (this.persistenceImpl) {
+      // Health transitions (probe/sink driven) refresh the banner live.
+      this.unsubscribeHealth = this.persistenceImpl.onHealthChange(() => this.refreshSaveStatus());
+    }
     const craftingEl = this.requireElement('crafting');
     this.overlayEl = this.requireElement('overlay');
     this.overlayMessageEl = this.requireElement('overlay-message');
@@ -501,8 +589,21 @@ export class Game {
     this.loading.show();
     this.loading.setProgress(0);
     this.loadingShown = true;
-    this.showOverlay();
-    this.loop.start();
+    if (this.selfOpenPromise !== null) {
+      // Self-composed persistence: defer the loop (and overlay) until open
+      // settles so the bulk-loaded state is applied before the first frame.
+      // On failure the game still starts memory-only with a visible warning.
+      void this.selfOpenPromise.then(() => {
+        if (this.disposed) {
+          return;
+        }
+        this.showOverlay();
+        this.loop.start();
+      });
+    } else {
+      this.showOverlay();
+      this.loop.start();
+    }
   }
 
   /** Dispose all resources and stop the loop. */
@@ -516,7 +617,13 @@ export class Game {
       clearTimeout(this.toastTimer);
       this.toastTimer = null;
     }
-    this.saveEdits();
+    this.savePlayerStateDurable();
+    this.saveTimer = 0;
+    void this.persistenceImpl?.dispose().catch(() => undefined);
+    if (this.unsubscribeHealth !== null) {
+      this.unsubscribeHealth();
+      this.unsubscribeHealth = null;
+    }
     this.input.dispose();
     this.detachTouchCapture();
     window.removeEventListener('resize', this.onResize);
@@ -589,6 +696,16 @@ export class Game {
     if (this.failNextUpdate) {
       this.failNextUpdate = false;
       throw new Error('239 test-injected simulation failure');
+    }
+
+    // Periodic durable autosave (abrupt-close durability): chunk edits are
+    // already captured continuously by the World durability bridge, so only
+    // the player state needs re-enqueueing here; the facade's coordinator
+    // drains it on its own tick.
+    this.saveTimer += dt * 1000;
+    if (this.saveTimer >= 5000) {
+      this.saveTimer = 0;
+      this.persistenceImpl?.savePlayerState(this.buildPlayerSnapshot());
     }
 
     // Player chunk used for streaming + debug.
@@ -1480,106 +1597,87 @@ export class Game {
 
   private resizeTimer: ReturnType<typeof setTimeout> | null = null;
 
-  /** Persist edits when the tab is backgrounded or the game is disposed. */
+  /** Persist player state durably when the tab is backgrounded or disposed. */
   private readonly onPageHide = (): void => {
-    this.saveEdits();
+    this.savePlayerStateDurable();
+    this.saveTimer = 0;
   };
 
-  private loadSavedEdits(): void {
-    try {
-      const raw = window.localStorage.getItem(this.saveStorageKey);
-      if (raw) {
-        this.world.importEdits(JSON.parse(raw) as unknown);
-      }
-    } catch {
-      // Storage can be disabled or contain malformed data. A fresh world is a
-      // safe fallback and should not prevent the renderer from starting.
+  /** Apply a bulk-loaded edit snapshot; `importEdits` validates internally. */
+  private applyInitialEdits(snapshot: WorldEditSnapshot | null): void {
+    if (snapshot) {
+      this.world.importEdits(snapshot);
     }
   }
 
-  private loadPlayerState(): void {
-    try {
-      const raw = window.localStorage.getItem(this.stateStorageKey());
-      if (!raw) return;
-      const snapshot = JSON.parse(raw) as unknown;
-      if (!this.isGameSaveSnapshot(snapshot) || snapshot.seed !== this.seed) return;
-      const [x, y, z] = snapshot.player.position;
-      this.player.position.set(x, y, z);
-      this.player.yaw = snapshot.player.yaw;
-      this.player.pitch = snapshot.player.pitch;
-      this.inventory.restore(
-        snapshot.inventory,
-        (id) => this.itemRegistry.has(id),
-        (id) => this.itemRegistry.getByLegacyId(id)?.maxDurability ?? 0,
-      );
-      this.survival.restore(snapshot.survival);
-      this.experience.restore(snapshot.experience);
-    } catch {
-      // A missing, corrupt, or unavailable browser save falls back to the
-      // deterministic spawn state without preventing the game from starting.
-    }
-  }
-
-  private saveEdits(): void {
-    try {
-      const snapshot = this.world.exportEdits();
-      window.localStorage.setItem(this.saveStorageKey, JSON.stringify(snapshot));
-    } catch {
-      // Quota/private-mode errors are non-fatal; the active world remains
-      // playable and the in-memory overlay still survives chunk unloads.
-    }
-    this.savePlayerState();
-  }
-
-  private savePlayerState(): void {
-    try {
-      const snapshot: GameSaveSnapshot = {
-        version: 1,
-        seed: this.seed,
-        player: {
-          position: [this.player.position.x, this.player.position.y, this.player.position.z],
-          yaw: this.player.yaw,
-          pitch: this.player.pitch,
-        },
-        inventory: this.inventory.snapshot(),
-        survival: this.survival.snapshot(),
-        experience: this.experience.snapshot(),
-      };
-      window.localStorage.setItem(this.stateStorageKey(), JSON.stringify(snapshot));
-    } catch {
-      // Browser storage is an enhancement; memory-only play remains valid.
-    }
-  }
-
-  private stateStorageKey(): string {
-    return `voxel-game-state-v1:${this.seed}`;
-  }
-
-  private isGameSaveSnapshot(value: unknown): value is GameSaveSnapshot {
-    if (typeof value !== 'object' || value === null) return false;
-    const candidate = value as Partial<GameSaveSnapshot>;
-    const player = candidate.player;
-    return (
-      candidate.version === 1 &&
-      Number.isInteger(candidate.seed) &&
-      typeof player === 'object' &&
-      player !== null &&
-      Array.isArray(player.position) &&
-      player.position.length === 3 &&
-      player.position.every((part) => typeof part === 'number' && Number.isFinite(part)) &&
-      typeof player.yaw === 'number' &&
-      Number.isFinite(player.yaw) &&
-      typeof player.pitch === 'number' &&
-      Number.isFinite(player.pitch) &&
-      typeof candidate.inventory === 'object' &&
-      candidate.inventory !== null &&
-      typeof candidate.survival === 'object' &&
-      candidate.survival !== null &&
-      typeof candidate.experience === 'object' &&
-      candidate.experience !== null &&
-      player.position[1] >= CONFIG.bedrockY &&
-      player.position[1] < CONFIG.chunk.height
+  /**
+   * Apply a bulk-loaded player snapshot. A foreign-seed or out-of-range state
+   * falls back to the deterministic spawn state, mirroring the old localStorage
+   * validation before the durable facade took over loading.
+   */
+  private applyInitialPlayerState(state: GamePlayerSnapshot | null): void {
+    if (!state || state.seed !== this.seed) return;
+    const [x, y, z] = state.player.position;
+    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) return;
+    if (y < CONFIG.bedrockY || y >= CONFIG.chunk.height) return;
+    this.player.position.set(x, y, z);
+    this.player.yaw = state.player.yaw;
+    this.player.pitch = state.player.pitch;
+    this.inventory.restore(
+      state.inventory,
+      (id) => this.itemRegistry.has(id),
+      (id) => this.itemRegistry.getByLegacyId(id)?.maxDurability ?? 0,
     );
+    this.survival.restore(state.survival);
+    this.experience.restore(state.experience);
+  }
+
+  /** The game-level player snapshot the facade persists. */
+  private buildPlayerSnapshot(): GamePlayerSnapshot {
+    return {
+      version: 1,
+      seed: this.seed,
+      player: {
+        position: [this.player.position.x, this.player.position.y, this.player.position.z],
+        yaw: this.player.yaw,
+        pitch: this.player.pitch,
+      },
+      inventory: this.inventory.snapshot(),
+      survival: this.survival.snapshot(),
+      experience: this.experience.snapshot(),
+    };
+  }
+
+  /**
+   * Enqueue the latest player state and flush it durably. The facade's flush
+   * never throws; the belt-and-braces catch only guards against an unexpected
+   * rejection and stays deliberately silent about health — failures surface
+   * through `health` / `onHealthChange` / the save-status banner instead.
+   */
+  private savePlayerStateDurable(): void {
+    const p = this.persistenceImpl;
+    if (!p) return;
+    p.savePlayerState(this.buildPlayerSnapshot());
+    void p
+      .flush()
+      .then((r) => {
+        // A verified durable commit clears the sticky boot warning (SAVE-FAIL-3).
+        if (r.committed > 0) {
+          this.bootSaveDegraded = false;
+        }
+        this.refreshSaveStatus();
+      })
+      .catch(() => undefined);
+  }
+
+  /**
+   * Effective save status = worst of the live health and the sticky boot-time
+   * warning; drives the persistent banner.
+   */
+  private refreshSaveStatus(): void {
+    const health = this.persistenceImpl?.health ?? 'ok';
+    const effective = health === 'ok' && this.bootSaveDegraded ? 'degraded' : health;
+    this.saveStatusIndicator.setStatus(effective);
   }
 
   private onSurvivalEvent(event: SurvivalEvent, amount?: number): void {
@@ -1639,16 +1737,9 @@ export class Game {
     }, 100);
   };
 
-  private resolveSeed(): number {
-    const params = new URLSearchParams(window.location.search);
-    const seedParam = params.get('seed');
-    if (seedParam !== null && seedParam !== '') {
-      const n = Number(seedParam);
-      if (Number.isFinite(n)) {
-        return n >>> 0;
-      }
-    }
-    return CONFIG.seed;
+  /** The durable persistence facade driving saves, or null (E2E observability). */
+  get persistence(): GamePersistence | null {
+    return this.persistenceImpl;
   }
 
   /** Keep automated/headless sessions responsive without changing desktop quality. */

@@ -15,7 +15,15 @@ import type { TerrainGenerator } from './TerrainGenerator';
 import type { WorldStats } from './MeshingTypes';
 import type { WorldAccess } from './WorldAccess';
 import { RenderSimulationDistance } from './RenderSimulationDistance';
-import { CHUNK_DIMENSIONS, chunkKey, localIndex, worldToChunk, worldToLocal } from './WorldCoordinates';
+import {
+  CHUNK_BLOCK_COUNT,
+  CHUNK_DIMENSIONS,
+  chunkKey,
+  keyToChunk,
+  localIndex,
+  worldToChunk,
+  worldToLocal,
+} from './WorldCoordinates';
 
 /** A queued generation job. */
 interface GenJob {
@@ -45,6 +53,22 @@ export interface WorldEditSnapshot {
 }
 
 /**
+ * Durable-ownership seam for player edits (DIRTY-1..5). Implementations own the
+ * authoritative copy of unsaved edits; World's edit overlay is only a resident
+ * cache capped at {@link World.EDIT_OVERLAY_MAX_CHUNKS} entries.
+ */
+export interface WorldEditDurability {
+  /** Called after every committed overlay mutation for the chunk (full latest changes). */
+  captureChunkEdits(cx: number, cy: number, cz: number, changes: ReadonlyMap<number, number>): void;
+  /** Called just before the LRU evicts a resident overlay entry (safety handoff; idempotent). */
+  retainEvictedChunkEdits(cx: number, cy: number, cz: number, changes: ReadonlyMap<number, number>): void;
+  /** Synchronous pending-copy lookup used to re-materialize an evicted entry on regeneration. */
+  restorePendingChunkEdits(cx: number, cy: number, cz: number): ReadonlyMap<number, number> | null;
+  /** Asynchronous committed-copy lookup (IndexedDB) for chunks with no resident/pending copy. */
+  loadCommittedChunkEdits(cx: number, cy: number, cz: number): Promise<Array<[number, number]> | null>;
+}
+
+/**
  * The chunked, streaming world. Owns chunk storage, the budgeted
  * generation/meshing pipeline, unloading, and the player-edit overlay that
  * survives chunk unload/reload.
@@ -69,7 +93,9 @@ export class World implements WorldAccess {
   /** Number of vertical chunk layers streamed around the player (1 by default). */
   private readonly chunkLayerCount: number;
 
-  /** Player edits keyed by chunk key → local index → block id. Survives unload. */
+  /** Resident cache of player edits keyed by chunk key → local index → block
+   *  id. Survives unload within the LRU cap; the injected durability layer
+   *  (DIRTY-1/2) owns the authoritative copy of everything evicted. */
   private readonly editOverlay = new Map<string, Map<number, number>>();
   /** Edit overlay chunk keys ordered least- to most-recently used. Drives LRU
    *  eviction so a chunk the player keeps returning to is never dropped in
@@ -78,6 +104,13 @@ export class World implements WorldAccess {
   /** Maximum distinct chunks tracked in the edit overlay. Prevents unbounded
    *  memory growth over very long sessions. */
   private static readonly EDIT_OVERLAY_MAX_CHUNKS = 10_000;
+  /** Durable owner of edits beyond the resident overlay cap (optional; tests
+   *  and the persistence facade inject it). Null keeps legacy cache-only
+   *  behaviour where eviction discards entries. */
+  private readonly editDurability: WorldEditDurability | null;
+  /** Chunk keys with an in-flight `loadCommittedChunkEdits` hydration, so
+   *  repeated generation cannot double-fire the async lookup (DIRTY-3). */
+  private readonly hydrationPending = new Set<string>();
 
   /**
    * In-memory block-state overrides keyed by chunk key → cell index →
@@ -138,6 +171,8 @@ export class World implements WorldAccess {
     dimension?: DimensionType;
     /** Block-state registry for reading/writing canonical block states. Omit for the default. */
     stateRegistry?: BlockStateRegistry;
+    /** Durable owner of unsaved edits (DIRTY-1..5). Omit for cache-only behaviour. */
+    editDurability?: WorldEditDurability;
   }) {
     this.registry = opts.registry;
     this.seed = opts.seed >>> 0;
@@ -146,6 +181,7 @@ export class World implements WorldAccess {
     this.generator = opts.generator;
     this.materials = opts.materials;
     this.stateRegistry = opts.stateRegistry ?? createDefaultBlockStateRegistry();
+    this.editDurability = opts.editDurability ?? null;
     this.renderDistance = opts.renderDistance ?? CONFIG.renderDistance;
     this.simulationDistance = opts.simulationDistance ?? CONFIG.simulationDistance;
     this.rsd = new RenderSimulationDistance(this.renderDistance, this.simulationDistance);
@@ -215,6 +251,11 @@ export class World implements WorldAccess {
     }
     this.touchEditOverlay(key);
     overlay.set(localIndex(lx, ly, lz), id);
+    // DIRTY-1/2: every committed live edit is handed to the durability layer
+    // (full latest changes), so the resident overlay is never the sole copy.
+    // importEdits deliberately does NOT capture: boot-time bulk imports are
+    // already durable and must not be re-enqueued.
+    this.editDurability?.captureChunkEdits(cx, cy, cz, overlay);
 
     if (!chunk) {
       return; // Not loaded yet; the edit is applied when the chunk generates.
@@ -755,12 +796,29 @@ export class World implements WorldAccess {
     this.retryMeshQueue.push({ key, cx: chunk.cx, cy: chunk.cy, cz: chunk.cz, version: chunk.meshVersion });
   }
 
-  /** Re-apply the player's edits for a chunk after regeneration. */
+  /**
+   * Re-apply the player's edits for a chunk after regeneration. Fallback chain
+   * when the resident overlay misses (DIRTY-1..3): a synchronous pending copy
+   * from the durability layer re-materializes the overlay entry immediately;
+   * otherwise an async committed-copy hydration is fired (de-duplicated per
+   * chunk key) which applies, remeshes, and populates the overlay on resolve.
+   */
   private applyEditOverlay(chunk: Chunk): void {
     const key = chunkKey(chunk.cx, chunk.cy, chunk.cz);
-    const overlay = this.editOverlay.get(key);
+    let overlay = this.editOverlay.get(key);
     if (!overlay) {
-      return;
+      const pending = this.editDurability?.restorePendingChunkEdits(chunk.cx, chunk.cy, chunk.cz);
+      if (pending && pending.size > 0) {
+        // Copy into a fresh resident entry; the durability layer keeps its own.
+        overlay = new Map<number, number>(pending);
+        this.editOverlay.set(key, overlay);
+        this.touchEditOverlay(key);
+      } else if (this.editDurability?.loadCommittedChunkEdits) {
+        this.beginEditHydration(chunk.cx, chunk.cy, chunk.cz, key);
+      }
+      if (!overlay) {
+        return;
+      }
     }
     // Reading the overlay counts as a use: a chunk that keeps reloading around
     // the player must not be evicted before chunks edited once and abandoned.
@@ -771,8 +829,66 @@ export class World implements WorldAccess {
   }
 
   /**
+   * Fire-and-forget async hydration of committed edits for a chunk with no
+   * resident/pending copy. Resolved entries are validated like importEdits
+   * (index bounds + registered id), written into a fresh overlay entry, and
+   * applied to the live chunk with a voxel-count refresh and remesh. Errors are
+   * swallowed here — failures surface through the durability layer's health,
+   * not exceptions. The pending set prevents double-fires while one is in
+   * flight.
+   */
+  private beginEditHydration(cx: number, cy: number, cz: number, key: string): void {
+    if (this.hydrationPending.has(key)) {
+      return;
+    }
+    this.hydrationPending.add(key);
+    this.editDurability!
+      .loadCommittedChunkEdits(cx, cy, cz)
+      .then((changes) => {
+        if (!changes || changes.length === 0) {
+          return;
+        }
+        const overlay = new Map<number, number>();
+        for (const [index, id] of changes) {
+          if (index < 0 || index >= CHUNK_BLOCK_COUNT || !this.registry.has(id)) {
+            continue;
+          }
+          overlay.set(index, id);
+        }
+        if (overlay.size === 0) {
+          return;
+        }
+        // A resident entry may have appeared while hydration was in flight (a
+        // live edit or a pending-copy restore); it is newer than the committed
+        // copy, so leave it untouched rather than visually reverting it.
+        if (this.editOverlay.has(key)) {
+          return;
+        }
+        this.editOverlay.set(key, overlay);
+        this.touchEditOverlay(key);
+        const chunk = this.chunkManager.getChunk(cx, cy, cz);
+        if (chunk?.generated) {
+          for (const [index, id] of overlay) {
+            chunk.blocks[index] = id;
+          }
+          this.refreshChunkVoxelCount(chunk);
+          chunk.markDirty();
+          this.enqueueMeshWithRetry(chunk);
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        this.hydrationPending.delete(key);
+      });
+  }
+
+  /**
    * Mark an edit-overlay chunk key as most-recently used and enforce the size
-   * cap by evicting least-recently-used keys.
+   * cap by evicting least-recently-used keys. Eviction only discards the
+   * resident copy: the latest state is handed to the durability layer first,
+   * so the authoritative record of unsaved edits is never destroyed
+   * (DIRTY-1/2/4). Without an injected durability layer the legacy
+   * drop-on-evict behaviour remains.
    */
   private touchEditOverlay(key: string): void {
     const index = this.editOverlayAccessOrder.indexOf(key);
@@ -785,6 +901,11 @@ export class World implements WorldAccess {
       const lruKey = this.editOverlayAccessOrder.shift();
       if (lruKey === undefined) {
         break; // Access order exhausted; nothing left to evict.
+      }
+      const evicted = this.editOverlay.get(lruKey);
+      if (evicted && this.editDurability) {
+        const [cx, cy, cz] = keyToChunk(lruKey);
+        this.editDurability.retainEvictedChunkEdits(cx, cy, cz, evicted);
       }
       this.editOverlay.delete(lruKey);
     }

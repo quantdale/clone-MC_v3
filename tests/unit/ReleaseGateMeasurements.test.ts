@@ -68,7 +68,9 @@ describe('release-performance-gate: canonical measurements', () => {
   }, 60_000);
 
   it('demonstrates per-domain verdicts: a violated domain fails while others stay within', async () => {
-    const load = await measureCanonicalLoad();
+    // All inputs are synthetic/budget-exact so the verdict-classification
+    // assertions are deterministic even under coverage instrumentation or a
+    // slow host: only the deliberately-violated frame domain may fail.
     const bundle: ReleaseMeasurementBundle = {
       tier: 'Ultra',
       frame: syntheticFrameBundle('Ultra', { frameTimeMillis: 999 }),
@@ -77,7 +79,7 @@ describe('release-performance-gate: canonical measurements', () => {
           DEFAULT_RELEASE_BUDGETS.tick.Ultra.minSustainedTicksPerSecond,
         canonicalTickRunMs: DEFAULT_RELEASE_BUDGETS.tick.Ultra.maxCanonicalTickRunMs,
       },
-      load: { loadMs: load.loadMs },
+      load: { loadMs: DEFAULT_RELEASE_BUDGETS.load.Ultra.maxLoadMs },
       save: { saveFlushMs: DEFAULT_RELEASE_BUDGETS.save.Ultra.maxSaveFlushMs },
       network: syntheticNetworkBundle('Ultra'),
     };

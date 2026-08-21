@@ -9,8 +9,9 @@
  * - `start()` is idempotent: one interval, registered once.
  * - Each interval fire calls `tick()`: drains at most `limitPerTick` units; empty queues cost a `size`
  *   check only.
- * - `pagehide`/hidden fires `flush()`: drains to empty with a zero-progress guard so a persistently
- *   failing sink cannot hang the tab close.
+ * - `pagehide`/hidden fires `flush()`: drains to empty bounded by a zero-progress guard AND a hard
+ *   round cap (`FLUSH_MAX_ROUNDS`), so continuous concurrent marking cannot extend a close-time
+ *   flush indefinitely; excess units stay queued for the next tick.
  * - `stop()` clears the interval and listeners; `markDirty` after `stop()` re-arms (wake-on-dirty).
  */
 import { DirtySaveQueue, type SaveSink, type SaveUnit } from './DirtySaveQueue';
@@ -43,6 +44,14 @@ export interface AutosaveCoordinatorOptions {
 
 /** Consecutive zero-progress drains that end a `flush` (persistent failure guard). */
 const FLUSH_ZERO_PROGRESS_LIMIT = 3;
+
+/**
+ * Hard cap on drain rounds within one `flush`. Progress-positive rounds reset the zero-progress
+ * guard, so continuous concurrent `markDirty` traffic could otherwise keep a flush draining
+ * indefinitely; the cap bounds worst-case flush work regardless of incoming rate (SAVE-FAIL-4
+ * boundedness; pagehide/dispose flushes are best-effort and must always return).
+ */
+const FLUSH_MAX_ROUNDS = 128;
 
 function defaultTimer(): TimerLike {
   return globalThis as TimerLike;
@@ -117,13 +126,18 @@ export class AutosaveCoordinator {
     return this.queue.drain(this.sink, this.limitPerTick);
   }
 
-  /** Best-effort drain-to-empty with a zero-progress guard. Returns the number of units written. */
+  /**
+   * Best-effort drain-to-empty with a zero-progress guard and a hard round cap. Returns the number
+   * of units written; units beyond the cap remain queued for the next tick/flush.
+   */
   async flush(): Promise<number> {
     let total = 0;
     let zeroProgressRuns = 0;
-    while (this.queue.size > 0 && zeroProgressRuns < FLUSH_ZERO_PROGRESS_LIMIT) {
+    let rounds = 0;
+    while (this.queue.size > 0 && zeroProgressRuns < FLUSH_ZERO_PROGRESS_LIMIT && rounds < FLUSH_MAX_ROUNDS) {
       const n = await this.queue.drain(this.sink, this.limitPerTick);
       total += n;
+      rounds++;
       zeroProgressRuns = n === 0 ? zeroProgressRuns + 1 : 0;
     }
     return total;

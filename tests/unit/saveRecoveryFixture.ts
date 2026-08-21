@@ -7,7 +7,7 @@
  * the store for corrupt-record scenarios). Also exports a `makeCoordinator` helper matching the
  * matrix's `limitPerTick = 2` contract.
  */
-import { WORLD_DB_NAME, WORLD_METADATA_STORE, WORLD_CHUNK_SECTION_STORE, WORLD_BLOCK_ENTITY_STORE, WORLD_ENTITY_STORE } from '../../src/storage/WorldMetadata';
+import { WORLD_DB_NAME, WORLD_METADATA_STORE, WORLD_CHUNK_SECTION_STORE, WORLD_BLOCK_ENTITY_STORE, WORLD_ENTITY_STORE, WORLD_PLAYER_STATE_STORE, WORLD_CHUNK_EDIT_STORE } from '../../src/storage/WorldMetadata';
 import type { WorldArchiverDeps } from '../../src/storage/WorldArchiver';
 import { WorldMetadataRepository } from '../../src/storage/WorldMetadataRepository';
 import { ChunkSectionRepository } from '../../src/storage/ChunkSectionRepository';
@@ -55,6 +55,21 @@ const STORE_LADDER: Record<number, Array<[string, string]>> = {
     [WORLD_CHUNK_SECTION_STORE, 'key'],
     [WORLD_BLOCK_ENTITY_STORE, 'key'],
     [WORLD_ENTITY_STORE, 'key'],
+  ],
+  5: [
+    [WORLD_METADATA_STORE, 'worldId'],
+    [WORLD_CHUNK_SECTION_STORE, 'key'],
+    [WORLD_BLOCK_ENTITY_STORE, 'key'],
+    [WORLD_ENTITY_STORE, 'key'],
+    [WORLD_PLAYER_STATE_STORE, 'key'],
+  ],
+  6: [
+    [WORLD_METADATA_STORE, 'worldId'],
+    [WORLD_CHUNK_SECTION_STORE, 'key'],
+    [WORLD_BLOCK_ENTITY_STORE, 'key'],
+    [WORLD_ENTITY_STORE, 'key'],
+    [WORLD_PLAYER_STATE_STORE, 'key'],
+    [WORLD_CHUNK_EDIT_STORE, 'key'],
   ],
 };
 

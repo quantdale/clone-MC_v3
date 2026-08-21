@@ -2,6 +2,27 @@
 
 ## Current checkpoint
 
+> **ACTIVE INTERLOCK (2026-08-21 session, start head `471cf1e`):** the mandatory post-250
+> production-persistence hardening campaign
+> (`openspec/hardening/2026-08-21-post-250-production-persistence-hardening/`) supersedes the
+> historical READY/COMPLETE text below for current release authority
+> (`CHANGE_SEQUENCE_OVERRIDES.md`). Implementation is complete: schema v6 `chunk-edits` store,
+> `GamePersistence` facade composition root, World durability bridge (>10k-chunk churn proof),
+> live Game/main.ts wiring with `#save-status` health banner, faithful legacy migration with
+> read-back verification + truncation fix, SEC-001 bundle assertion wired into CI. Unit suite
+> 3877 passed at the pre-final tree; browser E2E persistence spec 5/6 (one timeout under
+> diagnosis). Remaining: final gate suite, independent adversarial re-audit pass, publication to
+> `origin/main`, canonical CI SUCCESS on the exact SHA — then
+> `openspec/evidence/release-readiness-post-hardening.md` PH-6/PH-7/PH-8 flip to PASS and the
+> interlock may be marked VERIFIED. The historical terminal state below is preserved unchanged.
+
+<!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys).
+     "None (hardening interlock ...)" is the sanctioned form while an interlock governs release
+     authority; nextChange stays null because no Change 251 exists. -->
+- Active implementation change: **None (hardening interlock: post-250 production persistence hardening)**
+- Next change: **null**
+- 240 advancement allowed: **yes**
+
 - Program: **COMPLETE** (terminal state — no change 251 exists)
 - Last completed change: **250-final-program-verification — VERIFIED 100% (documentation-only; final numbered change)**
 - All changes 001–250: **VERIFIED** — zero DEFERRED, zero UNCLASSIFIED (`openspec/evidence/checklist/final-verification-checklist.md`)

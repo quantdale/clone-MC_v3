@@ -16,6 +16,7 @@ import { ChunkSectionRepository } from './ChunkSectionRepository';
 import { BlockEntityRepository } from './BlockEntityRepository';
 import { EntityRepository } from './EntityRepository';
 import { PlayerStateRepository } from './PlayerStateRepository';
+import { ChunkEditRepository } from './ChunkEditRepository';
 
 /** Health of the storage layer. */
 export type StorageStatus = 'ok' | 'degraded' | 'failed';
@@ -128,13 +129,15 @@ export class StorageHealthMonitor {
   }
 }
 
-/** The five repositories the world probe exercises. */
+/** The five repositories the world probe exercises, plus the optional v6 chunk-edit repository. */
 export interface WorldStorageProbeDeps {
   metadata: WorldMetadataRepository;
   chunkSections: ChunkSectionRepository;
   blockEntities: BlockEntityRepository;
   entities: EntityRepository;
   playerStates: PlayerStateRepository;
+  /** Optional; when present the probe round-trips the `chunk-edits` store too. */
+  chunkEdits?: ChunkEditRepository;
 }
 
 /** Reserved world id for the probe record; always deleted after a probe. */
@@ -148,12 +151,13 @@ export const WORLD_PROBE_WORLD_ID = '__probe__';
 export function createWorldStorageProbe(deps: WorldStorageProbeDeps): StorageProbe {
   return {
     async probe(): Promise<void> {
-      const { metadata, chunkSections, blockEntities, entities, playerStates } = deps;
+      const { metadata, chunkSections, blockEntities, entities, playerStates, chunkEdits } = deps;
       await metadata.open();
       await chunkSections.open();
       await blockEntities.open();
       await entities.open();
       await playerStates.open();
+      if (chunkEdits) await chunkEdits.open();
 
       const probeRecord: WorldMetadata = {
         schemaVersion: 1,
@@ -172,11 +176,26 @@ export function createWorldStorageProbe(deps: WorldStorageProbeDeps): StoragePro
         if (read === null) {
           throw new Error('Storage probe: probe record was not readable');
         }
+        if (chunkEdits) {
+          // Tiny round-trip on the chunk-edits store at reserved probe coordinates.
+          await chunkEdits.putChunkEdits(WORLD_PROBE_WORLD_ID, 0, 0, 0, [[0, 1]]);
+          const edits = await chunkEdits.getChunkEdits(WORLD_PROBE_WORLD_ID, 0, 0, 0);
+          if (edits === null || edits.length !== 1 || edits[0]?.[0] !== 0 || edits[0]?.[1] !== 1) {
+            throw new Error('Storage probe: probe chunk edits were not readable');
+          }
+        }
       } finally {
         try {
           await metadata.deleteMetadata(WORLD_PROBE_WORLD_ID);
         } catch {
           // Best-effort cleanup; a failed delete must not mask the probe outcome.
+        }
+        if (chunkEdits) {
+          try {
+            await chunkEdits.deleteChunkEdits(WORLD_PROBE_WORLD_ID, 0, 0, 0);
+          } catch {
+            // Best-effort cleanup; a failed delete must not mask the probe outcome.
+          }
         }
       }
     },

@@ -12,11 +12,11 @@ function makeMatrix(): SaveRecoveryMatrix {
 }
 
 describe('migration-recovery', () => {
-  it('schema-upgrade: v1..4 databases reopen at v5 with all stores and prior data preserved', async () => {
+  it('schema-upgrade: v1..5 databases reopen at v6 with all stores and prior data preserved', async () => {
     const results = await makeMatrix().runMigration();
     const r = results.find((x) => x.scenarioId === 'migration.schema-upgrade')!;
     expect(r.outcome).toBe('pass');
-    expect(r.detail).toContain('v1..4');
+    expect(r.detail).toContain('v1..5');
   });
 
   it('schema-upgrade is exercised directly: opening a v2 database creates the missing stores', async () => {

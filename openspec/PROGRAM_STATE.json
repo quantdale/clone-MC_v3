@@ -15,9 +15,9 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "6e606e19f78e4212f3150300374f6ec6308032be",
-  "lastCompletedTask": "250 final-program-verification VERIFIED (documentation-only: evidence archive 001-250, final verification checklist, final parity audit PASS with DL-001/DL-002 accepted, final regression suite PASS, release-readiness READY; program COMPLETE)",
-  "nextExactAction": "Program terminal: all changes 001-250 VERIFIED, state COMPLETE. Publish this checkpoint to origin/main per openspec/REVIEW_HANDOFF.md and record published head for RC-9; no change 251 exists.",
+  "sessionStartHead": "471cf1eb5884a8e25c63c967cd0cf1d1ccc0a7d9",
+  "lastCompletedTask": "post-250 production-persistence-hardening: implementation complete (schema v6 chunk-edits store; GamePersistence facade composition root; World durability bridge with >10k-chunk churn proof; Game/main.ts live wiring with #save-status health banner; faithful legacy migration with read-back verification + truncation fix; SEC-001 bundle assertion in CI). Unit suite 3877 passed at pre-final tree; browser E2E persistence spec 5/6 (one timeout under diagnosis). Final gates, independent re-audit pass, and publication pending.",
+  "nextExactAction": "Resume openspec/hardening/2026-08-21-post-250-production-persistence-hardening/ (supersedes historical Change 250 READY per CHANGE_SEQUENCE_OVERRIDES.md): finish diagnosing the E2E churn-test timeout, run the full gate suite (validate-state/typecheck/lint/test/coverage/build/audits/e2e/perf), complete the independent adversarial re-audit pass, publish to origin/main, record canonical CI SUCCESS for the exact SHA, then flip release-readiness-post-hardening.md PH-6/PH-7/PH-8 to PASS before marking the interlock VERIFIED.",
   "blockers": [],
   "validationResults": [
     {

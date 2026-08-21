@@ -8,6 +8,41 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' ws: wss:; worker-src 'self' blob:;" />
     <title>Voxel Game</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%234a7c2f'/></svg>" />
+    <style>
+      /* Persistent save-health banner (249-DL-001); styled like #toast but
+         pinned top-center and never auto-dismissed. */
+      #save-status {
+        position: absolute;
+        z-index: 2;
+        pointer-events: none;
+        top: 14px;
+        bottom: auto;
+        left: 50%;
+        width: max-content;
+        max-width: min(90vw, 420px);
+        height: auto;
+        transform: translateX(-50%);
+        padding: 8px 13px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 8px;
+        color: #fff;
+        background: rgba(7, 20, 31, 0.86);
+        box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+        font-size: 13px;
+        font-weight: 650;
+        text-align: center;
+        backdrop-filter: blur(8px);
+      }
+      #save-status.save-status-degraded {
+        color: #ffc857;
+      }
+      #save-status.save-status-failed {
+        color: #ff6b6b;
+      }
+      #save-status.hidden {
+        display: none;
+      }
+    </style>
   </head>
   <body>
     <div id="app">
@@ -30,6 +65,7 @@
           <div class="break-progress-track"><div id="break-progress-bar" class="break-progress-bar"></div></div>
         </div>
         <div id="toast" class="ui hidden" role="status" aria-live="polite"></div>
+        <div id="save-status" class="hidden" role="status" aria-live="polite"></div>
         <div id="loading" class="ui">
           <div class="loading-panel">
             <div class="loading-spinner" aria-hidden="true"></div>

@@ -29,4 +29,5 @@ A fresh `/goal`, `continue`, or equivalent session MUST:
 
 The repository is **not release-ready while this interlock is incomplete**. `249-DL-001` and `249-DL-002` must be resolved in production code, not accepted, waived, relabeled, or moved to documentation-only debt. `249-DL-005` must either be resolved by wiring the durable stack into the live game or replaced by an equally durable live architecture that satisfies every normative durability requirement.
 
-See `proposal.md`, `design.md`, `tasks.md`, `verification.md`, `remediation-matrix.md`, and `specs/**/spec.md`.
+See `proposal.md`, `design.md`, `design-addendum.md` (normative implementation contracts),
+`tasks.md`, `verification.md`, `remediation-matrix.md`, and `specs/**/spec.md`.

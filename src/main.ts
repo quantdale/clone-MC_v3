@@ -1,14 +1,17 @@
 import './styles.css';
-import { Game, type GameQualityOverrides } from './engine/Game';
+import { Game, resolveGameSeed, type GameQualityOverrides } from './engine/Game';
+import { GamePersistence } from './storage/GamePersistence';
 
 /**
  * Application bootstrap.
  *
- * Validates the required DOM elements, constructs the Game, and enters the
- * recoverable init-error state if WebGL or the DOM is unavailable. The fatal
- * error path is shown as a visible message rather than an uncaught exception.
+ * Validates the required DOM elements, composes and opens the durable
+ * persistence facade (249-DL-005), constructs the Game with it injected, and
+ * enters the recoverable init-error state if WebGL or the DOM is unavailable.
+ * The fatal error path is shown as a visible message rather than an uncaught
+ * exception.
  */
-function bootstrap(): void {
+async function bootstrap(): Promise<void> {
   const bootstrapWindow = window as Window & { __voxelBootstrapStarted?: boolean };
   if (bootstrapWindow.__voxelBootstrapStarted) {
     return;
@@ -33,9 +36,22 @@ function bootstrap(): void {
       window as unknown as { __voxelQualityProfile?: GameQualityOverrides }
     ).__voxelQualityProfile;
   }
+
+  // Compose + open persistence BEFORE constructing Game (249-DL-001/005) so the
+  // bulk-loaded state is available synchronously at construction. open() never
+  // throws per its contract; the catch is purely defensive (offline-first).
+  const seed = resolveGameSeed();
+  let persistence: GamePersistence | undefined;
+  try {
+    persistence = GamePersistence.createProductionGamePersistence(seed);
+    await persistence.open();
+  } catch {
+    persistence = undefined;
+  }
+
   let game: Game;
   try {
-    game = new Game(canvas, undefined, quality);
+    game = new Game(canvas, seed, quality, persistence ? { persistence } : undefined);
   } catch (err) {
     showFatalError(
       `Failed to initialize the game: ${err instanceof Error ? err.message : String(err)}`,
@@ -73,4 +89,4 @@ function showFatalError(message: string): void {
   }
 }
 
-bootstrap();
+void bootstrap();

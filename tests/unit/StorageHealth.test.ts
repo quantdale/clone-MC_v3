@@ -11,6 +11,7 @@ import { ChunkSectionRepository } from '../../src/storage/ChunkSectionRepository
 import { BlockEntityRepository } from '../../src/storage/BlockEntityRepository';
 import { EntityRepository } from '../../src/storage/EntityRepository';
 import { PlayerStateRepository } from '../../src/storage/PlayerStateRepository';
+import { ChunkEditRepository } from '../../src/storage/ChunkEditRepository';
 import { createIdbFactoryMock, type MockIdbFactory } from './IdbFactoryMock';
 
 function err(name: string, code?: number): Error {
@@ -157,5 +158,23 @@ describe('createWorldStorageProbe', () => {
     const monitor = new StorageHealthMonitor({ probe });
     expect(await monitor.check()).toBe('degraded');
     expect(monitor.lastFailure?.kind).toBe('quota');
+  });
+
+  it('round-trips the chunk-edits store when the optional repository is provided', async () => {
+    const mock: MockIdbFactory = createIdbFactoryMock();
+    const chunkEdits = new ChunkEditRepository({ factory: mock });
+    const deps = {
+      metadata: new WorldMetadataRepository({ factory: mock }),
+      chunkSections: new ChunkSectionRepository({ factory: mock }),
+      blockEntities: new BlockEntityRepository({ factory: mock }),
+      entities: new EntityRepository({ factory: mock }),
+      playerStates: new PlayerStateRepository({ factory: mock }),
+      chunkEdits,
+    };
+    const probe = createWorldStorageProbe(deps);
+
+    await expect(probe.probe()).resolves.toBeUndefined();
+    // The probe record is deleted in all paths.
+    expect(await chunkEdits.getChunkEdits(WORLD_PROBE_WORLD_ID, 0, 0, 0)).toBeNull();
   });
 });

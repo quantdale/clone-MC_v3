@@ -1,15 +1,31 @@
 /**
- * Legacy localStorage → world-database migration (040). Reads the legacy per-seed keys
+ * Legacy localStorage → world-database migration (040 / v6). Reads the legacy per-seed keys
  * `voxel-game-edits-v1:${seed}` (sparse edit overlay) and `voxel-game-state-v1:${seed}`
- * (player/inventory/survival), validates them, and imports them into the 034-040 persistence layer:
- * the edit overlay becomes `SerializedChunkColumn` records in the chunk-sections store, and the game
- * snapshot becomes a `PlayerStateRecord` in the player-state store. Migration is non-destructive —
- * legacy storage is only read — and reports per-artifact errors without partial writes.
+ * (player/inventory/survival), validates them, and imports them into the persistence layer:
+ *
+ * - **Authoritative faithful record**: one `ChunkEditRecord` per distinct `(cx, cy, cz)` legacy
+ *   entry is written to the v6 `chunk-edits` store via `ChunkEditRepository`, holding the validated
+ *   `[localIndex, blockId]` pairs sorted by index and deduplicated by index (last occurrence wins,
+ *   matching `World.importEdits` map-insertion semantics). Indices span the full chunk volume
+ *   (`CHUNK_BLOCK_COUNT` = 16×64×16); nothing is truncated. Each record is read back and verified
+ *   for semantic equivalence before it counts as migrated; a mismatch deletes the bad record so
+ *   partial/corrupt state never masquerades as migrated.
+ * - **Compatibility columns**: the edit overlay is additionally folded into air-filled
+ *   `SerializedChunkColumn` records in the chunk-sections store. This output is lossy by design
+ *   (untouched cells are indistinguishable from edited-to-air) and is retained solely for archive/
+ *   tooling compatibility; it is no longer consumed by the game. Column read-back verification is
+ *   deliberately skipped — the faithful record above carries the correctness guarantee, and the
+ *   columns are redundant compatibility output.
+ * - The game snapshot becomes a `PlayerStateRecord` in the player-state store, also read back and
+ *   verified field-equivalent (mismatch → error + delete).
+ *
+ * Migration is non-destructive — legacy storage is only read, never written or deleted — and
+ * interruption-safe: a crash mid-migration leaves the already-committed records in place, and the
+ * next `migrate()` run overwrites them idempotently with identical content. Per-artifact failures
+ * are reported without throwing.
  *
  * Conversion is registry-free: legacy numeric id `0` is air, so each migrated section's paletted
- * container is built with palette `[0, ...changedIds]` and storage initialized to air. Migrated
- * columns contain the player's edits with air for untouched cells; the world runtime decides how to
- * merge them with regenerated terrain when it consumes the store.
+ * container is built with palette `[0, ...changedIds]` and storage initialized to air.
  */
 import { CHUNK_COLUMN_VERSION, type SerializedChunkColumn } from '../world/ChunkColumn';
 import {
@@ -18,8 +34,10 @@ import {
   PackedIntegerArray,
   type SerializedPalettedContainer,
 } from '../data/PalettedContainer';
-import { SECTION_VOLUME } from '../math/SectionCoordinate';
+import { SECTION_SIZE, SECTION_VOLUME } from '../math/SectionCoordinate';
+import { CHUNK_BLOCK_COUNT } from '../world/WorldCoordinates';
 import { ChunkSectionRepository } from './ChunkSectionRepository';
+import { ChunkEditRepository } from './ChunkEditRepository';
 import { PlayerStateRepository } from './PlayerStateRepository';
 import {
   validatePlayerStateRecord,
@@ -57,9 +75,13 @@ export interface LegacyMigrationReport {
   importedColumns: number;
   /** Accepted cell edits folded into the migrated columns. */
   importedEdits: number;
-  /** Whether the player-state record was written. */
+  /** Whether the player-state record was written (and read-back verified). */
   playerStateImported: boolean;
-  /** Per-artifact failures (validation/storage); empty when fully successful. */
+  /** Faithful `ChunkEditRecord`s written to the chunk-edits store. */
+  importedEditRecords?: number;
+  /** Records (chunk-edits + player state) that passed read-back verification. */
+  verifiedRecords?: number;
+  /** Per-artifact failures (validation/storage/verification); empty when fully successful. */
   errors: string[];
 }
 
@@ -69,11 +91,21 @@ export const LEGACY_EDIT_STORAGE_PREFIX = 'voxel-game-edits-v1:';
 /** Legacy localStorage key prefix for the player state snapshot. */
 export const LEGACY_STATE_STORAGE_PREFIX = 'voxel-game-state-v1:';
 
-/** One edited section within a column being built. */
+/**
+ * One edited section within a column being built. `cy` is the section's Y within the column
+ * (already decoded from full-chunk edit indices by the caller); `changes` holds section-local
+ * `[index, blockId]` pairs with `0 <= index < SECTION_VOLUME`.
+ */
 export interface EditSectionGroup {
   cy: number;
   changes: Array<[number, number]>;
 }
+
+/** Sections per chunk column: the full chunk volume (16×64×16) folds into 16³ sections. */
+const SECTIONS_PER_CHUNK = CHUNK_BLOCK_COUNT / SECTION_VOLUME;
+
+/** Section-plane area: one local y step in the full-chunk index encoding. */
+const SECTION_AREA = SECTION_SIZE * SECTION_SIZE;
 
 function isInteger(v: unknown): v is number {
   return typeof v === 'number' && Number.isInteger(v);
@@ -189,6 +221,51 @@ export function editsToSerializedChunkColumn(
   };
 }
 
+/**
+ * Normalize one legacy entry's changes into the faithful record form: drop cells with an
+ * out-of-range index or a negative id, deduplicate by index (last occurrence wins, matching the
+ * map-insertion semantics of `World.importEdits`), and sort ascending by index. Indices span the
+ * full chunk volume (`CHUNK_BLOCK_COUNT`), so edits at any local y are preserved.
+ */
+export function normalizeLegacyChanges(
+  changes: ReadonlyArray<[number, number]>,
+): Array<[number, number]> {
+  const byIndex = new Map<number, number>();
+  for (const [index, id] of changes) {
+    if (isInteger(index) && index >= 0 && index < CHUNK_BLOCK_COUNT && isInteger(id) && id >= 0) {
+      byIndex.set(index, id);
+    }
+  }
+  return [...byIndex.entries()].sort((a, b) => a[0] - b[0]);
+}
+
+/**
+ * Decode a full-chunk edit index (`lx + lz*16 + ly*256`, `ly` over the full chunk height) into its
+ * containing section Y within the chunk (0..SECTIONS_PER_CHUNK-1) and the section-local index.
+ */
+export function decodeFullChunkIndex(index: number): { sectionY: number; localIndex: number } {
+  const lx = index % SECTION_SIZE;
+  const lz = Math.floor(index / SECTION_SIZE) % SECTION_SIZE;
+  const ly = Math.floor(index / SECTION_AREA);
+  return {
+    sectionY: Math.floor(ly / SECTION_SIZE),
+    localIndex: lx + lz * SECTION_SIZE + (ly % SECTION_SIZE) * SECTION_AREA,
+  };
+}
+
+/** Semantic equivalence of two changes lists: same multiset of `[index, id]` pairs. */
+function changesEqual(
+  a: ReadonlyArray<[number, number]> | null,
+  b: ReadonlyArray<[number, number]>,
+): boolean {
+  if (!a || a.length !== b.length) return false;
+  const sort = (list: ReadonlyArray<[number, number]>) =>
+    [...list].sort((x, y) => x[0] - y[0]);
+  const sa = sort(a);
+  const sb = sort(b);
+  return sa.every(([index, id], i) => sb[i]![0] === index && sb[i]![1] === id);
+}
+
 /** Convert a validated legacy player snapshot into a `PlayerStateRecord` for `worldId`. */
 export function toPlayerStateRecord(snapshot: LegacyPlayerSnapshot, worldId: string): PlayerStateRecord {
   return validatePlayerStateRecord({
@@ -221,31 +298,37 @@ function errorMessage(e: unknown): string {
 }
 
 /**
- * One-time, non-destructive importer of a seed's legacy localStorage artifacts into the new
- * persistence layer.
+ * One-time, non-destructive, interruption-safe importer of a seed's legacy localStorage artifacts
+ * into the persistence layer. Legacy storage is never written or deleted; a crash mid-migration
+ * leaves earlier committed records in place and the next `migrate()` run overwrites them
+ * idempotently with identical content.
  */
 export class LegacyLocalStorageMigrator {
   private readonly storage: StorageLike;
   private readonly chunkSections: ChunkSectionRepository;
+  private readonly chunkEdits: ChunkEditRepository;
   private readonly playerStates: PlayerStateRepository;
   private readonly worldIdForSeed: (seed: number) => string;
 
   constructor(opts: {
     storage: StorageLike;
     chunkSections: ChunkSectionRepository;
+    /** Faithful per-chunk sparse-edit store (v6 `chunk-edits`); the authoritative import target. */
+    chunkEdits: ChunkEditRepository;
     playerStates: PlayerStateRepository;
     /** Map a legacy seed to the world id used by the repositories (default `world-${seed}`). */
     worldIdForSeed?: (seed: number) => string;
   }) {
     this.storage = opts.storage;
     this.chunkSections = opts.chunkSections;
+    this.chunkEdits = opts.chunkEdits;
     this.playerStates = opts.playerStates;
     this.worldIdForSeed = opts.worldIdForSeed ?? ((seed: number) => `world-${seed}`);
   }
 
   /**
    * Import the legacy edits and player state for `seed` into the repositories. Never throws out of
-   * the method: storage/validation/write failures are collected in `report.errors`.
+   * the method: storage/validation/write/verification failures are collected in `report.errors`.
    */
   async migrate(seed: number): Promise<LegacyMigrationReport> {
     const worldId = this.worldIdForSeed(seed);
@@ -254,12 +337,15 @@ export class LegacyLocalStorageMigrator {
       importedColumns: 0,
       importedEdits: 0,
       playerStateImported: false,
+      importedEditRecords: 0,
+      verifiedRecords: 0,
       errors: [],
     };
     await this.chunkSections.open();
+    await this.chunkEdits.open();
     await this.playerStates.open();
 
-    // --- Sparse edit overlay → chunk-sections ---------------------------------------------
+    // --- Sparse edit overlay → faithful chunk-edits records + compatibility columns --------
     let rawEdits: string | null = null;
     try {
       rawEdits = this.storage.getItem(LEGACY_EDIT_STORAGE_PREFIX + seed);
@@ -272,10 +358,61 @@ export class LegacyLocalStorageMigrator {
         if (!isLegacyEditSnapshot(parsed)) {
           throw new Error('malformed legacy edit snapshot');
         }
-        const columns = groupEditsToColumns(parsed.edits);
-        for (const column of columns.values()) {
+
+        // Pass 1 — authoritative faithful records: one per distinct (cx, cy, cz), changes sorted
+        // ascending and deduplicated by index (last wins). Each record is read back and verified;
+        // on mismatch the bad record is deleted so corrupt state never masquerades as migrated.
+        const columnSections = new Map<string, { cx: number; cz: number; sections: Map<number, Array<[number, number]>> }>();
+        for (const entry of parsed.edits) {
+          const [cx, cy, cz] = entry.chunk;
+          const normalized = normalizeLegacyChanges(entry.changes);
+          if (normalized.length === 0) continue; // nothing valid to persist for this entry
+          try {
+            await this.chunkEdits.putChunkEdits(worldId, cx, cy, cz, normalized);
+            const readBack = await this.chunkEdits.getChunkEdits(worldId, cx, cy, cz);
+            if (!changesEqual(readBack, normalized)) {
+              throw new Error(
+                `chunk-edits read-back mismatch for (${cx},${cy},${cz}): expected ${JSON.stringify(normalized)}, got ${JSON.stringify(readBack)}`,
+              );
+            }
+            report.importedEditRecords!++;
+            report.verifiedRecords!++;
+          } catch (e) {
+            report.errors.push(`chunk-edits (${cx},${cy},${cz}): ${errorMessage(e)}`);
+            try {
+              await this.chunkEdits.deleteChunkEdits(worldId, cx, cy, cz);
+            } catch (cleanupError) {
+              report.errors.push(
+                `chunk-edits cleanup (${cx},${cy},${cz}): ${errorMessage(cleanupError)}`,
+              );
+            }
+            continue;
+          }
+
+          // Pass 2 (same loop) — decode full-chunk indices into 16³ sections for the
+          // compatibility column output. Column section Y = legacy chunkY * sections-per-chunk +
+          // decoded section Y, placing each legacy chunk's edits at their vertical position.
+          const key = `${cx}|${cz}`;
+          let column = columnSections.get(key);
+          if (!column) {
+            column = { cx, cz, sections: new Map() };
+            columnSections.set(key, column);
+          }
+          for (const [index, id] of normalized) {
+            const { sectionY, localIndex } = decodeFullChunkIndex(index);
+            const columnSectionY = cy * SECTIONS_PER_CHUNK + sectionY;
+            const bucket = column.sections.get(columnSectionY) ?? [];
+            bucket.push([localIndex, id]);
+            column.sections.set(columnSectionY, bucket);
+          }
+        }
+
+        // Compatibility columns: air-filled by design (lossy), archive/tooling output only, so
+        // read-back verification is deliberately skipped here — the faithful records above carry
+        // the MIGRATE-1 correctness guarantee.
+        for (const column of columnSections.values()) {
           const sections = [...column.sections.entries()].map(
-            ([cy, changes]): EditSectionGroup => ({ cy, changes }),
+            ([columnSectionY, changes]): EditSectionGroup => ({ cy: columnSectionY, changes }),
           );
           const serialized = editsToSerializedChunkColumn(sections, column.cx, column.cz);
           await this.chunkSections.putColumn(worldId, serialized);
@@ -295,38 +432,32 @@ export class LegacyLocalStorageMigrator {
       report.errors.push(`read state: ${errorMessage(e)}`);
     }
     if (rawState !== null && rawState !== undefined) {
+      let record: PlayerStateRecord | null = null;
       try {
         const parsed = JSON.parse(rawState) as unknown;
         if (!isLegacyPlayerSnapshot(parsed)) {
           throw new Error('malformed legacy player snapshot');
         }
-        await this.playerStates.putPlayerState(toPlayerStateRecord(parsed, worldId));
+        record = toPlayerStateRecord(parsed, worldId);
+        await this.playerStates.putPlayerState(record);
+        const readBack = await this.playerStates.getPlayerState(worldId);
+        if (!record || !readBack || JSON.stringify(readBack) !== JSON.stringify(record)) {
+          throw new Error('player-state read-back mismatch');
+        }
         report.playerStateImported = true;
+        report.verifiedRecords!++;
       } catch (e) {
         report.errors.push(`state: ${errorMessage(e)}`);
+        if (record) {
+          try {
+            await this.playerStates.deletePlayerState(worldId);
+          } catch (cleanupError) {
+            report.errors.push(`state cleanup: ${errorMessage(cleanupError)}`);
+          }
+        }
       }
     }
 
     return report;
   }
-}
-
-/** Group a legacy snapshot's entries by `(chunkX, chunkZ)`. */
-function groupEditsToColumns(
-  edits: LegacyEditSnapshot['edits'],
-): Map<string, { cx: number; cz: number; sections: Map<number, Array<[number, number]>> }> {
-  const columns = new Map<string, { cx: number; cz: number; sections: Map<number, Array<[number, number]>> }>();
-  for (const entry of edits) {
-    const [cx, cy, cz] = entry.chunk;
-    const key = `${cx}|${cz}`;
-    let column = columns.get(key);
-    if (!column) {
-      column = { cx, cz, sections: new Map() };
-      columns.set(key, column);
-    }
-    const existing = column.sections.get(cy) ?? [];
-    existing.push(...entry.changes);
-    column.sections.set(cy, existing);
-  }
-  return columns;
 }

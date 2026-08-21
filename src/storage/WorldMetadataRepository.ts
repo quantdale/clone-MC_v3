@@ -12,6 +12,7 @@ import {
   WORLD_BLOCK_ENTITY_STORE,
   WORLD_ENTITY_STORE,
   WORLD_PLAYER_STATE_STORE,
+  WORLD_CHUNK_EDIT_STORE,
   validateWorldMetadata,
   type WorldMetadata,
 } from './WorldMetadata';
@@ -89,6 +90,9 @@ export function ensureWorldStores(db: IdbDatabaseLike): void {
   }
   if (!db.objectStoreNames.contains(WORLD_PLAYER_STATE_STORE)) {
     db.createObjectStore(WORLD_PLAYER_STATE_STORE, { keyPath: 'key' });
+  }
+  if (!db.objectStoreNames.contains(WORLD_CHUNK_EDIT_STORE)) {
+    db.createObjectStore(WORLD_CHUNK_EDIT_STORE, { keyPath: 'key' });
   }
 }
 

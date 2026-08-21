@@ -117,6 +117,26 @@ describe('AutosaveCoordinator', () => {
     expect(coord.size).toBe(1);
   });
 
+  it('flush is hard-bounded under continuous concurrent marking (SAVE-FAIL-4)', async () => {
+    const q = new DirtySaveQueue();
+    const calls: string[] = [];
+    // A hostile sink that marks a fresh unit on every successful write: each
+    // drain round makes progress, so only the round cap can end the flush.
+    const sink: SaveSink = {
+      async write(u: SaveUnit): Promise<void> {
+        calls.push(u.key);
+        if (calls.length <= 500) q.markDirty(unit(`spawned-${calls.length}`));
+      },
+    };
+    const coord = new AutosaveCoordinator({ queue: q, sink, limitPerTick: 1, intervalMs: 1000, flushTarget: null });
+    coord.start();
+    coord.markDirty(unit('seed'));
+
+    const written = await coord.flush(); // must terminate, not spin forever
+    expect(written).toBe(128); // FLUSH_MAX_ROUNDS × limitPerTick(1)
+    expect(coord.size).toBeGreaterThan(0); // excess units remain queued for later ticks
+  });
+
   it('start is idempotent; stop clears interval and listeners; markDirty re-arms', async () => {
     const q = new DirtySaveQueue();
     const sink = new RecordingSink();

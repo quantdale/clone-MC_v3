@@ -110,6 +110,48 @@ describe('DirtySaveQueue (generic)', () => {
     expect(sink.calls).toHaveLength(0);
     expect(q.size).toBe(1);
   });
+
+  it('de-duplicates chunk-edits units by a key that includes chunkY', async () => {
+    const q = new DirtySaveQueue();
+    const key = (cy: number) => `chunk-edits|a|1|${cy}|2`;
+    q.markDirty(unit({ key: key(0), kind: 'chunk-edits', worldId: 'a', chunkX: 1, chunkY: 0, chunkZ: 2, payload: [[0, 1]] }));
+    q.markDirty(unit({ key: key(1), kind: 'chunk-edits', worldId: 'a', chunkX: 1, chunkY: 1, chunkZ: 2, payload: [[3, 4]] }));
+    // Re-marking the same chunk (same chunkY) updates the payload but keeps one pending unit.
+    q.markDirty(unit({ key: key(0), kind: 'chunk-edits', worldId: 'a', chunkX: 1, chunkY: 0, chunkZ: 2, payload: [[0, 9]] }));
+
+    expect(q.size).toBe(2);
+    expect(q.keys()).toEqual([key(0), key(1)]);
+
+    const sink = new RecordingSink();
+    await q.drain(sink, 10);
+    const first = sink.calls.find((u) => u.key === key(0))!;
+    expect(first.chunkY).toBe(0);
+    expect(first.payload).toEqual([[0, 9]]);
+    expect(q.size).toBe(0);
+  });
+
+  it('re-queues a failing chunk-edits unit and retries it next drain', async () => {
+    const q = new DirtySaveQueue();
+    q.markDirty(unit({
+      key: 'chunk-edits|a|0|0|0',
+      kind: 'chunk-edits',
+      worldId: 'a',
+      chunkX: 0,
+      chunkY: 0,
+      chunkZ: 0,
+      payload: [[0, 1]],
+    }));
+
+    const sink = new RecordingSink();
+    sink.failKeys.add('chunk-edits|a|0|0|0');
+    expect(await q.drain(sink, 10)).toBe(0);
+    expect(q.size).toBe(1);
+
+    sink.failKeys.clear();
+    expect(await q.drain(sink, 10)).toBe(1);
+    expect(q.size).toBe(0);
+    expect(sink.calls.filter((u) => u.key === 'chunk-edits|a|0|0|0')).toHaveLength(2);
+  });
 });
 
 describe('RepositorySaveSink integration (in-memory mocks)', () => {
@@ -171,6 +213,30 @@ describe('RepositorySaveSink integration (in-memory mocks)', () => {
     expect(db.objectStoreNames.contains(WORLD_CHUNK_SECTION_STORE)).toBe(true);
     expect(db.objectStoreNames.contains(WORLD_BLOCK_ENTITY_STORE)).toBe(true);
     expect(db.objectStoreNames.contains(WORLD_ENTITY_STORE)).toBe(true);
+  });
+
+  it('a failed write does not clobber a newer markDirty that landed mid-write', async () => {
+    const q = new DirtySaveQueue();
+    q.markDirty({ key: 'k', kind: 'world-metadata', worldId: 'a', chunkX: 0, chunkZ: 0, payload: 'v1' });
+
+    const sink: SaveSink = {
+      write(u: SaveUnit): Promise<void> {
+        if (u.payload === 'v1') {
+          // The newer snapshot lands while the stale write is in flight.
+          q.markDirty({ key: 'k', kind: 'world-metadata', worldId: 'a', chunkX: 0, chunkZ: 0, payload: 'v2' });
+          return Promise.reject(new Error('forced failure'));
+        }
+        return Promise.resolve();
+      },
+    };
+
+    const written = await q.drain(sink, 10);
+    expect(written).toBe(0);
+    // The pending unit must be the NEWER snapshot, not the failed stale one.
+    expect(q.size).toBe(1);
+    const next = await q.drain(sink, 10);
+    expect(next).toBe(1);
+    expect(q.size).toBe(0);
   });
 
   it('re-queues a unit when its repository is missing', async () => {

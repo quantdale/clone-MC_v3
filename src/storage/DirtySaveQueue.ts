@@ -7,8 +7,18 @@
  * repositories, which are supplied via the sink (see `RepositorySaveSink`).
  */
 
-/** The kind of world data a save unit carries; one per 034-037 persistence boundary. */
-export type SaveUnitKind = 'world-metadata' | 'chunk-sections' | 'block-entities' | 'entities';
+/**
+ * The kind of world data a save unit carries; one per 034-040 persistence boundary plus the v6
+ * chunk-edit store. `chunk-edits` payloads are `Array<[number, number]>` full per-chunk sparse
+ * snapshots; `player-state` payloads are `PlayerStateRecord`-shaped objects.
+ */
+export type SaveUnitKind =
+  | 'world-metadata'
+  | 'chunk-sections'
+  | 'block-entities'
+  | 'entities'
+  | 'chunk-edits'
+  | 'player-state';
 
 /** A single dirty unit to persist. The unique `key` de-duplicates repeated marks. */
 export interface SaveUnit {
@@ -20,9 +30,11 @@ export interface SaveUnit {
   worldId: string;
   /** Chunk X (0 for world-metadata). */
   chunkX: number;
+  /** Chunk Y (0 for world-metadata; only meaningful for `chunk-edits`). */
+  chunkY?: number;
   /** Chunk Z (0 for world-metadata). */
   chunkZ: number;
-  /** Kind-specific data (WorldMetadata | SerializedChunkColumn | SerializedBlockEntity[] | SerializedEntity[]). */
+  /** Kind-specific data (WorldMetadata | SerializedChunkColumn | SerializedBlockEntity[] | SerializedEntity[] | Array<[number, number]> | PlayerStateRecord-shaped object). */
   payload: unknown;
 }
 
@@ -61,8 +73,12 @@ export class DirtySaveQueue {
         await sink.write(unit);
         written++;
       } catch {
-        // Re-queue at the end for retry; preserves no-loss semantics.
-        this.pending.set(key, unit);
+        // Re-queue at the end for retry; preserves no-loss semantics. If a
+        // newer markDirty for this key landed while the write was in flight,
+        // keep that newer snapshot instead of resurrecting the stale one.
+        if (!this.pending.has(key)) {
+          this.pending.set(key, unit);
+        }
       }
     }
 
