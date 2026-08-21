@@ -110,3 +110,127 @@ export function evaluateRenderBudget(config: RenderBudgetConfig, metrics: Render
   });
   return { withinBudget: entries.every((entry) => entry.withinBudget), entries };
 }
+
+// ── Frame work-budget scheduler (audit 04: time-aware budgets) ───────────────
+
+/** Task classes competing for the per-frame main-thread work budget. */
+export type FrameTaskClass = 'generate' | 'mesh-upload' | 'light' | 'unload';
+
+/** Fixed task-class order (normative for summaries). */
+export const FRAME_TASK_CLASSES: readonly FrameTaskClass[] = ['generate', 'mesh-upload', 'light', 'unload'];
+
+/** Per-class millisecond budgets for one frame. */
+export interface FrameWorkBudgetConfig {
+  generateMs: number;
+  meshUploadMs: number;
+  lightMs: number;
+  unloadMs: number;
+}
+
+/** Per-class frame summary: budget vs used/remaining plus the duration EMA. */
+export interface FrameTaskClassSummary {
+  budgetMs: number;
+  usedMs: number;
+  remainingMs: number;
+  /** Exponential moving average of recorded actual durations (ms), 0 before data. */
+  emaMs: number;
+}
+
+/** Full-frame budget consumption snapshot. */
+export interface FrameBudgetSummary {
+  classes: Readonly<Record<FrameTaskClass, FrameTaskClassSummary>>;
+  /** True when every class still has at least `epsilon` ms remaining. */
+  exhausted: boolean;
+}
+
+const EMA_ALPHA = 0.25;
+/** Remaining budget below which dispatch stops (ms). */
+const EPSILON_MS = 0.01;
+
+/**
+ * Time-aware per-frame work scheduler. The frame loop calls `beginFrame`, then
+ * gates each candidate chunk task through `tryAcquire(taskClass, estimate)` and
+ * skips further dispatch once the class budget is spent; completed tasks report
+ * their real duration via `recordActual` to refine a per-class EMA used as the
+ * next frame's default cost estimate.
+ */
+export class FrameWorkBudgetScheduler {
+  private readonly budgets: Record<FrameTaskClass, number>;
+  private readonly used: Record<FrameTaskClass, number>;
+  private readonly ema: Record<FrameTaskClass, number>;
+
+  constructor(config: FrameWorkBudgetConfig) {
+    this.budgets = {
+      generate: config.generateMs,
+      'mesh-upload': config.meshUploadMs,
+      light: config.lightMs,
+      unload: config.unloadMs,
+    };
+    this.used = { generate: 0, 'mesh-upload': 0, light: 0, unload: 0 };
+    this.ema = { generate: 0, 'mesh-upload': 0, light: 0, unload: 0 };
+  }
+
+  /** Start a new frame: resets per-class consumption (EMAs persist). */
+  beginFrame(): void {
+    for (const taskClass of FRAME_TASK_CLASSES) {
+      this.used[taskClass] = 0;
+    }
+  }
+
+  /**
+   * Attempt to reserve `estimatedCostMs` of this frame's budget for the class.
+   * Returns false (and reserves nothing) when the remaining budget is too small.
+   * With no EMA history the caller's estimate is trusted as-is.
+   */
+  tryAcquire(taskClass: FrameTaskClass, estimatedCostMs?: number): boolean {
+    const cost = estimatedCostMs ?? (this.ema[taskClass] > 0 ? this.ema[taskClass] : 0);
+    if (cost < 0 || !Number.isFinite(cost)) {
+      throw new RangeError(`FrameWorkBudgetScheduler.tryAcquire(${taskClass}): invalid cost ${cost}`);
+    }
+    const remaining = this.budgets[taskClass] - this.used[taskClass];
+    // Allow dispatch while the estimate fits within a small epsilon of the
+    // remaining budget; stop dispatch once the class budget is spent.
+    if (cost > remaining + EPSILON_MS) {
+      return false;
+    }
+    this.used[taskClass] += cost;
+    return true;
+  }
+
+  /** Record the measured duration of a dispatched task; updates the class EMA. */
+  recordActual(taskClass: FrameTaskClass, durationMs: number): void {
+    if (!Number.isFinite(durationMs) || durationMs < 0) {
+      throw new RangeError(`FrameWorkBudgetScheduler.recordActual(${taskClass}): invalid duration ${durationMs}`);
+    }
+    this.ema[taskClass] = this.ema[taskClass] === 0 ? durationMs : this.ema[taskClass] * (1 - EMA_ALPHA) + durationMs * EMA_ALPHA;
+  }
+
+  /** Remaining budget for a class this frame (milliseconds). */
+  remaining(taskClass: FrameTaskClass): number {
+    return Math.max(0, this.budgets[taskClass] - this.used[taskClass]);
+  }
+
+  /** Current EMA of actual task durations for a class (0 before any data). */
+  emaMs(taskClass: FrameTaskClass): number {
+    return this.ema[taskClass];
+  }
+
+  /** Per-class used/remaining/budget snapshot for observability. */
+  summary(): FrameBudgetSummary {
+    const classes = {} as Record<FrameTaskClass, FrameTaskClassSummary>;
+    let exhausted = true;
+    for (const taskClass of FRAME_TASK_CLASSES) {
+      const remainingMs = this.remaining(taskClass);
+      if (remainingMs >= EPSILON_MS) {
+        exhausted = false;
+      }
+      classes[taskClass] = {
+        budgetMs: this.budgets[taskClass],
+        usedMs: this.used[taskClass],
+        remainingMs,
+        emaMs: this.ema[taskClass],
+      };
+    }
+    return { classes, exhausted };
+  }
+}

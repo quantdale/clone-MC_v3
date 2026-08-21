@@ -13,6 +13,11 @@
  * `DEFAULT_MEMORY_RESOURCE_BUDGET` is derived from the documented runtime caps below
  * via `deriveMemoryResourceBudget(6)` (desktop render distance R=6). The e2e
  * long-session suite derives its own budget from the headless R=2 ring.
+ *
+ * Also hosts the `MemoryResourceLedger`, the resource ownership ledger from the
+ * deep-engine audit: aggregate counts + estimated bytes per `ResourceCategory`
+ * with source tags, bounded internal storage, and convergence snapshots for
+ * leak detection.
  */
 
 /** The seven live-resource dimensions measured over a session. */
@@ -224,4 +229,158 @@ export function evaluateResourceBudget(
     };
   });
   return { withinBudget: entries.every((entry) => entry.withinBudget), entries };
+}
+
+// ── Resource ownership ledger ────────────────────────────────────────────────
+
+/** Live-resource categories the engine owns memory for (audit 04/05). */
+export type ResourceCategory =
+  | 'cpuVoxelStorage'
+  | 'editOverlays'
+  | 'workerBuffers'
+  | 'geometries'
+  | 'textures'
+  | 'materials'
+  | 'entities'
+  | 'particles'
+  | 'audio';
+
+/** Fixed category order (normative for reports). */
+export const RESOURCE_CATEGORIES: readonly ResourceCategory[] = [
+  'cpuVoxelStorage',
+  'editOverlays',
+  'workerBuffers',
+  'geometries',
+  'textures',
+  'materials',
+  'entities',
+  'particles',
+  'audio',
+];
+
+/** Aggregate usage of one category: live item count + estimated bytes. */
+export interface CategoryUsage {
+  count: number;
+  estimatedBytes: number;
+}
+
+/** Aggregate usage across all categories. */
+export type CategoryUsageMap = Readonly<Record<ResourceCategory, CategoryUsage>>;
+
+/** One convergence comparison between a baseline and a current snapshot. */
+export interface ConvergenceEntry {
+  category: ResourceCategory;
+  baselineCount: number;
+  baselineBytes: number;
+  currentCount: number;
+  currentBytes: number;
+  /** Current exceeds baseline beyond the tolerance fraction. */
+  leaked: boolean;
+}
+
+/** Convergence verdict: per-category deltas plus overall leak flag. */
+export interface ConvergenceReport {
+  leaked: boolean;
+  entries: readonly ConvergenceEntry[];
+}
+
+function zeroUsage(): Record<ResourceCategory, CategoryUsage> {
+  const map = {} as Record<ResourceCategory, CategoryUsage>;
+  for (const category of RESOURCE_CATEGORIES) {
+    map[category] = { count: 0, estimatedBytes: 0 };
+  }
+  return map;
+}
+
+/**
+ * Resource ownership ledger. Tracks aggregate counts and estimated bytes per
+ * `ResourceCategory`, tagged with the registering subsystem's source tag.
+ *
+ * Storage is bounded by design: only per-category aggregate counters are kept
+ * (never per-item lists), so the ledger itself cannot grow with session length.
+ * Releases that exceed the registered amount are clamped and counted as
+ * underflows instead of throwing, so a bad release path cannot crash the frame.
+ */
+export class MemoryResourceLedger {
+  private readonly usage = zeroUsage();
+  private underflows = 0;
+
+  /**
+   * Register live resources. `count` is the number of items; `estimatedBytes`
+   * the estimated total footprint added.
+   */
+  register(category: ResourceCategory, sourceTag: string, count = 1, estimatedBytes = 0): void {
+    if (!Number.isFinite(count) || count < 0 || !Number.isFinite(estimatedBytes) || estimatedBytes < 0) {
+      throw new RangeError(`MemoryResourceLedger.register(${category}): invalid count/bytes from "${sourceTag}"`);
+    }
+    const entry = this.usage[category];
+    entry.count += count;
+    entry.estimatedBytes += estimatedBytes;
+  }
+
+  /** Release previously registered resources; over-release is clamped and counted. */
+  release(category: ResourceCategory, sourceTag: string, count = 1, estimatedBytes = 0): void {
+    if (!Number.isFinite(count) || count < 0 || !Number.isFinite(estimatedBytes) || estimatedBytes < 0) {
+      throw new RangeError(`MemoryResourceLedger.release(${category}): invalid count/bytes from "${sourceTag}"`);
+    }
+    const entry = this.usage[category];
+    if (count > entry.count || estimatedBytes > entry.estimatedBytes) {
+      this.underflows += 1;
+    }
+    entry.count = Math.max(0, entry.count - count);
+    entry.estimatedBytes = Math.max(0, entry.estimatedBytes - estimatedBytes);
+  }
+
+  /** Current aggregate usage per category. */
+  snapshot(): CategoryUsageMap {
+    const out = {} as Record<ResourceCategory, CategoryUsage>;
+    for (const category of RESOURCE_CATEGORIES) {
+      const entry = this.usage[category];
+      out[category] = { count: entry.count, estimatedBytes: entry.estimatedBytes };
+    }
+    return out;
+  }
+
+  /** Number of releases that exceeded the registered amount (accounting drift). */
+  get underflowCount(): number {
+    return this.underflows;
+  }
+
+  /** Total estimated bytes currently held across all categories. */
+  get totalEstimatedBytes(): number {
+    let total = 0;
+    for (const category of RESOURCE_CATEGORIES) {
+      total += this.usage[category].estimatedBytes;
+    }
+    return total;
+  }
+
+  /**
+   * Compare a baseline snapshot against the current one for leak detection.
+   * A category is flagged when its current bytes exceed the baseline plus
+   * `toleranceFraction` (relative to the baseline, absolute floors apply so
+   * near-zero baselines do not flag on noise).
+   */
+  convergence(
+    baseline: CategoryUsageMap,
+    toleranceFraction = 0.15,
+    absoluteByteTolerance = 1024 * 1024,
+  ): ConvergenceReport {
+    const current = this.snapshot();
+    const entries: ConvergenceEntry[] = RESOURCE_CATEGORIES.map((category) => {
+      const base = baseline[category];
+      const now = current[category];
+      const allowed = Math.max(base.estimatedBytes * toleranceFraction, absoluteByteTolerance);
+      const leaked = now.estimatedBytes > base.estimatedBytes + allowed;
+      return {
+        category,
+        baselineCount: base.count,
+        baselineBytes: base.estimatedBytes,
+        currentCount: now.count,
+        currentBytes: now.estimatedBytes,
+        leaked,
+      };
+    });
+    return { leaked: entries.some((entry) => entry.leaked), entries };
+  }
 }

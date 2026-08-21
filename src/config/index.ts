@@ -75,7 +75,8 @@ export const CONFIG = {
   /** Maximum delta time per frame (seconds) to prevent physics explosions. */
   maxDeltaTime: 0.1,
 
-  /** Bounded per-frame work budgets for chunk streaming. */
+  /** Bounded per-frame work budgets for chunk streaming. Count caps are hard safety
+   *  limits; the time budgets below are the primary scheduling signal (audit 04). */
   budgets: {
     /** Max chunks generated per frame. */
     generatePerFrame: 2,
@@ -83,6 +84,20 @@ export const CONFIG = {
     meshPerFrame: 3,
     /** Max chunks unloaded per frame. */
     unloadPerFrame: 4,
+    /** Main-thread chunk-task time budget per frame (milliseconds). */
+    mainThreadChunkMs: 3,
+    /** Main-thread GPU upload time budget per frame (milliseconds). */
+    uploadMsPerFrame: 1.5,
+    /** Light-propagation drain time budget per frame (milliseconds). */
+    lightDrainMs: 2,
+    /** Maximum simulation ticks run in one frame to catch up accumulated debt. */
+    maxCatchUpTicks: 5,
+    /** Worker pool size hint; 0 = derive automatically from hardwareConcurrency. */
+    workerPoolSize: 0,
+    /** Hard cap on GPU buffer-upload bytes accepted per frame. */
+    uploadBytesPerFrameCap: 4 * 1024 * 1024,
+    /** Queue age above which a warning/telemetry event fires (milliseconds). */
+    queueAgeWarnMs: 500,
   },
 
   /** Chunks queued immediately around the spawn point before normal streaming. */
@@ -141,6 +156,66 @@ export const CONFIG = {
   },
 } as const;
 
+/** Quality-tier preset: renderer/streaming knobs a tier switch may adjust. */
+export interface QualityTierPreset {
+  /** Renderer pixel-ratio cap. */
+  maxPixelRatio: number;
+  /** Whether shadow maps are enabled. */
+  shadows: boolean;
+  /** Shadow map resolution (square, in pixels). */
+  shadowMapSize: number;
+  /** Shadow camera distance in blocks. */
+  shadowDistance: number;
+  /** Chunk load radius around the player. */
+  renderDistance: number;
+  /** Chunk simulation radius around the player. */
+  simulationDistance: number;
+  /** Volumetric-style cloud layer enabled. */
+  clouds: boolean;
+  /** Post-processing / fancy effects enabled. */
+  effects: boolean;
+}
+
+/** Named quality tiers, ordered low → high. */
+export type QualityTier = 'low' | 'medium' | 'high';
+
+/**
+ * Quality-tier presets. `medium` mirrors the top-level defaults so switching
+ * tiers is a no-op until a different tier is selected.
+ */
+export const QUALITY_TIERS: Record<QualityTier, QualityTierPreset> = {
+  low: {
+    maxPixelRatio: 1,
+    shadows: false,
+    shadowMapSize: 512,
+    shadowDistance: 48,
+    renderDistance: 3,
+    simulationDistance: 3,
+    clouds: false,
+    effects: false,
+  },
+  medium: {
+    maxPixelRatio: 2,
+    shadows: true,
+    shadowMapSize: 1024,
+    shadowDistance: 96,
+    renderDistance: 6,
+    simulationDistance: 6,
+    clouds: true,
+    effects: false,
+  },
+  high: {
+    maxPixelRatio: 2,
+    shadows: true,
+    shadowMapSize: 2048,
+    shadowDistance: 128,
+    renderDistance: 8,
+    simulationDistance: 8,
+    clouds: true,
+    effects: true,
+  },
+};
+
 // Freeze the config at runtime so accidental mutations are caught immediately.
 Object.freeze(CONFIG);
 Object.freeze(CONFIG.player);
@@ -150,5 +225,9 @@ Object.freeze(CONFIG.rendering);
 Object.freeze(CONFIG.headless);
 Object.freeze(CONFIG.dayNight);
 Object.freeze(CONFIG.xp);
+Object.freeze(QUALITY_TIERS);
+for (const preset of Object.values(QUALITY_TIERS)) {
+  Object.freeze(preset);
+}
 
 export type GameConfig = typeof CONFIG;
