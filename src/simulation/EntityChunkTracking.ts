@@ -10,23 +10,23 @@
  * No `Game`/persistence-repository wiring and no automatic chunk-diffing loop
  * are in scope — see the proposal's Non-goals.
  */
-import { sectionIndex } from '../math/SectionCoordinate';
 import type { SerializedEntity } from '../storage/EntityRecord';
 import type { EntityInstance } from '../world/Entity';
 import type { EntityManager } from './EntityManager';
 
 /**
  * The `ACTIVE` entities in `manager` whose current chunk satisfies
- * `isChunkTicking(cx, cz)`, in `getAll()`'s insertion order. Pure: never
+ * `isChunkTicking(cx, cz)`. Iterates `manager`'s chunk-partitioned spatial
+ * index (single source of truth for chunk membership) rather than scanning
+ * every entity, so cost is O(matching buckets' sizes). Order is by bucket
+ * insertion, then id within a bucket — not globally spawn order. Pure: never
  * mutates the manager. A throwing predicate propagates (not caught).
  */
 export function selectTickingEntities(
   manager: EntityManager,
   isChunkTicking: (cx: number, cz: number) => boolean,
 ): EntityInstance[] {
-  return manager
-    .getAll()
-    .filter((e) => isChunkTicking(sectionIndex(e.transform.x), sectionIndex(e.transform.z)));
+  return manager.getInChunks(isChunkTicking);
 }
 
 /**

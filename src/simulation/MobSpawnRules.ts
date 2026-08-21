@@ -24,6 +24,13 @@ export const CREATURE_MIN_LIGHT = 9;
 export const MIN_SPAWN_DISTANCE = 24;
 /** Maximum distance (blocks) from the nearest player a mob may spawn. */
 export const MAX_SPAWN_DISTANCE = 128;
+/**
+ * Default simulation-distance cap (blocks) applied by
+ * {@link isWithinSimulationDistance} when the caller supplies none; matches
+ * {@link MAX_SPAWN_DISTANCE} so the default never tightens vanilla-adjacent
+ * spawn-range behavior.
+ */
+export const DEFAULT_SPAWN_SIMULATION_DISTANCE_BLOCKS = 128;
 
 function clampLight(v: number): number {
   return Math.max(0, Math.min(15, v));
@@ -45,6 +52,19 @@ function isLandCategory(category: EntityCategory): boolean {
 /** Whether `distanceBlocks` (from the nearest player) falls within the allowed spawn range. */
 export function isValidSpawnDistance(distanceBlocks: number): boolean {
   return distanceBlocks >= MIN_SPAWN_DISTANCE && distanceBlocks <= MAX_SPAWN_DISTANCE;
+}
+
+/**
+ * Whether a candidate at `distanceBlocks` lies within the caller's simulation
+ * distance (`simulationDistanceBlocks`, defaulting to
+ * {@link DEFAULT_SPAWN_SIMULATION_DISTANCE_BLOCKS}). Non-finite distances are
+ * rejected.
+ */
+export function isWithinSimulationDistance(
+  distanceBlocks: number,
+  simulationDistanceBlocks = DEFAULT_SPAWN_SIMULATION_DISTANCE_BLOCKS,
+): boolean {
+  return Number.isFinite(distanceBlocks) && distanceBlocks <= simulationDistanceBlocks;
 }
 
 /**

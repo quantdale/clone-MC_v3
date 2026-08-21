@@ -5,7 +5,10 @@
  * that target and stops within attack range. No obstacle-aware pathfinding,
  * no line-of-sight checks, no actual attack/damage, and no `Game`/
  * mob-spawning wiring — see
- * `openspec/changes/140-hostile-target-ai/design.md`.
+ * `openspec/changes/140-hostile-target-ai/design.md`. Phase 8 adds
+ * {@link PathCache}, a bounded navigation-path cache callers wrap around
+ * `AStarPathfinding.findPath` with (this module deliberately does not import
+ * it), invalidated on nearby block changes.
  */
 import type { Goal } from './GoalSelector';
 import { GoalFlag } from './GoalSelector';
@@ -157,5 +160,145 @@ export class ChaseGoal implements Goal {
     const entity = this.manager.get(this.entityId);
     if (!entity) return;
     this.manager.setVelocity(entity.id, { vx: 0, vy: entity.velocity.vy, vz: 0 });
+  }
+}
+
+/** Max entries {@link PathCache} retains; the oldest entry is evicted beyond this. */
+export const PATH_CACHE_CAPACITY = 64;
+
+/** One cached path plus the exact cells it was computed for. */
+interface PathCacheEntry<T> {
+  startCell: { x: number; y: number; z: number };
+  goalCell: { x: number; y: number; z: number };
+  path: T;
+}
+
+/**
+ * Bounded LRU-style cache for navigation paths (Phase 8 "navigation budget
+ * and path cache"). Generic over the path representation so callers can wrap
+ * `AStarPathfinding.findPath` without this module importing it — compute on
+ * miss, `put` the result, `get` on subsequent ticks. Keys are compact numeric
+ * cell hashes bucketing exact `(x, y, z)` start/goal pairs; a hash hit is
+ * verified against the stored cells, so collisions degrade to a miss, never
+ * to a wrong path. `invalidateNear` drops entries whose start or goal cell is
+ * within `radiusCells` of a changed block column, keeping stale geometry out
+ * of the cache after edits.
+ */
+export class PathCache<T> {
+  private readonly capacity: number;
+  private readonly buckets = new Map<number, PathCacheEntry<T>[]>();
+
+  constructor(capacity: number = PATH_CACHE_CAPACITY) {
+    if (!(capacity > 0)) throw new Error('PathCache: capacity must be positive');
+    this.capacity = capacity;
+  }
+
+  private static cellHash(x: number, y: number, z: number): number {
+    // Compact numeric hash over integer cells; verified on lookup.
+    return Math.imul(x | 0, 0x9e3779b1) ^ Math.imul(y | 0, 0x85ebca6b) ^ Math.imul(z | 0, 0xc2b2ae35);
+  }
+
+  private static key(start: { x: number; y: number; z: number }, goal: { x: number; y: number; z: number }): number {
+    return (
+      PathCache.cellHash(start.x, start.y, start.z) ^
+      Math.imul(PathCache.cellHash(goal.x, goal.y, goal.z), 0x27d4eb2f)
+    );
+  }
+
+  private static sameCell(
+    a: { x: number; y: number; z: number },
+    b: { x: number; y: number; z: number },
+  ): boolean {
+    return a.x === b.x && a.y === b.y && a.z === b.z;
+  }
+
+  /** The cached path for exactly these start/goal cells, or `undefined`. Refreshes recency. */
+  get(
+    startCell: { x: number; y: number; z: number },
+    goalCell: { x: number; y: number; z: number },
+  ): T | undefined {
+    const key = PathCache.key(startCell, goalCell);
+    const bucket = this.buckets.get(key);
+    if (!bucket) return undefined;
+    for (let i = 0; i < bucket.length; i++) {
+      const entry = bucket[i];
+      if (
+        PathCache.sameCell(entry.startCell, startCell) &&
+        PathCache.sameCell(entry.goalCell, goalCell)
+      ) {
+        // LRU refresh: move to the back of the bucket.
+        bucket.splice(i, 1);
+        bucket.push(entry);
+        return entry.path;
+      }
+    }
+    return undefined;
+  }
+
+  /** Cache `path` for these start/goal cells, evicting the oldest entry when full. */
+  put(
+    startCell: { x: number; y: number; z: number },
+    goalCell: { x: number; y: number; z: number },
+    path: T,
+  ): void {
+    const key = PathCache.key(startCell, goalCell);
+    let bucket = this.buckets.get(key);
+    if (!bucket) {
+      bucket = [];
+      this.buckets.set(key, bucket);
+    }
+    for (const entry of bucket) {
+      if (
+        PathCache.sameCell(entry.startCell, startCell) &&
+        PathCache.sameCell(entry.goalCell, goalCell)
+      ) {
+        entry.path = path;
+        return;
+      }
+    }
+    if (this.size >= this.capacity) {
+      this.evictOldest();
+    }
+    bucket.push({ startCell: { ...startCell }, goalCell: { ...goalCell }, path });
+  }
+
+  /** Drop every entry whose start or goal cell lies within `radiusCells` of `(x, z)`. */
+  invalidateNear(x: number, z: number, radiusCells: number): void {
+    if (!(radiusCells >= 0)) return;
+    for (const [key, bucket] of [...this.buckets]) {
+      const kept = bucket.filter(
+        (entry) =>
+          !this.cellNear(entry.startCell, x, z, radiusCells) &&
+          !this.cellNear(entry.goalCell, x, z, radiusCells),
+      );
+      if (kept.length === 0) this.buckets.delete(key);
+      else bucket.splice(0, bucket.length, ...kept);
+    }
+  }
+
+  /** Drop every cached path. */
+  clear(): void {
+    this.buckets.clear();
+  }
+
+  /** Number of cached paths. */
+  get size(): number {
+    let n = 0;
+    for (const bucket of this.buckets.values()) n += bucket.length;
+    return n;
+  }
+
+  private cellNear(cell: { x: number; y: number; z: number }, x: number, z: number, radiusCells: number): boolean {
+    const dx = cell.x - x;
+    const dz = cell.z - z;
+    return dx * dx + dz * dz <= radiusCells * radiusCells;
+  }
+
+  private evictOldest(): void {
+    for (const [key, bucket] of this.buckets) {
+      bucket.shift();
+      if (bucket.length === 0) this.buckets.delete(key);
+      return;
+    }
   }
 }
