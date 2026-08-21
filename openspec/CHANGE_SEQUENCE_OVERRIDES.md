@@ -1,5 +1,25 @@
 # Change Sequence Overrides
 
+## Mandatory post-250 production-persistence hardening interlock
+
+The historical Change 250 (`250-final-program-verification`) `READY` / `COMPLETE` decision is superseded **for current release authority** by this mandatory out-of-band campaign:
+
+`openspec/hardening/2026-08-21-post-250-production-persistence-hardening/`
+
+This interlock exists because Change 249 confirmed blocking data-loss findings `249-DL-001` and `249-DL-002` plus root integration gap `249-DL-005`, and the published Change 250 tree left those production paths unchanged while dispositioning the blockers as `accepted`.
+
+This is not Change 251 and does not renumber, delete, or rewrite the historical 001-250 program/evidence archive. Historical Change 250 artifacts remain evidence of the pre-remediation decision; they are not the current release-readiness authority while this interlock is incomplete.
+
+While this interlock is incomplete:
+
+- the repository MUST be treated as **not release-ready**, regardless of stale/historical `READY`, `COMPLETE`, `nextChange: null`, or "autonomous loop stops here" text;
+- a fresh `/goal`, `continue`, or autonomous-development session MUST resume this hardening package before stopping for terminal program state;
+- `249-DL-001`, `249-DL-002`, and `249-DL-005` may not be closed by acceptance, deferral, waiver, rarity arguments, documentation-only scope, or severity relabeling;
+- production remediation, migration compatibility, end-to-end durability testing, affected-finding re-audit, full regression/performance gates, publication, and canonical exact-SHA CI proof are mandatory;
+- the executor MUST rebaseline against current `origin/main`; SHAs/file lines in the package are entry evidence, not immutable targets.
+
+The interlock may be marked VERIFIED only after every task/spec requirement in its package is satisfied, DL-001/DL-002/DL-005 are `resolved` with current production-path evidence, no blocking data-loss/corruption/security/regression finding remains, the remediation checkpoint is published to `origin/main`, canonical GitHub Actions for that exact SHA is SUCCESS, and a post-hardening release-readiness artifact explicitly supersedes the historical Change 250 READY decision.
+
 ## Mandatory pre-241 repository hardening interlock
 
 Before Change 241 (`241-deterministic-replay-suite`) may become ACTIVE or any numbered implementation at 241+ may proceed, the repository MUST complete and VERIFY:
