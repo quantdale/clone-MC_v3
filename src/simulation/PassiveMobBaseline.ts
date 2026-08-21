@@ -110,6 +110,10 @@ export const SPAWN_CAP = 12;
 export const SPAWN_ATTEMPTS_PER_CHUNK = 2;
 /** Frames between spawn-cycle sweeps (throttle). */
 export const SPAWN_CYCLE_INTERVAL_TICKS = 100;
+/** Simulation-distance cap (blocks) forwarded to each spawn cycle. */
+export const SIMULATION_DISTANCE_BLOCKS = 128;
+/** Max total spawns one passive spawn-cycle sweep may produce. */
+export const MAX_SPAWNS_PER_CYCLE = 8;
 
 /** One chunk coordinate pair. */
 export interface ChunkCoord {
@@ -128,6 +132,8 @@ export class PassiveMobSystem {
   private readonly goalSelectors = new Map<number, GoalSelector>();
   private readonly pigTypeId: ResourceId;
   private readonly seed: number;
+  /** Monotonic fallback simulation-tick counter used when no tick index is supplied. */
+  private simTickCounter = 0;
 
   constructor(registry: EntityRegistry, seed: number) {
     const pig = registry.getByKey('pig');
@@ -175,6 +181,7 @@ export class PassiveMobSystem {
         dimension,
         this.seed,
         configs,
+        { simulationDistanceBlocks: SIMULATION_DISTANCE_BLOCKS, maxSpawnsPerCycle: MAX_SPAWNS_PER_CYCLE },
       );
     }
     return total;
@@ -185,10 +192,17 @@ export class PassiveMobSystem {
    * deterministic `WanderGoal`+`LookGoal` pair seeded from `(seed, entityId)`), then run its goal
    * selector and one `EntityPhysics` step. Entities outside the ticking set are untouched.
    */
-  tick(dt: number, world: PassiveMobWorld, isChunkTicking: (cx: number, cz: number) => boolean): void {
+  tick(dt: number, world: PassiveMobWorld, isChunkTicking: (cx: number, cz: number) => boolean, simTickIndex?: number): void {
+    const simTick = simTickIndex ?? this.simTickCounter++;
     const ticking = selectTickingEntities(this.manager, isChunkTicking);
     for (const entity of ticking) {
       if (entity.typeId !== this.pigTypeId) continue;
+      // Activation gate (fail-open): inactive entities skip goal AI but keep
+      // the cheap physics step so they still settle under gravity/ground snap.
+      if (!this.manager.isActivationActive(entity.id)) {
+        tickEntityPhysics(this.manager, entity.id, world, this.resolver, PIG_BOUNDING_BOX, dt);
+        continue;
+      }
 
       let selector = this.goalSelectors.get(entity.id);
       if (!selector) {
@@ -202,7 +216,7 @@ export class PassiveMobSystem {
         this.goalSelectors.set(entity.id, selector);
       }
 
-      selector.tick();
+      selector.tickClocked(simTick, entity.id);
       tickEntityPhysics(this.manager, entity.id, world, this.resolver, PIG_BOUNDING_BOX, dt);
     }
   }

@@ -76,8 +76,7 @@ export const HOSTILE_FORGET_RADIUS = 32;
 export const HOSTILE_ATTACK_RANGE = 2;
 /** Chase horizontal steering speed in blocks/second. */
 export const HOSTILE_CHASE_SPEED = 2.6;
-/** Knockback strength passed to `resolveMeleeAttack` (computed, not applied — see Non-goals). */
-export const HOSTILE_KNOCKBACK_STRENGTH = 0.4;
+/** Knockback strength passed to `resolveMeleeAttack` (computed, not applied — see Non-goals). */export const HOSTILE_KNOCKBACK_STRENGTH = 0.4;
 /** Fallback melee damage when the registered zombie definition has no `attackDamage`. */
 export const DEFAULT_HOSTILE_ATTACK_DAMAGE = 3;
 /** Attacks-per-second input to `resolveMeleeAttack`'s cooldown-scaling math. */
@@ -95,6 +94,10 @@ export const HOSTILE_ATTACK_TICKS_SINCE_LAST = 20;
  * can never collide with a real entity id.
  */
 export const PLAYER_SENTINEL_ID = -1;
+/** Simulation-distance cap (blocks) forwarded to each spawn cycle. */
+export const HOSTILE_SIMULATION_DISTANCE_BLOCKS = 128;
+/** Max total spawns one hostile spawn-cycle sweep may produce. */
+export const HOSTILE_MAX_SPAWNS_PER_CYCLE = 8;
 
 function horizontalDistance(ax: number, az: number, bx: number, bz: number): number {
   const dx = ax - bx;
@@ -122,6 +125,8 @@ export class HostileMobSystem {
   private readonly attackDamage: number;
   private readonly seed: number;
   private frameCounter = 0;
+  /** Monotonic fallback simulation-tick counter used when no tick index is supplied. */
+  private simTickCounter = 0;
 
   constructor(registry: EntityRegistry, seed: number) {
     const zombie = registry.getByKey('zombie');
@@ -175,6 +180,7 @@ export class HostileMobSystem {
         dimension,
         this.seed,
         configs,
+        { simulationDistanceBlocks: HOSTILE_SIMULATION_DISTANCE_BLOCKS, maxSpawnsPerCycle: HOSTILE_MAX_SPAWNS_PER_CYCLE },
       );
     }
     return total;
@@ -193,11 +199,19 @@ export class HostileMobSystem {
     isChunkTicking: (cx: number, cz: number) => boolean,
     getPlayerTarget: () => PlayerTarget | null,
     onPlayerDamaged: (amount: number) => void,
+    simTickIndex?: number,
   ): void {
     this.frameCounter++;
+    const simTick = simTickIndex ?? this.simTickCounter++;
     const ticking = selectTickingEntities(this.manager, isChunkTicking);
     for (const entity of ticking) {
       if (entity.typeId !== this.zombieTypeId) continue;
+      // Activation gate (fail-open): inactive entities skip goal AI but keep
+      // the cheap physics step so they still settle under gravity/ground snap.
+      if (!this.manager.isActivationActive(entity.id)) {
+        tickEntityPhysics(this.manager, entity.id, world, this.resolver, ZOMBIE_BOUNDING_BOX, dt);
+        continue;
+      }
 
       let bundle = this.bundles.get(entity.id);
       if (!bundle) {
@@ -234,7 +248,7 @@ export class HostileMobSystem {
         this.bundles.set(entity.id, bundle);
       }
 
-      bundle.selector.tick();
+      bundle.selector.tickClocked(simTick, entity.id);
       tickEntityPhysics(this.manager, entity.id, world, this.resolver, ZOMBIE_BOUNDING_BOX, dt);
 
       const target = bundle.targetGoal.getTarget();
