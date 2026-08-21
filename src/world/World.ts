@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { CONFIG } from '../config';
-import { BlockId, BlockRegistry } from './BlockRegistry';
+import { BlockId, BlockRegistry, RenderCategory } from './BlockRegistry';
 import {
   BlockState,
   BlockStateId,
@@ -10,11 +10,31 @@ import {
 import { DimensionType } from '../data/DimensionType';
 import { Chunk, ChunkState } from './Chunk';
 import { ChunkManager } from './ChunkManager';
-import type { ChunkMesher } from './ChunkMesher';
+import { ChunkMesher, geometryFromMeshStream } from './ChunkMesher';
 import type { TerrainGenerator } from './TerrainGenerator';
 import type { WorldStats } from './MeshingTypes';
 import type { WorldAccess } from './WorldAccess';
 import { RenderSimulationDistance } from './RenderSimulationDistance';
+import { FrameWorkBudgetScheduler, type FrameTaskClass } from '../rendering/RenderBudget';
+import { WorldLightStorage } from '../rendering/LightStorage';
+import { LightUpdateEngine } from '../rendering/LightUpdateEngine';
+import {
+  ChunkStreamPriority,
+  ChunkTicketType,
+  createChunkTicket,
+} from './ChunkTicket';
+import { ChunkLifecycleStage } from './ChunkStatus';
+import type { ChunkMeshResult } from './MeshingTypes';
+import type { UvRect, MeshStreamName } from './MeshingTypes';
+import {
+  MeshWorkerClient,
+  expandPackedMeshResult,
+  packQuadsToTypedArrays,
+  type MeshSectionRequestPayload,
+  type MeshSectionResultPayload,
+  type PackedMeshExpandInfo,
+} from '../rendering/WorkerMeshing';
+import { WorkerPool, computeWorkerPoolSize } from '../engine/WorkerPool';
 import {
   CHUNK_BLOCK_COUNT,
   CHUNK_DIMENSIONS,
@@ -25,14 +45,6 @@ import {
   worldToLocal,
 } from './WorldCoordinates';
 
-/** A queued generation job. */
-interface GenJob {
-  key: string;
-  cx: number;
-  cy: number;
-  cz: number;
-}
-
 /** A queued meshing job; carries the meshVersion captured at queue time. */
 interface MeshJob {
   key: string;
@@ -40,6 +52,54 @@ interface MeshJob {
   cy: number;
   cz: number;
   version: number;
+}
+
+/**
+ * Material set World renders chunk meshes with. `opaque`/`transparent` are
+ * required (legacy contract); `cutout`/`fluid` are additive opt-ins — when a
+ * stream's material is absent its geometry is simply not attached.
+ */
+export interface WorldMaterials {
+  opaque: THREE.MeshLambertMaterial;
+  transparent: THREE.MeshLambertMaterial;
+  cutout?: THREE.MeshLambertMaterial;
+  fluid?: THREE.MeshLambertMaterial;
+}
+
+/**
+ * Minimal observability handle World feeds per frame (audit 05). Declared
+ * locally so World does not import Game-side monitor types.
+ */
+export interface WorldMonitorHandle {
+  setQueueDepth(kind: 'generate' | 'mesh' | 'upload' | 'unload', depth: number): void;
+  setOldestJobAgeMs(ageMs: number): void;
+  recordUploadBytes(bytes: number): void;
+}
+
+/** Luminance (emitted block light, 0-15) of emissive blocks. Registry entries carry no luminance field yet, so the emissive set is this explicit map. */
+const BLOCK_LUMINANCE: Readonly<Record<number, number>> = {
+  [BlockId.Lava]: 15,
+  [BlockId.Fire]: 15,
+  [BlockId.RedstoneTorch]: 7,
+};
+
+function blockLuminance(id: number): number {
+  return BLOCK_LUMINANCE[id] ?? 0;
+}
+
+/** Rough GPU upload cost of one geometry: sum of its attribute + index buffers. */
+function estimateGeometryBytes(geometry: THREE.BufferGeometry): number {
+  let bytes = 0;
+  for (const name of Object.keys(geometry.attributes)) {
+    const attribute = geometry.attributes[name];
+    if (attribute?.array instanceof ArrayBufferView) {
+      bytes += attribute.array.byteLength;
+    }
+  }
+  if (geometry.index?.array instanceof ArrayBufferView) {
+    bytes += geometry.index.array.byteLength;
+  }
+  return bytes;
 }
 
 /** Portable representation of player edits for localStorage or a save file. */
@@ -80,10 +140,7 @@ export class World implements WorldAccess {
   private readonly mesher: ChunkMesher;
   private readonly generator: TerrainGenerator;
   private readonly seed: number;
-  private readonly materials: {
-    opaque: THREE.MeshLambertMaterial;
-    transparent: THREE.MeshLambertMaterial;
-  };
+  private readonly materials: WorldMaterials;
   private readonly renderDistance: number;
   private readonly simulationDistance: number;
   /** Classifier for the two independent radii; streaming stays on `renderDistance`. */
@@ -124,15 +181,62 @@ export class World implements WorldAccess {
   /** Block-state registry used to resolve/read canonical block states. */
   private readonly stateRegistry: BlockStateRegistry;
 
-  private genQueue: GenJob[] = [];
-  private readonly genSet = new Set<string>();
-  private meshQueue: MeshJob[] = [];
-  private readonly meshSet = new Set<string>();
-  /** Set when an item is pushed onto a queue; the queue is reordered only once
-   *  in the next update, avoiding a sort every frame. */
-  private genQueueDirty = false;
-  private meshQueueDirty = false;
-  /** Mesh jobs dropped while the mesh queue was at capacity, retried once it drains. */
+  /** Per-frame time-budget scheduler over the four chunk-task classes (audit 04).
+   *  Class budgets derive from CONFIG.budgets; count caps stay as hard limits. */
+  private readonly budgets = new FrameWorkBudgetScheduler({
+    generateMs: CONFIG.budgets.mainThreadChunkMs,
+    meshUploadMs: CONFIG.budgets.uploadMsPerFrame,
+    lightMs: CONFIG.budgets.lightDrainMs,
+    unloadMs: CONFIG.budgets.mainThreadChunkMs / 2,
+  });
+  /** Conservative first-frame cost estimates (ms) per task class, used until the
+   *  scheduler's EMA has data (tryAcquire trusts a 0 estimate otherwise). */
+  private static readonly TASK_ESTIMATE_MS: Readonly<Record<FrameTaskClass, number>> = {
+    generate: 0.5,
+    'mesh-upload': 1,
+    light: 0.25,
+    unload: 0.25,
+  };
+
+  /** Authoritative voxel light field (world coordinates, per 16³ section). */
+  private readonly lightStorage = new WorldLightStorage();
+  /** Incremental sky/block light engine over {@link lightStorage}. */
+  private readonly lightEngine: LightUpdateEngine;
+  /** Chunk keys whose light was invalidated since the last productive drain;
+   *  promoted to remesh jobs when propagation actually changes values. */
+  private readonly lightDirtyChunks = new Set<string>();
+  /** World-coordinate light sampler handed to the mesher (070 shading). */
+  private readonly mesherLightSampler = {
+    inBounds: (x: number, y: number, z: number): boolean =>
+      Number.isInteger(x) && Number.isInteger(y) && Number.isInteger(z) &&
+      y >= CONFIG.bedrockY && y < CHUNK_DIMENSIONS.height,
+    isOpaque: (x: number, y: number, z: number): boolean => this.registry.isOpaque(this.getBlock(x, y, z)),
+    getSkyLight: (x: number, y: number, z: number): number => this.lightStorage.getSkyLight(x, y, z),
+    getBlockLight: (x: number, y: number, z: number): number => this.lightStorage.getBlockLight(x, y, z),
+  };
+  /** 16³ light sections per chunk column (chunk height / section size). */
+  private readonly sectionsPerChunk = CHUNK_DIMENSIONS.height / 16;
+
+  // ── Worker meshing plumbing (toggleable; OFF until validated) ──────────────
+  /**
+   * Worker meshing switch. DEFAULTS TO FALSE: the synchronous ChunkMesher stays
+   * the active path. Flipping this flag awaits the worker-meshing validation
+   * campaign (golden-image + parity checks) — do not enable it in production
+   * before then. When true, mesh jobs are submitted as per-section requests and
+   * consumed through the same stale-check + attach path as sync results.
+   */
+  private readonly useWorkers = false;
+  private workerPool: WorkerPool | null = null;
+  private workerClient: MeshWorkerClient | null = null;
+  /** Optional atlas UV lookup for the worker path's packed-result expansion.
+   *  Without it, worker results cannot be textured and are dropped. */
+  private readonly uvRectFor: ((blockId: number, faceIndex: number) => UvRect) | null;
+
+  /** GPU bytes attached this frame, fed to the monitor at end of update. */
+  private uploadBytesThisFrame = 0;
+  /** Optional observability feeder (audit 05); null keeps World headless. */
+  private readonly monitor: WorldMonitorHandle | null;
+
   private readonly retryMeshQueue: MeshJob[] = [];
   private readonly retryMeshSet = new Set<string>();
   /** Sand/gravel cells waiting to resolve after a supporting block changes. */
@@ -163,7 +267,7 @@ export class World implements WorldAccess {
     scene: THREE.Scene;
     mesher: ChunkMesher;
     generator: TerrainGenerator;
-    materials: { opaque: THREE.MeshLambertMaterial; transparent: THREE.MeshLambertMaterial };
+    materials: WorldMaterials;
     renderDistance?: number;
     /** Ticking/simulation radius; defaults to CONFIG.simulationDistance (== render by default). */
     simulationDistance?: number;
@@ -173,6 +277,13 @@ export class World implements WorldAccess {
     stateRegistry?: BlockStateRegistry;
     /** Durable owner of unsaved edits (DIRTY-1..5). Omit for cache-only behaviour. */
     editDurability?: WorldEditDurability;
+    /** Observability feeder (queue depths, job age, upload bytes). Omit for none. */
+    monitor?: WorldMonitorHandle;
+    /**
+     * Atlas UV lookup used only by the worker-meshing path to expand packed
+     * results. Omit unless `useWorkers` is being enabled.
+     */
+    uvRectFor?: (blockId: number, faceIndex: number) => UvRect;
   }) {
     this.registry = opts.registry;
     this.seed = opts.seed >>> 0;
@@ -189,6 +300,16 @@ export class World implements WorldAccess {
     this.minChunkY = opts.dimension ? Math.floor(opts.dimension.minY / CHUNK_DIMENSIONS.height) : 0;
     this.chunkLayerCount = opts.dimension ? Math.ceil(opts.dimension.height / CHUNK_DIMENSIONS.height) : 1;
     this.chunkManager = new ChunkManager(opts.registry);
+    this.monitor = opts.monitor ?? null;
+    this.uvRectFor = opts.uvRectFor ?? null;
+    this.lightEngine = new LightUpdateEngine(
+      this.lightStorage,
+      {
+        isOpaque: (x, y, z) => this.registry.isOpaque(this.getBlock(x, y, z)),
+        getLuminance: (x, y, z) => blockLuminance(this.getBlock(x, y, z)),
+      },
+      { minY: CONFIG.bedrockY, maxY: CHUNK_DIMENSIONS.height },
+    );
   }
 
   // ── WorldAccess ────────────────────────────────────────────────────────────
@@ -280,6 +401,12 @@ export class World implements WorldAccess {
     if (lx === CHUNK_DIMENSIONS.width - 1) this.markNeighborDirty(cx + 1, cy, cz);
     if (lz === 0) this.markNeighborDirty(cx, cy, cz - 1);
     if (lz === CHUNK_DIMENSIONS.depth - 1) this.markNeighborDirty(cx, cy, cz + 1);
+
+    // Voxel lighting: queue minimal invalidation for both channels (the engine
+    // reads the NEW opacity/luminance through its accessors), and remember the
+    // affected chunks so a productive drain remeshes them.
+    this.lightEngine.onBlockChanged(x, y, z);
+    this.lightDirtyChunks.add(key);
 
     this.enqueueMeshWithRetry(chunk);
     if (id === BlockId.Sand || id === BlockId.Gravel) {
@@ -482,36 +609,31 @@ export class World implements WorldAccess {
   // ── Streaming ──────────────────────────────────────────────────────────────
 
   update(_dt: number, playerChunkX: number, playerChunkZ: number): void {
+    this.budgets.beginFrame();
+    this.uploadBytesThisFrame = 0;
     this.ensureChunks(playerChunkX, playerChunkZ);
-    // Prioritize the queue by distance to the player so the nearest chunks
-    // (and the player's own chunk) generate and mesh first. Only re-sort when
-    // something was added since the last sort.
-    if (this.genQueueDirty) {
-      this.prioritizeQueue(this.genQueue, playerChunkX, playerChunkZ);
-      this.genQueueDirty = false;
-    }
-    if (this.meshQueueDirty) {
-      this.prioritizeQueue(this.meshQueue, playerChunkX, playerChunkZ);
-      this.meshQueueDirty = false;
-    }
     this.processGeneration();
     this.processMeshing();
     this.processFallingBlocks();
+    this.processLightUpdates();
     if (this.needsUnload) {
       this.needsUnload = this.unloadChunks(playerChunkX, playerChunkZ);
     }
+    this.feedMonitor();
   }
 
-  /** Reorder a job queue by Chebyshev distance to the player chunk. */
-  private prioritizeQueue(queue: { cx: number; cz: number }[], pcx: number, pcz: number): void {
-    if (queue.length < 2) {
-      return;
-    }
-    queue.sort((a, b) => {
-      const da = Math.max(Math.abs(a.cx - pcx), Math.abs(a.cz - pcz));
-      const db = Math.max(Math.abs(b.cx - pcx), Math.abs(b.cz - pcz));
-      return da - db;
-    });
+  /**
+   * Streaming priority for a chunk offset from the stream center (audit 04
+   * tiers). Approximated by Chebyshev distance — front-facing refinement needs
+   * a movement vector World does not track. Lower value dispatches first.
+   */
+  private streamPriorityFor(dx: number, dz: number): ChunkStreamPriority {
+    const r = Math.max(Math.abs(dx), Math.abs(dz));
+    if (r <= 1) return ChunkStreamPriority.VisibleNear;
+    if (r <= 2) return ChunkStreamPriority.Simulation;
+    if (r <= 3) return ChunkStreamPriority.Interaction;
+    if (r <= 5) return ChunkStreamPriority.ForwardCorridor;
+    return ChunkStreamPriority.Rings;
   }
 
   /** Create and queue generation for every missing chunk around the player. */
@@ -521,10 +643,6 @@ export class World implements WorldAccess {
       this.streamCenterX = playerChunkX;
       this.streamCenterZ = playerChunkZ;
       this.needsEnsure = true;
-      // A moving player changes the nearest chunk ordering even when no new job
-      // was added, so the next pass must re-prioritize existing work.
-      this.genQueueDirty = true;
-      this.meshQueueDirty = true;
       this.needsUnload = true;
     }
     if (!centerChanged && !this.needsEnsure) {
@@ -532,6 +650,7 @@ export class World implements WorldAccess {
     }
 
     const rd = this.renderDistance;
+    const pipeline = this.chunkManager.pipeline;
     let queueFull = false;
     scan:
     for (let dx = -rd; dx <= rd; dx++) {
@@ -539,26 +658,23 @@ export class World implements WorldAccess {
         const cx = playerChunkX + dx;
         const cz = playerChunkZ + dz;
         for (let cy = this.minChunkY; cy < this.minChunkY + this.chunkLayerCount; cy++) {
-          const key = chunkKey(cx, cy, cz);
           const existing = this.chunkManager.getChunk(cx, cy, cz);
           if (!existing) {
-            if (this.genQueue.length >= CONFIG.maxQueueSize) {
-              // The queue is at capacity. Don't create a chunk we can't queue —
-              // it would sit in the manager forever as an un-generated void.
-              // ensureChunks runs every frame, so the area is retried once the
-              // queue drains.
+            // Hard safety cap: don't create a chunk whose generation job cannot
+            // be queued — it would sit as an un-generated void. ensureChunks
+            // runs every frame, so the area is retried once the queue drains.
+            if (pipeline.queueDepth('generate') >= CONFIG.maxQueueSize) {
               queueFull = true;
               break scan;
             }
             const chunk = this.chunkManager.createChunk(cx, cy, cz);
-            this.enqueueGeneration(chunk);
-          } else if (!existing.generated && !this.genSet.has(key)) {
-            // A chunk was created earlier but its generation job was dropped
-            // (queue overflow). Re-queue it now that (or when) there is room, so
-            // it cannot be stranded.
-            if (this.genQueue.length < CONFIG.maxQueueSize) {
-              this.enqueueGeneration(existing);
-            }
+            // Player ticket: the reason this chunk is kept resident at all.
+            this.chunkManager.acquireTicket(cx, cy, cz, createChunkTicket(ChunkTicketType.Player));
+            this.enqueueGeneration(chunk, this.streamPriorityFor(dx, dz));
+          } else if (!existing.generated) {
+            // A chunk created earlier whose generation job was dropped or
+            // displaced re-queues here; enqueue deduplicates per stage.
+            this.enqueueGeneration(existing, this.streamPriorityFor(dx, dz));
           }
         }
       }
@@ -568,13 +684,28 @@ export class World implements WorldAccess {
   }
 
   private processGeneration(): void {
+    const pipeline = this.chunkManager.pipeline;
     let done = 0;
-    while (done < CONFIG.budgets.generatePerFrame && this.genQueue.length > 0) {
-      const job = this.genQueue.shift()!;
-      this.genSet.delete(job.key);
+    for (;;) {
+      if (done >= CONFIG.budgets.generatePerFrame) break;
+      const job = pipeline.dequeue('generate');
+      if (!job) break;
+      // Time budget: put the job back and stop when this frame's slice is spent.
+      if (!this.budgets.tryAcquire('generate', World.TASK_ESTIMATE_MS.generate)) {
+        pipeline.enqueue('generate', job.cx, job.cy, job.cz, job.priority);
+        break;
+      }
+      const t0 = performance.now();
 
+      const record = pipeline.getRecord(job.key);
+      if (!record) continue;
+      // Version token: a job captured before a reset/failure is stale.
+      if (pipeline.beginStage(job.key, 'generate', job.version).ok === false) {
+        continue;
+      }
       const chunk = this.chunkManager.getChunk(job.cx, job.cy, job.cz);
       if (!chunk) {
+        pipeline.failStage(job.key, 'generate');
         continue;
       }
 
@@ -583,6 +714,19 @@ export class World implements WorldAccess {
       chunk.generated = true;
       chunk.state = ChunkState.Generated;
       this.countChunkVoxels(chunk);
+
+      // Bookkeeping advance through the features/light stages: terrain,
+      // overlay application and light seeding all happened above.
+      pipeline.completeStage(job.key, 'generate', job.version);
+      const features = pipeline.beginStage(job.key, 'features', job.version);
+      if (features.ok) {
+        this.seedChunkLight(chunk);
+        pipeline.completeStage(job.key, 'features', job.version);
+        const light = pipeline.beginStage(job.key, 'light', job.version);
+        if (light.ok) {
+          pipeline.completeStage(job.key, 'light', job.version);
+        }
+      }
 
       // This chunk now has real geometry data. Any already-visible neighbour
       // that was meshed while this chunk was still absent may have emitted
@@ -595,16 +739,77 @@ export class World implements WorldAccess {
       this.markNeighborDirty(cx, cy, cz - 1);
       this.markNeighborDirty(cx, cy, cz + 1);
 
-      // If the mesh queue is full, park the job and retry once it drains. This
-      // also covers edits and boundary-neighbor remeshes, not only generation.
       this.enqueueMeshWithRetry(chunk);
+      this.budgets.recordActual('generate', performance.now() - t0);
       done++;
     }
   }
 
+  /**
+   * Seed the voxel light field for a freshly generated chunk: full-pass skylight
+   * column seeding (15 from the top down to the first opaque block) plus block
+   * light emitters. Border propagation then happens incrementally through the
+   * light engine as edits arrive.
+   */
+  private seedChunkLight(chunk: Chunk): void {
+    const ox = chunk.cx * CHUNK_DIMENSIONS.width;
+    const oy = chunk.cy * CHUNK_DIMENSIONS.height;
+    const oz = chunk.cz * CHUNK_DIMENSIONS.depth;
+    const { width, height, depth } = CHUNK_DIMENSIONS;
+    for (let x = 0; x < width; x++) {
+      for (let z = 0; z < depth; z++) {
+        let sky = 15;
+        for (let y = height - 1; y >= 0; y--) {
+          const id = chunk.getLocal(x, y, z);
+          if (sky > 0 && this.registry.isOpaque(id)) {
+            sky = 0;
+          }
+          if (sky > 0) {
+            this.lightStorage.setSkyLight(ox + x, oy + y, oz + z, sky);
+          }
+          const luminance = blockLuminance(id);
+          if (luminance > 0) {
+            this.lightStorage.setBlockLight(ox + x, oy + y, oz + z, Math.min(15, luminance));
+          }
+        }
+      }
+    }
+  }
+
+  /** Budgeted drain of pending light propagation; remeshes affected chunks on change. */
+  private processLightUpdates(): void {
+    if (this.lightEngine.idle) {
+      this.lightDirtyChunks.clear();
+      return;
+    }
+    if (!this.budgets.tryAcquire('light', World.TASK_ESTIMATE_MS.light)) {
+      return;
+    }
+    const t0 = performance.now();
+    const result = this.lightEngine.drain({ budgetMs: CONFIG.budgets.lightDrainMs });
+    this.budgets.recordActual('light', performance.now() - t0);
+    if (result.opsUsed > 0) {
+      // Light values changed: every chunk whose cells were invalidated (plus
+      // the border neighbours registered alongside them) must re-mesh so the
+      // new vertex shading reaches the GPU.
+      for (const key of this.lightDirtyChunks) {
+        const [cx, cy, cz] = keyToChunk(key);
+        const chunk = this.chunkManager.getChunk(cx, cy, cz);
+        if (chunk?.generated) {
+          chunk.markDirty();
+          this.enqueueMeshWithRetry(chunk);
+        }
+      }
+    }
+    if (result.completed) {
+      this.lightDirtyChunks.clear();
+    }
+  }
+
   private processMeshing(): void {
+    const pipeline = this.chunkManager.pipeline;
     // Re-admit mesh jobs that were parked while the queue was at capacity.
-    while (this.retryMeshQueue.length > 0 && this.meshQueue.length < CONFIG.maxQueueSize) {
+    while (this.retryMeshQueue.length > 0) {
       const job = this.retryMeshQueue.shift()!;
       this.retryMeshSet.delete(job.key);
       const chunk = this.chunkManager.getChunk(job.cx, job.cy, job.cz);
@@ -614,42 +819,72 @@ export class World implements WorldAccess {
     }
 
     let done = 0;
-    while (done < CONFIG.budgets.meshPerFrame && this.meshQueue.length > 0) {
-      const job = this.meshQueue.shift()!;
-      this.meshSet.delete(job.key);
-
+    for (;;) {
+      if (done >= CONFIG.budgets.meshPerFrame) break;
+      const job = pipeline.dequeue('mesh');
+      if (!job) break;
+      if (!this.budgets.tryAcquire('mesh-upload', World.TASK_ESTIMATE_MS['mesh-upload'])) {
+        pipeline.enqueue('mesh', job.cx, job.cy, job.cz, job.priority);
+        break;
+      }
+      const t0 = performance.now();
+      const record = pipeline.getRecord(job.key);
+      if (!record) continue;
+      if (pipeline.beginStage(job.key, 'mesh', job.version).ok === false) {
+        continue; // stale token or unknown chunk
+      }
       const chunk = this.chunkManager.getChunk(job.cx, job.cy, job.cz);
-      if (!chunk) {
+      if (!chunk || !chunk.generated) {
+        pipeline.failStage(job.key, 'mesh');
         continue;
       }
 
-      // Stale guard: skip if the chunk was modified since this job was queued.
-      if (job.version !== chunk.meshVersion) {
-        continue;
+      if (this.useWorkers) {
+        this.submitWorkerMeshJob(chunk, record.generation, chunk.meshVersion);
+      } else {
+        const result = this.mesher.mesh(chunk, (cx, cy, cz) => this.chunkManager.getChunk(cx, cy, cz), {
+          inputVersion: record.generation,
+          lightSampler: this.mesherLightSampler,
+        });
+        // Stale rejection: drop results built against a superseded generation.
+        if (result.streams.inputVersion !== record.generation) {
+          pipeline.failStage(job.key, 'mesh');
+          continue;
+        }
+        this.attach(chunk, result);
+        chunk.dirty = false;
+        chunk.state = ChunkState.Visible;
+        pipeline.completeStage(job.key, 'mesh', job.version);
+        // Upload bookkeeping: scene attachment is synchronous here, so the
+        // upload stage begins and completes in the same step.
+        pipeline.beginStage(job.key, 'upload');
+        pipeline.completeStage(job.key, 'upload');
       }
-
-      const result = this.mesher.mesh(chunk, (cx, cy, cz) => this.chunkManager.getChunk(cx, cy, cz));
-      this.attach(chunk, result);
-      chunk.dirty = false;
-      chunk.state = ChunkState.Visible;
+      this.budgets.recordActual('mesh-upload', performance.now() - t0);
       done++;
     }
   }
 
   private unloadChunks(playerChunkX: number, playerChunkZ: number): boolean {
-    const limit = this.renderDistance + 1;
+    // Hysteresis: chunks unload one ring beyond the load radius so a player
+    // oscillating around the boundary cannot churn allocations.
     const candidates: Chunk[] = [];
     this.chunkManager.forEachChunk((chunk) => {
-      if (Math.abs(chunk.cx - playerChunkX) > limit || Math.abs(chunk.cz - playerChunkZ) > limit) {
+      if (
+        this.chunkManager.pipeline.shouldUnload(
+          chunk.cx - playerChunkX,
+          chunk.cz - playerChunkZ,
+          this.renderDistance,
+        )
+      ) {
         candidates.push(chunk);
       }
     });
 
     let unloaded = 0;
     for (const chunk of candidates) {
-      if (unloaded >= CONFIG.budgets.unloadPerFrame) {
-        break;
-      }
+      if (unloaded >= CONFIG.budgets.unloadPerFrame) break;
+      if (!this.budgets.tryAcquire('unload', World.TASK_ESTIMATE_MS.unload)) break;
       const key = chunkKey(chunk.cx, chunk.cy, chunk.cz);
 
       this.removeMeshesForChunk(chunk);
@@ -660,23 +895,8 @@ export class World implements WorldAccess {
       }
       this.chunkVoxelCounts.delete(key);
 
-      // Drop any pending jobs for this chunk. Each set mirrors its queue, so an
-      // O(1) miss skips the scan entirely and no queue is ever reallocated.
-      if (this.genSet.delete(key)) {
-        for (let i = this.genQueue.length - 1; i >= 0; i--) {
-          if (this.genQueue[i]?.key === key) {
-            this.genQueue.splice(i, 1);
-          }
-        }
-      }
-      if (this.meshSet.delete(key)) {
-        for (let i = this.meshQueue.length - 1; i >= 0; i--) {
-          if (this.meshQueue[i]?.key === key) {
-            this.meshQueue.splice(i, 1);
-          }
-        }
-      }
-      // In-place filter on the readonly retry queue (no reassignment).
+      // Drop any parked retry job for this chunk; pipeline queues are purged by
+      // markEvicting → cancelForKey inside removeChunk.
       for (let i = this.retryMeshQueue.length - 1; i >= 0; i--) {
         const job = this.retryMeshQueue[i];
         if (job && job.key === key) {
@@ -685,7 +905,16 @@ export class World implements WorldAccess {
       }
       this.retryMeshSet.delete(key);
 
+      // Drop the chunk's light sections so a reload reseeds them fresh.
+      const baseSy = chunk.cy * this.sectionsPerChunk;
+      for (let sy = baseSy; sy < baseSy + this.sectionsPerChunk; sy++) {
+        this.lightStorage.deleteSection(chunk.cx, sy, chunk.cz);
+      }
+      this.lightDirtyChunks.delete(key);
+
       // The edit overlay is intentionally kept so edits survive reload.
+      // removeChunk runs the authoritative eviction flow (markEvicting before
+      // release) and cancels outstanding pipeline work.
       this.chunkManager.removeChunk(chunk.cx, chunk.cy, chunk.cz);
       unloaded++;
     }
@@ -733,39 +962,59 @@ export class World implements WorldAccess {
 
   // ── Queues ─────────────────────────────────────────────────────────────────
 
-  private enqueueGeneration(chunk: Chunk): void {
-    const key = chunkKey(chunk.cx, chunk.cy, chunk.cz);
-    if (this.genSet.has(key)) {
-      return;
-    }
-    if (this.genQueue.length >= CONFIG.maxQueueSize) {
-      return; // Drop beyond the bound.
-    }
-    this.genQueue.push({ key, cx: chunk.cx, cy: chunk.cy, cz: chunk.cz });
-    this.genQueueDirty = true;
-    this.genSet.add(key);
+  private enqueueGeneration(chunk: Chunk, priority: ChunkStreamPriority): void {
+    // Deduplicated per stage by the pipeline; displaced only by more urgent
+    // work when the bounded queue is full. A `false` return leaves the chunk
+    // ungenerated; ensureChunks re-queues it on a later scan.
+    this.chunkManager.pipeline.enqueue('generate', chunk.cx, chunk.cy, chunk.cz, priority);
     chunk.state = ChunkState.Generating;
   }
 
+  /** Queue a mesh job through the pipeline's bounded mesh stage. */
   private enqueueMesh(chunk: Chunk): boolean {
+    this.ensureMeshableRecord(chunk);
+    const record = this.chunkManager.pipeline.getRecordByCoords(chunk.cx, chunk.cy, chunk.cz);
+    if (!record) {
+      return false;
+    }
+    const priority = this.streamPriorityFor(
+      chunk.cx - (this.streamCenterX ?? chunk.cx),
+      chunk.cz - (this.streamCenterZ ?? chunk.cz),
+    );
+    const ok = this.chunkManager.pipeline.enqueue('mesh', chunk.cx, chunk.cy, chunk.cz, priority);
+    if (ok) {
+      chunk.state = ChunkState.Meshing;
+    }
+    return ok;
+  }
+
+  /**
+   * The pipeline state machine is monotonic (`ActiveGpu` only leaves via
+   * `Evicting`), but World re-meshes live chunks on every edit and boundary
+   * update. For a record already at or past `MeshQueued`, reset it with a new
+   * generation (invalidating any stale in-flight results — exactly what we
+   * want for a fresh build) and fast-forward the completed worldgen stages;
+   * chunk data is unchanged, so no work or light reseeding happens here.
+   */
+  private ensureMeshableRecord(chunk: Chunk): void {
+    const pipeline = this.chunkManager.pipeline;
     const key = chunkKey(chunk.cx, chunk.cy, chunk.cz);
-    if (this.meshSet.has(key)) {
-      // Already queued — refresh the captured version so the job reflects the
-      // latest data and isn't discarded as stale.
-      const existing = this.meshQueue.find((j) => j.key === key);
-      if (existing) {
-        existing.version = chunk.meshVersion;
-      }
-      return true;
+    const record = pipeline.getRecord(key);
+    if (!record || record.status < ChunkLifecycleStage.MeshQueued) {
+      return; // Fresh flow advances stage by stage during generation.
     }
-    if (this.meshQueue.length >= CONFIG.maxQueueSize) {
-      return false; // Queue is at capacity; caller may retry later.
+    const reset = (() => {
+      // Cancel any queued/in-flight work first: enqueue() deduplicates by
+      // keeping the earliest queued job, so a superseded entry must be removed
+      // or its captured (now-stale) version would block the fresh one.
+      pipeline.cancelForKey(key);
+      return pipeline.resetForRegeneration(key);
+    })();
+    if (!reset) return;
+    for (const stage of ['generate', 'features', 'light'] as const) {
+      pipeline.beginStage(key, stage, reset.generation);
+      pipeline.completeStage(key, stage, reset.generation);
     }
-    this.meshQueue.push({ key, cx: chunk.cx, cy: chunk.cy, cz: chunk.cz, version: chunk.meshVersion });
-    this.meshQueueDirty = true;
-    this.meshSet.add(key);
-    chunk.state = ChunkState.Meshing;
-    return true;
   }
 
   /** Queue a mesh job, retaining it when the active queue is temporarily full. */
@@ -789,7 +1038,7 @@ export class World implements WorldAccess {
       existing.version = chunk.meshVersion;
       return;
     }
-    // The active mesh queue is bounded, and the retry queue is bounded by the
+    // The pipeline mesh queue is bounded, and the retry queue is bounded by the
     // loaded chunk set (which is itself bounded by render distance). Keeping a
     // parked entry here guarantees that edits are never silently stranded.
     this.retryMeshSet.add(key);
@@ -913,7 +1162,33 @@ export class World implements WorldAccess {
 
   // ── Rendering ──────────────────────────────────────────────────────────────
 
-  private attach(chunk: Chunk, result: { opaque: THREE.BufferGeometry | null; transparent: THREE.BufferGeometry | null }): void {
+  private attach(chunk: Chunk, result: ChunkMeshResult): void {
+    this.attachGeometries(chunk, [
+      { geometry: result.opaque, material: this.materials.opaque, renderOrder: 0, castShadow: true },
+      { geometry: result.cutout, material: this.materials.cutout, renderOrder: 0, castShadow: true },
+      // `translucent` is the canonical translucent stream (`transparent`
+      // aliases it in legacy results); attach exactly one mesh for it.
+      { geometry: result.translucent ?? result.transparent, material: this.materials.transparent, renderOrder: 1, castShadow: false },
+      // Fluid renders last; depthWrite behaviour is owned by the fluid material.
+      { geometry: result.fluid, material: this.materials.fluid, renderOrder: 2, castShadow: false },
+    ]);
+  }
+
+  /**
+   * Swap a chunk's scene meshes for the given stream entries. Render order:
+   * opaque/cutout 0, translucent 1, fluid 2. Entries with no geometry or no
+   * material (optional cutout/fluid) are skipped; replaced geometries are
+   * disposed as before.
+   */
+  private attachGeometries(
+    chunk: Chunk,
+    entries: ReadonlyArray<{
+      geometry: THREE.BufferGeometry | null;
+      material: THREE.MeshLambertMaterial | undefined;
+      renderOrder: number;
+      castShadow: boolean;
+    }>,
+  ): void {
     const key = chunkKey(chunk.cx, chunk.cy, chunk.cz);
     this.removeMeshesForChunk(chunk);
 
@@ -923,28 +1198,179 @@ export class World implements WorldAccess {
     const py = chunk.cy * CHUNK_DIMENSIONS.height;
     const pz = chunk.cz * CHUNK_DIMENSIONS.depth;
 
-    if (result.opaque) {
-      const mesh = new THREE.Mesh(result.opaque, this.materials.opaque);
+    for (const entry of entries) {
+      if (!entry.geometry || !entry.material) continue;
+      const mesh = new THREE.Mesh(entry.geometry, entry.material);
       mesh.position.set(px, py, pz);
-      mesh.castShadow = true;
+      mesh.renderOrder = entry.renderOrder;
+      mesh.castShadow = entry.castShadow;
       mesh.receiveShadow = true;
       this.scene.add(mesh);
       meshes.push(mesh);
-      tris += this.triangleCount(result.opaque);
-    }
-    if (result.transparent) {
-      const mesh = new THREE.Mesh(result.transparent, this.materials.transparent);
-      mesh.position.set(px, py, pz);
-      mesh.renderOrder = 1;
-      mesh.receiveShadow = true;
-      this.scene.add(mesh);
-      meshes.push(mesh);
-      tris += this.triangleCount(result.transparent);
+      tris += this.triangleCount(entry.geometry);
+      this.uploadBytesThisFrame += estimateGeometryBytes(entry.geometry);
     }
 
     this.meshGroups.set(key, meshes);
     this.chunkTriangles.set(key, tris);
     this.triangles += tris;
+  }
+
+  // ── Worker meshing path (inert while `useWorkers` is false) ────────────────
+
+  /**
+   * Lazily construct the shared worker pool + mesh client. Returns false when
+   * workers cannot be used (flag off or no UV lookup for result expansion).
+   */
+  private ensureWorkerMeshing(): boolean {
+    if (!this.useWorkers) return false;
+    if (this.workerClient) return true;
+    // NOTE: no worker entry module ships yet (`src/rendering/MeshWorkerEntry.ts`
+    // does not exist). Enabling `useWorkers` before that entry lands throws here
+    // by design — the sync mesher fallback in `submitWorkerMeshJob` covers it.
+    const size = CONFIG.budgets.workerPoolSize > 0 ? CONFIG.budgets.workerPoolSize : computeWorkerPoolSize();
+    this.workerPool = new WorkerPool({
+      size,
+      spawn: () => {
+        throw new Error('World worker meshing: MeshWorkerEntry.ts not implemented yet');
+      },
+    });
+    this.workerClient = new MeshWorkerClient({ pool: this.workerPool });
+    return true;
+  }
+
+  /**
+   * Submit one per-section meshing job for a chunk (worker path). Results are
+   * consumed through the same stale-check + attach path as sync builds.
+   */
+  private submitWorkerMeshJob(chunk: Chunk, generation: number, meshVersion: number): void {
+    if (!this.ensureWorkerMeshing() || !this.workerClient) {
+      // Workers unavailable (e.g. no uvRectFor): fall back to the sync mesher
+      // so the chunk never strands unmeshed.
+      const record = this.chunkManager.pipeline.getRecordByCoords(chunk.cx, chunk.cy, chunk.cz);
+      if (!record) return;
+      const result = this.mesher.mesh(chunk, (cx, cy, cz) => this.chunkManager.getChunk(cx, cy, cz), {
+        inputVersion: generation,
+        lightSampler: this.mesherLightSampler,
+      });
+      if (result.streams.inputVersion === generation) {
+        this.attach(chunk, result);
+        chunk.dirty = false;
+        chunk.state = ChunkState.Visible;
+      }
+      return;
+    }
+
+    const sectionsY = CHUNK_DIMENSIONS.height / 16;
+    for (let sy = 0; sy < sectionsY; sy++) {
+      const payload = this.buildSectionPayload(chunk, sy);
+      if (!payload) continue;
+      this.workerClient.setGenerationToken(generation);
+      this.workerClient.requestSection(payload, (result) => {
+        this.consumeWorkerMeshResult(chunk.cx, chunk.cy, chunk.cz, generation, meshVersion, result);
+      });
+    }
+  }
+
+  /** Build the structured-clone payload for one 16³ section, or null when empty. */
+  private buildSectionPayload(chunk: Chunk, sectionIndex: number): MeshSectionRequestPayload | null {
+    const baseX = chunk.cx * CHUNK_DIMENSIONS.width;
+    const baseY = chunk.cy * CHUNK_DIMENSIONS.height + sectionIndex * 16;
+    const baseZ = chunk.cz * CHUNK_DIMENSIONS.depth;
+    const cells: Array<number | null> = new Array(4096);
+    let nonAir = 0;
+    for (let y = 0; y < 16; y++) {
+      for (let z = 0; z < 16; z++) {
+        for (let x = 0; x < 16; x++) {
+          const id = this.getBlock(baseX + x, baseY + y, baseZ + z);
+          if (id !== BlockId.Air) nonAir++;
+          cells[x + y * 16 + z * 256] = id;
+        }
+      }
+    }
+    if (nonAir === 0) return null;
+    const skyLight: number[] = new Array(4096);
+    const blockLight: number[] = new Array(4096);
+    for (let y = 0; y < 16; y++) {
+      for (let z = 0; z < 16; z++) {
+        for (let x = 0; x < 16; x++) {
+          const wx = baseX + x;
+          const wy = baseY + y;
+          const wz = baseZ + z;
+          const i = x + y * 16 + z * 256;
+          skyLight[i] = this.lightStorage.getSkyLight(wx, wy, wz);
+          blockLight[i] = this.lightStorage.getBlockLight(wx, wy, wz);
+        }
+      }
+    }
+    const opaqueIds: number[] = [];
+    for (const def of this.registry.all()) {
+      if (def.opaque) opaqueIds.push(def.id);
+    }
+    return {
+      sectionX: chunk.cx * (CHUNK_DIMENSIONS.width / 16),
+      sectionY: chunk.cy * this.sectionsPerChunk + sectionIndex,
+      sectionZ: chunk.cz * (CHUNK_DIMENSIONS.depth / 16),
+      cells,
+      opaqueIds,
+      skyLight,
+      blockLight,
+    };
+  }
+
+  /**
+   * Stale-check + attach for one finished worker section. The whole chunk
+   * re-meshes through the sync path if any section arrives stale.
+   */
+  private consumeWorkerMeshResult(
+    cx: number,
+    cy: number,
+    cz: number,
+    generation: number,
+    meshVersion: number,
+    result: MeshSectionResultPayload,
+  ): void {
+    const pipeline = this.chunkManager.pipeline;
+    const record = pipeline.getRecord(chunkKey(cx, cy, cz));
+    // Stale rejection: chunk gone or regenerated since submission.
+    if (!record || record.generation !== generation) return;
+    // Same-generation edits are caught by the legacy meshVersion guard.
+    const chunk = this.chunkManager.getChunk(cx, cy, cz);
+    if (!chunk || chunk.meshVersion !== meshVersion) return;
+    if (!this.uvRectFor) return; // cannot texture packed quads without atlas UVs
+
+    const info: PackedMeshExpandInfo = {
+      uvFor: (blockId, faceIndex) => this.uvRectFor!(blockId, faceIndex),
+      renderLayerOf: (blockId) =>
+        this.registry.get(blockId).renderCategory === RenderCategory.Transparent
+          ? ('translucent' as MeshStreamName)
+          : ('opaque' as MeshStreamName),
+      buildGeometry: geometryFromMeshStream,
+    };
+    // Both transport forms share one expansion route: pack the merged quads,
+    // then decode the stride-22 buffer into four-stream geometries.
+    const packed = packQuadsToTypedArrays(result.quads);
+    const geometries = expandPackedMeshResult(packed, info);
+    this.attachGeometries(chunk, [
+      { geometry: geometries.opaque, material: this.materials.opaque, renderOrder: 0, castShadow: true },
+      { geometry: geometries.cutout, material: this.materials.cutout, renderOrder: 0, castShadow: true },
+      { geometry: geometries.translucent, material: this.materials.transparent, renderOrder: 1, castShadow: false },
+      { geometry: geometries.fluid, material: this.materials.fluid, renderOrder: 2, castShadow: false },
+    ]);
+  }
+
+  // ── Observability ──────────────────────────────────────────────────────────
+
+  /** Push queue depths / job age / upload bytes to the optional monitor. */
+  private feedMonitor(): void {
+    if (!this.monitor) return;
+    const pipeline = this.chunkManager.pipeline;
+    this.monitor.setQueueDepth('generate', pipeline.queueDepth('generate'));
+    this.monitor.setQueueDepth('mesh', pipeline.queueDepth('mesh') + this.retryMeshQueue.length);
+    this.monitor.setQueueDepth('upload', pipeline.queueDepth('upload'));
+    this.monitor.setQueueDepth('unload', 0);
+    this.monitor.setOldestJobAgeMs(pipeline.oldestJobAgeMs());
+    this.monitor.recordUploadBytes(this.uploadBytesThisFrame);
   }
 
   private removeMeshesForChunk(chunk: Chunk): void {
@@ -977,6 +1403,9 @@ export class World implements WorldAccess {
     const neighbor = this.chunkManager.getChunk(cx, cy, cz);
     if (neighbor) {
       neighbor.markDirty();
+      // Light (like faces) crosses chunk borders; a border edit's propagation
+      // can change the neighbour's shading, so track it for drain remeshing.
+      this.lightDirtyChunks.add(chunkKey(cx, cy, cz));
       this.enqueueMeshWithRetry(neighbor);
     }
   }
@@ -1040,8 +1469,11 @@ export class World implements WorldAccess {
   getStats(): WorldStats {
     return {
       loadedChunks: this.chunkManager.size,
-      pendingGeneration: this.genQueue.length,
-      pendingMesh: this.meshQueue.length + this.retryMeshQueue.length,
+      pendingGeneration: this.chunkManager.pipeline.queueDepth('generate'),
+      pendingMesh:
+        this.chunkManager.pipeline.queueDepth('mesh') +
+        this.chunkManager.pipeline.queueDepth('upload') +
+        this.retryMeshQueue.length,
       triangles: this.triangles,
       voxels: this.voxels,
     };
@@ -1082,9 +1514,10 @@ export class World implements WorldAccess {
           let chunk = this.chunkManager.getChunk(cx, cy, cz);
           if (!chunk) {
             chunk = this.chunkManager.createChunk(cx, cy, cz);
+            this.chunkManager.acquireTicket(cx, cy, cz, createChunkTicket(ChunkTicketType.Player));
           }
           if (!chunk.generated) {
-            this.enqueueGeneration(chunk);
+            this.enqueueGeneration(chunk, ChunkStreamPriority.Preload);
           } else if (chunk.state !== ChunkState.Visible) {
             this.enqueueMeshWithRetry(chunk);
           }
@@ -1092,17 +1525,21 @@ export class World implements WorldAccess {
       }
     }
     this.needsEnsure = true;
-    this.genQueueDirty = true;
-    this.meshQueueDirty = true;
   }
 
   dispose(): void {
     this.chunkManager.forEachChunk((chunk) => this.removeMeshesForChunk(chunk));
+    // Outstanding jobs fail through pool.dispose → onFailure, which cancels
+    // the client's pending entries; late results resolve as stale.
+    this.workerClient = null;
+    if (this.workerPool) {
+      this.workerPool.dispose();
+      this.workerPool = null;
+    }
     this.chunkManager.dispose();
-    this.genQueue = [];
-    this.genSet.clear();
-    this.meshQueue = [];
-    this.meshSet.clear();
+    this.lightEngine.clearPending();
+    this.lightStorage.clear();
+    this.lightDirtyChunks.clear();
     this.retryMeshQueue.length = 0;
     this.retryMeshSet.clear();
     this.fallingQueue.length = 0;

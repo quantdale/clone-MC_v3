@@ -25,6 +25,8 @@ import {
   type OpaqueFaceQuad,
 } from './GreedyMesher';
 import type { ModelFace } from '../data/BlockModel';
+import type * as THREE from 'three';
+import type { MeshStreamData, MeshStreamName, UvRect } from './MeshingTypes';
 
 /** A section-meshing job request (plain data; structured-clone-safe). */
 export interface MeshSectionRequestPayload {
@@ -314,8 +316,155 @@ export class MeshWorkerClient {
     this.tokens.delete(jobId);
     const result: MeshSectionResultPayload =
       token === UNVERSIONED_TOKEN ? payload : { ...payload, generationToken: token };
-    const callback = this.callbacks.get(jobId);
     if (callback) callback(result);
     return result;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Main-thread packed-result expansion (World.ts worker-meshing integration).
+// ---------------------------------------------------------------------------
+
+/** Per-face expansion conventions for the stride-22 packed quad layout. */
+interface PackedFaceLayout {
+  /** Outward normal. */
+  normal: [number, number, number];
+  /**
+   * Min-corner vertex offset (block units) plus unit U/V edge directions.
+   * Corners are emitted in the canonical `(minU,minV), (maxU,minV), (minU,maxV),
+   * (maxU,maxV)` order; winding is CCW from outside, matching `ChunkMesher`.
+   */
+  origin: [number, number, number];
+  uDir: [number, number, number];
+  vDir: [number, number, number];
+}
+
+/** Expansion layouts indexed by `FACE_INDEX` (up, down, north, south, east, west). */
+const PACKED_FACE_LAYOUTS: readonly PackedFaceLayout[] = [
+  { normal: [0, 1, 0], origin: [0, 1, 0], uDir: [1, 0, 0], vDir: [0, 0, 1] }, // up    (+Y)
+  { normal: [0, -1, 0], origin: [0, 0, 0], uDir: [1, 0, 0], vDir: [0, 0, 1] }, // down  (-Y)
+  { normal: [0, 0, -1], origin: [0, 0, 0], uDir: [1, 0, 0], vDir: [0, 1, 0] }, // north (-Z)
+  { normal: [0, 0, 1], origin: [0, 0, 1], uDir: [1, 0, 0], vDir: [0, 1, 0] }, // south (+Z)
+  { normal: [1, 0, 0], origin: [1, 0, 0], uDir: [0, 0, 1], vDir: [0, 1, 0] }, // east  (+X)
+  { normal: [-1, 0, 0], origin: [0, 0, 0], uDir: [0, 0, 1], vDir: [0, 1, 0] }, // west  (-X)
+];
+
+/** Expanded per-stream scratch used while decoding one packed buffer. */
+interface ExpandStream {
+  positions: number[];
+  normals: number[];
+  uvs: number[];
+  skyLight: number[];
+  blockLight: number[];
+  ao: number[];
+  tint: number[];
+  indices: number[];
+  vertices: number;
+}
+
+/** Main-thread collaborators `expandPackedMeshResult` needs (keeps this file THREE-free). */
+export interface PackedMeshExpandInfo {
+  /** Atlas UV rectangle for a block id + canonical face index. */
+  uvFor(blockId: number, faceIndex: number): UvRect;
+  /** Render-stream classification for a block id. */
+  renderLayerOf(blockId: number): MeshStreamName;
+  /** Geometry factory (main thread supplies `geometryFromMeshStream`). */
+  buildGeometry(stream: MeshStreamData): THREE.BufferGeometry | null;
+}
+
+/** Expanded per-stream geometries of one packed mesh result (`null` when empty). */
+export interface PackedMeshGeometries {
+  opaque: THREE.BufferGeometry | null;
+  cutout: THREE.BufferGeometry | null;
+  translucent: THREE.BufferGeometry | null;
+  fluid: THREE.BufferGeometry | null;
+}
+
+function emptyExpandStream(): ExpandStream {
+  return {
+    positions: [], normals: [], uvs: [],
+    skyLight: [], blockLight: [], ao: [], tint: [],
+    indices: [], vertices: 0,
+  };
+}
+
+/**
+ * Decode a stride-22 packed quad buffer ({@link packQuadsToTypedArrays} output) into four-stream
+ * BufferGeometries. Main-thread only (builds geometry via `info.buildGeometry`); deterministic.
+ *
+ * Tint classes are emitted untinted white — biome tint resolution is not carried in the packed
+ * layout and is applied by a later pass once class → RGB mapping is validated.
+ */
+export function expandPackedMeshResult(packed: PackedMeshResult, info: PackedMeshExpandInfo): PackedMeshGeometries {
+  const streams: Record<MeshStreamName, ExpandStream> = {
+    opaque: emptyExpandStream(),
+    cutout: emptyExpandStream(),
+    translucent: emptyExpandStream(),
+    fluid: emptyExpandStream(),
+  };
+
+  for (let q = 0; q < packed.quadCount; q++) {
+    const o = q * packed.stride;
+    const x = packed.data[o]!;
+    const y = packed.data[o + 1]!;
+    const z = packed.data[o + 2]!;
+    const width = packed.data[o + 3]!;
+    const height = packed.data[o + 4]!;
+    const blockId = packed.data[o + 5]!;
+    const faceIndex = Math.min(5, Math.max(0, Math.round(packed.data[o + 6]!)));
+    const layout = PACKED_FACE_LAYOUTS[faceIndex]!;
+    const stream = streams[info.renderLayerOf(blockId)]!;
+
+    const base = stream.vertices;
+    const uv = info.uvFor(blockId, faceIndex);
+    const cornerUv: ReadonlyArray<readonly [number, number]> = [
+      [uv.u0, uv.v0],
+      [uv.u1, uv.v0],
+      [uv.u0, uv.v1],
+      [uv.u1, uv.v1],
+    ];
+    for (let c = 0; c < 4; c++) {
+      const cu = c === 1 || c === 3 ? width : 0;
+      const cv = c >= 2 ? height : 0;
+      stream.positions.push(
+        x + layout.origin[0] + layout.uDir[0] * cu + layout.vDir[0] * cv,
+        y + layout.origin[1] + layout.uDir[1] * cu + layout.vDir[1] * cv,
+        z + layout.origin[2] + layout.uDir[2] * cu + layout.vDir[2] * cv,
+      );
+      stream.normals.push(layout.normal[0], layout.normal[1], layout.normal[2]);
+      stream.uvs.push(cornerUv[c]![0], cornerUv[c]![1]);
+      const lightBase = o + 10 + c * 3;
+      stream.skyLight.push(packed.data[lightBase]!);
+      stream.blockLight.push(packed.data[lightBase + 1]!);
+      stream.ao.push(packed.data[lightBase + 2]!);
+      stream.tint.push(1, 1, 1);
+      stream.vertices++;
+    }
+    // CCW winding matching MeshingTypes' pushQuadIndices convention.
+    stream.indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
+  }
+
+  return {
+    opaque: buildExpandedGeometry(streams.opaque, info),
+    cutout: buildExpandedGeometry(streams.cutout, info),
+    translucent: buildExpandedGeometry(streams.translucent, info),
+    fluid: buildExpandedGeometry(streams.fluid, info),
+  };
+}
+
+function buildExpandedGeometry(s: ExpandStream, info: PackedMeshExpandInfo): THREE.BufferGeometry | null {
+  if (s.vertices === 0) return null;
+  const data: MeshStreamData = {
+    positions: new Float32Array(s.positions),
+    normals: new Float32Array(s.normals),
+    uvs: new Float32Array(s.uvs),
+    skyLight: new Uint8Array(s.skyLight),
+    blockLight: new Uint8Array(s.blockLight),
+    ao: new Uint8Array(s.ao),
+    tint: new Float32Array(s.tint),
+    indices: new Uint32Array(s.indices),
+    vertexCount: s.vertices,
+    indexCount: s.indices.length,
+  };
+  return info.buildGeometry(data);
 }
