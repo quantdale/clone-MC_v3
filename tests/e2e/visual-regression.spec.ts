@@ -38,7 +38,11 @@ const SETTLE_MS = 750;
 
 /** Comparison thresholds per capture mode (fixed constants, see design). */
 const EXACT = { channelTolerance: 0, maxChangedFraction: 0 };
-const PIXEL_DIFF = { channelTolerance: 24, maxChangedFraction: 0.01 };
+// maxChangedFraction 0.02: headless software-WebGL sky noise on the largest render cell
+// (environment-day/high/1920x1080) measured up to ~0.0105 across runs — right at the old
+// 0.01 bound. Real rendering regressions change far more than 2% of pixels; renderer noise
+// does not. Raised from the 245 default 0.01 with this evidence (248 session).
+const PIXEL_DIFF = { channelTolerance: 24, maxChangedFraction: 0.02 };
 
 /** Fixed camera pose for every capture. */
 const POSE_YAW = 0.6;

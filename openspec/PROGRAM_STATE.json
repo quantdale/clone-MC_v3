@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "248-parity-matrix-reconciliation",
+  "currentChange": "249-whole-codebase-adversarial-audit",
   "currentChangeStatus": "ACTIVE",
-  "lastCompletedChange": "247-performance-release-gate",
-  "nextChange": "249-whole-codebase-adversarial-audit",
+  "lastCompletedChange": "248-parity-matrix-reconciliation",
+  "nextChange": "250-final-program-verification",
   "completedTasks": 0,
   "totalTasks": null,
   "completionPercentage": 0,
@@ -16,10 +16,16 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "6e606e19f78e4212f3150300374f6ec6308032be",
-  "lastCompletedTask": "247 performance-release-gate VERIFIED (15/15 tasks; full gate green incl. e2e 40/40)",
-  "nextExactAction": "Begin 248-parity-matrix-reconciliation: read its artifacts, record baseline into its verification.md, then implement per its tasks",
+  "lastCompletedTask": "248 parity-matrix-reconciliation VERIFIED (15/15 tasks; PARITY_MATRIX.md 252 rows; full gate green incl. e2e 40/40)",
+  "nextExactAction": "Begin 249-whole-codebase-adversarial-audit: read its artifacts, record baseline into its verification.md, then implement per its tasks",
   "blockers": [],
   "validationResults": [
+    {
+      "change": "248-parity-matrix-reconciliation",
+      "status": "VERIFIED",
+      "unitTests": 3827,
+      "e2eTests": 40
+    },
     {
       "change": "247-performance-release-gate",
       "status": "VERIFIED",

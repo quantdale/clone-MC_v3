@@ -8,7 +8,7 @@
       `RenderBudget`, 224 `WorldTickProcess`/044 `SimulationClock`, 234 `ServerSaveLifecycle`/
       `SaveLoadBoundary`, 055 `SimulationHarness`) and that 236 `MultiClientLoadHarness` is
       unimplemented (specs-only) so the network domain is wired by contract.
-- [ ] 1.3 Characterization: run a throwaway probe of `CANONICAL_SIM` (289 columns, 64 entities,
+- [x] 1.3 Characterization: run a throwaway probe of `CANONICAL_SIM` (289 columns, 64 entities,
       1200 ticks) and `CANONICAL_WORLD_SNAPSHOT` / `CANONICAL_SAVE_DIRTY` timings on the host and
       record preliminary actuals (not yet asserted) to sanity-check the declared ceilings before
       finalizing them.
@@ -52,8 +52,8 @@
 - [x] 4.1 Integration: produce a complete `ReleaseMeasurementBundle` for at least one tier per
       domain (frame, tick, load, save, network) and demonstrate a full `evaluateReleaseGate` verdict
       per domain; record actuals.
-- [ ] 4.2 Update `openspec/PROGRAM_STATE.json` / `PROGRAM_STATE.md`, mark `tasks.md` checkboxes, and
+- [x] 4.2 Update `openspec/PROGRAM_STATE.json` / `PROGRAM_STATE.md`, mark `tasks.md` checkboxes, and
       fill `verification.md` with actual evidence (including a full baseline-gate re-run).
-- [ ] 4.3 Run the full regression gate: `npm run typecheck`, `npm run lint`, `npm test`,
+- [x] 4.3 Run the full regression gate: `npm run typecheck`, `npm run lint`, `npm test`,
       `npm run build`, `npm run test:e2e`; confirm unit count grows by the 247 suites and e2e stays
       green.
