@@ -4118,3 +4118,91 @@ before any production code.
 A future session must first inspect current `origin/main`, this state, and the 145
 verification. Change 146 is the next change; its artifacts must be authored and
 validated before implementation begins.
+
+---
+
+# Session 2026-08-21/22 — branch consolidation + deep-engine implementation wave (IMPLEMENTED/UNVERIFIED)
+
+## Scope deviation (explicit)
+
+This session was explicitly user-directed as CODE IMPLEMENTATION ONLY: no tests, typecheck, lint,
+build, E2E, coverage, or benchmarks were run, and none may be inferred from this entry. All work
+below is IMPLEMENTED / UNVERIFIED. The next validation campaign owns all gates.
+
+## Branch consolidation
+
+- `origin/docs/deep-engine-audit-v2` (1 commit ahead of main at session start) merged into `main`
+  and its remote branch deleted after reachability proof; prior-session uncommitted persistence
+  hardening implementation committed first (tree was dirty at session start).
+- Final topology: local branches = `main` only; remote branches = `origin/main` only.
+
+## Inputs consumed
+
+`AGENTS.md`, `openspec/AUTONOMOUS_GOAL.md`, `PROGRAM_STATE.json/md`,
+`CHANGE_SEQUENCE_OVERRIDES.md`, `REVIEW_HANDOFF.md`, the full merged
+`docs/deep-engine-audit/` tree (00–08), and the post-250 hardening package. Runtime wiring was
+traced directly in source before implementing (Game.ts imports, orphan check, call-site greps).
+
+## Implementation wave (12 commits, pushed to origin/main in slices)
+
+1. `engine:` fixed-tick core — SimulationClock bounded catch-up/debt accounting/pause,
+   allocation-free RenderInterpolator with tick-index continuity + teleport reset, new
+   FixedTickDriver, WorldTickProcess per-system budgets.
+2. `world:` authoritative chunk lifecycle — ChunkLifecycleStage machine + transition validation,
+   ticket priorities/version tokens/expiry, ChunkPipeline coordinator (bounded priority queues per
+   stage, stale-token rejection, neighbor deps, load/unload hysteresis, cancellation, eviction,
+   stats); ChunkManager delegates through it (legacy API preserved).
+3. `workers:` v2 job protocol + generic WorkerPool (conservative sizing, bounded queues, priority,
+   cancel by id/token, stale rejection pre-callback, respawn, dispose); mesh/worldgen clients
+   refactored onto it; transferable packed quad buffers.
+4. `meshing:` four-stream typed geometry model (opaque/cutout/translucent/fluid) with grow-only
+   builders; strict greedy merge signatures (block/face/orientation + corner light + AO pattern +
+   tint/transparency/animation class); ChunkMesher rebuilt on shared builder keeping legacy API;
+   translucent painter sort keys.
+5. `lighting:` WorldLightStorage packed sections + border slices + snapshots; incremental
+   sky/block engines; LightUpdateEngine facade (deduped invalidation, budgeted drain, version
+   tokens); shared Environment state; precipitation tiers.
+6. `physics:` data-driven BlockShapeTable (collision/selection/occlusion), PlayerPhysics onto
+   shape clipping with explicit support contact, friction hook, head-clearance step-up, sneak
+   edge-safety, climbable hook, 4-point fluid immersion; shape-aware selection raycast; swept
+   projectile tiering documented.
+7. `perf:` CONFIG time budgets + quality-tier presets, MemoryResourceLedger categories +
+   convergence, ledger-backed ResourceManager, FrameWorkBudgetScheduler (EMA), ring-buffered
+   RenderPerformanceMonitor with exportJSON.
+8. `worldgen:` deterministic depth pipeline in TerrainGenerator (CLIMATE→BIOMES→TERRAIN→CAVES→
+   SURFACE→ORES→VEGETATION→STRUCTURES) using five-field climate, declarative surface rules,
+   region-owned ore veins; generateChunk contract unchanged. Golden worldgen hashes WILL change;
+   re-pin deferred.
+9. `entities:` incremental chunk-partitioned spatial index, activation LOD with hysteresis,
+   round-robin update budgets, cadenced sensory goals, simulation-distance spawn gating, bounded
+   PathCache.
+10. `world:` integration — generation/meshing/unload routed through ChunkPipeline with priorities/
+    tokens/hysteresis/stale rejection; FrameWorkBudgetScheduler gates frame work; four-stream mesh
+    attach (+optional cutout/fluid materials); voxel light wired to live setBlock with budgeted
+    drain + remesh promotion; mesher fed real light sampler; toggleable worker mesh path
+    (`useWorkers=false` pending validation).
+11. `engine:` Game composition adopts FixedTickDriver (20 Hz explicit tick order: activation →
+    player → items/xp → mobs → random/fluid → survival), interpolated camera pose, cutout/fluid
+    materials, physics hooks wired, entity activation refresh per tick, perf monitor fed;
+    249 persistence pagehide flush preserved.
+12. `entities:` passive/hostile mob systems adopt activation filtering (physics-only for inactive),
+    tickClocked sensory cadence, spawn limits forwarding.
+
+## Intentionally inert seams (documented in code)
+
+- Worker mesh path default OFF (no MeshWorkerEntry yet; sync mesher active).
+- Sneak input source does not exist; isSneaking hook unwired.
+- BlockShapeTable has no registered partial shapes yet (defaults = full cube).
+- Biome tint classes in packed worker results expand untinted.
+- DebugOverlay exportJSON surfacing skipped (E2E text-pinning risk).
+
+## Validation status
+
+NOT RUN by design this session. Everything above plus post-250 hardening tasks 6.x–8.x awaits the
+next validation campaign: typecheck/lint/unit/build/E2E/perf gates, golden worldgen hash re-pin,
+DL-001/002/005 re-audit evidence, canonical CI for the published SHA.
+
+## Publication
+
+Session range `471cf1e..b809b79` pushed to `origin/main` (plus the state-checkpoint commit that
+contains this entry).
