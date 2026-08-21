@@ -332,8 +332,8 @@ export class PlayerPhysics {
    * Horizontal pass with sneak edge-safety and state-dependent stepping.
    * Order of checks after the raw move:
    * 1. sneaking + grounded: revert any move that would leave support;
-   * 2. collided + grounded: attempt a step-up (head-clearance checked, then
-   *    settle onto support) and retry the move once;
+   * 2. collided + grounded: attempt a step-up (head clearance checked, move
+   *    retried while lifted, then settle onto support);
    * 3. still collided: clamp velocity to zero.
    */
   private moveHorizontal(player: Player, axis: 'x' | 'z', dt: number, sneaking: boolean): void {
@@ -362,21 +362,7 @@ export class PlayerPhysics {
     }
 
     if (result.collidedX || result.collidedZ) {
-      if (wasGrounded && this.tryStepUp(player)) {
-        // Retry the horizontal move from the stepped position.
-        const steppedBox = this.boxOf(player);
-        const retry =
-          axis === 'x'
-            ? this.resolver.move(this.shapeWorld, steppedBox, delta, 0, 0)
-            : this.resolver.move(this.shapeWorld, steppedBox, 0, 0, delta);
-        this.applyBox(player, {
-          ...steppedBox,
-          x: axis === 'x' ? retry.x : steppedBox.x,
-          z: axis === 'z' ? retry.z : steppedBox.z,
-        });
-        if (axis === 'x' ? retry.collidedX : retry.collidedZ) {
-          player.velocity[axis] = 0;
-        }
+      if (wasGrounded && this.tryStepUp(player, axis, delta)) {
         return;
       }
       player.velocity[axis] = 0;
@@ -388,28 +374,49 @@ export class PlayerPhysics {
   /**
    * Attempt to lift a grounded player over a low obstacle. The rise is capped
    * by the configured step height; it succeeds only when the raised AABB is
-   * clear (head clearance) AND the player then settles down onto support
-   * within that rise. On success vertical velocity is zeroed and the player
-   * stays grounded.
+   * clear (head clearance), the horizontal motion can be retried while lifted,
+   * AND the player then settles down onto support within that rise. On
+   * success vertical velocity is zeroed and the player stays grounded. On
+   * failure the player is left untouched.
    */
-  private tryStepUp(player: Player): boolean {
+  private tryStepUp(player: Player, axis: 'x' | 'z', delta: number): boolean {
     const height = this.options.stepHeight ?? CONFIG.player.stepHeight;
-    if (height <= 0) {
+    if (height <= 0 || delta === 0) {
       return false;
     }
-    const startY = player.position.y;
-    const raised = { ...this.boxOf(player), y: startY + height };
+    // Lift a hair past the exact rise so the boundary-inclusive overlap test
+    // does not read the obstacle's own top face as head collision.
+    const lift = height + 0.001;
+    const startBox = this.boxOf(player);
+    const raised = { ...startBox, y: startBox.y + lift };
     if (this.resolver.collides(this.shapeWorld, raised)) {
       return false;
     }
-    // Settle: drop the raised box back down; it must land on support within
-    // the step rise, otherwise there was nothing to step onto.
-    const settled = this.resolver.move(this.shapeWorld, raised, 0, -height, 0);
+    // Retry the blocked horizontal move while lifted so the footprint moves
+    // over the obstacle before settling back down onto its support surface.
+    const stepped =
+      axis === 'x'
+        ? this.resolver.move(this.shapeWorld, raised, delta, 0, 0)
+        : this.resolver.move(this.shapeWorld, raised, 0, 0, delta);
+    if ((axis === 'x' ? stepped.collidedX : stepped.collidedZ) && Math.abs((axis === 'x' ? stepped.x : stepped.z) - (axis === 'x' ? raised.x : raised.z)) < 1e-9) {
+      // Fully walled even at the raised height: nothing to step onto.
+      return false;
+    }
+    const steppedBox: CollisionBox =
+      axis === 'x'
+        ? { ...raised, x: stepped.x }
+        : { ...raised, z: stepped.z };
+    // Settle: drop the lifted box back down; it must land within the rise,
+    // otherwise there was no support to step onto.
+    const settled = this.resolver.move(this.shapeWorld, steppedBox, 0, -lift, 0);
     if (!settled.collidedY) {
       return false;
     }
-    player.position.y = settled.y;
+    this.applyBox(player, { ...steppedBox, y: settled.y });
     player.velocity.y = 0;
+    if (axis === 'x' ? stepped.collidedX : stepped.collidedZ) {
+      player.velocity[axis] = 0;
+    }
     this.landedThisUpdate = true;
     return true;
   }

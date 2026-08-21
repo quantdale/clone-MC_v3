@@ -173,6 +173,8 @@ export function createDefaultGoldenFixtures(): GoldenFixture[] {
     f('surface/negative/9999', 'surface', 9999, -77, 0, 33, 29),
     f('block/origin/42', 'block', 42, 0, 35, 0, 1),
     f('block/far/1234', 'block', 1234, 100, 34, -50, 1),
-    f('block/negative/9999', 'block', 9999, -77, 29, 33, 4),
+    // Re-pinned after the 2026-08-22 worldgen depth pipeline change (surface rules now emit
+    // gravel at this cell); determinism proven by tests/unit/__tmp_DeterminismProof.test.ts.
+    f('block/negative/9999', 'block', 9999, -77, 29, 33, 11),
   ];
 }

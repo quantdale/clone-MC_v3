@@ -34,6 +34,8 @@ export class RenderInterpolator {
   private currentBuf: number[] = [];
   private outBuf: number[] = [];
   private size = -1;
+  /** Logical component count of the retained previous snapshot (`-1` when none). */
+  private previousSize = -1;
   private hasPrevious = false;
   private prevTickIndex = -1;
   private currTickIndex = -1;
@@ -45,6 +47,8 @@ export class RenderInterpolator {
    */
   setState(state: RenderState, tickIndex?: number): void {
     const n = state.length;
+    // The snapshot being demoted to "previous" carries the old logical size.
+    this.previousSize = this.size;
     // Swap buffer roles: the old current becomes the previous without copying it.
     const swap = this.previousBuf;
     this.previousBuf = this.currentBuf;
@@ -85,6 +89,7 @@ export class RenderInterpolator {
 
     const canBlend =
       this.hasPrevious &&
+      this.previousSize === this.size &&
       this.prevTickIndex >= 0 &&
       this.currTickIndex === this.prevTickIndex + 1;
 
@@ -123,6 +128,7 @@ export class RenderInterpolator {
    */
   notifyTeleport(): void {
     this.hasPrevious = false;
+    this.previousSize = -1;
     this.prevTickIndex = -1;
   }
 
@@ -132,6 +138,7 @@ export class RenderInterpolator {
     this.currentBuf.length = 0;
     this.outBuf.length = 0;
     this.size = -1;
+    this.previousSize = -1;
     this.hasPrevious = false;
     this.prevTickIndex = -1;
     this.currTickIndex = -1;

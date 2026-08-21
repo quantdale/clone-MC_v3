@@ -244,12 +244,15 @@ export class WorldgenWorkerClient {
     };
   }
 
-  /** Shared exactly-once completion: drop the pending job, fire its callback, return the result. */
+  /** Shared exactly-once completion: drop all bookkeeping, fire its callback, return the result. */
   private complete(jobId: string, result: WorldgenResultPayload): WorldgenResultPayload | null {
-    if (!this.jobs.cancel(jobId)) return null; // stale / cancelled / already resolved
+    // Authority is the callbacks map: on the detached/harness path `resolveResult` has already
+    // consumed the protocol-level pending record, so gating here on `jobs.cancel` would drop
+    // every legitimate result.
     const callback = this.callbacks.get(jobId);
+    if (!callback) return null; // stale / cancelled / already resolved
     this.abandon(jobId);
-    if (callback) callback(result);
+    callback(result);
     return result;
   }
 

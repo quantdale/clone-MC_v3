@@ -58,11 +58,16 @@ export interface MatrixFixture {
   expected: number | string;
 }
 
-/** The current matrix version. A deliberate worldgen/registry change must bump and re-pin. */
-export const WORLDGEN_MATRIX_VERSION = 'v1';
+/**
+ * The current matrix version. A deliberate worldgen/registry change must bump and re-pin.
+ * v1→v2: 2026-08-22 deterministic depth pipeline change (five-field climate classifier with new
+ * biome thresholds, declarative surface rules, region-owned ore veins) intentionally changed
+ * generated content; determinism of the new pipeline proven by tests/unit/WorldgenDeterminism.test.ts.
+ */
+export const WORLDGEN_MATRIX_VERSION = 'v2';
 
-/** Versions the suite enforces green. Today exactly `['v1']`. */
-export const SUPPORTED_WORLDGEN_MATRIX_VERSIONS: readonly string[] = ['v1'];
+/** Versions the suite enforces green. Today exactly `['v2']`. */
+export const SUPPORTED_WORLDGEN_MATRIX_VERSIONS: readonly string[] = ['v2'];
 
 function isInteger(v: unknown): v is number {
   return typeof v === 'number' && Number.isInteger(v);
@@ -324,51 +329,65 @@ export function fingerprintWorldgenState(options: {
   return digest.toString(16).padStart(8, '0');
 }
 
-/** The pinned v1 catalog's matrix hash (authoring-script generated; see verification.md). */
-export const PINNED_V1_MATRIX_HASH = 1789027111;
+/**
+ * Re-pinned after the 2026-08-22 worldgen depth pipeline change; determinism proven by
+ * tests/unit/WorldgenDeterminism.test.ts. Regenerated via the authoring script
+ * (`npx vitest run --config scripts/worldgen/vitest.author.config.ts`).
+ */
+export const PINNED_V2_MATRIX_HASH = 1619101606;
+// (Authoring-script output 1517357792 was computed with fixtures still stamped version:'v1';
+// `worldgenMatrixHash` records include the version field, so the v2-stamped digest is this.)
 
-/** The pinned default registry-state fingerprint (authoring-script generated). */
+/** The pinned default registry-state fingerprint (authoring-script generated). Unchanged from
+ * v1: the block registry and structure template/placement registries were not touched by the
+ * 2026-08-22 pipeline change, so `fingerprintWorldgenState` digests identically. */
 export const PINNED_WORLDGEN_STATE_FINGERPRINT = '6e654848';
 
-/** The pinned v1 catalog (authoring-script generated; embedded verbatim — never hand-tuned). */
-const PINNED_V1_CATALOG: readonly MatrixFixture[] = [
+/**
+ * The pinned v2 catalog (authoring-script generated; embedded verbatim — never hand-tuned).
+ * Biome coordinates, surface blocks, and ore positions re-pinned after the 2026-08-22 worldgen
+ * depth pipeline change (biome keys shifted plains↔forest↔taiga under the new five-field climate
+ * thresholds; surface rules changed near-surface blocks; ores became region-owned veins);
+ * determinism proven by tests/unit/WorldgenDeterminism.test.ts.
+ */
+const PINNED_V2_CATALOG: readonly MatrixFixture[] = [
   // prettier-ignore
-    { key: 'hash2/origin/42', kind: 'hash2', version: 'v1', seed: 42, x: 0, y: 0, z: 0, expected: 1973702734 },
-    { key: 'hash2/negative/1234', kind: 'hash2', version: 'v1', seed: 1234, x: -77, y: 0, z: 33, expected: 672145738 },
-    { key: 'hash2/boundary-seed/0', kind: 'hash2', version: 'v1', seed: 0, x: 48, y: 0, z: 64, expected: 3656787307 },
-    { key: 'hash3/depth/42', kind: 'hash3', version: 'v1', seed: 42, x: 1, y: -64, z: 1, expected: 848142630 },
-    { key: 'hash3/negative/9999', kind: 'hash3', version: 'v1', seed: 9999, x: -5, y: 30, z: -5, expected: 2437147272 },
-    { key: 'hash3/boundary-seed/0', kind: 'hash3', version: 'v1', seed: 0, x: 48, y: 12, z: 64, expected: 3274001703 },
-    { key: 'biome/spawn-origin/42', kind: 'biome', version: 'v1', seed: 42, x: 0, y: 0, z: 0, expected: "plains" },
-    { key: 'biome/forest/0', kind: 'biome', version: 'v1', seed: 0, x: -512, y: 0, z: 0, expected: "forest" },
-    { key: 'biome/desert/0', kind: 'biome', version: 'v1', seed: 0, x: -192, y: 0, z: -16, expected: "desert" },
-    { key: 'biome/taiga/0', kind: 'biome', version: 'v1', seed: 0, x: -480, y: 0, z: 416, expected: "taiga" },
-    { key: 'surface/0', kind: 'surface', version: 'v1', seed: 0, x: -512, y: 0, z: 0, expected: 32 },
-    { key: 'block/surface/0', kind: 'block', version: 'v1', seed: 0, x: -512, y: 31, z: 0, expected: 11 },
-    { key: 'surface/1', kind: 'surface', version: 'v1', seed: 1, x: 16, y: 0, z: -16, expected: 32 },
-    { key: 'block/surface/1', kind: 'block', version: 'v1', seed: 1, x: 16, y: 31, z: -16, expected: 11 },
-    { key: 'surface/42', kind: 'surface', version: 'v1', seed: 42, x: 0, y: 0, z: 0, expected: 35 },
-    { key: 'block/surface/42', kind: 'block', version: 'v1', seed: 42, x: 0, y: 34, z: 0, expected: 2 },
-    { key: 'surface/1337', kind: 'surface', version: 'v1', seed: 1337, x: 21392, y: 0, z: -16, expected: 32 },
-    { key: 'block/surface/1337', kind: 'block', version: 'v1', seed: 1337, x: 21392, y: 31, z: -16, expected: 11 },
-    { key: 'surface/1234', kind: 'surface', version: 'v1', seed: 1234, x: 19744, y: 0, z: -16, expected: 35 },
-    { key: 'block/surface/1234', kind: 'block', version: 'v1', seed: 1234, x: 19744, y: 34, z: -16, expected: 2 },
-    { key: 'surface/9999', kind: 'surface', version: 'v1', seed: 9999, x: 159984, y: 0, z: -16, expected: 37 },
-    { key: 'block/surface/9999', kind: 'block', version: 'v1', seed: 9999, x: 159984, y: 36, z: -16, expected: 2 },
-    { key: 'biome/1', kind: 'biome', version: 'v1', seed: 1, x: 16, y: 0, z: -16, expected: "plains" },
-    { key: 'biome/42', kind: 'biome', version: 'v1', seed: 42, x: 0, y: 0, z: 0, expected: "plains" },
-    { key: 'biome/1337', kind: 'biome', version: 'v1', seed: 1337, x: 21392, y: 0, z: -16, expected: "plains" },
-    { key: 'biome/1234', kind: 'biome', version: 'v1', seed: 1234, x: 19744, y: 0, z: -16, expected: "plains" },
-    { key: 'biome/9999', kind: 'biome', version: 'v1', seed: 9999, x: 159984, y: 0, z: -16, expected: "taiga" },
-    { key: 'block/bedrock/0', kind: 'block', version: 'v1', seed: 0, x: 0, y: 0, z: 0, expected: 6 },
-    { key: 'block/boundary-column/1337', kind: 'block', version: 'v1', seed: 1337, x: 48, y: 10, z: 64, expected: 0 },
-    { key: 'ore/coal/0', kind: 'ore', version: 'v1', seed: 0, x: -256, y: 15, z: -216, expected: 14 },
-    { key: 'ore/iron/0', kind: 'ore', version: 'v1', seed: 0, x: -256, y: 3, z: -256, expected: 15 },
-    { key: 'ore/no-ore-control/0', kind: 'ore', version: 'v1', seed: 0, x: -256, y: 6, z: -256, expected: 3 },
-    { key: 'cave/carved/0', kind: 'cave', version: 'v1', seed: 0, x: -256, y: 23, z: -192, expected: 0 },
-    { key: 'cave/not-carved-control/0', kind: 'cave', version: 'v1', seed: 0, x: -256, y: 2, z: -256, expected: 3 },
-    { key: 'structure/present/42', kind: 'structure', version: 'v1', seed: 42, x: -552, y: 0, z: 648, expected: "present" },
-    { key: 'structure/absent/42', kind: 'structure', version: 'v1', seed: 42, x: -632, y: 0, z: -632, expected: "absent" },
+    { key: 'hash2/origin/42', kind: 'hash2', version: 'v2', seed: 42, x: 0, y: 0, z: 0, expected: 1973702734 },
+    { key: 'hash2/negative/1234', kind: 'hash2', version: 'v2', seed: 1234, x: -77, y: 0, z: 33, expected: 672145738 },
+    { key: 'hash2/boundary-seed/0', kind: 'hash2', version: 'v2', seed: 0, x: 48, y: 0, z: 64, expected: 3656787307 },
+    { key: 'hash3/depth/42', kind: 'hash3', version: 'v2', seed: 42, x: 1, y: -64, z: 1, expected: 848142630 },
+    { key: 'hash3/negative/9999', kind: 'hash3', version: 'v2', seed: 9999, x: -5, y: 30, z: -5, expected: 2437147272 },
+    { key: 'hash3/boundary-seed/0', kind: 'hash3', version: 'v2', seed: 0, x: 48, y: 12, z: 64, expected: 3274001703 },
+    { key: 'biome/spawn-origin/42', kind: 'biome', version: 'v2', seed: 42, x: 0, y: 0, z: 0, expected: "plains" },
+    { key: 'biome/forest/0', kind: 'biome', version: 'v2', seed: 0, x: -512, y: 0, z: -320, expected: "forest" },
+    { key: 'biome/desert/0', kind: 'biome', version: 'v2', seed: 0, x: -512, y: 0, z: 496, expected: "desert" },
+    { key: 'biome/taiga/0', kind: 'biome', version: 'v2', seed: 0, x: -512, y: 0, z: -512, expected: "taiga" },
+    { key: 'surface/0', kind: 'surface', version: 'v2', seed: 0, x: -512, y: 0, z: -512, expected: 35 },
+    { key: 'block/surface/0', kind: 'block', version: 'v2', seed: 0, x: -512, y: 34, z: -512, expected: 2 },
+    { key: 'surface/1', kind: 'surface', version: 'v2', seed: 1, x: 16, y: 0, z: -16, expected: 32 },
+    { key: 'block/surface/1', kind: 'block', version: 'v2', seed: 1, x: 16, y: 31, z: -16, expected: 11 },
+    { key: 'surface/42', kind: 'surface', version: 'v2', seed: 42, x: 0, y: 0, z: 0, expected: 35 },
+    { key: 'block/surface/42', kind: 'block', version: 'v2', seed: 42, x: 0, y: 34, z: 0, expected: 2 },
+    { key: 'surface/1337', kind: 'surface', version: 'v2', seed: 1337, x: 21392, y: 0, z: -16, expected: 32 },
+    { key: 'block/surface/1337', kind: 'block', version: 'v2', seed: 1337, x: 21392, y: 31, z: -16, expected: 4 },
+    { key: 'surface/1234', kind: 'surface', version: 'v2', seed: 1234, x: 19744, y: 0, z: -16, expected: 35 },
+    { key: 'block/surface/1234', kind: 'block', version: 'v2', seed: 1234, x: 19744, y: 34, z: -16, expected: 2 },
+    { key: 'surface/9999', kind: 'surface', version: 'v2', seed: 9999, x: 159984, y: 0, z: -16, expected: 37 },
+    { key: 'block/surface/9999', kind: 'block', version: 'v2', seed: 9999, x: 159984, y: 36, z: -16, expected: 2 },
+    { key: 'biome/1', kind: 'biome', version: 'v2', seed: 1, x: 16, y: 0, z: -16, expected: "plains" },
+    { key: 'biome/42', kind: 'biome', version: 'v2', seed: 42, x: 0, y: 0, z: 0, expected: "plains" },
+    { key: 'biome/1337', kind: 'biome', version: 'v2', seed: 1337, x: 21392, y: 0, z: -16, expected: "desert" },
+    { key: 'biome/1234', kind: 'biome', version: 'v2', seed: 1234, x: 19744, y: 0, z: -16, expected: "plains" },
+    { key: 'biome/9999', kind: 'biome', version: 'v2', seed: 9999, x: 159984, y: 0, z: -16, expected: "plains" },
+    { key: 'block/bedrock/0', kind: 'block', version: 'v2', seed: 0, x: 0, y: 0, z: 0, expected: 6 },
+    { key: 'block/boundary-column/1337', kind: 'block', version: 'v2', seed: 1337, x: 48, y: 10, z: 64, expected: 0 },
+    { key: 'ore/coal/0', kind: 'ore', version: 'v2', seed: 0, x: -256, y: 15, z: -192, expected: 14 },
+    { key: 'ore/iron/0', kind: 'ore', version: 'v2', seed: 0, x: -256, y: 8, z: 240, expected: 15 },
+    { key: 'ore/no-ore-control/0', kind: 'ore', version: 'v2', seed: 0, x: -256, y: 3, z: -256, expected: 3 },
+    { key: 'cave/carved/0', kind: 'cave', version: 'v2', seed: 0, x: -256, y: 23, z: -192, expected: 0 },
+    { key: 'cave/not-carved-control/0', kind: 'cave', version: 'v2', seed: 0, x: -256, y: 2, z: -256, expected: 3 },
+    { key: 'structure/present/42', kind: 'structure', version: 'v2', seed: 42, x: -552, y: 0, z: 648, expected: "present" },
+    { key: 'structure/absent/42', kind: 'structure', version: 'v2', seed: 42, x: -632, y: 0, z: -632, expected: "absent" },
 ];
 
 /**
@@ -384,5 +403,5 @@ export function createDefaultWorldgenMatrix(version: string = WORLDGEN_MATRIX_VE
   if (version !== WORLDGEN_MATRIX_VERSION) {
     throw new Error(`WorldgenRegressionMatrix: no catalog pinned for version ${version}`);
   }
-  return PINNED_V1_CATALOG.map((f) => ({ ...f }));
+  return PINNED_V2_CATALOG.map((f) => ({ ...f }));
 }

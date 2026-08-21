@@ -53,6 +53,73 @@ export interface MeshSectionResultPayload {
   generationToken?: number;
 }
 
+const MODEL_FACE_KEYS: ReadonlySet<string> = new Set(['up', 'down', 'north', 'south', 'east', 'west']);
+
+function isLightChannel(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 15;
+}
+
+/**
+ * Validate an untyped worker result as a {@link MeshSectionResultPayload}; throws on any invalid
+ * field. Structural discipline for both pooled results and detached `handleMessage` input, so a
+ * malformed or foreign payload can never reach a mesh callback.
+ */
+export function validateMeshSectionResult(input: unknown): MeshSectionResultPayload {
+  if (typeof input !== 'object' || input === null) {
+    throw new Error('MeshSectionResult: expected an object');
+  }
+  const r = input as Record<string, unknown>;
+  if (!Number.isInteger(r.sectionX) || !Number.isInteger(r.sectionY) || !Number.isInteger(r.sectionZ)) {
+    throw new Error('MeshSectionResult: section coordinates must be integers');
+  }
+  if (!Array.isArray(r.quads)) {
+    throw new Error('MeshSectionResult: quads must be an array');
+  }
+  const quads: OpaqueFaceQuad[] = [];
+  for (const raw of r.quads) {
+    if (typeof raw !== 'object' || raw === null) {
+      throw new Error('MeshSectionResult: each quad must be an object');
+    }
+    const quad = raw as Record<string, unknown>;
+    for (const key of ['x', 'y', 'z'] as const) {
+      if (typeof quad[key] !== 'number' || !Number.isFinite(quad[key])) {
+        throw new Error(`MeshSectionResult: quad.${key} must be a finite number`);
+      }
+    }
+    for (const key of ['width', 'height'] as const) {
+      if (typeof quad[key] !== 'number' || !Number.isFinite(quad[key]) || (quad[key] as number) < 0) {
+        throw new Error(`MeshSectionResult: quad.${key} must be a non-negative finite number`);
+      }
+    }
+    if (typeof quad.face !== 'string' || !MODEL_FACE_KEYS.has(quad.face)) {
+      throw new Error('MeshSectionResult: quad.face must be a known model face');
+    }
+    if (!Array.isArray(quad.vertexLights) || (quad.vertexLights as unknown[]).length !== 4) {
+      throw new Error('MeshSectionResult: quad.vertexLights must hold 4 corners');
+    }
+    for (const light of quad.vertexLights as unknown[]) {
+      if (typeof light !== 'object' || light === null) {
+        throw new Error('MeshSectionResult: each corner light must be an object');
+      }
+      const channel = light as Record<string, unknown>;
+      if (!isLightChannel(channel.sky) || !isLightChannel(channel.block)) {
+        throw new Error('MeshSectionResult: corner sky/block light must be integers in [0, 15]');
+      }
+    }
+    if (!Array.isArray(quad.vertexAO) || (quad.vertexAO as unknown[]).length !== 4 ||
+      !(quad.vertexAO as unknown[]).every((a) => typeof a === 'number' && Number.isInteger(a) && a >= 0 && a <= 3)) {
+      throw new Error('MeshSectionResult: quad.vertexAO must hold 4 integers in [0, 3]');
+    }
+    quads.push(raw as OpaqueFaceQuad);
+  }
+  return {
+    sectionX: r.sectionX as number,
+    sectionY: r.sectionY as number,
+    sectionZ: r.sectionZ as number,
+    quads,
+  };
+}
+
 const SECTION = 16;
 
 /** Canonical face index encoding used by `packQuadsToTypedArrays`. */
@@ -199,6 +266,8 @@ export class MeshWorkerClient {
   private readonly callbacks = new Map<string, (result: MeshSectionResultPayload) => void>();
   /** Submission-time token per pending job (mirrors `WorkerJobClient` state for cancellation sweeps). */
   private readonly tokens = new Map<string, number>();
+  /** Submission payload per pending job (identity matching against result coordinates). */
+  private readonly requests = new Map<string, MeshSectionRequestPayload>();
   private pool: WorkerPool | null = null;
   private generationToken = 0;
 
@@ -226,19 +295,31 @@ export class MeshWorkerClient {
     const jobId = this.jobs.submit('mesh-section', token);
     this.callbacks.set(jobId, onResult);
     this.tokens.set(jobId, token);
+    this.requests.set(jobId, payload);
     if (this.pool) {
       this.pool.submit({
         kind: 'mesh-section',
         generationToken: token,
         payload,
         onResult: (result) => {
-          this.complete(jobId, result as MeshSectionResultPayload, token);
+          // Pool payloads are untyped transport: validate structure and require section-coordinate
+          // identity before anything can resolve the job.
+          let validated: MeshSectionResultPayload;
+          try {
+            validated = validateMeshSectionResult(result);
+          } catch {
+            this.abandon(jobId); // malformed payload can never satisfy the job
+            return;
+          }
+          if (!this.matchesRequest(jobId, validated)) {
+            this.abandon(jobId); // foreign/stale identity must not resolve the job
+            return;
+          }
+          this.complete(jobId, validated, token);
         },
         onFailure: () => {
           // Abandon the job (worker loss/dispose): no result is delivered; late results become stale.
-          this.jobs.cancel(jobId);
-          this.callbacks.delete(jobId);
-          this.tokens.delete(jobId);
+          this.abandon(jobId);
         },
       });
     }
@@ -246,24 +327,28 @@ export class MeshWorkerClient {
   }
 
   /**
-   * Handle a worker message: validate + resolve via the unified protocol; on success invoke the
-   * job's callback once and return the result. Stale/invalid messages return `null` and invoke
-   * nothing.
+   * Handle a worker message: validate + resolve via the unified protocol, then validate payload
+   * structure and require section-coordinate identity; on success invoke the job's callback once
+   * and return the result. Stale/invalid/mismatched messages return `null` and invoke nothing.
    */
   handleMessage(input: unknown): MeshSectionResultPayload | null {
     const outcome: ResolvedOutcome | null = this.jobs.resolveResult(input);
-    if (outcome === null || !outcome.ok) return null;
+    if (outcome === null || !outcome.ok || outcome.payload === undefined) return null;
 
-    const payload = outcome.payload as MeshSectionResultPayload | undefined;
-    if (payload === undefined) return null;
+    let payload: MeshSectionResultPayload;
+    try {
+      payload = validateMeshSectionResult(outcome.payload);
+    } catch {
+      return null; // malformed payload: never resolves the job
+    }
+    if (!this.matchesRequest(outcome.jobId, payload)) return null;
     return this.complete(outcome.jobId, payload, outcome.generationToken);
   }
 
   /** Cancel a pending job (its late result becomes stale). */
   cancel(jobId: string): boolean {
     const removed = this.jobs.cancel(jobId);
-    this.callbacks.delete(jobId);
-    this.tokens.delete(jobId);
+    this.abandon(jobId);
     return removed;
   }
 
@@ -275,8 +360,7 @@ export class MeshWorkerClient {
     let cancelled = 0;
     for (const [jobId, token] of this.tokens) {
       if (token === generationToken && this.jobs.cancel(jobId)) {
-        this.callbacks.delete(jobId);
-        this.tokens.delete(jobId);
+        this.abandon(jobId);
         cancelled++;
       }
     }
@@ -304,20 +388,38 @@ export class MeshWorkerClient {
     };
   }
 
+  /** Whether a validated result carries the exact section identity of the stored request. */
+  private matchesRequest(jobId: string, result: MeshSectionResultPayload): boolean {
+    const request = this.requests.get(jobId);
+    return (
+      request !== undefined &&
+      request.sectionX === result.sectionX &&
+      request.sectionY === result.sectionY &&
+      request.sectionZ === result.sectionZ
+    );
+  }
+
   /**
-   * Shared exactly-once completion: drop the pending job (stale/unknown ids are ignored), fire its
-   * callback once, and return the token-stamped result. Used by both the pooled path and
-   * `handleMessage`.
+   * Shared exactly-once completion. Authority is the callbacks map (the unified client already
+   * consumed the protocol-level pending record during resolution), so both the pooled path and
+   * `handleMessage` resolve each job exactly once regardless of which consumed it first.
    */
   private complete(jobId: string, payload: MeshSectionResultPayload, token: number): MeshSectionResultPayload | null {
-    if (!this.jobs.cancel(jobId)) return null; // stale / cancelled / already resolved
     const callback = this.callbacks.get(jobId);
-    this.callbacks.delete(jobId);
-    this.tokens.delete(jobId);
+    if (!callback) return null; // unknown / cancelled / already resolved
+    this.abandon(jobId); // drop every bookkeeping entry before firing (exactly once)
     const result: MeshSectionResultPayload =
       token === UNVERSIONED_TOKEN ? payload : { ...payload, generationToken: token };
-    if (callback) callback(result);
+    callback(result);
     return result;
+  }
+
+  /** Drop all per-job bookkeeping without invoking the callback (failure/stale/invalid paths). */
+  private abandon(jobId: string): void {
+    this.jobs.cancel(jobId);
+    this.callbacks.delete(jobId);
+    this.tokens.delete(jobId);
+    this.requests.delete(jobId);
   }
 }
 

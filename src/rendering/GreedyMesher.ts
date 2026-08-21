@@ -14,18 +14,16 @@
  *
  * 1. `baseKey` — the caller's `faceKey(id, face)`, covering block/material id,
  *    texture face/layer and orientation;
- * 2. corner-light signature — the four per-corner `(sky, block)` pairs of the
- *    1×1 quad (070), packed 10 bits per corner;
- * 3. AO pattern id — the four per-corner AO levels (071) packed as
- *    `aoPatternId(vertexAO)`;
- * 4. biome tint class (072);
- * 5. transparency class;
- * 6. animation class.
+ * 2. biome tint class (072);
+ * 3. transparency class;
+ * 4. animation class.
  *
- * Merging faces that differ in any visible attribute produces seams or wrong
- * gradients, so the shading fields are sampled per cell before the merge
- * decision, not after. Classes 4-6 come from optional caller callbacks and
- * default to the single class `0`.
+ * Per-corner light (070) and AO (071) are deliberately NOT merge gates: they
+ * vary smoothly across neighboring cells, so gating on per-cell values would
+ * fragment surfaces into 1×1 quads. Instead every emitted quad samples its own
+ * four corners over its full extent (`withVertexShading` at emit time), which
+ * reproduces the correct gradient for merged rectangles. Classes 2-4 come from
+ * optional caller callbacks and default to the single class `0`.
  */
 import type { ModelFace } from '../data/BlockModel';
 import { quadVertexAO } from './AmbientOcclusion';
@@ -229,24 +227,19 @@ function withVertexShading(
   };
 }
 
-/** Pack four AO levels into an 8-bit pattern id (merge-signature field 3). */
+/** Pack four AO levels into an 8-bit pattern id. */
 export function aoPatternId(ao: readonly AOLevel[]): number {
   return ao[0]! | (ao[1]! << 2) | (ao[2]! << 4) | (ao[3]! << 6);
 }
 
 /**
  * The complete merge signature of the visible cell at grid `(v, u)` of a slice:
- * base face key plus per-corner light/AO shading and the optional merge
- * classes. Two cells are merge-compatible only when every field matches.
+ * base face key plus the optional merge classes. Light (070) and AO (071) are
+ * sampled per emitted quad after merging, not gated per cell (see module doc).
+ * Two cells are merge-compatible only when every field matches.
  */
 interface MergeSignature {
   baseKey: string;
-  /** Corner lights packed 8 bits each: c0 | c1<<8. */
-  lightsLo: number;
-  /** Corner lights packed 8 bits each: c2 | c3<<8. */
-  lightsHi: number;
-  /** `aoPatternId` of the 1×1 quad's corner AO. */
-  aoPattern: number;
   tintClass: number;
   animationClass: number;
   transparencyClass: number;
@@ -258,24 +251,28 @@ class SignatureCache {
 
   constructor(
     private readonly grid: VisibleCell[][],
-    private readonly plane: FacePlane,
-    private readonly slice: number,
-    private readonly light: LightSampler,
+    plane: FacePlane,
+    slice: number,
     private readonly resolvers: MergeClassResolvers,
-  ) {}
+  ) {
+    // `plane`/`slice` identify the cache's scope; the per-slice lifecycle makes them
+    // implicit (one cache instance per slice), so they are accepted for signature clarity only.
+    void plane;
+    void slice;
+  }
+
+  /** Whether a visible (non-null) cell exists at `(v, u)`. */
+  has(v: number, u: number): boolean {
+    return this.grid[v] !== undefined && this.grid[v]![u] !== null && this.grid[v]![u] !== undefined;
+  }
 
   get(v: number, u: number): MergeSignature {
     const index = v * SECTION + u;
     let entry = this.entries.get(index);
     if (entry === undefined) {
       const cell = this.grid[v]![u]!;
-      const [x, y, z] = quadPosition(this.plane, this.slice, u, v);
-      const shading = withVertexShading(this.light, this.plane, this.slice, x, y, z, 1, 1);
       entry = {
         baseKey: cell.key,
-        lightsLo: shading.vertexLights[0].sky | (shading.vertexLights[0].block << 4) | (shading.vertexLights[1].sky << 8) | (shading.vertexLights[1].block << 12),
-        lightsHi: shading.vertexLights[2].sky | (shading.vertexLights[2].block << 4) | (shading.vertexLights[3].sky << 8) | (shading.vertexLights[3].block << 12),
-        aoPattern: aoPatternId(shading.vertexAO),
         tintClass: this.resolvers.tintClassOf ? this.resolvers.tintClassOf(cell.id) : 0,
         animationClass: this.resolvers.animationClassOf ? this.resolvers.animationClassOf(cell.id) : 0,
         transparencyClass: this.resolvers.transparencyClassOf ? this.resolvers.transparencyClassOf(cell.id) : 0,
@@ -287,12 +284,10 @@ class SignatureCache {
 
   /** Whether the signatures at `(v, u)` and `seed` match on every field. */
   matches(v: number, u: number, seed: MergeSignature): boolean {
+    if (!this.has(v, u)) return false;
     const other = this.get(v, u);
     return (
       other.baseKey === seed.baseKey &&
-      other.lightsLo === seed.lightsLo &&
-      other.lightsHi === seed.lightsHi &&
-      other.aoPattern === seed.aoPattern &&
       other.tintClass === seed.tintClass &&
       other.animationClass === seed.animationClass &&
       other.transparencyClass === seed.transparencyClass
@@ -320,7 +315,7 @@ export function greedyMergeOpaqueFaces(
     for (let slice = 0; slice < plane.slices; slice++) {
       const grid = buildVisibilityGrid(getCell, isOpaque, faceKey, plane, slice);
       const consumed: boolean[][] = grid.map((row) => row.map(() => false));
-      const signatures = new SignatureCache(grid, plane, slice, light, resolvers);
+      const signatures = new SignatureCache(grid, plane, slice, resolvers);
 
       for (let v = 0; v < SECTION; v++) {
         for (let u = 0; u < SECTION; u++) {

@@ -22,11 +22,11 @@ function okResult(
   };
 }
 
-function failResult(jobId: string, error = 'boom'): Record<string, unknown> {
+function failResult(jobId: string, error = 'boom', kind: 'worldgen' | 'mesh-section' = 'mesh-section'): Record<string, unknown> {
   return {
     protocolVersion: WORKER_PROTOCOL_VERSION,
     jobId,
-    kind: 'mesh-section',
+    kind,
     ok: false,
     generationToken: UNVERSIONED_TOKEN,
     error,
@@ -130,8 +130,8 @@ describe('WorkerJobClient', () => {
 
     // ...but an echoed concrete token that no longer matches is stale.
     const other = client.submit('worldgen', 4);
-    expect(client.resolveResult(okResult(other, {}, { generationToken: 5 }))).toBeNull();
-    expect(client.resolveResult(okResult(other, {}, { generationToken: 4 }))).not.toBeNull();
+    expect(client.resolveResult(okResult(other, {}, { kind: 'worldgen', generationToken: 5 }))).toBeNull();
+    expect(client.resolveResult(okResult(other, {}, { kind: 'worldgen', generationToken: 4 }))).not.toBeNull();
   });
 
   it('rejects results whose kind differs from the submission kind', () => {
@@ -181,7 +181,7 @@ describe('WorkerJobClient', () => {
     const badJob = client.submit('worldgen', 0);
 
     expect(client.resolveResult(okResult(okJob, { n: 1 }))!.payload).toEqual({ n: 1 });
-    expect(client.resolveResult(failResult(badJob, 'kaboom'))).toEqual({
+    expect(client.resolveResult(failResult(badJob, 'kaboom', 'worldgen'))).toEqual({
       jobId: badJob,
       kind: 'worldgen',
       ok: false,

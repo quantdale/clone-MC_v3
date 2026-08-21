@@ -18,7 +18,7 @@ import {
 import { StructureTemplateRegistry } from '../../src/worldgen/StructureTemplate';
 import { StructurePlacementRegistry } from '../../src/worldgen/StructurePlacement';
 import {
-  PINNED_V1_MATRIX_HASH,
+  PINNED_V2_MATRIX_HASH,
   PINNED_WORLDGEN_STATE_FINGERPRINT,
   SUPPORTED_WORLDGEN_MATRIX_VERSIONS,
   WORLDGEN_MATRIX_VERSION,
@@ -139,15 +139,15 @@ const probe = new TerrainProbe();
 describe('validateMatrixFixture', () => {
   it('accepts a fixture of every kind and returns the input unchanged', () => {
     const fixtures: MatrixFixture[] = [
-      { key: 'hash2', kind: 'hash2', version: 'v1', seed: 42, x: 0, y: 0, z: 0, expected: 7 },
-      { key: 'hash3', kind: 'hash3', version: 'v1', seed: 42, x: 0, y: 1, z: 0, expected: 7 },
-      { key: 'surface', kind: 'surface', version: 'v1', seed: 42, x: 0, y: 0, z: 0, expected: 35 },
-      { key: 'biome', kind: 'biome', version: 'v1', seed: 42, x: 0, y: 0, z: 0, expected: 'plains' },
-      { key: 'block', kind: 'block', version: 'v1', seed: 42, x: 0, y: 30, z: 0, expected: 3 },
-      { key: 'ore', kind: 'ore', version: 'v1', seed: 42, x: 0, y: 10, z: 0, expected: 14 },
-      { key: 'cave', kind: 'cave', version: 'v1', seed: 42, x: 0, y: 20, z: 0, expected: 0 },
-      { key: 'structure-present', kind: 'structure', version: 'v1', seed: 42, x: 0, y: 0, z: 0, expected: 'present' },
-      { key: 'structure-absent', kind: 'structure', version: 'v1', seed: 42, x: 0, y: 0, z: 0, expected: 'absent' },
+      { key: 'hash2', kind: 'hash2', version: 'v2', seed: 42, x: 0, y: 0, z: 0, expected: 7 },
+      { key: 'hash3', kind: 'hash3', version: 'v2', seed: 42, x: 0, y: 1, z: 0, expected: 7 },
+      { key: 'surface', kind: 'surface', version: 'v2', seed: 42, x: 0, y: 0, z: 0, expected: 35 },
+      { key: 'biome', kind: 'biome', version: 'v2', seed: 42, x: 0, y: 0, z: 0, expected: 'plains' },
+      { key: 'block', kind: 'block', version: 'v2', seed: 42, x: 0, y: 30, z: 0, expected: 3 },
+      { key: 'ore', kind: 'ore', version: 'v2', seed: 42, x: 0, y: 10, z: 0, expected: 14 },
+      { key: 'cave', kind: 'cave', version: 'v2', seed: 42, x: 0, y: 20, z: 0, expected: 0 },
+      { key: 'structure-present', kind: 'structure', version: 'v2', seed: 42, x: 0, y: 0, z: 0, expected: 'present' },
+      { key: 'structure-absent', kind: 'structure', version: 'v2', seed: 42, x: 0, y: 0, z: 0, expected: 'absent' },
     ];
     for (const f of fixtures) {
       expect(validateMatrixFixture(f)).toEqual(f);
@@ -155,7 +155,7 @@ describe('validateMatrixFixture', () => {
   });
 
   it('rejects malformed fixtures naming the offending field', () => {
-    const base: MatrixFixture = { key: 'k', kind: 'hash2', version: 'v1', seed: 42, x: 0, y: 0, z: 0, expected: 0 };
+    const base: MatrixFixture = { key: 'k', kind: 'hash2', version: 'v2', seed: 42, x: 0, y: 0, z: 0, expected: 0 };
     expect(() => validateMatrixFixture({ ...base, key: '' })).toThrow(/key/i);
     expect(() => validateMatrixFixture({ ...base, version: '' })).toThrow(/version/i);
     expect(() => validateMatrixFixture({ ...base, kind: 'hash4' })).toThrow(/kind/i);
@@ -174,7 +174,7 @@ describe('validateMatrixFixture', () => {
     const base: MatrixFixture = { key: 'k', kind: 'hash2', version: 'v9', seed: 42, x: 0, y: 0, z: 0, expected: 0 };
     expect(() => validateMatrixFixture(base)).toThrow(/v9/);
     expect(() => validateMatrixFixture(base)).toThrow(/SUPPORTED_WORLDGEN_MATRIX_VERSIONS/);
-    expect(SUPPORTED_WORLDGEN_MATRIX_VERSIONS).toEqual(['v1']);
+    expect(SUPPORTED_WORLDGEN_MATRIX_VERSIONS).toEqual(['v2']);
   });
 });
 
@@ -185,13 +185,13 @@ describe('verifyWorldgenMatrix per-kind computation', () => {
     const z = -48;
     const h = probe.surfaceHeight(seed, x, z);
     const fixtures: MatrixFixture[] = [
-      { key: 'hash2', kind: 'hash2', version: 'v1', seed, x, y: 0, z, expected: hash2(x, z, seed) },
-      { key: 'hash3', kind: 'hash3', version: 'v1', seed, x, y: 12, z, expected: hash3(x, 12, z, seed) },
-      { key: 'surface', kind: 'surface', version: 'v1', seed, x, y: 0, z, expected: h },
-      { key: 'biome', kind: 'biome', version: 'v1', seed, x, y: 0, z, expected: probe.biomeAt(seed, x, z) },
-      { key: 'block', kind: 'block', version: 'v1', seed, x, y: h - 1, z, expected: probe.blockAt(seed, x, h - 1, z) },
-      { key: 'ore', kind: 'ore', version: 'v1', seed, x: x + 1, y: 10, z, expected: probe.blockAt(seed, x + 1, 10, z) },
-      { key: 'cave', kind: 'cave', version: 'v1', seed, x: x + 2, y: 20, z, expected: probe.blockAt(seed, x + 2, 20, z) },
+      { key: 'hash2', kind: 'hash2', version: 'v2', seed, x, y: 0, z, expected: hash2(x, z, seed) },
+      { key: 'hash3', kind: 'hash3', version: 'v2', seed, x, y: 12, z, expected: hash3(x, 12, z, seed) },
+      { key: 'surface', kind: 'surface', version: 'v2', seed, x, y: 0, z, expected: h },
+      { key: 'biome', kind: 'biome', version: 'v2', seed, x, y: 0, z, expected: probe.biomeAt(seed, x, z) },
+      { key: 'block', kind: 'block', version: 'v2', seed, x, y: h - 1, z, expected: probe.blockAt(seed, x, h - 1, z) },
+      { key: 'ore', kind: 'ore', version: 'v2', seed, x: x + 1, y: 10, z, expected: probe.blockAt(seed, x + 1, 10, z) },
+      { key: 'cave', kind: 'cave', version: 'v2', seed, x: x + 2, y: 20, z, expected: probe.blockAt(seed, x + 2, 20, z) },
     ];
     for (const f of fixtures) {
       expect(validateMatrixFixture(f)).toEqual(f);
@@ -204,14 +204,14 @@ describe('verifyWorldgenMatrix per-kind computation', () => {
   });
 
   it('verifies structurePresent fixtures through the real generator/context', () => {
-    // The pinned v1 present/absent structure columns for seed 42.
+    // The pinned v2 present/absent structure columns for seed 42.
     const present = { x: -552, z: 648 };
     const absent = { x: -632, z: -632 };
     const fixtures: MatrixFixture[] = [
       {
         key: 'structure/present',
         kind: 'structure',
-        version: 'v1',
+        version: 'v2',
         seed: 42,
         x: present.x,
         y: 0,
@@ -223,7 +223,7 @@ describe('verifyWorldgenMatrix per-kind computation', () => {
       {
         key: 'structure/absent',
         kind: 'structure',
-        version: 'v1',
+        version: 'v2',
         seed: 42,
         x: absent.x,
         y: 0,
@@ -239,7 +239,7 @@ describe('verifyWorldgenMatrix per-kind computation', () => {
   });
 });
 
-describe('full pinned v1 catalog', () => {
+describe('full pinned v2 catalog', () => {
   it('validates every catalog fixture', () => {
     const catalog = createDefaultWorldgenMatrix();
     expect(catalog.length).toBeGreaterThan(0);
@@ -253,7 +253,7 @@ describe('full pinned v1 catalog', () => {
     const results = verifyWorldgenMatrix(catalog, probe);
     expect(results.length).toBe(catalog.length);
     expect(results.filter((r) => !r.pass)).toEqual([]);
-    expect(worldgenMatrixHash(catalog, probe)).toBe(PINNED_V1_MATRIX_HASH);
+    expect(worldgenMatrixHash(catalog, probe)).toBe(PINNED_V2_MATRIX_HASH);
     expect(defaultFingerprint()).toBe(PINNED_WORLDGEN_STATE_FINGERPRINT);
   });
 });
@@ -375,9 +375,9 @@ describe('determinism across fresh probes', () => {
 });
 
 describe('version policy', () => {
-  it('pins the current version to v1 and rejects unsupported versions', () => {
-    expect(WORLDGEN_MATRIX_VERSION).toBe('v1');
-    expect(SUPPORTED_WORLDGEN_MATRIX_VERSIONS).toEqual(['v1']);
+  it('pins the current version to v2 (bumped for the 2026-08-22 worldgen depth pipeline change) and rejects unsupported versions', () => {
+    expect(WORLDGEN_MATRIX_VERSION).toBe('v2');
+    expect(SUPPORTED_WORLDGEN_MATRIX_VERSIONS).toEqual(['v2']);
     expect(() => createDefaultWorldgenMatrix('v9')).toThrow(/v9/);
   });
 

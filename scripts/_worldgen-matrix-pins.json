@@ -1,0 +1,367 @@
+{
+  "count": 36,
+  "hash": 1517357792,
+  "fingerprint": "6e654848",
+  "fixtures": [
+    {
+      "key": "hash2/origin/42",
+      "kind": "hash2",
+      "version": "v1",
+      "seed": 42,
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "expected": 1973702734
+    },
+    {
+      "key": "hash2/negative/1234",
+      "kind": "hash2",
+      "version": "v1",
+      "seed": 1234,
+      "x": -77,
+      "y": 0,
+      "z": 33,
+      "expected": 672145738
+    },
+    {
+      "key": "hash2/boundary-seed/0",
+      "kind": "hash2",
+      "version": "v1",
+      "seed": 0,
+      "x": 48,
+      "y": 0,
+      "z": 64,
+      "expected": 3656787307
+    },
+    {
+      "key": "hash3/depth/42",
+      "kind": "hash3",
+      "version": "v1",
+      "seed": 42,
+      "x": 1,
+      "y": -64,
+      "z": 1,
+      "expected": 848142630
+    },
+    {
+      "key": "hash3/negative/9999",
+      "kind": "hash3",
+      "version": "v1",
+      "seed": 9999,
+      "x": -5,
+      "y": 30,
+      "z": -5,
+      "expected": 2437147272
+    },
+    {
+      "key": "hash3/boundary-seed/0",
+      "kind": "hash3",
+      "version": "v1",
+      "seed": 0,
+      "x": 48,
+      "y": 12,
+      "z": 64,
+      "expected": 3274001703
+    },
+    {
+      "key": "biome/spawn-origin/42",
+      "kind": "biome",
+      "version": "v1",
+      "seed": 42,
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "expected": "plains"
+    },
+    {
+      "key": "biome/forest/0",
+      "kind": "biome",
+      "version": "v1",
+      "seed": 0,
+      "x": -512,
+      "y": 0,
+      "z": -320,
+      "expected": "forest"
+    },
+    {
+      "key": "biome/desert/0",
+      "kind": "biome",
+      "version": "v1",
+      "seed": 0,
+      "x": -512,
+      "y": 0,
+      "z": 496,
+      "expected": "desert"
+    },
+    {
+      "key": "biome/taiga/0",
+      "kind": "biome",
+      "version": "v1",
+      "seed": 0,
+      "x": -512,
+      "y": 0,
+      "z": -512,
+      "expected": "taiga"
+    },
+    {
+      "key": "surface/0",
+      "kind": "surface",
+      "version": "v1",
+      "seed": 0,
+      "x": -512,
+      "y": 0,
+      "z": -512,
+      "expected": 35
+    },
+    {
+      "key": "block/surface/0",
+      "kind": "block",
+      "version": "v1",
+      "seed": 0,
+      "x": -512,
+      "y": 34,
+      "z": -512,
+      "expected": 2
+    },
+    {
+      "key": "surface/1",
+      "kind": "surface",
+      "version": "v1",
+      "seed": 1,
+      "x": 16,
+      "y": 0,
+      "z": -16,
+      "expected": 32
+    },
+    {
+      "key": "block/surface/1",
+      "kind": "block",
+      "version": "v1",
+      "seed": 1,
+      "x": 16,
+      "y": 31,
+      "z": -16,
+      "expected": 11
+    },
+    {
+      "key": "surface/42",
+      "kind": "surface",
+      "version": "v1",
+      "seed": 42,
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "expected": 35
+    },
+    {
+      "key": "block/surface/42",
+      "kind": "block",
+      "version": "v1",
+      "seed": 42,
+      "x": 0,
+      "y": 34,
+      "z": 0,
+      "expected": 2
+    },
+    {
+      "key": "surface/1337",
+      "kind": "surface",
+      "version": "v1",
+      "seed": 1337,
+      "x": 21392,
+      "y": 0,
+      "z": -16,
+      "expected": 32
+    },
+    {
+      "key": "block/surface/1337",
+      "kind": "block",
+      "version": "v1",
+      "seed": 1337,
+      "x": 21392,
+      "y": 31,
+      "z": -16,
+      "expected": 4
+    },
+    {
+      "key": "surface/1234",
+      "kind": "surface",
+      "version": "v1",
+      "seed": 1234,
+      "x": 19744,
+      "y": 0,
+      "z": -16,
+      "expected": 35
+    },
+    {
+      "key": "block/surface/1234",
+      "kind": "block",
+      "version": "v1",
+      "seed": 1234,
+      "x": 19744,
+      "y": 34,
+      "z": -16,
+      "expected": 2
+    },
+    {
+      "key": "surface/9999",
+      "kind": "surface",
+      "version": "v1",
+      "seed": 9999,
+      "x": 159984,
+      "y": 0,
+      "z": -16,
+      "expected": 37
+    },
+    {
+      "key": "block/surface/9999",
+      "kind": "block",
+      "version": "v1",
+      "seed": 9999,
+      "x": 159984,
+      "y": 36,
+      "z": -16,
+      "expected": 2
+    },
+    {
+      "key": "biome/1",
+      "kind": "biome",
+      "version": "v1",
+      "seed": 1,
+      "x": 16,
+      "y": 0,
+      "z": -16,
+      "expected": "plains"
+    },
+    {
+      "key": "biome/42",
+      "kind": "biome",
+      "version": "v1",
+      "seed": 42,
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "expected": "plains"
+    },
+    {
+      "key": "biome/1337",
+      "kind": "biome",
+      "version": "v1",
+      "seed": 1337,
+      "x": 21392,
+      "y": 0,
+      "z": -16,
+      "expected": "desert"
+    },
+    {
+      "key": "biome/1234",
+      "kind": "biome",
+      "version": "v1",
+      "seed": 1234,
+      "x": 19744,
+      "y": 0,
+      "z": -16,
+      "expected": "plains"
+    },
+    {
+      "key": "biome/9999",
+      "kind": "biome",
+      "version": "v1",
+      "seed": 9999,
+      "x": 159984,
+      "y": 0,
+      "z": -16,
+      "expected": "plains"
+    },
+    {
+      "key": "block/bedrock/0",
+      "kind": "block",
+      "version": "v1",
+      "seed": 0,
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "expected": 6
+    },
+    {
+      "key": "block/boundary-column/1337",
+      "kind": "block",
+      "version": "v1",
+      "seed": 1337,
+      "x": 48,
+      "y": 10,
+      "z": 64,
+      "expected": 0
+    },
+    {
+      "key": "ore/coal/0",
+      "kind": "ore",
+      "version": "v1",
+      "seed": 0,
+      "x": -256,
+      "y": 15,
+      "z": -192,
+      "expected": 14
+    },
+    {
+      "key": "ore/iron/0",
+      "kind": "ore",
+      "version": "v1",
+      "seed": 0,
+      "x": -256,
+      "y": 8,
+      "z": 240,
+      "expected": 15
+    },
+    {
+      "key": "ore/no-ore-control/0",
+      "kind": "ore",
+      "version": "v1",
+      "seed": 0,
+      "x": -256,
+      "y": 3,
+      "z": -256,
+      "expected": 3
+    },
+    {
+      "key": "cave/carved/0",
+      "kind": "cave",
+      "version": "v1",
+      "seed": 0,
+      "x": -256,
+      "y": 23,
+      "z": -192,
+      "expected": 0
+    },
+    {
+      "key": "cave/not-carved-control/0",
+      "kind": "cave",
+      "version": "v1",
+      "seed": 0,
+      "x": -256,
+      "y": 2,
+      "z": -256,
+      "expected": 3
+    },
+    {
+      "key": "structure/present/42",
+      "kind": "structure",
+      "version": "v1",
+      "seed": 42,
+      "x": -552,
+      "y": 0,
+      "z": 648,
+      "expected": "present"
+    },
+    {
+      "key": "structure/absent/42",
+      "kind": "structure",
+      "version": "v1",
+      "seed": 42,
+      "x": -632,
+      "y": 0,
+      "z": -632,
+      "expected": "absent"
+    }
+  ]
+}

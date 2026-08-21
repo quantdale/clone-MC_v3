@@ -836,8 +836,13 @@ export class World implements WorldAccess {
       }
       const chunk = this.chunkManager.getChunk(job.cx, job.cy, job.cz);
       if (!chunk || !chunk.generated) {
-        pipeline.failStage(job.key, 'mesh');
-        continue;
+        // Generation has not caught up with this entry (defensive: neighbours
+        // are only mesh-dirtied once generated). Defer it intact instead of
+        // failing — a failed stage would bump the generation token and strand
+        // the queued job as stale — and stop draining so a not-yet-generatable
+        // entry cannot starve the frame's mesh budget.
+        pipeline.enqueue('mesh', job.cx, job.cy, job.cz, job.priority);
+        break;
       }
 
       if (this.useWorkers) {
@@ -847,8 +852,11 @@ export class World implements WorldAccess {
           inputVersion: record.generation,
           lightSampler: this.mesherLightSampler,
         });
-        // Stale rejection: drop results built against a superseded generation.
-        if (result.streams.inputVersion !== record.generation) {
+        // Stale rejection: drop results built against a superseded generation. Legacy
+        // mesher results carry no `streams` stamp and cannot be staleness-checked;
+        // they attach unconditionally (pre-wave behavior).
+        const builtVersion = result.streams?.inputVersion;
+        if (builtVersion !== undefined && builtVersion !== record.generation) {
           pipeline.failStage(job.key, 'mesh');
           continue;
         }
@@ -1254,7 +1262,9 @@ export class World implements WorldAccess {
         inputVersion: generation,
         lightSampler: this.mesherLightSampler,
       });
-      if (result.streams.inputVersion === generation) {
+      // Legacy results without a streams stamp attach unconditionally (see sync path).
+      const builtVersion = result.streams?.inputVersion;
+      if (builtVersion === undefined || builtVersion === generation) {
         this.attach(chunk, result);
         chunk.dirty = false;
         chunk.state = ChunkState.Visible;
@@ -1402,7 +1412,10 @@ export class World implements WorldAccess {
 
   private markNeighborDirty(cx: number, cy: number, cz: number): void {
     const neighbor = this.chunkManager.getChunk(cx, cy, cz);
-    if (neighbor) {
+    // Only generated neighbours can remesh: an ungenerated one has no buildable
+    // state, and queueing mesh work for it would burn slots on invalid
+    // transitions. When it generates, its own pass re-meshes this boundary.
+    if (neighbor?.generated) {
       neighbor.markDirty();
       // Light (like faces) crosses chunk borders; a border edit's propagation
       // can change the neighbour's shading, so track it for drain remeshing.
@@ -1518,7 +1531,10 @@ export class World implements WorldAccess {
             this.chunkManager.acquireTicket(cx, cy, cz, createChunkTicket(ChunkTicketType.Player));
           }
           if (!chunk.generated) {
-            this.enqueueGeneration(chunk, ChunkStreamPriority.Preload);
+            // Spawn-area preloads are the boot-critical set, so they take the
+            // normal distance tiers (center = VisibleNear), not the speculative
+            // Preload tier — otherwise the player's own chunk generates last.
+            this.enqueueGeneration(chunk, this.streamPriorityFor(dx, dz));
           } else if (chunk.state !== ChunkState.Visible) {
             this.enqueueMeshWithRetry(chunk);
           }
