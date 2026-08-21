@@ -110,6 +110,12 @@ import {
   type AccessibilityStore,
 } from '../simulation/AccessibilityFramework';
 import { resolveTouches, type TouchPoint } from '../simulation/TouchFramework';
+import { FixedTickDriver } from './FixedTickDriver';
+import { TICK_RATE } from './SimulationClock';
+import { RenderInterpolator } from './RenderInterpolator';
+import { RenderPerformanceMonitor } from '../rendering/RenderPerformanceMonitor';
+import { BlockShapeTable } from '../world/VoxelShape';
+import type { SelectionShapeWorld } from '../world/ShapeRaycast';
 
 /**
  * Wires the entire game together: renderer, world, player, interaction, UI, and
@@ -169,6 +175,35 @@ export class Game {
   private readonly worldBlockAccess: WorldBlockAccess;
   /** Monotonic simulation tick counter driving random-tick seeding. */
   private simTick = 0;
+  /**
+   * Fixed-tick owner (044/045): turns rAF frame deltas into deterministic
+   * 20 TPS ticks. The tick body ({@link runFixedTick}) runs the whole ordered
+   * simulation pipeline; per-frame presentation stays in {@link update}.
+   */
+  private readonly tickDriver: FixedTickDriver;
+  /** Player eye-pose interpolation between the previous and current ticks (045). */
+  private readonly playerInterpolator = new RenderInterpolator();
+  /** Render performance observability (audit 05): fed by render() + World's monitor. */
+  private readonly perfMonitor = new RenderPerformanceMonitor(() => performance.now());
+  /**
+   * Observability handle handed to World (audit 05): World pushes queue depths,
+   * oldest-job age, and upload bytes each frame straight into the monitor.
+   */
+  private readonly worldMonitor = {
+    setQueueDepth: (kind: 'generate' | 'mesh' | 'upload' | 'unload', depth: number): void => {
+      this.perfMonitor.setQueueDepth(kind, depth);
+    },
+    setOldestJobAgeMs: (ageMs: number): void => {
+      this.perfMonitor.setOldestJobAgeMs(ageMs);
+    },
+    recordUploadBytes: (bytes: number): void => {
+      this.perfMonitor.recordUploadBytes(bytes);
+    },
+  };
+  /** Selection/collision shape table (056); unregistered ids answer full cubes. */
+  private readonly blockShapes = new BlockShapeTable();
+  /** Shape-aware selection raycast adapter (058) over {@link blockShapes} + world lookups. */
+  private readonly selectionShapes: SelectionShapeWorld;
   private readonly atlas: TextureAtlas;
   private readonly materials: Materials;
   private readonly renderer: Renderer;
@@ -415,11 +450,26 @@ export class Game {
       scene: this.renderer.scene,
       mesher,
       generator,
-      materials: { opaque: this.materials.opaque, transparent: this.materials.transparent },
+      materials: {
+        opaque: this.materials.opaque,
+        transparent: this.materials.transparent,
+        cutout: this.materials.cutout,
+        fluid: this.materials.fluid,
+      },
       renderDistance,
       simulationDistance: this.runtimeSimulationDistance(),
       stateRegistry: this.stateRegistry,
       editDurability: this.persistenceImpl ?? undefined,
+      monitor: this.worldMonitor,
+      // Atlas UV seam for the (currently disabled) worker-meshing path; the
+      // sync mesher ignores it. Face index is WorkerMeshing's canonical
+      // encoding: 0=up, 1=down, 2-5 sides.
+      uvRectFor: (blockId, faceIndex) => {
+        const def = this.blockRegistry.get(blockId);
+        const tile =
+          faceIndex === 0 ? def.topTile : faceIndex === 1 ? def.bottomTile : def.sideTile;
+        return this.atlas.uv(tile);
+      },
     });
     this.worldBlockAccess = new WorldBlockAccess(this.world);
     // Injected persistence is already open: apply its bulk-loaded edits now.
@@ -491,9 +541,22 @@ export class Game {
     this.loadInputConfiguration();
     this.attachTouchCapture();
     this.controller = new PlayerController(this.player, this.input);
-    this.physics = new PlayerPhysics(this.world, this.blockRegistry);
+    // Physics hooks (behavior-neutral where data is missing): the block
+    // registry exposes no slipperiness yet, so friction stays a constant-1.0
+    // table; sneak state has no InputManager/Controller source to read.
+    this.physics = new PlayerPhysics(this.world, this.blockRegistry, {
+      blockShapes: this.blockShapes,
+      frictionForBlock: () => 1.0,
+    });
     this.itemEntities = new ItemEntityManager({ itemRegistry: this.itemRegistry, rng: Math.random });
     this.xpOrbs = new XpOrbManager({ rng: Math.random });
+    // Shape-aware selection (058): adapt world block lookups through the shape
+    // table so raycasts honor partial shapes (slabs/fences/etc.); unregistered
+    // ids answer full cubes, matching the pre-adapter behavior.
+    this.selectionShapes = {
+      getSelectionShape: (x, y, z) =>
+        this.blockShapes.getSelectionShape(this.world.getBlock(x, y, z)),
+    };
     this.interaction = new PlayerInteraction({
       world: this.world,
       registry: this.blockRegistry,
@@ -515,6 +578,7 @@ export class Game {
       itemEntities: this.itemEntities,
       xpOrbs: this.xpOrbs,
       xpOrbValue: CONFIG.xp.orbValue,
+      selectionShapes: this.selectionShapes,
     });
     this.resources.track(this.interaction);
 
@@ -554,6 +618,14 @@ export class Game {
       (recipe) => this.onCrafted(recipe),
       () => this.closeCrafting(),
     );
+
+    // Fixed-tick ownership (044): the driver turns frame deltas into bounded,
+    // deterministic 20 TPS ticks; the tick body enforces the simulation order.
+    this.tickDriver = new FixedTickDriver({
+      tickRateHz: TICK_RATE,
+      maxCatchUpTicks: CONFIG.budgets.maxCatchUpTicks,
+      tick: (tickIndex) => this.runFixedTick(tickIndex),
+    });
 
     this.loop = new GameLoop(
       (dt) => this.update(dt),
@@ -613,6 +685,9 @@ export class Game {
     }
     this.disposed = true;
     this.loop.stop();
+    // The fixed-tick driver and perf monitor hold no GPU/DOM resources — no
+    // explicit teardown beyond stopping the loop that feeds them.
+    this.tickDriver.pause();
     if (this.toastTimer !== null) {
       clearTimeout(this.toastTimer);
       this.toastTimer = null;
@@ -711,9 +786,10 @@ export class Game {
     // Player chunk used for streaming + debug.
     const [pcx, , pcz] = worldToChunk(this.player.position.x, this.player.position.y, this.player.position.z);
 
-    // Stream before physics. Until the local safety ring is visible, hold the
-    // player in place so collision queries never treat an ungenerated chunk as
-    // empty space and make the player fall through the spawn area.
+    // World streaming stays frame-driven: it is time-budgeted background work
+    // that must also progress while paused/loading, and its readiness gate
+    // (`worldReady`) is what makes fixed ticks safe to run at all. Deterministic
+    // world mutation (random/fluid ticks) runs inside the tick body instead.
     this.world.update(dt, pcx, pcz);
     const readyProgress = this.world.getReadyProgress(pcx, pcz);
     const worldReady = readyProgress >= 1;
@@ -734,51 +810,18 @@ export class Game {
       !this.craftingOpen &&
       !this.overlayOpen &&
       (this.pointerLocked || this.hasControllerInput(deviceFrame));
+
+    // Pause/resume mapping (044): while inactive the driver's time anchor keeps
+    // advancing but emits no ticks, and the paused wall time is never replayed
+    // on resume. `advance` must run every frame either way.
     if (simulationActive) {
-      this.controller.update(dt);
-      this.physics.update(this.player, dt);
-      this.tickRandomBlocks();
-      this.itemEntities.tickItemEntities(dt);
-      this.itemEntities.mergeEntities();
-      this.itemEntities.despawnExpired();
-      const collected = this.itemEntities.collectPlayerDrops(
-        this.player.position.x,
-        this.player.position.y,
-        this.player.position.z,
-        (id, count) => this.inventory.addItem(id, count),
-      );
-      if (collected > 0) this.hotbar.render();
-      this.xpOrbs.tickItemEntities(
-        dt,
-        this.player.position.x,
-        this.player.position.y,
-        this.player.position.z,
-        this.experience,
-      );
-      this.worldLife.update(dt, this.player.position);
-      this.tickPassiveMobs(dt);
-      this.passiveMobRenderer.sync(this.passiveMobs.getActivePigs());
-      this.tickHostileMobs(dt);
-      this.hostileMobRenderer.sync(this.hostileMobs.getActiveZombies());
-      this.breeding.tick(this.passiveMobs.getManager(), this.passiveMobs.getActivePigs(), this.pigBreedableSpecies, SPAWN_CAP);
-      const headY = Math.floor(this.player.position.y + CONFIG.player.eyeHeight);
-      const headSubmerged = this.world.getBlock(
-        Math.floor(this.player.position.x),
-        headY,
-        Math.floor(this.player.position.z),
-      ) === BlockId.Water;
-      this.survival.update(dt, this.player, {
-        sprinting: this.input.sprint,
-        headSubmerged,
-        inLava: this.player.inLava,
-        landingDistance: this.physics.consumeLandingDistance(),
-      });
-      this.playerEffects.tick(dt);
-      if (this.input.consumeEat()) {
-        this.tryEatSelected();
-      }
-      this.hud.setSurvival(this.survival.health, this.survival.hunger);
+      this.tickDriver.resume();
     } else {
+      this.tickDriver.pause();
+    }
+    this.tickDriver.advance(dt);
+
+    if (!simulationActive) {
       this.controller.update(0);
       this.player.velocity.set(0, 0, 0);
       if (!worldReady) {
@@ -787,8 +830,23 @@ export class Game {
       }
     }
 
-    // Camera follows the player's eye.
-    const eye = this.player.eyePosition;
+    // Camera presentation (045): blend the player eye pose between the previous
+    // and current tick states with the driver alpha; before any tick has ever
+    // run (or right after a teleport reset) fall back to the live pose.
+    let eyeX: number;
+    let eyeY: number;
+    let eyeZ: number;
+    if (this.playerInterpolator.hasState) {
+      const rendered = this.playerInterpolator.interpolate(this.tickDriver.alpha);
+      eyeX = rendered[0]!;
+      eyeY = rendered[1]!;
+      eyeZ = rendered[2]!;
+    } else {
+      const eye = this.player.eyePosition;
+      eyeX = eye.x;
+      eyeY = eye.y;
+      eyeZ = eye.z;
+    }
     const moving = simulationActive && (this.input.moveForward || this.input.moveBack || this.input.moveLeft || this.input.moveRight);
     if (moving && this.player.onGround && !this.player.inWater && !this.player.inLava) {
       this.bobTime += dt * (this.input.sprint ? 12 : 9);
@@ -799,17 +857,7 @@ export class Game {
       moving && this.player.onGround && !this.player.inWater && !this.player.inLava
         ? Math.sin(this.bobTime) * 0.018 * (this.accessibility.reducedMotion === true ? 0 : 1)
         : 0;
-    this.renderer.camera.position.copy(eye);
-    this.renderer.camera.position.y += bobAmount;
-    this.renderer.camera.rotation.set(0, 0, 0);
-    this.renderer.camera.rotateY(this.player.yaw);
-    this.renderer.camera.rotateX(this.player.pitch);
-
-    // Raycast from the camera after it has followed the current player pose so
-    // selection and block actions never lag one frame behind movement/look.
-    if (simulationActive) {
-      this.interaction.update(dt);
-    }
+    this.applyCameraTransform(eyeX, eyeY + bobAmount, eyeZ);
 
     // Lighting / environment.
     this.lighting.update(simulationActive ? dt : 0, this.player.position);
@@ -857,11 +905,118 @@ export class Game {
     this.updateDebug(pcx, pcz);
   }
 
+  /**
+   * The deterministic fixed-tick body (044). Runs exactly `1/TICK_RATE`
+   * seconds of simulation per call, in strict order — do not reorder:
+   *
+   *   1. entity activation refresh (scale wiring, both mob managers)
+   *   2. player: controller -> physics -> interaction
+   *   3. item entities -> xp orbs
+   *   4. world ambient life -> passive mobs -> breeding -> hostile mobs
+   *   5. random/fluid block ticks
+   *   6. survival + status-effect systems
+   *
+   * World streaming/update deliberately stays frame-driven in {@link update}
+   * (see the note there): it is budgeted background work that must progress
+   * while paused/loading, and `worldReady` already gates tick execution.
+   */
+  private runFixedTick(tickIndex: number): void {
+    const dt = 1 / TICK_RATE;
+
+    // 1. Entity activation refresh: keep both managers' activation state in
+    // sync with the player position each tick so activation-aware consumers
+    // see current range data (fail-open until adopted by the systems).
+    const px = this.player.position.x;
+    const py = this.player.position.y;
+    const pz = this.player.position.z;
+    const simDistanceBlocks = this.runtimeSimulationDistance() * CONFIG.chunk.width;
+    this.passiveMobs.getManager().updateActivation(px, py, pz, simDistanceBlocks);
+    this.hostileMobs.getManager().updateActivation(px, py, pz, simDistanceBlocks);
+
+    // 2. Player: controller, then physics, then interaction. Sync the camera
+    // to the post-physics pose before the interaction raycast so selection and
+    // block actions match what the player sees this tick (render bob is a
+    // presentation-only offset applied in `update`).
+    this.controller.update(dt);
+    this.physics.update(this.player, dt);
+    const eye = this.player.eyePosition;
+    this.applyCameraTransform(eye.x, eye.y, eye.z);
+    this.interaction.update(dt);
+
+    // 3. Item entities, then xp orbs (collection order matters: items first so
+    // xp pickup reads post-collection inventory state exactly as before).
+    this.itemEntities.tickItemEntities(dt);
+    this.itemEntities.mergeEntities();
+    this.itemEntities.despawnExpired();
+    const collected = this.itemEntities.collectPlayerDrops(
+      px,
+      py,
+      pz,
+      (id, count) => this.inventory.addItem(id, count),
+    );
+    if (collected > 0) this.hotbar.render();
+    this.xpOrbs.tickItemEntities(dt, px, py, pz, this.experience);
+
+    // 4. Mobs: ambient life, passive mobs (+ renderer sync), breeding, then
+    // hostile mobs (+ renderer sync) — passive always precedes hostile.
+    this.worldLife.update(dt, this.player.position);
+    this.tickPassiveMobs(dt);
+    this.passiveMobRenderer.sync(this.passiveMobs.getActivePigs());
+    this.breeding.tick(this.passiveMobs.getManager(), this.passiveMobs.getActivePigs(), this.pigBreedableSpecies, SPAWN_CAP);
+    this.tickHostileMobs(dt);
+    this.hostileMobRenderer.sync(this.hostileMobs.getActiveZombies());
+
+    // 5. Random/fluid ticks (048/050/125 dispatch over simulating sections).
+    this.tickRandomBlocks();
+
+    // 6. Survival + status systems.
+    const headY = Math.floor(py + CONFIG.player.eyeHeight);
+    const headSubmerged = this.world.getBlock(
+      Math.floor(px),
+      headY,
+      Math.floor(pz),
+    ) === BlockId.Water;
+    this.survival.update(dt, this.player, {
+      sprinting: this.input.sprint,
+      headSubmerged,
+      inLava: this.player.inLava,
+      landingDistance: this.physics.consumeLandingDistance(),
+    });
+    this.playerEffects.tick(dt);
+    if (this.input.consumeEat()) {
+      this.tryEatSelected();
+    }
+    this.hud.setSurvival(this.survival.health, this.survival.hunger);
+
+    // Snapshot the post-tick eye pose tagged with its tick index so the render
+    // path can blend between consecutive tick states (045).
+    this.playerInterpolator.setState([eye.x, eye.y, eye.z], tickIndex);
+  }
+
+  /** Point the camera from an eye position with the player's yaw/pitch. */
+  private applyCameraTransform(eyeX: number, eyeY: number, eyeZ: number): void {
+    this.renderer.camera.position.set(eyeX, eyeY, eyeZ);
+    this.renderer.camera.rotation.set(0, 0, 0);
+    this.renderer.camera.rotateY(this.player.yaw);
+    this.renderer.camera.rotateX(this.player.pitch);
+  }
+
   private render(): void {
     if (this.disposed) {
       return;
     }
+    // Observability (audit 05): bracket the frame and feed renderer.info after
+    // the draw; World feeds queue depths/upload bytes via `worldMonitor`.
+    this.perfMonitor.beginFrame();
     this.renderer.render();
+    const info = this.renderer.renderer?.info;
+    if (info) {
+      this.perfMonitor.recordRendererInfo({
+        render: { calls: info.render.calls, triangles: info.render.triangles },
+        memory: { geometries: info.memory.geometries, textures: info.memory.textures },
+      });
+    }
+    this.perfMonitor.endFrame();
   }
 
   /**
@@ -1721,6 +1876,8 @@ export class Game {
     this.player.pitch = 0;
     this.survival.consumeDeath();
     this.playerEffects.clear();
+    // Teleport discontinuity: never blend the camera across the respawn jump.
+    this.playerInterpolator.notifyTeleport();
     this.interaction.clearTarget();
     this.showToast('You died. Respawned at spawn.');
   }
