@@ -12,6 +12,12 @@ export const enum ChunkTicketType {
   Generation = 4,
   Migration = 5,
   Structure = 6,
+  /** Collision/simulation neighborhood hold (audit 04 streaming tier 2). */
+  Simulation = 7,
+  /** Interaction target neighborhood (streaming tier 3). */
+  Interaction = 8,
+  /** Speculative/preload work (lowest streaming tier 6). */
+  Preload = 9,
 }
 
 /** Default hold level each ticket reason keeps a chunk at. Lower = more loaded/ticking. */
@@ -23,6 +29,43 @@ export const CHUNK_TICKET_DEFAULT_LEVEL: Record<ChunkTicketType, number> = {
   [ChunkTicketType.Generation]: 33,
   [ChunkTicketType.Migration]: 33,
   [ChunkTicketType.Structure]: 34,
+  [ChunkTicketType.Simulation]: 31,
+  [ChunkTicketType.Interaction]: 32,
+  [ChunkTicketType.Preload]: 40,
+};
+
+/**
+ * Streaming work priorities (audit 04 "Streaming priorities"). Lower value = dispatched first.
+ * These order queue dispatch; ticket *levels* order residency. The two are related but distinct:
+ * a preload ticket keeps a chunk resident at a weak level and its jobs also run last.
+ */
+export const enum ChunkStreamPriority {
+  /** Visible/front-facing sections near the camera. */
+  VisibleNear = 0,
+  /** Collision/simulation neighborhood. */
+  Simulation = 1,
+  /** Interaction target neighborhood. */
+  Interaction = 2,
+  /** Forward movement corridor. */
+  ForwardCorridor = 3,
+  /** Remaining render-distance rings. */
+  Rings = 4,
+  /** Speculative/preload work. */
+  Preload = 5,
+}
+
+/** Default streaming priority each ticket type contributes to queued work. */
+export const CHUNK_TICKET_DEFAULT_PRIORITY: Record<ChunkTicketType, ChunkStreamPriority> = {
+  [ChunkTicketType.Unknown]: ChunkStreamPriority.Rings,
+  [ChunkTicketType.Player]: ChunkStreamPriority.VisibleNear,
+  [ChunkTicketType.Portal]: ChunkStreamPriority.ForwardCorridor,
+  [ChunkTicketType.Light]: ChunkStreamPriority.Simulation,
+  [ChunkTicketType.Generation]: ChunkStreamPriority.Simulation,
+  [ChunkTicketType.Migration]: ChunkStreamPriority.Preload,
+  [ChunkTicketType.Structure]: ChunkStreamPriority.Rings,
+  [ChunkTicketType.Simulation]: ChunkStreamPriority.Simulation,
+  [ChunkTicketType.Interaction]: ChunkStreamPriority.Interaction,
+  [ChunkTicketType.Preload]: ChunkStreamPriority.Preload,
 };
 
 /** A chunk at or below this level ticks. */
@@ -39,6 +82,18 @@ export type ChunkTicketLevel = number;
 export interface ChunkTicket {
   type: ChunkTicketType;
   level: ChunkTicketLevel;
+  /** Streaming priority for work queued under this ticket; defaults from the ticket type. */
+  priority?: ChunkStreamPriority;
+  /**
+   * Generation/version token this ticket was issued against. When the chunk's lifecycle
+   * generation counter moves past it (regeneration, eviction), the ticket is stale and must be
+   * re-acquired rather than reused.
+   */
+  version?: number;
+  /** Epoch ms when the ticket was issued; used with `expiresAt` for expiry. */
+  issuedAt?: number;
+  /** Epoch ms after which the ticket no longer holds the chunk; omitted = never expires. */
+  expiresAt?: number;
 }
 
 /** Create a ticket for `type`, using its default level unless `level` is supplied. */
@@ -59,6 +114,21 @@ export function isLoadedLevel(level: ChunkTicketLevel): boolean {
 /** True when ticket `a` has higher priority (lower level) than `b`. */
 export function isHigherPriority(a: ChunkTicket, b: ChunkTicket): boolean {
   return a.level < b.level;
+}
+
+/** Effective streaming priority of a ticket (its explicit value or its type's default). */
+export function ticketPriority(ticket: ChunkTicket): ChunkStreamPriority {
+  return ticket.priority ?? CHUNK_TICKET_DEFAULT_PRIORITY[ticket.type];
+}
+
+/** True when the ticket carries a version token that no longer matches `currentVersion`. */
+export function isTicketStale(ticket: ChunkTicket, currentVersion: number): boolean {
+  return ticket.version !== undefined && ticket.version !== currentVersion;
+}
+
+/** True when the ticket has an expiry that has passed at `nowMs`. Non-expiring tickets are never stale by time. */
+export function isTicketExpired(ticket: ChunkTicket, nowMs: number): boolean {
+  return ticket.expiresAt !== undefined && nowMs >= ticket.expiresAt;
 }
 
 /**
