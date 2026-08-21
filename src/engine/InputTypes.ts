@@ -19,6 +19,12 @@ export interface InputState {
   jump: boolean;
   sprint: boolean;
 
+  /**
+   * Whether the sneak action (Shift by default) is currently held. Optional
+   * so existing implementations stay valid; consumers treat absent as false.
+   */
+  sneaking?: boolean;
+
   /** Whether pointer lock is currently active. */
   isLocked(): boolean;
 

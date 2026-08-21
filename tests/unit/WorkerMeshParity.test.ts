@@ -2,11 +2,13 @@ import { describe, it, expect } from 'vitest';
 import {
   packQuadsToTypedArrays,
   packedQuadGeometryInputs,
+  packedTintRgb,
   expandPackedMeshResult,
   processMeshSectionRequest,
   type MeshSectionRequestPayload,
   type PackedMeshExpandInfo,
 } from '../../src/rendering/WorkerMeshing';
+import type { OpaqueFaceQuad } from '../../src/rendering/GreedyMesher';
 import {
   MeshBuildResultBuilder,
   MESH_STREAM_NAMES,
@@ -97,7 +99,7 @@ function directStreams(quads: ReturnType<typeof processMeshSectionRequest>['quad
         normal[0], normal[1], normal[2],
         cornerUv[c]![0], cornerUv[c]![1],
         light.sky, light.block, quad.vertexAO[c]!,
-        1, 1, 1,
+        ...packedTintRgb(quad.tintClass ?? 0),
       );
     }
     sb.pushQuadIndices(sb.vertexCount - 1);
@@ -151,5 +153,69 @@ describe('worker packed-mesh path parity (P10)', () => {
     expect(() => validateMeshSectionResult({ sectionX: 'x' })).toThrow();
     const good = processMeshSectionRequest(multiStreamPayload());
     expect(validateMeshSectionResult(good).quads.length).toBe(good.quads.length);
+  });
+
+  it('packed validator accepts the worker-entry packed form and rejects corrupt buffers', () => {
+    const good = processMeshSectionRequest(multiStreamPayload());
+    const packed = packQuadsToTypedArrays(good.quads);
+    const envelope = {
+      sectionX: good.sectionX,
+      sectionY: good.sectionY,
+      sectionZ: good.sectionZ,
+      data: packed.data,
+      quadCount: packed.quadCount,
+      stride: packed.stride,
+    };
+    const validated = validateMeshSectionResult(structuredClone(envelope));
+    expect(validated.packed).toBeDefined();
+    expect(validated.packed!.quadCount).toBe(packed.quadCount);
+    expect(Array.from(validated.packed!.data)).toEqual(Array.from(packed.data));
+    expect(() =>
+      validateMeshSectionResult({ ...envelope, quadCount: packed.quadCount + 1 }),
+    ).toThrow();
+    expect(() => validateMeshSectionResult({ ...envelope, stride: 21 })).toThrow();
+  });
+
+  it('non-zero tintClass decodes identically on packed and direct paths', () => {
+    // Hand-built quads carrying resolved 24-bit biome tint classes (072): grass green, foliage,
+    // water blue, plus one untinted (class 0) quad. processMeshSectionRequest cannot stamp these
+    // (its merge key is block id with no tint resolver), so fixtures are constructed directly.
+    const cornerLight = { sky: 15, block: 3 };
+    const makeQuad = (tintClass: number): OpaqueFaceQuad => ({
+      x: 0,
+      y: 0,
+      z: 0,
+      width: 2,
+      height: 1,
+      blockId: 1,
+      face: 'up',
+      vertexLights: [cornerLight, cornerLight, cornerLight, cornerLight],
+      vertexAO: [3, 3, 2, 2],
+      tintClass,
+    });
+    const quads = [
+      makeQuad(0x7cbd6b), // grass green
+      makeQuad(0x48b518), // foliage
+      makeQuad(0x3f76e4), // water blue
+      makeQuad(0), // untinted white
+    ];
+
+    const capture: Capture = { byName: {} };
+    expandPackedMeshResult(packQuadsToTypedArrays(quads), makeInfo(capture));
+    const expanded = {} as Record<MeshStreamName, MeshStreamData>;
+    for (const name of MESH_STREAM_NAMES) expanded[name] = capture.byName[name] ?? emptyMeshStream();
+
+    expectStreamsEqual(directStreams(quads), expanded);
+
+    // Explicit expectations: class 0 → white; others decode as id>>16 / >>8 / &255 over 255.
+    // tintClass rides a Float32Array and the decoded tint attribute is Float32Array as well,
+    // so expectations are compared through Math.fround.
+    const tints = Array.from(expanded.opaque!.tint);
+    const decoded = (id: number, i: number): number =>
+      Math.fround((((id) >> (16 - (i % 3) * 8)) & 255) / 255);
+    expect(tints.slice(0, 12)).toEqual(new Array(12).fill(0).map((_, i) => decoded(0x7cbd6b, i)));
+    expect(tints.slice(12, 24)).toEqual(new Array(12).fill(0).map((_, i) => decoded(0x48b518, i)));
+    expect(tints.slice(24, 36)).toEqual(new Array(12).fill(0).map((_, i) => decoded(0x3f76e4, i)));
+    expect(tints.slice(36, 48)).toEqual(new Array(12).fill(1));
   });
 });

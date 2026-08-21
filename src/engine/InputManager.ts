@@ -20,17 +20,20 @@ const MOVEMENT_ACTIONS: ReadonlySet<string> = new Set([
 
 /**
  * Legacy aliases kept alongside the 207 bindings so default play is unchanged:
- * the arrow keys still move and Shift still sprints even though the framework's
- * default table binds neither. A remapped action stops flowing through its old
- * key immediately (recompute always uses the CURRENT bindings).
+ * the arrow keys still move and Shift still sneaks / Ctrl still sprints even
+ * where the framework's default table binds only one key of a modifier pair. A
+ * remapped action stops flowing through its old key immediately (recompute
+ * always uses the CURRENT bindings).
  */
 const LEGACY_ALIASES: Readonly<Record<string, KeybindingAction>> = {
   ArrowUp: 'forward',
   ArrowDown: 'back',
   ArrowLeft: 'left',
   ArrowRight: 'right',
-  ShiftLeft: 'sprint',
-  ShiftRight: 'sprint',
+  ShiftLeft: 'sneak',
+  ShiftRight: 'sneak',
+  ControlLeft: 'sprint',
+  ControlRight: 'sprint',
 };
 
 /**
@@ -42,11 +45,11 @@ const LEGACY_ALIASES: Readonly<Record<string, KeybindingAction>> = {
  * consumeMouseDelta(). Break/place actions and the hotbar scroll are queued on
  * the underlying events and consumed once per frame.
  *
- * Movement/jump/sprint flags are derived from the held key codes intersected
- * with the active 207 keybinding state (plus the legacy arrow/Shift aliases),
- * so a remap applies to subsequent keydowns only and never re-arms a currently
- * held key whose action moved away. Mouse look scales through the 206 settings
- * via applyMouseLook (see InputWiring for the exact scale contract).
+ * Movement/jump/sprint/sneak flags are derived from the held key codes
+ * intersected with the active 207 keybinding state (plus the legacy arrow /
+ * modifier aliases), so a remap applies to subsequent keydowns only and never
+ * re-arms a currently held key whose action moved away. Mouse look scales
+ * through the 206 settings via applyMouseLook (see InputWiring for the exact scale contract).
  */
 export class InputManager implements InputState {
   moveForward = false;
@@ -55,6 +58,7 @@ export class InputManager implements InputState {
   moveRight = false;
   jump = false;
   sprint = false;
+  sneaking = false;
 
   private locked = false;
 
@@ -437,14 +441,14 @@ export class InputManager implements InputState {
     this.moveRight = false;
     this.jump = false;
     this.sprint = false;
+    this.sneaking = false;
   }
 
   /**
    * Derive the movement flags from the held codes intersected with the CURRENT
-   * bindings plus the legacy arrow/Shift aliases (union: Shift is bound to
-   * `sneak` by 207's defaults but must keep driving `sprint` as before). Runs
-   * on every keydown/keyup and binding swap, so a remap applies to subsequent
-   * input only: a key still held whose action moved away stops producing it.
+   * bindings plus the legacy arrow/modifier aliases. Runs on every keydown/
+   * keyup and binding swap, so a remap applies to subsequent input only: a key
+   * still held whose action moved away stops producing it.
    */
   private recomputeMovement(): void {
     let forward = false;
@@ -453,6 +457,7 @@ export class InputManager implements InputState {
     let right = false;
     let jump = false;
     let sprint = false;
+    let sneaking = false;
     for (const code of this.heldCodes) {
       const bound = actionForKey(this.bindings, code);
       const alias = LEGACY_ALIASES[code];
@@ -474,18 +479,13 @@ export class InputManager implements InputState {
           jump = true;
           break;
         case 'sneak':
-          // No InputState consumer yet; recognized so it does not fall through.
+          sneaking = true;
           break;
         case 'sprint':
           sprint = true;
           break;
         default:
           break;
-      }
-      // Union pass: a legacy alias contributes even when the code is bound to
-      // another action (e.g. ShiftLeft = sneak + legacy sprint).
-      if (alias === 'sprint') {
-        sprint = true;
       }
     }
     this.moveForward = forward;
@@ -494,6 +494,7 @@ export class InputManager implements InputState {
     this.moveRight = right;
     this.jump = jump;
     this.sprint = sprint;
+    this.sneaking = sneaking;
   }
 
   /** Clear input that must never leak across a pause or focus transition. */
@@ -533,6 +534,8 @@ export class InputManager implements InputState {
       case 'Space':
       case 'ShiftLeft':
       case 'ShiftRight':
+      case 'ControlLeft':
+      case 'ControlRight':
         return true;
       default:
         return false;

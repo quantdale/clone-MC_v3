@@ -9,39 +9,97 @@ export interface DebugStats {
 }
 
 /**
+ * Compact single-line summary from `RenderPerformanceMonitor.exportJSON()`:
+ * fps / p95 / p99 frame times + draw calls + total worker-queue depth.
+ * Returns an empty string when the JSON cannot be parsed (line is hidden).
+ *
+ * Phase 11.5 wiring note: Game composes this with
+ * `overlay.setPerfSource(() => formatPerfLine(monitor.exportJSON()))`
+ * — a one-line change next to the existing DebugOverlay construction.
+ */
+export function formatPerfLine(json: string): string {
+  let d: any;
+  try {
+    d = JSON.parse(json);
+  } catch {
+    return '';
+  }
+  const fpsAvg = Number(d?.frame?.fpsAvg);
+  const p95 = Number(d?.frame?.p95Millis);
+  const p99 = Number(d?.frame?.p99Millis);
+  const draws = Number(d?.render?.drawCalls);
+  const depths = d?.queues?.depths;
+  let queue = 0;
+  if (depths && typeof depths === 'object') {
+    for (const v of Object.values(depths)) {
+      queue += Number(v) || 0;
+    }
+  }
+  if (!Number.isFinite(fpsAvg) || !Number.isFinite(p95) || !Number.isFinite(p99) || !Number.isFinite(draws)) {
+    return '';
+  }
+  return `perf: fps=${fpsAvg.toFixed(1)} p95=${p95.toFixed(1)}ms p99=${p99.toFixed(1)}ms draws=${draws} queue=${queue}`;
+}
+
+/**
  * Debug overlay. Renders a monospace block of engine stats into the element
  * and can be toggled on/off with the `hidden` class.
+ *
+ * The legacy stats block and the optional perf line live in separate child
+ * spans, so adding/perf content never perturbs the pinned legacy text that
+ * e2e specs assert against.
  */
 export class DebugOverlay {
   private readonly el: HTMLElement;
+  private readonly statsEl: HTMLElement;
+  private readonly perfEl: HTMLElement;
   /** Test-only override (245): when set, update() renders this constant block. */
   private fixedText: string | null = null;
+  /** Optional Phase 11.5 perf source; returns the formatted perf line or null. */
+  private getSummary: (() => string | null) | null = null;
 
   constructor(el: HTMLElement) {
     this.el = el;
+    this.statsEl = document.createElement('span');
+    this.perfEl = document.createElement('span');
+    this.perfEl.className = 'debug-perf-line';
+    el.appendChild(this.statsEl);
+    el.appendChild(this.perfEl);
+  }
+
+  /**
+   * Phase 11.5: register an optional performance-summary source. When set,
+   * update() appends one compact perf line below the legacy stats block;
+   * returning null hides the line. Purely additive — legacy lines are
+   * byte-identical whether or not a source is registered.
+   */
+  setPerfSource(getSummary: () => string | null): void {
+    this.getSummary = getSummary;
   }
 
   /** Format and write the current stats into the overlay element. */
   update(data: DebugStats): void {
     if (this.fixedText !== null) {
-      this.el.textContent = this.fixedText;
-      return;
+      this.statsEl.textContent = this.fixedText;
+    } else {
+      const [x, y, z] = data.position;
+      this.statsEl.textContent = [
+        `pos: ${formatNum(x)} ${formatNum(y)} ${formatNum(z)}`,
+        `chunk: ${data.chunk}`,
+        `loaded: ${data.loaded}`,
+        `pendingGen: ${data.pendingGen}`,
+        `pendingMesh: ${data.pendingMesh}`,
+        `triangles: ${data.triangles}`,
+      ].join('\n');
     }
-    const [x, y, z] = data.position;
-    this.el.textContent = [
-      `pos: ${formatNum(x)} ${formatNum(y)} ${formatNum(z)}`,
-      `chunk: ${data.chunk}`,
-      `loaded: ${data.loaded}`,
-      `pendingGen: ${data.pendingGen}`,
-      `pendingMesh: ${data.pendingMesh}`,
-      `triangles: ${data.triangles}`,
-    ].join('\n');
+    const summary = this.getSummary !== null ? this.getSummary() : null;
+    this.perfEl.textContent = summary !== null && summary !== '' ? `\n${summary}` : '';
   }
 
   /** Test-only hook (245): pin the stats block to a fixed constant. */
   setFixedText(text: string): void {
     this.fixedText = text;
-    this.el.textContent = text;
+    this.statsEl.textContent = text;
   }
 
   /** Toggle the overlay's visibility. */

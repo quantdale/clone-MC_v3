@@ -4,6 +4,7 @@
  * validated and frozen at construction; `union` composes without mutating inputs; queries are
  * boundary-inclusive. `FULL_CUBE`/`EMPTY` are the canonical constants.
  */
+import { BlockId } from './BlockRegistry';
 export interface Aabb {
   minX: number;
   minY: number;
@@ -179,6 +180,66 @@ export const ShapeBuilders = {
     }
   },
 };
+
+/**
+ * Build the default partial-shape registrations for every non-cube block in
+ * {@link createDefaultBlockRegistry}. Keyed by stable `BlockId`; entries are
+ * written once at build time so the returned table is immutable afterwards and
+ * lookups stay O(1) map probes on integer ids. Unregistered ids answer the
+ * table defaults (full cube).
+ *
+ * Registration rationale (Phase 11.2):
+ * - Crops (wheat, nether wart), fire and redstone components: collision EMPTY
+ *   (walk-through), small selection box, occlusion EMPTY.
+ * - Fluids (water, lava): every variant EMPTY — player interaction runs
+ *   through the medium system, not collision shapes.
+ * - Farmland: bottom slab of 15/16 height (the vanilla furrow depth),
+ *   collision and selection alike.
+ * - Chest/furnace: a slightly-inset full-height box (14/16 cross-section),
+ *   collision and selection alike.
+ * - Rails/pressure plates/wire: flat carpet-style selection, EMPTY collision,
+ *   EMPTY occlusion.
+ *
+ * Deliberately left unregistered (full-cube fallback):
+ * - Doors, trapdoors, pistons, hoppers/droppers/dispensers: their true shape
+ *   depends on block state (`open`, `facing`, `extended`) which the id-keyed
+ *   table cannot express yet; per-state shapes arrive with the block-state
+ *   shape work.
+ * - Snow: registered here as the full "Snow Block", not a layer.
+ */
+export function createDefaultBlockShapeTable(): BlockShapeTable {
+  const empty = VoxelShape.EMPTY;
+  const cropSelection = VoxelShape.boxes(box(1 / 16, 0, 1 / 16, 15 / 16, 0.75, 15 / 16));
+  const flatSelection = ShapeBuilders.carpet(1 / 16);
+  const containerBox = ShapeBuilders.post(14 / 16, 1);
+  return new BlockShapeTable()
+    // Air: never targetable/collidable — the table's unregistered fallback is
+    // FULL_CUBE, which would otherwise make every empty cell a raycast hit.
+    .set(BlockId.Air, { collision: empty, selection: empty, occlusion: empty })
+    // Fluids: fully handled by the medium system.
+    .set(BlockId.Water, { collision: empty, selection: empty, occlusion: empty })
+    .set(BlockId.Lava, { collision: empty, selection: empty, occlusion: empty })
+    // Crops: walk-through, small selectable volume.
+    .set(BlockId.Wheat, { collision: empty, selection: cropSelection, occlusion: empty })
+    .set(BlockId.NetherWart, { collision: empty, selection: cropSelection, occlusion: empty })
+    // Fire: never collides, tiny selectable core.
+    .set(BlockId.Fire, { collision: empty, selection: ShapeBuilders.post(0.25, 0.5), occlusion: empty })
+    // Farmland: 15/16-high bottom slab.
+    .set(BlockId.Farmland, { collision: ShapeBuilders.slabBottom(15 / 16), selection: ShapeBuilders.slabBottom(15 / 16) })
+    // Containers: slightly inset, full height.
+    .set(BlockId.Chest, { collision: containerBox, selection: containerBox })
+    .set(BlockId.Furnace, { collision: containerBox, selection: containerBox })
+    // Redstone components: no collision, small selection, no occlusion.
+    .set(BlockId.RedstoneWire, { collision: empty, selection: flatSelection, occlusion: empty })
+    .set(BlockId.RedstoneTorch, { collision: empty, selection: ShapeBuilders.post(0.125, 0.625), occlusion: empty })
+    .set(BlockId.Lever, { collision: empty, selection: ShapeBuilders.post(0.25, 0.5), occlusion: empty })
+    .set(BlockId.StoneButton, { collision: empty, selection: ShapeBuilders.post(0.25, 0.25), occlusion: empty })
+    .set(BlockId.PressurePlate, { collision: empty, selection: flatSelection, occlusion: empty })
+    .set(BlockId.RedstoneRepeater, { collision: empty, selection: ShapeBuilders.carpet(2 / 16), occlusion: empty })
+    .set(BlockId.RedstoneComparator, { collision: empty, selection: ShapeBuilders.carpet(2 / 16), occlusion: empty })
+    // Rails: flat selection only.
+    .set(BlockId.Rail, { collision: empty, selection: flatSelection, occlusion: empty });
+}
 
 /**
  * Per-block shape variants. A block may declare distinct collision, selection

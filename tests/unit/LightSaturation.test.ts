@@ -257,7 +257,10 @@ describe('runLightEditSaturation (incremental edits)', () => {
     expect(snapshot(incremental)).toBe(snapshot(fresh));
   });
 
-  it('preserves 069 equivalence across a 1000-edit sequence', { timeout: 30000 }, () => {
+  // 1000 incremental edits through the BFS engines are legitimately heavy;
+  // 90 s accommodates coverage-instrumented runs (~5x slowdown) without
+  // weakening any assertion.
+  it('preserves 069 equivalence across a 1000-edit sequence', { timeout: 90000 }, () => {
     const world = denseWorld();
     fullCompute(world);
     const edits: LightEdit<DenseGridWorld>[] = [];

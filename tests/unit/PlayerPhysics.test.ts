@@ -236,4 +236,51 @@ describe('player physics', () => {
     }
     throw new Error('player never landed');
   });
+
+  it('a non-sneaking player walks off a ledge', () => {
+    // Floor ends at x=5: solid below y=0 only for x<5.
+    const world = makeLedgeWorld();
+    const physics = new PlayerPhysics(world, registry);
+    const player = new Player({ position: new THREE.Vector3(4.2, 0, 0.5) });
+    player.onGround = true;
+    player.velocity.x = CONFIG.player.walkSpeed;
+    for (let i = 0; i < 60; i++) {
+      physics.update(player, 0.016);
+    }
+    expect(player.position.x).toBeGreaterThanOrEqual(5);
+    expect(player.onGround).toBe(false); // fell off the edge
+  });
+
+  it('sneaking prevents walking off the ledge edge', () => {
+    const world = makeLedgeWorld();
+    let sneaking = false;
+    const physics = new PlayerPhysics(world, registry, { isSneaking: () => sneaking });
+    const player = new Player({ position: new THREE.Vector3(4.2, 0, 0.5) });
+    player.onGround = true;
+    player.velocity.x = CONFIG.player.walkSpeed;
+    sneaking = true;
+    for (let i = 0; i < 60; i++) {
+      physics.update(player, 0.016);
+    }
+    // The edge-safety clamp keeps the sneaking player on supported ground.
+    expect(player.position.x).toBeLessThan(5);
+    expect(player.onGround).toBe(true);
+  });
 });
+
+/**
+ * A world stub with a floor ending at x=5 (an open ledge), for edge-safety.
+ */
+function makeLedgeWorld(): import('../../src/world/WorldAccess').WorldAccess {
+  return {
+    getBlock(): number {
+      return 0;
+    },
+    setBlock(): void {
+      /* no-op */
+    },
+    isSolid(x: number, y: number): boolean {
+      return y < 0 && x < 5;
+    },
+  };
+}

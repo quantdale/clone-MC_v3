@@ -4,6 +4,12 @@ import { Player } from './Player';
 import { InputState } from '../engine/InputTypes';
 
 /**
+ * Sneak speed scale applied to the base walk speed while sneaking
+ * (Phase 11.3, Minecraft-style: sneak ≈ 0.3× walk).
+ */
+const SNEAK_SPEED_MULTIPLIER = 0.3;
+
+/**
  * Player controller.
  *
  * Converts raw input (mouse look + WASD + jump/sprint) into player state. Mouse
@@ -33,6 +39,14 @@ export class PlayerController {
     this.player = player;
     this.input = input;
     this.frictionProvider = opts.frictionProvider;
+  }
+
+  /**
+   * Whether the sneak action (Shift by default) is currently held. Absent
+   * input support (optional InputState field) counts as not sneaking.
+   */
+  isSneaking(): boolean {
+    return this.input.sneaking === true;
   }
 
   update(dt: number): void {
@@ -73,7 +87,11 @@ export class PlayerController {
     const moveDirX = moveLen > 0 ? moveX / moveLen : 0;
     const moveDirZ = moveLen > 0 ? moveZ / moveLen : 0;
 
-    const baseSpeed = this.input.sprint ? CONFIG.player.sprintSpeed : CONFIG.player.walkSpeed;
+    const sneaking = this.isSneaking();
+    // Sneaking never sprints and caps the base speed at ~0.3× walk.
+    const unscaledSpeed =
+      !sneaking && this.input.sprint ? CONFIG.player.sprintSpeed : CONFIG.player.walkSpeed;
+    const baseSpeed = sneaking ? unscaledSpeed * SNEAK_SPEED_MULTIPLIER : unscaledSpeed;
     const targetSpeed = this.player.inWater
       ? baseSpeed * CONFIG.player.waterSpeedMultiplier
       : this.player.inLava

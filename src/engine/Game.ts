@@ -114,7 +114,7 @@ import { FixedTickDriver } from './FixedTickDriver';
 import { TICK_RATE } from './SimulationClock';
 import { RenderInterpolator } from './RenderInterpolator';
 import { RenderPerformanceMonitor } from '../rendering/RenderPerformanceMonitor';
-import { BlockShapeTable } from '../world/VoxelShape';
+import { createDefaultBlockShapeTable } from '../world/VoxelShape';
 import type { SelectionShapeWorld } from '../world/ShapeRaycast';
 
 /**
@@ -200,8 +200,8 @@ export class Game {
       this.perfMonitor.recordUploadBytes(bytes);
     },
   };
-  /** Selection/collision shape table (056); unregistered ids answer full cubes. */
-  private readonly blockShapes = new BlockShapeTable();
+  /** Shape table (056) with default partial-shape registrations for non-cube blocks. */
+  private readonly blockShapes = createDefaultBlockShapeTable();
   /** Shape-aware selection raycast adapter (058) over {@link blockShapes} + world lookups. */
   private readonly selectionShapes: SelectionShapeWorld;
   private readonly atlas: TextureAtlas;
@@ -543,10 +543,12 @@ export class Game {
     this.controller = new PlayerController(this.player, this.input);
     // Physics hooks (behavior-neutral where data is missing): the block
     // registry exposes no slipperiness yet, so friction stays a constant-1.0
-    // table; sneak state has no InputManager/Controller source to read.
+    // table. Sneak state flows from InputManager through the controller
+    // (Phase 11.3) into the edge-safety clamp.
     this.physics = new PlayerPhysics(this.world, this.blockRegistry, {
       blockShapes: this.blockShapes,
       frictionForBlock: () => 1.0,
+      isSneaking: () => this.controller.isSneaking(),
     });
     this.itemEntities = new ItemEntityManager({ itemRegistry: this.itemRegistry, rng: Math.random });
     this.xpOrbs = new XpOrbManager({ rng: Math.random });

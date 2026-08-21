@@ -43,7 +43,7 @@ export interface MeshSectionRequestPayload {
   blockLight: number[];
 }
 
-/** A section-meshing job result. */
+/** A section-meshing job result (quad form, as produced by `processMeshSectionRequest`). */
 export interface MeshSectionResultPayload {
   sectionX: number;
   sectionY: number;
@@ -51,6 +51,11 @@ export interface MeshSectionResultPayload {
   quads: OpaqueFaceQuad[];
   /** Version/generation token echoed from the request (present on pooled results). */
   generationToken?: number;
+  /**
+   * Packed typed-array form of `quads` (worker-entry transport). When present the
+   * main thread expands it directly and `quads` is empty.
+   */
+  packed?: PackedMeshResult;
 }
 
 const MODEL_FACE_KEYS: ReadonlySet<string> = new Set(['up', 'down', 'north', 'south', 'east', 'west']);
@@ -72,11 +77,49 @@ export function validateMeshSectionResult(input: unknown): MeshSectionResultPayl
   if (!Number.isInteger(r.sectionX) || !Number.isInteger(r.sectionY) || !Number.isInteger(r.sectionZ)) {
     throw new Error('MeshSectionResult: section coordinates must be integers');
   }
-  if (!Array.isArray(r.quads)) {
+  return {
+    sectionX: r.sectionX as number,
+    sectionY: r.sectionY as number,
+    sectionZ: r.sectionZ as number,
+    ...validateResultBody(r),
+  };
+}
+
+/**
+ * Validate the body of a mesh result after envelope identity checks: either the quad form
+ * (`quads`) or the packed typed-array form (`data`/`quadCount`/`stride`, produced by the
+ * worker entry). Throws on any invalid field.
+ */
+function validateResultBody(
+  r: Record<string, unknown>,
+): { quads: OpaqueFaceQuad[] } | { quads: OpaqueFaceQuad[]; packed: PackedMeshResult } {
+  if (r.data !== undefined || r.quadCount !== undefined || r.stride !== undefined) {
+    if (!(r.data instanceof Float32Array)) {
+      throw new Error('MeshSectionResult: packed data must be a Float32Array');
+    }
+    if (!Number.isInteger(r.quadCount) || (r.quadCount as number) < 0) {
+      throw new Error('MeshSectionResult: quadCount must be a non-negative integer');
+    }
+    if (r.stride !== PACKED_QUAD_STRIDE) {
+      throw new Error(`MeshSectionResult: stride must be ${PACKED_QUAD_STRIDE}`);
+    }
+    if ((r.data as Float32Array).length !== (r.quadCount as number) * PACKED_QUAD_STRIDE) {
+      throw new Error('MeshSectionResult: packed data length must equal quadCount * stride');
+    }
+    return {
+      quads: [],
+      packed: { data: r.data as Float32Array, quadCount: r.quadCount as number, stride: PACKED_QUAD_STRIDE },
+    };
+  }
+  return { quads: validateQuads(r.quads) };
+}
+
+function validateQuads(rawQuads: unknown): OpaqueFaceQuad[] {
+  if (!Array.isArray(rawQuads)) {
     throw new Error('MeshSectionResult: quads must be an array');
   }
   const quads: OpaqueFaceQuad[] = [];
-  for (const raw of r.quads) {
+  for (const raw of rawQuads) {
     if (typeof raw !== 'object' || raw === null) {
       throw new Error('MeshSectionResult: each quad must be an object');
     }
@@ -112,11 +155,38 @@ export function validateMeshSectionResult(input: unknown): MeshSectionResultPayl
     }
     quads.push(raw as OpaqueFaceQuad);
   }
+  return quads;
+}
+
+/** Validate an untyped worker request payload as a {@link MeshSectionRequestPayload}. */
+export function validateMeshSectionRequest(input: unknown): MeshSectionRequestPayload {
+  if (typeof input !== 'object' || input === null) {
+    throw new Error('MeshSectionRequest: expected an object');
+  }
+  const r = input as Record<string, unknown>;
+  if (!Number.isInteger(r.sectionX) || !Number.isInteger(r.sectionY) || !Number.isInteger(r.sectionZ)) {
+    throw new Error('MeshSectionRequest: section coordinates must be integers');
+  }
+  if (
+    !Array.isArray(r.cells) || (r.cells as unknown[]).length !== SECTION * SECTION * SECTION ||
+    !(r.cells as unknown[]).every((c) => c === null || (typeof c === 'number' && Number.isInteger(c) && c >= 0))
+  ) {
+    throw new Error('MeshSectionRequest: cells must be 4096 entries of null or non-negative integers');
+  }
+  if (!Array.isArray(r.opaqueIds) ||
+    !(r.opaqueIds as unknown[]).every((id) => typeof id === 'number' && Number.isInteger(id))) {
+    throw new Error('MeshSectionRequest: opaqueIds must be an array of integers');
+  }
+  assertLightArray('skyLight', r.skyLight);
+  assertLightArray('blockLight', r.blockLight);
   return {
     sectionX: r.sectionX as number,
     sectionY: r.sectionY as number,
     sectionZ: r.sectionZ as number,
-    quads,
+    cells: r.cells as Array<number | null>,
+    opaqueIds: r.opaqueIds as number[],
+    skyLight: r.skyLight as number[],
+    blockLight: r.blockLight as number[],
   };
 }
 
@@ -187,17 +257,13 @@ function assertLightArray(name: string, values: unknown): asserts values is numb
 
 /** Build a section-local light sampler over a validated payload (070). */
 export function sectionLightSampler(payload: MeshSectionRequestPayload): LightSampler {
-  const baseX = payload.sectionX * SECTION;
-  const baseY = payload.sectionY * SECTION;
-  const baseZ = payload.sectionZ * SECTION;
   const opaque = new Set(payload.opaqueIds);
 
+  // The greedy mesher samples with section-LOCAL coordinates (0..15); the payload's
+  // sectionX/Y/Z are identity metadata echoed on results, not sampling offsets.
   const localIndex = (x: number, y: number, z: number): number | null => {
-    const dx = x - baseX;
-    const dy = y - baseY;
-    const dz = z - baseZ;
-    if (dx < 0 || dx >= SECTION || dy < 0 || dy >= SECTION || dz < 0 || dz >= SECTION) return null;
-    return dx + dy * SECTION + dz * SECTION * SECTION;
+    if (x < 0 || x >= SECTION || y < 0 || y >= SECTION || z < 0 || z >= SECTION) return null;
+    return x + y * SECTION + z * SECTION * SECTION;
   };
 
   return {
@@ -228,18 +294,13 @@ export function processMeshSectionRequest(
   assertLightArray('skyLight', payload.skyLight);
   assertLightArray('blockLight', payload.blockLight);
   const opaque = new Set(payload.opaqueIds);
-  const baseX = payload.sectionX * SECTION;
-  const baseY = payload.sectionY * SECTION;
-  const baseZ = payload.sectionZ * SECTION;
 
+  // Greedy mesher samples in section-LOCAL coordinates; sectionX/Y/Z are identity only.
   const getCell: FaceCellSampler = (x, y, z) => {
-    const dx = x - baseX;
-    const dy = y - baseY;
-    const dz = z - baseZ;
-    if (dx < 0 || dx >= SECTION || dy < 0 || dy >= SECTION || dz < 0 || dz >= SECTION) {
+    if (x < 0 || x >= SECTION || y < 0 || y >= SECTION || z < 0 || z >= SECTION) {
       return null;
     }
-    return payload.cells[dx + dy * SECTION + dz * SECTION * SECTION] ?? null;
+    return payload.cells[x + y * SECTION + z * SECTION * SECTION] ?? null;
   };
   const isOpaque = (id: number): boolean => opaque.has(id);
   const faceKey = (id: number): string => String(id);
@@ -491,11 +552,20 @@ function emptyExpandStream(): ExpandStream {
 }
 
 /**
+ * Decode a packed tint class id into normalized RGB (Phase 11.4): the class is a
+ * resolved 24-bit biome color (`biomeTintClassId`); 0 means untinted white.
+ */
+export function packedTintRgb(classId: number): [number, number, number] {
+  if (classId === 0) return [1, 1, 1];
+  return [((classId >> 16) & 255) / 255, ((classId >> 8) & 255) / 255, (classId & 255) / 255];
+}
+
+/**
  * Decode a stride-22 packed quad buffer ({@link packQuadsToTypedArrays} output) into four-stream
  * BufferGeometries. Main-thread only (builds geometry via `info.buildGeometry`); deterministic.
  *
- * Tint classes are emitted untinted white — biome tint resolution is not carried in the packed
- * layout and is applied by a later pass once class → RGB mapping is validated.
+ * Tint classes carry resolved 24-bit biome colors through the packed layout; they are decoded
+ * here via {@link packedTintRgb} so worker-path output matches the sync mesher's tints.
  */
 /**
  * Corner geometry inputs for one packed quad, shared by `expandPackedMeshResult` and parity
@@ -562,7 +632,8 @@ export function expandPackedMeshResult(packed: PackedMeshResult, info: PackedMes
       stream.skyLight.push(packed.data[lightBase]!);
       stream.blockLight.push(packed.data[lightBase + 1]!);
       stream.ao.push(packed.data[lightBase + 2]!);
-      stream.tint.push(1, 1, 1);
+      const [tr, tg, tb] = packedTintRgb(packed.data[o + 7]!);
+      stream.tint.push(tr, tg, tb);
       stream.vertices++;
     }
     // CCW winding matching MeshingTypes' pushQuadIndices convention.
