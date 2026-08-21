@@ -13,6 +13,7 @@
  * (which owns randomness), mirroring 196's injected-rolls pattern.
  */
 import type { WeatherState } from '../simulation/WeatherFramework';
+import type { EnvironmentState } from './Environment';
 
 /** Sky darkening during plain rain (vanilla-inspired). */
 export const RAIN_SKY_DARKNESS = 0.25;
@@ -65,4 +66,57 @@ export function presentWeather(state: WeatherState): WeatherPresentation {
         thunderSoundLevel: 1,
       };
   }
+}
+
+/** Discrete precipitation intensity tiers for rendering/particle budgets. */
+export type PrecipitationTier = 'clear' | 'light' | 'moderate' | 'storm';
+
+/** Tier thresholds (module constants instead of CONFIG edits). */
+const TIER_LIGHT_MIN = 0.001;
+const TIER_MODERATE_MIN = 0.34;
+const TIER_STORM_MIN = 0.67;
+
+/** Map a continuous `rainIntensity` (e.g. from an interpolated transition) to its tier. */
+export function precipitationTier(rainIntensity: number): PrecipitationTier {
+  if (!Number.isFinite(rainIntensity) || rainIntensity < TIER_LIGHT_MIN) return 'clear';
+  if (rainIntensity < TIER_MODERATE_MIN) return 'light';
+  if (rainIntensity < TIER_STORM_MIN) return 'moderate';
+  return 'storm';
+}
+
+/**
+ * Fold a weather presentation into the shared {@link EnvironmentState}: precipitation/thunder
+ * intensities are set and sky/fog colors are darkened coherently by the same `skyDarkness` factor
+ * so fog never disagrees with the sky. Writes into `out` (or a fresh state) — no allocation when
+ * `out` is the live environment state object.
+ */
+export function applyWeatherToEnvironment(
+  state: EnvironmentState,
+  presentation: WeatherPresentation,
+  out?: EnvironmentState,
+): EnvironmentState {
+  const target = out ?? state;
+  target.precipitationIntensity = presentation.rainIntensity;
+  target.thunderIntensity = presentation.thunderIntensity;
+  if (target !== state) {
+    // Copy time/day fields so a fresh out does not inherit zeros silently.
+    target.timeOfDayHours = state.timeOfDayHours;
+    target.sunDirection.x = state.sunDirection.x;
+    target.sunDirection.y = state.sunDirection.y;
+    target.sunDirection.z = state.sunDirection.z;
+    target.daylightFactor = state.daylightFactor;
+    target.exposure = state.exposure;
+  }
+  const darken = 1 - presentation.skyDarkness;
+  target.skyZenith.r = state.skyZenith.r * darken;
+  target.skyZenith.g = state.skyZenith.g * darken;
+  target.skyZenith.b = state.skyZenith.b * darken;
+  target.skyHorizon.r = state.skyHorizon.r * darken;
+  target.skyHorizon.g = state.skyHorizon.g * darken;
+  target.skyHorizon.b = state.skyHorizon.b * darken;
+  target.fogColor.r = state.fogColor.r * darken;
+  target.fogColor.g = state.fogColor.g * darken;
+  target.fogColor.b = state.fogColor.b * darken;
+  target.exposure = Math.max(0, target.exposure * (1 - presentation.skyDarkness * 0.5));
+  return target;
 }

@@ -2,7 +2,10 @@
  * Voxel light storage (066). A `NibbleArray` stores 4096 4-bit values in 2048 bytes (low nibble of
  * byte `i` = cell `2i`, high nibble = cell `2i + 1`), with bounds/value validation and deterministic
  * serialization. A `SectionLightStorage` wraps sky and block light nibble arrays with per-coordinate
- * accessors, `fill`, and serialization. Propagation (067/068) and meshing (070) consume these.
+ * accessors, `fill`, and serialization. `WorldLightStorage` is the authoritative per-section map with
+ * world-coordinate accessors, section-border slice accessors for cross-section propagation, and
+ * typed-array snapshot/restore for persistence/worker transport. Propagation (067/068) and meshing
+ * (070) consume these.
  */
 import { localIndex, SECTION_VOLUME, type LocalCoord } from '../math/SectionCoordinate';
 
@@ -135,3 +138,256 @@ export class SectionLightStorage {
     return new SectionLightStorage(data.sky, data.block);
   }
 }
+
+/** One of the six section faces, named by the neighbor's direction. */
+export type LightFace = 'up' | 'down' | 'north' | 'south' | 'west' | 'east';
+
+/** Cells per border slice (16×16). */
+export const BORDER_SLICE_LENGTH = 256;
+
+/** Which light channel a slice accessor addresses. */
+export type LightChannel = 'sky' | 'block';
+
+/**
+ * Deterministic in-slice index layout per face:
+ * - `west`/`east` (fixed localX): `localY * 16 + localZ`
+ * - `down`/`up` (fixed localY): `localZ * 16 + localX`
+ * - `north`/`south` (fixed localZ): `localY * 16 + localX`
+ */
+
+function assertFace(face: LightFace): void {
+  switch (face) {
+    case 'up':
+    case 'down':
+    case 'north':
+    case 'south':
+    case 'west':
+    case 'east':
+      return;
+    default:
+      throw new RangeError(`WorldLightStorage: unknown face ${String(face)}`);
+  }
+}
+
+function assertSliceLength(length: number, label: string): void {
+  if (length !== BORDER_SLICE_LENGTH) {
+    throw new RangeError(`WorldLightStorage: slice ${label} must hold ${BORDER_SLICE_LENGTH} values`);
+  }
+}
+
+/** World-coordinate position of cell `i` of a face's border slice. */
+export function borderSliceCell(face: LightFace, i: number): { x: number; y: number; z: number } {
+  const fixed = face === 'west' || face === 'down' || face === 'north' ? 0 : 15;
+  const a = Math.floor(i / 16); // localY for side faces, localZ for horizontal faces
+  const b = i % 16;
+  switch (face) {
+    case 'west':
+    case 'east':
+      return { x: fixed, y: a, z: b };
+    case 'down':
+    case 'up':
+      return { x: b, y: fixed, z: a };
+    case 'north':
+    case 'south':
+      return { x: b, y: a, z: fixed };
+  }
+}
+
+/** Serialized form of one section's position and light. */
+export interface SerializedSectionLight {
+  readonly sectionX: number;
+  readonly sectionY: number;
+  readonly sectionZ: number;
+  readonly sky: Uint8Array;
+  readonly block: Uint8Array;
+}
+
+/** Snapshot of all sections' light; plain typed arrays, structured-clone safe. */
+export interface WorldLightSnapshot {
+  readonly sections: readonly SerializedSectionLight[];
+}
+
+/**
+ * Authoritative packed-light store across sections. World-coordinate accessors route through a
+ * one-entry section cache (propagation is strongly section-local); missing sections read as 0.
+ * Writes auto-create the target section. Only malformed coordinates or slice buffers throw.
+ */
+export class WorldLightStorage {
+  private readonly sections = new Map<string, SectionLightStorage>();
+  /** One-entry lookup cache: propagation touches the same section many times in a row. */
+  private cacheKey: string | null = null;
+  private cacheSection: SectionLightStorage | null = null;
+
+  /** Number of stored sections. */
+  get size(): number {
+    return this.sections.size;
+  }
+
+  private key(sx: number, sy: number, sz: number): string {
+    return `${sx},${sy},${sz}`;
+  }
+
+  private sectionFor(sx: number, sy: number, sz: number): SectionLightStorage | undefined {
+    const key = this.key(sx, sy, sz);
+    if (this.cacheKey === key) return this.cacheSection!;
+    const section = this.sections.get(key);
+    if (section !== undefined) {
+      this.cacheKey = key;
+      this.cacheSection = section;
+    }
+    return section;
+  }
+
+  /** The section's storage, creating zero-filled storage when absent. */
+  getOrCreateSection(sx: number, sy: number, sz: number): SectionLightStorage {
+    const key = this.key(sx, sy, sz);
+    let section = this.sections.get(key);
+    if (section === undefined) {
+      section = new SectionLightStorage();
+      this.sections.set(key, section);
+    }
+    this.cacheKey = key;
+    this.cacheSection = section;
+    return section;
+  }
+
+  /** The section's storage, or `undefined`. */
+  getSection(sx: number, sy: number, sz: number): SectionLightStorage | undefined {
+    return this.sectionFor(sx, sy, sz);
+  }
+
+  /** Drop one section's light. */
+  deleteSection(sx: number, sy: number, sz: number): boolean {
+    const removed = this.sections.delete(this.key(sx, sy, sz));
+    if (removed) {
+      this.cacheKey = null;
+      this.cacheSection = null;
+    }
+    return removed;
+  }
+
+  /** Remove every section. */
+  clear(): void {
+    this.sections.clear();
+    this.cacheKey = null;
+    this.cacheSection = null;
+  }
+
+  private assertWorldCoord(value: number, label: string): void {
+    if (!Number.isInteger(value)) {
+      throw new RangeError(`WorldLightStorage: ${label} must be an integer: ${value}`);
+    }
+  }
+
+  /** Sky light at world coordinates; 0 outside any known section. */
+  getSkyLight(x: number, y: number, z: number): number {
+    this.assertWorldCoord(x, 'x');
+    this.assertWorldCoord(y, 'y');
+    this.assertWorldCoord(z, 'z');
+    const section = this.sectionFor(x >> 4, y >> 4, z >> 4);
+    return section ? section.getSkyLight(x & 15, y & 15, z & 15) : 0;
+  }
+
+  /** Set sky light at world coordinates, creating the section when absent. */
+  setSkyLight(x: number, y: number, z: number, value: number): void {
+    this.assertWorldCoord(x, 'x');
+    this.assertWorldCoord(y, 'y');
+    this.assertWorldCoord(z, 'z');
+    this.getOrCreateSection(x >> 4, y >> 4, z >> 4).setSkyLight(x & 15, y & 15, z & 15, value);
+  }
+
+  /** Block light at world coordinates; 0 outside any known section. */
+  getBlockLight(x: number, y: number, z: number): number {
+    this.assertWorldCoord(x, 'x');
+    this.assertWorldCoord(y, 'y');
+    this.assertWorldCoord(z, 'z');
+    const section = this.sectionFor(x >> 4, y >> 4, z >> 4);
+    return section ? section.getBlockLight(x & 15, y & 15, z & 15) : 0;
+  }
+
+  /** Set block light at world coordinates, creating the section when absent. */
+  setBlockLight(x: number, y: number, z: number, value: number): void {
+    this.assertWorldCoord(x, 'x');
+    this.assertWorldCoord(y, 'y');
+    this.assertWorldCoord(z, 'z');
+    this.getOrCreateSection(x >> 4, y >> 4, z >> 4).setBlockLight(x & 15, y & 15, z & 15, value);
+  }
+
+  /**
+   * Read a section-border slice into `dest` (or a fresh array). Missing sections yield zeros.
+   * Layout per {@link borderSliceCell}.
+   */
+  readBorderSlice(
+    sx: number,
+    sy: number,
+    sz: number,
+    face: LightFace,
+    channel: LightChannel,
+    dest?: Uint8Array,
+  ): Uint8Array {
+    assertFace(face);
+    const out = dest ?? new Uint8Array(BORDER_SLICE_LENGTH);
+    assertSliceLength(out.length, 'destination');
+    out.fill(0);
+    const section = this.sectionFor(sx, sy, sz);
+    if (!section) return out;
+    for (let i = 0; i < BORDER_SLICE_LENGTH; i++) {
+      const { x, y, z } = borderSliceCell(face, i);
+      out[i] = channel === 'sky' ? section.getSkyLight(x, y, z) : section.getBlockLight(x, y, z);
+    }
+    return out;
+  }
+
+  /**
+   * Write a 256-value slice onto a section border, creating the section when absent. Mirrors
+   * {@link readBorderSlice}'s layout; values must be in [0, 15].
+   */
+  writeBorderSlice(
+    sx: number,
+    sy: number,
+    sz: number,
+    face: LightFace,
+    channel: LightChannel,
+    src: Uint8Array,
+  ): void {
+    assertFace(face);
+    assertSliceLength(src.length, 'source');
+    const section = this.getOrCreateSection(sx, sy, sz);
+    for (let i = 0; i < BORDER_SLICE_LENGTH; i++) {
+      const v = src[i]!;
+      if (!Number.isInteger(v) || v < 0 || v > 15) {
+        throw new RangeError(`WorldLightStorage: slice value out of range [0, 15]: ${v}`);
+      }
+      const { x, y, z } = borderSliceCell(face, i);
+      if (channel === 'sky') section.setSkyLight(x, y, z, v);
+      else section.setBlockLight(x, y, z, v);
+    }
+  }
+
+  /** Deep snapshot as plain typed arrays (copies; safe to structured-clone). */
+  snapshot(): WorldLightSnapshot {
+    const sections: SerializedSectionLight[] = [];
+    for (const [key, section] of this.sections) {
+      const parts = key.split(',');
+      const data = section.serialize();
+      sections.push({
+        sectionX: Number(parts[0]),
+        sectionY: Number(parts[1]),
+        sectionZ: Number(parts[2]),
+        sky: data.sky,
+        block: data.block,
+      });
+    }
+    return { sections };
+  }
+
+  /** Replace all stored light from a snapshot (copies). */
+  restore(snapshot: WorldLightSnapshot): void {
+    this.clear();
+    for (const entry of snapshot.sections) {
+      const section = new SectionLightStorage(entry.sky, entry.block);
+      this.sections.set(this.key(entry.sectionX, entry.sectionY, entry.sectionZ), section);
+    }
+  }
+}
+

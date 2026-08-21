@@ -6,6 +6,8 @@
  * results (fixed neighbor order).
  */
 
+import { ChannelUpdateQueue, type DrainResult, type DrainBudget, type LightChannelContext, type LightVersion } from './LightUpdateEngine';
+
 /** The light world the engine computes over. */
 export interface BlockLightWorld {
   /** 0 when the cell is not a light source. */
@@ -70,4 +72,70 @@ export function computeBlockLight(world: BlockLightWorld): number {
   }
 
   return lit;
+}
+
+/** Predicates and storage the incremental block-light engine reads and writes. */
+export interface BlockLightFieldAccess {
+  /** Lowest world Y of the lit volume. */
+  minY: number;
+  /** Highest world Y + 1 (world top). */
+  maxY: number;
+  isOpaque(x: number, y: number, z: number): boolean;
+  /** Emitted light level (0 for non-sources); sources include opaque blocks like glowstone. */
+  getLuminance(x: number, y: number, z: number): number;
+  getBlockLight(x: number, y: number, z: number): number;
+  setBlockLight(x: number, y: number, z: number, value: number): void;
+}
+
+/**
+ * Incremental block-light channel: `invalidate` records edited cells (deduplicated; fresh emitters
+ * are seeded with their luminance at drain time), `drain` applies removal-then-re-propagation within
+ * a work budget, and `version` advances per batch so stale async applications can be rejected.
+ */
+export class BlockLightEngine {
+  private readonly queue = new ChannelUpdateQueue();
+  private readonly context: LightChannelContext;
+
+  constructor(private readonly access: BlockLightFieldAccess) {
+    this.context = {
+      minY: access.minY,
+      maxY: access.maxY,
+      isOpaque: (x, y, z) => access.isOpaque(x, y, z),
+      get: (x, y, z) => access.getBlockLight(x, y, z),
+      set: (x, y, z, v) => access.setBlockLight(x, y, z, v),
+      attenuate: (value) => value - 1,
+      consumesEqualDown: false,
+      emit: (x, y, z) => access.getLuminance(x, y, z),
+    };
+  }
+
+  /** Queue a cell for re-evaluation. */
+  invalidate(x: number, y: number, z: number): void {
+    this.queue.invalidate(this.context, x, y, z);
+  }
+
+  /** Process queued work; unfinished work remains queued across calls. */
+  drain(budget: DrainBudget): DrainResult {
+    return this.queue.drain(this.context, budget);
+  }
+
+  /** Queued work units. */
+  get pendingCount(): number {
+    return this.queue.pendingCount;
+  }
+
+  /** True when nothing is queued. */
+  get idle(): boolean {
+    return this.queue.idle;
+  }
+
+  /** Version token of the latest applied propagation batch. */
+  get version(): LightVersion {
+    return this.queue.version;
+  }
+
+  /** Drop queued work without touching stored light. */
+  clearPending(): void {
+    this.queue.clear();
+  }
 }

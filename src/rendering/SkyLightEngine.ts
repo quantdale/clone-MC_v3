@@ -4,7 +4,14 @@
  * block (0 below). It then propagates via a FIFO BFS through non-opaque cells: a cell with light `v`
  * raises its six non-opaque neighbors to `v - 1` when darker. Neighbor order is fixed
  * (`-x, +x, -y, +y, -z, +z`), so identical worlds produce identical results.
+ *
+ * `SkyLightEngine` provides the incremental counterpart with Minecraft-like direct-sky columns:
+ * skylight 15 propagates straight down undiminished, lateral propagation decrements by 1, and a
+ * removal may consume an equal-value cell only when moving straight down a lit column. Invalidation
+ * is queued and deduplicated, drains are work-budgeted, and each applied batch bumps a version token.
  */
+
+import { ChannelUpdateQueue, type DrainResult, type DrainBudget, type LightChannelContext, type LightVersion } from './LightUpdateEngine';
 
 /** The light world the engine computes over. */
 export interface SkyLightWorld {
@@ -79,4 +86,66 @@ export function computeSkyLight(world: SkyLightWorld): number {
   }
 
   return lit;
+}
+
+/** Predicates and storage the incremental skylight engine reads and writes. */
+export interface SkyLightFieldAccess {
+  /** Lowest world Y of the lit volume. */
+  minY: number;
+  /** Highest world Y + 1 (world top). */
+  maxY: number;
+  isOpaque(x: number, y: number, z: number): boolean;
+  getSkyLight(x: number, y: number, z: number): number;
+  setSkyLight(x: number, y: number, z: number, value: number): void;
+}
+
+/**
+ * Incremental skylight channel: `invalidate` records edits (deduplicated; directly lit columns
+ * below an edit are included), `drain` applies removal-then-re-propagation within a work budget,
+ * and `version` advances per batch so stale async applications can be rejected.
+ */
+export class SkyLightEngine {
+  private readonly queue = new ChannelUpdateQueue();
+  private readonly context: LightChannelContext;
+  constructor(private readonly access: SkyLightFieldAccess) {
+    this.context = {
+      minY: access.minY,
+      maxY: access.maxY,
+      isOpaque: (x, y, z) => access.isOpaque(x, y, z),
+      get: (x, y, z) => access.getSkyLight(x, y, z),
+      set: (x, y, z, v) => access.setSkyLight(x, y, z, v),
+      attenuate: (value, _dx, dy) => (value === 15 && dy === -1 ? 15 : value - 1),
+      consumesEqualDown: true,
+    };
+  }
+
+  /** Queue a cell (and its directly lit column below) for re-evaluation. */
+  invalidate(x: number, y: number, z: number): void {
+    this.queue.invalidate(this.context, x, y, z);
+  }
+
+  /** Process queued work; unfinished work remains queued across calls. */
+  drain(budget: DrainBudget): DrainResult {
+    return this.queue.drain(this.context, budget);
+  }
+
+  /** Queued work units. */
+  get pendingCount(): number {
+    return this.queue.pendingCount;
+  }
+
+  /** True when nothing is queued. */
+  get idle(): boolean {
+    return this.queue.idle;
+  }
+
+  /** Version token of the latest applied propagation batch. */
+  get version(): LightVersion {
+    return this.queue.version;
+  }
+
+  /** Drop queued work without touching stored light. */
+  clearPending(): void {
+    this.queue.clear();
+  }
 }

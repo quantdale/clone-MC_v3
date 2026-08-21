@@ -1,6 +1,9 @@
 /**
- * Main-thread light saturation harness (238, light-saturation). Drives the deterministic light
- * engines (066-069) at worst-case volume over a fixed dense volume, measuring full-pass
+ * Main-thread light saturation harness (238, light-saturation). Composition helper over the
+ * deterministic light engines (066-069) — the pure full-pass entry points (`computeSkyLight`,
+ * `computeBlockLight`) and single-shot incremental update (`updateLightAfterEdit`) it drives are
+ * unchanged by the bounded/versioned engine layer, so this harness measures the same semantics.
+ * Drives at worst-case volume over a fixed dense volume, measuring full-pass
  * (067 `computeSkyLight` + 068 `computeBlockLight`) and incremental-edit-pass (069
  * `updateLightAfterEdit`) latency with an injectable clock, tracking bounded per-cell visits, and
  * evaluating full-pass/edit-pass latency budgets. Preserves 069 equivalence (incremental equals a
