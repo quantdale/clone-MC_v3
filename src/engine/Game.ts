@@ -97,6 +97,16 @@ interface GameSaveSnapshot {
  * Wires the entire game together: renderer, world, player, interaction, UI, and
  * the main loop. Owns the app lifecycle and disposes all resources on stop.
  */
+/** Test-only render-quality overrides (245), applied only by the VITE_E2E boot seam. */
+export interface GameQualityOverrides {
+  /** Integer chunk radius applied to World/Environment creation. */
+  renderDistance?: number;
+  /** Camera field of view in degrees. */
+  fov?: number;
+  /** Fixed daylight factor (0-1) the day-night clock is frozen at. */
+  brightness?: number;
+}
+
 export class Game {
   private readonly blockRegistry: BlockRegistry;
   private readonly itemRegistry: ItemTypeRegistry;
@@ -198,10 +208,33 @@ export class Game {
    *  enters its recoverable error state. Never set in production gameplay. */
   private failNextUpdate = false;
 
+  /** Test-only hook (245): pin the camera to an exact yaw/pitch pose. */
+  testSetCameraPose(yaw: number, pitch: number): void {
+    this.player.yaw = yaw;
+    this.player.pitch = pitch;
+  }
+
+  /** Test-only hook (245): freeze the day-night clock at a fixed daylight factor. */
+  testFreezeDayNight(daylight: number): void {
+    this.lighting.freezeDayNight(daylight);
+  }
+
+  /** Test-only hook (245): pin dynamic HUD/debug text to fixed constants. */
+  testNormalizeHud(fpsText: string, worldTimeText: string, debugStatsText?: string): void {
+    this.hud.setFixedText(fpsText, worldTimeText);
+    if (debugStatsText !== undefined) {
+      this.debugOverlay.setFixedText(debugStatsText);
+    }
+  }
+
   /** The seed resolved from the URL ?seed= override, or the configured default. */
   readonly seed: number;
 
-  constructor(canvas: HTMLCanvasElement, seed?: number) {
+  constructor(
+    canvas: HTMLCanvasElement,
+    seed?: number,
+    quality?: GameQualityOverrides,
+  ) {
     this.seed = seed ?? this.resolveSeed();
 
     this.blockRegistry = createDefaultBlockRegistry();
@@ -234,7 +267,14 @@ export class Game {
 
     this.lighting = new Lighting(this.renderer.scene);
     this.resources.track(this.lighting);
-    const renderDistance = this.runtimeRenderDistance();
+    if (quality?.fov !== undefined) {
+      this.renderer.camera.fov = quality.fov;
+      this.renderer.camera.updateProjectionMatrix();
+    }
+    if (quality?.brightness !== undefined) {
+      this.lighting.freezeDayNight(quality.brightness);
+    }
+    const renderDistance = quality?.renderDistance ?? this.runtimeRenderDistance();
     this.environment = new Environment(this.renderer.scene, renderDistance, this.seed);
     this.resources.track(this.environment);
     this.audio = new GameAudio();

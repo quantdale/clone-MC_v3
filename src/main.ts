@@ -1,5 +1,5 @@
 import './styles.css';
-import { Game } from './engine/Game';
+import { Game, type GameQualityOverrides } from './engine/Game';
 
 /**
  * Application bootstrap.
@@ -24,9 +24,18 @@ function bootstrap(): void {
     return;
   }
 
+  // Test-only boot seam (245): the VITE_E2E build may apply a fixed quality
+  // profile injected via Playwright's addInitScript before any page script runs.
+  // Shipped builds never read this global.
+  let quality: GameQualityOverrides | undefined;
+  if (import.meta.env.VITE_E2E === 'true') {
+    quality = (
+      window as unknown as { __voxelQualityProfile?: GameQualityOverrides }
+    ).__voxelQualityProfile;
+  }
   let game: Game;
   try {
-    game = new Game(canvas);
+    game = new Game(canvas, undefined, quality);
   } catch (err) {
     showFatalError(
       `Failed to initialize the game: ${err instanceof Error ? err.message : String(err)}`,

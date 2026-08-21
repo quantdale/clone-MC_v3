@@ -28,6 +28,8 @@ export class Lighting {
   private readonly nightSunColor = new THREE.Color(0x6f86b3);
   private daylightFactor = 1;
   private worldSeconds = 0;
+  /** Test-only freeze flag (245): when set, the clock and sun direction never advance. */
+  private frozen = false;
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
@@ -58,9 +60,10 @@ export class Lighting {
    * scene lighting is untouched.
    */
   update(dt: number, focus?: THREE.Vector3): void {
-    this.worldSeconds = (this.worldSeconds + Math.max(0, Math.min(dt, CONFIG.maxDeltaTime))) % CONFIG.dayNight.dayLength;
+    const effectiveDt = this.frozen ? 0 : Math.max(0, Math.min(dt, CONFIG.maxDeltaTime));
+    this.worldSeconds = (this.worldSeconds + effectiveDt) % CONFIG.dayNight.dayLength;
     let directionChanged = false;
-    if (CONFIG.dayNight.enabled) {
+    if (CONFIG.dayNight.enabled && !this.frozen) {
       const anglePerSecond = (Math.PI * 2) / CONFIG.dayNight.dayLength;
       this.sunDirection.applyAxisAngle(this.dayNightAxis, -anglePerSecond * dt);
       directionChanged = true;
@@ -90,6 +93,20 @@ export class Lighting {
         this.sun.target.updateMatrixWorld();
       }
     }
+  }
+
+  /**
+   * Test-only hook (245): freezes the day-night clock at a fixed daylight factor.
+   * Pins the sun direction analytically (solving d = (y + 0.18) / 1.05 for the unit
+   * direction's y with the canonical azimuth ratio) so repeated captures are identical.
+   */
+  freezeDayNight(daylight: number): void {
+    const d = THREE.MathUtils.clamp(daylight, 0, 1);
+    this.frozen = true;
+    const y = 1.05 * d - 0.18;
+    const horiz = Math.sqrt(Math.max(0, 1 - y * y));
+    const hLen = Math.hypot(0.5, 0.3);
+    this.sunDirection.set((0.5 / hLen) * horiz, y, (0.3 / hLen) * horiz);
   }
 
   /** Current normalized brightness used to synchronize the sky shader. */

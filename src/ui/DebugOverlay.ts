@@ -14,6 +14,8 @@ export interface DebugStats {
  */
 export class DebugOverlay {
   private readonly el: HTMLElement;
+  /** Test-only override (245): when set, update() renders this constant block. */
+  private fixedText: string | null = null;
 
   constructor(el: HTMLElement) {
     this.el = el;
@@ -21,6 +23,10 @@ export class DebugOverlay {
 
   /** Format and write the current stats into the overlay element. */
   update(data: DebugStats): void {
+    if (this.fixedText !== null) {
+      this.el.textContent = this.fixedText;
+      return;
+    }
     const [x, y, z] = data.position;
     this.el.textContent = [
       `pos: ${formatNum(x)} ${formatNum(y)} ${formatNum(z)}`,
@@ -30,6 +36,12 @@ export class DebugOverlay {
       `pendingMesh: ${data.pendingMesh}`,
       `triangles: ${data.triangles}`,
     ].join('\n');
+  }
+
+  /** Test-only hook (245): pin the stats block to a fixed constant. */
+  setFixedText(text: string): void {
+    this.fixedText = text;
+    this.el.textContent = text;
   }
 
   /** Toggle the overlay's visibility. */

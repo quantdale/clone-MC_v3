@@ -3,15 +3,45 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **244-worldgen-regression-matrix — VERIFIED 100% (15/15 tasks)**
-- Active implementation change: **245-visual-regression-matrix — ACTIVE (0/15 tasks, just activated)**
-- Next change: **246-input-accessibility-matrix — ready after 245 VERIFIED**
-- 244 required-test gate: **PASS — typecheck, lint, unit 286 files / 3719 passed + 1 skipped (+25 tests), build, e2e 35/35**
-- 244 advancement allowed: **yes (VERIFIED; no exception used)**
-- Session-start head: `0783031c47b518bdbf0fe2ea84c4b9eb8123b3fa` (this session); published head recorded in the session report
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), the chat and command networking (233), the server world persistence (234), the reconnect state recovery (235), the multiplayer load tests (236), the network adversarial validation (237), the worker and main-thread stress (238), the long-session memory stress (239) VERIFIED, the save recovery stress (240) VERIFIED, the deterministic-replay-suite (241) VERIFIED 100%, survival-progression-e2e (242) VERIFIED 100%, redstone-automation-e2e (243) VERIFIED 100%, and worldgen-regression-matrix (244) VERIFIED 100% (WorldgenRegressionMatrix pins biome/structure/ore/cave/surface/block/hash outcomes across seeds {0,1,42,1337,1234,9999} with a 36-fixture v1 catalog, matrix hash 1789027111, registry fingerprint 6e654848); Hardening interlock VERIFIED.**
+- Last completed change: **245-visual-regression-matrix — VERIFIED 100% (15/15 tasks)**
+- Active implementation change: **246-input-accessibility-matrix — ACTIVE (0/15 tasks, just activated)**
+- Next change: **247-performance-release-gate — ready after 246 VERIFIED**
+- 245 required-test gate: **PASS — typecheck, lint, unit 288 files / 3759 passed + 1 skipped (+40 tests), build (no test seam in dist), e2e 36/36 (12.7m incl. the 60-cell visual matrix)**
+- 245 advancement allowed: **yes (VERIFIED; no exception used)**
+- Session-start head: `3c8f8e906493169eba3cfca8e05420cba1b61dde` (this session); published head recorded in the session report
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), the chat and command networking (233), the server world persistence (234), the reconnect state recovery (235), the multiplayer load tests (236), the network adversarial validation (237), the worker and main-thread stress (238), the long-session memory stress (239) VERIFIED, the save recovery stress (240) VERIFIED, the deterministic-replay-suite (241) VERIFIED 100%, survival-progression-e2e (242) VERIFIED 100%, redstone-automation-e2e (243) VERIFIED 100%, worldgen-regression-matrix (244) VERIFIED 100%, and visual-regression-matrix (245) VERIFIED 100% (60-cell golden-image matrix: 10 screens x low/default/high x 1280x720/1920x1080, committed goldens under tests/visual-golden/, verify-mode green); Hardening interlock VERIFIED.**
 - Hardening interlock: **VERIFIED at e3ecf86c28553c558459c855a3aee3b003bcb157 (run 32320823336 #337 SUCCESS; 78/78 tasks 100%; all gates green)**
-- Next exact action: **Begin 245-visual-regression-matrix: read its artifacts, then implement tests/visual/matrix.ts + goldenCompare.ts, the VITE_E2E-only boot seam, and visual-regression.spec.ts per its tasks**
+- Next exact action: **Begin 246-input-accessibility-matrix: read its artifacts, record baseline into its verification.md, then implement per its tasks**
+
+## What 245 implemented
+
+Change 245 adds the **visual regression matrix**: a deterministic golden-image guard over the
+Render/HUD/inventory/environment surfaces.
+
+- Pure modules: `tests/visual/matrix.ts` (10 screens with family/mode/selector, low/default/high
+  quality profiles, two 16:9 resolutions, 60-cell `allCells()`, `goldenPath()`,
+  `validateMatrix()` + per-collection validators) and `tests/visual/goldenCompare.ts`
+  (`comparePng` byte-identity fast path, exact vs pixel-diff modes with channelTolerance 24 /
+  maxChangedFraction 0.01 for WebGL screens, missing-golden/dimension-mismatch/decode-error
+  outcomes; deterministic; `writeDiffPng` debug artifacts). pngjs only; no new dependency.
+- VITE_E2E-only boot seam: `Game` accepts `quality?: GameQualityOverrides`
+  (renderDistance -> World/Environment, fov -> camera, brightness -> frozen daylight);
+  `main.ts` reads `window.__voxelQualityProfile` (injected via Playwright addInitScript)
+  strictly under the same gate that exposes `__voxelGame`. Shipped bundles contain no seam
+  (verified by grep over dist).
+- Deterministic-state hooks: `Game.testSetCameraPose`, `Game.testFreezeDayNight` (backed by
+  `Lighting.freezeDayNight` — analytic sun-direction pin solving d=(y+0.18)/1.05, dt=0 while
+  frozen), `Game.testNormalizeHud` (backed by `HUD.setFixedText` / `DebugOverlay.setFixedText`
+  overrides honored inside per-frame updates).
+- Capture harness: `tests/e2e/visual-regression.spec.ts` — fresh context per cell, fixed seed
+  1337, quality injected pre-boot, fixed camera pose, per-screen day/night freeze
+  (environment-day=1.0, environment-night=0.0), normalized dynamic text, settle delay,
+  full-viewport or element-clipped capture, UPDATE_SNAPSHOTS / SCREEN_FILTER env handling,
+  failure artifacts under test-results/visual/.
+- Goldens: 60 committed PNGs under `tests/visual-golden/` (14 MB), seeded once via
+  UPDATE_SNAPSHOTS=1; verify-mode re-run passes all 60 cells (5.4m).
+- Tests: `VisualMatrix.test.ts` (24) + `GoldenCompare.test.ts` (16) cover every scenario in the
+  matrix-manifest and golden-comparison specs' verification mappings.
 
 ## What 244 implemented
 
