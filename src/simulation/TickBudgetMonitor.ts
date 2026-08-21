@@ -133,6 +133,13 @@ export class TickBudgetMonitor {
     return this.lastOverrunMs;
   }
 
+  /** Clear the timing/overrun counters (e.g. alongside a process `reset`); the budget is kept. */
+  reset(): void {
+    this.lastMs = 0;
+    this.overrunCount = 0;
+    this.lastOverrunMs = 0;
+  }
+
   /** A verdict snapshot: last tick time, overruns, last overrun, and whether the last tick was in budget. */
   sample(): TickSample {
     return {
@@ -142,4 +149,20 @@ export class TickBudgetMonitor {
       withinBudget: withinLatency(this.budgetMillis, this.lastMs),
     };
   }
+}
+
+/**
+ * Alignment helper for the fixed-tick driver pipeline (audit 02 §3): wraps any `TickSystem` in a
+ * {@link TickBudgetMonitor} so it can be registered — in order — inside a `WorldTickProcess` or
+ * driven from a `FixedTickDriver` tick callback while still reporting per-tick budget verdicts.
+ */
+export function wrapSystemWithBudget(system: TickSystem, opts: TickBudgetMonitorOptions): TickBudgetMonitor {
+  if (!isTickSystemValue(system)) {
+    throw new Error('wrapSystemWithBudget: system must have a callable tick');
+  }
+  return new TickBudgetMonitor(system, opts);
+}
+
+function isTickSystemValue(value: unknown): value is TickSystem {
+  return typeof value === 'object' && value !== null && typeof (value as TickSystem).tick === 'function';
 }
