@@ -79,6 +79,33 @@ import {
 } from '../simulation/HostileMobBaseline';
 import { HostileMobRenderer } from '../rendering/HostileMobRenderer';
 import { BreedingSystem, type BreedableSpecies } from '../simulation/AnimalBreeding';
+import {
+  clearAll,
+  resolveFrame,
+  type DeviceFrame,
+  type ResolvedInputFrame,
+} from '../simulation/InputCoordinator';
+import {
+  gamepadFrame,
+  keyboardActions,
+  loadWithFallback,
+  type RawGamepadSnapshot,
+} from '../simulation/InputWiring';
+import {
+  createDefaultKeybindings,
+  deserializeKeybindings,
+  type KeybindingState,
+} from '../simulation/KeybindingFramework';
+import {
+  createDefaultSettings,
+  deserializeSettings,
+} from '../simulation/SettingsFramework';
+import {
+  createDefaultAccessibility,
+  deserializeAccessibility,
+  type AccessibilityStore,
+} from '../simulation/AccessibilityFramework';
+import { resolveTouches, type TouchPoint } from '../simulation/TouchFramework';
 
 interface GameSaveSnapshot {
   version: 1;
@@ -201,8 +228,33 @@ export class Game {
   private contextLost = false;
   private pointerLocked = false;
   private craftingOpen = false;
+  /** Whether the pause/start overlay is currently shown (246 playability input). */
+  private overlayOpen = false;
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
   private bobTime = 0;
+
+  // ── Device input wiring (246) ─────────────────────────────────────────────
+  /** The canvas owning the touch-capture listeners (kept for dispose). */
+  private readonly gameCanvas: HTMLCanvasElement;
+  /** Last resolved per-device input frame; rebuilt every update(). */
+  private resolvedInput: ResolvedInputFrame = {
+    actions: [],
+    move: { x: 0, y: 0 },
+    look: { x: 0, y: 0 },
+    breakHeld: false,
+    useHeld: false,
+    pickHeld: false,
+    hotbarIndex: -1,
+    hotbarDelta: 0,
+    uiNav: { up: false, down: false, left: false, right: false, confirm: false, cancel: false },
+    active: false,
+  };
+  /** Active 207 keybinding state feeding both InputManager and the frame build. */
+  private keybindings: KeybindingState = createDefaultKeybindings();
+  /** Active 208 accessibility store (reducedMotion/uiScale). */
+  private accessibility: AccessibilityStore = createDefaultAccessibility();
+  /** Active touches normalized to [0,1], with their previous point when known. */
+  private readonly activeTouches = new Map<number, { point: TouchPoint; previous?: TouchPoint }>();
 
   /** Test-only hook (239): when true, the next `update` throws so the game
    *  enters its recoverable error state. Never set in production gameplay. */
@@ -236,6 +288,7 @@ export class Game {
     quality?: GameQualityOverrides,
   ) {
     this.seed = seed ?? this.resolveSeed();
+    this.gameCanvas = canvas;
 
     this.blockRegistry = createDefaultBlockRegistry();
     this.itemRegistry = createDefaultItemRegistry();
@@ -342,8 +395,17 @@ export class Game {
     this.input = new InputManager(
       canvas,
       (locked) => this.onLockChange(locked),
-      (message) => this.showInputError(message),
+      (message) => {
+        // pointerlockerror (246): clear every device, then surface the
+        // recoverable "Pointer lock failed" overlay message.
+        this.applyFocusLoss();
+        this.showInputError(message);
+      },
     );
+    // Load persisted 206/207/208 payloads through the corrupt-safe fallback and
+    // hand them to the input path before any frame runs.
+    this.loadInputConfiguration();
+    this.attachTouchCapture();
     this.controller = new PlayerController(this.player, this.input);
     this.physics = new PlayerPhysics(this.world, this.blockRegistry);
     this.itemEntities = new ItemEntityManager({ itemRegistry: this.itemRegistry, rng: Math.random });
@@ -425,6 +487,9 @@ export class Game {
     // Resize handling.
     window.addEventListener('resize', this.onResize);
     window.addEventListener('pagehide', this.onPageHide);
+    // Unified focus-loss clear (246): blur and hidden both zero every device.
+    window.addEventListener('blur', this.onWindowFocusLoss);
+    document.addEventListener('visibilitychange', this.onVisibilityChange);
   }
 
   /** Start the game loop and show the initial UI. */
@@ -453,8 +518,11 @@ export class Game {
     }
     this.saveEdits();
     this.input.dispose();
+    this.detachTouchCapture();
     window.removeEventListener('resize', this.onResize);
     window.removeEventListener('pagehide', this.onPageHide);
+    window.removeEventListener('blur', this.onWindowFocusLoss);
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
     if (this.resizeTimer !== null) {
       clearTimeout(this.resizeTimer);
       this.resizeTimer = null;
@@ -508,7 +576,7 @@ export class Game {
     this.toastEl.classList.add('hidden');
     this.errorMessageEl.textContent = message;
     this.errorEl.classList.remove('hidden');
-    this.overlayEl.classList.add('hidden');
+    this.hideOverlay();
     this.loading.hide();
   }
 
@@ -532,7 +600,23 @@ export class Game {
     this.world.update(dt, pcx, pcz);
     const readyProgress = this.world.getReadyProgress(pcx, pcz);
     const worldReady = readyProgress >= 1;
-    const simulationActive = worldReady && this.pointerLocked && !this.craftingOpen;
+    // Device input wiring (246): poll/assemble the four devices, resolve them
+    // through the pure coordinator, then evaluate the playable-state rule.
+    // Keyboard/mouse frames are active only while pointer-locked; gamepad/touch
+    // drive lock-free; a paused/overlaid or still-loading game delivers nothing.
+    const deviceFrame = this.buildDeviceFrame(worldReady);
+    this.resolvedInput = resolveFrame(deviceFrame);
+    // Feed the arbitrated analog movement into the controller path. While
+    // pointer-locked the keyboard owns movement exactly as before (the external
+    // contribution is zeroed); in lock-free play the resolved gamepad/touch
+    // move drives the player.
+    this.input.setExternalMove(this.pointerLocked ? { x: 0, y: 0 } : this.resolvedInput.move);
+    this.maybeDismissOverlayForControllerPlay(deviceFrame, worldReady);
+    const simulationActive =
+      worldReady &&
+      !this.craftingOpen &&
+      !this.overlayOpen &&
+      (this.pointerLocked || this.hasControllerInput(deviceFrame));
     if (simulationActive) {
       this.controller.update(dt);
       this.physics.update(this.player, dt);
@@ -594,7 +678,10 @@ export class Game {
     } else {
       this.bobTime += dt * 2;
     }
-    const bobAmount = moving && this.player.onGround && !this.player.inWater && !this.player.inLava ? Math.sin(this.bobTime) * 0.018 : 0;
+    const bobAmount =
+      moving && this.player.onGround && !this.player.inWater && !this.player.inLava
+        ? Math.sin(this.bobTime) * 0.018 * (this.accessibility.reducedMotion === true ? 0 : 1)
+        : 0;
     this.renderer.camera.position.copy(eye);
     this.renderer.camera.position.y += bobAmount;
     this.renderer.camera.rotation.set(0, 0, 0);
@@ -623,7 +710,7 @@ export class Game {
     if (this.loadingShown && worldReady) {
       this.loading.hide();
       this.loadingShown = false;
-      if (this.pointerLocked) {
+      if (this.shouldShowHud()) {
         this.crosshair.show();
         this.hud.show();
         this.hotbar.show();
@@ -847,7 +934,7 @@ export class Game {
       if (this.craftingOpen) {
         this.closeCrafting();
       }
-      this.overlayEl.classList.add('hidden');
+      this.hideOverlay();
       // The HUD/crosshair only appear once the world is ready (see update()).
       if (!this.loadingShown) {
         this.crosshair.show();
@@ -897,13 +984,19 @@ export class Game {
   private showOverlay(message = 'Click to play'): void {
     this.overlayMessageEl.textContent = message;
     this.overlayEl.classList.remove('hidden');
+    this.overlayOpen = true;
+  }
+
+  private hideOverlay(): void {
+    this.overlayEl.classList.add('hidden');
+    this.overlayOpen = false;
   }
 
   private openCrafting(): void {
     if (this.craftingOpen) return;
     this.craftingOpen = true;
     this.input.releasePointerLock();
-    this.overlayEl.classList.add('hidden');
+    this.hideOverlay();
     this.crosshair.hide();
     this.hud.hide();
     this.hotbar.hide();
@@ -937,6 +1030,305 @@ export class Game {
     this.setBreakProgress(0);
     this.interaction.clearTarget();
   }
+
+  // ── Device input wiring (246) ─────────────────────────────────────────────
+
+  /** E2E observability (246): plain copy of the last resolved input frame. */
+  resolvedInputView(): ResolvedInputFrame {
+    const r = this.resolvedInput;
+    return {
+      actions: [...r.actions],
+      move: { ...r.move },
+      look: { ...r.look },
+      breakHeld: r.breakHeld,
+      useHeld: r.useHeld,
+      pickHeld: r.pickHeld,
+      hotbarIndex: r.hotbarIndex,
+      hotbarDelta: r.hotbarDelta,
+      uiNav: { ...r.uiNav },
+      active: r.active,
+    };
+  }
+
+  /** Load persisted 206/207/208 payloads; corrupt ones fall back to defaults. */
+  private loadInputConfiguration(): void {
+    const settings = this.loadStoredPayload(
+      'voxel-game-settings-v1',
+      deserializeSettings,
+      createDefaultSettings,
+      'settings',
+    );
+    // The settings store lives in InputManager (mouse look + autoJump read it).
+    this.input.setSettings(settings.value);
+    const keybindings = this.loadStoredPayload(
+      'voxel-game-keybindings-v1',
+      deserializeKeybindings,
+      createDefaultKeybindings,
+      'keybindings',
+    );
+    this.keybindings = keybindings.value;
+    this.input.setBindings(keybindings.value);
+
+    const accessibility = this.loadStoredPayload(
+      'voxel-game-accessibility-v1',
+      deserializeAccessibility,
+      createDefaultAccessibility,
+      'accessibility',
+    );
+    this.accessibility = accessibility.value;
+    this.applyUiScale();
+  }
+
+  /**
+   * Read one persisted payload: absent storage yields clean defaults; a broken
+   * JSON payload or a throwing deserializer falls back to defaults with a
+   * single console.warn (never fatal).
+   */
+  private loadStoredPayload<T>(
+    key: string,
+    deserialize: (input: unknown) => T,
+    createDefault: () => T,
+    label: string,
+  ): { value: T; corrupted: boolean } {
+    let raw: string | null = null;
+    try {
+      raw = window.localStorage.getItem(key);
+    } catch {
+      // Storage unavailable (private mode etc.) — defaults are safe.
+    }
+    if (raw === null || raw.length === 0) {
+      return { value: createDefault(), corrupted: false };
+    }
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (err) {
+      console.warn(`[voxel] corrupt persisted ${label} payload; using defaults`, err);
+      return { value: createDefault(), corrupted: true };
+    }
+    const result = loadWithFallback(deserialize, createDefault, parsed);
+    if (result.corrupted) {
+      console.warn(`[voxel] corrupt persisted ${label} payload; using defaults`);
+    }
+    return result;
+  }
+
+  /** Apply 208's uiScale to the UI root (small=0.85, normal/auto=1, large=1.15). */
+  private applyUiScale(): void {
+    const uiRoot = document.getElementById('ui-root');
+    if (!uiRoot) return;
+    const scale =
+      this.accessibility.uiScale === 'small' ? 0.85 : this.accessibility.uiScale === 'large' ? 1.15 : 1;
+    uiRoot.style.fontSize = `${Math.round(scale * 100)}%`;
+  }
+
+  /** Capture touch pointers on the canvas, normalized to [0,1] (246). */
+  private attachTouchCapture(): void {
+    this.gameCanvas.addEventListener('pointerdown', this.onCanvasPointerDown);
+    this.gameCanvas.addEventListener('pointermove', this.onCanvasPointerMove);
+    this.gameCanvas.addEventListener('pointerup', this.onCanvasPointerUp);
+    this.gameCanvas.addEventListener('pointercancel', this.onCanvasPointerCancel);
+  }
+
+  private detachTouchCapture(): void {
+    this.gameCanvas.removeEventListener('pointerdown', this.onCanvasPointerDown);
+    this.gameCanvas.removeEventListener('pointermove', this.onCanvasPointerMove);
+    this.gameCanvas.removeEventListener('pointerup', this.onCanvasPointerUp);
+    this.gameCanvas.removeEventListener('pointercancel', this.onCanvasPointerCancel);
+  }
+
+  private isTouchPointer(event: PointerEvent): boolean {
+    return event.pointerType === 'touch' || event.pointerType === 'pen';
+  }
+
+  private normalizePointerPoint(event: PointerEvent): TouchPoint {
+    const rect = this.gameCanvas.getBoundingClientRect();
+    const width = rect.width > 0 ? rect.width : 1;
+    const height = rect.height > 0 ? rect.height : 1;
+    return {
+      x: Math.min(1, Math.max(0, (event.clientX - rect.left) / width)),
+      y: Math.min(1, Math.max(0, (event.clientY - rect.top) / height)),
+    };
+  }
+
+  private readonly onCanvasPointerDown = (event: PointerEvent): void => {
+    if (!this.isTouchPointer(event)) return;
+    this.activeTouches.set(event.pointerId, { point: this.normalizePointerPoint(event) });
+  };
+
+  private readonly onCanvasPointerMove = (event: PointerEvent): void => {
+    if (!this.isTouchPointer(event)) return;
+    const previous = this.activeTouches.get(event.pointerId)?.point;
+    this.activeTouches.set(event.pointerId, {
+      point: this.normalizePointerPoint(event),
+      previous,
+    });
+  };
+
+  private readonly onCanvasPointerUp = (event: PointerEvent): void => {
+    if (!this.isTouchPointer(event)) return;
+    this.activeTouches.delete(event.pointerId);
+  };
+
+  private readonly onCanvasPointerCancel = (event: PointerEvent): void => {
+    if (!this.isTouchPointer(event)) return;
+    this.activeTouches.delete(event.pointerId);
+  };
+
+  /** Poll navigator.getGamepads defensively; absence/failure degrades to null. */
+  private pollGamepads(): RawGamepadSnapshot[] | null {
+    try {
+      const pads = navigator.getGamepads?.();
+      if (!pads) return null;
+      const snapshots: RawGamepadSnapshot[] = [];
+      for (const pad of pads) {
+        if (!pad) continue;
+        snapshots.push({
+          connected: pad.connected === true,
+          buttons: Array.from(pad.buttons, (button) => ({ pressed: button?.pressed === true })),
+          axes: Array.from(pad.axes, (axis) =>
+            typeof axis === 'number' && Number.isFinite(axis) ? axis : 0,
+          ),
+        });
+      }
+      return snapshots;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Assemble the per-frame DeviceFrame from the four devices. Keyboard/mouse
+   * fields are zeroed unless pointer-locked (their contributions require lock);
+   * gamepad/touch are read whenever present. The playable-state rule composes
+   * `active`: never while paused/overlaid/crafting or before the world is ready;
+   * keyboard/mouse only while locked; gamepad when connected; touch while down.
+   */
+  private buildDeviceFrame(worldReady: boolean): DeviceFrame {
+    const locked = this.pointerLocked;
+    const keyboard = locked
+      ? {
+          heldActions: keyboardActions(this.input.heldCodesView(), this.keybindings),
+          hotbarIndex: this.input.peekHotbarIndex(),
+          hotbarDelta: this.input.peekHotbarDelta(),
+        }
+      : { heldActions: [], hotbarIndex: -1, hotbarDelta: 0 };
+    const mouseDelta = locked ? this.input.peekMouseDelta() : { dyaw: 0, dpitch: 0 };
+    const touchState = resolveTouches(
+      [...this.activeTouches.values()].map((touch) => ({
+        point: touch.point,
+        previous: touch.previous,
+      })),
+    );
+    const frame: DeviceFrame = {
+      keyboard,
+      mouse: {
+        look: { x: mouseDelta.dyaw, y: mouseDelta.dpitch },
+        breakHeld: locked && this.input.isBreakHeld(),
+        useHeld: locked && this.input.isUseHeld(),
+        pickHeld: locked && this.input.isPickHeld(),
+      },
+      gamepad: gamepadFrame(this.pollGamepads()),
+      touch: {
+        actions: touchState.actions,
+        move: touchState.move,
+        look: touchState.lookDelta,
+      },
+    };
+    const touchPresent = this.activeTouches.size > 0;
+    return {
+      ...frame,
+      active:
+        !this.overlayOpen &&
+        !this.craftingOpen &&
+        worldReady &&
+        (this.pointerLocked || frame.gamepad.connected || touchPresent),
+    };
+  }
+
+  /**
+   * Lock-free play gate (246): true when a gamepad/touch is actually delivering
+   * non-zero input this frame (keyboard/mouse require pointer lock instead).
+   * Purely a device-contribution check — pause/overlay state is applied by the
+   * callers, otherwise controller activity could never dismiss the overlay.
+   */
+  private hasControllerInput(frame: DeviceFrame): boolean {
+    const gp = frame.gamepad;
+    const gamepadDriving =
+      gp.connected &&
+      (gp.move.x !== 0 ||
+        gp.move.y !== 0 ||
+        gp.look.x !== 0 ||
+        gp.look.y !== 0 ||
+        gp.actions.length > 0);
+    const touch = frame.touch;
+    const touchDriving =
+      touch.actions.length > 0 ||
+      touch.move.x !== 0 ||
+      touch.move.y !== 0 ||
+      touch.look.x !== 0 ||
+      touch.look.y !== 0;
+    return gamepadDriving || touchDriving;
+  }
+
+  /**
+   * Whether the crosshair/HUD/hotbar should be visible: pointer-locked play, or
+   * an in-progress lock-free controller/touch session (overlay dismissed).
+   */
+  private shouldShowHud(): boolean {
+    return this.pointerLocked || (!this.overlayOpen && !this.craftingOpen);
+  }
+
+  /**
+   * Lock-free play (246): controller/touch activity dismisses the start/pause
+   * overlay without pointer lock, mirroring what a canvas click does for
+   * keyboard/mouse. Keyboard-only sessions keep today's click-to-play flow.
+   */
+  private maybeDismissOverlayForControllerPlay(frame: DeviceFrame, worldReady: boolean): void {
+    if (!this.overlayOpen || !worldReady) return;
+    if (this.craftingOpen || this.contextLost || !this.errorEl.classList.contains('hidden')) return;
+    if (!this.hasControllerInput(frame)) return;
+    this.hideOverlay();
+    if (this.shouldShowHud()) {
+      this.crosshair.show();
+      this.hud.show();
+      this.hotbar.show();
+    }
+  }
+
+  /**
+   * Unified focus-loss handling (246): zero every device for the next frame via
+   * clearAll, and end any lock-free session by restoring the pause overlay.
+   * Keyboard/mouse pause behavior is unchanged (InputManager clears its own
+   * state and fires onLockChange(false), which shows the overlay as today).
+   */
+  private applyFocusLoss(): void {
+    this.resolvedInput = resolveFrame({ ...clearAll(this.buildDeviceFrame(false)), active: false });
+    if (
+      !this.overlayOpen &&
+      !this.pointerLocked &&
+      !this.craftingOpen &&
+      !this.contextLost &&
+      this.errorEl.classList.contains('hidden')
+    ) {
+      this.showOverlay();
+      this.crosshair.hide();
+      this.hud.hide();
+      this.hotbar.hide();
+      this.interaction.clearTarget();
+      this.setBreakProgress(0);
+    }
+  }
+
+  private readonly onWindowFocusLoss = (): void => {
+    this.applyFocusLoss();
+  };
+
+  private readonly onVisibilityChange = (): void => {
+    if (document.hidden) {
+      this.applyFocusLoss();
+    }
+  };
 
   private onInteractionAction(action: InteractionAction, blockId?: number): void {
     const name = blockId !== undefined

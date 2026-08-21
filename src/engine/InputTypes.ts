@@ -51,4 +51,14 @@ export interface InputState {
 
   /** Returns true when the food-use key was pressed. */
   consumeEat(): boolean;
+
+  /** Whether 206's autoJump is enabled; optional so existing implementations stay valid. */
+  wantsAutoJump?(): boolean;
+
+  /**
+   * Current analog movement (gamepad/touch, 246) in the coordinator's axis
+   * convention (x = strafe right+, y = forward−); optional so existing
+   * implementations stay valid. Keyboard flags remain separate.
+   */
+  analogMove?(): { x: number; y: number };
 }

@@ -15,6 +15,13 @@ export class PlayerController {
   private readonly player: Player;
   private readonly input: InputState;
 
+  /** Auto-jump latch (206): armed while airborne, consumed by one landing jump. */
+  private autoJumpArmed = false;
+  /** True when the previous airborne phase was started by the auto-jump itself. */
+  private autoJumpLanded = false;
+  /** True when the previous airborne phase was started by a held-jump input. */
+  private manualJumped = false;
+
   constructor(player: Player, input: InputState) {
     this.player = player;
     this.input = input;
@@ -36,14 +43,17 @@ export class PlayerController {
       );
     }
 
-    // Horizontal movement direction from WASD, relative to yaw.
+    // Horizontal movement direction from WASD plus the optional analog
+    // gamepad/touch contribution (246, coordinator axis convention:
+    // y = -forward), relative to yaw. Opposite inputs cancel.
     const forward = this.input.moveForward ? 1 : 0;
     const back = this.input.moveBack ? 1 : 0;
     const left = this.input.moveLeft ? 1 : 0;
     const right = this.input.moveRight ? 1 : 0;
+    const analog = this.input.analogMove?.() ?? { x: 0, y: 0 };
 
-    const fwd = forward - back;
-    const strafe = right - left;
+    const fwd = forward - back - analog.y;
+    const strafe = right - left + analog.x;
 
     // Desired movement vector in world space (yaw uses -Z forward convention).
     const sinYaw = Math.sin(this.player.yaw);
@@ -92,6 +102,29 @@ export class PlayerController {
         ? CONFIG.player.swimUpVelocity
         : CONFIG.player.jumpVelocity;
       this.player.onGround = false;
+      this.manualJumped = true;
+    }
+    // Auto-jump (206): when enabled and jump is not held, trigger a single
+    // automatic jump on landing. Armed while airborne and consumed by exactly
+    // one jump so it cannot bounce continuously; landings that follow a manual
+    // jump or the auto-jump's own hop do not re-trigger.
+    if (!this.player.onGround) {
+      this.autoJumpArmed = true;
+    } else if (this.autoJumpArmed) {
+      this.autoJumpArmed = false;
+      const suppressed = this.manualJumped || this.autoJumpLanded;
+      this.manualJumped = false;
+      this.autoJumpLanded = false;
+      if (
+        !suppressed &&
+        !this.input.jump &&
+        !this.player.inWater &&
+        this.input.wantsAutoJump?.() === true
+      ) {
+        this.player.velocity.y = CONFIG.player.jumpVelocity;
+        this.player.onGround = false;
+        this.autoJumpLanded = true;
+      }
     }
   }
 

@@ -3,15 +3,42 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **245-visual-regression-matrix — VERIFIED 100% (15/15 tasks)**
-- Active implementation change: **246-input-accessibility-matrix — ACTIVE (0/15 tasks, just activated)**
-- Next change: **247-performance-release-gate — ready after 246 VERIFIED**
-- 245 required-test gate: **PASS — typecheck, lint, unit 288 files / 3759 passed + 1 skipped (+40 tests), build (no test seam in dist), e2e 36/36 (12.7m incl. the 60-cell visual matrix)**
-- 245 advancement allowed: **yes (VERIFIED; no exception used)**
-- Session-start head: `3c8f8e906493169eba3cfca8e05420cba1b61dde` (this session); published head recorded in the session report
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), the chat and command networking (233), the server world persistence (234), the reconnect state recovery (235), the multiplayer load tests (236), the network adversarial validation (237), the worker and main-thread stress (238), the long-session memory stress (239) VERIFIED, the save recovery stress (240) VERIFIED, the deterministic-replay-suite (241) VERIFIED 100%, survival-progression-e2e (242) VERIFIED 100%, redstone-automation-e2e (243) VERIFIED 100%, worldgen-regression-matrix (244) VERIFIED 100%, and visual-regression-matrix (245) VERIFIED 100% (60-cell golden-image matrix: 10 screens x low/default/high x 1280x720/1920x1080, committed goldens under tests/visual-golden/, verify-mode green); Hardening interlock VERIFIED.**
+- Last completed change: **246-input-accessibility-matrix — VERIFIED 100% (15/15 tasks)**
+- Active implementation change: **247-performance-release-gate — ACTIVE (0/15 tasks, just activated)**
+- Next change: **248-parity-matrix-reconciliation — ready after 247 VERIFIED**
+- 246 required-test gate: **PASS — typecheck, lint, unit 290 files / 3805 passed + 1 skipped (+46 tests), build, e2e 40/40 (12.4m incl. 4 new device-input cases)**
+- 246 advancement allowed: **yes (VERIFIED; no exception used)**
+- Session-start head: `b915d5bc522977adc2788bcc30d9b8cd37f22f2e` (this session); published head recorded in the session report
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), the chat and command networking (233), the server world persistence (234), the reconnect state recovery (235), the multiplayer load tests (236), the network adversarial validation (237), the worker and main-thread stress (238), the long-session memory stress (239) VERIFIED, the save recovery stress (240) VERIFIED, the deterministic-replay-suite (241) VERIFIED 100%, survival-progression-e2e (242) VERIFIED 100%, redstone-automation-e2e (243) VERIFIED 100%, worldgen-regression-matrix (244) VERIFIED 100%, visual-regression-matrix (245) VERIFIED 100%, and input-accessibility-matrix (246) VERIFIED 100% (InputCoordinator arbitrates keyboard/mouse/gamepad/touch into one ResolvedInputFrame; remap-aware dispatch, gamepad/touch lock-free play, unified focus-loss recovery, 206/208 settings applied); Hardening interlock VERIFIED.**
 - Hardening interlock: **VERIFIED at e3ecf86c28553c558459c855a3aee3b003bcb157 (run 32320823336 #337 SUCCESS; 78/78 tasks 100%; all gates green)**
-- Next exact action: **Begin 246-input-accessibility-matrix: read its artifacts, record baseline into its verification.md, then implement per its tasks**
+- Next exact action: **Begin 247-performance-release-gate: read its artifacts, record baseline into its verification.md, then implement per its tasks**
+
+## What 246 implemented
+
+Change 246 wires the four input devices through a new pure coordinator into the live game.
+
+- `src/simulation/InputCoordinator.ts` (NEW): `resolveFrame` merges per-device raw resolutions
+  into one `ResolvedInputFrame` — action union deduped in KEYBINDING_ACTIONS order (mouse
+  break/use/pick contribute attack/use/pickBlock), move arbitration gamepad > touch >
+  keyboard-cardinal with zero-deferral, look arbitration mouse > gamepad > touch, any-device
+  held-button merge, hotbar aggregation, uiNav passthrough, wiring-owned `active`;
+  `clearAll`/`clearDevice` O(1) rebuilds. Pure/headless: no DOM, no mutation, no throws.
+- `src/simulation/InputWiring.ts` (NEW): `keyboardActions(codes, bindings)` via actionForKey;
+  `applyMouseLook` ((mouseSensitivity/0.5) * CONFIG scale so default reproduces today exactly;
+  invertY flips vertical); `loadWithFallback` corrupt-payload guard; `gamepadFrame` poll shape
+  with disconnect zeroing.
+- `InputManager`: held-code Set + binding-based dispatch (remap applies to subsequent
+  keydowns; hotbar digits once per press); focus loss clears held codes (re-arm rule);
+  observables for e2e. `Game`: boot-time settings/keybindings/accessibility load with corrupt
+  fallback; per-frame DeviceFrame assembly + resolveFrame; play gate
+  `worldReady && !craftingOpen && !overlayOpen && (pointerLocked || hasControllerInput)` —
+  gamepad/touch play lock-free; unified blur/visibilitychange/pointerlockerror handler;
+  reducedMotion zeroes bob; uiScale scales #ui-root. `PlayerController`: autoJump latch +
+  analog-move fold-in.
+- Tests: `tests/unit/InputCoordinator.test.ts` (28) + `tests/unit/InputWiring.test.ts` (18)
+  cover every spec verification row; e2e `device input matrix (246)` describe adds 4 cases
+  (simulated gamepad lock-free movement, touch-driven movement, blur zeroes resolved input,
+  paused delivers inactive frame). All prior e2e assertions stayed green throughout.
 
 ## What 245 implemented
 

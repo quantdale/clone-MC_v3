@@ -1,5 +1,37 @@
-import { CONFIG } from '../config';
 import type { InputState, MouseDelta } from './InputTypes';
+import { applyMouseLook } from '../simulation/InputWiring';
+import {
+  actionForKey,
+  createDefaultKeybindings,
+  type KeybindingAction,
+  type KeybindingState,
+} from '../simulation/KeybindingFramework';
+import { createDefaultSettings, type SettingsStore } from '../simulation/SettingsFramework';
+
+/** Actions that drive player movement and therefore require pointer lock. */
+const MOVEMENT_ACTIONS: ReadonlySet<string> = new Set([
+  'forward',
+  'back',
+  'left',
+  'right',
+  'jump',
+  'sprint',
+]);
+
+/**
+ * Legacy aliases kept alongside the 207 bindings so default play is unchanged:
+ * the arrow keys still move and Shift still sprints even though the framework's
+ * default table binds neither. A remapped action stops flowing through its old
+ * key immediately (recompute always uses the CURRENT bindings).
+ */
+const LEGACY_ALIASES: Readonly<Record<string, KeybindingAction>> = {
+  ArrowUp: 'forward',
+  ArrowDown: 'back',
+  ArrowLeft: 'left',
+  ArrowRight: 'right',
+  ShiftLeft: 'sprint',
+  ShiftRight: 'sprint',
+};
 
 /**
  * Collects keyboard / mouse input into a shared InputState consumable by the
@@ -9,6 +41,12 @@ import type { InputState, MouseDelta } from './InputTypes';
  * accumulated into a yaw/pitch delta that is consumed (and reset) by
  * consumeMouseDelta(). Break/place actions and the hotbar scroll are queued on
  * the underlying events and consumed once per frame.
+ *
+ * Movement/jump/sprint flags are derived from the held key codes intersected
+ * with the active 207 keybinding state (plus the legacy arrow/Shift aliases),
+ * so a remap applies to subsequent keydowns only and never re-arms a currently
+ * held key whose action moved away. Mouse look scales through the 206 settings
+ * via applyMouseLook (see InputWiring for the exact scale contract).
  */
 export class InputManager implements InputState {
   moveForward = false;
@@ -20,6 +58,11 @@ export class InputManager implements InputState {
 
   private locked = false;
 
+  /** KeyboardEvent.codes currently down (cleared on focus loss / unlock). */
+  private readonly heldCodes = new Set<string>();
+  private bindings: KeybindingState = createDefaultKeybindings();
+  private settings: SettingsStore = createDefaultSettings();
+
   private dyaw = 0;
   private dpitch = 0;
 
@@ -28,6 +71,10 @@ export class InputManager implements InputState {
   private breakClickQueued = false;
   private breakPressedAt = 0;
   private placeQueued = false;
+  private useHeld = false;
+  private pickHeld = false;
+  /** Analog gamepad/touch movement (246); overwritten each frame by Game. */
+  private externalMove: { x: number; y: number } = { x: 0, y: 0 };
   private hotbarDelta = 0;
   private hotbarIndex = -1;
   private debugToggleQueued = false;
@@ -70,6 +117,71 @@ export class InputManager implements InputState {
 
   isLocked(): boolean {
     return this.locked;
+  }
+
+  /** Replaces the active 207 keybinding state; held keys re-resolve immediately. */
+  setBindings(state: KeybindingState): void {
+    this.bindings = state;
+    this.recomputeMovement();
+  }
+
+  /** Replaces the active 206 settings store (mouse look scale/invertY/autoJump). */
+  setSettings(store: SettingsStore): void {
+    this.settings = store;
+  }
+
+  /** Whether 206's autoJump is enabled (the ground check stays with the controller). */
+  wantsAutoJump(): boolean {
+    return this.settings.autoJump === true;
+  }
+
+  /** E2E observability: snapshot of the currently held key codes. */
+  heldCodesView(): string[] {
+    return [...this.heldCodes];
+  }
+
+  /** E2E observability: the active keybinding state (immutable). */
+  bindingsView(): KeybindingState {
+    return this.bindings;
+  }
+
+  /** Non-consuming mouse delta read for the per-frame device frame. */
+  peekMouseDelta(): MouseDelta {
+    return { dyaw: this.dyaw, dpitch: this.dpitch };
+  }
+
+  /** Non-consuming queued hotbar slot for the per-frame device frame. */
+  peekHotbarIndex(): number {
+    return this.hotbarIndex;
+  }
+
+  /** Non-consuming queued wheel delta for the per-frame device frame. */
+  peekHotbarDelta(): number {
+    return this.hotbarDelta;
+  }
+
+  /** Whether the right mouse button is currently held (use). */
+  isUseHeld(): boolean {
+    return this.useHeld;
+  }
+
+  /** Whether the middle mouse button is currently held (pick block). */
+  isPickHeld(): boolean {
+    return this.pickHeld;
+  }
+
+  /**
+   * Analog movement contributed by gamepad/touch (246), set by Game each frame
+   * from the resolved coordinator output. Zero while pointer-locked, where the
+   * keyboard owns movement exactly as before.
+   */
+  setExternalMove(move: { x: number; y: number }): void {
+    this.externalMove = { x: move.x, y: move.y };
+  }
+
+  /** The current analog movement in the coordinator's axis convention. */
+  analogMove(): { x: number; y: number } {
+    return this.externalMove;
   }
 
   /** Release pointer lock and clear movement without removing input listeners. */
@@ -190,46 +302,37 @@ export class InputManager implements InputState {
 
   private readonly onMouseMove = (event: MouseEvent): void => {
     if (!this.locked) return;
-    this.dyaw += event.movementX * CONFIG.mouseSensitivity;
-    // Mouse movement Y is positive when the mouse moves down, so negate it to
-    // keep dpitch positive when the mouse moves up (matching the "positive = up"
-    // convention documented on MouseDelta and Player.pitch).
-    this.dpitch -= event.movementY * CONFIG.mouseSensitivity;
+    // applyMouseLook scales by the 206 settings; its y keeps screen convention
+    // (positive = mouse moved down), so negate it to keep dpitch positive when
+    // the mouse moves up (matching the "positive = up" convention documented on
+    // MouseDelta and Player.pitch). With default settings this reproduces the
+    // previous hard-coded `movement * CONFIG.mouseSensitivity` math exactly.
+    const look = applyMouseLook(
+      { movementX: event.movementX, movementY: event.movementY },
+      this.settings,
+    );
+    this.dyaw += look.x;
+    this.dpitch -= look.y;
   };
 
   private readonly onKeyDown = (event: KeyboardEvent): void => {
+    const action = actionForKey(this.bindings, event.code);
     // Movement input must stop when pointer lock is lost (pause). A repeated
     // keydown after an unlock must not re-arm the movement flags, otherwise
     // the player keeps walking behind the pause overlay. Non-movement keys
     // (F3, number keys) remain available while paused.
-    if (!this.locked && this.isMovementKey(event.code)) {
+    if (
+      !this.locked &&
+      (this.isMovementKey(event.code) || (action !== null && MOVEMENT_ACTIONS.has(action)))
+    ) {
       return;
     }
 
+    // Track the physical key state for the binding-derived movement flags and
+    // the per-frame keyboard device frame. Autorepeat adds are idempotent.
+    this.heldCodes.add(event.code);
+
     switch (event.code) {
-      case 'KeyW':
-      case 'ArrowUp':
-        this.moveForward = true;
-        break;
-      case 'KeyS':
-      case 'ArrowDown':
-        this.moveBack = true;
-        break;
-      case 'KeyA':
-      case 'ArrowLeft':
-        this.moveLeft = true;
-        break;
-      case 'KeyD':
-      case 'ArrowRight':
-        this.moveRight = true;
-        break;
-      case 'Space':
-        this.jump = true;
-        break;
-      case 'ShiftLeft':
-      case 'ShiftRight':
-        this.sprint = true;
-        break;
       case 'F3':
         this.debugToggleQueued = true;
         break;
@@ -239,53 +342,39 @@ export class InputManager implements InputState {
       case 'KeyR':
         this.eatQueued = true;
         break;
-      case 'Digit1':
-      case 'Digit2':
-      case 'Digit3':
-      case 'Digit4':
-      case 'Digit5':
-      case 'Digit6':
-      case 'Digit7':
-      case 'Digit8':
-      case 'Digit9':
-        // Number keys select a hotbar slot (1–9 → slot index 0–8).
-        this.hotbarIndex = Number(event.code.charAt(5)) - 1;
-        break;
       default:
-        return;
+        break;
     }
-    event.preventDefault();
+
+    if (action !== null && action.startsWith('hotbar') && !event.repeat) {
+      // Bound hotbar keys select a slot once per physical press (no autorepeat).
+      const slot = Number(action.slice('hotbar'.length));
+      if (Number.isInteger(slot)) {
+        // hotbar1..hotbar9 → slot index 0–8.
+        this.hotbarIndex = slot - 1;
+      }
+    }
+
+    this.recomputeMovement();
+
+    if (
+      action !== null ||
+      this.isMovementKey(event.code) ||
+      event.code === 'F3' ||
+      event.code === 'KeyC' ||
+      event.code === 'KeyR'
+    ) {
+      event.preventDefault();
+    }
   };
 
   private readonly onKeyUp = (event: KeyboardEvent): void => {
-    switch (event.code) {
-      case 'KeyW':
-      case 'ArrowUp':
-        this.moveForward = false;
-        break;
-      case 'KeyS':
-      case 'ArrowDown':
-        this.moveBack = false;
-        break;
-      case 'KeyA':
-      case 'ArrowLeft':
-        this.moveLeft = false;
-        break;
-      case 'KeyD':
-      case 'ArrowRight':
-        this.moveRight = false;
-        break;
-      case 'Space':
-        this.jump = false;
-        break;
-      case 'ShiftLeft':
-      case 'ShiftRight':
-        this.sprint = false;
-        break;
-      default:
-        return;
+    const action = actionForKey(this.bindings, event.code);
+    this.heldCodes.delete(event.code);
+    this.recomputeMovement();
+    if (this.isMovementKey(event.code) || (action !== null && MOVEMENT_ACTIONS.has(action))) {
+      event.preventDefault();
     }
-    event.preventDefault();
   };
 
   private readonly onMouseDown = (event: MouseEvent): void => {
@@ -295,6 +384,9 @@ export class InputManager implements InputState {
       this.breakPressedAt = performance.now();
     } else if (event.button === 2) {
       this.placeQueued = true;
+      this.useHeld = true;
+    } else if (event.button === 1) {
+      this.pickHeld = true;
     }
   };
 
@@ -304,6 +396,10 @@ export class InputManager implements InputState {
       if (performance.now() - this.breakPressedAt <= 220) {
         this.breakClickQueued = true;
       }
+    } else if (event.button === 2) {
+      this.useHeld = false;
+    } else if (event.button === 1) {
+      this.pickHeld = false;
     }
   };
 
@@ -343,8 +439,69 @@ export class InputManager implements InputState {
     this.sprint = false;
   }
 
+  /**
+   * Derive the movement flags from the held codes intersected with the CURRENT
+   * bindings plus the legacy arrow/Shift aliases (union: Shift is bound to
+   * `sneak` by 207's defaults but must keep driving `sprint` as before). Runs
+   * on every keydown/keyup and binding swap, so a remap applies to subsequent
+   * input only: a key still held whose action moved away stops producing it.
+   */
+  private recomputeMovement(): void {
+    let forward = false;
+    let back = false;
+    let left = false;
+    let right = false;
+    let jump = false;
+    let sprint = false;
+    for (const code of this.heldCodes) {
+      const bound = actionForKey(this.bindings, code);
+      const alias = LEGACY_ALIASES[code];
+      const action = bound ?? alias;
+      switch (action) {
+        case 'forward':
+          forward = true;
+          break;
+        case 'back':
+          back = true;
+          break;
+        case 'left':
+          left = true;
+          break;
+        case 'right':
+          right = true;
+          break;
+        case 'jump':
+          jump = true;
+          break;
+        case 'sneak':
+          // No InputState consumer yet; recognized so it does not fall through.
+          break;
+        case 'sprint':
+          sprint = true;
+          break;
+        default:
+          break;
+      }
+      // Union pass: a legacy alias contributes even when the code is bound to
+      // another action (e.g. ShiftLeft = sneak + legacy sprint).
+      if (alias === 'sprint') {
+        sprint = true;
+      }
+    }
+    this.moveForward = forward;
+    this.moveBack = back;
+    this.moveLeft = left;
+    this.moveRight = right;
+    this.jump = jump;
+    this.sprint = sprint;
+  }
+
   /** Clear input that must never leak across a pause or focus transition. */
   private resetPointerInput(): void {
+    // Clearing the held codes enforces the re-arm rule: a keyup that arrives
+    // while unfocused/paused cannot resurrect an action, and only a fresh
+    // physical keydown re-arms movement after refocus.
+    this.heldCodes.clear();
     this.resetMovement();
     this.dyaw = 0;
     this.dpitch = 0;
@@ -353,6 +510,9 @@ export class InputManager implements InputState {
     this.breakClickQueued = false;
     this.breakPressedAt = 0;
     this.placeQueued = false;
+    this.useHeld = false;
+    this.pickHeld = false;
+    this.externalMove = { x: 0, y: 0 };
     this.hotbarDelta = 0;
     this.debugToggleQueued = false;
     this.craftingToggleQueued = false;

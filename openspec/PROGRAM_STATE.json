@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "246-input-accessibility-matrix",
+  "currentChange": "247-performance-release-gate",
   "currentChangeStatus": "ACTIVE",
-  "lastCompletedChange": "245-visual-regression-matrix",
-  "nextChange": "247-performance-release-gate",
+  "lastCompletedChange": "246-input-accessibility-matrix",
+  "nextChange": "248-parity-matrix-reconciliation",
   "completedTasks": 0,
   "totalTasks": null,
   "completionPercentage": 0,
@@ -16,10 +16,16 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "6e606e19f78e4212f3150300374f6ec6308032be",
-  "lastCompletedTask": "245 visual-regression-matrix VERIFIED (15/15 tasks; full gate green incl. e2e 36/36)",
-  "nextExactAction": "Begin 246-input-accessibility-matrix: read its artifacts, record baseline into its verification.md, then implement per its tasks",
+  "lastCompletedTask": "246 input-accessibility-matrix VERIFIED (15/15 tasks; full gate green incl. e2e 40/40)",
+  "nextExactAction": "Begin 247-performance-release-gate: read its artifacts, record baseline into its verification.md, then implement per its tasks",
   "blockers": [],
   "validationResults": [
+    {
+      "change": "246-input-accessibility-matrix",
+      "status": "VERIFIED",
+      "unitTests": 3805,
+      "e2eTests": 40
+    },
     {
       "change": "245-visual-regression-matrix",
       "status": "VERIFIED",

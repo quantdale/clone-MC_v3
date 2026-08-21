@@ -740,3 +740,183 @@ test.describe('survival-progression foundation (242 e2e seam)', () => {
   });
 });
 
+/**
+ * Device input matrix (246 e2e seam).
+ *
+ * Drives the four-device input wiring through the `__voxelGame.resolvedInputView()`
+ * observability hook: gamepad lock-free play, touch lock-free play, focus-loss
+ * clearing, and paused-frame inactivity.
+ */
+
+/** Minimal shape of the 246 resolved-input view used for assertions. */
+interface ResolvedInputView {
+  active: boolean;
+  actions: string[];
+  move: { x: number; y: number };
+  look: { x: number; y: number };
+}
+
+function readResolvedInput(page: Page): Promise<ResolvedInputView | undefined> {
+  return page.evaluate(() =>
+    (
+      window as unknown as {
+        __voxelGame?: { resolvedInputView(): ResolvedInputView };
+      }
+    ).__voxelGame?.resolvedInputView(),
+  );
+}
+
+test.describe('device input matrix (246 e2e seam)', () => {
+  test('simulated gamepad drives movement without pointer lock', async ({ page }) => {
+    // Stub the Gamepad API before any page script runs: left stick fully
+    // deflected up (= forward), everything else neutral.
+    await page.addInitScript(() => {
+      const pad = {
+        connected: true,
+        id: 'test-pad',
+        index: 0,
+        mapping: 'standard',
+        axes: [0, -1, 0, 0],
+        buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })),
+      };
+      Object.defineProperty(navigator, 'getGamepads', {
+        configurable: true,
+        value: () => [pad, null, null, null],
+      });
+    });
+    await waitForGame(page);
+
+    // Lock-free play: controller activity dismisses the start overlay and the
+    // resolved frame becomes active with the gamepad's movement vector.
+    await page.waitForFunction(
+      () => {
+        const view = (
+          window as unknown as {
+            __voxelGame?: { resolvedInputView(): ResolvedInputView };
+          }
+        ).__voxelGame?.resolvedInputView();
+        return view?.active === true && view.move.y === -1;
+      },
+      { timeout: 15_000 },
+    );
+    await expect(page.locator('#overlay')).toBeHidden();
+
+    // The player actually moves (poll generously: software WebGL is slow).
+    const before = await page.evaluate(() => {
+      const g = (
+        window as unknown as {
+          __voxelGame?: { player: { position: { x: number; z: number } } };
+        }
+      ).__voxelGame;
+      return { x: g?.player.position.x ?? 0, z: g?.player.position.z ?? 0 };
+    });
+    await page.waitForFunction(
+      (b) => {
+        const g = (
+          window as unknown as {
+            __voxelGame?: { player: { position: { x: number; z: number } } };
+          }
+        ).__voxelGame;
+        if (!g) return false;
+        return Math.abs(g.player.position.x - b.x) > 0.5 || Math.abs(g.player.position.z - b.z) > 0.5;
+      },
+      before,
+      { timeout: 20_000 },
+    );
+  });
+
+  test('simulated touch drives movement without pointer lock', async ({ page }) => {
+    await waitForGame(page);
+    const box = await page.locator('#game-canvas').boundingBox();
+    expect(box).not.toBeNull();
+    const fireTouch = (type: string, fx: number, fy: number) =>
+      page.evaluate(
+        ([type, fx, fy]) => {
+          const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
+          const rect = canvas.getBoundingClientRect();
+          canvas.dispatchEvent(
+            new PointerEvent(type, {
+              pointerType: 'touch',
+              pointerId: 7,
+              isPrimary: true,
+              clientX: rect.left + rect.width * fx,
+              clientY: rect.top + rect.height * fy,
+              bubbles: true,
+            }),
+          );
+        },
+        [type, fx, fy] as [string, number, number],
+      );
+
+    // Drag inside the left-half move zone: (0.2, 0.5) → (0.3, 0.5). The 210
+    // drag math scales by 4, so the expected move vector is ≈ { x: 0.4, y: 0 }.
+    await fireTouch('pointerdown', 0.2, 0.5);
+    await fireTouch('pointermove', 0.3, 0.5);
+
+    await page.waitForFunction(
+      () => {
+        const view = (
+          window as unknown as {
+            __voxelGame?: { resolvedInputView(): ResolvedInputView };
+          }
+        ).__voxelGame?.resolvedInputView();
+        return view?.active === true && Math.abs(view.move.x - 0.4) < 0.01 && Math.abs(view.move.y) < 0.01;
+      },
+      { timeout: 15_000 },
+    );
+    // Touch activity also plays lock-free: the overlay is dismissed.
+    await expect(page.locator('#overlay')).toBeHidden();
+    await fireTouch('pointerup', 0.3, 0.5);
+  });
+
+  test('blur during a held key zeroes the resolved input', async ({ page }) => {
+    await waitForGame(page);
+    await enterPointerLock(page);
+    await page.keyboard.down('KeyW');
+    await page.waitForFunction(
+      () => {
+        const view = (
+          window as unknown as {
+            __voxelGame?: { resolvedInputView(): ResolvedInputView };
+          }
+        ).__voxelGame?.resolvedInputView();
+        return view?.active === true && view.actions.includes('forward');
+      },
+      { timeout: 10_000 },
+    );
+
+    await page.evaluate(() => window.dispatchEvent(new Event('blur')));
+    await page.waitForFunction(
+      () => {
+        const view = (
+          window as unknown as {
+            __voxelGame?: { resolvedInputView(): ResolvedInputView };
+          }
+        ).__voxelGame?.resolvedInputView();
+        return (
+          view?.active === false &&
+          view.actions.length === 0 &&
+          view.move.x === 0 &&
+          view.move.y === 0
+        );
+      },
+      { timeout: 10_000 },
+    );
+    // The pause overlay appears for the keyboard/mouse path, as today.
+    await expect(page.locator('#overlay')).toBeVisible();
+    await page.keyboard.up('KeyW');
+  });
+
+  test('paused start overlay delivers no input', async ({ page }) => {
+    await waitForGame(page);
+    // Never clicked: the start overlay is up, so the frame must be inactive
+    // regardless of what devices report.
+    await expect(page.locator('#overlay')).toBeVisible();
+    const view = await readResolvedInput(page);
+    expect(view).toBeDefined();
+    expect(view!.active).toBe(false);
+    expect(view!.actions).toEqual([]);
+    expect(view!.move).toEqual({ x: 0, y: 0 });
+  });
+});
+
