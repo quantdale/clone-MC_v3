@@ -97,7 +97,8 @@ export class DebugOverlay {
         `triangles: ${data.triangles}`,
       ].join('\n');
     }
-    const summary = this.getSummary !== null ? this.getSummary() : null;
+    const summary =
+      this.getSummary !== null && this.fixedText === null ? this.getSummary() : null;
     this.perfEl.textContent = summary !== null && summary !== '' ? `\n${summary}` : '';
   }
 
@@ -105,6 +106,9 @@ export class DebugOverlay {
   setFixedText(text: string): void {
     this.fixedText = text;
     this.statsEl.textContent = text;
+    // Pinned mode is the deterministic-capture mode: a live perf line would
+    // vary per frame, so it is suppressed while fixed text is active.
+    this.perfEl.textContent = '';
   }
 
   /** Toggle the overlay's visibility. */

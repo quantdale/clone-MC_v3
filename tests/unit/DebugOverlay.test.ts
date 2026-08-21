@@ -107,12 +107,14 @@ describe('DebugOverlay perf source', () => {
     expect((el.children[1] as FakeElement).textContent).toBe('');
   });
 
-  it('setFixedText pins only the legacy block', () => {
+  it('setFixedText pins the legacy block and suppresses the volatile perf line', () => {
     const { overlay, el } = makeOverlay();
     overlay.setPerfSource(() => 'perf: fps=60.0 p95=16.0ms p99=17.0ms draws=1 queue=0');
     overlay.setFixedText('pinned');
     overlay.update(stats);
     expect((el.children[0] as FakeElement).textContent).toBe('pinned');
-    expect((el.children[1] as FakeElement).textContent).toContain('perf:');
+    // Pinned mode is the deterministic-capture mode (245 visual matrix): the
+    // perf line carries live numbers, so it must be hidden while pinned.
+    expect((el.children[1] as FakeElement).textContent).toBe('');
   });
 });
