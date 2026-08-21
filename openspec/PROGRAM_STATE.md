@@ -3,15 +3,42 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **243-redstone-automation-e2e — VERIFIED 100% (15/15 tasks)**
-- Active implementation change: **244-worldgen-regression-matrix — ACTIVE (0/15 tasks, just activated)**
-- Next change: **245-visual-regression-matrix — ready after 244 VERIFIED**
-- 243 required-test gate: **PASS — typecheck, lint, unit 285 files / 3694 passed + 1 skipped (+36 tests: 22 circuits + 14 harness-spec/matrix/adversarial), build, e2e 35/35**
-- 243 advancement allowed: **yes (VERIFIED; no exception used)**
-- Session-start head: `6e606e1` (this session); published head recorded in the session report
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), the chat and command networking (233), the server world persistence (234), the reconnect state recovery (235), the multiplayer load tests (236), the network adversarial validation (237), the worker and main-thread stress (238), the long-session memory stress (239) VERIFIED, the save recovery stress (240) VERIFIED, the deterministic-replay-suite (241) VERIFIED 100%, survival-progression-e2e (242) VERIFIED 100%, and redstone-automation-e2e (243) VERIFIED 100% (headless RedstoneAutomationHarness composes the real 047/156-172 modules into six canonical circuits with save/reload/chunk-cycle survival); Hardening interlock VERIFIED.**
+- Last completed change: **244-worldgen-regression-matrix — VERIFIED 100% (15/15 tasks)**
+- Active implementation change: **245-visual-regression-matrix — ACTIVE (0/15 tasks, just activated)**
+- Next change: **246-input-accessibility-matrix — ready after 245 VERIFIED**
+- 244 required-test gate: **PASS — typecheck, lint, unit 286 files / 3719 passed + 1 skipped (+25 tests), build, e2e 35/35**
+- 244 advancement allowed: **yes (VERIFIED; no exception used)**
+- Session-start head: `0783031c47b518bdbf0fe2ea84c4b9eb8123b3fa` (this session); published head recorded in the session report
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), the chat and command networking (233), the server world persistence (234), the reconnect state recovery (235), the multiplayer load tests (236), the network adversarial validation (237), the worker and main-thread stress (238), the long-session memory stress (239) VERIFIED, the save recovery stress (240) VERIFIED, the deterministic-replay-suite (241) VERIFIED 100%, survival-progression-e2e (242) VERIFIED 100%, redstone-automation-e2e (243) VERIFIED 100%, and worldgen-regression-matrix (244) VERIFIED 100% (WorldgenRegressionMatrix pins biome/structure/ore/cave/surface/block/hash outcomes across seeds {0,1,42,1337,1234,9999} with a 36-fixture v1 catalog, matrix hash 1789027111, registry fingerprint 6e654848); Hardening interlock VERIFIED.**
 - Hardening interlock: **VERIFIED at e3ecf86c28553c558459c855a3aee3b003bcb157 (run 32320823336 #337 SUCCESS; 78/78 tasks 100%; all gates green)**
-- Next exact action: **Begin 244-worldgen-regression-matrix: read its artifacts, record baseline gate numbers into its verification.md (task 1.x), then implement the seed/coordinate/biome/structure/ore/cave golden matrix per its tasks**
+- Next exact action: **Begin 245-visual-regression-matrix: read its artifacts, then implement tests/visual/matrix.ts + goldenCompare.ts, the VITE_E2E-only boot seam, and visual-regression.spec.ts per its tasks**
+
+## What 244 implemented
+
+Change 244 adds the **worldgen regression matrix**: `src/worldgen/WorldgenRegressionMatrix.ts`
+(NEW, additive alongside 102's `GoldenSeed.ts`, which is untouched). It pins the produced world —
+not the unwired pipeline modules — through a `TerrainGenerator`-backed probe.
+
+- Eight fixture kinds (`hash2`/`hash3`/`surface`/`biome`/`block`/`ore`/`cave`/`structure`);
+  strict `validateMatrixFixture` with field-naming errors, kind-consistent `expected` checks, and
+  unsupported-version rejection.
+- `verifyWorldgenMatrix`: deterministic per-fixture pass/fail over the probe; value mismatches
+  never throw; probe exceptions surface as failed entries with `error` and verification continues.
+- `worldgenMatrixHash`: FNV-1a 32-bit over canonical `version|key|kind|seed|x|y|z|actual` records.
+- `fingerprintWorldgenState`: digest of generation-relevant block-id→resource mappings plus the
+  structure template/placement registries in registration order; sensitive to id remaps,
+  template edits, and placement changes.
+- `createDefaultWorldgenMatrix('v1')`: 36 pinned fixtures across seeds {0,1,42,1337,1234,9999}
+  covering all four biomes (+ spawn-plains guard at origin), structure present/absent,
+  coal/iron/no-ore, carved/not-carved cave, bedrock/deep/ore-band/cave-band/surface y values,
+  origin/negative/far/chunk-boundary coordinates. Matrix hash `1789027111`; fingerprint
+  `6e654848`. Generated once by the authoring tool
+  (`scripts/worldgen/author-worldgen-matrix.test.ts` via its dedicated vitest config) and
+  embedded verbatim.
+- Tests: `tests/unit/WorldgenRegressionMatrix.test.ts` (NEW, 25 tests): validation matrix,
+  per-kind computation incl. real structure starts, full-catalog pass + pinned hash/fingerprint,
+  hash/fingerprint stability+sensitivity, mismatch reporting, probe-error surfacing, determinism,
+  version policy, bounds, coverage assertions, boundary seeds/coordinates.
 
 ## What 243 implemented
 

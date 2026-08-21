@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "minecraft-parity",
   "status": "ACTIVE",
-  "currentChange": "244-worldgen-regression-matrix",
+  "currentChange": "245-visual-regression-matrix",
   "currentChangeStatus": "ACTIVE",
-  "lastCompletedChange": "243-redstone-automation-e2e",
-  "nextChange": "245-visual-regression-matrix",
+  "lastCompletedChange": "244-worldgen-regression-matrix",
+  "nextChange": "246-input-accessibility-matrix",
   "completedTasks": 0,
   "totalTasks": 15,
   "completionPercentage": 0,
@@ -16,10 +16,16 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "6e606e19f78e4212f3150300374f6ec6308032be",
-  "lastCompletedTask": "243 redstone-automation-e2e VERIFIED (15/15 tasks; full gate green incl. e2e 35/35)",
-  "nextExactAction": "Begin 244-worldgen-regression-matrix: read its artifacts, record baseline gate numbers into its verification.md (task 1.x), then implement the seed/coordinate/biome/structure/ore/cave golden matrix per its tasks",
+  "lastCompletedTask": "244 worldgen-regression-matrix VERIFIED (15/15 tasks; full gate green incl. e2e 35/35)",
+  "nextExactAction": "Begin 245-visual-regression-matrix: read its artifacts, then implement tests/visual/matrix.ts + goldenCompare.ts, the VITE_E2E-only boot seam, and visual-regression.spec.ts per its tasks",
   "blockers": [],
   "validationResults": [
+    {
+      "change": "244-worldgen-regression-matrix",
+      "status": "VERIFIED",
+      "unitTests": 3719,
+      "e2eTests": 35
+    },
     {
       "change": "243-redstone-automation-e2e",
       "status": "VERIFIED",
