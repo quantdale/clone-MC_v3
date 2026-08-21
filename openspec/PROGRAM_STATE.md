@@ -3,17 +3,46 @@
 ## Current checkpoint
 
 - Program: **ACTIVE**
-- Last completed change: **242-survival-progression-e2e — VERIFIED 100%**
-- Active implementation change: **243-redstone-automation-e2e — ACTIVE (in progress, 40%: harness core + torch-burnout circuit green; 5 circuits remain)**
-- Next change: **244-worldgen-regression-matrix — ready after 243 VERIFIED**
-- 243 task ledger: **15 total tasks, 6 completed (1.1, 1.2, 2.2, 2.3, 2.4, 3.5)**
-- 243 completion: **40%** (advancement blocked: below 90% and circuits 1-5 of 6 not yet implemented)
-- 243 required-test gate (implemented subset): **PASS — typecheck, lint, unit 3658/3658 + 1 skipped (10 new torch-burnout harness tests), build, e2e 35/35 (242 unchanged)**
-- 242 advancement allowed: **yes (VERIFIED, published 218d600)**
-- Session-start head: `218d600991b641232c163cc13417b3157ee2825c`
-- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), the chat and command networking (233), the server world persistence (234), the reconnect state recovery (235), the multiplayer load tests (236), the network adversarial validation (237), the worker and main-thread stress (238), the long-session memory stress (239) VERIFIED, the save recovery stress (240) VERIFIED, the deterministic-replay-suite (241) VERIFIED 100%, and survival-progression-e2e (242) VERIFIED 100% (headless ProgressionHarness drives the real modules 0→6 deterministically); Hardening interlock active.**
+- Last completed change: **243-redstone-automation-e2e — VERIFIED 100% (15/15 tasks)**
+- Active implementation change: **244-worldgen-regression-matrix — ACTIVE (0/15 tasks, just activated)**
+- Next change: **245-visual-regression-matrix — ready after 244 VERIFIED**
+- 243 required-test gate: **PASS — typecheck, lint, unit 285 files / 3694 passed + 1 skipped (+36 tests: 22 circuits + 14 harness-spec/matrix/adversarial), build, e2e 35/35**
+- 243 advancement allowed: **yes (VERIFIED; no exception used)**
+- Session-start head: `6e606e1` (this session); published head recorded in the session report
+- Section milestone: **"Entity framework and mobs" (129-153) COMPLETE; "Redstone and automation" (154-173) COMPLETE; "Dimensions and major progression" (174-195) COMPLETE; weather (196-197), sleep (198), particles (199), sound arc (200-201), inventory-parity arc (202-205), settings arc (206-207), accessibility (208), gamepad (209), touch (210), assets arc (211-213), localization (214), content expansion (215-220), release delta (221), the shared-simulation boundary (222), the network-protocol codecs (223), the dedicated-server tick loop (224), the connection lifecycle (225), the server chunk streaming (226), the server player movement (227), the client prediction and reconciliation (228), the entity replication (229), the block interaction networking (230), the inventory network transactions (231), the combat networking (232), the chat and command networking (233), the server world persistence (234), the reconnect state recovery (235), the multiplayer load tests (236), the network adversarial validation (237), the worker and main-thread stress (238), the long-session memory stress (239) VERIFIED, the save recovery stress (240) VERIFIED, the deterministic-replay-suite (241) VERIFIED 100%, survival-progression-e2e (242) VERIFIED 100%, and redstone-automation-e2e (243) VERIFIED 100% (headless RedstoneAutomationHarness composes the real 047/156-172 modules into six canonical circuits with save/reload/chunk-cycle survival); Hardening interlock VERIFIED.**
 - Hardening interlock: **VERIFIED at e3ecf86c28553c558459c855a3aee3b003bcb157 (run 32320823336 #337 SUCCESS; 78/78 tasks 100%; all gates green)**
-- Next exact action: **Continue 243: implement remaining circuits (clock, divider, t-flip-flop, piston-door, item-sorter) + full survival matrix; gate green then advance 243 to VERIFIED**
+- Next exact action: **Begin 244-worldgen-regression-matrix: read its artifacts, record baseline gate numbers into its verification.md (task 1.x), then implement the seed/coordinate/biome/structure/ore/cave golden matrix per its tasks**
+
+## What 243 implemented
+
+Change 243 adds the **redstone automation E2E** layer as pure test-support: a headless
+`RedstoneAutomationHarness` (`tests/support/RedstoneAutomationHarness.ts`) that composes the REAL
+production modules — the 047 `ScheduledTickQueue`, 156 `RedstonePropagator`, 158 `TorchBurnoutTracker`,
+159-162 repeater/comparator/observer/consumers, 157 inputs, 163-165 pistons, 166-167 hopper/dropper,
+and the 234 `WorldSaveCodec` — over an in-memory fixture, and drives six canonical circuits
+deterministically. No shipped game code changed (`git diff HEAD -- src/` is empty).
+
+- Six circuits at mutually disjoint per-kind base positions: torch-burnout, clock (torch+delay-3
+  repeater ring, measured period exactly `CLOCK_PERIOD_TICKS = 16`, edges at 0/16/32/48),
+  pulse-divider ÷2/÷4 (counter chain over real clock edges; output risings at N×16, 2N×16),
+  t-flip-flop (edge-toggled manual torch latch), piston-door (sticky extend C→D / pull D→C through
+  163/164/165), item-sorter-chain (hopper push at tick 8, dropper drop at tick 16).
+- Survival operations: `saveReload()` encodes every occupied chunk's chunk-sections AND
+  block-entities units through the real codec, validates the decode before mutating (all-or-nothing),
+  and round-trips the 047 queue v1 + burnout history at absolute ticks; `cycleChunk(cx,cz)` scopes
+  its drop/restore to one chunk while pending entries inside AND outside survive.
+- Atomicity/determinism: whole-payload snapshot validation (foreign worldId, non-integer fields,
+  duplicate block-entity keys, bad 047 version) rejecting before any mutation; deterministic
+  `stateHash()`; boolean `stepUntil` per spec.
+- Tests: `tests/unit/RedstoneAutomationCircuits.test.ts` (NEW, 22 tests: clock/divider/t-flip-flop/
+  piston-door/item-sorter per their capability specs) and `tests/unit/RedstoneAutomationHarness.test.ts`
+  (NEW, 14 tests: construction/stepping/snapshot/saveReload/cycle/build-independence/hash +
+  six-circuit × three-op survival matrix + adversarial cases); torch suite updated to the spec'd
+  boolean `stepUntil`.
+- Reconciliation notes (full list in the change's verification.md): return row routed two blocks
+  south of the main line (a beside-row both latches the loop through step-up connections and locks
+  the repeater perpendicularily); repeater input read directionally from its back face; sticky
+  retract planned from the virtual head position.
 
 ## What 235 implemented
 

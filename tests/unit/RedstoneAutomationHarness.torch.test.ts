@@ -92,11 +92,11 @@ describe('redstone-automation: determinism + harness invariants (2.x / 3.6 / 4.1
     expect(h.stateHash()).not.toBe(a);
   });
 
-  it('stepUntil budget exhaustion returns steps taken and leaves the predicate false', () => {
+  it('stepUntil budget exhaustion returns false and leaves the predicate false', () => {
     const h = new RedstoneAutomationHarness({ worldId: 'budget' });
     h.buildCircuit('torch-burnout');
-    const steps = h.stepUntil(() => false, 5);
-    expect(steps).toBe(5);
+    const met = h.stepUntil(() => false, 5);
+    expect(met).toBe(false);
     expect(h.snapshot().tick).toBe(5);
   });
 
