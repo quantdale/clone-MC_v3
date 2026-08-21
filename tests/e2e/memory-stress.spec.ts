@@ -19,7 +19,7 @@ import {
 const HEADLESS_BUDGET = deriveMemoryResourceBudget(2); // headless render distance R=2
 const HEAP_CEILING_BYTES = 8 * 1024 * 1024; // 8 MiB
 const GEOMETRY_DRIFT = 4; // plateau drift allowance (geometries)
-const GEOMETRY_PER_CHUNK = 6; // per-chunk geometry allowance for footprint growth (~2 meshes/chunk + headroom, measured CI ceiling)
+const GEOMETRY_PER_CHUNK = 8; // per-chunk geometry allowance for footprint growth. Raised from 6 during the 239 validation campaign: with four mesh streams per chunk (opaque/cutout/translucent/fluid) plus mob constant-shape geometries, a measured local run showed 37 geometries over +5 chunks (7.4/chunk) with flat heap/textures — no leak; smallest covering allowance is 8/chunk.
 // Residency ceiling for headless R=2: the boot preload radius (3) exceeds the
 // streaming ring (2), so the engine can hold up to the radius-3 ring (49).
 const MAX_LOADED = HEADLESS_BUDGET.maxLoadedChunks;

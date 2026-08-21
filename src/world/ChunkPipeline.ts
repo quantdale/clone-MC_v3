@@ -164,6 +164,8 @@ export class ChunkPipeline {
     mesh: [],
     upload: [],
   };
+  /** Queued jobs evicted by strictly-more-urgent enqueues since the last `takeDisplacedCount`. */
+  private displacedCount = 0;
   private readonly queuedKeys: Record<PipelineStage, Set<string>> = {
     generate: new Set(),
     features: new Set(),
@@ -416,6 +418,9 @@ export class ChunkPipeline {
    * Enqueue work for `stage`. Deduplicates by chunk key per stage. When the queue is at its cap:
    * the new job displaces the lowest-priority oldest queued job if it is strictly more urgent,
    * otherwise it is rejected (`false`) — the caller retries, mirroring World.ts's retry queue.
+   *
+   * A displaced job's chunk would otherwise strand (its only queued copy was just deleted), so
+   * every displacement is recorded; callers poll {@link takeDisplacedCount} to force a re-scan.
    */
   enqueue(stage: PipelineStage, cx: number, cy: number, cz: number, priority: ChunkStreamPriority): boolean {
     const key = `${cx},${cy},${cz}`;
@@ -441,11 +446,23 @@ export class ChunkPipeline {
       this.queuedKeys[stage].delete(worst.key);
       queue[worstIndex] = job;
       this.queuedKeys[stage].add(key);
+      this.displacedCount++;
       return true;
     }
     queue.push(job);
     this.queuedKeys[stage].add(key);
     return true;
+  }
+
+  /**
+   * Number of queued jobs displaced by higher-urgency enqueues since the last call, resetting the
+   * counter. A displaced entry lost its only queued copy, so callers must re-scan the area to
+   * re-queue it (World sets `needsEnsure` when this is non-zero).
+   */
+  takeDisplacedCount(): number {
+    const n = this.displacedCount;
+    this.displacedCount = 0;
+    return n;
   }
 
   /** Number of pending jobs in a stage queue. */

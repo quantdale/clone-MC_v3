@@ -239,17 +239,20 @@ export class WorkerPool {
       this.statsInternal.cancelled++;
       return true;
     }
+    // Rebuild the heap minus the cancelled entry. Every non-matching entry MUST
+    // be re-pushed before returning — an early return would silently drop all
+    // queued jobs behind the cancelled one, stranding their callers.
+    let found = false;
     for (const entry of this.queue.drainAll()) {
-      // Rebuild the heap minus the cancelled entry (cancels are rare; n is bounded).
       if (entry.jobId !== jobId) {
         this.queue.push(entry);
       } else {
         this.recycle(entry);
         this.statsInternal.cancelled++;
-        return true;
+        found = true;
       }
     }
-    return false;
+    return found;
   }
 
   /**

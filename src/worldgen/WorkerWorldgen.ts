@@ -138,31 +138,37 @@ export class WorldgenWorkerClient {
     this.requests.set(jobId, payload);
     this.tokens.set(jobId, token);
     if (this.pool) {
-      this.pool.submit({
-        kind: 'worldgen',
-        generationToken: token,
-        payload,
-        onResult: (payload) => {
-          // Pool payloads are untyped transport: apply the same validation and
-          // identity-match discipline as `handleMessage` before completion.
-          let result: WorldgenResultPayload;
-          try {
-            result = validateWorldgenResult(payload);
-          } catch {
-            this.abandon(jobId); // invalid payload can never satisfy the job
-            return;
-          }
-          if (!this.matches(jobId, result)) {
-            this.abandon(jobId); // foreign/stale identity must not resolve the job
-            return;
-          }
-          this.complete(jobId, result);
-        },
-        onFailure: () => {
-          // Abandon the job (worker loss/dispose): no result is delivered; late results become stale.
-          this.abandon(jobId);
-        },
-      });
+      try {
+        this.pool.submit({
+          kind: 'worldgen',
+          generationToken: token,
+          payload,
+          onResult: (payload) => {
+            // Pool payloads are untyped transport: apply the same validation and
+            // identity-match discipline as `handleMessage` before completion.
+            let result: WorldgenResultPayload;
+            try {
+              result = validateWorldgenResult(payload);
+            } catch {
+              this.abandon(jobId); // invalid payload can never satisfy the job
+              return;
+            }
+            if (!this.matches(jobId, result)) {
+              this.abandon(jobId); // foreign/stale identity must not resolve the job
+              return;
+            }
+            this.complete(jobId, result);
+          },
+          onFailure: () => {
+            // Abandon the job (worker loss/dispose): no result is delivered; late results become stale.
+            this.abandon(jobId);
+          },
+        });
+      } catch (err) {
+        // Synchronous pool rejection (bounded queue full): keep bookkeeping truthful.
+        this.abandon(jobId);
+        throw err;
+      }
     }
     return jobId;
   }

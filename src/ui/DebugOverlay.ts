@@ -18,17 +18,22 @@ export interface DebugStats {
  * — a one-line change next to the existing DebugOverlay construction.
  */
 export function formatPerfLine(json: string): string {
-  let d: any;
+  let d: unknown;
   try {
-    d = JSON.parse(json);
+    d = JSON.parse(json) as unknown;
   } catch {
     return '';
   }
-  const fpsAvg = Number(d?.frame?.fpsAvg);
-  const p95 = Number(d?.frame?.p95Millis);
-  const p99 = Number(d?.frame?.p99Millis);
-  const draws = Number(d?.render?.drawCalls);
-  const depths = d?.queues?.depths;
+  const obj = (d ?? {}) as {
+    frame?: { fpsAvg?: unknown; p95Millis?: unknown; p99Millis?: unknown };
+    render?: { drawCalls?: unknown };
+    queues?: { depths?: Record<string, unknown> };
+  };
+  const fpsAvg = Number(obj.frame?.fpsAvg);
+  const p95 = Number(obj.frame?.p95Millis);
+  const p99 = Number(obj.frame?.p99Millis);
+  const draws = Number(obj.render?.drawCalls);
+  const depths = obj.queues?.depths;
   let queue = 0;
   if (depths && typeof depths === 'object') {
     for (const v of Object.values(depths)) {

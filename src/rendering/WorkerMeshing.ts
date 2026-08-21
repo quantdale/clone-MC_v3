@@ -358,31 +358,37 @@ export class MeshWorkerClient {
     this.tokens.set(jobId, token);
     this.requests.set(jobId, payload);
     if (this.pool) {
-      this.pool.submit({
-        kind: 'mesh-section',
-        generationToken: token,
-        payload,
-        onResult: (result) => {
-          // Pool payloads are untyped transport: validate structure and require section-coordinate
-          // identity before anything can resolve the job.
-          let validated: MeshSectionResultPayload;
-          try {
-            validated = validateMeshSectionResult(result);
-          } catch {
-            this.abandon(jobId); // malformed payload can never satisfy the job
-            return;
-          }
-          if (!this.matchesRequest(jobId, validated)) {
-            this.abandon(jobId); // foreign/stale identity must not resolve the job
-            return;
-          }
-          this.complete(jobId, validated, token);
-        },
-        onFailure: () => {
-          // Abandon the job (worker loss/dispose): no result is delivered; late results become stale.
-          this.abandon(jobId);
-        },
-      });
+      try {
+        this.pool.submit({
+          kind: 'mesh-section',
+          generationToken: token,
+          payload,
+          onResult: (result) => {
+            // Pool payloads are untyped transport: validate structure and require section-coordinate
+            // identity before anything can resolve the job.
+            let validated: MeshSectionResultPayload;
+            try {
+              validated = validateMeshSectionResult(result);
+            } catch {
+              this.abandon(jobId); // malformed payload can never satisfy the job
+              return;
+            }
+            if (!this.matchesRequest(jobId, validated)) {
+              this.abandon(jobId); // foreign/stale identity must not resolve the job
+              return;
+            }
+            this.complete(jobId, validated, token);
+          },
+          onFailure: () => {
+            // Abandon the job (worker loss/dispose): no result is delivered; late results become stale.
+            this.abandon(jobId);
+          },
+        });
+      } catch (err) {
+        // Synchronous pool rejection (bounded queue full): keep bookkeeping truthful.
+        this.abandon(jobId);
+        throw err;
+      }
     }
     return jobId;
   }

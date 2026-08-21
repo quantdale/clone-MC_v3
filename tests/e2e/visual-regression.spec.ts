@@ -24,6 +24,9 @@ import { comparePng, writeDiffPng } from '../visual/goldenCompare';
  * - `SCREEN_FILTER=hud,hotbar`: run only the listed screen ids (all qualities ×
  *   both resolutions); unset runs the full 60-cell matrix.
  *
+ * Provenance: goldens re-pinned after worldgen v2 depth pipeline + four-stream
+ * material split (2026-08-22 validation campaign).
+ *
  * Determinism: fresh context per cell (empty localStorage), fixed seed (?seed=1337),
  * quality profile injected pre-boot via addInitScript (VITE_E2E-only seam), fixed
  * camera pose, day/night clock frozen per screen, dynamic HUD/debug text normalized,

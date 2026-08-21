@@ -14,19 +14,19 @@ class FakeElement {
 }
 
 beforeEach(() => {
-  (globalThis as any).document = {
+  (globalThis as unknown as { document?: unknown }).document = {
     createElement: () => new FakeElement(),
   };
 });
 
 afterEach(() => {
-  delete (globalThis as any).document;
+  delete (globalThis as unknown as { document?: unknown }).document;
 });
 
 const { DebugOverlay, formatPerfLine } = await import('../../src/ui/DebugOverlay');
 type DebugStats = import('../../src/ui/DebugOverlay').DebugStats;
 
-function makeOverlay(): { overlay: any; el: FakeElement } {
+function makeOverlay(): { overlay: import('../../src/ui/DebugOverlay').DebugOverlay; el: FakeElement } {
   const el = new FakeElement();
   const overlay = new DebugOverlay(el as unknown as HTMLElement);
   return { overlay, el };

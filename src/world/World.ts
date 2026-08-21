@@ -19,6 +19,9 @@ import { FrameWorkBudgetScheduler, type FrameTaskClass } from '../rendering/Rend
 import { WorldLightStorage } from '../rendering/LightStorage';
 import { LightUpdateEngine } from '../rendering/LightUpdateEngine';
 import {
+  CHUNK_PIPELINE_QUEUE_CAPS,
+} from './ChunkPipeline';
+import {
   ChunkStreamPriority,
   ChunkTicketType,
   createChunkTicket,
@@ -664,21 +667,34 @@ export class World implements WorldAccess {
             // Hard safety cap: don't create a chunk whose generation job cannot
             // be queued — it would sit as an un-generated void. ensureChunks
             // runs every frame, so the area is retried once the queue drains.
-            if (pipeline.queueDepth('generate') >= CONFIG.maxQueueSize) {
+            // The cap is the pipeline's own generate bound (the old
+            // CONFIG.maxQueueSize guard could never trip before it).
+            if (pipeline.queueDepth('generate') >= CHUNK_PIPELINE_QUEUE_CAPS.generate) {
               queueFull = true;
               break scan;
             }
             const chunk = this.chunkManager.createChunk(cx, cy, cz);
             // Player ticket: the reason this chunk is kept resident at all.
             this.chunkManager.acquireTicket(cx, cy, cz, createChunkTicket(ChunkTicketType.Player));
-            this.enqueueGeneration(chunk, this.streamPriorityFor(dx, dz));
+            if (!this.enqueueGeneration(chunk, this.streamPriorityFor(dx, dz))) {
+              queueFull = true; // rejected at cap: retry on the next scan
+              break scan;
+            }
           } else if (!existing.generated) {
             // A chunk created earlier whose generation job was dropped or
             // displaced re-queues here; enqueue deduplicates per stage.
-            this.enqueueGeneration(existing, this.streamPriorityFor(dx, dz));
+            if (!this.enqueueGeneration(existing, this.streamPriorityFor(dx, dz))) {
+              queueFull = true;
+              break scan;
+            }
           }
         }
       }
+    }
+    // Any displacement means some resident chunk lost its only queued copy —
+    // force a re-scan so it is re-queued instead of stranding as a void.
+    if (pipeline.takeDisplacedCount() > 0) {
+      queueFull = true;
     }
     this.needsEnsure = queueFull;
     return centerChanged;
@@ -971,12 +987,13 @@ export class World implements WorldAccess {
 
   // ── Queues ─────────────────────────────────────────────────────────────────
 
-  private enqueueGeneration(chunk: Chunk, priority: ChunkStreamPriority): void {
+  private enqueueGeneration(chunk: Chunk, priority: ChunkStreamPriority): boolean {
     // Deduplicated per stage by the pipeline; displaced only by more urgent
     // work when the bounded queue is full. A `false` return leaves the chunk
-    // ungenerated; ensureChunks re-queues it on a later scan.
-    this.chunkManager.pipeline.enqueue('generate', chunk.cx, chunk.cy, chunk.cz, priority);
-    chunk.state = ChunkState.Generating;
+    // ungenerated; ensureChunks flags a re-scan so it is retried next frame.
+    const ok = this.chunkManager.pipeline.enqueue('generate', chunk.cx, chunk.cy, chunk.cz, priority);
+    if (ok) chunk.state = ChunkState.Generating;
+    return ok;
   }
 
   /** Queue a mesh job through the pipeline's bounded mesh stage. */
@@ -1234,15 +1251,10 @@ export class World implements WorldAccess {
   private ensureWorkerMeshing(): boolean {
     if (!this.useWorkers) return false;
     if (this.workerClient) return true;
-    // NOTE: no worker entry module ships yet (`src/rendering/MeshWorkerEntry.ts`
-    // does not exist). Enabling `useWorkers` before that entry lands throws here
-    // by design — the sync mesher fallback in `submitWorkerMeshJob` covers it.
     const size = CONFIG.budgets.workerPoolSize > 0 ? CONFIG.budgets.workerPoolSize : computeWorkerPoolSize();
     this.workerPool = new WorkerPool({
       size,
-      spawn: () => {
-        throw new Error('World worker meshing: MeshWorkerEntry.ts not implemented yet');
-      },
+      spawn: () => new Worker(new URL('../rendering/MeshWorkerEntry.ts', import.meta.url), { type: 'module' }),
     });
     this.workerClient = new MeshWorkerClient({ pool: this.workerPool });
     return true;
@@ -1358,9 +1370,10 @@ export class World implements WorldAccess {
           : ('opaque' as MeshStreamName),
       buildGeometry: geometryFromMeshStream,
     };
-    // Both transport forms share one expansion route: pack the merged quads,
-    // then decode the stride-22 buffer into four-stream geometries.
-    const packed = packQuadsToTypedArrays(result.quads);
+    // Both transport forms share one expansion route: quad results pack here, packed
+    // worker-entry results arrive pre-packed; either way the stride-22 buffer decodes
+    // into four-stream geometries.
+    const packed = result.packed ?? packQuadsToTypedArrays(result.quads);
     const geometries = expandPackedMeshResult(packed, info);
     this.attachGeometries(chunk, [
       { geometry: geometries.opaque, material: this.materials.opaque, renderOrder: 0, castShadow: true },
