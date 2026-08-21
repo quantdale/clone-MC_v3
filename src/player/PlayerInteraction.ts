@@ -15,6 +15,7 @@ import {
 import type { EnchantmentRegistry } from '../inventory/EnchantmentRegistry';
 import { type LootTableRegistry, type RandomSource, type LootContext, type LootStack, evaluate } from '../inventory/LootTable';
 import { raycastVoxel, RaycastResult } from '../math/DDA';
+import { raycastSelection, type SelectionShapeWorld } from '../world/ShapeRaycast';
 import type { ItemEntityManager } from '../simulation/ItemEntityManager';
 import type { XpOrbManager } from '../simulation/XpOrbManager';
 import { createSpawnPosition } from '../world/ItemEntity';
@@ -50,6 +51,8 @@ export class PlayerInteraction {
   private readonly xpOrbValue: number;
   /** Optional enchantment registry (119) used to read selected-stack enchantments. */
   private readonly enchantmentRegistry?: EnchantmentRegistry;
+  /** Optional selection-shape source; when absent targeting falls back to cell-level DDA. */
+  private readonly selectionShapes?: SelectionShapeWorld;
 
   private readonly eyePos = new THREE.Vector3();
   private readonly dir = new THREE.Vector3();
@@ -82,6 +85,8 @@ export class PlayerInteraction {
     xpOrbs?: XpOrbManager;
     xpOrbValue?: number;
     enchantmentRegistry?: EnchantmentRegistry;
+    /** Optional per-cell selection-shape source enabling shape-aware targeting. */
+    selectionShapes?: SelectionShapeWorld;
   }) {
     this.world = opts.world;
     this.registry = opts.registry;
@@ -100,6 +105,7 @@ export class PlayerInteraction {
     this.xpOrbs = opts.xpOrbs;
     this.xpOrbValue = opts.xpOrbValue ?? 0;
     this.enchantmentRegistry = opts.enchantmentRegistry;
+    this.selectionShapes = opts.selectionShapes;
 
     // A centered unit-cube wireframe marks the targeted block. Keeping the
     // geometry centered and placing it at block + 0.5 avoids the classic
@@ -128,16 +134,47 @@ export class PlayerInteraction {
     this.camera.getWorldDirection(this.dir);
     this.origin.copy(this.eyePos);
 
-    this.target = raycastVoxel(
-      this.world,
-      this.origin.x,
-      this.origin.y,
-      this.origin.z,
-      this.dir.x,
-      this.dir.y,
-      this.dir.z,
-      CONFIG.reach,
-    );
+    // Shape-aware targeting: when a selection-shape source is available the
+    // DDA traversal tests each visited cell's SELECTION shape and the nearest
+    // box hit wins; cells whose selection shape misses are skipped. Without
+    // one, targeting falls back to the cell-level DDA raycast.
+    if (this.selectionShapes) {
+      const shapeHit = raycastSelection(
+        this.selectionShapes,
+        this.origin.x,
+        this.origin.y,
+        this.origin.z,
+        this.dir.x,
+        this.dir.y,
+        this.dir.z,
+        CONFIG.reach,
+      );
+      this.target = shapeHit
+        ? {
+            blockX: shapeHit.blockX,
+            blockY: shapeHit.blockY,
+            blockZ: shapeHit.blockZ,
+            nx: shapeHit.nx,
+            ny: shapeHit.ny,
+            nz: shapeHit.nz,
+            distance: shapeHit.distance,
+            hitPointX: shapeHit.pointX,
+            hitPointY: shapeHit.pointY,
+            hitPointZ: shapeHit.pointZ,
+          }
+        : null;
+    } else {
+      this.target = raycastVoxel(
+        this.world,
+        this.origin.x,
+        this.origin.y,
+        this.origin.z,
+        this.dir.x,
+        this.dir.y,
+        this.dir.z,
+        CONFIG.reach,
+      );
+    }
 
     const targetKey = this.target
       ? `${this.target.blockX},${this.target.blockY},${this.target.blockZ}`

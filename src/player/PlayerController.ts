@@ -21,10 +21,18 @@ export class PlayerController {
   private autoJumpLanded = false;
   /** True when the previous airborne phase was started by a held-jump input. */
   private manualJumped = false;
+  /**
+   * Optional support-friction provider, wired by Game to
+   * `PlayerPhysics.getSupportFriction` (block-id slipperiness hook). Absent or
+   * returning values other than 1 scales grounded accel/damping; the default
+   * keeps prior movement feel exactly.
+   */
+  private readonly frictionProvider?: () => number;
 
-  constructor(player: Player, input: InputState) {
+  constructor(player: Player, input: InputState, opts: { frictionProvider?: () => number } = {}) {
     this.player = player;
     this.input = input;
+    this.frictionProvider = opts.frictionProvider;
   }
 
   update(dt: number): void {
@@ -74,14 +82,19 @@ export class PlayerController {
     const targetVX = moveDirX * targetSpeed;
     const targetVZ = moveDirZ * targetSpeed;
 
-    // Smooth acceleration toward the target velocity.
+    // Smooth acceleration toward the target velocity. Grounded motion is
+    // scaled by the support block's friction/slipperiness (default 1.0).
     const fluidFactor = this.player.inWater
       ? CONFIG.player.waterSpeedMultiplier
       : this.player.inLava
         ? 0.35
         : 1;
-    const accel = CONFIG.player.acceleration * fluidFactor * d;
-    const damping = CONFIG.player.damping * fluidFactor * d;
+    const groundFriction =
+      this.player.onGround && !this.player.inWater && !this.player.inLava
+        ? Math.max(0, this.frictionProvider?.() ?? 1)
+        : 1;
+    const accel = CONFIG.player.acceleration * fluidFactor * groundFriction * d;
+    const damping = CONFIG.player.damping * fluidFactor * groundFriction * d;
 
     this.player.velocity.x = this.horizontalDamp(
       this.player.velocity.x,

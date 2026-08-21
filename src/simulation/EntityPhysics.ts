@@ -13,6 +13,11 @@
  * sub-stepping, no per-type bounding-box storage on the 017 `EntityRegistry`,
  * no fluid physics, and no `Game` tick-loop wiring are in scope here.
  *
+ * Physics tiering (audit 02 §8): this is the mob tier — kinematic AABB with
+ * shape-aware axis-separated resolution and per-axis collision flags.
+ * Items/XP use a cheaper gravity + ground-snap policy; projectiles use the
+ * swept segment traversal in `ProjectileCore` to prevent tunneling.
+ *
  * Transform convention (matches `PlayerPhysics`): `transform.x`/`z` are the
  * entity box's horizontal center; `transform.y` is the box's bottom (feet).
  */

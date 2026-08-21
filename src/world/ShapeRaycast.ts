@@ -90,6 +90,52 @@ function entryNormal(axis: number, dir: number): number {
   return dir > 0 ? -1 : 1;
 }
 
+/** Result of a ray vs box-list intersection: entry distance plus face normal. */
+export interface RayBoxesHit {
+  /** Distance along the (normalized) ray to the nearest box entry. */
+  t: number;
+  nx: number;
+  ny: number;
+  nz: number;
+}
+
+/**
+ * Per-cell shape intersection routine: intersect a normalized ray with an
+ * ordered list of AABBs (already in world coordinates) via the slab method.
+ * Returns the nearest hit's distance and entry-face normal (pointing toward
+ * the origin), or `null` when no box is hit within `maxT`. Deterministic:
+ * ties resolve to the earliest box in the list.
+ */
+export function intersectRayBoxes(
+  ox: number,
+  oy: number,
+  oz: number,
+  dx: number,
+  dy: number,
+  dz: number,
+  boxes: readonly Aabb[],
+  maxT: number,
+): RayBoxesHit | null {
+  let best: BoxHit | null = null;
+  const hit: BoxHit = { t: 0, axis: -1 };
+  for (const candidate of boxes) {
+    if (!intersectBox(ox, oy, oz, dx, dy, dz, candidate, hit)) continue;
+    if (hit.t > maxT) continue;
+    if (best === null || hit.t < best.t) {
+      best = { t: hit.t, axis: hit.axis };
+    }
+  }
+  if (best === null) return null;
+  const dirOnAxis = best.axis === 0 ? dx : best.axis === 1 ? dy : dz;
+  const n = entryNormal(best.axis, dirOnAxis);
+  return {
+    t: best.t,
+    nx: best.axis === 0 ? n : 0,
+    ny: best.axis === 1 ? n : 0,
+    nz: best.axis === 2 ? n : 0,
+  };
+}
+
 /**
  * Cast a shape-aware selection ray from `origin` along normalized `dir` up to `maxDistance`. Returns
  * the nearest box hit or `null`.
@@ -137,32 +183,21 @@ export function raycastSelection(
   let tMaxY = dirY !== 0 ? (stepY > 0 ? y + 1 - originY : originY - y) * tDeltaY : Infinity;
   let tMaxZ = dirZ !== 0 ? (stepZ > 0 ? z + 1 - originZ : originZ - z) * tDeltaZ : Infinity;
 
-  const hit: BoxHit = { t: 0, axis: -1 };
-
   const tryCell = (cx: number, cy: number, cz: number): ShapeRayHit | null => {
     const shape = world.getSelectionShape(cx, cy, cz);
     if (shape.isEmpty) return null;
 
-    let best: BoxHit | null = null;
-    for (const box of shape.boxes) {
-      const worldBox = translate(box, cx, cy, cz);
-      if (!intersectBox(originX, originY, originZ, dirX, dirY, dirZ, worldBox, hit)) continue;
-      if (hit.t > maxDistance) continue;
-      if (best === null || hit.t < best.t) {
-        best = { t: hit.t, axis: hit.axis };
-      }
-    }
+    const worldBoxes = shape.boxes.map((b) => translate(b, cx, cy, cz));
+    const best = intersectRayBoxes(originX, originY, originZ, dirX, dirY, dirZ, worldBoxes, maxDistance);
     if (best === null) return null;
 
-    const dirOnAxis = best.axis === 0 ? dirX : best.axis === 1 ? dirY : dirZ;
-    const nx = entryNormal(best.axis, dirOnAxis);
     return {
       blockX: cx,
       blockY: cy,
       blockZ: cz,
-      nx,
-      ny: best.axis === 1 ? nx : 0,
-      nz: best.axis === 2 ? nx : 0,
+      nx: best.nx,
+      ny: best.ny,
+      nz: best.nz,
       pointX: originX + dirX * best.t,
       pointY: originY + dirY * best.t,
       pointZ: originZ + dirZ * best.t,

@@ -5,6 +5,13 @@
  * expiration. No damage computation, no entity/item representation, and no
  * `Game`/spawning wiring — see
  * `openspec/changes/142-projectile-core/design.md`.
+ *
+ * Physics tiering (audit 02 §8): projectiles are the swept-collision tier.
+ * Block hits go through 057 `CollisionResolver.move`, which scans every voxel
+ * cell along each axis's full swept path (start -> final) and clamps to the
+ * first shape face — so a fast projectile cannot tunnel through partial shapes
+ * (slabs, fences, carpets) at any legal tick velocity, unlike a point sample.
+ * Items/XP use the cheaper ground-snap policy; mobs use `EntityPhysics`.
  */
 import type { CollisionResolver, ShapeWorld } from '../world/CollisionResolver';
 

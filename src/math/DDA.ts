@@ -19,6 +19,12 @@ export interface RaycastResult {
   nz: number;
   /** Distance along the ray to the hit. */
   distance: number;
+  /** Exact hit point X (present for shape-aware casts; absent otherwise). */
+  hitPointX?: number;
+  /** Exact hit point Y (present for shape-aware casts; absent otherwise). */
+  hitPointY?: number;
+  /** Exact hit point Z (present for shape-aware casts; absent otherwise). */
+  hitPointZ?: number;
 }
 
 export interface BlockSampler {

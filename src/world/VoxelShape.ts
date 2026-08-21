@@ -120,4 +120,108 @@ export class VoxelShape {
     }
     return top;
   }
+
+  /** Builder alias for `of`; reads naturally at call sites (`VoxelShape.boxes(...)`). */
+  static boxes(...parts: Aabb[]): VoxelShape {
+    return VoxelShape.of(parts);
+  }
+
+  /** Compose two shapes without mutating either input. */
+  static union(a: VoxelShape, b: VoxelShape): VoxelShape {
+    return a.union(b);
+  }
+}
+
+/** Convenience box literal (all bounds required, validated by `VoxelShape.of`). */
+export function box(
+  minX: number,
+  minY: number,
+  minZ: number,
+  maxX: number,
+  maxY: number,
+  maxZ: number,
+): Aabb {
+  return { minX, minY, minZ, maxX, maxY, maxZ };
+}
+
+/** Common partial-shape builders in block-local unit coordinates. */
+export const ShapeBuilders = {
+  /** Bottom slab: `[0,h]` vertically (default half block). */
+  slabBottom(h = 0.5): VoxelShape {
+    return VoxelShape.boxes(box(0, 0, 0, 1, h, 1));
+  },
+  /** Top slab: `[1-h,1]` vertically. */
+  slabTop(h = 0.5): VoxelShape {
+    return VoxelShape.boxes(box(0, 1 - h, 0, 1, 1, 1));
+  },
+  /** Thin flat covering on the floor (carpet/pressure-plate style). */
+  carpet(thickness = 0.0625, inset = 0): VoxelShape {
+    return VoxelShape.boxes(box(inset, 0, inset, 1 - inset, thickness, 1 - inset));
+  },
+  /** Central post of a fence/wall: full height, square cross-section centered in the cell. */
+  post(width = 0.375, height = 1): VoxelShape {
+    const lo = (1 - width) / 2;
+    return VoxelShape.boxes(box(lo, 0, lo, lo + width, height, lo + width));
+  },
+  /** Horizontal arm connecting the post toward one face (fence/wall rails). */
+  arm(direction: 'north' | 'south' | 'east' | 'west', width = 0.375, y0 = 0.375, y1 = 0.5625): VoxelShape {
+    const lo = (1 - width) / 2;
+    const hi = lo + width;
+    switch (direction) {
+      case 'north':
+        return VoxelShape.boxes(box(lo, y0, 0, hi, y1, 0.5));
+      case 'south':
+        return VoxelShape.boxes(box(lo, y0, 0.5, hi, y1, 1));
+      case 'west':
+        return VoxelShape.boxes(box(0, y0, lo, 0.5, y1, hi));
+      case 'east':
+        return VoxelShape.boxes(box(0.5, y0, lo, 1, y1, hi));
+    }
+  },
+};
+
+/**
+ * Per-block shape variants. A block may declare distinct collision, selection
+ * and occlusion shapes; any omitted variant falls back to the table default.
+ */
+export interface BlockShapeVariants {
+  collision?: VoxelShape;
+  selection?: VoxelShape;
+  occlusion?: VoxelShape;
+}
+
+/**
+ * Immutable-style registry table keyed by numeric block id. Entries are set at
+ * registration time and never mutated afterwards; unregistered ids answer the
+ * sane defaults (full cube) so callers only register deviations such as EMPTY
+ * for air/fluids or partial boxes for slabs/fences/carpets.
+ */
+export class BlockShapeTable {
+  private readonly entries = new Map<number, Required<BlockShapeVariants>>();
+
+  /** Register (or replace) the variants for one block id. Chainable. */
+  set(blockId: number, variants: BlockShapeVariants): this {
+    this.entries.set(blockId, Object.freeze({
+      collision: variants.collision ?? VoxelShape.FULL_CUBE,
+      selection: variants.selection ?? variants.collision ?? VoxelShape.FULL_CUBE,
+      occlusion: variants.occlusion ?? variants.collision ?? VoxelShape.FULL_CUBE,
+    }));
+    return this;
+  }
+
+  has(blockId: number): boolean {
+    return this.entries.has(blockId);
+  }
+
+  getCollisionShape(blockId: number): VoxelShape {
+    return this.entries.get(blockId)?.collision ?? VoxelShape.FULL_CUBE;
+  }
+
+  getSelectionShape(blockId: number): VoxelShape {
+    return this.entries.get(blockId)?.selection ?? VoxelShape.FULL_CUBE;
+  }
+
+  getOcclusionShape(blockId: number): VoxelShape {
+    return this.entries.get(blockId)?.occlusion ?? VoxelShape.FULL_CUBE;
+  }
 }
