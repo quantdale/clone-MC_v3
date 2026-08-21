@@ -1,12 +1,20 @@
 /**
- * Worker worldgen (086). Versioned off-main-thread generation jobs over the 064 worker protocol:
- * `WorldgenRequestPayload { columnX, columnZ, seed, stage }` (stage from the 085 vocabulary) and
- * `WorldgenResultPayload` echoing the identity with `generationVersion`. `processWorldgenRequest`
- * is the pure worker-side job (stage bodies arrive in 087+). `WorldgenWorkerClient` dispatches
- * valid, identity-matching results exactly once and drops stale, duplicate, and mismatched
- * results (mirroring 065).
+ * Worker worldgen (086). Versioned off-main-thread generation jobs over the unified worker protocol
+ * (`WorkerJobProtocol`, v2): `WorldgenRequestPayload { columnX, columnZ, seed, stage }` (stage from
+ * the 085 vocabulary) and `WorldgenResultPayload` echoing the identity with `generationVersion`.
+ * `processWorldgenRequest` is the pure worker-side job (stage bodies arrive in 087+).
+ * `WorldgenWorkerClient` dispatches valid, identity-matching, token-matching results exactly once
+ * and drops stale, duplicate, mismatched, and superseded results. It can run detached (synchronous
+ * harness mode) or backed by a shared `WorkerPool` of real workers.
  */
-import { WORKER_PROTOCOL_VERSION, WorkerJobClient, type ResolvedOutcome } from '../rendering/WorkerJobProtocol';
+import {
+  UNVERSIONED_TOKEN,
+  WORKER_PROTOCOL_VERSION,
+  WorkerJobClient,
+  type ResolvedOutcome,
+  type WorkerResult,
+} from '../rendering/WorkerJobProtocol';
+import type { WorkerPool } from '../engine/WorkerPool';
 import { validateGenerationStage } from './GenerationPipeline';
 
 /** Version of the worldgen result envelope. */
@@ -90,17 +98,62 @@ export function processWorldgenRequest(payload: WorldgenRequestPayload): Worldge
   };
 }
 
-/** Main-thread dispatcher for worldgen jobs over the 064 protocol. */
+/**
+ * Main-thread dispatcher for worldgen jobs over the unified protocol. Detached mode (no pool)
+ * keeps the synchronous harness contract; pool mode posts real worker requests and routes results
+ * back through the same exactly-once resolution path.
+ */
 export class WorldgenWorkerClient {
   private readonly jobs = new WorkerJobClient();
   private readonly callbacks = new Map<string, (result: WorldgenResultPayload) => void>();
   private readonly requests = new Map<string, WorldgenRequestPayload>();
+  /** Submission-time token per pending job (mirrors `WorkerJobClient` state for cancellation sweeps). */
+  private readonly tokens = new Map<string, number>();
+  private pool: WorkerPool | null = null;
+  private generationToken = 0;
+
+  constructor(opts: { pool?: WorkerPool; generationToken?: number } = {}) {
+    if (opts.pool) this.pool = opts.pool;
+    if (opts.generationToken !== undefined) this.generationToken = opts.generationToken;
+  }
+
+  /** Attach a shared worker pool; subsequent jobs are dispatched to real workers. */
+  attachPool(pool: WorkerPool): void {
+    this.pool = pool;
+  }
+
+  /**
+   * Advance the version token. Pending jobs keep their old token, so their late results are
+   * rejected as stale; call `cancelByToken` to also free their queue slots eagerly.
+   */
+  setGenerationToken(token: number): void {
+    this.generationToken = token;
+  }
 
   /** Submit a worldgen job; `onResult` fires exactly once on a valid, identity-matching result. */
   submit(payload: WorldgenRequestPayload, onResult: (result: WorldgenResultPayload) => void): string {
-    const jobId = this.jobs.submit('worldgen', payload);
+    const token = this.generationToken;
+    const jobId = this.jobs.submit('worldgen', token);
     this.callbacks.set(jobId, onResult);
     this.requests.set(jobId, payload);
+    this.tokens.set(jobId, token);
+    if (this.pool) {
+      this.pool.submit({
+        kind: 'worldgen',
+        generationToken: token,
+        payload,
+        onResult: (result) => {
+          this.complete(jobId, result);
+        },
+        onFailure: () => {
+          // Abandon the job (worker loss/dispose): no result is delivered; late results become stale.
+          this.jobs.cancel(jobId);
+          this.callbacks.delete(jobId);
+          this.requests.delete(jobId);
+          this.tokens.delete(jobId);
+        },
+      });
+    }
     return jobId;
   }
 
@@ -117,9 +170,9 @@ export class WorldgenWorkerClient {
   }
 
   /**
-   * Handle a worker message: validate + resolve via 064, then require identity match; on success
-   * invoke the job's callback once and return the result. Stale/invalid/mismatched messages
-   * return null and invoke nothing.
+   * Handle a worker message: validate + resolve via the unified protocol, then require identity
+   * match; on success invoke the job's callback once and return the result. Stale/invalid/
+   * mismatched messages return null and invoke nothing.
    */
   handleMessage(input: unknown): WorldgenResultPayload | null {
     const outcome: ResolvedOutcome | null = this.jobs.resolveResult(input);
@@ -132,12 +185,7 @@ export class WorldgenWorkerClient {
       return null;
     }
     if (!this.matches(outcome.jobId, result)) return null;
-
-    const callback = this.callbacks.get(outcome.jobId);
-    this.callbacks.delete(outcome.jobId);
-    this.requests.delete(outcome.jobId);
-    if (callback) callback(result);
-    return result;
+    return this.complete(outcome.jobId, result);
   }
 
   /** Cancel a pending job (its late result becomes stale). */
@@ -145,7 +193,26 @@ export class WorldgenWorkerClient {
     const removed = this.jobs.cancel(jobId);
     this.callbacks.delete(jobId);
     this.requests.delete(jobId);
+    this.tokens.delete(jobId);
     return removed;
+  }
+
+  /**
+   * Cancel every pending job still carrying `generationToken`; returns how many. Use when the
+   * world revision advances (new seed, regenerated region) so superseded columns are dropped
+   * wholesale instead of writing over current state.
+   */
+  cancelByToken(generationToken: number): number {
+    let cancelled = 0;
+    for (const [jobId, token] of this.tokens) {
+      if (token === generationToken && this.jobs.cancel(jobId)) {
+        this.callbacks.delete(jobId);
+        this.requests.delete(jobId);
+        this.tokens.delete(jobId);
+        cancelled++;
+      }
+    }
+    return cancelled;
   }
 
   /** Number of pending (unresolved) jobs. */
@@ -153,8 +220,30 @@ export class WorldgenWorkerClient {
     return this.jobs.pendingCount;
   }
 
-  /** Build a 064 result message for `jobId` (helper for worker-side wiring). */
-  static resultMessage(jobId: string, payload: WorldgenResultPayload): unknown {
-    return { protocolVersion: WORKER_PROTOCOL_VERSION, jobId, ok: true, payload };
+  /**
+   * Build a unified-protocol result message for `jobId` (helper for worker-side wiring and the
+   * synchronous harness path). The wildcard `UNVERSIONED_TOKEN` means "resolve regardless of the
+   * submission token"; real async workers must echo their request's token instead.
+   */
+  static resultMessage(jobId: string, payload: WorldgenResultPayload): WorkerResult {
+    return {
+      protocolVersion: WORKER_PROTOCOL_VERSION,
+      jobId,
+      kind: 'worldgen',
+      ok: true,
+      generationToken: UNVERSIONED_TOKEN,
+      payload,
+    };
+  }
+
+  /** Shared exactly-once completion: drop the pending job, fire its callback, return the result. */
+  private complete(jobId: string, result: WorldgenResultPayload): WorldgenResultPayload | null {
+    if (!this.jobs.cancel(jobId)) return null; // stale / cancelled / already resolved
+    const callback = this.callbacks.get(jobId);
+    this.callbacks.delete(jobId);
+    this.requests.delete(jobId);
+    this.tokens.delete(jobId);
+    if (callback) callback(result);
+    return result;
   }
 }
