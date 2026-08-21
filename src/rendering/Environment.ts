@@ -180,8 +180,6 @@ export class Environment {
   private readonly clouds: THREE.Group;
   private readonly cloudGeometry: THREE.BoxGeometry | null;
   private readonly cloudMaterial: THREE.MeshLambertMaterial | null;
-  private readonly dayFogColor = new THREE.Color(CONFIG.fog.color);
-  private readonly nightFogColor = new THREE.Color(0x14243a);
   /** Shared, reusable environment state; identity-stable across frames. */
   private readonly envState: EnvironmentState = computeEnvironmentState(START_HOUR);
 

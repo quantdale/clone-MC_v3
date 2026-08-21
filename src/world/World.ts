@@ -92,11 +92,12 @@ function estimateGeometryBytes(geometry: THREE.BufferGeometry): number {
   let bytes = 0;
   for (const name of Object.keys(geometry.attributes)) {
     const attribute = geometry.attributes[name];
-    if (attribute?.array instanceof ArrayBufferView) {
+    // ArrayBufferView is type-only; `ArrayBuffer.isView` is its runtime check.
+    if (attribute?.array !== undefined && ArrayBuffer.isView(attribute.array)) {
       bytes += attribute.array.byteLength;
     }
   }
-  if (geometry.index?.array instanceof ArrayBufferView) {
+  if (geometry.index?.array !== undefined && ArrayBuffer.isView(geometry.index.array)) {
     bytes += geometry.index.array.byteLength;
   }
   return bytes;

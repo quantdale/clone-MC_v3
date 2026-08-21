@@ -107,7 +107,7 @@ export interface SkyLightFieldAccess {
 export class SkyLightEngine {
   private readonly queue = new ChannelUpdateQueue();
   private readonly context: LightChannelContext;
-  constructor(private readonly access: SkyLightFieldAccess) {
+  constructor(access: SkyLightFieldAccess) {
     this.context = {
       minY: access.minY,
       maxY: access.maxY,

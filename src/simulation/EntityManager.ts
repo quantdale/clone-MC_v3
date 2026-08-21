@@ -540,6 +540,7 @@ export class EntityManager {
     let cursor = this.updateCursor % n;
     while (scanned < n && out.length < maxEntities) {
       const id = this.order[cursor];
+      if (id === undefined) break;
       const e = this.byId.get(id);
       if (e && e.state === 'ACTIVE' && this.isActivationActive(id)) out.push(e);
       cursor = (cursor + 1) % n;

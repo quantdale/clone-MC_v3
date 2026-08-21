@@ -142,15 +142,25 @@ export class WorldgenWorkerClient {
         kind: 'worldgen',
         generationToken: token,
         payload,
-        onResult: (result) => {
+        onResult: (payload) => {
+          // Pool payloads are untyped transport: apply the same validation and
+          // identity-match discipline as `handleMessage` before completion.
+          let result: WorldgenResultPayload;
+          try {
+            result = validateWorldgenResult(payload);
+          } catch {
+            this.abandon(jobId); // invalid payload can never satisfy the job
+            return;
+          }
+          if (!this.matches(jobId, result)) {
+            this.abandon(jobId); // foreign/stale identity must not resolve the job
+            return;
+          }
           this.complete(jobId, result);
         },
         onFailure: () => {
           // Abandon the job (worker loss/dispose): no result is delivered; late results become stale.
-          this.jobs.cancel(jobId);
-          this.callbacks.delete(jobId);
-          this.requests.delete(jobId);
-          this.tokens.delete(jobId);
+          this.abandon(jobId);
         },
       });
     }
@@ -191,9 +201,7 @@ export class WorldgenWorkerClient {
   /** Cancel a pending job (its late result becomes stale). */
   cancel(jobId: string): boolean {
     const removed = this.jobs.cancel(jobId);
-    this.callbacks.delete(jobId);
-    this.requests.delete(jobId);
-    this.tokens.delete(jobId);
+    this.abandon(jobId);
     return removed;
   }
 
@@ -240,10 +248,16 @@ export class WorldgenWorkerClient {
   private complete(jobId: string, result: WorldgenResultPayload): WorldgenResultPayload | null {
     if (!this.jobs.cancel(jobId)) return null; // stale / cancelled / already resolved
     const callback = this.callbacks.get(jobId);
+    this.abandon(jobId);
+    if (callback) callback(result);
+    return result;
+  }
+
+  /** Drop all per-job bookkeeping without invoking the callback (failure/stale/invalid paths). */
+  private abandon(jobId: string): void {
+    this.jobs.cancel(jobId);
     this.callbacks.delete(jobId);
     this.requests.delete(jobId);
     this.tokens.delete(jobId);
-    if (callback) callback(result);
-    return result;
   }
 }

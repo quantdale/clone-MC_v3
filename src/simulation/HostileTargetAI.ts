@@ -222,6 +222,7 @@ export class PathCache<T> {
     if (!bucket) return undefined;
     for (let i = 0; i < bucket.length; i++) {
       const entry = bucket[i];
+      if (!entry) continue;
       if (
         PathCache.sameCell(entry.startCell, startCell) &&
         PathCache.sameCell(entry.goalCell, goalCell)

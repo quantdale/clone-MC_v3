@@ -26,7 +26,7 @@ import {
 } from './GreedyMesher';
 import type { ModelFace } from '../data/BlockModel';
 import type * as THREE from 'three';
-import type { MeshStreamData, MeshStreamName, UvRect } from './MeshingTypes';
+import type { MeshStreamData, MeshStreamName, UvRect } from '../world/MeshingTypes';
 
 /** A section-meshing job request (plain data; structured-clone-safe). */
 export interface MeshSectionRequestPayload {

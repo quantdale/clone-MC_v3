@@ -96,7 +96,7 @@ export class BlockLightEngine {
   private readonly queue = new ChannelUpdateQueue();
   private readonly context: LightChannelContext;
 
-  constructor(private readonly access: BlockLightFieldAccess) {
+  constructor(access: BlockLightFieldAccess) {
     this.context = {
       minY: access.minY,
       maxY: access.maxY,

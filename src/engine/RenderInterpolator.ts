@@ -90,7 +90,7 @@ export class RenderInterpolator {
 
     if (!canBlend) {
       if (target.length < n) target.length = n;
-      for (let i = 0; i < n; i++) target[i] = curr[i];
+      for (let i = 0; i < n; i++) target[i] = curr[i]!;
       return target;
     }
 

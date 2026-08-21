@@ -225,7 +225,11 @@ export class RenderPerformanceMonitor {
       return { samples: 0, fpsAvg: 0, p50Millis: 0, p95Millis: 0, p99Millis: 0, longFrames: 0 };
     }
     const sorted = Array.from(this.frameRing.subarray(0, n)).sort((a, b) => a - b);
-    const percentile = (p: number): number => sorted[Math.min(n - 1, Math.ceil(p * n) - 1)];
+    const percentile = (p: number): number => {
+      // Index is provably within [0, n-1]; the coalescing only satisfies
+      // noUncheckedIndexedAccess.
+      return sorted[Math.min(n - 1, Math.ceil(p * n) - 1)] ?? 0;
+    };
     let longFrames = 0;
     let total = 0;
     for (const t of sorted) {
