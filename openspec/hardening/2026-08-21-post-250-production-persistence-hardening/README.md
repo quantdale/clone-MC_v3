@@ -1,6 +1,10 @@
 # Post-250 Production Persistence Hardening
 
-Status: **MANDATORY / ACTIVE INTERLOCK**
+Status: **VERIFIED / COMPLETE (2026-08-23)** — all 78 tasks done, Gates A–F PASS, DL-001/DL-002/DL-005
+resolved in production code, canonical CI SUCCESS on the published remediation checkpoint
+`aa92a5c229a753f10f8c1677e836136962b5d07a`, and release readiness **READY**
+(`openspec/evidence/release-readiness-post-hardening.md`). The campaign text below is preserved as
+the record of what was mandated and executed.
 
 This out-of-band hardening campaign supersedes the Change 250 `READY` release decision for release purposes. It does not renumber Changes 001-250 and it does not create Change 251.
 

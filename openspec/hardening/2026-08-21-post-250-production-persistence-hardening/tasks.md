@@ -61,7 +61,7 @@ Target: all tasks complete; no advancement exception may waive DL-001 or DL-002.
 
 - [x] 8.1 Run `npm run validate-state`, typecheck, lint, full unit, coverage, build, production/full dependency audits, and E2E with required retry policy.
 - [x] 8.2 Run the release-performance gate and confirm persistence changes remain within save/load/memory budgets.
-- [ ] 8.3 Publish the intended remediation checkpoint to `origin/main`, refetch, and confirm exact remote SHA.
-- [ ] 8.4 Require canonical GitHub Actions SUCCESS for that exact published SHA and record run/job IDs.
-- [ ] 8.5 Author/update post-hardening audit and release-readiness evidence. The historical Change 250 READY decision must be explicitly superseded, not silently rewritten.
-- [ ] 8.6 Mark this interlock VERIFIED only when all tasks above pass and no unresolved data-loss/corruption/security/regression blocker remains.
+- [x] 8.3 Publish the intended remediation checkpoint to `origin/main`, refetch, and confirm exact remote SHA. (Published chain `ec6989b` → `a06b042` → `aa92a5c229a753f10f8c1677e836136962b5d07a`; refetch proves remote = local HEAD = `aa92a5c`, clean tree.)
+- [x] 8.4 Require canonical GitHub Actions SUCCESS for that exact published SHA and record run/job IDs. (Run **32589457819** on `aa92a5c`: gate job **97078975848** SUCCESS — validate-state, typecheck, lint, build, SEC-001 bundle assertion, unit suite, coverage thresholds, both dependency audits; e2e job **97078975868** SUCCESS — full 46-test suite incl. the 60-cell visual matrix vs the committed linux-ci set.)
+- [x] 8.5 Author/update post-hardening audit and release-readiness evidence. The historical Change 250 READY decision must be explicitly superseded, not silently rewritten. (`post-hardening-audit.md` incl. NEW-6 + PH-7 incremental pass; `openspec/evidence/release-readiness-post-hardening.md` verdict READY naming `aa92a5c`.)
+- [x] 8.6 Mark this interlock VERIFIED only when all tasks above pass and no unresolved data-loss/corruption/security/regression blocker remains. (All gates PASS; DL-001/DL-002/DL-005 resolved; NEW-1..NEW-6 closed in-tree; interlock marked VERIFIED in `CHANGE_SEQUENCE_OVERRIDES.md`.)

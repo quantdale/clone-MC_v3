@@ -1,8 +1,8 @@
 # Verification: Post-250 Production Persistence Hardening
 
-Overall status: **VERIFYING** (implementation complete; full gate + publication pending)
-Task completion: **see `tasks.md`** (sections 0-6 implemented and tested; 7-8 in progress)
-Release readiness: **BLOCKED by this interlock until Gate F completes**
+Overall status: **VERIFIED** (2026-08-23; Gates A-F PASS; canonical CI SUCCESS on `aa92a5c`)
+Task completion: **78/78 — see `tasks.md`**
+Release readiness: **READY** per `openspec/evidence/release-readiness-post-hardening.md`
 
 Historical note: Change 250's `READY`/`COMPLETE` artifacts remain as immutable historical evidence of the pre-remediation decision. For current release authority they are superseded by `CHANGE_SEQUENCE_OVERRIDES.md` and this package until this verification becomes VERIFIED.
 
@@ -166,15 +166,22 @@ all fixed or documented in-tree before publication (NEW-1..NEW-5 in `post-harden
 
 ## Gate F — publication/canonical proof
 
-Status: **IN PROGRESS** (publication confirmed; canonical CI blocked by NEW-6, remediation
-published, awaiting green run — see narrative)
+Status: **PASS** (2026-08-23)
 
-- [x] intended remediation commit published to `origin/main` (through `ec6989b`, 2026-08-22;
-      refetch 2026-08-23 00:13 +0800 and `ls-remote`/`fetch` 2026-08-23 both prove remote
-      `origin/main` = `ec6989b55dc89291d771013952a936d3273793ee` = local HEAD)
-- [ ] canonical GitHub Actions SUCCESS for the exact published SHA (see below)
-- [ ] run/job IDs and results recorded here
-- [ ] post-hardening release-readiness artifact names exact published SHA and supersedes historical Change 250 READY decision
+- [x] intended remediation checkpoint published to `origin/main`:
+      `ec6989b` (hardening campaign) → `a06b042` (NEW-6 fix) →
+      **`aa92a5c229a753f10f8c1677e836136962b5d07a` (remediation checkpoint: full campaign + NEW-6
+      remediation + committed linux-ci golden set)**
+- [x] refetch proves the exact published SHA (`git fetch` + `rev-parse origin/main` =
+      `aa92a5c229a753f10f8c1677e836136962b5d07a`, local HEAD identical, clean tree)
+- [x] canonical GitHub Actions run for that exact SHA completes SUCCESS — **run 32589457819,
+      conclusion SUCCESS**: job `gate` 97078975848 success (validate-state, typecheck, lint,
+      build, release-bundle assertion, unit suite, coverage thresholds, production + full
+      dependency audits — every step green), job `e2e` 97078975868 success (Playwright browser
+      install + full 46-test E2E suite incl. the 60-cell visual matrix against the committed
+      linux-ci set)
+- [x] run/job IDs and results recorded here (see execution record below)
+- [x] post-hardening release-readiness artifact names exact published SHA and supersedes historical Change 250 READY decision (`openspec/evidence/release-readiness-post-hardening.md`)
 
 ### Gate F execution record
 
@@ -201,9 +208,17 @@ published, awaiting green run — see narrative)
    SHA (`a06b042`) is expected RED in the e2e job only because the linux-ci set was not yet
    committed when it started (60 × missing-golden) — the gate job result on that SHA is
    unaffected evidence for every non-visual requirement.
-
-SEC-001 interim evidence: plain `npm run build` + `node scripts/check-release-bundle.mjs` → "3 assets checked; no E2E hook found" (exit 0); enforced green as the `gate` job's bundle step in run 32577467105.
+4. **Canonical proof — SUCCESS (2026-08-23).** CI run **32589457819** on SHA
+   `aa92a5c229a753f10f8c1677e836136962b5d07a`: `gate` job 97078975848 SUCCESS (all 13 required
+   steps), `e2e` job 97078975868 SUCCESS including the E2E tests step — the first fully green
+   canonical run of the program's mandatory gates on GitHub Actions.
 
 ## Final verdict
 
-**NOT VERIFIED.** Do not mark release READY while any mandatory finding or gate above is incomplete.
+**VERIFIED** (2026-08-22/23 campaign; canonical proof on `aa92a5c`). All mandatory findings are
+resolved in production code with current-tree evidence; Gates A-F are PASS; no unresolved
+data-loss/corruption/determinism/security/regression blocker remains. Release readiness is
+governed by `openspec/evidence/release-readiness-post-hardening.md` (**READY**), which supersedes
+the historical Change 250 decision for current release authority.
+
+SEC-001 interim evidence: plain `npm run build` + `node scripts/check-release-bundle.mjs` → "3 assets checked; no E2E hook found" (exit 0); enforced green as the `gate` job's bundle step in run 32577467105 and again in canonical run 32589457819.

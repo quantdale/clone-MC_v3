@@ -2,38 +2,35 @@
 
 ## Current checkpoint
 
-> **ACTIVE INTERLOCK (2026-08-21 session, start head `471cf1e`):** the mandatory post-250
-> production-persistence hardening campaign
-> (`openspec/hardening/2026-08-21-post-250-production-persistence-hardening/`) supersedes the
-> historical READY/COMPLETE text below for current release authority
-> (`CHANGE_SEQUENCE_OVERRIDES.md`). Implementation is complete: schema v6 `chunk-edits` store,
-> `GamePersistence` facade composition root, World durability bridge (>10k-chunk churn proof),
-> live Game/main.ts wiring with `#save-status` health banner, faithful legacy migration with
-> read-back verification + truncation fix, SEC-001 bundle assertion wired into CI. Unit suite
-> 3877 passed at the pre-final tree; browser E2E persistence spec 5/6 (one timeout under
-> diagnosis). Remaining: final gate suite, independent adversarial re-audit pass, publication to
-> `origin/main`, canonical CI SUCCESS on the exact SHA — then
-> `openspec/evidence/release-readiness-post-hardening.md` PH-6/PH-7/PH-8 flip to PASS and the
-> interlock may be marked VERIFIED. The historical terminal state below is preserved unchanged.
+> **INTERLOCK VERIFIED — PROGRAM TERMINAL (2026-08-23, session start head `ec6989b`).** The
+> mandatory post-250 production-persistence hardening campaign
+> (`openspec/hardening/2026-08-21-post-250-production-persistence-hardening/`) completed all 78
+> tasks and is **VERIFIED**: Gates A–F PASS; DL-001/DL-002/DL-005 resolved in production code;
+> NEW-1..NEW-6 closed (NEW-6 = environment-locked Change-245 visual goldens, discovered via
+> canonical CI run 32577467105 on `ec6989b`, fixed at root with environment-scoped golden sets);
+> PH-7 incremental adversarial pass over the published delta clean. Remediation checkpoint
+> **`aa92a5c229a753f10f8c1677e836136962b5d07a`** published and refetch-proved; canonical GitHub
+> Actions run **32589457819** SUCCESS on that exact SHA (gate job **97078975848**, e2e job
+> **97078975868**). Release decision: **READY**
+> (`openspec/evidence/release-readiness-post-hardening.md`, superseding the historical Change 250
+> READY for current release authority). `CHANGE_SEQUENCE_OVERRIDES.md` records the interlock as
+> VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys).
      "None (hardening interlock ...)" is the sanctioned form while an interlock governs release
      authority; nextChange stays null because no Change 251 exists. -->
-- Active implementation change: **None (hardening interlock: post-250 production persistence hardening)**
+- Active implementation change: **None (hardening interlock VERIFIED; program terminal)**
 - Next change: **null**
 - 240 advancement allowed: **yes**
 
 - Program: **COMPLETE** (terminal state — no change 251 exists)
 - Last completed change: **250-final-program-verification — VERIFIED 100% (documentation-only; final numbered change)**
 - All changes 001–250: **VERIFIED** — zero DEFERRED, zero UNCLASSIFIED (`openspec/evidence/checklist/final-verification-checklist.md`)
-- 250 required-test gate: **PASS — typecheck/lint/test re-run at head 502d021 (292 files / 3827 passed + 1 skipped); build/e2e cited at byte-identical tree b56529e (build PASS, e2e 40/40, 12.8m); no src/tests file created or modified by 250**
-- Release-readiness decision: **READY** (`openspec/evidence/release-readiness.md`, RC-1..RC-9 all PASS)
-- Final parity audit: **PASS** (`openspec/evidence/parity/final-parity-audit.md`; 249-DL-001/249-DL-002 dispositioned `accepted` with recorded product decision — remediation via DL-005 transactional-stack wiring tracked forward as post-release work; dispositions accepted 33 / resolved 12 / open 0)
-- Evidence archive: **complete** (`openspec/evidence/` — README manifest, checklist, 250 per-change records, parity audit, suite record, release decision; provenance-backed to validationResults + source verification.md files)
-- Session-start head: `502d0215f88f31868f6bc7067efe4326d2f7fb26`; published head recorded in the session report after push
-- Section milestone: **PROGRAM COMPLETE — every planned change 001–250 VERIFIED**: program control (001), data/registry foundation (002–020), vertical world/chunk storage (021–033), persistent storage (034–043), fixed-tick simulation (044–055), block geometry/rendering (056–075), fluids (076–084), worldgen (085–102), crafting/containers/progression (103–128), entity framework/mobs (129–153), redstone/automation (154–173), dimensions/major progression (174–195), environment/UX/accessibility (196–210), resource/data packs/content breadth (211–221), multiplayer (222–237), hardening/verification matrices (238–247), parity matrix reconciliation (248), whole-codebase adversarial audit (249), final program verification (250). Hardening interlock VERIFIED.
-- Hardening interlock: **VERIFIED at e3ecf86c28553c558459c855a3aee3b003bcb157 (run 32320823336 #337 SUCCESS; 78/78 tasks 100%; all gates green)**
-- Next exact action: **Publish the remediation checkpoint to origin/main; then record canonical GitHub Actions SUCCESS for the exact published SHA in hardening verification.md Gate F, author the post-hardening release-readiness artifact superseding historical Change 250 READY, and mark the interlock VERIFIED per CHANGE_SEQUENCE_OVERRIDES.md.**
+- Historical Change 250-era bullets (preserved; superseded **for current release authority** by `openspec/evidence/release-readiness-post-hardening.md`): 250 required-test gate PASS at head `502d021` / byte-identical tree `b56529e`; historical release-readiness READY RC-1..RC-9 (`openspec/evidence/release-readiness.md`); final parity audit PASS with DL dispositions later rejected by this interlock (`openspec/evidence/parity/final-parity-audit.md`); evidence archive complete (`openspec/evidence/`)
+- Post-250 hardening interlock: **VERIFIED at remediation checkpoint `aa92a5c229a753f10f8c1677e836136962b5d07a` — canonical CI run 32589457819 SUCCESS (gate job 97078975848, e2e job 97078975868); tasks 78/78; release decision READY (`openspec/evidence/release-readiness-post-hardening.md`)**
+- Session-start head: `ec6989b55dc89291d771013952a936d3273793ee`; published head recorded in the session report after push
+- Section milestone: **PROGRAM COMPLETE — every planned change 001–250 VERIFIED and the mandatory post-250 hardening interlock VERIFIED with canonical exact-SHA CI proof**: program control (001), data/registry foundation (002–020), vertical world/chunk storage (021–033), persistent storage (034–043), fixed-tick simulation (044–055), block geometry/rendering (056–075), fluids (076–084), worldgen (085–102), crafting/containers/progression (103–128), entity framework/mobs (129–153), redstone/automation (154–173), dimensions/major progression (174–195), environment/UX/accessibility (196–210), resource/data packs/content breadth (211–221), multiplayer (222–237), hardening/verification matrices (238–247), parity matrix reconciliation (248), whole-codebase adversarial audit (249), final program verification (250), post-250 production persistence hardening (interlock).
+- Next exact action: **None — program terminal. Future sessions enter through GitHub review of the published range and resume only for reviewer findings or explicitly authorized new scope.**
 
 ## What 250 implemented
 

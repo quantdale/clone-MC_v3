@@ -2,6 +2,18 @@
 
 ## Mandatory post-250 production-persistence hardening interlock
 
+> **STATUS: VERIFIED (2026-08-23).** Every task in the package is complete (78/78);
+> `249-DL-001`, `249-DL-002`, and `249-DL-005` are `resolved` with current production-path
+> evidence (`post-hardening-audit.md`, including NEW-1..NEW-6 and the PH-7 incremental pass over
+> the published delta); Gates A–F are PASS in the package's `verification.md`; the remediation
+> checkpoint **`aa92a5c229a753f10f8c1677e836136962b5d07a`** is published to `origin/main`
+> (refetch-proved); canonical GitHub Actions for that exact SHA is SUCCESS (**run 32589457819**,
+> gate job 97078975848, e2e job 97078975868); and
+> `openspec/evidence/release-readiness-post-hardening.md` records verdict **READY**, explicitly
+> superseding the historical Change 250 decision. The release-authority supersession below is now
+> historical context: current authority is the READY artifact. The numbered-change rules in this
+> section (no Change 251, no renumbering/rewriting of 001–250 artifacts) remain in force.
+
 The historical Change 250 (`250-final-program-verification`) `READY` / `COMPLETE` decision is superseded **for current release authority** by this mandatory out-of-band campaign:
 
 `openspec/hardening/2026-08-21-post-250-production-persistence-hardening/`

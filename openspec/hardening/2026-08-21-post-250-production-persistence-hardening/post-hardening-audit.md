@@ -75,6 +75,45 @@ Remediation normative baseline: `design-addendum.md` in this package.
    capture-harness specs amended with dated rationale; provenance in
    `tests/visual-golden/README.md`.
 
+## PH-7 incremental adversarial pass against the published remediation tree (2026-08-23)
+
+Scope: the production `src/` delta between the Gate E audit snapshot (`32b0e76`) and the
+published remediation checkpoint `aa92a5c` — the nine-commit deep-engine wave plus gate-defect
+fixes (63 files, +8283/−866), none of which existed at audit time. Method: risk-based targeted
+review over the persistence/durability intersection first, then lifecycle/concurrency,
+determinism, security surface, and resource bounds, cross-checked against the suites that ran
+green in canonical CI run 32589457819 on that exact SHA.
+
+1. **Durability seams intact through the wave rewrite.** `World.captureChunkEdits` (World.ts:383),
+   eviction→`retainEvictedChunkEdits` handoff (World.ts:1175-1186), hydration resident-wins race
+   guard (World.ts:1139-1141), and restore-on-regen (World.ts:1085) are unchanged in behavior;
+   `main.ts:40-47` still composes + opens `GamePersistence` BEFORE `Game`. The >10,051-chunk churn
+   unit test and both ProductionComposition tests pass on this tree.
+2. **Worker lifecycle integrity.** The gate-fixed cancel/cancelByToken slot-capacity leak is
+   present (WorkerPool.ts:276/320/470 drain freed capacity immediately); stale/malformed worker
+   messages are rejected BEFORE any caller callback (WorkerPool.handleMessage:425-450;
+   WorkerJobClient.resolveResult:278-290); malformed mesh payloads never resolve a job
+   (WorkerMeshing.ts:372/408 abandon-or-null).
+3. **Bounded catch-up.** `FixedTickDriver` bounds catch-up at `maxCatchUpTicks` (default 5),
+   discards and reports excess debt (FixedTickDriver.ts:100 → SimulationClock maxTicksPerFrame);
+   no unbounded spiral under stalls.
+4. **Security surface probe over the full delta:** added lines contain zero `eval(`/`new Function`,
+   zero `fetch`/`XMLHttpRequest`/`WebSocket`, zero `localStorage` access additions, zero dynamic
+   `import()`/child-process use. The wave introduced no new I/O or privilege surface.
+5. **Determinism/resource bounds:** worldgen v2 matrix hash + fingerprint pinned in source;
+   replay suite, worldgen matrix, and visual matrices green in the same canonical run;
+   MemoryResourceBudget/RenderBudget/TickBudgetMonitor/entity-activation-LOD bound work with
+   dedicated budget tests green.
+6. **Observations (non-blocking):** (a) `WorkerPool` isolates caller `onResult` exceptions after
+   the job is resolved (WorkerPool.ts:461-465) — deliberate loop protection, callers own retries;
+   (b) dropped catch-up debt is silent at the driver level beyond its counters — by-design
+   simulation-time compression under stall, never persisted-state loss. Neither weakens any
+   mandatory finding.
+
+Verdict: **no blocking data-loss/corruption/determinism/security/regression finding exists in the
+published delta**. PH-7's outstanding item ("independent dynamic pass against the final published
+tree") is satisfied by this pass combined with the canonical green run on the exact SHA.
+
 ## Gate E completion status
 
 - [x] REAUDIT-1 current-source citations above (file-level; line numbers drift with edits — see
