@@ -21,7 +21,7 @@ import {
   validateWorkerResult,
   type WorkerJobKind,
   type WorkerRequest,
-} from '../rendering/WorkerJobProtocol';
+} from "../rendering/WorkerJobProtocol";
 
 // Module-level sizing constants (audit 04 Phase B): keep cores for the UI thread and the browser.
 const MIN_POOL_SIZE = 1;
@@ -37,8 +37,13 @@ const REQUEST_FREELIST_CAP = 64;
 
 /** Conservative pool size: clamp(hardwareConcurrency - 2, 1, 4), fallback 2 when unavailable. */
 export function computeWorkerPoolSize(hardwareConcurrency?: number): number {
-  const cores = hardwareConcurrency ?? (typeof navigator !== 'undefined' ? navigator.hardwareConcurrency : undefined);
-  if (typeof cores !== 'number' || !Number.isFinite(cores) || cores < 1) return FALLBACK_POOL_SIZE;
+  const cores =
+    hardwareConcurrency ??
+    (typeof navigator !== "undefined"
+      ? navigator.hardwareConcurrency
+      : undefined);
+  if (typeof cores !== "number" || !Number.isFinite(cores) || cores < 1)
+    return FALLBACK_POOL_SIZE;
   return Math.min(MAX_POOL_SIZE, Math.max(MIN_POOL_SIZE, cores - 2));
 }
 
@@ -132,8 +137,16 @@ class BoundedPriorityQueue {
         const left = 2 * i + 1;
         const right = left + 1;
         let best = i;
-        if (left < this.heap.length && this.before(this.heap[left]!, this.heap[best]!)) best = left;
-        if (right < this.heap.length && this.before(this.heap[right]!, this.heap[best]!)) best = right;
+        if (
+          left < this.heap.length &&
+          this.before(this.heap[left]!, this.heap[best]!)
+        )
+          best = left;
+        if (
+          right < this.heap.length &&
+          this.before(this.heap[right]!, this.heap[best]!)
+        )
+          best = right;
         if (best === i) break;
         [this.heap[i], this.heap[best]] = [this.heap[best]!, this.heap[i]!];
         i = best;
@@ -150,7 +163,9 @@ class BoundedPriorityQueue {
   }
 
   private before(a: PendingEntry, b: PendingEntry): boolean {
-    return a.priority > b.priority || (a.priority === b.priority && a.seq < b.seq);
+    return (
+      a.priority > b.priority || (a.priority === b.priority && a.seq < b.seq)
+    );
   }
 }
 
@@ -158,11 +173,17 @@ export class WorkerPool {
   private readonly slots: WorkerSlot[] = [];
   private readonly queue: BoundedPriorityQueue;
   /** jobId -> entry, populated from dispatch until the result arrives. */
-  private readonly inFlight = new Map<string, { entry: PendingEntry; slotIndex: number }>();
+  private readonly inFlight = new Map<
+    string,
+    { entry: PendingEntry; slotIndex: number }
+  >();
   private readonly freelist: PendingEntry[] = [];
   private nextSeq = 0;
   private disposed = false;
-  private statsInternal: Omit<WorkerPoolStats, 'workerCount' | 'inFlight' | 'pending'> = {
+  private statsInternal: Omit<
+    WorkerPoolStats,
+    "workerCount" | "inFlight" | "pending"
+  > = {
     submitted: 0,
     completed: 0,
     failed: 0,
@@ -181,14 +202,21 @@ export class WorkerPool {
     },
   ) {
     const size = opts.size ?? computeWorkerPoolSize();
-    const maxInFlight = opts.maxInFlightPerWorker ?? DEFAULT_MAX_IN_FLIGHT_PER_WORKER;
+    const maxInFlight =
+      opts.maxInFlightPerWorker ?? DEFAULT_MAX_IN_FLIGHT_PER_WORKER;
     if (!Number.isInteger(size) || size < MIN_POOL_SIZE) {
-      throw new Error(`WorkerPool: size must be an integer >= ${MIN_POOL_SIZE}`);
+      throw new Error(
+        `WorkerPool: size must be an integer >= ${MIN_POOL_SIZE}`,
+      );
     }
     if (!Number.isInteger(maxInFlight) || maxInFlight < 1) {
-      throw new Error('WorkerPool: maxInFlightPerWorker must be an integer >= 1');
+      throw new Error(
+        "WorkerPool: maxInFlightPerWorker must be an integer >= 1",
+      );
     }
-    this.queue = new BoundedPriorityQueue(opts.maxPending ?? DEFAULT_MAX_PENDING);
+    this.queue = new BoundedPriorityQueue(
+      opts.maxPending ?? DEFAULT_MAX_PENDING,
+    );
     for (let i = 0; i < size; i++) this.slots.push(this.spawnSlot());
   }
 
@@ -199,15 +227,17 @@ export class WorkerPool {
    * fires once instead.
    */
   submit(options: SubmitOptions): string {
-    if (this.disposed) throw new Error('WorkerPool.submit: pool is disposed');
+    if (this.disposed) throw new Error("WorkerPool.submit: pool is disposed");
     if (this.queue.isFull) {
-      throw new RangeError(`WorkerPool.submit: pending queue is full (${this.queue.size})`);
+      throw new RangeError(
+        `WorkerPool.submit: pending queue is full (${this.queue.size})`,
+      );
     }
     const jobId = `wp-${++this.nextSeq}`;
     const entry: PendingEntry =
       this.freelist.pop() ??
       ({
-        jobId: '',
+        jobId: "",
         kind: options.kind,
         generationToken: 0,
         payload: null,
@@ -235,8 +265,15 @@ export class WorkerPool {
   /** Cancel a pending or in-flight job; its late result is rejected as stale. True if it existed. */
   cancel(jobId: string): boolean {
     if (this.disposed) return false;
-    if (this.inFlight.delete(jobId)) {
+    const inflightRecord = this.inFlight.get(jobId);
+    if (inflightRecord !== undefined) {
+      // Free the owning slot's in-flight marker too, or its capacity stays leaked until an
+      // unrelated late echo happens to clean it up.
+      this.inFlight.delete(jobId);
+      this.slots[inflightRecord.slotIndex]?.inFlight.delete(jobId);
+      this.recycle(inflightRecord.entry);
       this.statsInternal.cancelled++;
+      this.dispatch(); // freed capacity drains the queue immediately
       return true;
     }
     // Rebuild the heap minus the cancelled entry. Every non-matching entry MUST
@@ -274,11 +311,13 @@ export class WorkerPool {
     for (const [jobId, record] of this.inFlight) {
       if (record.entry.generationToken === generationToken) {
         this.inFlight.delete(jobId);
+        this.slots[record.slotIndex]?.inFlight.delete(jobId);
         this.recycle(record.entry);
         cancelled++;
       }
     }
     this.statsInternal.cancelled += cancelled;
+    if (cancelled > 0) this.dispatch(); // freed capacity drains the queue immediately
     return cancelled;
   }
 
@@ -287,11 +326,11 @@ export class WorkerPool {
     if (this.disposed) return;
     this.disposed = true;
     for (const entry of this.queue.drainAll()) {
-      entry.onFailure('disposed', entry.jobId);
+      entry.onFailure("disposed", entry.jobId);
       this.recycle(entry);
     }
     for (const [jobId, record] of this.inFlight) {
-      record.entry.onFailure('disposed', jobId);
+      record.entry.onFailure("disposed", jobId);
       this.inFlight.delete(jobId);
     }
     for (const slot of this.slots) {
@@ -326,10 +365,14 @@ export class WorkerPool {
     const worker = this.opts.spawn();
     const slot: WorkerSlot = { worker, inFlight: new Set() };
     const slotIndex = this.slots.length;
-    worker.onmessage = (event: MessageEvent) => this.handleMessage(event.data, slotIndex);
-    worker.onerror = () => this.recoverSlot(slotIndex, 'worker error');
-    worker.onmessageerror = () => this.recoverSlot(slotIndex, 'worker message serialization failure');
-    worker.addEventListener?.('close', () => this.recoverSlot(slotIndex, 'worker closed'));
+    worker.onmessage = (event: MessageEvent) =>
+      this.handleMessage(event.data, slotIndex);
+    worker.onerror = () => this.recoverSlot(slotIndex, "worker error");
+    worker.onmessageerror = () =>
+      this.recoverSlot(slotIndex, "worker message serialization failure");
+    worker.addEventListener?.("close", () =>
+      this.recoverSlot(slotIndex, "worker closed"),
+    );
     return slot;
   }
 
@@ -363,7 +406,8 @@ export class WorkerPool {
   private pickSlot(): number {
     let best = -1;
     let bestLoad = Number.POSITIVE_INFINITY;
-    const cap = this.opts.maxInFlightPerWorker ?? DEFAULT_MAX_IN_FLIGHT_PER_WORKER;
+    const cap =
+      this.opts.maxInFlightPerWorker ?? DEFAULT_MAX_IN_FLIGHT_PER_WORKER;
     for (let i = 0; i < this.slots.length; i++) {
       const load = this.slots[i]!.inFlight.size;
       if (load < bestLoad && load < cap) {
@@ -394,7 +438,10 @@ export class WorkerPool {
     }
     const { entry } = record;
     // Stale-result rejection happens here, before any caller callback can observe the payload.
-    if (result.generationToken !== UNVERSIONED_TOKEN_SENTINEL && result.generationToken !== entry.generationToken) {
+    if (
+      result.generationToken !== UNVERSIONED_TOKEN_SENTINEL &&
+      result.generationToken !== entry.generationToken
+    ) {
       this.inFlight.delete(result.jobId);
       this.slots[slotIndex]?.inFlight.delete(result.jobId);
       this.recycle(entry);
@@ -418,7 +465,7 @@ export class WorkerPool {
       }
     } else {
       this.statsInternal.failed++;
-      entry.onFailure(error ?? 'unknown worker failure', jobId);
+      entry.onFailure(error ?? "unknown worker failure", jobId);
     }
     this.dispatch(); // freed capacity: drain the queue immediately
   }
@@ -439,7 +486,10 @@ export class WorkerPool {
         // requeued; keep its callbacks intact
       } else {
         this.statsInternal.failed++;
-        record.entry.onFailure(`${reason}; pending queue full, job dropped`, jobId);
+        record.entry.onFailure(
+          `${reason}; pending queue full, job dropped`,
+          jobId,
+        );
         this.recycle(record.entry);
       }
     }

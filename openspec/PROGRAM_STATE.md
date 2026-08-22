@@ -33,7 +33,7 @@
 - Session-start head: `502d0215f88f31868f6bc7067efe4326d2f7fb26`; published head recorded in the session report after push
 - Section milestone: **PROGRAM COMPLETE — every planned change 001–250 VERIFIED**: program control (001), data/registry foundation (002–020), vertical world/chunk storage (021–033), persistent storage (034–043), fixed-tick simulation (044–055), block geometry/rendering (056–075), fluids (076–084), worldgen (085–102), crafting/containers/progression (103–128), entity framework/mobs (129–153), redstone/automation (154–173), dimensions/major progression (174–195), environment/UX/accessibility (196–210), resource/data packs/content breadth (211–221), multiplayer (222–237), hardening/verification matrices (238–247), parity matrix reconciliation (248), whole-codebase adversarial audit (249), final program verification (250). Hardening interlock VERIFIED.
 - Hardening interlock: **VERIFIED at e3ecf86c28553c558459c855a3aee3b003bcb157 (run 32320823336 #337 SUCCESS; 78/78 tasks 100%; all gates green)**
-- Next exact action: **Publish this terminal checkpoint to origin/main per openspec/REVIEW_HANDOFF.md and record the published head for RC-9; the autonomous loop stops here.**
+- Next exact action: **Publish the remediation checkpoint to origin/main; then record canonical GitHub Actions SUCCESS for the exact published SHA in hardening verification.md Gate F, author the post-hardening release-readiness artifact superseding historical Change 250 READY, and mark the interlock VERIFIED per CHANGE_SEQUENCE_OVERRIDES.md.**
 
 ## What 250 implemented
 
@@ -4206,3 +4206,60 @@ DL-001/002/005 re-audit evidence, canonical CI for the published SHA.
 
 Session range `471cf1e..b809b79` pushed to `origin/main` (plus the state-checkpoint commit that
 contains this entry).
+
+---
+
+# Session 2026-08-22 — recovery/audit + durable checkpoint (NO code changes; shell tooling broken)
+
+## Session facts (verified, not assumed)
+
+- session_start_head: `002b31012c80520893a06278e8ada1272f20188c` (local main HEAD at session start).
+- `origin/main` verified LIVE on GitHub (web fetch of the commits page; local git could not run):
+  **`6482687d06ac237cf8c8a757fced5cc22c392e82`** — exactly the state-checkpoint commit above.
+- Local main is therefore **9 commits ahead of origin/main and unpublished**:
+  `cce8a84` → `3810ebd` → `d9f8a1a` → `d2a919d` → `517a198` → `8ae68b6` → `8fa92fb` →
+  `348bec3` → `002b310`. Remote is a strict ancestor; a normal fast-forward push is safe when
+  shell access returns. These commits are the post-checkpoint slice of the deep-engine validation
+  campaign (type repairs, unit suite green at 3887 per commit message, P10 packed-mesh parity
+  suite, Phase-11 gap closure, N-1/N-2/N-3 audit fixes + lint warnings, perf overlay wiring,
+  start-overlay binding fix, pinned-mode perf-line suppression, final-tree golden re-pin).
+
+## Read-only tree verification performed this session
+
+- `tests/visual-golden/README.md`: documents the 2026-08-22 canonical `UPDATE_SNAPSHOTS=1`
+  re-pin after worldgen depth pipeline v2 and the four-stream material split; thresholds
+  unchanged (channelTolerance 24 / maxChangedFraction 0.02).
+- `src/worldgen/WorldgenRegressionMatrix.ts`: v2 re-pin present in source —
+  `PINNED_V2_MATRIX_HASH = 1619101606`, v2-stamped catalog, fingerprint unchanged (`6e654848`),
+  determinism delegated to `tests/unit/WorldgenDeterminism.test.ts`.
+- All 60 golden PNGs present under `tests/visual-golden/`.
+- Hardening interlock `verification.md`: Gates A/B/C/E PASS; Gate D PARTIAL (final full-suite
+  run pending on the publication tree); Gate F NOT RUN; `tasks.md` 6.x–8.x correctly still
+  unchecked (no checkbox was granted without a final recorded gate).
+
+## Blocker (exact)
+
+ROOT CAUSE IDENTIFIED: the OpenCode host spawns child processes with the project path unquoted;
+`C:\Users\Michael Roy\Documents\clone-MC_v3` contains a space, so every spawn splits at
+`Michael` (LSP stderr proof: `'\\?\C:\Users\Michael' is not recognized as an internal or external
+command`). bash/devcontainer/worktree fail pre-execution with the sibling validation error
+(`paths[0] property must be of type string, got undefined`). In-process tools (file read/edit,
+glob/grep, tree-sitter AST tools) work. FIX REQUIRED OUTSIDE THE SESSION: move/clone the repo to
+a space-free path (e.g. `C:\dev\clone-MC_v3`) or fix/upgrade OpenCode's Windows path quoting,
+then restart the session there.
+
+Work completed despite the blocker — static verification of all nine unpublished commits'
+claims against the tree (details in the hardening package's Gate D static-verification addendum):
+P10 parity suite, sneak wiring, partial-shape table, perf overlay wiring + pinned-mode
+suppression, persistence composition intact in `src/main.ts`, 60 goldens + provenance, worldgen
+v2 hash pin. No runtime gate is claimed; tasks 6.x–8.x stay unchecked.
+
+## Next exact action
+
+With working shell tooling: publish `cce8a84..002b310` to `origin/main` (fast-forward), refetch,
+record `published_head`; run the full final gate (validate-state, typecheck, lint, unit,
+coverage, build, npm audit plain + --omit=dev, full E2E incl. persistence suite + 247 release-
+performance gate); record Gate D evidence in the hardening package; check tasks 6.x–8.x only
+against that evidence; complete Gate F (canonical CI SUCCESS for the exact SHA + run/job IDs +
+post-hardening release-readiness artifact superseding historical Change 250 READY); then mark
+the interlock VERIFIED per CHANGE_SEQUENCE_OVERRIDES.md.

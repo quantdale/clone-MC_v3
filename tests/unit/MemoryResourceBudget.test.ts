@@ -5,6 +5,8 @@ import {
   computeRingCardinality,
   validateMemoryResourceConfig,
   evaluateResourceBudget,
+  MemoryResourceLedger,
+  RESOURCE_CATEGORIES,
   MAX_QUEUE_SIZE,
   EDIT_OVERLAY_MAX_CHUNKS,
   GEOMETRY_FIXED_ALLOWANCE,
@@ -182,6 +184,92 @@ describe('evaluateResourceBudget', () => {
     const c = config();
     const s = snapshot({ loadedChunks: 40, meshGeometries: 75 });
     expect(evaluateResourceBudget(c, s)).toEqual(evaluateResourceBudget(c, s));
+  });
+});
+
+describe('MemoryResourceLedger', () => {
+  it('accounts counts and bytes per category independently', () => {
+    const ledger = new MemoryResourceLedger();
+    ledger.register('geometries', 'chunk-mesh', 3, 900);
+    ledger.register('geometries', 'chunk-mesh', 2, 600);
+    ledger.register('textures', 'atlas', 1, 4096);
+    const snap = ledger.snapshot();
+    expect(snap.geometries).toEqual({ count: 5, estimatedBytes: 1500 });
+    expect(snap.textures).toEqual({ count: 1, estimatedBytes: 4096 });
+    // Untouched categories stay zero.
+    expect(snap.particles).toEqual({ count: 0, estimatedBytes: 0 });
+    expect(RESOURCE_CATEGORIES).toHaveLength(Object.keys(snap).length);
+    expect(ledger.totalEstimatedBytes).toBe(1500 + 4096);
+
+    ledger.release('geometries', 'chunk-mesh', 4, 1000);
+    expect(ledger.snapshot().geometries).toEqual({ count: 1, estimatedBytes: 500 });
+    expect(ledger.underflowCount).toBe(0);
+  });
+
+  it('rejects invalid register/release arguments', () => {
+    const ledger = new MemoryResourceLedger();
+    for (const bad of [-1, NaN, Infinity]) {
+      expect(() => ledger.register('audio', 'x', bad)).toThrow(RangeError);
+      expect(() => ledger.release('audio', 'x', 1, bad)).toThrow(RangeError);
+    }
+  });
+
+  it('clamps over-release to zero and counts underflows instead of throwing', () => {
+    const ledger = new MemoryResourceLedger();
+    ledger.register('entities', 'mobs', 2, 512);
+    ledger.release('entities', 'mobs', 5, 1024); // over-releases both axes
+    expect(ledger.snapshot().entities).toEqual({ count: 0, estimatedBytes: 0 });
+    expect(ledger.underflowCount).toBe(1);
+    // An exact release does not count as drift...
+    ledger.register('entities', 'mobs', 1, 128);
+    ledger.release('entities', 'mobs', 1, 128);
+    expect(ledger.underflowCount).toBe(1);
+    // ...but another count-only over-release does.
+    ledger.release('entities', 'mobs', 9);
+    expect(ledger.underflowCount).toBe(2);
+    expect(ledger.snapshot().entities.count).toBe(0);
+  });
+
+  it('convergence flags growth beyond baseline + tolerance and passes otherwise', () => {
+    const ledger = new MemoryResourceLedger();
+    ledger.register('geometries', 'meshes', 10, 2_000_000);
+    ledger.register('materials', 'shared', 1, 100_000);
+    const baseline = ledger.snapshot();
+
+    // Growth within the relative tolerance (15% of 2 MB) is not leaked.
+    // A small absolute byte floor keeps the relative rule dominant here.
+    ledger.register('geometries', 'meshes', 0, 200_000);
+    let report = ledger.convergence(baseline, 0.15, 1000);
+    expect(report.leaked).toBe(false);
+    const geo = report.entries.find((e) => e.category === 'geometries')!;
+    expect(geo.baselineBytes).toBe(2_000_000);
+    expect(geo.currentBytes).toBe(2_200_000);
+    expect(geo.leaked).toBe(false);
+
+    // Growth beyond the tolerance is flagged for that category only.
+    ledger.register('geometries', 'meshes', 0, 300_000); // now +500k > 300k allowance
+    report = ledger.convergence(baseline, 0.15, 1000);
+    expect(report.leaked).toBe(true);
+    expect(report.entries.find((e) => e.category === 'geometries')!.leaked).toBe(true);
+    expect(report.entries.find((e) => e.category === 'materials')!.leaked).toBe(false);
+
+    // Returning at or below baseline is never a leak (both directions checked).
+    ledger.release('geometries', 'meshes', 10, 500_000);
+    report = ledger.convergence(baseline, 0.15, 1000);
+    expect(report.leaked).toBe(false);
+  });
+
+  it('convergence applies the absolute byte floor so near-zero baselines do not flag on noise', () => {
+    const ledger = new MemoryResourceLedger();
+    ledger.register('particles', 'fx', 1, 0);
+    const baseline = ledger.snapshot();
+    // 500 KB growth on a ~0 baseline stays under the default 1 MB floor.
+    ledger.register('particles', 'fx', 0, 500 * 1024);
+    const report = ledger.convergence(baseline);
+    expect(report.entries.find((e) => e.category === 'particles')!.leaked).toBe(false);
+    // Exceeding the floor does leak.
+    ledger.register('particles', 'fx', 0, 600 * 1024);
+    expect(ledger.convergence(baseline).leaked).toBe(true);
   });
 });
 

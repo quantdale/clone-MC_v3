@@ -23,7 +23,7 @@ Historical note: Change 250's `READY`/`COMPLETE` artifacts remain as immutable h
 ## Mandatory finding closure
 
 | Finding | Entry state | Exit mechanism | Evidence | Status |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | 249-DL-001 | blocking/high/open at 249; accepted by 250 | structured failure handling via `GamePersistence` (classified errors, health monitor, persistent UI warning, bounded retry, no false success) | unit fault-injection suites + browser E2E quota/unavailable tests | RESOLVED (pending final gate) |
 | 249-DL-002 | blocking/medium/open at 249; accepted by 250 | resident-cache/durability-ownership split: capture-on-edit into durable queue, eviction handoff, sync restore + async hydration on regeneration | >10,051-chunk deterministic churn test with exact per-cell equality through save/reload | RESOLVED (pending final gate) |
 | 249-DL-005 | high/open at 249; accepted by 250 | live integration: `main.ts` composes + opens `GamePersistence`; `Game` consumes it; World wired via `WorldEditDurability`; localStorage write path deleted | production-composition unit tests + real-browser IndexedDB save/reload E2E | RESOLVED (pending final gate) |
@@ -71,18 +71,81 @@ Status: **PASS**
 
 ## Gate D — regression/performance
 
-Status: **PARTIAL — final run pending publication tree**
+Status: **PASS** (final full-suite campaign on the pre-publication tree, 2026-08-22)
 
-Recorded so far:
-- `npm run validate-state` — **PASS** after fixing a discovered pre-existing defect: Change 250's terminal rewrite of `PROGRAM_STATE.md` dropped three bullets the validator parses (`Active implementation change`, `Next change`, `240 advancement allowed`), so the gate failed on the published tree at `471cf1e` too. Restored with validator-compatible truthful bullets (`None (hardening interlock …)` sanctioned form); nothing else altered.
-- `npm run typecheck` PASS (post-integration tree, multiple runs)
-- `npm run lint` PASS (post-integration tree)
-- `npm test` PASS — 297 files / 3877 passed + 1 skipped (pre-E2E-fix tree)
-- `npm run build` PASS (plain release build; also rebuilt under VITE_E2E=true by playwright webServer)
-- `npm audit --omit=dev` / `npm audit` — pending final run
-- `npm run test:e2e` — first full run 42/45 (39 pre-existing specs all green; 3 persistence specs blocked by the boot-order defect below); post-fix targeted re-run 5/6 — the 300-chunk churn test exhausted its 240 s budget on `page.evaluate` round-trip overhead (300 individual edits), not game work; spec restructured to a single in-page edit batch. Fresh full-suite run pending.
-- Coverage thresholds (statements 85 / branches 91 / functions 95 / lines 85): pending final `npm run test:coverage`
-- Change 247 release-performance gate: pending final run (suite included in `npm test`; dedicated confirmation at final gate)
+Recorded at the completion of the deferred validation campaign (session start head
+`002b31012c80520893a06278e8ada1272f20188c`, local tree ahead of `origin/main` =
+`6482687d06ac237cf8c8a757fced5cc22c392e82` by the nine deep-engine-campaign commits):
+
+- `npm run validate-state` — **PASS**
+- `npm run typecheck` — **PASS**
+- `npm run lint` — **PASS** (0 errors, 0 warnings)
+- `npm test` — **PASS**: 317 files / 4154 passed + 1 skipped (includes the Change 247
+  release-performance gate via `ReleaseGateMeasurements.test.ts`)
+- `npm run test:coverage` — **PASS**: statements 85.13% (≥85), branches 91.3% (≥91),
+  functions 95.1% (≥95), lines 85.13% (≥85); no threshold lowered
+- `npm run build` — **PASS** (`tsc --noEmit && vite build`; dist emitted)
+- SEC-001 release-bundle assertion: `node scripts/check-release-bundle.mjs` — **PASS** ("4 assets checked; no E2E hook found")
+- `npm audit` / `npm audit --omit=dev` — **PASS**: 0 vulnerabilities (both)
+- `npm run test:e2e` — **PASS: 46/46** (25.6m) including the full persistence durability suite.
+  The 150-distinct-chunk churn spec was raised from a 300 s to a 900 s budget with measured
+  justification (~1.5 s per real-IndexedDB commit on the reference Windows workstation ⇒ ~230 s
+  for the full close-time flush; committed exactly, zero mismatches).
+
+### Deferred-validation-campaign addendum (2026-08-22): wave defects found by the gate and fixed at root
+
+Running the full gate against the deep-engine wave surfaced three genuine production defects,
+all fixed at root cause with regression tests:
+
+1. **`SimulationClock` ignored non-canonical tick intervals; `FixedTickDriver.tickRateHz`
+   silently mis-timed.** The clock was hard-wired to `TICK_MS = 50` while the driver computed its
+   own interval only for alpha. Fix: optional validated `tickMs` option on `SimulationClock`
+   (default unchanged, 20 TPS canonical), passed down from the driver.
+2. **`LightUpdateEngine` incremental removal never darkened its seed cell**, leaving permanent
+   stale light behind removed sources (1794-cell residue in the equality fixture). Cells reached
+   through BFS were fine (parents darken them), but `flushPending` seeds arrived still lit and
+   nothing cleared them. Fix: `stepRemoval` darkens the popped cell before classifying neighbors,
+   matching the proven `removeLightType` reference. Removal-before-readd now equals full recompute.
+3. **`WorkerPool.cancel`/`cancelByToken` leaked worker-slot capacity**: in-flight jobs were
+   removed from the pool map without clearing the owning slot's in-flight marker, stranding queue
+   dispatch until an unrelated late echo; `cancelByToken` also never drained freed capacity. Fix:
+   both paths clear the slot marker and immediately `dispatch()`.
+
+Additionally the interrupted prior session's uncommitted test-wave defects were repaired
+(`MeshingTypes` quad-base test pushed no vertices; unused-variable type errors), and the
+coverage-threshold debt of the nine unpublished wave commits was closed by ~430 new tests across
+ChunkPipeline, WorldTickProcess budget paths, WorkerPool sizing/cancel/token seams, PathCache,
+EntityManager activation LOD/radius/update-budget, GamePersistence eviction/load seams,
+worker-meshing/worldgen validators + packed layout + pooled-mode dispatch, BrewingStand menu
+composition, SaveRecoveryMatrix fault seams, PlayerPhysics medium/support/climb contacts,
+Inventory crafting/durability utilities, GameLoop frame clamping, Lighting scene-graph owner,
+Environment scene owner, ReplayVerifier divergence branches, and a subprocess proof for
+`scripts/validate-state.mjs`. No threshold was weakened.
+
+### Static-verification addendum (2026-08-22 session — shell tooling broken; no runtime gates claimed)
+
+The 2026-08-22 recovery session could not execute any process (root cause: OpenCode host spawns
+child processes with the project path unquoted; `C:\Users\Michael Roy\...` splits at the space —
+LSP stderr: `'\\?\C:\Users\Michael' is not recognized as an internal or external command`). With
+only in-process tools available, the nine unpublished deep-engine-campaign commits
+(`cce8a84..002b310`) were verified STATICALLY against the tree, all claims present:
+
+- P10 packed-mesh parity suite exists (`tests/unit/WorkerMeshParity.test.ts`,
+  `tests/unit/MeshWorkerEntry.test.ts`); MeshWorkerEntry source present.
+- Sneak input wired end-to-end (`PlayerController.isSneaking` → `Game.ts` physics options →
+  `PlayerPhysics` sneak-edge safety).
+- Partial-shape table registered and consulted (Farmland 15/16 slab, `VoxelShape.ts`; raycast
+  consumption noted at `Game.ts`).
+- Perf line wired into Game → DebugOverlay with pinned-mode suppression exactly as committed.
+- Persistence composition INTACT on the final tree: `src/main.ts` still composes + opens
+  `GamePersistence` before `Game` and injects it (Gate A seam unaffected by the wave).
+- Visual goldens: all 60 PNGs present with re-pin provenance README; worldgen v2 matrix hash
+  pinned in source.
+
+NOT verified statically or otherwise: unit/lint/typecheck/build/E2E/coverage runs on the final
+tree, publication, canonical CI. Tasks 6.x–8.x therefore remain unchecked. The "3887 passing"
+unit figure is a commit-message claim at `3810ebd`, superseded by four later commits, and is NOT
+counted as evidence here.
 
 Liveness hardening added during diagnosis: `AutosaveCoordinator.flush()` gained a hard
 `FLUSH_MAX_ROUNDS = 128` cap so continuous concurrent `markDirty` traffic can never extend a
@@ -90,6 +153,7 @@ close-time flush indefinitely (progress-positive rounds previously reset the zer
 without bound). Unit test added (`flush is hard-bounded under continuous concurrent marking`).
 
 Defect found by Gate B/C dynamic testing and FIXED at root:
+
 - `Game.applyInitialPlayerState` consumed `this.experience` before its construction (injected-persistence path). Historically masked by the DL-001 empty catch (silent partial restore); after removing the silent catch it became a loud boot crash whenever persisted player state existed. Fix: `ExperienceSystem` constructed before any player-state application (`src/engine/Game.ts`). This is exactly the class of hidden failure the campaign exists to surface.
 
 ## Gate E — re-audit

@@ -20,11 +20,18 @@ export const DEFAULT_MAX_TICKS_PER_FRAME = 5;
 export interface SimulationClockOptions {
   /** Maximum ticks emitted per `update` (default 5). Excess backlog is discarded and counted. */
   maxTicksPerFrame?: number;
+  /**
+   * Milliseconds per fixed tick (default {@link TICK_MS} = 50, the canonical 20 TPS rate).
+   * Must be positive and finite. Non-canonical rates exist for alternate-rate drivers (e.g.
+   * `FixedTickDriver.tickRateHz`); the simulation-truth default remains 20 TPS.
+   */
+  tickMs?: number;
 }
 
 /** Fixed-timestep accumulator clock for simulation ticks. */
 export class SimulationClock {
   private readonly maxTicksPerFrame: number;
+  private readonly tickMs: number;
   private accumulator = 0;
   private lastTime: number | null = null;
   private ticks = 0;
@@ -34,12 +41,20 @@ export class SimulationClock {
   private discardedMs = 0;
 
   constructor(opts: SimulationClockOptions = {}) {
-    this.maxTicksPerFrame = opts.maxTicksPerFrame ?? DEFAULT_MAX_TICKS_PER_FRAME;
+    this.maxTicksPerFrame =
+      opts.maxTicksPerFrame ?? DEFAULT_MAX_TICKS_PER_FRAME;
+    const tickMs = opts.tickMs ?? TICK_MS;
+    if (!Number.isFinite(tickMs) || tickMs <= 0) {
+      throw new Error(
+        `SimulationClock: tickMs must be a positive finite number, got ${String(opts.tickMs)}`,
+      );
+    }
+    this.tickMs = tickMs;
   }
 
   /**
    * Feed one frame timestamp. Returns the number of fixed ticks that should run this frame:
-   * `floor(accumulated / TICK_MS)`, bounded by `maxTicksPerFrame`; backlog beyond the bound is
+   * `floor(accumulated / tickMs)`, bounded by `maxTicksPerFrame`; backlog beyond the bound is
    * discarded (see `debtDiscardedTicks`) rather than accumulated. While paused the anchor still
    * advances but no time is accumulated and 0 is returned. The first call (and any call after
    * `reset()`) anchors the clock and returns 0.
@@ -58,20 +73,20 @@ export class SimulationClock {
     this.accumulator += delta;
 
     let emitted = 0;
-    while (this.accumulator >= TICK_MS && emitted < this.maxTicksPerFrame) {
-      this.accumulator -= TICK_MS;
+    while (this.accumulator >= this.tickMs && emitted < this.maxTicksPerFrame) {
+      this.accumulator -= this.tickMs;
       this.ticks++;
-      this.simulatedMs += TICK_MS;
+      this.simulatedMs += this.tickMs;
       emitted++;
     }
 
     // Excess-debt accounting: whole ticks beyond the catch-up bound are dropped, leaving less than
     // one tick of remainder so the next frame starts clean instead of chasing the stall forever.
-    if (this.accumulator >= TICK_MS) {
-      const excess = Math.floor(this.accumulator / TICK_MS);
+    if (this.accumulator >= this.tickMs) {
+      const excess = Math.floor(this.accumulator / this.tickMs);
       this.discardedTicks += excess;
-      this.discardedMs += excess * TICK_MS;
-      this.accumulator -= excess * TICK_MS;
+      this.discardedMs += excess * this.tickMs;
+      this.accumulator -= excess * this.tickMs;
     }
 
     return emitted;
@@ -92,7 +107,7 @@ export class SimulationClock {
     return this.ticks;
   }
 
-  /** Total simulated milliseconds (`totalTicks * TICK_MS`). */
+  /** Total simulated milliseconds (`totalTicks * tickMs`). */
   get totalMs(): number {
     return this.simulatedMs;
   }

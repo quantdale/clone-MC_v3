@@ -7,7 +7,7 @@
  * produce identical results.
  */
 
-import { WorldLightStorage } from './LightStorage';
+import { WorldLightStorage } from "./LightStorage";
 
 /** The light world the single-shot update computes over. */
 export interface LightUpdateWorld {
@@ -22,7 +22,7 @@ export interface LightUpdateWorld {
   maxY: number;
 }
 
-type LightType = 'sky' | 'block';
+type LightType = "sky" | "block";
 
 /** Fixed neighbor expansion order (deterministic). */
 const NEIGHBORS: ReadonlyArray<[number, number, number]> = [
@@ -34,16 +34,38 @@ const NEIGHBORS: ReadonlyArray<[number, number, number]> = [
   [0, 0, 1],
 ];
 
-function inBounds(world: LightUpdateWorld, x: number, y: number, z: number): boolean {
-  return x >= 0 && x < 16 && z >= 0 && z < 16 && y >= world.minY && y < world.maxY;
+function inBounds(
+  world: LightUpdateWorld,
+  x: number,
+  y: number,
+  z: number,
+): boolean {
+  return (
+    x >= 0 && x < 16 && z >= 0 && z < 16 && y >= world.minY && y < world.maxY
+  );
 }
 
-function getLight(world: LightUpdateWorld, type: LightType, x: number, y: number, z: number): number {
-  return type === 'sky' ? world.getSkyLight(x, y, z) : world.getBlockLight(x, y, z);
+function getLight(
+  world: LightUpdateWorld,
+  type: LightType,
+  x: number,
+  y: number,
+  z: number,
+): number {
+  return type === "sky"
+    ? world.getSkyLight(x, y, z)
+    : world.getBlockLight(x, y, z);
 }
 
-function setLight(world: LightUpdateWorld, type: LightType, x: number, y: number, z: number, value: number): void {
-  if (type === 'sky') world.setSkyLight(x, y, z, value);
+function setLight(
+  world: LightUpdateWorld,
+  type: LightType,
+  x: number,
+  y: number,
+  z: number,
+  value: number,
+): void {
+  if (type === "sky") world.setSkyLight(x, y, z, value);
   else world.setBlockLight(x, y, z, value);
 }
 
@@ -51,7 +73,13 @@ function setLight(world: LightUpdateWorld, type: LightType, x: number, y: number
  * Removal phase: BFS from the edited cell zeroing cells whose light depended on the removed path
  * (value strictly below the path level). Opaque cells block the BFS.
  */
-function removeLightType(world: LightUpdateWorld, type: LightType, sx: number, sy: number, sz: number): void {
+function removeLightType(
+  world: LightUpdateWorld,
+  type: LightType,
+  sx: number,
+  sy: number,
+  sz: number,
+): void {
   const start = getLight(world, type, sx, sy, sz);
   if (start <= 0) return;
   setLight(world, type, sx, sy, sz, 0);
@@ -83,7 +111,7 @@ function propagateType(world: LightUpdateWorld, type: LightType): void {
     for (let z = 0; z < 16; z++) {
       for (let y = world.minY; y < world.maxY; y++) {
         let value = getLight(world, type, x, y, z);
-        if (type === 'block') {
+        if (type === "block") {
           const luminance = world.getLuminance(x, y, z);
           if (luminance > 0) {
             value = Math.min(15, luminance);
@@ -117,11 +145,16 @@ function propagateType(world: LightUpdateWorld, type: LightType): void {
  * Update sky and block light after the block at `(x, y, z)` changed. Deterministic; equivalent to a
  * full recompute of the edited world.
  */
-export function updateLightAfterEdit(world: LightUpdateWorld, x: number, y: number, z: number): void {
-  removeLightType(world, 'sky', x, y, z);
-  removeLightType(world, 'block', x, y, z);
-  propagateType(world, 'block');
-  propagateType(world, 'sky');
+export function updateLightAfterEdit(
+  world: LightUpdateWorld,
+  x: number,
+  y: number,
+  z: number,
+): void {
+  removeLightType(world, "sky", x, y, z);
+  removeLightType(world, "block", x, y, z);
+  propagateType(world, "block");
+  propagateType(world, "sky");
 }
 
 // ---------------------------------------------------------------------------
@@ -216,12 +249,20 @@ export class ChannelUpdateQueue {
 
   /** Queued work units (pending invalidations + removals + re-adds). */
   get pendingCount(): number {
-    return this.pendingInvalidations.size + this.removalQueue.length / 4 + this.addQueue.length / 3;
+    return (
+      this.pendingInvalidations.size +
+      this.removalQueue.length / 4 +
+      this.addQueue.length / 3
+    );
   }
 
   /** True when nothing is queued. */
   get idle(): boolean {
-    return this.pendingInvalidations.size === 0 && this.removalQueue.length === 0 && this.addQueue.length === 0;
+    return (
+      this.pendingInvalidations.size === 0 &&
+      this.removalQueue.length === 0 &&
+      this.addQueue.length === 0
+    );
   }
 
   private enqueueRemoval(x: number, y: number, z: number, level: number): void {
@@ -243,9 +284,14 @@ export class ChannelUpdateQueue {
     if (this.pendingInvalidations.has(key)) return;
     this.pendingInvalidations.add(key);
     if (ctx.consumesEqualDown) {
-      for (let cy = y - 1; cy >= ctx.minY && !ctx.isOpaque(x, cy, z) && ctx.get(x, cy, z) === 15; cy--) {
+      for (
+        let cy = y - 1;
+        cy >= ctx.minY && !ctx.isOpaque(x, cy, z) && ctx.get(x, cy, z) === 15;
+        cy--
+      ) {
         const belowKey = `${x},${cy},${z}`;
-        if (!this.pendingInvalidations.has(belowKey)) this.pendingInvalidations.add(belowKey);
+        if (!this.pendingInvalidations.has(belowKey))
+          this.pendingInvalidations.add(belowKey);
       }
     }
   }
@@ -254,7 +300,7 @@ export class ChannelUpdateQueue {
   private flushPending(ctx: LightChannelContext): void {
     if (this.pendingInvalidations.size === 0) return;
     for (const key of this.pendingInvalidations) {
-      const parts = key.split(',');
+      const parts = key.split(",");
       const x = Number(parts[0]);
       const y = Number(parts[1]);
       const z = Number(parts[2]);
@@ -276,12 +322,25 @@ export class ChannelUpdateQueue {
    * Process up to the budget's worth of queue pops. One op = one removal or one re-add step.
    * Returns whether work remains.
    */
-  drain(ctx: LightChannelContext, budget: DrainBudget, now?: () => number): DrainResult {
+  drain(
+    ctx: LightChannelContext,
+    budget: DrainBudget,
+    now?: () => number,
+  ): DrainResult {
     this.flushPending(ctx);
-    const maxOps = Math.max(0, Math.floor(budget.maxOps ?? Number.POSITIVE_INFINITY));
-    const deadline = budget.budgetMs !== undefined && now ? now() + budget.budgetMs : Number.POSITIVE_INFINITY;
+    const maxOps = Math.max(
+      0,
+      Math.floor(budget.maxOps ?? Number.POSITIVE_INFINITY),
+    );
+    const deadline =
+      budget.budgetMs !== undefined && now
+        ? now() + budget.budgetMs
+        : Number.POSITIVE_INFINITY;
     let ops = 0;
-    while (ops < maxOps && (this.removalQueue.length > 0 || this.addQueue.length > 0)) {
+    while (
+      ops < maxOps &&
+      (this.removalQueue.length > 0 || this.addQueue.length > 0)
+    ) {
       if (this.removalQueue.length > 0) {
         this.stepRemoval(ctx);
       } else {
@@ -291,8 +350,16 @@ export class ChannelUpdateQueue {
       if (now && (ops & 0x0f) === 0 && now() >= deadline) break;
     }
     if (ops > 0) this.versionValue++;
-    const remaining = this.pendingInvalidations.size + this.removalQueue.length / 4 + this.addQueue.length / 3;
-    return { opsUsed: ops, remainingOps: remaining, completed: remaining === 0, version: this.versionValue };
+    const remaining =
+      this.pendingInvalidations.size +
+      this.removalQueue.length / 4 +
+      this.addQueue.length / 3;
+    return {
+      opsUsed: ops,
+      remainingOps: remaining,
+      completed: remaining === 0,
+      version: this.versionValue,
+    };
   }
 
   /** Drop all queued work without touching stored light. */
@@ -315,6 +382,10 @@ export class ChannelUpdateQueue {
     // when it still carries the removed level (or has since gone dark on its own path).
     const own = ctx.get(x, y, z);
     if (own !== 0 && own !== level) return;
+    // Darken this cell before classifying neighbors. Cells reached through the removal BFS were
+    // already zeroed by their parent, but flushPending seeds (the edited cell itself) arrive still
+    // lit and nothing else would clear them — leaving permanent stale light behind a removed source.
+    ctx.set(x, y, z, 0);
 
     for (const [dx, dy, dz] of NEIGHBOR_DELTAS) {
       const nx = x + dx;
@@ -324,7 +395,8 @@ export class ChannelUpdateQueue {
       const value = ctx.get(nx, ny, nz);
       if (value <= 0) continue;
       const consumed =
-        value < level || (ctx.consumesEqualDown && dy === -1 && value === 15 && level === 15);
+        value < level ||
+        (ctx.consumesEqualDown && dy === -1 && value === 15 && level === 15);
       if (consumed) {
         ctx.set(nx, ny, nz, 0);
         this.enqueueRemoval(nx, ny, nz, value);
@@ -414,7 +486,8 @@ export class LightUpdateEngine {
       isOpaque: (x, y, z) => access.isOpaque(x, y, z),
       get: (x, y, z) => storage.getSkyLight(x, y, z),
       set: (x, y, z, v) => storage.setSkyLight(x, y, z, v),
-      attenuate: (value, _dx, dy) => (value === 15 && dy === -1 ? 15 : value - 1),
+      attenuate: (value, _dx, dy) =>
+        value === 15 && dy === -1 ? 15 : value - 1,
       consumesEqualDown: true,
     };
     this.blockContext = {
@@ -449,12 +522,27 @@ export class LightUpdateEngine {
    * before skylight reshapes ambient levels. Unfinished work simply remains queued.
    */
   drain(budget: DrainBudget = { maxOps: DEFAULT_DRAIN_OPS }): DrainResult {
-    const maxOps = budget.maxOps ?? (budget.budgetMs !== undefined ? Number.POSITIVE_INFINITY : DEFAULT_DRAIN_OPS);
+    const maxOps =
+      budget.maxOps ??
+      (budget.budgetMs !== undefined
+        ? Number.POSITIVE_INFINITY
+        : DEFAULT_DRAIN_OPS);
     const start = this.now();
-    const blockResult = this.blockQueue.drain(this.blockContext, { ...budget, maxOps }, this.now);
+    const blockResult = this.blockQueue.drain(
+      this.blockContext,
+      { ...budget, maxOps },
+      this.now,
+    );
     const elapsed = this.now() - start;
-    const skyBudgetMs = budget.budgetMs !== undefined ? Math.max(0, budget.budgetMs - elapsed) : undefined;
-    const skyResult = this.skyQueue.drain(this.skyContext, { maxOps: budget.maxOps ?? Infinity, budgetMs: skyBudgetMs }, this.now);
+    const skyBudgetMs =
+      budget.budgetMs !== undefined
+        ? Math.max(0, budget.budgetMs - elapsed)
+        : undefined;
+    const skyResult = this.skyQueue.drain(
+      this.skyContext,
+      { maxOps: budget.maxOps ?? Infinity, budgetMs: skyBudgetMs },
+      this.now,
+    );
     return {
       opsUsed: blockResult.opsUsed + skyResult.opsUsed,
       remainingOps: blockResult.remainingOps + skyResult.remainingOps,

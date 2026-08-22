@@ -65,6 +65,68 @@ describe('SimulationClock', () => {
     expect(clock.totalMs).toBe(0);
   });
 
+  it('accounts discarded debt in whole ticks and milliseconds after bursts beyond the cap', () => {
+    const clock = new SimulationClock({ maxTicksPerFrame: 4 });
+    expect(clock.debtDiscardedTicks).toBe(0);
+    expect(clock.debtDiscardedMs).toBe(0);
+
+    clock.update(0); // anchor
+    clock.update(450); // 9 ticks owed -> 4 emitted, 5 discarded
+    expect(clock.totalTicks).toBe(4);
+    expect(clock.debtDiscardedTicks).toBe(5);
+    expect(clock.debtDiscardedMs).toBe(250);
+    // The accumulator is left below one tick so the next frame starts clean.
+    expect(clock.accumulatorMs).toBeLessThan(TICK_MS);
+    expect(clock.accumulatorMs).toBeGreaterThanOrEqual(0);
+
+    clock.update(650); // +200 ms -> exactly 4 more emitted, no new debt
+    expect(clock.totalTicks).toBe(8);
+    expect(clock.debtDiscardedTicks).toBe(5);
+    expect(clock.debtDiscardedMs).toBe(250);
+
+    // Simulated time only counts emitted ticks; discarded backlog is not retroactively applied.
+    expect(clock.totalMs).toBe(clock.totalTicks * TICK_MS);
+  });
+
+  it('accumulates nothing while paused and re-anchors its lastTime on every paused update', () => {
+    const clock = new SimulationClock();
+    clock.update(0); // anchor
+    clock.update(100); // 2 ticks
+    expect(clock.totalTicks).toBe(2);
+
+    clock.pause();
+    expect(clock.isPaused).toBe(true);
+    // Wall time keeps flowing through update (the anchor stays fresh) but nothing accumulates:
+    for (const now of [200, 500, 10_000]) {
+      expect(clock.update(now)).toBe(0);
+    }
+    expect(clock.accumulatorMs).toBe(0); // the 100 ms delta was dropped, not banked
+    expect(clock.totalTicks).toBe(2);
+    expect(clock.isRunning).toBe(true);
+
+    clock.resume();
+    expect(clock.isPaused).toBe(false);
+    // lastTime was re-anchored at 10_000, so only the NEW delta counts on resume.
+    expect(clock.update(10_050)).toBe(1);
+    expect(clock.update(10_150)).toBe(2);
+    expect(clock.totalTicks).toBe(5); // 2 pre-pause + 3 post-resume, no replay of the pause
+    expect(clock.totalMs).toBe(5 * TICK_MS);
+  });
+
+  it('clears pause state and debt counters on reset', () => {
+    const clock = new SimulationClock({ maxTicksPerFrame: 2 });
+    clock.update(0);
+    clock.update(500); // debt
+    clock.pause();
+    clock.reset();
+    expect(clock.isPaused).toBe(false);
+    expect(clock.debtDiscardedTicks).toBe(0);
+    expect(clock.debtDiscardedMs).toBe(0);
+    clock.update(1000); // fresh anchor after reset
+    expect(clock.update(1100)).toBe(2);
+    expect(clock.totalTicks).toBe(2);
+  });
+
   it('ignores non-finite timestamps', () => {
     const clock = new SimulationClock();
     expect(clock.update(0)).toBe(0); // anchor

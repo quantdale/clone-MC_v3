@@ -44,23 +44,23 @@ Target: all tasks complete; no advancement exception may waive DL-001 or DL-002.
 
 ## 6. End-to-end durability matrix
 
-- [ ] 6.1 Exercise normal save/reload through the exact production composition.
-- [ ] 6.2 Exercise abrupt close/pagehide and newest-valid recovery.
-- [ ] 6.3 Exercise quota/unavailable/transaction-abort paths with visible failure state and later recovery.
-- [ ] 6.4 Exercise >10k edited-chunk churn + eviction/unload + reload with zero edit loss.
-- [ ] 6.5 Exercise repeated failures/retries for queue/listener/memory boundedness.
-- [ ] 6.6 Add browser E2E coverage for at least normal persistence, visible save failure, recovery, and migrated-save load.
+- [x] 6.1 Exercise normal save/reload through the exact production composition.
+- [x] 6.2 Exercise abrupt close/pagehide and newest-valid recovery.
+- [x] 6.3 Exercise quota/unavailable/transaction-abort paths with visible failure state and later recovery.
+- [x] 6.4 Exercise >10k edited-chunk churn + eviction/unload + reload with zero edit loss.
+- [x] 6.5 Exercise repeated failures/retries for queue/listener/memory boundedness.
+- [x] 6.6 Add browser E2E coverage for at least normal persistence, visible save failure, recovery, and migrated-save load.
 
 ## 7. Re-audit 249 findings
 
-- [ ] 7.1 Re-audit DL-001, DL-002, DL-005 with current source and dynamic evidence; all three must be `resolved` for this campaign to pass.
-- [ ] 7.2 Revisit affected related findings (DL-003, DL-004, SEC-001, reliability/architecture storage findings) and fix any newly blocking regression discovered.
-- [ ] 7.3 Run targeted adversarial probes against the actual production persistence composition.
+- [x] 7.1 Re-audit DL-001, DL-002, DL-005 with current source and dynamic evidence; all three must be `resolved` for this campaign to pass.
+- [x] 7.2 Revisit affected related findings (DL-003, DL-004, SEC-001, reliability/architecture storage findings) and fix any newly blocking regression discovered.
+- [x] 7.3 Run targeted adversarial probes against the actual production persistence composition.
 
 ## 8. Full verification and release redecision
 
-- [ ] 8.1 Run `npm run validate-state`, typecheck, lint, full unit, coverage, build, production/full dependency audits, and E2E with required retry policy.
-- [ ] 8.2 Run the release-performance gate and confirm persistence changes remain within save/load/memory budgets.
+- [x] 8.1 Run `npm run validate-state`, typecheck, lint, full unit, coverage, build, production/full dependency audits, and E2E with required retry policy.
+- [x] 8.2 Run the release-performance gate and confirm persistence changes remain within save/load/memory budgets.
 - [ ] 8.3 Publish the intended remediation checkpoint to `origin/main`, refetch, and confirm exact remote SHA.
 - [ ] 8.4 Require canonical GitHub Actions SUCCESS for that exact published SHA and record run/job IDs.
 - [ ] 8.5 Author/update post-hardening audit and release-readiness evidence. The historical Change 250 READY decision must be explicitly superseded, not silently rewritten.

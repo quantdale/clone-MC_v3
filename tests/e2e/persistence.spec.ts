@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page } from "@playwright/test";
 
 /**
  * Browser E2E durability matrix (249 hardening, design addendum §F/§G).
@@ -45,13 +45,23 @@ interface PersistenceView {
     cz: number,
   ): Promise<Array<[number, number]> | null>;
   initialEdits: {
-    edits: Array<{ chunk: [number, number, number]; changes: Array<[number, number]> }>;
+    edits: Array<{
+      chunk: [number, number, number];
+      changes: Array<[number, number]>;
+    }>;
   } | null;
 }
 
 type GameHandle = {
-  world: { setBlock(x: number, y: number, z: number, id: number): void; getBlock(x: number, y: number, z: number): number };
-  player: { position: { x: number; y: number; z: number }; yaw: number; pitch: number };
+  world: {
+    setBlock(x: number, y: number, z: number, id: number): void;
+    getBlock(x: number, y: number, z: number): number;
+  };
+  player: {
+    position: { x: number; y: number; z: number };
+    yaw: number;
+    pitch: number;
+  };
   persistence: PersistenceView | null;
 };
 
@@ -62,15 +72,21 @@ async function waitReady(page: Page): Promise<void> {
     () => (window as unknown as { __voxelGame?: unknown }).__voxelGame != null,
     { timeout: 30_000 },
   );
-  await page.waitForSelector('#loading', { state: 'hidden', timeout: 30_000 });
+  await page.waitForSelector("#loading", { state: "hidden", timeout: 30_000 });
 }
 
 /** Spawn-anchored edit cell: ±2 blocks horizontally, safely above terrain. */
-async function editCellNearSpawn(page: Page): Promise<{ x: number; y: number; z: number }> {
+async function editCellNearSpawn(
+  page: Page,
+): Promise<{ x: number; y: number; z: number }> {
   const s = await page.evaluate(() => {
     const g = (window as unknown as { __voxelGame?: GameHandle }).__voxelGame;
-    if (!g) throw new Error('game handle missing');
-    return { x: g.player.position.x, y: g.player.position.y, z: g.player.position.z };
+    if (!g) throw new Error("game handle missing");
+    return {
+      x: g.player.position.x,
+      y: g.player.position.y,
+      z: g.player.position.z,
+    };
   });
   return {
     x: Math.floor(s.x) + 2,
@@ -79,28 +95,45 @@ async function editCellNearSpawn(page: Page): Promise<{ x: number; y: number; z:
   };
 }
 
-async function setBlock(page: Page, x: number, y: number, z: number, id: number): Promise<void> {
-  await page.evaluate((coords) => {
-    const [x, y, z, id] = coords as [number, number, number, number];
-    const g = (window as unknown as { __voxelGame?: GameHandle }).__voxelGame;
-    if (!g) throw new Error('game handle missing');
-    g.world.setBlock(x, y, z, id);
-  }, [x, y, z, id]);
+async function setBlock(
+  page: Page,
+  x: number,
+  y: number,
+  z: number,
+  id: number,
+): Promise<void> {
+  await page.evaluate(
+    (coords) => {
+      const [x, y, z, id] = coords as [number, number, number, number];
+      const g = (window as unknown as { __voxelGame?: GameHandle }).__voxelGame;
+      if (!g) throw new Error("game handle missing");
+      g.world.setBlock(x, y, z, id);
+    },
+    [x, y, z, id],
+  );
 }
 
-async function getBlock(page: Page, x: number, y: number, z: number): Promise<number> {
-  return page.evaluate((coords) => {
-    const [x, y, z] = coords as [number, number, number];
-    const g = (window as unknown as { __voxelGame?: GameHandle }).__voxelGame;
-    if (!g) throw new Error('game handle missing');
-    return g.world.getBlock(x, y, z);
-  }, [x, y, z]);
+async function getBlock(
+  page: Page,
+  x: number,
+  y: number,
+  z: number,
+): Promise<number> {
+  return page.evaluate(
+    (coords) => {
+      const [x, y, z] = coords as [number, number, number];
+      const g = (window as unknown as { __voxelGame?: GameHandle }).__voxelGame;
+      if (!g) throw new Error("game handle missing");
+      return g.world.getBlock(x, y, z);
+    },
+    [x, y, z],
+  );
 }
 
 async function flush(page: Page): Promise<FlushResult> {
   return page.evaluate(() => {
     const g = (window as unknown as { __voxelGame?: GameHandle }).__voxelGame;
-    if (!g?.persistence) throw new Error('persistence missing');
+    if (!g?.persistence) throw new Error("persistence missing");
     return g.persistence.flush();
   });
 }
@@ -118,12 +151,15 @@ async function loadCommitted(
   cy: number,
   cz: number,
 ): Promise<Array<[number, number]> | null> {
-  return page.evaluate((coords) => {
-    const [cx, cy, cz] = coords as [number, number, number];
-    const g = (window as unknown as { __voxelGame?: GameHandle }).__voxelGame;
-    if (!g?.persistence) throw new Error('persistence missing');
-    return g.persistence.loadCommittedChunkEdits(cx, cy, cz);
-  }, [cx, cy, cz]);
+  return page.evaluate(
+    (coords) => {
+      const [cx, cy, cz] = coords as [number, number, number];
+      const g = (window as unknown as { __voxelGame?: GameHandle }).__voxelGame;
+      if (!g?.persistence) throw new Error("persistence missing");
+      return g.persistence.loadCommittedChunkEdits(cx, cy, cz);
+    },
+    [cx, cy, cz],
+  );
 }
 
 /** Chunk coords per src/world/WorldCoordinates.ts (16 wide, 64 tall). */
@@ -140,8 +176,10 @@ function localIndexOf(x: number, y: number, z: number): number {
   return lx + lz * 16 + ly * 256;
 }
 
-test.describe('persistence durability (249 e2e)', () => {
-  test('normal save/reload round-trips through real IndexedDB', async ({ page }) => {
+test.describe("persistence durability (249 e2e)", () => {
+  test("normal save/reload round-trips through real IndexedDB", async ({
+    page,
+  }) => {
     test.setTimeout(180_000);
     await waitReady(page);
 
@@ -167,7 +205,10 @@ test.describe('persistence durability (249 e2e)', () => {
     const [cx, cy, cz] = chunkOf(cell.x, cell.y, cell.z);
     const changes = await loadCommitted(page, cx, cy, cz);
     expect(changes).not.toBeNull();
-    expect(changes!).toContainEqual([localIndexOf(cell.x, cell.y, cell.z), STONE]);
+    expect(changes!).toContainEqual([
+      localIndexOf(cell.x, cell.y, cell.z),
+      STONE,
+    ]);
 
     const initialEdits = await page.evaluate(() => {
       const g = (window as unknown as { __voxelGame?: GameHandle }).__voxelGame;
@@ -176,7 +217,9 @@ test.describe('persistence durability (249 e2e)', () => {
     expect(initialEdits).not.toBeNull();
   });
 
-  test('quota failure shows the warning, retains dirty state, then recovers', async ({ page }) => {
+  test("quota failure shows the warning, retains dirty state, then recovers", async ({
+    page,
+  }) => {
     test.setTimeout(240_000);
     // Map-backed fake IndexedDB installed before app scripts (§G). The first
     // THREE `put` calls on the `chunk-edits` store reject with a quota error.
@@ -253,12 +296,16 @@ test.describe('persistence durability (249 e2e)', () => {
     // The save-status banner must become visible with a non-empty warning.
     await page.waitForFunction(
       () => {
-        const el = document.getElementById('save-status');
-        return el !== null && !el.classList.contains('hidden') && (el.textContent ?? '').length > 0;
+        const el = document.getElementById("save-status");
+        return (
+          el !== null &&
+          !el.classList.contains("hidden") &&
+          (el.textContent ?? "").length > 0
+        );
       },
       { timeout: 30_000 },
     );
-    const bannerText = await page.locator('#save-status').textContent();
+    const bannerText = await page.locator("#save-status").textContent();
     expect(bannerText).toMatch(/Save delayed|Saves failing/);
 
     // Flush: the armed failure must reject the write and RETAIN the dirty unit.
@@ -271,7 +318,11 @@ test.describe('persistence durability (249 e2e)', () => {
     let recovered: FlushResult | null = null;
     while (Date.now() < deadline) {
       const r = await flush(page);
-      if (r.committed >= 1 && (await pendingCount(page)) === 0 && r.health === 'ok') {
+      if (
+        r.committed >= 1 &&
+        (await pendingCount(page)) === 0 &&
+        r.health === "ok"
+      ) {
         recovered = r;
         break;
       }
@@ -280,16 +331,21 @@ test.describe('persistence durability (249 e2e)', () => {
     expect(recovered).not.toBeNull();
 
     // Verified recovery hides the banner again.
-    await expect(page.locator('#save-status')).toBeHidden({ timeout: 10_000 });
+    await expect(page.locator("#save-status")).toBeHidden({ timeout: 10_000 });
 
     // The retained edit is durably readable through the committed record.
     const [cx, cy, cz] = chunkOf(cell.x, cell.y, cell.z);
     const changes = await loadCommitted(page, cx, cy, cz);
     expect(changes).not.toBeNull();
-    expect(changes!).toContainEqual([localIndexOf(cell.x, cell.y, cell.z), STONE]);
+    expect(changes!).toContainEqual([
+      localIndexOf(cell.x, cell.y, cell.z),
+      STONE,
+    ]);
   });
 
-  test('unavailable storage boots memory-only with the FAILED banner', async ({ page }) => {
+  test("unavailable storage boots memory-only with the FAILED banner", async ({
+    page,
+  }) => {
     test.setTimeout(240_000);
     // Private-mode equivalent: indexedDB.open throws SecurityError (§G).
     await page.addInitScript({
@@ -306,8 +362,12 @@ test.describe('persistence durability (249 e2e)', () => {
     // and the banner shows the failing message.
     await page.waitForFunction(
       () => {
-        const el = document.getElementById('save-status');
-        return el !== null && !el.classList.contains('hidden') && (el.textContent ?? '').includes('Saves failing');
+        const el = document.getElementById("save-status");
+        return (
+          el !== null &&
+          !el.classList.contains("hidden") &&
+          (el.textContent ?? "").includes("Saves failing")
+        );
       },
       { timeout: 60_000 },
     );
@@ -317,23 +377,26 @@ test.describe('persistence durability (249 e2e)', () => {
     let kind: string | null = null;
     while (Date.now() < deadline) {
       kind = await page.evaluate(() => {
-        const g = (window as unknown as { __voxelGame?: GameHandle }).__voxelGame;
+        const g = (window as unknown as { __voxelGame?: GameHandle })
+          .__voxelGame;
         return g?.persistence?.lastFailureKind ?? null;
       });
-      if (kind === 'private-mode') break;
+      if (kind === "private-mode") break;
       await page.waitForTimeout(500);
     }
-    expect(kind).toBe('private-mode');
+    expect(kind).toBe("private-mode");
 
     // The game stays playable: placing a block must not crash the loop.
     const cell = await editCellNearSpawn(page);
     await setBlock(page, cell.x, cell.y, cell.z, STONE);
     expect(await getBlock(page, cell.x, cell.y, cell.z)).toBe(STONE);
     await page.waitForTimeout(1000);
-    await expect(page.locator('#error')).toBeHidden();
+    await expect(page.locator("#error")).toBeHidden();
   });
 
-  test('migrated legacy save restores edits and player state non-destructively', async ({ page }) => {
+  test("migrated legacy save restores edits and player state non-destructively", async ({
+    page,
+  }) => {
     test.setTimeout(240_000);
     // Legacy localStorage artifacts seeded before app scripts (real IDB target).
     // idx1 = 1 + 1*16 + 40*256 = 10257 → world (1, 40, 1); normal index.
@@ -381,7 +444,7 @@ test.describe('persistence durability (249 e2e)', () => {
     // Player state restored (gravity may settle y, so only x/z/yaw/pitch pin).
     const player = await page.evaluate(() => {
       const g = (window as unknown as { __voxelGame?: GameHandle }).__voxelGame;
-      if (!g) throw new Error('game handle missing');
+      if (!g) throw new Error("game handle missing");
       return {
         x: g.player.position.x,
         z: g.player.position.z,
@@ -400,13 +463,17 @@ test.describe('persistence durability (249 e2e)', () => {
       return g?.persistence?.initialEdits ?? null;
     });
     expect(initialEdits).not.toBeNull();
-    const entry = initialEdits!.edits.find((e) => e.chunk[0] === 0 && e.chunk[1] === 0 && e.chunk[2] === 0);
+    const entry = initialEdits!.edits.find(
+      (e) => e.chunk[0] === 0 && e.chunk[1] === 0 && e.chunk[2] === 0,
+    );
     expect(entry).toBeDefined();
     expect(entry!.changes).toContainEqual([IDX1, STONE]);
     expect(entry!.changes).toContainEqual([IDX2, COBBLESTONE]);
   });
 
-  test('abrupt-close pagehide flush persists the placed block', async ({ page }) => {
+  test("abrupt-close pagehide flush persists the placed block", async ({
+    page,
+  }) => {
     test.setTimeout(180_000);
     await waitReady(page);
 
@@ -415,7 +482,9 @@ test.describe('persistence durability (249 e2e)', () => {
 
     // Simulate tab close/teardown: the pagehide handler enqueues the player
     // state and flushes every dirty unit (including captured chunk edits).
-    await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide')));
+    await page.evaluate(() =>
+      window.dispatchEvent(new PageTransitionEvent("pagehide")),
+    );
     await page.waitForTimeout(1500);
 
     await page.reload();
@@ -424,17 +493,24 @@ test.describe('persistence durability (249 e2e)', () => {
     expect(await getBlock(page, cell.x, cell.y, cell.z)).toBe(STONE);
     const [cx, cy, cz] = chunkOf(cell.x, cell.y, cell.z);
     const changes = await loadCommitted(page, cx, cy, cz);
-    expect(changes!).toContainEqual([localIndexOf(cell.x, cell.y, cell.z), STONE]);
+    expect(changes!).toContainEqual([
+      localIndexOf(cell.x, cell.y, cell.z),
+      STONE,
+    ]);
   });
 
-  test('churn across 150 distinct chunks survives reload exactly', async ({ page }) => {
+  test("churn across 150 distinct chunks survives reload exactly", async ({
+    page,
+  }) => {
     // Slow-disk environments can cost hundreds of ms per IndexedDB commit; the
-    // flush's 151 sequential writes are the product behavior under test, while
+    // flush's ~151 sequential writes are the product behavior under test, while
     // the verification reads below are parallelized so total wall-clock stays
     // dominated by the flush alone. (The >10k-chunk adversarial churn proof is
     // a deterministic unit scenario per DIRTY-5; this browser test proves the
-    // production composition end-to-end at real-IndexedDB scale.)
-    test.setTimeout(300_000);
+    // production composition end-to-end at real-IndexedDB scale.) Measured on
+    // the reference Windows workstation: ~1.5 s/commit ⇒ ~230 s for the full
+    // flush — so the budget allows 3× that headroom.
+    test.setTimeout(900_000);
     await waitReady(page);
 
     const anchor = await editCellNearSpawn(page);
@@ -449,24 +525,37 @@ test.describe('persistence durability (249 e2e)', () => {
     for (let i = 0; i < 150; i++) {
       const cx = cx0 + 30 + (i % 15);
       const cz = cz0 + 30 + Math.floor(i / 15);
-      cells.push({ x: cx * 16 + 3, y: baseY, z: cz * 16 + 3, id: i % 2 === 0 ? STONE : COBBLESTONE });
+      cells.push({
+        x: cx * 16 + 3,
+        y: baseY,
+        z: cz * 16 + 3,
+        id: i % 2 === 0 ? STONE : COBBLESTONE,
+      });
     }
 
     // Single in-page batch: one evaluate round-trip for all 150 edits keeps the
     // test wall-clock dominated by game work, not CDP round-trips.
     let t = Date.now();
     const mark = (label: string): void => {
-      console.log(`[churn-timing] ${label}: ${((Date.now() - t) / 1000).toFixed(1)}s`);
+      console.log(
+        `[churn-timing] ${label}: ${((Date.now() - t) / 1000).toFixed(1)}s`,
+      );
       t = Date.now();
     };
-    await page.evaluate((batch) => {
-      const g = (window as unknown as { __voxelGame?: GameHandle }).__voxelGame;
-      if (!g) throw new Error('game handle missing');
-      for (const [x, y, z, id] of batch as Array<[number, number, number, number]>) {
-        g.world.setBlock(x, y, z, id);
-      }
-    }, cells.map((c) => [c.x, c.y, c.z, c.id]));
-    mark('edits');
+    await page.evaluate(
+      (batch) => {
+        const g = (window as unknown as { __voxelGame?: GameHandle })
+          .__voxelGame;
+        if (!g) throw new Error("game handle missing");
+        for (const [x, y, z, id] of batch as Array<
+          [number, number, number, number]
+        >) {
+          g.world.setBlock(x, y, z, id);
+        }
+      },
+      cells.map((c) => [c.x, c.y, c.z, c.id]),
+    );
+    mark("edits");
 
     const flushed = await flush(page);
     mark(`flush committed=${flushed.committed} failed=${flushed.failed}`);
@@ -475,7 +564,7 @@ test.describe('persistence durability (249 e2e)', () => {
 
     await page.reload();
     await waitReady(page);
-    mark('reload');
+    mark("reload");
 
     // The edited chunks are non-resident by design (far from spawn), so exact
     // equality is asserted through the committed records
@@ -485,20 +574,29 @@ test.describe('persistence durability (249 e2e)', () => {
     const mismatches = await page.evaluate((cells) => {
       const g = (window as unknown as { __voxelGame?: GameHandle }).__voxelGame;
       const persistence = g?.persistence;
-      if (!persistence) throw new Error('persistence missing');
+      if (!persistence) throw new Error("persistence missing");
       return Promise.all(
-        (cells as Array<{ x: number; y: number; z: number; id: number }>).map(async (c, i) => {
-          const cx = Math.floor(c.x / 16);
-          const cy = Math.floor(c.y / 64);
-          const cz = Math.floor(c.z / 16);
-          const changes = await persistence.loadCommittedChunkEdits(cx, cy, cz);
-          const idx =
-            (c.x - 16 * cx) + (c.z - 16 * cz) * 16 + (c.y - 64 * cy) * 256;
-          return changes && changes.some(([j, id]) => j === idx && id === c.id) ? -1 : i;
-        }),
+        (cells as Array<{ x: number; y: number; z: number; id: number }>).map(
+          async (c, i) => {
+            const cx = Math.floor(c.x / 16);
+            const cy = Math.floor(c.y / 64);
+            const cz = Math.floor(c.z / 16);
+            const changes = await persistence.loadCommittedChunkEdits(
+              cx,
+              cy,
+              cz,
+            );
+            const idx =
+              c.x - 16 * cx + (c.z - 16 * cz) * 16 + (c.y - 64 * cy) * 256;
+            return changes &&
+              changes.some(([j, id]) => j === idx && id === c.id)
+              ? -1
+              : i;
+          },
+        ),
       ).then((marks) => marks.filter((m) => m !== -1));
     }, cells);
-    mark('verify-reads');
+    mark("verify-reads");
     expect(mismatches).toEqual([]);
   });
 });

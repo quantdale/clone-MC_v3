@@ -5,6 +5,7 @@ import {
   validateTickBudgetConfig,
   evaluateTickBudget,
   TickBudgetMonitor,
+  wrapSystemWithBudget,
 } from '../../src/simulation/TickBudgetMonitor';
 import {
   DEFAULT_RENDER_BUDGET,
@@ -124,6 +125,59 @@ describe('TickBudgetMonitor', () => {
       return monitor.sample();
     };
     expect(run()).toEqual(run());
+  });
+});
+
+describe('wrapSystemWithBudget (224 alignment helper)', () => {
+  it('wraps a system in a TickBudgetMonitor that records overruns without throwing', () => {
+    const clock = fakeClock();
+    const system: TickSystem = { tick: () => clock.advance(10) };
+    const monitor = wrapSystemWithBudget(system, { now: clock.now, config: DEFAULT_TICK_BUDGET });
+
+    expect(monitor).toBeInstanceOf(TickBudgetMonitor);
+    expect(() => monitor.tick(0)).not.toThrow(); // overrun recorded, never thrown
+    expect(monitor.lastTickMillis).toBe(10);
+    expect(monitor.overruns).toBe(1);
+    expect(monitor.lastOverrunMillis).toBe(10);
+    expect(monitor.sample().withinBudget).toBe(false);
+
+    monitor.tick(1);
+    expect(monitor.overruns).toBe(2); // keeps counting across ticks
+  });
+
+  it('rejects values that are not TickSystem-shaped', () => {
+    const clock = fakeClock();
+    const opts = { now: clock.now, config: DEFAULT_TICK_BUDGET };
+    for (const bad of [null, undefined, {}, { tick: 'not-a-function' }, 42]) {
+      expect(() => wrapSystemWithBudget(bad as never, opts)).toThrow(/tick/);
+    }
+  });
+
+  it('reset() clears timing and overrun counters but keeps the budget', () => {
+    const clock = fakeClock();
+    const monitor = wrapSystemWithBudget({ tick: () => clock.advance(20) }, {
+      now: clock.now,
+      config: DEFAULT_TICK_BUDGET,
+    });
+    monitor.tick(0);
+    expect(monitor.overruns).toBe(1);
+    expect(monitor.sample().withinBudget).toBe(false);
+
+    monitor.reset();
+    expect(monitor.lastTickMillis).toBe(0);
+    expect(monitor.overruns).toBe(0);
+    expect(monitor.lastOverrunMillis).toBe(0);
+    expect(monitor.maxTickMillis).toBe(DEFAULT_TICK_BUDGET.maxTickMillis); // budget kept
+    expect(monitor.sample()).toEqual({
+      lastTickMillis: 0,
+      overruns: 0,
+      lastOverrunMillis: 0,
+      withinBudget: true, // zero elapsed counts as within budget after reset
+    });
+
+    // Still fully functional after reset.
+    monitor.tick(1);
+    expect(monitor.overruns).toBe(1);
   });
 });
 

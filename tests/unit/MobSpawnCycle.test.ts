@@ -3,6 +3,7 @@ import {
   countLiveByCategory,
   selectSpawnCandidate,
   runSpawnCycleForChunk,
+  DEFAULT_MAX_SPAWNS_PER_CYCLE,
   type SpawnCategoryConfig,
 } from '../../src/simulation/MobSpawnCycle';
 import { EntityManager } from '../../src/simulation/EntityManager';
@@ -198,5 +199,73 @@ describe('runSpawnCycleForChunk — no eligible candidate', () => {
 
     expect(spawned).toBe(0);
     expect(m.size).toBe(0);
+  });
+});
+
+describe('runSpawnCycleForChunk — Phase 8 limits', () => {
+  const MONSTER_CONFIG: SpawnCategoryConfig = {
+    category: 'MONSTER',
+    typeId: ZOMBIE,
+    cap: 10,
+    attemptsPerChunk: 20,
+  };
+
+  function run(
+    m = manager(),
+    limits: Parameters<typeof runSpawnCycleForChunk>[11] | undefined = undefined,
+    distance = nearestPlayerDistance,
+  ): number {
+    const args = [
+      m, registry, new FlatFavorableWorld(), PLAINS, 0, 0,
+      surfaceHeightAt, distance, OVERWORLD, 3, [MONSTER_CONFIG],
+    ] as const;
+    return limits === undefined
+      ? runSpawnCycleForChunk(...args)
+      : runSpawnCycleForChunk(...args, limits);
+  }
+
+  it('simulationDistanceBlocks gates candidates beyond the given radius', () => {
+    // Favorable world and valid base distance, but outside the simulation distance.
+    expect(run(undefined, { simulationDistanceBlocks: 10 })).toBe(0);
+    expect(manager().size).toBe(0);
+
+    // Same setup inside the simulation distance spawns normally.
+    expect(run(undefined, { simulationDistanceBlocks: 50 })).toBeGreaterThan(0);
+  });
+
+  it('maxSpawnsPerCycle stops the cycle early across configs', () => {
+    const m = manager();
+    const configs: SpawnCategoryConfig[] = [
+      { ...MONSTER_CONFIG, cap: 2 }, // fills first...
+      { category: 'CREATURE', typeId: PIG, cap: 10, attemptsPerChunk: 20 },
+    ];
+    const bright = new FlatFavorableWorld();
+    const brightWorld: SpawnWorld = {
+      getBlockId: (x, y, z) => bright.getBlockId(x, y, z),
+      getCollisionShape: (x, y, z) => bright.getCollisionShape(x, y, z),
+      getSkyLight: () => 15, // favorable for CREATUREs
+      getBlockLight: () => 0,
+    };
+    const spawned = runSpawnCycleForChunk(
+      m, registry, brightWorld, PLAINS, 0, 0, surfaceHeightAt, nearestPlayerDistance,
+      OVERWORLD, 5, configs, { maxSpawnsPerCycle: 3 },
+    );
+    expect(spawned).toBe(3); // capped despite 12 total allowed by config caps
+    expect(m.size).toBe(3);
+  });
+
+  it('omitted limits keeps the default per-cycle budget', () => {
+    const m = manager();
+    const generous: SpawnCategoryConfig = { ...MONSTER_CONFIG, cap: 100 };
+    const spawnedNoLimitsArg = run(m);
+    expect(spawnedNoLimitsArg).toBe(DEFAULT_MAX_SPAWNS_PER_CYCLE);
+    expect(countLiveByCategory(m, registry, 'MONSTER')).toBe(DEFAULT_MAX_SPAWNS_PER_CYCLE);
+
+    const m2 = manager();
+    const spawnedExplicitDefault = runSpawnCycleForChunk(
+      m2, registry, new FlatFavorableWorld(), PLAINS, 0, 0, surfaceHeightAt,
+      nearestPlayerDistance, OVERWORLD, 3, [generous], {},
+    );
+    expect(spawnedExplicitDefault).toBe(DEFAULT_MAX_SPAWNS_PER_CYCLE);
   });
 });

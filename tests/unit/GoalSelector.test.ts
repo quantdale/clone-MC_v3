@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { GoalSelector, GoalFlag, type Goal } from '../../src/simulation/GoalSelector';
+import {
+  GoalSelector,
+  GoalFlag,
+  SENSORY_CADENCE_INTERVAL_TICKS,
+  isSensoryTick,
+  type Goal,
+} from '../../src/simulation/GoalSelector';
 
 interface StubOptions {
   canUse?: () => boolean;
@@ -168,6 +174,82 @@ describe('GoalSelector — removeGoal / clear', () => {
     selector.clear();
 
     expect(log).toContain('stop:move');
+    expect(log).toContain('stop:look');
+    expect(selector.getRunning()).toEqual([]);
+  });
+});
+
+describe('GoalSelector — tickClocked sensory cadence', () => {
+  const ENTITY_ID = 1; // slot fires when (tick + 1) % 4 === 0, i.e. ticks 3, 7, ...
+  const INTERVAL = SENSORY_CADENCE_INTERVAL_TICKS;
+
+  it('isSensoryTick staggers slots per entity id', () => {
+    expect(isSensoryTick(3, 1)).toBe(true);
+    expect(isSensoryTick(4, 1)).toBe(false);
+    expect(isSensoryTick(0, 4)).toBe(true);
+    expect(isSensoryTick(0, 0)).toBe(true);
+    // Negative global ticks still resolve to a well-defined phase.
+    expect(isSensoryTick(-1, 1)).toBe(true);
+  });
+
+  it('runs Move goals every call regardless of the cadence slot', () => {
+    const log: string[] = [];
+    const selector = new GoalSelector();
+    const move = makeGoal([GoalFlag.Move], { log, name: 'move' });
+    selector.addGoal(0, move);
+
+    for (let tick = 0; tick < INTERVAL * 2; tick++) {
+      selector.tickClocked(tick, ENTITY_ID);
+    }
+
+    const moveTicks = log.filter((entry) => entry === 'tick:move').length;
+    expect(moveTicks).toBe(INTERVAL * 2);
+    expect(selector.getRunning()).toEqual([move]);
+  });
+
+  it('evaluates a sensory goal only on its cadence slot', () => {
+    let canUseCalls = 0;
+    const selector = new GoalSelector();
+    const target: Goal = {
+      flags: [GoalFlag.Target],
+      canUse: () => {
+        canUseCalls++;
+        return true;
+      },
+      start: () => {},
+      tick: () => {},
+    };
+    selector.addGoal(0, target);
+
+    for (let tick = 0; tick < INTERVAL; tick++) {
+      selector.tickClocked(tick, ENTITY_ID);
+    }
+    // Only the single in-phase tick evaluated it.
+    expect(canUseCalls).toBe(1);
+    expect(selector.getRunning()).toEqual([target]);
+  });
+
+  it('holds a running sensory goal on off-ticks without ticking or stopping it', () => {
+    const log: string[] = [];
+    const selector = new GoalSelector();
+    let keepRunning = true;
+    const look = makeGoal([GoalFlag.Look], { log, name: 'look', canContinueToUse: () => keepRunning });
+    selector.addGoal(0, look);
+
+    const dueTick = INTERVAL - (ENTITY_ID % INTERVAL); // (tick + id) % interval === 0
+    selector.tickClocked(dueTick, ENTITY_ID); // cadence fires → goal starts
+    expect(selector.getRunning()).toEqual([look]);
+    expect(log).toContain('start:look');
+
+    log.length = 0;
+    keepRunning = false; // would drop it under plain tick(); off-cadence must not even ask
+    selector.tickClocked(dueTick + 1, ENTITY_ID);
+    selector.tickClocked(dueTick + 2, ENTITY_ID);
+    expect(log).toEqual([]);
+    expect(selector.getRunning()).toEqual([look]);
+
+    log.length = 0;
+    selector.tickClocked(dueTick + INTERVAL, ENTITY_ID); // next slot re-evaluates
     expect(log).toContain('stop:look');
     expect(selector.getRunning()).toEqual([]);
   });

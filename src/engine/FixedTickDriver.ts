@@ -1,4 +1,4 @@
-import { SimulationClock } from './SimulationClock';
+import { SimulationClock } from "./SimulationClock";
 
 /**
  * FixedTickDriver: the single owner that turns rAF frame deltas into deterministic fixed ticks
@@ -67,21 +67,28 @@ export class FixedTickDriver {
   /** Debt counter watermark so `debtDiscarded` reports only new drops per frame. */
   private lastDebtSeen = 0;
   /** Reused per-frame result (invalidated by the next `advance`). */
-  private readonly frameResult: { ticksExecuted: number; debtDiscarded: number; alpha: number } = {
+  private readonly frameResult: {
+    ticksExecuted: number;
+    debtDiscarded: number;
+    alpha: number;
+  } = {
     ticksExecuted: 0,
     debtDiscarded: 0,
     alpha: 0,
   };
 
   constructor(options: FixedTickDriverOptions) {
-    if (typeof options.tick !== 'function') {
-      throw new Error('FixedTickDriver: tick must be a function');
+    if (typeof options.tick !== "function") {
+      throw new Error("FixedTickDriver: tick must be a function");
     }
     const tickRateHz = options.tickRateHz ?? DEFAULT_TICK_RATE_HZ;
     if (!isPositiveFinite(tickRateHz)) {
-      throw new Error(`FixedTickDriver: tickRateHz must be a positive finite number, got ${String(options.tickRateHz)}`);
+      throw new Error(
+        `FixedTickDriver: tickRateHz must be a positive finite number, got ${String(options.tickRateHz)}`,
+      );
     }
-    const maxCatchUpTicks = options.maxCatchUpTicks ?? DEFAULT_MAX_CATCH_UP_TICKS;
+    const maxCatchUpTicks =
+      options.maxCatchUpTicks ?? DEFAULT_MAX_CATCH_UP_TICKS;
     if (!Number.isInteger(maxCatchUpTicks) || maxCatchUpTicks < 1) {
       throw new Error(
         `FixedTickDriver: maxCatchUpTicks must be an integer >= 1, got ${String(options.maxCatchUpTicks)}`,
@@ -89,7 +96,10 @@ export class FixedTickDriver {
     }
     this.tickFn = options.tick;
     this.tickIntervalMs = 1000 / tickRateHz;
-    this.clock = new SimulationClock({ maxTicksPerFrame: maxCatchUpTicks });
+    this.clock = new SimulationClock({
+      maxTicksPerFrame: maxCatchUpTicks,
+      tickMs: this.tickIntervalMs,
+    });
   }
 
   /**
