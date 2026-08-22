@@ -193,6 +193,14 @@ published, awaiting green run — see narrative)
    `.github/workflows/seed-visual-goldens.yml` and committed for review; thresholds/cell
    count/update semantics unchanged; 245 specs amended with dated rationale. Details in
    `post-hardening-audit.md` NEW-6.
+3. **Seed run — SUCCESS (2026-08-23).** Seed Visual Goldens run **32588358098** on SHA
+   `a06b042` completed SUCCESS; artifact `visual-goldens-linux-ci` (9479801647) downloaded and
+   audited: exactly 60 PNGs, full-frame cells at both documented resolutions, debug-overlay
+   uniformly 149×126 (Linux font metrics, matching the CI capture box), hotbar 470×62,
+   zero invalid files. Committed under `tests/visual-golden/linux-ci/`. The CI run on this same
+   SHA (`a06b042`) is expected RED in the e2e job only because the linux-ci set was not yet
+   committed when it started (60 × missing-golden) — the gate job result on that SHA is
+   unaffected evidence for every non-visual requirement.
 
 SEC-001 interim evidence: plain `npm run build` + `node scripts/check-release-bundle.mjs` → "3 assets checked; no E2E hook found" (exit 0); enforced green as the `gate` job's bundle step in run 32577467105.
 
