@@ -40,12 +40,19 @@ const SCREEN_FILTER = process.env.SCREEN_FILTER;
 const SETTLE_MS = 750;
 
 /** Comparison thresholds per capture mode (fixed constants, see design). */
-const EXACT = { channelTolerance: 0, maxChangedFraction: 0 };
 // maxChangedFraction 0.02: headless software-WebGL sky noise on the largest render cell
 // (environment-day/high/1920x1080) measured up to ~0.0105 across runs — right at the old
 // 0.01 bound. Real rendering regressions change far more than 2% of pixels; renderer noise
 // does not. Raised from the 245 default 0.01 with this evidence (248 session).
 const PIXEL_DIFF = { channelTolerance: 24, maxChangedFraction: 0.02 };
+// Element-clipped cells previously used byte-exact comparison. The 2026-08-22 validation
+// campaign proved that unstable across runs: two independent pin→verify cycles failed
+// byte-equality on high-quality clipped cells with changed fractions of 0.000012–0.0107,
+// all hugging DOM-text glyph edges (font anti-aliasing varies per capture under software
+// rasterization at 1920×1080). Clipped cells therefore use the same channel tolerance as
+// full-frame captures with a stricter fraction bound above the measured noise ceiling.
+// Structured UI regressions (wrong/missing panel, layout shift) change far more than 1.5%.
+const CLIPPED_DIFF = { channelTolerance: 24, maxChangedFraction: 0.015 };
 
 /** Fixed camera pose for every capture. */
 const POSE_YAW = 0.6;
@@ -203,7 +210,7 @@ test.describe('visual regression matrix (245)', () => {
           const golden = existsSync(goldenRel) ? readFileSync(goldenRel) : null;
           const opts =
             screen.mode === 'element-clipped'
-              ? EXACT
+              ? CLIPPED_DIFF
               : PIXEL_DIFF;
           const result = comparePng(shot, golden, opts);
           if (result.status === 'pass') {
