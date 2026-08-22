@@ -56,6 +56,25 @@ Remediation normative baseline: `design-addendum.md` in this package.
 3. **Flush termination bound (hardened).** `flush()` progress-reset semantics allowed unbounded
    draining under continuous concurrent enqueue traffic; capped at 128 rounds (see REL-006 row).
 
+## New finding surfaced by canonical CI proof (Gate F) — closed in-tree
+
+6. **NEW-6 visual-regression goldens were single-environment (fixed).** Discovered 2026-08-23
+   while executing Gate F: the first canonical CI run on published SHA `ec6989b`
+   (run 32577467105) finished `gate` SUCCESS but `e2e` FAILED — the Change 245 visual matrix
+   compared ubuntu-latest captures against workstation-pinned goldens. Evidence: 54 cells
+   exceeded-threshold at fractions 0.015–0.049 against unchanged bounds (0.02 full-frame /
+   0.015 clipped), and all six debug-overlay cells dimension-mismatched (139 px golden width =
+   Windows Consolas vs 149 px actual = Linux monospace fallback; OS font metrics change the
+   element's intrinsic box). Root cause: captured pixels are renderer- and font-environment
+   dependent, so one global golden set cannot serve two environments — the suite had only ever
+   completed on its authoring workstation (the pre-split single CI job timed out during E2E,
+   masking this). Remediation (no requirement weakened): environment-scoped baseline sets under
+   `tests/visual-golden/<environment>/` resolved by `resolveGoldenEnvironment()`
+   (`tests/visual/matrix.ts`); thresholds, cell count, verify/update semantics unchanged; CI
+   seeding via `.github/workflows/seed-visual-goldens.yml`; 245's matrix-manifest and
+   capture-harness specs amended with dated rationale; provenance in
+   `tests/visual-golden/README.md`.
+
 ## Gate E completion status
 
 - [x] REAUDIT-1 current-source citations above (file-level; line numbers drift with edits — see

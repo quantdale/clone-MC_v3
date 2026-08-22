@@ -1,0 +1,66 @@
+name: Seed Visual Goldens
+
+# Environment-scoped visual-golden seeding (post-250 hardening Gate F remediation).
+#
+# Runs the 60-cell Change-245 visual matrix in UPDATE_SNAPSHOTS=1 mode on the
+# ubuntu-latest runner (the canonical CI verification environment) and uploads the
+# freshly pinned `tests/visual-golden/linux-ci/` tree as a reviewable artifact.
+#
+# Gated: the job runs only for manual dispatch or for pushes whose head commit
+# message contains `[seed-visual]`, so ordinary pushes never re-pin baselines as
+# a side effect. Verify-mode CI (`ci.yml`) always compares against the committed
+# set; seeding never auto-commits anything.
+
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch: {}
+
+concurrency:
+  group: seed-visual-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  seed-linux-ci-goldens:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[seed-visual]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      # Same environment contract as ci.yml's e2e job: xvfb-run provides the
+      # display for WebGL; the webServer rebuilds with VITE_E2E=true. Update mode
+      # is scoped to this spec only — no other suite may write goldens.
+      - name: Pin linux-ci goldens (UPDATE_SNAPSHOTS=1)
+        run: UPDATE_SNAPSHOTS=1 xvfb-run -a npx playwright test tests/e2e/visual-regression.spec.ts
+
+      - name: Upload seeded linux-ci golden set
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-goldens-linux-ci
+          path: tests/visual-golden/linux-ci/
+          retention-days: 14

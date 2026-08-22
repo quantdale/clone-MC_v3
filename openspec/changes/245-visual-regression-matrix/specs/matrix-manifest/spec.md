@@ -18,7 +18,8 @@ utility read their configuration exclusively from this manifest.
   `low`, `default`, `high`.
 - **Resolution**: `{ id, width, height }` with `id` one of `1280x720`, `1920x1080`.
 - **Cell**: `{ screen, quality, resolution }`, a string tuple drawn from the manifest.
-- **Golden path**: `tests/visual-golden/<screen>/<quality>/<resolution>.png`.
+- **Golden path**: `tests/visual-golden/<environment>/<screen>/<quality>/<resolution>.png`
+  (2026-08-23 amendment, below; originally environment-free).
 
 ## Invariants
 
@@ -92,8 +93,9 @@ the documented `{ renderDistance, fov, brightness }` values and id uniqueness.
 ### Requirement: cell enumeration and golden paths
 `allCells()` MUST return exactly `10 × 3 × 2 = 60` cells, one for each combination of
 screen, quality, and resolution; `goldenPath(cell)` MUST return the deterministic
-path `tests/visual-golden/<screen>/<quality>/<resolution>.png` for any cell drawn
-from `allCells()`.
+path `tests/visual-golden/<environment>/<screen>/<quality>/<resolution>.png` for any
+cell drawn from `allCells()`, where `<environment>` is the resolved golden
+environment key.
 
 #### Scenario: full cross-product
 - **GIVEN** `allCells()`
@@ -101,8 +103,33 @@ from `allCells()`.
   exactly one entry.
 
 #### Scenario: golden path derivation
-- **GIVEN** the cell `(render-world, high, 1920x1080)`
-- **THEN** `goldenPath(cell)` is `tests/visual-golden/render-world/high/1920x1080.png`.
+- **GIVEN** the cell `(render-world, high, 1920x1080)` and golden environment `win32-local`
+- **THEN** `goldenPath(cell)` is
+  `tests/visual-golden/win32-local/render-world/high/1920x1080.png`.
+
+### Requirement: golden environment resolution (2026-08-23 amendment)
+The golden environment key MUST be a single validated filesystem-safe path segment.
+A non-empty `VISUAL_GOLDEN_ENV` override MUST win verbatim; otherwise the key MUST be
+`<platform>-ci` when the CI marker is set and `<platform>-local` otherwise. An invalid
+key MUST throw naming the value rather than silently redirecting captures to an
+unintended baseline directory. Rationale: captured pixels are renderer- and
+font-environment dependent, so each verification environment compares against a
+baseline pinned in that same environment; thresholds, cell count, and update-mode
+semantics are unchanged. Discovered during post-250 hardening Gate F (canonical CI),
+recorded in `openspec/hardening/2026-08-21-post-250-production-persistence-hardening/`.
+
+#### Scenario: derived keys
+- **GIVEN** platform `linux` with the CI marker set / unset
+- **THEN** the resolved key is `linux-ci` / `linux-local`.
+
+#### Scenario: explicit override
+- **GIVEN** `VISUAL_GOLDEN_ENV=win32-local`
+- **THEN** that exact key wins regardless of platform or CI marker.
+
+#### Scenario: invalid override rejected
+- **GIVEN** `VISUAL_GOLDEN_ENV=../escape`
+- **WHEN** the key resolves
+- **THEN** it throws naming the invalid key.
 
 ### Requirement: manifest validation
 `validateMatrix()` MUST return an empty array for the valid manifest and a non-empty
@@ -155,4 +182,5 @@ quality profile value outside its documented range).
 | Quality profile axis | › quality profiles |
 | Resolution axis | › resolutions |
 | Cell enumeration and golden paths | › cells and golden paths |
+| Golden environment resolution (2026-08-23 amendment) | › golden environments |
 | Manifest validation | › validation |

@@ -15,7 +15,7 @@ import { comparePng, writeDiffPng } from '../visual/goldenCompare';
  * Visual-regression matrix (245).
  *
  * Runs every `(screen, quality, resolution)` cell headlessly against a committed
- * golden PNG under `tests/visual-golden/`.
+ * golden PNG under `tests/visual-golden/<environment>/`.
  *
  * Environment variables:
  * - `UPDATE_SNAPSHOTS=1`: seed/refresh goldens instead of comparing (each executed
@@ -23,9 +23,12 @@ import { comparePng, writeDiffPng } from '../visual/goldenCompare';
  *   treats a missing golden as a failing cell.
  * - `SCREEN_FILTER=hud,hotbar`: run only the listed screen ids (all qualities ×
  *   both resolutions); unset runs the full 60-cell matrix.
+ * - `VISUAL_GOLDEN_ENV`: explicit baseline-set override; defaults to
+ *   `<platform>-ci` under CI and `<platform>-local` elsewhere (see matrix.ts).
  *
  * Provenance: goldens re-pinned after worldgen v2 depth pipeline + four-stream
- * material split (2026-08-22 validation campaign).
+ * material split (2026-08-22 validation campaign); sets are per-environment since
+ * pixel output is renderer/font dependent (2026-08-23 post-250 hardening Gate F).
  *
  * Determinism: fresh context per cell (empty localStorage), fixed seed (?seed=1337),
  * quality profile injected pre-boot via addInitScript (VITE_E2E-only seam), fixed

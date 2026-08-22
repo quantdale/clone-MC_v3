@@ -5,6 +5,7 @@ import {
   RESOLUTIONS,
   allCells,
   goldenPath,
+  resolveGoldenEnvironment,
   validateMatrix,
   validateScreens,
   validateProfiles,
@@ -150,18 +151,57 @@ describe('cells and golden paths', () => {
     expect(allCells()).toEqual(allCells());
   });
 
-  it('derives the documented golden path', () => {
-    expect(goldenPath({ screen: 'render-world', quality: 'high', resolution: '1920x1080' })).toBe(
-      'tests/visual-golden/render-world/high/1920x1080.png',
-    );
+  it('derives the documented golden path inside an explicit environment', () => {
+    expect(
+      goldenPath({ screen: 'render-world', quality: 'high', resolution: '1920x1080' }, 'win32-local'),
+    ).toBe('tests/visual-golden/win32-local/render-world/high/1920x1080.png');
   });
 
-  it('derives a stable path for every enumerated cell', () => {
+  it('derives a stable environment-scoped path for every enumerated cell', () => {
     for (const cell of allCells()) {
-      expect(goldenPath(cell)).toBe(
-        `tests/visual-golden/${cell.screen}/${cell.quality}/${cell.resolution}.png`,
+      expect(goldenPath(cell, 'linux-ci')).toBe(
+        `tests/visual-golden/linux-ci/${cell.screen}/${cell.quality}/${cell.resolution}.png`,
       );
     }
+  });
+});
+
+describe('golden environments', () => {
+  it('derives <platform>-ci under CI and <platform>-local otherwise', () => {
+    expect(resolveGoldenEnvironment({ CI: 'true', platform: 'linux' })).toBe('linux-ci');
+    expect(resolveGoldenEnvironment({ CI: '1', platform: 'darwin' })).toBe('darwin-ci');
+    expect(resolveGoldenEnvironment({ platform: 'win32' })).toBe('win32-local');
+    expect(resolveGoldenEnvironment({ CI: '', platform: 'win32' })).toBe('win32-local');
+  });
+
+  it('lets a non-empty VISUAL_GOLDEN_ENV override the derived key verbatim', () => {
+    expect(
+      resolveGoldenEnvironment({ VISUAL_GOLDEN_ENV: 'linux-ci', CI: undefined, platform: 'win32' }),
+    ).toBe('linux-ci');
+    expect(resolveGoldenEnvironment({ VISUAL_GOLDEN_ENV: 'rpi4.lab' })).toBe('rpi4.lab');
+  });
+
+  it('treats an empty override as absent', () => {
+    expect(resolveGoldenEnvironment({ VISUAL_GOLDEN_ENV: '', platform: 'win32' })).toBe('win32-local');
+  });
+
+  it('is deterministic for identical sources', () => {
+    const source = { CI: 'true', platform: 'linux' };
+    expect(resolveGoldenEnvironment(source)).toBe(resolveGoldenEnvironment({ ...source }));
+  });
+
+  it('rejects keys that are not legal path segments, naming the value', () => {
+    for (const bad of ['../escape', 'a/b', ' ', '.hidden', '-lead', String('x'.repeat(65))]) {
+      expect(() => resolveGoldenEnvironment({ VISUAL_GOLDEN_ENV: bad })).toThrowError(
+        new RegExp(`invalid golden environment key`),
+      );
+    }
+  });
+
+  it('composes explicit environments into golden paths', () => {
+    const cell = { screen: 'hud', quality: 'low', resolution: '1280x720' };
+    expect(goldenPath(cell, 'linux-ci')).toBe('tests/visual-golden/linux-ci/hud/low/1280x720.png');
+    expect(goldenPath(cell, 'win32-local')).toBe('tests/visual-golden/win32-local/hud/low/1280x720.png');
   });
 });
 

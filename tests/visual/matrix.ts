@@ -5,7 +5,16 @@
  *
  * Pure and headless-safe: constants and functions only, no I/O, no global state,
  * no mutation of inputs. The capture harness and comparison utility read their
- * configuration exclusively from this module.
+ * configuration exclusively from this module. The single deliberate environment
+ * seam is the optional default source of `resolveGoldenEnvironment()` (process
+ * env/platform), mirroring how the e2e harness owns `UPDATE_SNAPSHOTS`/`
+ * SCREEN_FILTER`; every function stays pure over explicit arguments.
+ *
+ * Environment-scoped goldens (2026-08-23 amendment, post-250 hardening Gate F):
+ * pixel output is renderer/font-environment dependent, so each verification
+ * environment compares against a baseline pinned in that same environment.
+ * Goldens live under `tests/visual-golden/<environment-key>/…`; thresholds,
+ * cell count, and update-mode semantics are unchanged.
  */
 
 export type ScreenFamily = 'render' | 'hud' | 'inventory' | 'environment';
@@ -87,9 +96,54 @@ export function allCells(): MatrixCell[] {
   return cells;
 }
 
-/** Derives the deterministic golden storage path for a cell. */
-export function goldenPath(cell: MatrixCell): string {
-  return `tests/visual-golden/${cell.screen}/${cell.quality}/${cell.resolution}.png`;
+/** Legal golden-environment key: one path segment, filesystem-safe, non-empty. */
+const GOLDEN_ENV_PATTERN = /^[a-z0-9][a-z0-9._-]{0,63}$/;
+
+/** The environment inputs the golden-environment key may be derived from. */
+export interface GoldenEnvironmentSource {
+  /** Explicit override; wins over every default when a non-empty string. */
+  readonly VISUAL_GOLDEN_ENV?: string;
+  /** CI marker (`"true"`/`"1"` on hosted runners). */
+  readonly CI?: string;
+  /** Operating-system platform of the rendering environment. */
+  readonly platform?: string;
+}
+
+function defaultGoldenEnvironmentSource(): GoldenEnvironmentSource {
+  return {
+    VISUAL_GOLDEN_ENV: typeof process !== 'undefined' ? process.env.VISUAL_GOLDEN_ENV : undefined,
+    CI: typeof process !== 'undefined' ? process.env.CI : undefined,
+    platform: typeof process !== 'undefined' ? process.platform : undefined,
+  };
+}
+
+/**
+ * Resolves the committed golden set the current run compares against.
+ *
+ * A non-empty `VISUAL_GOLDEN_ENV` wins verbatim (validated); otherwise the key
+ * is `<platform>-ci` under CI and `<platform>-local` elsewhere. Pure over its
+ * input; only the optional default source reads process state. Throws naming
+ * the value when any resolved key is not a legal path segment — a bad key must
+ * never silently redirect captures to an unintended baseline directory.
+ */
+export function resolveGoldenEnvironment(
+  source: GoldenEnvironmentSource = defaultGoldenEnvironmentSource(),
+): string {
+  const raw = source.VISUAL_GOLDEN_ENV;
+  const key = raw !== undefined && raw !== '' ? raw : `${source.platform ?? 'unknown'}-${source.CI ? 'ci' : 'local'}`;
+  if (!GOLDEN_ENV_PATTERN.test(key)) {
+    throw new Error(`VisualMatrix: invalid golden environment key '${key}'`);
+  }
+  return key;
+}
+
+/**
+ * Derives the deterministic golden storage path for a cell inside the given
+ * golden environment (default: the resolved current environment).
+ */
+export function goldenPath(cell: MatrixCell, environment?: string): string {
+  const env = environment ?? resolveGoldenEnvironment();
+  return `tests/visual-golden/${env}/${cell.screen}/${cell.quality}/${cell.resolution}.png`;
 }
 
 /** Validates arbitrary screens; returns human-readable defects naming each offender. */

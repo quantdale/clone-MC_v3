@@ -166,15 +166,35 @@ all fixed or documented in-tree before publication (NEW-1..NEW-5 in `post-harden
 
 ## Gate F — publication/canonical proof
 
-Status: **NOT RUN**
+Status: **IN PROGRESS** (publication confirmed; canonical CI blocked by NEW-6, remediation
+published, awaiting green run — see narrative)
 
-- [ ] intended remediation commit published to `origin/main`
-- [ ] refetch proves exact published SHA
-- [ ] canonical GitHub Actions run for exact SHA completes SUCCESS
+- [x] intended remediation commit published to `origin/main` (through `ec6989b`, 2026-08-22;
+      refetch 2026-08-23 00:13 +0800 and `ls-remote`/`fetch` 2026-08-23 both prove remote
+      `origin/main` = `ec6989b55dc89291d771013952a936d3273793ee` = local HEAD)
+- [ ] canonical GitHub Actions SUCCESS for the exact published SHA (see below)
 - [ ] run/job IDs and results recorded here
 - [ ] post-hardening release-readiness artifact names exact published SHA and supersedes historical Change 250 READY decision
 
-SEC-001 interim evidence: plain `npm run build` + `node scripts/check-release-bundle.mjs` → "3 assets checked; no E2E hook found" (exit 0).
+### Gate F execution record
+
+1. **First canonical run — RED (2026-08-22).** Run **32577467105** on SHA `ec6989b`:
+   job `gate` (97041774493) SUCCESS with every step green (validate-state, typecheck, lint,
+   build, release-bundle assertion, unit suite, coverage thresholds, both dependency audits);
+   job `e2e` (97041774616) FAILED at the E2E step after ~69 min. Failure isolated to the Change
+   245 visual matrix: 54 cells exceeded-threshold (0.015–0.049 vs unchanged bounds) and all six
+   debug-overlay cells dimension-mismatched (139 px golden [Windows Consolas] vs 149 px actual
+   [Linux monospace fallback]). Full report artifact (`playwright-report`, 201 MB) inspected.
+   Root cause recorded as finding **NEW-6**: single-environment goldens cannot serve a second
+   verification environment; the suite had never completed in CI before the fe7c6ff job split.
+2. **Remediation (2026-08-23):** environment-scoped baseline sets under
+   `tests/visual-golden/<environment>/` resolved by `resolveGoldenEnvironment()`; workstation
+   set preserved byte-for-byte under `win32-local/`; canonical CI set seeded on ubuntu-latest by
+   `.github/workflows/seed-visual-goldens.yml` and committed for review; thresholds/cell
+   count/update semantics unchanged; 245 specs amended with dated rationale. Details in
+   `post-hardening-audit.md` NEW-6.
+
+SEC-001 interim evidence: plain `npm run build` + `node scripts/check-release-bundle.mjs` → "3 assets checked; no E2E hook found" (exit 0); enforced green as the `gate` job's bundle step in run 32577467105.
 
 ## Final verdict
 

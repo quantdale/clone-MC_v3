@@ -16,14 +16,18 @@ except under the explicit `UPDATE_SNAPSHOTS=1` opt-in.
   (see `matrix-manifest` spec). `60` cells total.
 - **Capture mode**: `full-viewport` (`page.screenshot()`) or `element-clipped`
   (`page.locator(selector).screenshot()`), taken from the screen's definition.
-- **Golden path**: `tests/visual-golden/<screen>/<quality>/<resolution>.png`,
-  derived by `goldenPath(cell)`.
+- **Golden path**: `tests/visual-golden/<environment>/<screen>/<quality>/<resolution>.png`,
+  derived by `goldenPath(cell)` (2026-08-23 environment-scoping amendment, below).
 - **Verify mode**: the default; the harness reads the golden and compares. It never
   writes goldens.
 - **Update mode**: active only when the environment variable `UPDATE_SNAPSHOTS` is
   `"1"`; the harness writes the golden instead of comparing.
 - **Screen filter**: an optional environment variable `SCREEN_FILTER` listing screen
   ids (comma-separated) to run; when absent, every screen runs.
+- **Golden environment**: the committed baseline set the run compares against,
+  resolved per the `matrix-manifest` spec (`VISUAL_GOLDEN_ENV` override, else
+  `<platform>-ci`/`<platform>-local`). Pixels are renderer/font-environment
+  dependent, so pinning and verification MUST happen in the same environment.
 
 ## Invariants
 
@@ -50,8 +54,9 @@ fixed settle delay, and capture by the screen's capture mode.
 - **WHEN** the harness captures it
 - **THEN** the viewport is 1280×720, the seed is fixed, `#loading` is hidden before
   capture, HUD/hotbar/crosshair are visible, and the capture is a full-viewport
-  screenshot written to `tests/visual-golden/render-world/default/1280x720.png` in
-  update mode or compared against it in verify mode.
+  screenshot written to
+  `tests/visual-golden/<environment>/render-world/default/1280x720.png` in update
+  mode or compared against it in verify mode.
 
 #### Scenario: element-clipped capture
 - **GIVEN** the cell `(hotbar, default, 1280x720)` whose screen is `element-clipped`
@@ -175,6 +180,11 @@ remaining cells, and the spec MUST fail if any executed row is not `pass` (or
   unchanged except the VITE_E2E-only boot hooks (see `matrix-manifest`/design).
 - Golden storage and the `UPDATE_SNAPSHOTS`/`SCREEN_FILTER` env vars are new and
   documented in this spec and the design.
+- 2026-08-23 amendment (post-250 hardening Gate F): golden sets are scoped per
+  rendering environment under `tests/visual-golden/<environment>/`; CI seeding runs
+  the canonical update mode on ubuntu-latest via
+  `.github/workflows/seed-visual-goldens.yml`. Thresholds, cell count, and
+  verify/update semantics are unchanged.
 
 ## Security and integrity
 

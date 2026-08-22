@@ -1,6 +1,30 @@
 # Visual Golden Provenance
 
-Committed goldens for the 60-cell visual-regression matrix (tests/e2e/visual-regression.spec.ts).
+Committed goldens for the 60-cell visual-regression matrix (`tests/e2e/visual-regression.spec.ts`).
+
+## Environment-scoped sets (2026-08-23, post-250 hardening Gate F)
+
+Pixel output depends on the rendering environment: GPU/software rasterizer, OS font stack, and
+headless mode all change captured pixels. Canonical GitHub Actions (ubuntu-latest) therefore
+compares against a baseline pinned in that same environment instead of a workstation-pinned one —
+the single global set previously made the mandatory E2E gate unpassable in CI (CI run 32577467105
+on `ec6989b`: 54 cells exceeded thresholds at 0.015–0.049 vs the unchanged 0.02/0.015 bounds; all
+six debug-overlay cells dimension-mismatched at 139 px [Windows Consolas] vs 149 px [Linux
+monospace fallback] width). Thresholds, cell count, and update-mode semantics are unchanged.
+
+Layout and resolution order:
+
+| Directory | Baseline set | Resolved key |
+|---|---|---|
+| `win32-local/` | Windows authoring workstation (local dev / local gates) | `<platform>-local` |
+| `linux-ci/` | ubuntu-latest runner under xvfb-run (canonical CI) | `<platform>-ci` |
+
+The active set is resolved by `resolveGoldenEnvironment()` (`tests/visual/matrix.ts`): a non-empty
+`VISUAL_GOLDEN_ENV` wins verbatim; otherwise `<platform>-ci` when `CI` is set, `<platform>-local`
+otherwise. Seeding follows the suite's canonical `UPDATE_SNAPSHOTS=1` path; CI seeding is
+automated by `.github/workflows/seed-visual-goldens.yml` (gated on the `[seed-visual]` commit
+message marker or manual dispatch), which uploads the fresh `linux-ci/` tree as an artifact for
+review before it is committed.
 
 ## Re-pin 2026-08-22 (validation campaign)
 
@@ -16,4 +40,5 @@ intentional rendering/terrain changes landed on main:
 
 Determinism of the new terrain is proven by tests/unit/WorldgenDeterminism.test.ts; interaction
 correctness after these changes is covered by the game E2E specs. Pixel-diff thresholds are
-unchanged (channelTolerance 24 / maxChangedFraction 0.02 per Change 248).
+unchanged (channelTolerance 24 / maxChangedFraction 0.02 per Change 248). The files re-pinned on
+that date are preserved byte-for-byte under `win32-local/`.
