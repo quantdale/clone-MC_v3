@@ -5,7 +5,8 @@ on:
     branches: [main]
   pull_request:
 
-# Deterministic concurrency: serialize per ref, never cancel in-progress main builds
+# Deterministic concurrency: serialize per ref, never cancel in-flight
+# main builds
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
@@ -14,20 +15,76 @@ permissions:
   contents: read
 
 jobs:
-  ci:
+  # Static + unit gate: validate-state, typecheck, lint, build, the full unit
+  # suite, coverage thresholds, SEC-001 bundle assertion, and both dependency
+  # audits. Runs in PARALLEL with the E2E job — no requirement is weakened;
+  # splitting simply gives each heavy half its own wall-clock budget after the
+  # deep-engine wave grew both halves past a single 60-minute job (run on
+  # a83a810 passed every step except E2E, cancelled at the job timeout).
+  gate:
     runs-on: ubuntu-latest
-    # The full required gate (validate-state, typecheck, lint, build, the 3574-test
-    # unit suite, coverage thresholds, both dependency audits, a Playwright browser
-    # install, and the 31-test E2E suite) must complete without weakening any test,
-    # threshold, or audit requirement. Runs #329 and #331 were cancelled at their
-    # job timeouts (60m and 120m) because `npx playwright install --with-deps
-    # chromium` vendors the Chromium apt dependencies on a cold cache. Run #332-#333
-    # used mcr.microsoft.com/playwright:v1.62.1-jammy to bundle deps but E2E still
-    # failed (container sandbox / webServer routing difference). This revision runs
-    # host-native with `xvfb-run -a` for headless WebGL and retries the apt install
-    # on the host runner; 60 minutes gives headroom for a cold-cache install plus
-    # the suite.
-    timeout-minutes: 60
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate repository state
+        run: npm run validate-state
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      # SEC-001 (249 hardening): the plain release bundle must never inherit the
+      # E2E-only window.__voxelGame hook. Runs against the clean build artifact.
+      - name: Release bundle assertion (no E2E hook)
+        run: node scripts/check-release-bundle.mjs
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Coverage (no-regression thresholds)
+        run: npm run test:coverage
+
+      - name: Production dependency audit (block high/critical)
+        run: npm audit --omit=dev
+
+      - name: Full dependency audit (block high/critical)
+        run: npm audit
+
+      - name: Upload coverage report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 14
+
+  # Browser gate: Playwright Chromium install (cold-cache apt cost, cached
+  # afterwards) plus the 46-test E2E suite under xvfb for headless WebGL. The
+  # persistence durability suite alone can take ~15 minutes of real IndexedDB
+  # commits on slow disks and the visual/memory matrices are serial by design
+  # (workers: 1), so this job owns its own generous budget instead of competing
+  # with the unit/coverage half of the gate.
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
     permissions:
       contents: read
     steps:
@@ -49,51 +106,16 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
-      - name: Validate repository state
-        run: npm run validate-state
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Build
-        run: npm run build
-
-      # SEC-001 (249 hardening): the plain release bundle must never inherit the
-      # E2E-only window.__voxelGame hook. Runs against the clean build artifact
-      # BEFORE the E2E step rebuilds with VITE_E2E=true (where the hook is
-      # legitimately present for the specs).
-      - name: Release bundle assertion (no E2E hook)
-        run: node scripts/check-release-bundle.mjs
-
-      - name: Unit tests
-        run: npm test
-
-      - name: Coverage (no-regression thresholds)
-        run: npm run test:coverage
-
-      - name: Production dependency audit (block high/critical)
-        run: npm audit --omit=dev
-
-      - name: Full dependency audit (block high/critical)
-        run: npm audit
-
-      # Host runner: install Chromium plus its system deps (cached via actions/cache).
+      # Host runner: install Chromium plus its system deps (cached via
+      # actions/cache).
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
+      # Playwright's webServer rebuilds with VITE_E2E=true before booting the
+      # suite (the E2E-only window.__voxelGame hook is legitimately present for
+      # the specs; the plain-bundle assertion lives in the `gate` job).
       - name: E2E tests
         run: xvfb-run -a npm run test:e2e
-
-      - name: Upload coverage report on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage/
-          retention-days: 14
 
       - name: Upload Playwright report on failure
         if: failure()
