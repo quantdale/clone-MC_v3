@@ -19,7 +19,10 @@ export default defineConfig({
     // memory suite can force GC before settled heap samples. Never affects the
     // production build.
     launchOptions: {
-      args: ['--js-flags=--expose-gc'],
+      args: [
+        '--js-flags=--expose-gc',
+        ...(process.env.PW_SWIFT ? ['--use-angle=swiftshader'] : []),
+      ],
     },
   },
   webServer: {
