@@ -17,7 +17,7 @@
   "exceptionUsed": false,
   "sessionStartHead": "ec6989b55dc89291d771013952a936d3273793ee",
   "lastCompletedTask": "2026-08-23 canonical-CI follow-up on the certification package: published head c58f972 came back RED at the gate Lint step (run 32618476207: unused 'path' import in scripts/validate-file-audit.mjs, undeclared 'process' global in scripts/gen-file-audit.mjs — evidence-script hygiene only; build/unit/coverage skipped downstream, not failing). Root-caused and fixed (import removal + /* global console, process */); full local re-gate on the fixed tree green (validate-state, typecheck, lint, unit 326 files / 4206 passed +1 skipped, build, release-bundle check). Fix published to origin/main; canonical READY condition attaches to this SHA's CI run.",
-  "nextExactAction": "Verify canonical GitHub Actions gate + e2e SUCCESS for the exact published follow-up SHA and record run/job IDs in openspec/hardening/2026-08-23-exhaustive-repository-certification/verification.md; then the certification sign-off stands and the program remains terminal (resume only for reviewer findings or explicitly authorized new scope).",
+  "nextExactAction": "Close the certification condition: confirm e2e SUCCESS on run 32620103123 (head e56b83a), record candidateSha + canonicalCi in releaseAuthority, flip the certification validationResults entry to VERIFIED, then begin explicitly authorized post-terminal work (Change 251 live-furnace production integration) with fresh OpenSpec artifacts.",
   "blockers": [],
   "validationResults": [
     {
@@ -55,13 +55,6 @@
       "status": "VERIFIED",
       "unitTests": 3719,
       "e2eTests": 35
-    },
-    {
-      "change": "243-redstone-automation-e2e",
-      "status": "VERIFIED",
-      "unitTests": 3694,
-      "e2eTests": 35,
-      "note": "full gate green: typecheck, lint, unit 285 files / 3694 passed + 1 skipped, build, e2e 35 passed"
     },
     {
       "change": "243-redstone-automation-e2e",
@@ -2413,17 +2406,44 @@
     },
     {
       "change": "hardening/2026-08-23-exhaustive-repository-certification",
-      "status": "VERIFIED",
+      "status": "CONDITIONAL",
       "unitTests": 4201,
-      "e2eTests": "see session report",
-      "note": "typecheck/lint/build/release-bundle/npm-audits PASS; coverage functions 95.03% >= 95%; manifest validate-file-audit PASSED"
+      "e2eTests": "canonical exact-SHA CI pending",
+      "note": "Local campaign gates PASS (typecheck/lint/build/release-bundle/npm-audits; coverage functions 95.03% >= 95%; manifest validate-file-audit PASSED). Verdict is READY WITH EXPLICIT NON-BLOCKING DEBT conditioned on canonical exact-SHA GitHub Actions gate+e2e SUCCESS. Candidate c58f972 came back RED at gate Lint (run 32618476207); fixed by follow-up e56b83a whose gate job 97148797875 (run 32620103123) is SUCCESS with e2e still running when this field was written. Flip to VERIFIED with exact run/job IDs only after both jobs are SUCCESS on that SHA."
     }
   ],
-  "publishedHead": "67aafd3e7fa72b50170dff3b13c492d6df61a09e",
-  "publishedAt": "2026-08-16T16:18:18.133Z",
-  "lastValidatedHead": "67aafd3e7fa72b50170dff3b13c492d6df61a09e",
-  "lastKnownHead": "67aafd3e7fa72b50170dff3b13c492d6df61a09e",
+  "publicationHistory": [
+    {
+      "head": "67aafd3e7fa72b50170dff3b13c492d6df61a09e",
+      "at": "2026-08-16T16:18:18.133Z",
+      "note": "Change-238-era session publication. The retired scalar fields publishedHead/publishedAt/lastValidatedHead/lastKnownHead froze at this value and silently went stale; preserved here as a historical observation instead of a current claim."
+    },
+    {
+      "head": "c58f972ca62401a29ccf56fdce0716f7aeb38880",
+      "at": "2026-08-23T04:41:19Z",
+      "note": "2026-08-23 exhaustive repository certification publication. Canonical CI run 32618476207 returned gate FAILURE at Lint (unused 'path' import in scripts/validate-file-audit.mjs; undeclared 'process' global in scripts/gen-file-audit.mjs); build/unit/coverage were skipped downstream, not failing. Superseded by the next entry."
+    },
+    {
+      "head": "e56b83a35e5034b5c73745c9a76130a9ac58d273",
+      "at": "2026-08-23",
+      "note": "Evidence-only follow-up fixing the two lint defects. Local re-gate fully green (validate-state/typecheck/lint/unit 326 files 4206 passed +1 skipped/build/bundle-check). Canonical run 32620103123 gate job 97148797875 SUCCESS; e2e pending at authoring time. Follow-up commits carry no independent release claim."
+    }
+  ],
+  "releaseAuthority": {
+    "schemaVersion": 1,
+    "authorityPackage": "openspec/hardening/2026-08-23-exhaustive-repository-certification",
+    "verdict": "READY WITH EXPLICIT NON-BLOCKING DEBT",
+    "condition": "Canonical exact-SHA GitHub Actions run (gate + e2e jobs SUCCESS) on the published candidate head.",
+    "candidateSha": null,
+    "canonicalCi": null,
+    "semantics": {
+      "candidateSha": "The most recent commit whose canonical CI run is fully green (gate + e2e SUCCESS). Must be an ancestor-or-self of HEAD recorded by a LATER commit; a commit never contains its own SHA.",
+      "followUpCommits": "Documentation/evidence-only commits published after the candidate carry no release claim and do not invalidate the candidate.",
+      "historicalInterlocks": "The hardeningInterlock block below is a historical gating record (pre-241 era). The authorityPackage above owns the current release decision."
+    }
+  },
   "hardeningInterlock": {
+    "role": "historical interlock record (pre-241 era); NOT the current release authority - see releaseAuthority above",
     "package": "openspec/hardening/2026-08-17-pre-241-repository-hardening",
     "status": "VERIFIED",
     "verification": "VERIFIED at e3ecf86c28553c558459c855a3aee3b003bcb157 (run 32320823336 #337 SUCCESS; job 96282506795 21/21 success; E2E 30 passed + 1 flaky pig retry→pass in 11.2m; all 15 hardening steps green)",

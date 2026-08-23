@@ -11,6 +11,17 @@
  *    and a VERIFIED current change; a non-terminal status must not coexist with terminal claims.
  * 6. Lowercase alias conformance: openspec/program-state.json is redirect-only and must never
  *    carry per-change state fields that could contradict the canonical file.
+ * 7. Release-authority coherence (2026-08-23 governance repair):
+ *    - a terminal program declares `releaseAuthority.authorityPackage` pointing at an existing
+ *      hardening directory with a verification.md;
+ *    - `canonicalCi` may only be recorded when that verification.md carries the canonical
+ *      `Overall status: **VERIFIED**` marker (no premature closure claims);
+ *    - `candidateSha` / `publicationHistory[].head` values are 40-hex and ancestors-or-self of
+ *      HEAD wherever a git repository is present — a commit never claims its own SHA, so these
+ *      fields always observe PRIOR commits;
+ *    - the next action exists on both sides of the JSON/Markdown boundary.
+ * 8. `validationResults[]` entries with a `change` identity are unique (attempt/history records
+ *    must use an explicitly documented separate schema instead of silent duplicates).
  *
  * Exit code 0 if valid, 1 if invalid.
  *
@@ -18,6 +29,7 @@
  */
 import * as fs from 'fs';
 import * as path from 'path';
+import { execFileSync } from 'child_process';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -125,8 +137,213 @@ function validateAlias(errors) {
 }
 
 function extractChangeNumber(change) {
+  if (typeof change !== 'string') return null;
   const match = change.match(/^(\d+)-/);
   return match ? parseInt(match[1], 10) : null;
+}
+
+const SHA_40 = /^[0-9a-f]{40}$/;
+
+/** Whether `sha` is an ancestor of (or equal to) HEAD. Always true outside a git repo
+ * (synthetic validator fixtures have no history); real repositories enforce it. */
+function isAncestorOrSelf(sha, errors, label) {
+  if (!SHA_40.test(sha)) {
+    errors.push(`${label} "${sha}" is not a full 40-hex commit SHA`);
+    return;
+  }
+  if (!fs.existsSync(path.join(ROOT, '.git'))) return;
+  try {
+    execFileSync('git', ['merge-base', '--is-ancestor', sha, 'HEAD'], { cwd: ROOT, stdio: 'ignore' });
+  } catch {
+    errors.push(`${label} "${sha}" is not an ancestor-or-self of HEAD; release-evidence SHAs must observe prior commits, never claim their own`);
+  }
+}
+
+/** Release-authority coherence (check 7). */
+function validateReleaseAuthority(json, errors) {
+  const ra = json.releaseAuthority;
+  if (!ra || typeof ra !== 'object') {
+    errors.push('releaseAuthority block is missing; the current release decision must name its authority package');
+    return;
+  }
+  if (typeof ra.authorityPackage !== 'string' || ra.authorityPackage.length === 0) {
+    errors.push('releaseAuthority.authorityPackage must be a non-empty package path');
+    return;
+  }
+  const verificationPath = path.resolve(ROOT, ra.authorityPackage, 'verification.md');
+  let verificationRaw = null;
+  try {
+    verificationRaw = fs.readFileSync(verificationPath, 'utf8');
+  } catch {
+    errors.push(`releaseAuthority.authorityPackage "${ra.authorityPackage}" has no readable verification.md`);
+    return;
+  }
+  const artifactClosed = verificationRaw.includes('Overall status: **VERIFIED**');
+  if (ra.canonicalCi !== undefined && ra.canonicalCi !== null) {
+    if (!artifactClosed) {
+      errors.push(`releaseAuthority records canonicalCi but "${ra.authorityPackage}/verification.md" lacks the "Overall status: **VERIFIED**" marker; a conditional verdict must not be recorded as closed`);
+    }
+    const ci = ra.canonicalCi;
+    for (const field of ['runId', 'gateJobId', 'e2eJobId']) {
+      const v = ci[field];
+      if (!Number.isFinite(v) || typeof v !== 'number' || v <= 0) {
+        errors.push(`releaseAuthority.canonicalCi.${field} must be a positive workflow/job id`);
+      }
+    }
+    if (ci.gateConclusion !== 'success' || ci.e2eConclusion !== 'success') {
+      errors.push('releaseAuthority.canonicalCi may only be recorded when BOTH gate and e2e conclusions are success');
+    }
+    if (typeof ci.recordedAt !== 'string' || ci.recordedAt.length === 0) {
+      errors.push('releaseAuthority.canonicalCi.recordedAt must be an ISO timestamp string');
+    }
+  }
+  if (ra.candidateSha !== undefined && ra.candidateSha !== null) {
+    isAncestorOrSelf(ra.candidateSha, errors, 'releaseAuthority.candidateSha');
+  }
+  if (Array.isArray(json.publicationHistory)) {
+    json.publicationHistory.forEach((entry, i) => {
+      if (!entry || typeof entry.head !== 'string') {
+        errors.push(`publicationHistory[${i}] is missing a head SHA`);
+        return;
+      }
+      isAncestorOrSelf(entry.head, errors, `publicationHistory[${i}].head`);
+      if (typeof entry.at !== 'string' || entry.at.length === 0) {
+        errors.push(`publicationHistory[${i}].at must be a timestamp string`);
+      }
+      if (typeof entry.note !== 'string' || entry.note.length === 0) {
+        errors.push(`publicationHistory[${i}].note must explain what was published`);
+      }
+    });
+  }
+}
+
+/** validationResults identity uniqueness (check 8). */
+function validateValidationResults(json, errors) {
+  if (!Array.isArray(json.validationResults)) return;
+  const seen = new Map();
+  json.validationResults.forEach((entry, i) => {
+    const change = entry && typeof entry.change === 'string' ? entry.change : null;
+    if (change === null) return; // legacy head-only rows carry no change identity
+    if (seen.has(change)) {
+      errors.push(`validationResults contains duplicate change identity "${change}" (entries ${seen.get(change)} and ${i}); attempt/history data needs an explicit schema, not silent duplicates`);
+    } else {
+      seen.set(change, i);
+    }
+  });
+}
+
+/** PARITY_MATRIX.md ↔ PROGRAM_STATE.json cross-check (check 9). The matrix is an
+ * optional artifact (synthetic validator fixtures omit it); when present it must
+ * biject the numbered sequence, never regress a PROGRAM_STATE-VERIFIED change to
+ * a planned/in-progress row, preserve the two master-plan rows, and keep its
+ * summary counts in sync with the actual rows. */
+function validateParityMatrix(json, errors) {
+  const matrixPath = path.resolve(ROOT, 'PARITY_MATRIX.md');
+  if (!fs.existsSync(matrixPath)) return;
+  const lines = fs.readFileSync(matrixPath, 'utf8').split('\n');
+  const rows = new Map();
+  const mpRows = new Set();
+  const mpCategory = new Map();
+  for (const line of lines) {
+    const cMatch = line.match(/^\|\s*C(\d{3})\s*\|/);
+    if (cMatch) {
+      const id = `C${cMatch[1]}`;
+      if (rows.has(id)) {
+        errors.push(`PARITY_MATRIX has duplicate row ${id}`);
+        continue;
+      }
+      const cells = line.split('|').map((c) => c.trim());
+      // | C### | slug | outcome | category | evidence | differences | STATUS |
+      const category = cells[4] ?? '';
+      const status = (cells[cells.length - 2] ?? '').toLowerCase();
+      rows.set(id, { category, status });
+      continue;
+    }
+    const mpMatch = line.match(/^\|\s*(MP-[\w.-]+)\s*\|/);
+    if (mpMatch) {
+      mpRows.add(mpMatch[1]);
+      const cells = line.split('|').map((c) => c.trim());
+      mpCategory.set(mpMatch[1], cells[4] ?? '');
+    }
+  }
+
+  // a. Bijection over the numbered sequence.
+  for (let i = 1; i <= 250; i++) {
+    const id = `C${String(i).padStart(3, '0')}`;
+    if (!rows.has(id)) errors.push(`PARITY_MATRIX is missing its bijective row ${id}`);
+  }
+
+  // b. A PROGRAM_STATE-VERIFIED change must never sit on a planned/in-progress row.
+  const verifiedNumbers = new Set();
+  const collectVerified = (value) => {
+    if (typeof value !== 'string') return;
+    const m = value.match(/^(\d{3})-/);
+    if (m) verifiedNumbers.add(m[1]);
+  };
+  if (Array.isArray(json.validationResults)) {
+    for (const entry of json.validationResults) {
+      if (entry && typeof entry.change === 'string' && entry.status === 'VERIFIED') {
+        collectVerified(entry.change);
+      }
+    }
+  }
+  if (json.currentChangeStatus === 'VERIFIED') collectVerified(json.currentChange);
+  if (json.lastCompletedChange && json.currentChangeStatus === 'VERIFIED') {
+    collectVerified(typeof json.lastCompletedChange === 'string' ? json.lastCompletedChange : null);
+  }
+  for (const num of verifiedNumbers) {
+    const id = `C${num}`;
+    const row = rows.get(id);
+    if (!row) continue; // missing-row case already reported above
+    if (row.status !== 'verified') {
+      errors.push(`PARITY_MATRIX row ${id} is marked "${row.status}" but PROGRAM_STATE records change ${num} as VERIFIED`);
+    }
+  }
+
+  // c. Master-plan rows preserved.
+  if (!mpRows.has('MP-19.4-1')) {
+    errors.push('PARITY_MATRIX lost its deferred MP-19.4-1 Wither-like secondary boss row');
+  }
+  if (!mpRows.has('MP-33-1')) {
+    errors.push('PARITY_MATRIX lost its out-of-scope MP-33-1 proprietary-services row');
+  }
+
+  // d. Summary counts agree with the actual rows (C rows + MP rows both carry
+  // a category cell; the Summary table totals across both sections).
+  const norm = (s) => s.toLowerCase().replace(/\s*\(.*\)$/, '').trim();
+  const categoryCounts = {};
+  for (const { category } of rows.values()) {
+    const key = norm(category);
+    categoryCounts[key] = (categoryCounts[key] ?? 0) + 1;
+  }
+  for (const category of mpCategory.values()) {
+    const key = norm(category);
+    categoryCounts[key] = (categoryCounts[key] ?? 0) + 1;
+  }
+  const totalRows = rows.size + mpRows.size;
+  let inSummary = false;
+  for (const line of lines) {
+    if (line.startsWith('## Summary')) {
+      inSummary = true;
+      continue;
+    }
+    if (!inSummary || !line.startsWith('|')) continue;
+    const cells = line.split('|').map((c) => c.trim()).filter((c) => c.length > 0);
+    if (cells.length < 2) continue;
+    const label = cells[0];
+    const declared = parseInt(cells[1], 10);
+    if (Number.isNaN(declared)) continue;
+    if (/^total rows$/i.test(label)) {
+      if (declared !== totalRows) {
+        errors.push(`PARITY_MATRIX summary declares ${declared} total rows but ${totalRows} rows exist`);
+      }
+      continue;
+    }
+    const actual = categoryCounts[norm(label)] ?? 0;
+    if (actual !== declared) {
+      errors.push(`PARITY_MATRIX summary declares ${declared} "${label}" rows but the matrix has ${actual}`);
+    }
+  }
 }
 
 function validate() {
@@ -214,6 +431,25 @@ function validate() {
 
   // 6. Alias conformance.
   validateAlias(errors);
+
+  // 7. Release-authority coherence (mandatory for terminal programs).
+  const terminalStatuses2 = new Set(['COMPLETE', 'TERMINAL']);
+  if (terminalStatuses2.has(json.status)) {
+    validateReleaseAuthority(json, errors);
+    const mdNextExactAction = (md['Next exact action'] || '').trim();
+    if (mdNextExactAction.length === 0) {
+      errors.push('Markdown is missing a non-empty "- Next exact action: **...**" bullet');
+    }
+    if (typeof json.nextExactAction !== 'string' || json.nextExactAction.trim().length === 0) {
+      errors.push('JSON nextExactAction must be a non-empty string');
+    }
+  }
+
+  // 8. validationResults identity uniqueness.
+  validateValidationResults(json, errors);
+
+  // 9. PARITY_MATRIX cross-check.
+  validateParityMatrix(json, errors);
 
   return errors;
 }

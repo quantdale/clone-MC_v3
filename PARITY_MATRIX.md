@@ -1,7 +1,7 @@
 # PARITY_MATRIX.md
 
 - **Schema version:** `v1`
-- **Generated:** 2026-08-21
+- **Generated:** 2026-08-23 (reconciliation pass: C248–C250 statuses corrected to their true VERIFIED state; provenance in `openspec/PROGRAM_STATE.json`)
 - **Scope:** one row per planned numbered change `001`–`250` (FeatureId `C<number>`), plus master-plan-only feature areas (`MP-<section>-<seq>`).
 
 ## Sources of truth
@@ -278,9 +278,9 @@ Narrow-outcome text is quoted from `openspec/CHANGE_SEQUENCE.md` (authoritative 
 | C245 | `245-visual-regression-matrix` | Render/HUD/inventory/environment screenshots across quality settings and resolutions. | equivalent | `openspec/changes/245-visual-regression-matrix/verification.md` (VERIFIED) | Golden-image visual matrix captured from headless Chromium software WebGL (`workers: 1`) instead of real-GPU screenshots on physical devices; captured pixels may differ from consumer-GPU output. | VERIFIED |
 | C246 | `246-input-accessibility-matrix` | Keyboard/mouse/gamepad/touch/accessibility interactions and focus-loss recovery. | exact | `openspec/changes/246-input-accessibility-matrix/verification.md` (VERIFIED) | — | VERIFIED |
 | C247 | `247-performance-release-gate` | Release hardware tiers meet frame/tick/load/save/network budgets. | approx | `openspec/PROGRAM_STATE.json` validationResults (`247-performance-release-gate`: VERIFIED; commit d2e9770). Note: that change’s own `verification.md` was left stale ("NOT VERIFIED" header) — authoritative status is the JSON entry + published commit. | Constraint: budgets evaluated from headless browser measurement drivers (software WebGL), not physical release-hardware tiers; absolute frame/tick numbers differ from consumer hardware. | VERIFIED |
-| C248 | `248-parity-matrix-reconciliation` | Every planned feature categorized exact/equivalent/approx/deferred/out-of-scope with evidence. | n/a | — | This change: creates and reconciles `PARITY_MATRIX.md` itself (documentation-only). | in progress |
-| C249 | `249-whole-codebase-adversarial-audit` | Security, correctness, reliability, data-loss, concurrency, performance and architecture audit. | deferred | — | Roadmap: whole-codebase adversarial audit (security, correctness, reliability, data-loss, concurrency, performance, architecture) is sequenced after this reconciliation change. | planned |
-| C250 | `250-final-program-verification` | All mandatory changes verified, complete evidence archive, final release-readiness decision. | deferred | — | Roadmap: final program verification and release-readiness decision; requires the 249 audit complete first. | planned |
+| C248 | `248-parity-matrix-reconciliation` | Every planned feature categorized exact/equivalent/approx/deferred/out-of-scope with evidence. | n/a | `openspec/changes/248-parity-matrix-reconciliation/verification.md` (VERIFIED) | This change: creates and reconciles `PARITY_MATRIX.md` itself (documentation-only). Historical note: a prior reconciliation pass left this row marked "in progress" after the work had closed; corrected 2026-08-23 against PROGRAM_STATE.json. | VERIFIED |
+| C249 | `249-whole-codebase-adversarial-audit` | Security, correctness, reliability, data-loss, concurrency, performance and architecture audit. | n/a | `openspec/changes/249-whole-codebase-adversarial-audit/verification.md` (VERIFIED) | Documentation-only audit record (`report.md` + fragments); its blocking data-loss findings were remediated by the post-250 hardening interlock (`openspec/hardening/2026-08-21-post-250-production-persistence-hardening/`), superseding the historical `accepted` dispositions. | VERIFIED |
+| C250 | `250-final-program-verification` | All mandatory changes verified, complete evidence archive, final release-readiness decision. | n/a | `openspec/changes/250-final-program-verification/verification.md` (VERIFIED) | Documentation-only evidence archive (`openspec/evidence/`); its READY decision is superseded for current release authority by the post-250 interlock and the 2026-08-23 certification package (see `PROGRAM_STATE.json` `releaseAuthority`). | VERIFIED |
 
 ## Master-plan-only features
 
@@ -300,11 +300,11 @@ Feature areas named in `MINECRAFT_PARITY_MASTER_PLAN.md` that no single numbered
 | exact | 238 |
 | equivalent | 4 |
 | approx | 5 |
-| deferred | 3 (C249, C250, MP-19.4-1) |
-| out-of-scope | 1 (MP-33-1) |
-| n/a (documentation) | 1 (C248) |
+| deferred | 1 (MP-19.4-1 Wither-like secondary boss — future scope, intentionally not implemented) |
+| out-of-scope | 1 (MP-33-1 proprietary services/assets) |
+| n/a (documentation) | 3 (C248, C249, C250) |
 | **Total rows** | **252** (250 change rows + 2 master-plan rows) |
 
-Change-rows-only split: exact 238 / equivalent 4 / approx 5 / deferred 2 / n/a 1 = 250.
+Change-rows-only split: exact 238 / equivalent 4 / approx 5 / n/a 3 = 250.
 
-**Coverage statement:** every planned change 001–250 appears in exactly one row (bijective `C001`…`C250`, no duplicates, no orphan rows), and every VERIFIED change 001–247 maps to at least one row — its own `C<number>` row cites its VERIFIED artifact. The two additional `MP-*` rows cover master-plan areas outside the numbered sequence.
+**Coverage statement:** every planned change 001–250 appears in exactly one row (bijective `C001`…`C250`, no duplicates, no orphan rows), every completed change maps to at least one row citing its VERIFIED artifact, and `scripts/validate-state.mjs` cross-checks matrix rows against `PROGRAM_STATE.json` so a VERIFIED change can never silently regress to `deferred`/`planned` here. The two additional `MP-*` rows cover master-plan areas outside the numbered sequence.
