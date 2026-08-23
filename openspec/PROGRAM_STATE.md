@@ -37,11 +37,11 @@
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys).
      "None (hardening interlock ...)" is the sanctioned form while an interlock governs release
      authority; nextChange stays null because no Change 251 exists. -->
-- Active implementation change: **None (hardening interlock VERIFIED; program terminal)**
+- Active implementation change: **251-live-furnace-production-integration — live furnace/block-entity production integration (first explicitly authorized post-terminal change)**
 - Next change: **null**
 - 240 advancement allowed: **yes**
 
-- Program: **COMPLETE** (terminal state — no change 251 exists)
+- Program: **reopened from COMPLETE by explicit authorization — Change 251 ACTIVE (001–250 remain VERIFIED and untouched)**
 - Last completed change: **250-final-program-verification — VERIFIED 100% (documentation-only; final numbered change)**
 - All changes 001–250: **VERIFIED** — zero DEFERRED, zero UNCLASSIFIED (`openspec/evidence/checklist/final-verification-checklist.md`)
 - Historical Change 250-era bullets (preserved; superseded **for current release authority** by `openspec/evidence/release-readiness-post-hardening.md`): 250 required-test gate PASS at head `502d021` / byte-identical tree `b56529e`; historical release-readiness READY RC-1..RC-9 (`openspec/evidence/release-readiness.md`); final parity audit PASS with DL dispositions later rejected by this interlock (`openspec/evidence/parity/final-parity-audit.md`); evidence archive complete (`openspec/evidence/`)
@@ -50,7 +50,7 @@
 - Release authority: **certification package above; verdict READY WITH EXPLICIT NON-BLOCKING DEBT conditioned on canonical exact-SHA CI (gate + e2e SUCCESS)** — gate job 97148797875 (run 32620103123) is SUCCESS on follow-up head `e56b83a`; e2e pending at last checkpoint; `candidateSha` stays null until both jobs are green
 - Publication history: **stale scalars retired into `PROGRAM_STATE.json` `publicationHistory` (67aafd3e era → c58f972 certification → e56b83a lint fix); follow-up commits carry no independent release claim**
 - Section milestone: **PROGRAM COMPLETE — every planned change 001–250 VERIFIED and the mandatory post-250 hardening interlock VERIFIED with canonical exact-SHA CI proof**: program control (001), data/registry foundation (002–020), vertical world/chunk storage (021–033), persistent storage (034–043), fixed-tick simulation (044–055), block geometry/rendering (056–075), fluids (076–084), worldgen (085–102), crafting/containers/progression (103–128), entity framework/mobs (129–153), redstone/automation (154–173), dimensions/major progression (174–195), environment/UX/accessibility (196–210), resource/data packs/content breadth (211–221), multiplayer (222–237), hardening/verification matrices (238–247), parity matrix reconciliation (248), whole-codebase adversarial audit (249), final program verification (250), post-250 production persistence hardening (interlock).
-- Next exact action: **Close the certification condition (e2e SUCCESS on run 32620103123 / e56b83a), flip the certification entry to VERIFIED with exact IDs, then begin explicitly authorized post-terminal work: Change 251 live-furnace production integration.**
+- Next exact action: **Implement 251 tasks in order (composition → tick → interaction → UI → persistence → drops → adversarial), then close the certification condition when run 32620103123 e2e lands and record candidateSha/canonicalCi in releaseAuthority.**
 
 ## What 250 implemented
 

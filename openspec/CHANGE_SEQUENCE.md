@@ -355,3 +355,16 @@ The sequence intentionally front-loads architecture. Examples:
 - Multiplayer cannot be correct before the simulation is deterministic, serializable, and separated from presentation.
 
 Do not bypass these dependencies for visible feature count.
+
+---
+
+## Post-terminal epoch (explicitly authorized work)
+
+The numbered program 001–250 is COMPLETE and VERIFIED. That history is never rewritten. New
+numbered changes may be authorized only by an explicit product/owner decision (as with the
+2026-08-23 authorization of Change 251) and follow the same lifecycle, ordering, and gate
+rules as the original sequence:
+
+| # | Change | Narrow outcome |
+|---|---|---|
+| 251 | `251-live-furnace-production-integration` | Wire the verified furnace/block-entity/recipe/fuel/container/persistence infrastructure into the playable Game: place, open, operate, persist, unload/reload, and break a furnace without duplication, loss, or headless-only shortcuts. |
