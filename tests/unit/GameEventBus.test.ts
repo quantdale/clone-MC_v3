@@ -84,3 +84,15 @@ describe('GameEventBus', () => {
     expect(seen).toEqual([]);
   });
 });
+
+describe('wildcard once (hardening 2026-08-23)', () => {
+  it('unsubscribes a once wildcard listener after its first delivery', async () => {
+    const { GameEventBus, WILDCARD_EVENT_TYPE } = await import('../../src/simulation/GameEventBus');
+    const bus = new GameEventBus();
+    const seen: string[] = [];
+    bus.once(WILDCARD_EVENT_TYPE, (event) => seen.push(event.type));
+    bus.emit({ type: 'a' } as never);
+    bus.emit({ type: 'b' } as never);
+    expect(seen).toEqual(['a']);
+  });
+});

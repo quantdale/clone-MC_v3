@@ -401,7 +401,10 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       key: 'wooden_pickaxe',
       name: 'Wooden Pickaxe',
       iconTile: 22,
-      stackSize: 64,
+      // Durable items never stack (vanilla parity): a shared-damage pile would
+      // destroy every copy when the shared durability breaks (see the
+      // durable-items-stack invariant below).
+      stackSize: 1,
       toolKind: ToolKind.Pickaxe,
       toolPower: 2.2,
       toolTier: 1,
@@ -414,7 +417,7 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       key: 'stone_pickaxe',
       name: 'Stone Pickaxe',
       iconTile: 23,
-      stackSize: 64,
+      stackSize: 1,
       toolKind: ToolKind.Pickaxe,
       toolPower: 4,
       toolTier: 2,
@@ -427,7 +430,7 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       key: 'wooden_axe',
       name: 'Wooden Axe',
       iconTile: 24,
-      stackSize: 64,
+      stackSize: 1,
       toolKind: ToolKind.Axe,
       toolPower: 2.4,
       toolTier: 1,
@@ -757,7 +760,26 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       placeBlock: rid('nether_wart'),
     },
   ];
+  assertDurableItemsDoNotStack(defs);
   return new ItemTypeRegistry(defs);
+}
+
+/**
+ * Authoring invariant (hardening 2026-08-23): an item with durability can never
+ * stack. A shared-damage pile would apply wear to one shared component map and
+ * zero the whole count on break, destroying every copy in the stack at once.
+ * Throws at registry construction so a future durable definition cannot
+ * silently reintroduce the defect.
+ */
+export function assertDurableItemsDoNotStack(defs: readonly ItemTypeDefinition[]): void {
+  for (const def of defs) {
+    if ((def.maxDurability ?? 0) > 0 && def.stackSize !== 1) {
+      throw new Error(
+        `ItemRegistry: durable item '${def.key}' must declare stackSize 1 (got ${def.stackSize}); ` +
+          'stacking durable items shares one damage component across the pile',
+      );
+    }
+  }
 }
 
 /** Item tag backing each tool kind, in the `minecraft:tools/<kind>` form. */

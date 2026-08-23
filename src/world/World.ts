@@ -177,10 +177,21 @@ export class World implements WorldAccess {
    * In-memory block-state overrides keyed by chunk key → cell index →
    * BlockStateId, mirroring the edit overlay. Stateful blocks (e.g. wheat) write
    * their resolved state id here on {@link setBlockState}; {@link getBlockState}
-   * prefers it over the block's default state. It survives chunk unload/reload
-   * within a session but is not yet persisted to the edit snapshot (125 scope).
+   * prefers it over the block's default state.
+   *
+   * Lifetime (hardening 2026-08-23): entries survive chunk unload/reload within a
+   * session but are NOT persisted across page reload — crop/farmland/fire age
+   * reset deterministically to the block default, exactly as before. The map is
+   * bounded like {@link editOverlay}: at most
+   * {@link STATE_OVERLAY_MAX_CHUNKS} distinct chunks, least-recently-written
+   * entries evicted first. This is session-cache bounding, not durability;
+   * durable persistence of block states remains documented non-release debt.
    */
   private readonly stateOverlay = new Map<string, Map<number, BlockStateId>>();
+  /** Chunk keys ordered least- to most-recently written, driving eviction. */
+  private readonly stateOverlayWriteOrder: string[] = [];
+  /** Maximum distinct chunks tracked in the state overlay (mirrors the edit overlay cap). */
+  private static readonly STATE_OVERLAY_MAX_CHUNKS = 10_000;
 
   /** Block-state registry used to resolve/read canonical block states. */
   private readonly stateRegistry: BlockStateRegistry;
@@ -358,6 +369,7 @@ export class World implements WorldAccess {
       stateLayer.delete(index);
       if (stateLayer.size === 0) {
         this.stateOverlay.delete(key);
+        this.removeFromStateOverlayOrder(key);
       }
     }
 
@@ -456,6 +468,38 @@ export class World implements WorldAccess {
       this.stateOverlay.set(key, layer);
     }
     layer.set(index, state.id);
+    this.touchStateOverlay(key);
+  }
+
+  /**
+   * Mark a state-overlay chunk key as most recently written and enforce the
+   * size cap by evicting least-recently-written keys. Eviction discards only the
+   * resident cache copy: affected blocks fall back to their default state (the
+   * same observable behavior as a page reload), and no durability contract is
+   * broken because block-state persistence was never shipped.
+   */
+  private touchStateOverlay(key: string): void {
+    const index = this.stateOverlayWriteOrder.indexOf(key);
+    if (index !== -1) {
+      this.stateOverlayWriteOrder.splice(index, 1);
+    }
+    this.stateOverlayWriteOrder.push(key);
+
+    while (this.stateOverlay.size > World.STATE_OVERLAY_MAX_CHUNKS) {
+      const lruKey = this.stateOverlayWriteOrder.shift();
+      if (lruKey === undefined) {
+        break; // Write order exhausted; nothing left to evict.
+      }
+      this.stateOverlay.delete(lruKey);
+    }
+  }
+
+  /** Drop a chunk key from the eviction-order index when its layer empties. */
+  private removeFromStateOverlayOrder(key: string): void {
+    const index = this.stateOverlayWriteOrder.indexOf(key);
+    if (index !== -1) {
+      this.stateOverlayWriteOrder.splice(index, 1);
+    }
   }
 
   /**
@@ -1580,6 +1624,7 @@ export class World implements WorldAccess {
     this.editOverlay.clear();
     this.editOverlayAccessOrder.length = 0;
     this.stateOverlay.clear();
+    this.stateOverlayWriteOrder.length = 0;
     this.streamCenterX = null;
     this.streamCenterZ = null;
     this.needsEnsure = true;

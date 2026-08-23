@@ -205,7 +205,12 @@ export class PlayerInteraction {
 
       if (this.breaking) {
         if (!this.input.isBreakHeld()) {
-          if (breakClick && this.target) {
+          // Release ends the attempt. It completes only when the mining
+          // progress actually reached 1 (hardening 2026-08-23): a quick click
+          // previously called finishBreak unconditionally, letting ANY
+          // breakable block pop instantly regardless of hardness/tool — the
+          // exact shortcut the hardness-based duration contract exists for.
+          if (breakClick && this.target && this.breakProgress >= 1) {
             this.finishBreak(this.world.getBlock(this.target.blockX, this.target.blockY, this.target.blockZ));
           } else {
             this.resetBreakProgress();
@@ -260,7 +265,7 @@ export class PlayerInteraction {
     this.resetBreakProgress();
   }
 
-  private beginBreak(held: boolean): void {
+  private beginBreak(_held: boolean): void {
     if (!this.target) {
       this.onAction?.('blocked');
       return;
@@ -271,11 +276,11 @@ export class PlayerInteraction {
       this.onAction?.('blocked', blockId);
       return;
     }
-    if (held) {
-      this.breaking = true;
-      return;
-    }
-    this.finishBreak(blockId);
+    // Both clicks and holds start a mining attempt (hardening 2026-08-23):
+    // completion is owned by the duration-based progress, never by the press
+    // style. A released click resets on the next update unless progress
+    // already reached 1.
+    this.breaking = true;
   }
 
   private advanceBreak(dt: number): void {

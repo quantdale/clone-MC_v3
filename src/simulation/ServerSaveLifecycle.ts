@@ -502,8 +502,12 @@ export class ServerSaveLifecycle implements TickSystem {
       }
       seen.add(key);
     }
-    return [...list].sort((a, b) =>
-      `${a.chunkX}|${a.chunkZ}`.localeCompare(`${b.chunkX}|${b.chunkZ}`),
-    );
+    // Deterministic restore order (hardening 2026-08-23): plain numeric tuple
+    // comparison, not localeCompare — ICU locale rules are environment-specific
+    // and the module contract pins a machine-independent decode order.
+    return [...list].sort((a, b) => {
+      if (a.chunkX !== b.chunkX) return a.chunkX - b.chunkX;
+      return a.chunkZ - b.chunkZ;
+    });
   }
 }

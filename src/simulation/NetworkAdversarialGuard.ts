@@ -49,30 +49,39 @@ export type SequenceResult = 'accept' | 'duplicate' | 'out_of_order';
  */
 export class MessageSequenceGuard {
   private lastAccepted_ = 0;
+  /** Whether any sequence was accepted this epoch (hardening 2026-08-23). */
+  private hasAccepted = false;
 
   /** The last accepted sequence (0 before any accept). */
   get lastAccepted(): number {
     return this.lastAccepted_;
   }
 
-  /** Track a sequence. Requires a non-negative safe integer; malformed input throws. */
+  /**
+   * Track a sequence. Requires a non-negative safe integer; malformed input throws.
+   * The first message of an epoch — sequence 0, the documented post-reconnect
+   * restart value — is accepted, not reported as a duplicate of the
+   * not-yet-accepted sentinel (hardening 2026-08-23).
+   */
   track(sequence: number): SequenceResult {
     if (!Number.isSafeInteger(sequence) || sequence < 0) {
       throw new Error('NetworkAdversarial: sequence must be a non-negative safe integer');
     }
-    if (sequence === this.lastAccepted_) {
+    if (this.hasAccepted && sequence === this.lastAccepted_) {
       return 'duplicate';
     }
-    if (sequence < this.lastAccepted_) {
+    if (this.hasAccepted && sequence < this.lastAccepted_) {
       return 'out_of_order';
     }
     this.lastAccepted_ = sequence;
+    this.hasAccepted = true;
     return 'accept';
   }
 
   /** Reset to a fresh sequence epoch (called on disconnect/reconnect, matching 225 reset). */
   reset(): void {
     this.lastAccepted_ = 0;
+    this.hasAccepted = false;
   }
 }
 

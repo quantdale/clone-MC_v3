@@ -368,16 +368,42 @@ test.describe('voxel game', () => {
   test('chunks stream as the player explores', async ({ page }) => {
     await waitForGame(page);
     await enterPointerLock(page);
-    await page.keyboard.press('F3');
-    // The debug overlay shows 'loaded: N'; it should increase as we move.
-    const beforeText = await page.locator('#debug-overlay').innerText();
-    const beforeLoaded = Number(beforeText.match(/loaded: (\d+)/)?.[1] ?? 0);
+    // Walk forward long enough to cross at least one chunk boundary and prove
+    // streaming actually WORKED: new generation jobs were observed and drained
+    // (hardening 2026-08-23 — `after >= before` could not fail even if
+    // streaming never loaded another chunk).
+    const before = await page.evaluate(() => {
+      const g = (window as unknown as { __voxelGame?: { world?: { getStats(): { loadedChunks: number } } } }).__voxelGame;
+      return g?.world?.getStats().loadedChunks ?? -1;
+    });
+    expect(before).toBeGreaterThan(0);
+    let sawGeneration = false;
     await page.keyboard.down('KeyW');
-    await page.waitForTimeout(2500);
-    await page.keyboard.up('KeyW');
-    const afterText = await page.locator('#debug-overlay').innerText();
-    const afterLoaded = Number(afterText.match(/loaded: (\d+)/)?.[1] ?? 0);
-    expect(afterLoaded).toBeGreaterThanOrEqual(beforeLoaded);
+    try {
+      // Sample queue depth while moving; software WebGL still runs fixed ticks,
+      // so crossing a ring boundary enqueues generation within ~2s of walking.
+      const deadline = Date.now() + 6000;
+      while (Date.now() < deadline) {
+        const pendingGen = await page.evaluate(() => {
+          const g = (window as unknown as { __voxelGame?: { world?: { getStats(): { pendingGeneration: number } } } }).__voxelGame;
+          return g?.world?.getStats().pendingGeneration ?? -1;
+        });
+        if (pendingGen > 0) {
+          sawGeneration = true;
+          break;
+        }
+        await page.waitForTimeout(100);
+      }
+    } finally {
+      await page.keyboard.up('KeyW');
+    }
+    expect(sawGeneration).toBe(true);
+    // Queues must fully drain afterwards: streamed chunks become real chunks.
+    await page.waitForFunction((b) => {
+      const g = (window as unknown as { __voxelGame?: { world?: { getStats(): { loadedChunks: number; pendingGeneration: number } } } }).__voxelGame;
+      const stats = g?.world?.getStats();
+      return !!stats && stats.pendingGeneration === 0 && stats.loadedChunks >= b;
+    }, before, { timeout: 15000 });
   });
 
   test('production build loads without fatal errors', async ({ page }) => {
@@ -416,17 +442,21 @@ test.describe('voxel game', () => {
       return g?.world?.getBlock(t.x, t.y, t.z) ?? -1;
     }, target!);
     expect(before).not.toBe(0); // not air
-    // Break it with a left click. Poll for the resulting air cell rather than a
-    // fixed delay so the assertion is robust to low frame rates (software WebGL
-    // in CI renders at only a few FPS).
+    // Break it by HOLDING the left button until the block turns to air
+    // (hardening 2026-08-23: mining completion is owned by break-duration
+    // progress, so a click can no longer pop a hard block instantly). Polling
+    // keeps the assertion robust to low frame rates (software WebGL in CI
+    // renders at only a few FPS); 5s covers stone's barehand 1.5s duration.
     await page.evaluate(() => {
       document.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true }));
-      document.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
     });
     await page.waitForFunction((t) => {
       const g = (window as unknown as { __voxelGame?: { world?: { getBlock(x: number, y: number, z: number): number } } }).__voxelGame;
       return (g?.world?.getBlock(t.x, t.y, t.z) ?? -1) === 0;
-    }, target!, { timeout: 5000 });
+    }, target!, { timeout: 8000 });
+    await page.evaluate(() => {
+      document.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    });
     const after = await page.evaluate((t) => {
       const g = (window as unknown as { __voxelGame?: { world?: { getBlock(x: number, y: number, z: number): number } } }).__voxelGame;
       return g?.world?.getBlock(t.x, t.y, t.z) ?? -1;
@@ -452,14 +482,17 @@ test.describe('voxel game', () => {
       if (target) break;
     }
     expect(target).not.toBeNull();
+    // Hold-mine (see the break test above for the hardness rationale).
     await page.evaluate(() => {
       document.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true }));
-      document.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
     });
     await page.waitForFunction((t) => {
       const g = (window as unknown as { __voxelGame?: { world?: { getBlock(x: number, y: number, z: number): number } } }).__voxelGame;
       return (g?.world?.getBlock(t.x, t.y, t.z) ?? -1) === 0;
-    }, target!, { timeout: 5000 });
+    }, target!, { timeout: 8000 });
+    await page.evaluate(() => {
+      document.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    });
     // The mined block's drops now exist as world item entities (111), not in the
     // inventory directly.
     const entityCount = await page.evaluate(() => {
@@ -498,14 +531,17 @@ test.describe('voxel game', () => {
       );
     };
     const before = await page.evaluate(totalCount);
+    // Hold-mine (see the break test above for the hardness rationale).
     await page.evaluate(() => {
       document.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true }));
-      document.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
     });
     await page.waitForFunction((t) => {
       const g = (window as unknown as { __voxelGame?: { world?: { getBlock(x: number, y: number, z: number): number } } }).__voxelGame;
       return (g?.world?.getBlock(t.x, t.y, t.z) ?? -1) === 0;
-    }, target!, { timeout: 5000 });
+    }, target!, { timeout: 8000 });
+    await page.evaluate(() => {
+      document.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    });
     // Poll for the drop to be collected (pickup requires ageTicks >= 10 ~ 0.5s).
     await page.waitForFunction((b) => {
       const g = (window as unknown as { __voxelGame?: { inventory?: { slots: { count: number }[]; storage: { count: number }[] } } }).__voxelGame;

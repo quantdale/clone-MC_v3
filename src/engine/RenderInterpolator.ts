@@ -39,6 +39,8 @@ export class RenderInterpolator {
   private hasPrevious = false;
   private prevTickIndex = -1;
   private currTickIndex = -1;
+  /** Set by {@link notifyTeleport}; consumed by the next {@link setState}. */
+  private skipNextBlend = false;
 
   /**
    * Feed the latest authoritative simulation snapshot. The previous snapshot is retained for
@@ -47,6 +49,12 @@ export class RenderInterpolator {
    */
   setState(state: RenderState, tickIndex?: number): void {
     const n = state.length;
+    // A teleport invalidates exactly the blend INTO the post-teleport snapshot
+    // (hardening 2026-08-23): the demoted previous snapshot is still the
+    // pre-teleport pose, so blending it would sweep the camera across the map
+    // for one tick before the consecutive-index guard ever saw a gap.
+    const wasTeleport = this.skipNextBlend;
+    this.skipNextBlend = false;
     // The snapshot being demoted to "previous" carries the old logical size.
     this.previousSize = this.size;
     // Swap buffer roles: the old current becomes the previous without copying it.
@@ -58,7 +66,7 @@ export class RenderInterpolator {
       this.currentBuf[i] = state[i]!;
     }
     this.size = n;
-    this.hasPrevious = true;
+    this.hasPrevious = !wasTeleport;
     this.prevTickIndex = this.currTickIndex;
     this.currTickIndex =
       typeof tickIndex === 'number' && Number.isFinite(tickIndex) ? Math.trunc(tickIndex) : this.prevTickIndex + 1;
@@ -123,13 +131,12 @@ export class RenderInterpolator {
   }
 
   /**
-   * Alpha-reset hook for teleports/respawns: drop the retained previous snapshot so the next
-   * render shows the current state unblended instead of sweeping across the map.
+   * Alpha-reset hook for teleports/respawns: the next `setState` renders
+   * unblended (the retained previous snapshot is the pre-teleport pose), and
+   * blending resumes from the following snapshot pair.
    */
   notifyTeleport(): void {
-    this.hasPrevious = false;
-    this.previousSize = -1;
-    this.prevTickIndex = -1;
+    this.skipNextBlend = true;
   }
 
   /** Clear the interpolation history; the next `setState` behaves like the first. */

@@ -40,6 +40,7 @@ import { LootTableRegistry, buildCurrentLootTables } from '../inventory/LootTabl
 import { createDefaultEnchantmentRegistry, type EnchantmentRegistry } from '../inventory/EnchantmentRegistry';
 import {
   createSession,
+  enchantingTargetMatches,
   type EnchantingTableSession,
   type EnchantApplyResult,
 } from '../inventory/EnchantingTable';
@@ -243,6 +244,13 @@ export class Game {
   private readonly lootTables: LootTableRegistry;
   /** Active enchanting session opened via a `use` interaction, or null. */
   private enchantingSession: EnchantingTableSession | null = null;
+  /**
+   * Hotbar slot the active session was opened against (hardening 2026-08-23).
+   * Applying an offer into a different slot would overwrite unrelated contents
+   * with an enchanted copy of the captured stack, so a moved selection voids
+   * the session instead.
+   */
+  private enchantingSessionSlot: number | null = null;
   /** Harvest rules (114): tier/mineability-aware break speed and drop gating. */
   private readonly harvestRules: HarvestRules;
   /** Live world item-entity store (111); mined blocks drop into this. */
@@ -300,6 +308,8 @@ export class Game {
   private started = false;
   private disposed = false;
   private loadingShown = false;
+  /** True once the constructor finished; post-construction restores refresh UI. */
+  private fullyConstructed = false;
   private contextLost = false;
   private pointerLocked = false;
   private craftingOpen = false;
@@ -647,6 +657,9 @@ export class Game {
     if (this.targetOutline) {
       this.renderer.scene.add(this.targetOutline);
     }
+
+    // Constructor complete: post-construction restores may now refresh UI.
+    this.fullyConstructed = true;
 
     // Resize handling.
     window.addEventListener('resize', this.onResize);
@@ -1168,6 +1181,10 @@ export class Game {
     }
     if (this.inventory.selected !== this.lastSelection) {
       this.lastSelection = this.inventory.selected;
+      // A moved selection voids any open enchanting session: its captured
+      // stack no longer lives in the selected slot (hardening 2026-08-23).
+      this.enchantingSession = null;
+      this.enchantingSessionSlot = null;
       this.hotbar.render();
       const id = this.inventory.getSelectedItemId();
       this.hud.setSelectedName(this.itemRegistry.getByLegacyId(id)?.name ?? '');
@@ -1685,6 +1702,7 @@ export class Game {
       seed: this.seed,
       registry: this.enchantmentRegistry,
     });
+    this.enchantingSessionSlot = this.inventory.selected;
   }
 
   /**
@@ -1715,12 +1733,23 @@ export class Game {
   /**
    * Apply an offer from the active enchanting session. Returns the {@link
    * EnchantApplyResult}; on success the enchanted stack is written back to the held
-   * slot and the spent lapis is removed from the inventory. No-op (null) when no
-   * session is open.
+   * slot and the spent lapis is removed from the inventory. Returns null — with
+   * nothing spent and no slot touched — when no session is open, or when the
+   * selection moved off the captured slot / the held stack changed identity
+   * since the session was opened (hardening 2026-08-23: applying a stale
+   * session used to overwrite whatever stack was now selected).
    */
   applyEnchantingOffer(offerIndex: number): EnchantApplyResult | null {
     const session = this.enchantingSession;
     if (!session) return null;
+    if (
+      this.enchantingSessionSlot !== this.inventory.selected ||
+      !enchantingTargetMatches(this.inventory.getSelectedStack(), session.item)
+    ) {
+      this.enchantingSession = null;
+      this.enchantingSessionSlot = null;
+      return null;
+    }
     const lapisAvailable = this.inventory.getItemCount(ItemId.LapisLazuli);
     const result = session.apply(offerIndex, {
       experience: this.experience,
@@ -1789,6 +1818,14 @@ export class Game {
     );
     this.survival.restore(state.survival);
     this.experience.restore(state.experience);
+    // Restored stacks must reach the hotbar visuals immediately when this runs
+    // after construction (the async self-composed persistence path); the
+    // injected path restores during construction, where the Hotbar is built
+    // afterwards from the already-restored state. Icons/titles previously
+    // stayed at construction-time values until a later action re-rendered.
+    if (this.fullyConstructed) {
+      this.hotbar.render();
+    }
   }
 
   /** The game-level player snapshot the facade persists. */

@@ -1,0 +1,19 @@
+# Risk Register — Accepted Non-Blocking Debt
+
+Each entry names the residual risk, why it is accepted now, and what would trigger revisit.
+
+| ID | Risk | Severity | Rationale for acceptance | Revisit trigger |
+|----|------|----------|--------------------------|-----------------|
+| R-1 | Sneak edge-clamp can register phantom ground support via a wall's side face (PlayerPhysics/CollisionResolver boundary-inclusive contact), permitting sneak-crossing of a floorless gap adjacent to a wall. | LOW-MED | Fix requires changing collision query semantics (insets) that every movement/e2e test depends on; regression risk to shipped feel exceeds the bounded exploit. | Any rework of collision resolution or a player-reported movement dupe. |
+| R-2 | Leaves always drop an apple (no probability roll). | MEDIUM parity | Likely deliberate early-game food economy from the original scope; changing loot alters survival balance and fixtures without product sign-off. | Product decision on food economy, or when more foods land. |
+| R-3 | Enchanting session guard verified by unit tests on the pure guard + type-checked wiring; no browser test drives open→reselect→apply end-to-end. | LOW | The apply path has no shipped UI yet (documented headless consumer seam); browser harness cost outweighs current reachability. | When the enchanting panel UI ships. |
+| R-4 | `ItemEntityManager`/`XpOrbManager.deserializeAll` accept duplicate ids silently; `AdvancementFramework` deserializer under-validates. | LOW (unwired paths today) | These deserializers are reachable only from tests until entity/block-entity persistence is wired live. | Wiring entity persistence into GamePersistence units. |
+| R-5 | GitHub Actions pinned to version tags (`@v4`), not immutable commit SHAs. | LOW | Offline environment could not verify trusted SHAs; risk bounded: `contents: read` only, no secrets exposed to fork PRs, golden seeding never auto-commits. | First online maintenance window; pin then. |
+| R-6 | Browser-level proof gaps: composed-Game dispose, real worker terminate semantics, real IndexedDB corruption at boot, player-state durability across a real-IDB reload — covered at unit/integration level only. | MEDIUM (test debt) | Each needs new fault-injection harnesses in the browser suite; current unit matrices are comprehensive and green. | Next hardening campaign focused on E2E fault injection. |
+| R-7 | ChunkPipeline dequeue drops queued jobs whose stage is in-flight, relying on World's rescan loop for recovery. | LOW-MED (mechanism verified, recovery exists) | Rescan cadence covers it; changing queue ownership semantics risks stale-job regressions across 064-065 machinery. | Any change to pipeline stage transitions. |
+| R-8 | Furnace/brewing fuel-on-pause divergence (unwired block entities); ChunkSection.isEmpty treats single-palette as air (latent). | LOW | Unwired modules with their own suites; fixing before wiring lacks an integration oracle. | Wiring those block entities into the live world. |
+| R-9 | Lighting clock uses clamped dt for world time vs raw dt for sun rotation → cosmetic desync after hitches. | LOW | Presentation-only; fix risks visual golden churn with no gameplay impact. | Next visual-matrix re-pin cycle. |
+
+## Explicitly classified non-defects
+- Live drop RNG = `Math.random`: non-deterministic-by-design; deterministic replay operates on the seeded headless harness (241 suite reproduces its hashes).
+- Worker meshing path dormant by documented decision (`useWorkers=false`) pending its validation campaign; protocol/pool fully unit-tested.

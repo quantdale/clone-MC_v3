@@ -57,14 +57,26 @@ export class DirtySaveQueue {
 
   /**
    * Drain up to `limit` pending units in FIFO order through `sink`. Each unit is removed from the
-   * pending set before its write starts; a rejected write re-queues the unit at the end so it retries
-   * next drain. Returns the number of units successfully written.
+   * pending set before its write starts; a rejected write re-queues the unit at the end so it
+   * retries on a later drain. Returns the number of units successfully written.
    */
   async drain(sink: SaveSink, limit: number): Promise<number> {
-    if (!Number.isFinite(limit) || limit <= 0) return 0;
+    return (await this.drainReport(sink, limit)).written;
+  }
+
+  /**
+   * Drain with a detailed report: the successfully-written count plus the unit keys whose writes
+   * were accepted by the sink. Enables post-drain bookkeeping (e.g. releasing pending overlay
+   * copies once their durable commit lands) without re-queue ambiguity.
+   */
+  async drainReport(sink: SaveSink, limit: number): Promise<{ written: number; committedKeys: string[] }> {
+    if (!Number.isFinite(limit) || limit <= 0) {
+      return { written: 0, committedKeys: [] };
+    }
 
     const batch = [...this.pending.entries()].slice(0, limit);
     let written = 0;
+    const committedKeys: string[] = [];
 
     for (const [key, unit] of batch) {
       // Remove up front so a re-entrant drain cannot process the same unit twice.
@@ -72,6 +84,7 @@ export class DirtySaveQueue {
       try {
         await sink.write(unit);
         written++;
+        committedKeys.push(key);
       } catch {
         // Re-queue at the end for retry; preserves no-loss semantics. If a
         // newer markDirty for this key landed while the write was in flight,
@@ -82,7 +95,7 @@ export class DirtySaveQueue {
       }
     }
 
-    return written;
+    return { written, committedKeys };
   }
 
   /** Number of pending (not-yet-drained) units. */

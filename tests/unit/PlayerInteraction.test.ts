@@ -68,6 +68,24 @@ function makeInput(state: { breakRequested: boolean; held: boolean }): InputStat
   };
 }
 
+/**
+ * Hold-mine the targeted block (hardening 2026-08-23): completion is owned by
+ * break-duration progress, so tests step updates with the button held until
+ * the block turns to air. Mirrors real survival mining.
+ */
+function mineUntilBroken(
+  interaction: PlayerInteraction,
+  world: { getBlock(x: number, y: number, z: number): number },
+  state: { breakRequested: boolean; held: boolean },
+  maxTicks = 400,
+): void {
+  state.breakRequested = true;
+  state.held = true;
+  for (let i = 0; i < maxTicks && world.getBlock(2, 1, 0) !== BlockId.Air; i++) {
+    interaction.update(0.05);
+  }
+}
+
 describe('player interaction selection', () => {
   it('aligns the selection outline with the targeted block bounds', () => {
     const player = new Player({ position: new THREE.Vector3(0.5, 0, 0.5) });
@@ -105,7 +123,7 @@ describe('player interaction selection', () => {
     interaction.dispose();
   });
 
-  it('breaks a block on click and collects it into the selected stack', () => {
+  it('collects a held-mined block into the selected stack', () => {
     const player = new Player({ position: new THREE.Vector3(0.5, 0, 0.5) });
     const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 20);
     camera.position.copy(player.eyePosition);
@@ -119,6 +137,7 @@ describe('player interaction selection', () => {
       addItem: () => 0,
     };
     let collected = 0;
+    const inputState = { breakRequested: true, held: true };
     const interaction = new PlayerInteraction({
       world,
       registry: createDefaultBlockRegistry(),
@@ -126,20 +145,20 @@ describe('player interaction selection', () => {
       selector,
       player,
       camera,
-      input: makeInput({ breakRequested: true, held: false }),
+      input: makeInput(inputState),
       onAction: (action, id) => {
         if (action === 'break' && id === ItemId.Stone) collected++;
       },
     });
 
-    interaction.update(0.016);
+    mineUntilBroken(interaction, world, inputState);
 
     expect(world.getBlock(2, 1, 0)).toBe(BlockId.Air);
     expect(collected).toBe(1);
     interaction.dispose();
   });
 
-  it('turns ore blocks into their distinct world item entities', () => {
+  it('turns held-mined ore blocks into their distinct world item entities', () => {
     const player = new Player({ position: new THREE.Vector3(0.5, 0, 0.5) });
     const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 20);
     camera.position.copy(player.eyePosition);
@@ -147,6 +166,7 @@ describe('player interaction selection', () => {
     camera.updateMatrixWorld(true);
     const world = makeMutableWorld(BlockId.CoalOre);
     const itemEntities = new ItemEntityManager({ itemRegistry: createDefaultItemRegistry() });
+    const inputState = { breakRequested: true, held: true };
     const interaction = new PlayerInteraction({
       world,
       registry: createDefaultBlockRegistry(),
@@ -157,11 +177,11 @@ describe('player interaction selection', () => {
       },
       player,
       camera,
-      input: makeInput({ breakRequested: true, held: false }),
+      input: makeInput(inputState),
       itemEntities,
     });
 
-    interaction.update(0.016);
+    mineUntilBroken(interaction, world, inputState);
     expect(itemEntities.size).toBe(1);
     expect(itemEntities.getItemEntities()[0]!.item).toBe(ItemId.Coal);
     expect(itemEntities.getItemEntities()[0]!.count).toBe(1);
@@ -255,6 +275,7 @@ describe('player interaction selection', () => {
       createDefaultBlockTags(createDefaultBlockRegistry()),
       createDefaultItemTags(createDefaultItemRegistry()),
     );
+    const inputState = { breakRequested: true, held: true };
     const interaction = new PlayerInteraction({
       world,
       registry: createDefaultBlockRegistry(),
@@ -263,12 +284,12 @@ describe('player interaction selection', () => {
       selector: { getSelectedItemId: () => BlockId.Stone },
       player,
       camera,
-      input: makeInput({ breakRequested: true, held: false }),
+      input: makeInput(inputState),
       itemEntities,
       harvestRules,
     });
 
-    interaction.update(0.016);
+    mineUntilBroken(interaction, world, inputState);
 
     expect(world.getBlock(2, 1, 0)).toBe(BlockId.Air);
     expect(spawnSpy).not.toHaveBeenCalled();
@@ -284,6 +305,7 @@ describe('player interaction selection', () => {
     const world = makeMutableWorld(BlockId.CoalOre);
     const itemEntities = new ItemEntityManager({ itemRegistry: createDefaultItemRegistry() });
     const xpOrbs = new XpOrbManager();
+    const inputState = { breakRequested: true, held: true };
     const interaction = new PlayerInteraction({
       world,
       registry: createDefaultBlockRegistry(),
@@ -291,13 +313,13 @@ describe('player interaction selection', () => {
       selector: { getSelectedItemId: () => BlockId.Stone },
       player,
       camera,
-      input: makeInput({ breakRequested: true, held: false }),
+      input: makeInput(inputState),
       itemEntities,
       xpOrbs,
       xpOrbValue: 3,
     });
 
-    interaction.update(0.016);
+    mineUntilBroken(interaction, world, inputState);
 
     expect(itemEntities.size).toBe(1);
     expect(xpOrbs.getXpOrbs()).toHaveLength(1);
@@ -314,6 +336,7 @@ describe('player interaction selection', () => {
     const world = makeMutableWorld(BlockId.CoalOre);
     const itemEntities = new ItemEntityManager({ itemRegistry: createDefaultItemRegistry() });
     const xpOrbs = new XpOrbManager();
+    const inputState = { breakRequested: true, held: true };
     const interaction = new PlayerInteraction({
       world,
       registry: createDefaultBlockRegistry(),
@@ -321,16 +344,50 @@ describe('player interaction selection', () => {
       selector: { getSelectedItemId: () => BlockId.Stone },
       player,
       camera,
-      input: makeInput({ breakRequested: true, held: false }),
+      input: makeInput(inputState),
       itemEntities,
       xpOrbValue: 3,
     });
 
-    interaction.update(0.016);
+    mineUntilBroken(interaction, world, inputState);
 
     expect(itemEntities.size).toBe(1);
     // The supplied manager was never handed to the interaction, so no orb appears.
     expect(xpOrbs.getXpOrbs()).toHaveLength(0);
+    interaction.dispose();
+  });
+
+  it('a released click cannot bypass the remaining break duration (hardening 2026-08-23)', () => {
+    const player = new Player({ position: new THREE.Vector3(0.5, 0, 0.5) });
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 20);
+    camera.position.copy(player.eyePosition);
+    camera.lookAt(10, player.eyePosition.y, player.eyePosition.z);
+    camera.updateMatrixWorld(true);
+    const world = makeMutableWorld(); // stone at (2,1,0), hardness 1.5
+    // Quick click: press queues the request, release arrives before any tick
+    // advances progress. The old code finished the break unconditionally.
+    const inputState = { breakRequested: true, held: false };
+    let breakActions = 0;
+    const interaction = new PlayerInteraction({
+      world,
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
+      selector: { getSelectedItemId: () => BlockId.Stone },
+      player,
+      camera,
+      input: {
+        ...makeInput(inputState),
+        consumeBreakClick: () => true,
+      },
+      onAction: (action) => {
+        if (action === 'break') breakActions++;
+      },
+    });
+
+    interaction.update(0.05);
+
+    expect(world.getBlock(2, 1, 0)).toBe(BlockId.Stone);
+    expect(breakActions).toBe(0);
     interaction.dispose();
   });
 });
@@ -359,6 +416,7 @@ describe('player interaction enchantment application (119)', () => {
       createDefaultBlockTags(createDefaultBlockRegistry()),
       createDefaultItemTags(createDefaultItemRegistry()),
     );
+    const inputState = { breakRequested: true, held: true };
     const interaction = new PlayerInteraction({
       world,
       registry: createDefaultBlockRegistry(),
@@ -370,13 +428,13 @@ describe('player interaction enchantment application (119)', () => {
       },
       player,
       camera,
-      input: makeInput({ breakRequested: true, held: false }),
+      input: makeInput(inputState),
       itemEntities,
       harvestRules,
       enchantmentRegistry: enchantReg,
     });
 
-    interaction.update(0.016);
+    mineUntilBroken(interaction, world, inputState);
 
     expect(world.getBlock(2, 1, 0)).toBe(BlockId.Air);
     expect(itemEntities.size).toBe(1);
@@ -395,6 +453,7 @@ describe('player interaction enchantment application (119)', () => {
       createDefaultBlockTags(createDefaultBlockRegistry()),
       createDefaultItemTags(createDefaultItemRegistry()),
     );
+    const inputState = { breakRequested: true, held: true };
     const interaction = new PlayerInteraction({
       world,
       registry: createDefaultBlockRegistry(),
@@ -406,14 +465,14 @@ describe('player interaction enchantment application (119)', () => {
       },
       player,
       camera,
-      input: makeInput({ breakRequested: true, held: false }),
+      input: makeInput(inputState),
       itemEntities,
       harvestRules,
       enchantmentRegistry: enchantReg,
       rng: () => 0.99, // floor(0.99 * 4) = 3 extra
     });
 
-    interaction.update(0.016);
+    mineUntilBroken(interaction, world, inputState);
 
     expect(itemEntities.size).toBe(1);
     const drop = itemEntities.getItemEntities()[0]!;
@@ -442,6 +501,7 @@ describe('player interaction enchantment application (119)', () => {
       unbreaking: undefined,
       rng: undefined,
     };
+    const inputState = { breakRequested: true, held: true };
     const interaction = new PlayerInteraction({
       world,
       registry: createDefaultBlockRegistry(),
@@ -460,13 +520,13 @@ describe('player interaction enchantment application (119)', () => {
       },
       player,
       camera,
-      input: makeInput({ breakRequested: true, held: false }),
+      input: makeInput(inputState),
       harvestRules,
       enchantmentRegistry: enchantReg,
       rng: () => 0.5,
     });
 
-    interaction.update(0.016);
+    mineUntilBroken(interaction, world, inputState);
 
     expect(world.getBlock(2, 1, 0)).toBe(BlockId.Air);
     expect(captured.amount).toBe(1);
@@ -486,6 +546,7 @@ describe('player interaction enchantment application (119)', () => {
       createDefaultBlockTags(createDefaultBlockRegistry()),
       createDefaultItemTags(createDefaultItemRegistry()),
     );
+    const inputState = { breakRequested: true, held: true };
     const interaction = new PlayerInteraction({
       world,
       registry: createDefaultBlockRegistry(),
@@ -497,13 +558,13 @@ describe('player interaction enchantment application (119)', () => {
       },
       player,
       camera,
-      input: makeInput({ breakRequested: true, held: false }),
+      input: makeInput(inputState),
       itemEntities,
       harvestRules,
       // No enchantmentRegistry -> silk touch must not apply.
     });
 
-    interaction.update(0.016);
+    mineUntilBroken(interaction, world, inputState);
 
     // Without the registry the normal single drop is produced, not a silk drop.
     expect(itemEntities.getItemEntities()[0]!.count).toBe(1);

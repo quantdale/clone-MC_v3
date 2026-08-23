@@ -16,18 +16,18 @@ Fully spec-driven: see [`openspec/`](openspec/) for the capability specs, change
 - **Crafting** — nine transactional recipes for planks, glass, gravel, cobblestone, bricks, sticks, and durable wooden/stone tools, with material checks, output-capacity checks, and a clickable inventory/crafting panel.
 - **Tools** — craftable wooden pickaxes, a stone pickaxe, and a wooden axe speed up preferred block types and wear down visibly with use.
 - **Survival loop** — health, hunger, saturation, sprint hunger drain, fall damage, drowning, lava damage, regeneration, death/respawn, and apples as food.
-- **World simulation** — unsupported sand and gravel settle downward with bounded updates, while a deterministic herd of passive low-poly critters adds ambient life around the player.
+- **World simulation** — unsupported sand and gravel settle downward with bounded updates, deterministic passive pigs and hostile zombies roam and threaten the player, crops grow through random ticks, and enchanting/breeding/furnace-style systems model progression.
 - **Lighting & environment** — hemisphere light, shadowed directional sun, smooth day/night cycle with an in-game clock, procedural sky gradient, distance fog, drifting cloud layer, and semi-transparent water.
 - **Exploration polish** — automatic one-block step-up traversal, swimming, target outline feedback, focus-safe input release, camera bob, procedural action sounds, and player-centered shadow coverage.
 - **Responsive UI** — crosshair, FPS counter, loading indicator, start/pause overlay, debug overlay (F3), and a styled, professional hotbar.
-- **Save persistence** — block edits, player pose, inventory stacks, health, hunger, and saturation survive chunk unload/reload and page refresh through validated, seed-scoped localStorage snapshots.
+- **Save persistence** — block edits, player pose, inventory stacks (including per-stack components such as tool damage and enchantments), health, hunger, and saturation survive chunk unload/reload and page refresh through a durable IndexedDB facade (`GamePersistence`) with legacy localStorage migration; settings/keybindings/accessibility stay in localStorage.
 - **Production tooling** — ESLint, strict TypeScript, Vitest unit tests, Playwright browser tests, and a production build.
 
 ---
 
 ## Prerequisites
 
-- **Node.js 18+** (developed and verified on Node 24)
+- **Node.js 20+** (matches `engines` in `package.json`)
 - **npm**
 
 ## Installation
@@ -81,15 +81,18 @@ npx playwright install chromium
 | `W A S D` / arrow keys | Move |
 | `Space` | Jump |
 | `Space` while submerged | Swim upward |
-| `Shift` | Sprint |
+| `Shift` | Sneak |
+| `Ctrl` | Sprint |
 | `Mouse` | Look |
-| `Left click` | Destroy targeted block |
-| `Right click` | Place selected block |
+| `Left click` (held) | Mine targeted block (hardness-based duration) |
+| `Right click` | Place selected block / use |
 | `1–9` / `Mouse wheel` | Select hotbar slot |
 | `F3` | Toggle debug overlay |
 | `C` | Open/close inventory and crafting |
 | `R` | Eat an apple when hungry |
 | `Esc` | Release pointer lock (pause) |
+
+Gamepad and touch input drive movement/look/actions without pointer lock (246).
 
 ---
 
@@ -100,15 +103,23 @@ The codebase is modular with clear separation of concerns:
 ```
 src/
 ├── config/        # Central tunables (seed, chunk size, render distance, physics, budgets)
-├── engine/        # Game, GameLoop, Renderer, InputManager, ResourceManager
-├── world/         # World, Chunk, ChunkManager, ChunkMesher, TerrainGenerator,
-│                  # BlockRegistry, WorldCoordinates, WorldAccess, WorldLife
+├── engine/        # Game, GameLoop, Renderer, InputManager, ResourceManager,
+│                  # FixedTickDriver, SimulationClock, RenderInterpolator, WorkerPool
+├── world/         # World, Chunk, ChunkManager, ChunkPipeline, ChunkMesher,
+│                  # TerrainGenerator, registries, shapes/raycast, block entities
+├── worldgen/      # Biome/climate/feature/structure generation stages
 ├── player/        # Player, PlayerController, PlayerPhysics, PlayerInteraction, SurvivalSystem
+├── simulation/    # Deterministic headless systems: entities/mobs/AI, redstone, fluids,
+│                  # networking codecs/lifecycles, replay + performance harnesses
+├── storage/       # GamePersistence facade over IndexedDB repositories, dirty-save queue,
+│                  # autosave coordinator, health monitoring, legacy migration
+├── inventory/     # Inventory, Hotbar, Crafting, item registry/components, enchanting
+├── data/          # Resource ids, registries, biomes, effects, dimensions
+├── rendering/     # TextureAtlas, Materials, Lighting, Environment, light engines,
+│                  # greedy/template/fluid meshers, worker meshing protocol
 ├── audio/         # Procedural WebAudio action feedback
-├── rendering/     # TextureAtlas, Materials, Lighting, Environment
-├── inventory/     # Inventory, Hotbar, BlockSelector, Crafting
 ├── ui/            # Crosshair, HUD, LoadingIndicator, DebugOverlay, CraftingPanel
-├── math/          # PRNG, Noise, DDA (voxel raycast)
+├── math/          # PRNG, Noise, DDA (voxel raycast), section coordinates
 └── main.ts        # Bootstrap + init-error handling
 ```
 
@@ -132,10 +143,12 @@ Key design decisions:
 
 ## Known Limitations
 
-- **Greedy meshing** is not implemented; face-culled meshing is used and meets the performance target. This is a documented stretch goal.
-- **Hostile AI and interactive mobs** are not implemented; deterministic passive critters are visual ambience only, while the current scope remains a polished single-player survival/building/exploration sandbox.
-- **Mobile/touch controls** are not supported (keyboard + mouse required).
+- **Meshing** — the shipped path is face-culled meshing; greedy opaque merging (062) exists behind the worker-meshing path, which stays disabled until its validation campaign lands. Both meet the performance target.
+- **Stateful block state is session-only** — crop age, farmland moisture, and fire age live in an in-memory overlay: they survive chunk unload/reload within a session but reset to block defaults on page refresh (Change-125 scope; bounded in-session by a 10k-chunk LRU).
+- **Live drop randomness** — item/xp drop rolls in the running game use `Math.random`; deterministic replay operates on the seeded headless simulation harness instead of the live composition.
+- **Mobile/touch controls** — supported for movement/look/actions via the 246 touch framework; the layout remains desktop-first.
 - **Movement scope** — automatic one-block steps and swimming are supported; sprint-jumping, ladders, and slopes are not implemented.
+- **Multiplayer** — the shared-simulation/networking stack (222–237) ships as headless, fully tested infrastructure; no live server browser or netcode UI yet.
 
 ---
 

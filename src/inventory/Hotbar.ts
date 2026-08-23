@@ -14,6 +14,10 @@ export class Hotbar {
   private readonly atlas: TextureAtlas;
   private readonly registry: ItemTypeRegistry;
   private readonly slots: HTMLButtonElement[] = [];
+  /** Per-slot preview canvases, for redrawing when a slot's item id changes. */
+  private readonly canvases: HTMLCanvasElement[] = [];
+  /** Item id currently painted on each slot canvas (-1 = never drawn). */
+  private drawnIds: number[] = [];
 
   constructor(container: HTMLElement, inventory: Inventory, atlas: TextureAtlas, registry: ItemTypeRegistry) {
     this.container = container;
@@ -65,6 +69,8 @@ export class Hotbar {
         this.drawItemPreview(ctx, itemId);
       }
       slot.appendChild(canvas);
+      this.canvases.push(canvas);
+      this.drawnIds.push(itemId);
 
       slot.title = def?.name ?? 'empty';
 
@@ -83,7 +89,7 @@ export class Hotbar {
     ctx.drawImage(this.atlas.canvas, tileX, tileY, TILE_SIZE, TILE_SIZE, 0, 0, TILE_SIZE, TILE_SIZE);
   }
 
-  /** Re-sync the selected highlight to the inventory's current selection. */
+  /** Re-sync the selected highlight and per-slot visuals to the inventory. */
   render(): void {
     this.slots.forEach((slot, index) => {
       const selected = index === this.inventory.selected;
@@ -91,7 +97,21 @@ export class Hotbar {
       slot.setAttribute('aria-pressed', selected ? 'true' : 'false');
       const countLabel = slot.querySelector<HTMLElement>('.slot-count');
       const count = this.inventory.getSlotCount(index);
-      const definition = this.registry.getByLegacyId(this.inventory.slots[index]?.id ?? 0);
+      const stackId = this.inventory.slots[index]?.id ?? 0;
+      const definition = this.registry.getByLegacyId(stackId);
+      // Redraw the icon + title when the slot's item identity changed
+      // (hardening 2026-08-23): they were previously painted once at
+      // construction, leaving stale visuals after a save restore or when a
+      // pickup replaced an empty slot's placeholder id.
+      if (this.drawnIds[index] !== stackId) {
+        const canvas = this.canvases[index];
+        const ctx = canvas?.getContext('2d');
+        if (ctx) {
+          this.drawItemPreview(ctx, stackId);
+        }
+        this.drawnIds[index] = stackId;
+        slot.title = definition?.name ?? 'empty';
+      }
       if (countLabel) {
         countLabel.textContent = count > 0 ? String(count) : '';
       }
@@ -125,6 +145,8 @@ export class Hotbar {
   /** Remove all hotbar DOM from the container. */
   dispose(): void {
     this.slots.length = 0;
+    this.canvases.length = 0;
+    this.drawnIds = [];
     this.container.textContent = '';
   }
 }

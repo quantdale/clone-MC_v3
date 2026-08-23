@@ -54,8 +54,8 @@ export class GameEventBus {
     try {
       while (this.dispatchQueue.length > 0) {
         const current = this.dispatchQueue.shift()!;
-        this.deliver(this.byType.get(current.type), current);
-        this.deliver(this.byType.get(WILDCARD_EVENT_TYPE), current);
+        this.deliver(this.byType.get(current.type), current, current.type);
+        this.deliver(this.byType.get(WILDCARD_EVENT_TYPE), current, WILDCARD_EVENT_TYPE);
       }
     } finally {
       this.dispatching = false;
@@ -95,12 +95,15 @@ export class GameEventBus {
     };
   }
 
-  private deliver(subscriptions: Subscription[] | undefined, event: GameEvent): void {
+  private deliver(subscriptions: Subscription[] | undefined, event: GameEvent, bucketKey: string): void {
     if (!subscriptions) return;
     for (const entry of [...subscriptions]) {
       if (entry.once) {
-        // One-shot: unsubscribe before invocation.
-        this.removeEntry(event.type === WILDCARD_EVENT_TYPE ? WILDCARD_EVENT_TYPE : event.type, entry);
+        // One-shot: unsubscribe from the bucket this delivery came from before
+        // invocation (hardening 2026-08-23: a once wildcard listener used to be
+        // removed from its concrete-type bucket — never from '*' — so it fired
+        // on every subsequent event).
+        this.removeEntry(bucketKey, entry);
         entry.once = false;
       }
       try {

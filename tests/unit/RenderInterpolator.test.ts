@@ -71,3 +71,31 @@ describe('RenderInterpolator', () => {
     expect(interp.interpolate(1)).toEqual([4, 5, 6]);
   });
 });
+
+describe('RenderInterpolator teleport latch (hardening 2026-08-23)', () => {
+  it('renders the post-teleport snapshot unblended, then resumes blending', () => {
+    const interp = new RenderInterpolator();
+    interp.setState([0, 0, 0], 1);
+    interp.setState([10, 10, 10], 2);
+    // Respawn: the tick body notifies the teleport, then the SAME tick's
+    // post-physics pose is set. The old latch was consumed by that setState
+    // and the renderer blended death-spot -> spawn for one tick.
+    interp.notifyTeleport();
+    interp.setState([100, 50, 100], 3);
+
+    expect(interp.interpolate(0)).toEqual([100, 50, 100]);
+    expect(interp.interpolate(0.5)).toEqual([100, 50, 100]);
+    expect(interp.interpolate(1)).toEqual([100, 50, 100]);
+
+    // The following pair blends normally again.
+    interp.setState([110, 50, 100], 4);
+    expect(interp.interpolate(0.5)).toEqual([105, 50, 100]);
+  });
+
+  it('keeps blending when notifyTeleport is not called', () => {
+    const interp = new RenderInterpolator();
+    interp.setState([0, 0, 0], 1);
+    interp.setState([10, 0, 0], 2);
+    expect(interp.interpolate(0.5)).toEqual([5, 0, 0]);
+  });
+});

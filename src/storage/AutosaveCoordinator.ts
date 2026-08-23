@@ -40,6 +40,12 @@ export interface AutosaveCoordinatorOptions {
   timer?: TimerLike;
   /** Event target for flush listeners; `null` disables listener registration. */
   flushTarget?: EventTargetLike | null;
+  /**
+   * Called after every productive drain with the unit keys durably committed by
+   * that drain (hardening 2026-08-23). Lets owners release in-memory pending
+   * copies as soon as the durable write lands, instead of only on facade flush.
+   */
+  onUnitsCommitted?: (keys: readonly string[]) => void;
 }
 
 /** Consecutive zero-progress drains that end a `flush` (persistent failure guard). */
@@ -70,6 +76,7 @@ export class AutosaveCoordinator {
   private readonly intervalMs: number;
   private readonly timer: TimerLike;
   private readonly flushTarget: EventTargetLike | null;
+  private readonly onUnitsCommitted?: (keys: readonly string[]) => void;
   private intervalId: unknown | null = null;
   private started = false;
   private readonly onFlush = (): void => {
@@ -83,6 +90,7 @@ export class AutosaveCoordinator {
     this.intervalMs = opts.intervalMs ?? 5000;
     this.timer = opts.timer ?? defaultTimer();
     this.flushTarget = opts.flushTarget === undefined ? defaultFlushTarget() : opts.flushTarget;
+    this.onUnitsCommitted = opts.onUnitsCommitted;
   }
 
   /** Enqueue a dirty unit (and re-arm the interval if it was stopped). */
@@ -123,7 +131,15 @@ export class AutosaveCoordinator {
   /** Drain one bounded batch. Returns the number of units written. */
   async tick(): Promise<number> {
     if (this.queue.size === 0) return 0;
-    return this.queue.drain(this.sink, this.limitPerTick);
+    const result = await this.queue.drainReport(this.sink, this.limitPerTick);
+    if (result.written > 0 && this.onUnitsCommitted && result.committedKeys.length > 0) {
+      try {
+        this.onUnitsCommitted(result.committedKeys);
+      } catch {
+        // Bookkeeping callbacks must never break the save loop.
+      }
+    }
+    return result.written;
   }
 
   /**
@@ -135,10 +151,17 @@ export class AutosaveCoordinator {
     let zeroProgressRuns = 0;
     let rounds = 0;
     while (this.queue.size > 0 && zeroProgressRuns < FLUSH_ZERO_PROGRESS_LIMIT && rounds < FLUSH_MAX_ROUNDS) {
-      const n = await this.queue.drain(this.sink, this.limitPerTick);
-      total += n;
+      const result = await this.queue.drainReport(this.sink, this.limitPerTick);
+      total += result.written;
       rounds++;
-      zeroProgressRuns = n === 0 ? zeroProgressRuns + 1 : 0;
+      zeroProgressRuns = result.written === 0 ? zeroProgressRuns + 1 : 0;
+      if (result.written > 0 && this.onUnitsCommitted && result.committedKeys.length > 0) {
+        try {
+          this.onUnitsCommitted(result.committedKeys);
+        } catch {
+          // Bookkeeping callbacks must never break the save loop.
+        }
+      }
     }
     return total;
   }

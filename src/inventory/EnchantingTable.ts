@@ -25,6 +25,11 @@
 import { type ItemTypeDefinition } from './ItemRegistry';
 import type { ItemStack } from './Inventory';
 import {
+  DAMAGE_COMPONENT,
+  ENCHANTMENTS_COMPONENT,
+  type DamageComponentValue,
+} from './StackDataComponents';
+import {
   type EnchantmentInstance,
   type EnchantmentRegistry,
 } from './EnchantmentRegistry';
@@ -208,4 +213,28 @@ export function createSession(params: {
       return { ok: true, stack, xpSpent: offer.xpLevels, lapisSpent: offer.lapis, reason: 'ok' };
     },
   };
+}
+
+/**
+ * Whether the live selected stack is still the item a session was opened
+ * against (hardening 2026-08-23): identical id, count, accumulated damage, and
+ * enchantment record. Anything else — a consumed unit, extra wear, a different
+ * item entirely — voids the session so an apply can never enchant a copy of
+ * the captured stack into whatever slot is currently selected.
+ */
+export function enchantingTargetMatches(
+  live: ItemStack | null,
+  captured: ItemStack,
+): boolean {
+  if (!live || live.id !== captured.id || live.count !== captured.count) {
+    return false;
+  }
+  const damageOf = (stack: ItemStack): number =>
+    stack.components?.get<DamageComponentValue>(DAMAGE_COMPONENT)?.damage ?? 0;
+  if (damageOf(live) !== damageOf(captured)) {
+    return false;
+  }
+  const enchantmentsOf = (stack: ItemStack): string =>
+    JSON.stringify(stack.components?.get<Record<string, number>>(ENCHANTMENTS_COMPONENT) ?? {});
+  return enchantmentsOf(live) === enchantmentsOf(captured);
 }

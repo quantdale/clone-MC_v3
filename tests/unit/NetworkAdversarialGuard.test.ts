@@ -384,3 +384,17 @@ describe('adversarial burst integrity across handlers (REQ-R5)', () => {
     expect(runBurst()).toEqual(runBurst());
   });
 });
+
+describe('MessageSequenceGuard first-message seq 0 (hardening 2026-08-23)', () => {
+  it('accepts sequence 0 as the first message of an epoch', async () => {
+    const mod = await import('../../src/simulation/NetworkAdversarialGuard');
+    const guard = new mod.MessageSequenceGuard();
+    expect(guard.track(0)).toBe('accept');
+    expect(guard.lastAccepted).toBe(0);
+    // Replays of 0 are still duplicates within the epoch.
+    expect(guard.track(0)).toBe('duplicate');
+    // And a fresh epoch accepts 0 again.
+    guard.reset();
+    expect(guard.track(0)).toBe('accept');
+  });
+});

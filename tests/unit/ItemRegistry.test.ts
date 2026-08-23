@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
+  assertDurableItemsDoNotStack,
   createDefaultItemRegistry,
   ItemId,
+  type ItemTypeDefinition,
   type ItemTypeRegistry,
 } from '../../src/inventory/ItemRegistry';
 
@@ -37,5 +39,34 @@ describe('item registry enchanting data (120)', () => {
   it('places the bookshelf and enchanting-table blocks', () => {
     expect(registry.getByLegacyId(ItemId.Bookshelf)?.placeBlock).toBeDefined();
     expect(registry.getByLegacyId(ItemId.EnchantingTable)?.placeBlock).toBeDefined();
+  });
+});
+
+describe('durable items do not stack (hardening 2026-08-23)', () => {
+  const registry: ItemTypeRegistry = createDefaultItemRegistry();
+
+  it('declares stackSize 1 for every item with durability', () => {
+    for (const def of registry.all()) {
+      if ((def.maxDurability ?? 0) > 0) {
+        expect(def.stackSize, `${def.key} must not stack`).toBe(1);
+      }
+    }
+  });
+
+  it('keeps the three tools unstackable', () => {
+    expect(registry.getByLegacyId(ItemId.WoodenPickaxe)?.stackSize).toBe(1);
+    expect(registry.getByLegacyId(ItemId.StonePickaxe)?.stackSize).toBe(1);
+    expect(registry.getByLegacyId(ItemId.WoodenAxe)?.stackSize).toBe(1);
+  });
+
+  it('rejects a durable definition that declares stacking', () => {
+    const bad: ItemTypeDefinition = {
+      ...registry.getByLegacyId(ItemId.WoodenPickaxe)!,
+      key: 'stacking_pickaxe',
+      stackSize: 16,
+      maxDurability: 59,
+    };
+    expect(() => assertDurableItemsDoNotStack([bad])).toThrow(/stacking_pickaxe.*stackSize 1/);
+    expect(() => assertDurableItemsDoNotStack([{ ...bad, stackSize: 1 }])).not.toThrow();
   });
 });

@@ -2,6 +2,24 @@
 
 ## Current checkpoint
 
+> **CERTIFICATION HARDENING COMPLETE — PROGRAM TERMINAL (2026-08-23, session start head
+> `5e032877a6d2bad7ccd2af201d9dd77fe6ddc20d`).** The out-of-band adversarial certification
+> campaign (`openspec/hardening/2026-08-23-exhaustive-repository-certification/`) audited the
+> published READY tree from first principles and remediated what it could disprove. Every
+> tracked file carries a reviewed-manifest row (2472 rows, pending 0, unclassified 0,
+> `scripts/validate-file-audit.mjs` PASS). Findings fixed with regression oracles: HIGH ×3
+> (F-INV-1 tool-stack destruction, F-INV-2 enchantment/component loss on save/load,
+> F-MINE-1 click-through-mining-duration), MEDIUM ×8 (stateOverlay bounded+documented,
+> pendingEdits commit-hook release, enchanting-session identity guard, hotbar icon refresh,
+> GOV state-alias redirect-only, GOV validator terminal-coherence + invalid-state suite,
+> AUDIT-EVIDENCE pending-only inventory generator, chunk-streaming e2e falsifiability),
+> LOW ×5 (teleport blend latch, wildcard once unsubscribe, seq-0 epoch acceptance,
+> deterministic restore order, translucent geometry aliasing). README drift reconciled.
+> Accepted non-blocking debt is enumerated in the package's `risk-register.md` (R-1..R-9).
+> Final gates: typecheck/lint/build/release-bundle/npm-audits PASS; unit 4201 passed + 1
+> skipped; coverage functions 95.03% ≥ 95%; e2e recorded in the package `verification.md`.
+> No numbered change 251 exists; the autonomous loop remains terminal.
+
 > **INTERLOCK VERIFIED — PROGRAM TERMINAL (2026-08-23, session start head `ec6989b`).** The
 > mandatory post-250 production-persistence hardening campaign
 > (`openspec/hardening/2026-08-21-post-250-production-persistence-hardening/`) completed all 78
@@ -28,7 +46,8 @@
 - All changes 001–250: **VERIFIED** — zero DEFERRED, zero UNCLASSIFIED (`openspec/evidence/checklist/final-verification-checklist.md`)
 - Historical Change 250-era bullets (preserved; superseded **for current release authority** by `openspec/evidence/release-readiness-post-hardening.md`): 250 required-test gate PASS at head `502d021` / byte-identical tree `b56529e`; historical release-readiness READY RC-1..RC-9 (`openspec/evidence/release-readiness.md`); final parity audit PASS with DL dispositions later rejected by this interlock (`openspec/evidence/parity/final-parity-audit.md`); evidence archive complete (`openspec/evidence/`)
 - Post-250 hardening interlock: **VERIFIED at remediation checkpoint `aa92a5c229a753f10f8c1677e836136962b5d07a` — canonical CI run 32589457819 SUCCESS (gate job 97078975848, e2e job 97078975868); tasks 78/78; release decision READY (`openspec/evidence/release-readiness-post-hardening.md`)**
-- Session-start head: `ec6989b55dc89291d771013952a936d3273793ee`; published head recorded in the session report after push
+- Session-start head: `5e032877a6d2bad7ccd2af201d9dd77fe6ddc20d` (certification campaign); prior interlock session start `ec6989b55dc89291d771013952a936d3273793ee`; published head recorded in the session report after push
+- Certification campaign: **openspec/hardening/2026-08-23-exhaustive-repository-certification — findings fixed with oracles; manifest reviewed; risk register R-1..R-9 accepted debt**
 - Section milestone: **PROGRAM COMPLETE — every planned change 001–250 VERIFIED and the mandatory post-250 hardening interlock VERIFIED with canonical exact-SHA CI proof**: program control (001), data/registry foundation (002–020), vertical world/chunk storage (021–033), persistent storage (034–043), fixed-tick simulation (044–055), block geometry/rendering (056–075), fluids (076–084), worldgen (085–102), crafting/containers/progression (103–128), entity framework/mobs (129–153), redstone/automation (154–173), dimensions/major progression (174–195), environment/UX/accessibility (196–210), resource/data packs/content breadth (211–221), multiplayer (222–237), hardening/verification matrices (238–247), parity matrix reconciliation (248), whole-codebase adversarial audit (249), final program verification (250), post-250 production persistence hardening (interlock).
 - Next exact action: **None — program terminal. Future sessions enter through GitHub review of the published range and resume only for reviewer findings or explicitly authorized new scope.**
 

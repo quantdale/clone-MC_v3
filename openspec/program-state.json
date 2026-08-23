@@ -1,8 +1,5 @@
 {
   "canonicalFile": "openspec/PROGRAM_STATE.json",
-  "note": "Compatibility alias for older instructions. Read and update PROGRAM_STATE.json as the authoritative state file.",
-  "current_change": "002-resource-id-foundation",
-  "current_change_status": "ACTIVE",
-  "last_completed_change": "001-autonomous-program-control",
-  "advancement_allowed": false
+  "note": "Compatibility redirect for older instructions that read this lowercase path. This file intentionally carries NO program state: the authoritative state lives only in openspec/PROGRAM_STATE.json. Historical note (2026-08-23 hardening): this alias previously claimed change 002 was ACTIVE years after the program reached its terminal 250-VERIFIED state; stale per-change fields were removed so the alias can no longer misdirect a session.",
+  "fileKind": "redirect-only"
 }

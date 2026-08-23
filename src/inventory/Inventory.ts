@@ -7,8 +7,14 @@ import {
   StackComponentMap,
   createDefaultStackComponentRegistry,
   emptyStackComponents,
+  type StackComponentValue,
 } from './StackDataComponents';
 import { applyDamage, repair } from './DurabilityRules';
+import {
+  parseResourceId,
+  resourceIdToString,
+  type ResourceId,
+} from '../data/ResourceId';
 
 /**
  * One unified occupied-slot value: item identity, quantity, and the immutable
@@ -24,21 +30,92 @@ export interface ItemStack {
 }
 
 /**
+ * JSON-safe serialized form of one stack component: the component type's
+ * resource-id string plus its validated primitive/flat-bag value.
+ */
+export interface SerializedStackComponent {
+  id: string;
+  value: StackComponentValue;
+}
+
+/**
  * Save representation for browser persistence. This keeps the pre-009 shape
  * (parallel id/count/durability arrays plus a `{id,count}` storage list) so that
  * existing saves restore verbatim; 009 encodes tool wear as the damage component
  * for the round trip but exports it through the legacy `durability` field.
+ *
+ * Hardening 2026-08-23: optional `slotComponents` (and per-storage-entry
+ * `components`) carry every `StackComponentMap` — including enchantments —
+ * through the round trip. Absent fields mean a legacy snapshot; restore
+ * validates strictly and rejects (never throws) malformed payloads.
  */
 export interface InventorySnapshot {
   version: 1;
   slots: number[];
   counts: number[];
-  storage: ItemStack[];
+  /** Serialized storage stacks; `components` present only when non-empty. */
+  storage: Array<{
+    id: number;
+    count: number;
+    components?: SerializedStackComponent[];
+  }>;
   selected: number;
   /** Optional for backwards compatibility with pre-tool saves. */
   durability?: number[];
+  /** Per-slot serialized components, aligned with `slots`; null = none. */
+  slotComponents?: Array<SerializedStackComponent[] | null>;
   /** Worn equipment (Head/Chest/Legs/Feet/Offhand); absent in pre-113 saves. */
   equipment?: EquipmentSnapshot;
+}
+
+/** Serialize one component map to its JSON-safe form (empty array when absent). */
+function serializeComponents(
+  components: StackComponentMap | undefined,
+): SerializedStackComponent[] {
+  if (!components) return [];
+  return components.entries().map(([id, value]) => ({
+    id: resourceIdToString(id),
+    value: value as StackComponentValue,
+  }));
+}
+
+/**
+ * Rebuild a component map from serialized entries. Returns undefined for an
+ * empty list and null for any invalid entry (unknown id, failed validator, or
+ * non-object payload) so callers can reject the whole snapshot.
+ */
+function deserializeComponents(
+  input: unknown,
+): StackComponentMap | undefined | null {
+  if (input === null) return undefined;
+  if (!Array.isArray(input)) return null;
+  if (input.length === 0) return undefined;
+  const entries: Array<[ResourceId, StackComponentValue]> = [];
+  for (const entry of input) {
+    if (typeof entry !== 'object' || entry === null) return null;
+    const candidate = entry as { id?: unknown; value?: unknown };
+    if (typeof candidate.id !== 'string' || candidate.id.length === 0) return null;
+    let id: ResourceId;
+    try {
+      id = parseResourceId(candidate.id);
+    } catch {
+      return null;
+    }
+    if (!SHARED_COMPONENT_REGISTRY.has(id)) return null;
+    const value = candidate.value;
+    if (value === null || typeof value !== 'object') {
+      if (typeof value !== 'number' && typeof value !== 'string' && typeof value !== 'boolean') {
+        return null;
+      }
+    }
+    entries.push([id, value as StackComponentValue]);
+  }
+  try {
+    // Construction validates each value against the registered type validator.
+    return new StackComponentMap(SHARED_COMPONENT_REGISTRY, entries);
+  } catch {
+    return null;
+  }
 }
 
 const MAX_STACK = 64;
@@ -102,7 +179,14 @@ export class Inventory implements BlockSelector {
       this.slots = DEFAULT_SLOTS.map((id, i) => ({ id, count: this.clampCount(DEFAULT_COUNTS[i] ?? 0) }));
     }
     this.selected = 0;
-    this.storage = (storage ? storage : []).map((stack) => ({ id: stack.id, count: this.clampCount(stack.count) }));
+    // Preserve per-stack component maps on storage stacks routed through the
+    // constructor (hardening 2026-08-23): stripping them here silently reset
+    // enchanted/damaged items to pristine.
+    this.storage = (storage ? storage : []).map((stack) => ({
+      id: stack.id,
+      count: this.clampCount(stack.count),
+      ...(stack.components ? { components: stack.components.copy() } : {}),
+    }));
   }
 
   /** Maximum stack size for an item, falling back to the global cap. */
@@ -360,9 +444,19 @@ export class Inventory implements BlockSelector {
       version: 1,
       slots: this.slots.map((stack) => stack.id),
       counts: this.slots.map((stack) => stack.count),
-      storage: this.storage.map((stack) => ({ id: stack.id, count: stack.count })),
+      storage: this.storage.map((stack) => ({
+        id: stack.id,
+        count: stack.count,
+        ...(stack.components
+          ? { components: serializeComponents(stack.components) }
+          : {}),
+      })),
       selected: this.selected,
       durability: this.slots.map((stack) => this.remainingDurability(stack)),
+      slotComponents: this.slots.map((stack) => {
+        const serialized = serializeComponents(stack.components);
+        return serialized.length > 0 ? serialized : null;
+      }),
       equipment: this.equipment.serialize(),
     };
   }
@@ -415,23 +509,75 @@ export class Inventory implements BlockSelector {
       ) {
         return false;
       }
+      // Validate serialized storage components up-front too, so a malformed
+      // payload rejects before any state mutation.
+      if (
+        'components' in stack &&
+        deserializeComponents((stack as { components?: unknown }).components) === null
+      ) {
+        return false;
+      }
+    }
+    // Serialized slot components (hardening 2026-08-23): validate the whole
+    // array up-front so a malformed payload rejects before any mutation.
+    let restoredSlotComponents: Array<StackComponentMap | undefined> | undefined;
+    if (candidate.slotComponents !== undefined) {
+      if (!Array.isArray(candidate.slotComponents) || candidate.slotComponents.length !== candidate.slots.length) {
+        return false;
+      }
+      restoredSlotComponents = [];
+      for (const entry of candidate.slotComponents) {
+        const map = deserializeComponents(entry);
+        if (map === null) return false;
+        restoredSlotComponents.push(map);
+      }
     }
     this.slots = candidate.slots.map((id, i) => {
       const count = candidate.counts![i] ?? 0;
       const stack: ItemStack = { id, count: this.clampCount(count) };
       const max = maxDurabilityForItem(id);
       const durability = candidate.durability?.[i];
-      if (max > 0 && count > 0 && Number.isInteger(durability) && (durability as number) > 0) {
+      // Only REAL wear creates the damage component (hardening 2026-08-23):
+      // durability === max is a pristine tool and must restore componentless —
+      // a phantom {damage:0} here used to diverge restored state from a fresh
+      // run once full component serialization exposed it.
+      if (
+        max > 0 &&
+        Number.isFinite(max) &&
+        count > 0 &&
+        Number.isInteger(durability) &&
+        (durability as number) >= 0 &&
+        (durability as number) < max
+      ) {
         stack.components = new StackComponentMap(SHARED_COMPONENT_REGISTRY).with(
           DAMAGE_COMPONENT,
           { damage: max - (durability as number) },
         );
       }
+      // Full component data wins over the legacy durability translation.
+      const components = restoredSlotComponents?.[i];
+      if (components !== undefined) {
+        if (count > 0) {
+          stack.components = components;
+        } else {
+          stack.components = undefined;
+        }
+      }
       return stack;
     });
     this.storage.length = 0;
     for (const stack of candidate.storage) {
-      this.storage.push({ id: stack.id, count: this.clampCount(stack.count) });
+      const components =
+        'components' in stack
+          ? deserializeComponents((stack as { components?: unknown }).components)
+          : undefined;
+      // Unreachable: the up-front validation loop rejects null payloads.
+      if (components === null) return false;
+      this.storage.push({
+        id: stack.id,
+        count: this.clampCount(stack.count),
+        ...(components !== undefined ? { components } : {}),
+      });
     }
     if (candidate.equipment !== undefined) {
       this.equipment.restore(candidate.equipment, isValidItem);

@@ -210,11 +210,15 @@ export class ChunkMesher {
     }
 
     const streams: MeshBuildResult = SCRATCH.build(inputVersion);
+    // `transparent` aliases the translucent stream (hardening 2026-08-23):
+    // building it twice produced a second, never-rendered BufferGeometry that
+    // was discarded as CPU garbage on every remesh.
+    const translucent = buildGeometry(streams.streams.translucent);
     return {
       opaque: buildGeometry(streams.streams.opaque),
-      transparent: buildGeometry(streams.streams.translucent),
+      transparent: translucent,
       cutout: buildGeometry(streams.streams.cutout),
-      translucent: buildGeometry(streams.streams.translucent),
+      translucent,
       fluid: buildGeometry(streams.streams.fluid),
       streams,
     };

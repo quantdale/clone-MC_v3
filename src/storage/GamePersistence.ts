@@ -281,6 +281,11 @@ export class GamePersistence implements WorldEditDurability {
       intervalMs: this.intervalMs,
       timer: this.timer,
       flushTarget: opts.flushTarget === undefined ? undefined : opts.flushTarget,
+      // Release pending overlay copies as soon as their unit durably commits
+      // (hardening 2026-08-23): previously they were pruned only by facade
+      // flush(), so the periodic coordinator tick left one full overlay copy
+      // per distinct edited chunk resident for the whole session.
+      onUnitsCommitted: (keys) => this.releaseCommittedPendingEdits(keys),
     });
 
     // Single-instance slow recovery probe: started on transition-to-unhealthy, cleared on 'ok'.
@@ -727,6 +732,21 @@ export class GamePersistence implements WorldEditDurability {
     for (const [key, entry] of this.pendingEdits) {
       if (!this.queue.has(entry.unitKey)) {
         this.pendingEdits.delete(key);
+      }
+    }
+  }
+
+  /**
+   * Release the pending-overlay copies whose units just committed durably
+   * (coordinator hook). A key may still be pending when a newer markDirty
+   * landed during the write; only keys absent from the queue are released.
+   */
+  private releaseCommittedPendingEdits(committedKeys: readonly string[]): void {
+    for (const unitKey of committedKeys) {
+      for (const [chunkKey, entry] of this.pendingEdits) {
+        if (entry.unitKey === unitKey && !this.queue.has(unitKey)) {
+          this.pendingEdits.delete(chunkKey);
+        }
       }
     }
   }
