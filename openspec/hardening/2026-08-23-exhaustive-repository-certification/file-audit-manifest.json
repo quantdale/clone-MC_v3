@@ -11,7 +11,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2472,
+  "total": 2479,
   "pending": 0,
   "unclassified": 0,
   "rows": [
@@ -40530,6 +40530,151 @@
       "disposition": "",
       "reviewNotes": "Tracked auxiliary file; presence/format checked, no runtime role.",
       "status": "audited"
+    },
+    {
+      "gitBlob": null,
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "status": "audited",
+      "path": "src/engine/LiveBlockEntityHost.ts",
+      "category": "production",
+      "purpose": "Live block-entity host (251): authoritative furnace states, simulating-chunk fixed ticks, per-chunk persistence, hydration/quarantine, xp drain",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "wired-live",
+      "imports": [
+        "../math/SectionCoordinate",
+        "../simulation/BlockEntityManager",
+        "../storage/BlockEntityRecord",
+        "../world/FurnaceBlockEntity"
+      ],
+      "importedBy": [
+        "src/engine/Game.ts"
+      ],
+      "testEvidence": [
+        "tests/unit/LiveFurnaceIntegration.test.ts"
+      ],
+      "reviewNotes": "Authored and semantically reviewed 2026-08-23 in the Change-251 campaign: single-instance invariant, simulating-set tick gate, lazy staleness removal, corrupt-payload quarantine, full-snapshot dirty units; wiring proven by the new integration suite."
+    },
+    {
+      "gitBlob": null,
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "status": "audited",
+      "path": "src/inventory/MenuSlots.ts",
+      "category": "production",
+      "purpose": "Lossless ItemStack<->106-MenuSlot conversion incl. component records; null on unknown/corrupt for caller quarantine",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "wired-live",
+      "imports": [
+        "../data/ResourceId",
+        "./MenuTransaction",
+        "./Inventory",
+        "./ItemRegistry",
+        "./StackDataComponents"
+      ],
+      "importedBy": [
+        "src/ui/FurnacePanel.ts",
+        "src/engine/Game.ts"
+      ],
+      "testEvidence": [
+        "tests/unit/LiveFurnaceIntegration.test.ts"
+      ],
+      "reviewNotes": "Authored and semantically reviewed 2026-08-23 (Change-251): round-trip identity over the live vocabulary, component map<->record fidelity, no-loss contract enforced by returning null instead of dropping."
+    },
+    {
+      "gitBlob": null,
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "status": "audited",
+      "path": "src/ui/FurnacePanel.ts",
+      "category": "production",
+      "purpose": "Live furnace screen: derives 39-slot menu from authoritative state + inventory + cursor, applies one 106 transaction, writes back atomically, renders indicators/cursor",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "wired-live",
+      "imports": [
+        "../rendering/TextureAtlas",
+        "../inventory/Inventory",
+        "../inventory/ItemRegistry",
+        "../world/FurnaceBlockEntity",
+        "../inventory/MenuSlots",
+        "../inventory/MenuTransaction",
+        "../data/ResourceId"
+      ],
+      "importedBy": [
+        "src/engine/Game.ts"
+      ],
+      "testEvidence": [
+        "tests/unit/LiveFurnaceIntegration.test.ts",
+        "playwright e2e furnace journey"
+      ],
+      "reviewNotes": "Authored and semantically reviewed 2026-08-23 (Change-251): no owned item state beyond transient cursor (returned via takeCursor on close), render-signature dedupe, transactional output extraction."
+    },
+    {
+      "gitBlob": null,
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "status": "audited",
+      "path": "openspec/changes/251-live-furnace-production-integration/proposal.md",
+      "category": "spec",
+      "purpose": "Change-251 proposal: narrow live-furnace outcome, non-goals, risks",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "documentation-only",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "reviewNotes": "Authored 2026-08-23 with the Change-251 authorization; reviewed for scope discipline (no Wither boss, no new architecture wave)."
+    },
+    {
+      "gitBlob": null,
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "status": "audited",
+      "path": "openspec/changes/251-live-furnace-production-integration/design.md",
+      "category": "spec",
+      "purpose": "Change-251 design: single-authoritative-state architecture, phases A-G, risk/rollback table",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "documentation-only",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "reviewNotes": "Authored 2026-08-23 with the Change-251 authorization; implementation follows this design."
+    },
+    {
+      "gitBlob": null,
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "status": "audited",
+      "path": "openspec/changes/251-live-furnace-production-integration/tasks.md",
+      "category": "spec",
+      "purpose": "Change-251 task checklist (26 items across composition/tick/interaction/UI/persistence/drops/adversarial/tests/governance)",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "documentation-only",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "reviewNotes": "Authored 2026-08-23; checkboxes updated only with evidence per AGENTS.md rule."
+    },
+    {
+      "gitBlob": null,
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "status": "audited",
+      "path": "openspec/changes/251-live-furnace-production-integration/specs/live-furnace-integration/spec.md",
+      "category": "spec",
+      "purpose": "Normative Change-251 requirements: composition, fixed-tick simulation, interaction routing, container UI, persistence, drops, adversarial safety (7 requirements + scenarios)",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "documentation-only",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "reviewNotes": "Authored 2026-08-23 as the normative record; every MUST/SHALL maps to a task and test."
     }
   ]
 }

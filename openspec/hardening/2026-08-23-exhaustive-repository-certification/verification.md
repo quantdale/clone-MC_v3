@@ -1,5 +1,9 @@
 # Verification — Exhaustive Repository Certification Campaign
 
+> **Overall status: **VERIFIED** (2026-08-23)** — canonical exact-SHA CI run 32620103123 on
+> candidate `e56b83a35e5034b5c73745c9a76130a9ac58d273` returned gate job 97148797875 SUCCESS
+> and e2e job 97148797928 SUCCESS; recorded in `PROGRAM_STATE.json` `releaseAuthority.canonicalCi`.
+
 ## Baseline (START_SHA `5e032877a6d2bad7ccd2af201d9dd77fe6ddc20d`, clean tree)
 
 | Gate | Result |
