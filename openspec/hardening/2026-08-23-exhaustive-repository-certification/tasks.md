@@ -42,7 +42,8 @@ Status legend: `[x]` complete with evidence · `[ ]` open.
 - [x] Full clean gate at candidate SHA: validate-state/typecheck/lint/unit(4201+1)/coverage(functions 95.03)/build/bundle-check/audits×2 PASS; e2e interrupted by operator before completion — recorded honestly in verification.md
 - [x] Independent second pass over the campaign diff (post-hardening-audit.md): no blocking issue found
 - [x] PROGRAM_STATE checkpoint updated (json + md)
-- [ ] Publish to origin/main; verify HEAD == origin/main; record published_head (in progress at operator direction)
+- [x] Publish to origin/main; verify HEAD == origin/main; record published_head `c58f972ca62401a29ccf56fdce0716f7aeb38880` (published 2026-08-23; remote verified)
+- [x] Canonical CI on c58f972 came back RED at the gate Lint step (run 32618476207): `scripts/validate-file-audit.mjs` unused import `path`, `scripts/gen-file-audit.mjs` undeclared global `process`; build/unit/coverage/audits were skipped downstream. Root-caused and fixed locally (unused-import removal + `/* global console, process */`); full local re-gate on the fixed tree: validate-state/typecheck/lint/unit 326 files 4206 passed +1 skipped/build/bundle-check all PASS. Fix published as the session follow-up commit; canonical proof moves to that SHA's CI run.
 
 ## 5. Sign-off
 - [x] Release verdict recorded in verification.md: READY WITH EXPLICIT NON-BLOCKING DEBT, conditional on canonical exact-SHA CI

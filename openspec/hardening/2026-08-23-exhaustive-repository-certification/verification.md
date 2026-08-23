@@ -47,3 +47,23 @@ registered in risk-register.md.
 **READY WITH EXPLICIT NON-BLOCKING DEBT** — conditioned on the canonical exact-SHA CI run
 (gate + e2e jobs) succeeding on the published head; accepted debt enumerated in
 `risk-register.md` R-1..R-9.
+
+## Canonical exact-SHA CI follow-up (2026-08-23)
+
+The campaign was published as `c58f972ca62401a29ccf56fdce0716f7aeb38880` (remote HEAD verified).
+CI run 32618476207 for that SHA returned **gate FAILURE at the Lint step**:
+
+- `scripts/validate-file-audit.mjs` — `'path' is defined but never used` (unused `node:path` import);
+- `scripts/gen-file-audit.mjs` — `'process' is not defined` (`process.argv` used without a globals comment).
+
+Both are evidence-script hygiene defects only (no runtime/test behavior touched); Build,
+Unit, Coverage, and audits were skipped downstream of Lint and did not themselves fail.
+The prior local "lint PASS" claim predates the final edits of these two scripts and did not
+re-run afterward — recorded here as an honest process defect of the interrupted session.
+
+Remediation (this session): removed the unused import; declared `process` via the existing
+`/* global */` comment. Full local re-gate on the fixed tree: validate-state PASS,
+typecheck PASS, lint PASS, unit **326 files / 4206 passed + 1 skipped** PASS, build PASS
+(tsc --noEmit && vite build), release-bundle check PASS (4 assets, no E2E hook).
+The canonical READY condition therefore attaches to this follow-up commit's exact-SHA CI run
+(gate + e2e), which supersedes the RED run on c58f972.
