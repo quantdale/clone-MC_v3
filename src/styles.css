@@ -505,6 +505,63 @@ body {
   font-size: 12px;
   text-align: center;
 }
+
+/* Furnace screen (251) — reuses the crafting panel/inventory-cell chrome. */
+.furnace-io {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+}
+.furnace-io-column {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+}
+.furnace-slot {
+  width: 52px;
+}
+.furnace-flame {
+  width: 26px;
+  height: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+}
+.furnace-flame-bar {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(to top, #ff9d3c, #ffd166);
+  transition: width 120ms linear;
+}
+.furnace-flame-bar.lit {
+  box-shadow: 0 0 12px rgba(255, 157, 60, 0.65);
+}
+.furnace-arrow {
+  position: relative;
+  width: 74px;
+  height: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+.furnace-arrow-bar {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(to right, #7bd88f, #b8f2c6);
+  transition: width 120ms linear;
+}
+#furnace-cursor {
+  pointer-events: none;
+  opacity: 0.92;
+}
+#furnace-cursor.carrying {
+  outline: 2px solid #ffe08a;
+}
 .overlay-btn:focus-visible {
   outline: 3px solid #ffe08a;
   outline-offset: 3px;

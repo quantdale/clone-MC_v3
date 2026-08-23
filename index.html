@@ -109,6 +109,39 @@
             <p class="crafting-hint">Press C or close this panel, then click the world to resume.</p>
           </div>
         </div>
+        <div id="furnace" class="ui hidden" aria-label="Furnace screen">
+          <div class="crafting-panel" role="dialog" aria-modal="true" aria-labelledby="furnace-title">
+            <div class="crafting-header">
+              <div>
+                <h2 id="furnace-title">Furnace</h2>
+                <p id="furnace-status">Insert smeltable input and fuel.</p>
+              </div>
+              <button id="furnace-close" class="crafting-close" type="button" aria-label="Close furnace">×</button>
+            </div>
+            <div class="inventory-section">
+              <div class="inventory-section-title">Furnace</div>
+              <div class="furnace-io">
+                <div class="furnace-io-column">
+                  <div id="furnace-input-slot" class="inventory-cell furnace-slot"></div>
+                  <div class="furnace-flame" role="progressbar" aria-label="Fuel burn progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                    <div id="furnace-flame-bar" class="furnace-flame-bar"></div>
+                  </div>
+                  <div id="furnace-fuel-slot" class="inventory-cell furnace-slot"></div>
+                </div>
+                <div class="furnace-arrow" role="progressbar" aria-label="Smelting progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                  <div id="furnace-arrow-bar" class="furnace-arrow-bar"></div>
+                </div>
+                <div id="furnace-output-slot" class="inventory-cell furnace-slot"></div>
+                <div id="furnace-cursor" class="inventory-cell furnace-cursor empty" title="Held on cursor"></div>
+              </div>
+            </div>
+            <div class="inventory-section">
+              <div class="inventory-section-title">Inventory</div>
+              <div id="furnace-player-grid" class="inventory-grid" aria-label="Player inventory slots"></div>
+            </div>
+            <p class="crafting-hint">Left click move · right click split / place one · shift-click quick move.</p>
+          </div>
+        </div>
         <div id="error" class="ui hidden" role="alert">
           <div class="overlay-panel error-panel">
             <h1 class="overlay-title">Unable to start</h1>

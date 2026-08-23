@@ -117,6 +117,17 @@ import { RenderInterpolator } from './RenderInterpolator';
 import { RenderPerformanceMonitor } from '../rendering/RenderPerformanceMonitor';
 import { createDefaultBlockShapeTable } from '../world/VoxelShape';
 import type { SelectionShapeWorld } from '../world/ShapeRaycast';
+import { LiveBlockEntityHost } from './LiveBlockEntityHost';
+import { FURNACE_BLOCK_ID, type FurnaceContext } from '../world/FurnaceBlockEntity';
+import { createDefaultTypedRecipes } from '../inventory/TypedRecipe';
+import { createDefaultFuelValues, createFurnaceContext, takeFurnaceXp } from '../inventory/FurnaceRecipes';
+import { menuSlotToStack } from '../inventory/MenuSlots';
+import type { MenuSlot } from '../inventory/MenuTransaction';
+import { FurnacePanel } from '../ui/FurnacePanel';
+import type { LootStack } from '../inventory/LootTable';
+
+/** Maximum eye-to-furnace distance before an open furnace screen auto-closes (251). */
+const FURNACE_MAX_USE_DISTANCE = 8;
 
 /**
  * Wires the entire game together: renderer, world, player, interaction, UI, and
@@ -174,6 +185,16 @@ export class Game {
   private readonly randomTickSelector: RandomTickSelector;
   /** Behavior-facing world access adapter (125). */
   private readonly worldBlockAccess: WorldBlockAccess;
+  /** Live block-entity host (251): owns the authoritative furnace states. */
+  readonly blockEntityHost: LiveBlockEntityHost;
+  /** Furnace recipe/fuel context (110 data) injected into the 109 engine. */
+  private readonly furnaceContext: FurnaceContext;
+  /** Whether the furnace container screen is open (251). */
+  private furnaceOpen = false;
+  /** The open furnace's position, or null when closed. */
+  private furnacePos: { x: number; y: number; z: number } | null = null;
+  /** DOM controller for the live furnace screen (251). */
+  private readonly furnacePanel: FurnacePanel;
   /** Monotonic simulation tick counter driving random-tick seeding. */
   private simTick = 0;
   /**
@@ -394,6 +415,7 @@ export class Game {
         .then((result) => {
           this.applyInitialEdits(result.initialEdits);
           this.applyInitialPlayerState(result.initialPlayerState);
+          this.blockEntityHost.hydrate(result.initialBlockEntities);
           if (result.status !== 'ok') {
             this.bootSaveDegraded = true;
             this.refreshSaveStatus();
@@ -486,6 +508,24 @@ export class Game {
     // The self-composed path applies them when its open promise settles.
     if (this.selfOpenPromise === null) {
       this.applyInitialEdits(this.persistenceImpl?.initialEdits ?? null);
+    }
+
+    // 251: the live block-entity host owns every placed furnace's authoritative
+    // state. Hydration from persisted records happens at the same moment as the
+    // bulk-loaded edits (injected persistence) or when open() settles.
+    this.furnaceContext = createFurnaceContext(createDefaultTypedRecipes(), createDefaultFuelValues());
+    this.blockEntityHost = new LiveBlockEntityHost({
+      world: this.world,
+      persistence: this.persistenceImpl,
+      furnaceContext: this.furnaceContext,
+      onQuarantined: () => {
+        // A quarantined record means durable data was corrupt; surface it via
+        // the save-health banner instead of crashing boot.
+        this.refreshSaveStatus();
+      },
+    });
+    if (this.selfOpenPromise === null) {
+      this.blockEntityHost.hydrate(this.persistenceImpl?.initialBlockEntities ?? []);
     }
 
     this.overworldDimension = createResourceId('minecraft', 'overworld');
@@ -632,6 +672,25 @@ export class Game {
       (recipe) => this.onCrafted(recipe),
       () => this.closeCrafting(),
     );
+    // Live furnace screen (251): a pure view over the host's authoritative state.
+    this.furnacePanel = new FurnacePanel(this.requireElement('furnace'), {
+      inventory: this.inventory,
+      registry: this.itemRegistry,
+      atlas: this.atlas,
+      getState: () =>
+        this.furnacePos
+          ? this.blockEntityHost.getFurnaceState(this.furnacePos.x, this.furnacePos.y, this.furnacePos.z)
+          : null,
+      applySlots: (slots) =>
+        this.furnacePos
+          ? this.blockEntityHost.applyMenuSlots(this.furnacePos.x, this.furnacePos.y, this.furnacePos.z, slots)
+          : null,
+      onInventoryChanged: () => {
+        this.hotbar.render();
+        if (this.craftingOpen) this.craftingPanel.render(this.itemRegistry);
+      },
+      onClose: () => this.closeFurnace(),
+    });
 
     // Fixed-tick ownership (044): the driver turns frame deltas into bounded,
     // deterministic 20 TPS ticks; the tick body enforces the simulation order.
@@ -709,6 +768,9 @@ export class Game {
       clearTimeout(this.toastTimer);
       this.toastTimer = null;
     }
+    // Settle the furnace session first so its cursor/xp land in the state that
+    // savePlayerStateDurable + the facade flush are about to persist (251).
+    this.closeFurnace();
     this.savePlayerStateDurable();
     this.saveTimer = 0;
     void this.persistenceImpl?.dispose().catch(() => undefined);
@@ -745,14 +807,13 @@ export class Game {
 
   /**
    * Observability/test hook (239): live-resource counts for long-session leak
-   * validation. `blockEntities` is always 0 in the single-player world because
-   * block entities are not yet wired into it (see design.md reconciliation);
-   * `activeEntities` sums the live passive and hostile mobs; `itemEntities` is
-   * the live item-entity (+ xp-orb) set size. No gameplay behavior changes.
+   * validation. `blockEntities` counts live block entities owned by the 251
+   * host; `activeEntities` sums the live passive and hostile mobs; `itemEntities`
+   * is the live item-entity (+ xp-orb) set size. No gameplay behavior changes.
    */
   getLiveResourceCounts(): { blockEntities: number; activeEntities: number; itemEntities: number } {
     return {
-      blockEntities: 0,
+      blockEntities: this.blockEntityHost.size,
       activeEntities:
         this.passiveMobs.getActivePigs().length + this.hostileMobs.getActiveZombies().length,
       itemEntities: this.itemEntities.size,
@@ -826,6 +887,7 @@ export class Game {
       worldReady &&
       !this.craftingOpen &&
       !this.overlayOpen &&
+      !this.furnaceOpen &&
       (this.pointerLocked || this.hasControllerInput(deviceFrame));
 
     // Pause/resume mapping (044): while inactive the driver's time anchor keeps
@@ -910,6 +972,20 @@ export class Game {
       }
     }
 
+    // Furnace session upkeep (251): close on destruction or walking away, and
+    // keep the burn/smelt indicators live while it stays open.
+    if (this.furnaceOpen && this.furnacePos) {
+      const p = this.player.position;
+      const pos = this.furnacePos;
+      const stillThere = this.world.getBlock(pos.x, pos.y, pos.z) === BlockId.Furnace;
+      const distance = Math.hypot(p.x - (pos.x + 0.5), p.y - (pos.y + 0.5), p.z - (pos.z + 0.5));
+      if (!stillThere || distance > FURNACE_MAX_USE_DISTANCE) {
+        this.closeFurnace();
+      } else {
+        this.furnacePanel.render();
+      }
+    }
+
     // F3 toggles the debug overlay.
     if (this.input.consumeDebugToggle()) {
       this.debugOverlay.toggle();
@@ -973,6 +1049,10 @@ export class Game {
     );
     if (collected > 0) this.hotbar.render();
     this.xpOrbs.tickItemEntities(dt, px, py, pz, this.experience);
+
+    // 3.5 Block entities (251): furnaces in simulating chunks advance one
+    // canonical tick; pause/loading/non-simulating chunks stay frozen.
+    this.blockEntityHost.tickFurnaces();
 
     // 4. Mobs: ambient life, passive mobs (+ renderer sync), breeding, then
     // hostile mobs (+ renderer sync) — passive always precedes hostile.
@@ -1623,17 +1703,27 @@ export class Game {
     }
   };
 
-  private onInteractionAction(action: InteractionAction, blockId?: number): void {
+  private onInteractionAction(action: InteractionAction, blockId?: number, coords?: { x: number; y: number; z: number }): void {
     const name = blockId !== undefined
       ? (this.itemRegistry.getByLegacyId(blockId)?.name ?? this.blockRegistry.getByLegacyId(blockId)?.name ?? 'block')
       : 'block';
     switch (action) {
       case 'break':
+        if (coords) {
+          this.onBlockBrokenAt(coords.x, coords.y, coords.z);
+        }
         this.hotbar.render();
         this.audio.play('break');
         this.showToast(`Collected ${name}`);
         break;
       case 'place':
+        // A committed furnace placement instantiates its block entity (251).
+        if (
+          coords &&
+          this.world.getBlock(coords.x, coords.y, coords.z) === FURNACE_BLOCK_ID
+        ) {
+          this.blockEntityHost.placeFurnace(coords.x, coords.y, coords.z);
+        }
         this.hotbar.render();
         this.audio.play('place');
         this.showToast(`Placed ${name}`);
@@ -1645,12 +1735,112 @@ export class Game {
         this.showToast('That action is not possible here');
         break;
       case 'use':
-        if (this.isBonemealSelected()) {
+        if (
+          coords &&
+          this.world.getBlock(coords.x, coords.y, coords.z) === BlockId.Furnace
+        ) {
+          this.openFurnace(coords.x, coords.y, coords.z);
+        } else if (this.isBonemealSelected()) {
           this.useBonemeal();
         } else {
           this.openEnchanting();
         }
         break;
+    }
+  }
+
+  /** Whether the furnace container screen is open (E2E/test surface). */
+  get isFurnaceOpen(): boolean {
+    return this.furnaceOpen;
+  }
+
+  /** The open furnace's position, or null (E2E/test surface). */
+  get furnaceSessionPosition(): { x: number; y: number; z: number } | null {
+    return this.furnacePos;
+  }
+
+  /**
+   * Open the live furnace screen for the furnace at `(x, y, z)`. The session is
+   * authoritative-state-backed; closing returns the cursor stack to the player.
+   */
+  openFurnace(x: number, y: number, z: number): void {
+    if (this.furnaceOpen) return;
+    if (!this.blockEntityHost.has(x, y, z)) return;
+    this.furnaceOpen = true;
+    this.furnacePos = { x, y, z };
+    this.input.releasePointerLock();
+    this.hideOverlay();
+    this.crosshair.hide();
+    this.hud.hide();
+    this.hotbar.hide();
+    this.setBreakProgress(0);
+    this.interaction.clearTarget();
+    this.furnacePanel.show();
+  }
+
+  /**
+   * Close the furnace screen and settle its transient state: the cursor stack
+   * goes back into the inventory (dropped as item entities when full — never
+   * deleted) and accumulated experience is granted to the player.
+   */
+  closeFurnace(): void {
+    if (!this.furnaceOpen) return;
+    const pos = this.furnacePos;
+    const cursor = this.furnacePanel.takeCursor();
+    if (cursor) {
+      this.returnStackToPlayer(cursor.item, cursor.count);
+    }
+    this.furnaceOpen = false;
+    this.furnacePos = null;
+    this.furnacePanel.hide();
+    if (pos) {
+      const taken = this.blockEntityHost.takeExperience(pos.x, pos.y, pos.z);
+      if (taken > 0) {
+        this.experience.addXp(taken);
+        this.hud.setSelectedName(`+${taken} XP`);
+      }
+    }
+    this.showOverlay('Click to play');
+  }
+
+  /** Merge a menu-cursor stack back into the inventory or drop it at the player. */
+  private returnStackToPlayer(itemKey: string, count: number): void {
+    const stack = menuSlotToStack({ item: itemKey, count, maxStack: 64 }, this.itemRegistry);
+    if (!stack) return;
+    const left = this.inventory.addItem(stack.id, stack.count);
+    if (left > 0) {
+      const p = this.player.position;
+      this.itemEntities.spawnLootStacks([{ item: stack.id, count: left }], p.x, p.y + 1, p.z, Math.random);
+    }
+    this.hotbar.render();
+  }
+
+  /**
+   * Furnace-specific destruction handling (251): drop contained stacks and
+   * accumulated xp into the world and remove the block entity exactly once.
+   * Runs BEFORE the generic toast so an open panel can never ghost-reference a
+   * destroyed furnace.
+   */
+  private onBlockBrokenAt(x: number, y: number, z: number): void {
+    if (!this.blockEntityHost.has(x, y, z)) return;
+    if (this.furnaceOpen && this.furnacePos && this.furnacePos.x === x && this.furnacePos.y === y && this.furnacePos.z === z) {
+      this.closeFurnace();
+    }
+    const state = this.blockEntityHost.removeFurnace(x, y, z);
+    if (!state) return;
+    const stacks: LootStack[] = [];
+    for (const slot of [state.input, state.fuel, state.output] as MenuSlot[]) {
+      const stack = menuSlotToStack(slot, this.itemRegistry);
+      if (stack) stacks.push({ item: stack.id, count: stack.count });
+    }
+    if (stacks.length > 0) {
+      this.itemEntities.spawnLootStacks(stacks, x + 0.5, y + 0.5, z + 0.5, Math.random);
+    }
+    const { taken } = takeFurnaceXp(state.xp);
+    if (taken > 0) {
+      this.xpOrbs.spawnXpOrb(taken, x + 0.5, y + 0.5, z + 0.5, {
+        vy: CONFIG.xp.orbSpawnUpVelocity,
+      });
     }
   }
 
@@ -1907,6 +2097,11 @@ export class Game {
   }
 
   private respawnPlayer(): void {
+    // A death closes any open container so it cannot ghost-reference the old world.
+    this.closeFurnace();
+    if (this.craftingOpen) {
+      this.closeCrafting();
+    }
     this.player.position.copy(this.spawnPosition);
     this.player.velocity.set(0, 0, 0);
     this.player.onGround = false;

@@ -181,8 +181,9 @@ describe("scripts/validate-state.mjs rejects incoherent synthetic states", () =>
   // ─── Release-authority coherence (2026-08-23 governance repair) ───
 
   it("rejects a terminal state without a releaseAuthority block", () => {
-    const { releaseAuthority: _omitted, ...withoutAuthority } = terminalState();
-    writeState(withoutAuthority, terminalMd());
+    const state = terminalState() as Partial<ReturnType<typeof terminalState>>;
+    delete state.releaseAuthority;
+    writeState(state as ReturnType<typeof terminalState>, terminalMd());
     const result = runValidator();
     expect(result.code).toBe(1);
     expect(result.output).toContain("releaseAuthority block is missing");

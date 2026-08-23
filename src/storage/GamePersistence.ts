@@ -40,6 +40,7 @@ import { EntityRepository } from './EntityRepository';
 import { PlayerStateRepository } from './PlayerStateRepository';
 import { validatePlayerStateRecord, type PlayerStateRecord } from './PlayerStateRecord';
 import { ChunkEditRepository } from './ChunkEditRepository';
+import type { SerializedBlockEntity } from './BlockEntityRecord';
 import {
   LegacyLocalStorageMigrator,
   type LegacyMigrationReport,
@@ -65,6 +66,8 @@ export interface GamePersistenceOpenResult {
   initialEdits: WorldEditSnapshot | null;
   /** Bulk-loaded committed player state (`null` when none exists). */
   initialPlayerState: GamePlayerSnapshot | null;
+  /** Bulk-loaded persisted block-entity records for this world (251 hydration source; empty when none). */
+  initialBlockEntities: SerializedBlockEntity[];
   /** Migration audit trail; `null` when migration was skipped (marker present or no legacy source). */
   migrationReport: LegacyMigrationReport | null;
   /** Migration + load failures, user-observable; empty on a fully clean boot. */
@@ -239,6 +242,7 @@ export class GamePersistence implements WorldEditDurability {
   private lastResult: GamePersistenceOpenResult | null = null;
   private initialEditsValue: WorldEditSnapshot | null = null;
   private initialPlayerStateValue: GamePlayerSnapshot | null = null;
+  private initialBlockEntitiesValue: SerializedBlockEntity[] = [];
 
   constructor(opts: GamePersistenceOptions) {
     this.seed = opts.seed;
@@ -456,6 +460,7 @@ export class GamePersistence implements WorldEditDurability {
     // 4. Bulk-load committed state (never silent).
     let initialEdits: WorldEditSnapshot | null = null;
     let initialPlayerState: GamePlayerSnapshot | null = null;
+    const initialBlockEntities: SerializedBlockEntity[] = [];
     if (!fatal) {
       try {
         const records = await this.chunkEdits.listChunkEdits(this.worldIdValue);
@@ -471,6 +476,20 @@ export class GamePersistence implements WorldEditDurability {
         initialPlayerState = record ? playerRecordToSnapshot(record) : null;
       } catch (e) {
         this.recordError(`load player state: ${errorMessage(e)}`);
+      }
+      // 251 hydration source: every persisted block-entity record for this world.
+      try {
+        const chunkRecords = await this.blockEntities.listChunks(this.worldIdValue);
+        for (const chunkRecord of chunkRecords) {
+          const entities = await this.blockEntities.getChunkEntities(
+            this.worldIdValue,
+            chunkRecord.chunkX,
+            chunkRecord.chunkZ,
+          );
+          if (entities && entities.length > 0) initialBlockEntities.push(...entities);
+        }
+      } catch (e) {
+        this.recordError(`load block entities: ${errorMessage(e)}`);
       }
     }
 
@@ -511,8 +530,9 @@ export class GamePersistence implements WorldEditDurability {
 
     this.initialEditsValue = initialEdits;
     this.initialPlayerStateValue = initialPlayerState;
+    this.initialBlockEntitiesValue = initialBlockEntities;
     this.opened = true;
-    this.lastResult = { status, initialEdits, initialPlayerState, migrationReport, errors: [...this.errors] };
+    this.lastResult = { status, initialEdits, initialPlayerState, initialBlockEntities, migrationReport, errors: [...this.errors] };
     return this.lastResult;
   }
 
@@ -579,6 +599,41 @@ export class GamePersistence implements WorldEditDurability {
   /** Synchronous lookup of the still-pending overlay copy, or `null` once committed/absent. */
   restorePendingChunkEdits(cx: number, cy: number, cz: number): ReadonlyMap<number, number> | null {
     return this.pendingEdits.get(`${cx},${cy},${cz}`)?.map ?? null;
+  }
+
+  // -------------------------------------------------------------------------------------
+  // Block entities (251)
+  // -------------------------------------------------------------------------------------
+
+  /**
+   * Enqueue a chunk's block entities as a full-snapshot deduplicated dirty unit.
+   * An empty snapshot is meaningful: it overwrites stale persisted rows after the
+   * last furnace in a chunk is removed. No-op after dispose.
+   */
+  saveBlockEntities(cx: number, cz: number, entities: SerializedBlockEntity[]): void {
+    if (this.disposed) return;
+    this.coordinator.markDirty({
+      key: `block-entities|${this.worldIdValue}|${cx}|${cz}`,
+      kind: 'block-entities',
+      worldId: this.worldIdValue,
+      chunkX: cx,
+      chunkZ: cz,
+      payload: entities,
+    });
+  }
+
+  /**
+   * Committed-copy lookup for one chunk. NEVER throws: a failure is recorded and
+   * triggers a health check; the caller receives `null` (treated as "no data").
+   */
+  async loadBlockEntities(cx: number, cz: number): Promise<SerializedBlockEntity[] | null> {
+    try {
+      return await this.blockEntities.getChunkEntities(this.worldIdValue, cx, cz);
+    } catch (e) {
+      this.recordError(`load block entities (${cx},${cz}): ${errorMessage(e)}`);
+      void this.healthMonitor.check().catch(() => undefined);
+      return null;
+    }
   }
 
   /**
@@ -679,6 +734,11 @@ export class GamePersistence implements WorldEditDurability {
   /** Player state bulk-loaded at `open()` (null before open / when none exists). */
   get initialPlayerState(): GamePlayerSnapshot | null {
     return this.initialPlayerStateValue;
+  }
+
+  /** Bulk-loaded persisted block-entity records for this world (251 hydration). */
+  get initialBlockEntities(): SerializedBlockEntity[] {
+    return this.initialBlockEntitiesValue;
   }
 
   /** Last classified write failure observed by the monitoring sink, or `null` (debug surface). */

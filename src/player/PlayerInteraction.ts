@@ -22,6 +22,13 @@ import { createSpawnPosition } from '../world/ItemEntity';
 
 export type InteractionAction = 'break' | 'place' | 'blocked' | 'empty' | 'use';
 
+/** World coordinates of the affected block for an action (251). */
+export interface InteractionCoords {
+  x: number;
+  y: number;
+  z: number;
+}
+
 /**
  * Player interaction.
  *
@@ -40,7 +47,7 @@ export class PlayerInteraction {
   private readonly player: Player;
   private readonly camera: THREE.Camera;
   private readonly input?: InputState;
-  private readonly onAction?: (action: InteractionAction, blockId?: number) => void;
+  private readonly onAction?: (action: InteractionAction, blockId?: number, coords?: InteractionCoords) => void;
   private readonly onBreakProgress?: (progress: number) => void;
   private readonly onToolBreak?: () => void;
   private readonly lootTables?: LootTableRegistry;
@@ -75,7 +82,7 @@ export class PlayerInteraction {
     player: Player;
     camera: THREE.Camera;
     input?: InputState;
-    onAction?: (action: InteractionAction, blockId?: number) => void;
+    onAction?: (action: InteractionAction, blockId?: number, coords?: InteractionCoords) => void;
     onBreakProgress?: (progress: number) => void;
     onToolBreak?: () => void;
     lootTables?: LootTableRegistry;
@@ -227,6 +234,15 @@ export class PlayerInteraction {
           // Right-clicking an enchanting table opens a session instead of placing.
           if (targetBlockId === BlockId.EnchantingTable) {
             this.onAction?.('use', targetBlockId);
+            this.lastActionTime = this.elapsed;
+          } else if (targetBlockId === BlockId.Furnace) {
+            // Right-clicking a furnace opens its container instead of placing
+            // (251); the held stack is untouched regardless of what it is.
+            this.onAction?.('use', targetBlockId, {
+              x: this.target.blockX,
+              y: this.target.blockY,
+              z: this.target.blockZ,
+            });
             this.lastActionTime = this.elapsed;
           } else if (selectedId === ItemId.BoneMeal) {
             // Bone meal is used on the block under the crosshair instead of placing.
@@ -402,7 +418,11 @@ export class PlayerInteraction {
         this.onToolBreak?.();
       }
     }
-    this.onAction?.('break', primaryDropId);
+    this.onAction?.('break', primaryDropId, {
+      x: this.target.blockX,
+      y: this.target.blockY,
+      z: this.target.blockZ,
+    });
     this.lastActionTime = this.elapsed;
     this.resetBreakProgress();
   }
@@ -499,7 +519,7 @@ export class PlayerInteraction {
       this.onAction?.('blocked', selectedId);
       return false;
     }
-    this.onAction?.('place', selectedId);
+    this.onAction?.('place', selectedId, { x: bx, y: by, z: bz });
     return true;
   }
 

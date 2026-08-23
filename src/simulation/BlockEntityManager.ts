@@ -110,6 +110,22 @@ export class BlockEntityManager {
     return true;
   }
 
+  /**
+   * Swap the instance at `(x, y, z)` for `next` (251): instances are immutable,
+   * so a ticked furnace publishes its new state through an order-preserving
+   * replace instead of mutation. Returns false when no instance occupies the
+   * position or the position/type/coords disagree with `next`; the manager is
+   * unchanged in that case.
+   */
+  replace(next: BlockEntityInstance): boolean {
+    const key = positionKey(next.x, next.y, next.z);
+    const current = this.byPosition.get(key);
+    if (!current || current.typeKey !== next.typeKey) return false;
+    if (chunkOf(next.x, next.z) !== chunkOf(current.x, current.z)) return false;
+    this.byPosition.set(key, next);
+    return true;
+  }
+
   /** The instance at `(x, y, z)`, or `null`. */
   get(x: number, y: number, z: number): BlockEntityInstance | null {
     return this.byPosition.get(positionKey(x, y, z)) ?? null;
@@ -125,6 +141,16 @@ export class BlockEntityManager {
         const instance = this.byPosition.get(key);
         if (instance) out.push(instance);
       }
+    }
+    return out;
+  }
+
+  /** All live instances in insertion order (251 consumers). */
+  all(): BlockEntityInstance[] {
+    const out: BlockEntityInstance[] = [];
+    for (const key of this.order) {
+      const instance = this.byPosition.get(key);
+      if (instance) out.push(instance);
     }
     return out;
   }
