@@ -1,0 +1,13 @@
+# Universal Planner → Executor Handoff
+
+Version: 1
+
+This is an additive cross-agent protocol. It does not replace repository-specific product, architecture, governance, OpenSpec, campaign, state, validation, or Git rules.
+
+The repository-planning skill writes the next execution-ready campaign to `.agent/EXECUTION_PROMPT.md`. This is a planner-generated overlay, not a replacement for native goal/campaign/state/OpenSpec files. It should record `Status: ACTIVE | BLOCKED | COMPLETED`, `Planned-From`, `Planned-At`, and `Target-Branch`, then define mission, rationale, repository findings, behavior to preserve, scope/out-of-scope, ordered workstreams, implementation constraints, migrations/data work when relevant, testing, integration/E2E validation, acceptance criteria, completion gate, Git requirements, and final reporting.
+
+Planner: inspect actual source/config/tests/docs, recent commits/diffs, useful issues/PRs, agent/governance files, and native campaign/state before writing; build on completed work; choose one coherent high-impact long-session campaign; preserve working behavior unless intentionally changed; require appropriate automated and integration validation and no known Critical/High regressions; integrate with native control-plane files; write/update `EXECUTION_PROMPT.md`, commit/push the planning-only change per repository policy, and stop without implementing.
+
+Executor for `/goal continue`, `continue`, or the shared `goal` command/skill: read all applicable repository instructions, this file, `EXECUTION_PROMPT.md` if present, and native goal/campaign/state/OpenSpec files; inspect current branch/worktree/recent commits/tests/implementation; reconcile `Planned-From` with already-landed work; if the prompt is `ACTIVE`, resume the first genuinely incomplete requirement without redoing completed work; work autonomously, follow existing patterns, avoid unrelated rewrites, run required validation, repair introduced Critical/High regressions, update durable state, and commit/push per repository policy; mark `COMPLETED` only when acceptance criteria pass and `BLOCKED` only for a genuine blocker.
+
+If the planner prompt is absent/completed, use native continuation semantics. If neither an active planner prompt nor a native active campaign exists, do not invent a major campaign in executor mode; report that a planner pass is required. Explicit user instructions and stricter repository-specific rules remain authoritative.

@@ -1,0 +1,5 @@
+---
+description: Resume the repository's planner-generated or native active development campaign
+---
+
+Treat this as repository goal mode. Arguments: `$ARGUMENTS`. Read applicable `AGENTS.md`, `.agent/PLANNER_HANDOFF.md`, `.agent/EXECUTION_PROMPT.md` if present, and native campaign/state/OpenSpec files. Reconcile the planned baseline with current Git/tests/implementation. If the planner prompt is `ACTIVE`, resume the first genuinely incomplete requirement and execute autonomously until completion or a genuine durable blocker; do not repeat already-landed work. Otherwise use native continuation semantics; if none exists, report that a planner pass is required. Preserve stricter repository rules, run required validation, repair introduced Critical/High regressions, and commit/push per existing Git policy.

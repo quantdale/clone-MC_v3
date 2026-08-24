@@ -1,0 +1,3 @@
+# Planner/Executor Handoff Adapter
+
+Preserve root/scoped `AGENTS.md` and repository governance/state rules. For `/goal continue`: read `.agent/PLANNER_HANDOFF.md`, `.agent/EXECUTION_PROMPT.md` if present, and native campaign/state/OpenSpec files; reconcile with current Git and implementation; if the prompt is `ACTIVE`, resume the first genuinely incomplete requirement and continue autonomously through required validation, durable-state updates, commits, and pushes. If absent/completed, fall back to native continuation semantics. If neither exists, report that a planner pass is required. Never redo landed work, weaken stricter local rules, perform unrelated rewrites, or finish with known Critical/High regressions.
