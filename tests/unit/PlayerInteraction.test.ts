@@ -618,6 +618,103 @@ describe('player interaction enchantment application (119)', () => {
   });
 });
 
+describe('player interaction coordinate emission (251)', () => {
+  function aim(player: Player, camera: THREE.PerspectiveCamera): void {
+    camera.position.copy(player.eyePosition);
+    camera.lookAt(10, player.eyePosition.y, player.eyePosition.z);
+    camera.updateMatrixWorld(true);
+  }
+
+  it("right-clicking a furnace emits ('use', Furnace, coords) and never places", () => {
+    const player = new Player({ position: new THREE.Vector3(0.5, 0, 0.5) });
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 20);
+    aim(player, camera);
+    const world = makeMutableWorld(BlockId.Furnace);
+    const seen: Array<{ action: string; blockId?: number; coords?: { x: number; y: number; z: number } }> = [];
+    const interaction = new PlayerInteraction({
+      world,
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
+      selector: { getSelectedItemId: () => ItemId.Stone }, // a placeable block
+      player,
+      camera,
+      input: { ...makeInput({ breakRequested: false, held: false }), consumePlace: () => true },
+      onAction: (action, blockId, coords) => seen.push({ action, blockId, coords }),
+    });
+
+    interaction.update(0.016);
+
+    const use = seen.find((s) => s.action === 'use');
+    expect(use?.blockId).toBe(BlockId.Furnace);
+    expect(use?.coords).toEqual({ x: 2, y: 1, z: 0 });
+    // The targeted furnace is untouched: no placement replaced it.
+    expect(world.getBlock(2, 1, 0)).toBe(BlockId.Furnace);
+    expect(seen.some((s) => s.action === 'place')).toBe(false);
+    interaction.dispose();
+  });
+
+  it('breaking emits the mined block coordinates', () => {
+    const player = new Player({ position: new THREE.Vector3(0.5, 0, 0.5) });
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 20);
+    aim(player, camera);
+    const world = makeMutableWorld(BlockId.Stone);
+    let brokenCoords: { x: number; y: number; z: number } | undefined;
+    const inputState = { breakRequested: false, held: false };
+    const interaction = new PlayerInteraction({
+      world,
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
+      selector: { getSelectedItemId: () => ItemId.WoodenPickaxe },
+      player,
+      camera,
+      input: makeInput(inputState),
+      onAction: (_action, _blockId, coords) => {
+        if (coords) brokenCoords = coords;
+      },
+    });
+
+    inputState.breakRequested = true;
+    inputState.held = true;
+    for (let i = 0; i < 400 && world.getBlock(2, 1, 0) !== BlockId.Air; i++) {
+      interaction.update(0.05);
+    }
+    expect(world.getBlock(2, 1, 0)).toBe(BlockId.Air);
+    expect(brokenCoords).toEqual({ x: 2, y: 1, z: 0 });
+    interaction.dispose();
+  });
+
+  it('a committed placement emits the placed-cell coordinates', () => {
+    const player = new Player({ position: new THREE.Vector3(0.5, 0, 0.5) });
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 20);
+    aim(player, camera);
+    const world = makeMutableWorld(BlockId.Stone);
+    let placedCoords: { x: number; y: number; z: number } | undefined;
+    const interaction = new PlayerInteraction({
+      world,
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
+      selector: {
+        getSelectedItemId: () => ItemId.Cobblestone,
+        getSlotCount: () => 1,
+        consumeSelected: () => true,
+      },
+      player,
+      camera,
+      input: { ...makeInput({ breakRequested: false, held: false }), consumePlace: () => true },
+      onAction: (_action, _blockId, coords) => {
+        placedCoords = coords;
+      },
+    });
+
+    interaction.update(0.016);
+
+    // Horizontal ray hits the block's west face → placement lands at x=1.
+    expect(world.getBlock(1, 1, 0)).toBe(BlockId.Cobblestone);
+    expect(placedCoords).toEqual({ x: 1, y: 1, z: 0 });
+    interaction.dispose();
+  });
+});
+
 describe('player interaction bone meal (127)', () => {
   function aim(player: Player, camera: THREE.PerspectiveCamera): void {
     camera.position.copy(player.eyePosition);

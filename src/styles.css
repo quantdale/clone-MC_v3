@@ -46,6 +46,7 @@ body {
 #crosshair.hidden,
 #hotbar.hidden,
 #crafting.hidden,
+#furnace.hidden,
 #break-progress.hidden,
 #toast.hidden,
 #debug-overlay.hidden {
@@ -507,6 +508,14 @@ body {
 }
 
 /* Furnace screen (251) — reuses the crafting panel/inventory-cell chrome. */
+/* Furnace screen */
+#furnace {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  background: rgba(3, 10, 17, 0.36);
+}
 .furnace-io {
   display: flex;
   align-items: center;

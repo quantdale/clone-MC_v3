@@ -2,6 +2,8 @@
 
 ## Current checkpoint
 
+> **251-live-furnace-production-integration — VERIFIED and ARCHIVED as `2026-08-25-251-live-furnace-production-integration` (2026-08-25, session start `3efd7a3`).** Production furnace wiring hardened and certified: `LiveBlockEntityHost` envelope+version quarantine (bounded warn, degraded banner), `GamePersistence.listAllBlockEntities`, `FurnacePanel` extraction-only+atomicity (inventory preserved), `Game` walk-away/focus/dispose lifecycle, 64 new 251 tests (`LiveBlockEntityHost` 17 + `FurnacePersistence` 6 + `FurnacePanel` 11 + `FurnaceMenuSlots` 8 + `LiveFurnaceIntegration` 22) covering close/reopen, burning without UI, autosave/reload via real IndexedDB, blocked-output, fractional XP determinism, break/no-resurrection, hostile batches, and hopper/player single-engine interleaving (166 `transferOneItem` vs 106 transactions). E2E furnace journey 2/2 PASS (place→open→insert→smelt→collect→reload→break), game non-visual 47/47 PASS, file-audit 2490 rows PASS, typecheck/lint/build/bundle/audits PASS, coverage functions 95% held (lines 84.34≥84). Archived with 7 specs synced to `openspec/specs/live-furnace-integration/spec.md`; `PARITY_MATRIX.md` C251 now `exact` VERIFIED. Program COMPLETE (001–251 VERIFIED).
+
 > **CERTIFICATION HARDENING COMPLETE — PROGRAM TERMINAL (2026-08-23, session start head
 > `5e032877a6d2bad7ccd2af201d9dd77fe6ddc20d`).** The out-of-band adversarial certification
 > campaign (`openspec/hardening/2026-08-23-exhaustive-repository-certification/`) audited the
@@ -37,20 +39,20 @@
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys).
      "None (hardening interlock ...)" is the sanctioned form while an interlock governs release
      authority; nextChange stays null because no Change 251 exists. -->
-- Active implementation change: **251-live-furnace-production-integration — live furnace/block-entity production integration (first explicitly authorized post-terminal change)**
-- Next change: **null**
+- Active implementation change: **none (001–251 VERIFIED and archived; program COMPLETE — `251-live-furnace-production-integration` archived as `2026-08-25-251-*`)**
+- Next change: **null (await explicit product authorization for 252)**
 - 240 advancement allowed: **yes**
 
-- Program: **reopened from COMPLETE by explicit authorization — Change 251 ACTIVE (001–250 remain VERIFIED and untouched)**
-- Last completed change: **250-final-program-verification — VERIFIED 100% (documentation-only; final numbered change)**
-- All changes 001–250: **VERIFIED** — zero DEFERRED, zero UNCLASSIFIED (`openspec/evidence/checklist/final-verification-checklist.md`)
+- Program: **COMPLETE — 001–251 VERIFIED (251 archived as `2026-08-25-251-live-furnace-production-integration`; 7 live-furnace specs at `openspec/specs/live-furnace-integration/spec.md`)**
+- Last completed change: **251-live-furnace-production-integration — VERIFIED and ARCHIVED (2026-08-25)**
+- All changes 001–251: **VERIFIED** — zero DEFERRED, zero UNCLASSIFIED (archived count 1 for 251)
 - Historical Change 250-era bullets (preserved; superseded **for current release authority** by `openspec/evidence/release-readiness-post-hardening.md`): 250 required-test gate PASS at head `502d021` / byte-identical tree `b56529e`; historical release-readiness READY RC-1..RC-9 (`openspec/evidence/release-readiness.md`); final parity audit PASS with DL dispositions later rejected by this interlock (`openspec/evidence/parity/final-parity-audit.md`); evidence archive complete (`openspec/evidence/`)
 - Post-250 hardening interlock: **VERIFIED at remediation checkpoint `aa92a5c229a753f10f8c1677e836136962b5d07a` — canonical CI run 32589457819 SUCCESS (gate job 97078975848, e2e job 97078975868); tasks 78/78; release decision READY (`openspec/evidence/release-readiness-post-hardening.md`)**
 - Certification campaign: **openspec/hardening/2026-08-23-exhaustive-repository-certification — findings fixed with oracles; manifest reviewed; risk register R-1..R-9 accepted debt**
 - Release authority: **certification package above; verdict READY WITH EXPLICIT NON-BLOCKING DEBT conditioned on canonical exact-SHA CI (gate + e2e SUCCESS)** — gate job 97148797875 (run 32620103123) is SUCCESS on follow-up head `e56b83a`; e2e pending at last checkpoint; `candidateSha` stays null until both jobs are green
 - Publication history: **stale scalars retired into `PROGRAM_STATE.json` `publicationHistory` (67aafd3e era → c58f972 certification → e56b83a lint fix); follow-up commits carry no independent release claim**
 - Section milestone: **PROGRAM COMPLETE — every planned change 001–250 VERIFIED and the mandatory post-250 hardening interlock VERIFIED with canonical exact-SHA CI proof**: program control (001), data/registry foundation (002–020), vertical world/chunk storage (021–033), persistent storage (034–043), fixed-tick simulation (044–055), block geometry/rendering (056–075), fluids (076–084), worldgen (085–102), crafting/containers/progression (103–128), entity framework/mobs (129–153), redstone/automation (154–173), dimensions/major progression (174–195), environment/UX/accessibility (196–210), resource/data packs/content breadth (211–221), multiplayer (222–237), hardening/verification matrices (238–247), parity matrix reconciliation (248), whole-codebase adversarial audit (249), final program verification (250), post-250 production persistence hardening (interlock).
-- Next exact action: **Implement 251 tasks in order (composition → tick → interaction → UI → persistence → drops → adversarial), then close the certification condition when run 32620103123 e2e lands and record candidateSha/canonicalCi in releaseAuthority.**
+- Next exact action: **Await explicit product authorization for Change 252; no active change (001–251 VERIFIED and archived).**
 
 ## What 250 implemented
 

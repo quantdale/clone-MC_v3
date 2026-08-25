@@ -518,10 +518,14 @@ export class Game {
       world: this.world,
       persistence: this.persistenceImpl,
       furnaceContext: this.furnaceContext,
-      onQuarantined: () => {
-        // A quarantined record means durable data was corrupt; surface it via
-        // the save-health banner instead of crashing boot.
+      onQuarantined: (message) => {
+        // A quarantined record means durable data was corrupt or from a
+        // future/unknown schema version; surface it via the save-health
+        // banner instead of crashing boot, and keep the warning sticky
+        // until a verified durable commit proves current writes are healthy.
+        this.bootSaveDegraded = true;
         this.refreshSaveStatus();
+        void message;
       },
     });
     if (this.selfOpenPromise === null) {
@@ -617,7 +621,7 @@ export class Game {
       player: this.player,
       camera: this.renderer.camera,
       input: this.input,
-      onAction: (action, blockId) => this.onInteractionAction(action, blockId),
+      onAction: (action, blockId, coords) => this.onInteractionAction(action, blockId, coords),
       onBreakProgress: (progress) => this.setBreakProgress(progress),
       onToolBreak: () => {
         this.hotbar.render();
@@ -965,7 +969,11 @@ export class Game {
     this.updateHotbar();
 
     if (this.input.consumeCraftingToggle()) {
-      if (this.craftingOpen) {
+      if (this.furnaceOpen) {
+        // One container at a time: the toggle closes the furnace instead of
+        // stacking the crafting screen on top of it (251).
+        this.closeFurnace();
+      } else if (this.craftingOpen) {
         this.closeCrafting();
       } else {
         this.openCrafting();
@@ -1307,6 +1315,11 @@ export class Game {
       if (this.craftingOpen) {
         this.closeCrafting();
       }
+      if (this.furnaceOpen) {
+        // Re-locking the pointer settles any open container session (251) so a
+        // panel can never stay stuck over live input.
+        this.closeFurnace();
+      }
       this.hideOverlay();
       // The HUD/crosshair only appear once the world is ready (see update()).
       if (!this.loadingShown) {
@@ -1314,7 +1327,10 @@ export class Game {
         this.hud.show();
         this.hotbar.show();
       }
-    } else {
+    } else if (!this.craftingOpen && !this.furnaceOpen) {
+      // Unlock caused by OPENING a container session must not stack the pause
+      // overlay behind/on the open panel; the panel itself represents the
+      // paused state and its owner re-shows the overlay on close (251).
       this.showOverlay();
       this.crosshair.hide();
       this.hud.hide();
@@ -1659,7 +1675,7 @@ export class Game {
    */
   private maybeDismissOverlayForControllerPlay(frame: DeviceFrame, worldReady: boolean): void {
     if (!this.overlayOpen || !worldReady) return;
-    if (this.craftingOpen || this.contextLost || !this.errorEl.classList.contains('hidden')) return;
+    if (this.craftingOpen || this.furnaceOpen || this.contextLost || !this.errorEl.classList.contains('hidden')) return;
     if (!this.hasControllerInput(frame)) return;
     this.hideOverlay();
     if (this.shouldShowHud()) {
@@ -1681,6 +1697,7 @@ export class Game {
       !this.overlayOpen &&
       !this.pointerLocked &&
       !this.craftingOpen &&
+      !this.furnaceOpen &&
       !this.contextLost &&
       this.errorEl.classList.contains('hidden')
     ) {
@@ -1806,7 +1823,11 @@ export class Game {
   /** Merge a menu-cursor stack back into the inventory or drop it at the player. */
   private returnStackToPlayer(itemKey: string, count: number): void {
     const stack = menuSlotToStack({ item: itemKey, count, maxStack: 64 }, this.itemRegistry);
-    if (!stack) return;
+    if (!stack) {
+      // Unrepresentable cursor content is quarantined loudly, never deleted silently.
+      console.warn(`[voxel] furnace cursor stack ${itemKey} x${count} could not be restored`);
+      return;
+    }
     const left = this.inventory.addItem(stack.id, stack.count);
     if (left > 0) {
       const p = this.player.position;

@@ -20,7 +20,11 @@
  */
 import { SECTION_SIZE } from '../math/SectionCoordinate';
 import { BlockEntityManager } from '../simulation/BlockEntityManager';
-import type { SerializedBlockEntity } from '../storage/BlockEntityRecord';
+import {
+  BLOCK_ENTITY_RECORD_VERSION,
+  validateSerializedBlockEntity,
+  type SerializedBlockEntity,
+} from '../storage/BlockEntityRecord';
 import {
   FURNACE_BLOCK_ID,
   FURNACE_TYPE_KEY,
@@ -189,8 +193,27 @@ export class LiveBlockEntityHost {
   hydrate(records: ReadonlyArray<SerializedBlockEntity>): { hydrated: number; quarantined: number } {
     let hydrated = 0;
     let quarantined = 0;
-    for (const record of records) {
+    for (const raw of records) {
+      // The repository boundary writes through the validator, but reads do not
+      // re-validate every row; treat any envelope we did not write ourselves
+      // as untrusted (defense-in-depth so a hand-edited DB / older row can
+      // never crash boot).
+      let record: SerializedBlockEntity;
+      try {
+        record = validateSerializedBlockEntity(raw);
+      } catch (err) {
+        quarantined++;
+        this.warnQuarantine(raw, 'envelope', err);
+        continue;
+      }
       if (record.typeKey !== FURNACE_TYPE_KEY) continue;
+      // Future/unknown envelope version: fail safe (campaign 251 §9). A
+      // different shape could silently corrupt runtime state if trusted.
+      if (record.schemaVersion !== BLOCK_ENTITY_RECORD_VERSION) {
+        quarantined++;
+        this.warnQuarantine(record, `version ${record.schemaVersion} != ${BLOCK_ENTITY_RECORD_VERSION}`);
+        continue;
+      }
       if (this.manager.get(record.x, record.y, record.z)) continue;
       try {
         const state = deserializeFurnaceState(record.data);
@@ -198,15 +221,33 @@ export class LiveBlockEntityHost {
         hydrated++;
       } catch (err) {
         quarantined++;
-        this.onQuarantined?.(
-          `block-entity record at ${record.x},${record.y},${record.z} failed validation and was skipped`,
-        );
-        if (this.onQuarantined === undefined) {
-          console.warn(`[voxel] furnace record at ${record.x},${record.y},${record.z} was corrupt and was skipped`, err);
-        }
+        this.warnQuarantine(record, 'payload', err);
       }
     }
     return { hydrated, quarantined };
+  }
+
+  /**
+   * Surface a quarantine event with enough information to investigate without
+   * spamming the console (one event per record at hydration, never per tick).
+   */
+  private warnQuarantine(
+    record: { x: number; y: number; z: number; typeKey?: string },
+    reason: string,
+    err?: unknown,
+  ): void {
+    const coords = `${record.x},${record.y},${record.z}`;
+    const typeKey = record.typeKey ?? '<unknown>';
+    if (this.onQuarantined) {
+      this.onQuarantined(
+        `block-entity record at ${coords} (typeKey=${typeKey}) quarantined: ${reason}`,
+      );
+    } else {
+      console.warn(
+        `[voxel] furnace record at ${coords} (typeKey=${typeKey}) was quarantined: ${reason}`,
+        err,
+      );
+    }
   }
 
   // ── Fixed-tick simulation ──────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 # PARITY_MATRIX.md
 
 - **Schema version:** `v1`
-- **Generated:** 2026-08-23 (reconciliation pass: C248–C250 statuses corrected to their true VERIFIED state; C251 added for the authorized post-terminal epoch; provenance in `openspec/PROGRAM_STATE.json`)
+- **Generated:** 2026-08-25 (Change 251 VERIFIED and archived as `2026-08-25-251-live-furnace-production-integration`; 7 specs synced; C251 exact; 001–251 VERIFIED; provenance in `openspec/PROGRAM_STATE.json`)
 - **Scope:** one row per planned numbered change `001`–`251` (FeatureId `C<number>`), plus master-plan-only feature areas (`MP-<section>-<seq>`).
 
 ## Sources of truth
@@ -281,7 +281,7 @@ Narrow-outcome text is quoted from `openspec/CHANGE_SEQUENCE.md` (authoritative 
 | C248 | `248-parity-matrix-reconciliation` | Every planned feature categorized exact/equivalent/approx/deferred/out-of-scope with evidence. | n/a | `openspec/changes/248-parity-matrix-reconciliation/verification.md` (VERIFIED) | This change: creates and reconciles `PARITY_MATRIX.md` itself (documentation-only). Historical note: a prior reconciliation pass left this row marked "in progress" after the work had closed; corrected 2026-08-23 against PROGRAM_STATE.json. | VERIFIED |
 | C249 | `249-whole-codebase-adversarial-audit` | Security, correctness, reliability, data-loss, concurrency, performance and architecture audit. | n/a | `openspec/changes/249-whole-codebase-adversarial-audit/verification.md` (VERIFIED) | Documentation-only audit record (`report.md` + fragments); its blocking data-loss findings were remediated by the post-250 hardening interlock (`openspec/hardening/2026-08-21-post-250-production-persistence-hardening/`), superseding the historical `accepted` dispositions. | VERIFIED |
 | C250 | `250-final-program-verification` | All mandatory changes verified, complete evidence archive, final release-readiness decision. | n/a | `openspec/changes/250-final-program-verification/verification.md` (VERIFIED) | Documentation-only evidence archive (`openspec/evidence/`); its READY decision is superseded for current release authority by the post-250 interlock and the 2026-08-23 certification package (see `PROGRAM_STATE.json` `releaseAuthority`). | VERIFIED |
-| C251 | `251-live-furnace-production-integration` | Wire the verified furnace/block-entity stack into the playable Game: place, open, operate, persist, unload/reload, and break a furnace end-to-end. | deferred | — | First explicitly authorized post-terminal change (2026-08-23); ACTIVE at matrix-update time. | in progress |
+| C251 | `251-live-furnace-production-integration` | Wire the verified furnace/block-entity stack into the playable Game: place, open, operate, persist, unload/reload, and break a furnace end-to-end. | exact | `openspec/changes/archive/2026-08-25-251-live-furnace-production-integration/verification.md` (VERIFIED) + `openspec/specs/live-furnace-integration/spec.md` (7 requirements, 9 scenarios) | — | VERIFIED |
 
 ## Master-plan-only features
 
@@ -298,14 +298,14 @@ Feature areas named in `MINECRAFT_PARITY_MASTER_PLAN.md` that no single numbered
 
 | Category | Rows |
 |---|---|
-| exact | 238 |
+| exact | 239 |
 | equivalent | 4 |
 | approx | 5 |
-| deferred | 2 (C251 active post-terminal work; MP-19.4-1 Wither-like secondary boss — future scope, intentionally not implemented) |
+| deferred | 1 (MP-19.4-1 Wither-like secondary boss — future scope, intentionally not implemented) |
 | out-of-scope | 1 (MP-33-1 proprietary services/assets) |
 | n/a (documentation) | 3 (C248, C249, C250) |
 | **Total rows** | **253** (251 change rows + 2 master-plan rows) |
 
-Change-rows-only split: exact 238 / equivalent 4 / approx 5 / n/a 3 / deferred 1 = 251.
+Change-rows-only split: exact 239 / equivalent 4 / approx 5 / n/a 3 / deferred 1 = 251.
 
 **Coverage statement:** every planned change 001–251 appears in exactly one row (bijective `C001`…`C251`, no duplicates, no orphan rows), every completed change maps to at least one row citing its VERIFIED artifact, and `scripts/validate-state.mjs` cross-checks matrix rows against `PROGRAM_STATE.json` so a VERIFIED change can never silently regress to `deferred`/`planned` here. The two additional `MP-*` rows cover master-plan areas outside the numbered sequence.

@@ -479,15 +479,7 @@ export class GamePersistence implements WorldEditDurability {
       }
       // 251 hydration source: every persisted block-entity record for this world.
       try {
-        const chunkRecords = await this.blockEntities.listChunks(this.worldIdValue);
-        for (const chunkRecord of chunkRecords) {
-          const entities = await this.blockEntities.getChunkEntities(
-            this.worldIdValue,
-            chunkRecord.chunkX,
-            chunkRecord.chunkZ,
-          );
-          if (entities && entities.length > 0) initialBlockEntities.push(...entities);
-        }
+        initialBlockEntities.push(...(await this.listAllBlockEntities()));
       } catch (e) {
         this.recordError(`load block entities: ${errorMessage(e)}`);
       }
@@ -648,6 +640,25 @@ export class GamePersistence implements WorldEditDurability {
       void this.healthMonitor.check().catch(() => undefined);
       return null;
     }
+  }
+
+  /**
+   * List every persisted block-entity record for this world across all chunks
+   * (251 boot hydration; also usable by tests/tooling). Throws on repository
+   * failure — callers decide degradation policy (`open()` records + degrades).
+   */
+  async listAllBlockEntities(): Promise<SerializedBlockEntity[]> {
+    const out: SerializedBlockEntity[] = [];
+    const chunkRecords = await this.blockEntities.listChunks(this.worldIdValue);
+    for (const chunkRecord of chunkRecords) {
+      const entities = await this.blockEntities.getChunkEntities(
+        this.worldIdValue,
+        chunkRecord.chunkX,
+        chunkRecord.chunkZ,
+      );
+      if (entities && entities.length > 0) out.push(...entities);
+    }
+    return out;
   }
 
   // -------------------------------------------------------------------------------------

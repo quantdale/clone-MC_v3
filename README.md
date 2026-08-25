@@ -12,15 +12,15 @@ Fully spec-driven: see [`openspec/`](openspec/) for the capability specs, change
 - **Chunk streaming** — chunks generate, mesh, and unload around the player within a configurable render distance, with distance-prioritized queues, bounded per-frame work, and a non-blocking spawn preload.
 - **First-person controls** — pointer lock, mouse look, WASD, sprint, jump, swimming, lava slowdown, gravity, one-block steps, and AABB voxel collision (no falling through terrain).
 - **Block interaction** — destructive/placement with Amanatides & Woo voxel raycasting, accurate targeting, bedrock protection, placement validation, selection outline, stack consumption, hardness-based held mining progress, and distinct coal/raw-iron ore drops.
-- **Survival inventory** — 9-slot hotbar plus 27 storage slots, stack counts, collected block drops, apples from leaves, persistent inventory state, and a usable inventory screen.
-- **Crafting** — nine transactional recipes for planks, glass, gravel, cobblestone, bricks, sticks, and durable wooden/stone tools, with material checks, output-capacity checks, and a clickable inventory/crafting panel.
+- **Survival inventory** — 9-slot hotbar plus 27 storage slots, stack counts, collected block drops, apples from leaves, persistent inventory state, a usable inventory screen, and a live furnace (place, open, smelt with fuel recipes and XP, persist across unload/reload, and break to drop contents) wired through `LiveBlockEntityHost` and the `block-entities` IndexedDB store.
+- **Crafting** — nine transactional recipes for planks, glass, gravel, cobblestone, bricks, sticks, and durable wooden/stone tools, with material checks, output-capacity checks, and a clickable inventory/crafting panel. Right-click a placed furnace instead of placing the held block: its input/fuel/output slots plus the 36 player slots operate over the same 106 container-transaction core (shift-click, split-half/place-one, cursor safety) and burn/cook indicators.
 - **Tools** — craftable wooden pickaxes, a stone pickaxe, and a wooden axe speed up preferred block types and wear down visibly with use.
 - **Survival loop** — health, hunger, saturation, sprint hunger drain, fall damage, drowning, lava damage, regeneration, death/respawn, and apples as food.
-- **World simulation** — unsupported sand and gravel settle downward with bounded updates, deterministic passive pigs and hostile zombies roam and threaten the player, crops grow through random ticks, and enchanting/breeding/furnace-style systems model progression.
+- **World simulation** — unsupported sand and gravel settle downward with bounded updates, deterministic passive pigs and hostile zombies roam and threaten the player, crops grow through random ticks, the live furnace smelts deterministically on the 20-TPS fixed tick (simulating chunks only, burn frozen without cookable input or with blocked output, XP/fuel exact-once), and enchanting/brewing remain headless progression primitives.
 - **Lighting & environment** — hemisphere light, shadowed directional sun, smooth day/night cycle with an in-game clock, procedural sky gradient, distance fog, drifting cloud layer, and semi-transparent water.
 - **Exploration polish** — automatic one-block step-up traversal, swimming, target outline feedback, focus-safe input release, camera bob, procedural action sounds, and player-centered shadow coverage.
 - **Responsive UI** — crosshair, FPS counter, loading indicator, start/pause overlay, debug overlay (F3), and a styled, professional hotbar.
-- **Save persistence** — block edits, player pose, inventory stacks (including per-stack components such as tool damage and enchantments), health, hunger, and saturation survive chunk unload/reload and page refresh through a durable IndexedDB facade (`GamePersistence`) with legacy localStorage migration; settings/keybindings/accessibility stay in localStorage.
+- **Save persistence** — block edits, player pose, inventory stacks (including per-stack components such as tool damage and enchantments), health, hunger, saturation, and — since Change 251 — live furnace state (`input/fuel/output/burnTime/burnTimeTotal/smeltTime/smeltTimeTotal/xp` per furnace chunk) survive chunk unload/reload and page refresh through the durable IndexedDB facade (`GamePersistence`: `block-entities|world|cx|cz` dirty units with last-writer-wins `block-entities` store, degraded-warning quarantine for corrupt/future-version payloads); settings/keybindings/accessibility stay in localStorage.
 - **Production tooling** — ESLint, strict TypeScript, Vitest unit tests, Playwright browser tests, and a production build.
 
 ---
@@ -85,7 +85,8 @@ npx playwright install chromium
 | `Ctrl` | Sprint |
 | `Mouse` | Look |
 | `Left click` (held) | Mine targeted block (hardness-based duration) |
-| `Right click` | Place selected block / use |
+| `Right click` | Place selected block / use — targeting a placed furnace opens it instead of placing (input/fuel/output + player inventory, burn and smelt indicators, shift-click/quick-move, right-click split-half/place-one, cursor safety; closing returns the cursor or drops it) |
+| `Esc` (when furnace/crafting open) | Close the open container (cursor/XP settled) before releasing pointer lock |
 | `1–9` / `Mouse wheel` | Select hotbar slot |
 | `F3` | Toggle debug overlay |
 | `C` | Open/close inventory and crafting |
@@ -112,13 +113,16 @@ src/
 ├── simulation/    # Deterministic headless systems: entities/mobs/AI, redstone, fluids,
 │                  # networking codecs/lifecycles, replay + performance harnesses
 ├── storage/       # GamePersistence facade over IndexedDB repositories, dirty-save queue,
-│                  # autosave coordinator, health monitoring, legacy migration
-├── inventory/     # Inventory, Hotbar, Crafting, item registry/components, enchanting
+│                  # autosave coordinator, health monitoring, legacy migration,
+│                  # block-entity `block-entities` store (furnaces) since 251
+├── inventory/     # Inventory, Hotbar, Crafting, item registry/components, enchanting,
+│                  # FurnaceRecipes (smelting results, fuel values, XP per recipe: 110)
 ├── data/          # Resource ids, registries, biomes, effects, dimensions
 ├── rendering/     # TextureAtlas, Materials, Lighting, Environment, light engines,
 │                  # greedy/template/fluid meshers, worker meshing protocol
 ├── audio/         # Procedural WebAudio action feedback
-├── ui/            # Crosshair, HUD, LoadingIndicator, DebugOverlay, CraftingPanel
+├── ui/            # Crosshair, HUD, LoadingIndicator, DebugOverlay, CraftingPanel,
+│                  # FurnacePanel (DOM input/fuel/output + 36 player slots, burn/smelt bars, cursor chip: 251)
 ├── math/          # PRNG, Noise, DDA (voxel raycast), section coordinates
 └── main.ts        # Bootstrap + init-error handling
 ```

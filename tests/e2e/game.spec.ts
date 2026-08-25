@@ -134,7 +134,7 @@ test.describe('voxel game', () => {
 
     await expect(page.locator('#crafting')).toBeVisible();
     await expect(page.locator('#hotbar')).toBeHidden();
-    await expect(page.locator('.inventory-cell')).toHaveCount(36);
+    await expect(page.locator('#crafting .inventory-cell')).toHaveCount(36);
     await expect(page.locator('.crafting-recipe')).toHaveCount(9);
     await expect(page.locator('.crafting-recipe[data-recipe="planks"]')).toBeDisabled();
 

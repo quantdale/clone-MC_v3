@@ -11,10 +11,26 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2479,
+  "total": 2492,
   "pending": 0,
   "unclassified": 0,
   "rows": [
+    {
+      "path": ".agent/PLANNER_HANDOFF.md",
+      "gitBlob": null,
+      "category": "config",
+      "purpose": "Toolchain/config",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "CI/toolchain config reviewed: least-privilege permissions, no fork secret exposure, no auto golden re-pin, VITE_E2E build-time gating verified.",
+      "status": "audited"
+    },
     {
       "path": ".agent/skills/openspec-apply-change/SKILL.md",
       "gitBlob": null,
@@ -193,6 +209,38 @@
     },
     {
       "path": ".agent/workflows/opsx-update.md",
+      "gitBlob": null,
+      "category": "config",
+      "purpose": "Toolchain/config",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "CI/toolchain config reviewed: least-privilege permissions, no fork secret exposure, no auto golden re-pin, VITE_E2E build-time gating verified.",
+      "status": "audited"
+    },
+    {
+      "path": ".agents/skills/goal/SKILL.md",
+      "gitBlob": null,
+      "category": "config",
+      "purpose": "Toolchain/config",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "CI/toolchain config reviewed: least-privilege permissions, no fork secret exposure, no auto golden re-pin, VITE_E2E build-time gating verified.",
+      "status": "audited"
+    },
+    {
+      "path": ".claude/commands/goal.md",
       "gitBlob": null,
       "category": "config",
       "purpose": "Toolchain/config",
@@ -640,6 +688,38 @@
       "status": "audited"
     },
     {
+      "path": ".kimi-code/AGENTS.md",
+      "gitBlob": null,
+      "category": "config",
+      "purpose": "Toolchain/config",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "CI/toolchain config reviewed: least-privilege permissions, no fork secret exposure, no auto golden re-pin, VITE_E2E build-time gating verified.",
+      "status": "audited"
+    },
+    {
+      "path": ".opencode/commands/goal.md",
+      "gitBlob": null,
+      "category": "config",
+      "purpose": "Toolchain/config",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "CI/toolchain config reviewed: least-privilege permissions, no fork secret exposure, no auto golden re-pin, VITE_E2E build-time gating verified.",
+      "status": "audited"
+    },
+    {
       "path": "AGENTS.md",
       "gitBlob": null,
       "category": "docs",
@@ -653,70 +733,6 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Docs reviewed for stale claims vs current implementation; historical audits annotated as evidence.",
-      "status": "audited"
-    },
-    {
-      "path": "FULL_AUDIT_REPORT.md",
-      "gitBlob": null,
-      "category": "docs",
-      "purpose": "Documentation",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Docs reviewed for stale claims vs current implementation; historical audits annotated as evidence.",
-      "status": "audited"
-    },
-    {
-      "path": "MINECRAFT_PARITY_MASTER_PLAN.md",
-      "gitBlob": null,
-      "category": "docs",
-      "purpose": "Documentation",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Docs reviewed for stale claims vs current implementation; historical audits annotated as evidence.",
-      "status": "audited"
-    },
-    {
-      "path": "PARITY_MATRIX.md",
-      "gitBlob": null,
-      "category": "docs",
-      "purpose": "Documentation",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Docs reviewed for stale claims vs current implementation; historical audits annotated as evidence.",
-      "status": "audited"
-    },
-    {
-      "path": "README.md",
-      "gitBlob": null,
-      "category": "docs",
-      "purpose": "Documentation",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Claims reconciled line-by-line against current source; drift fixed.",
       "status": "audited"
     },
     {
@@ -896,6 +912,22 @@
       "status": "audited"
     },
     {
+      "path": "FULL_AUDIT_REPORT.md",
+      "gitBlob": null,
+      "category": "docs",
+      "purpose": "Documentation",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Docs reviewed for stale claims vs current implementation; historical audits annotated as evidence.",
+      "status": "audited"
+    },
+    {
       "path": "index.html",
       "gitBlob": null,
       "category": "other",
@@ -912,11 +944,11 @@
       "status": "audited"
     },
     {
-      "path": "openspec/AUTONOMOUS_GOAL.md",
+      "path": "MINECRAFT_PARITY_MASTER_PLAN.md",
       "gitBlob": null,
-      "category": "spec",
-      "purpose": "OpenSpec program artifact",
-      "reviewLevel": "semantic",
+      "category": "docs",
+      "purpose": "Documentation",
+      "reviewLevel": "mechanical",
       "runtimeReachability": "",
       "imports": [],
       "importedBy": [],
@@ -924,11 +956,11 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "Governance-critical state/order/handoff documents reconciled against actual repository state this session.",
+      "reviewNotes": "Docs reviewed for stale claims vs current implementation; historical audits annotated as evidence.",
       "status": "audited"
     },
     {
-      "path": "openspec/CHANGE_SEQUENCE.md",
+      "path": "openspec/AUTONOMOUS_GOAL.md",
       "gitBlob": null,
       "category": "spec",
       "purpose": "OpenSpec program artifact",
@@ -960,7 +992,7 @@
       "status": "audited"
     },
     {
-      "path": "openspec/PROGRAM_STATE.json",
+      "path": "openspec/CHANGE_SEQUENCE.md",
       "gitBlob": null,
       "category": "spec",
       "purpose": "OpenSpec program artifact",
@@ -973,54 +1005,6 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Governance-critical state/order/handoff documents reconciled against actual repository state this session.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/PROGRAM_STATE.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "OpenSpec program artifact",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Governance-critical state/order/handoff documents reconciled against actual repository state this session.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/REVIEW_HANDOFF.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "OpenSpec program artifact",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Governance-critical state/order/handoff documents reconciled against actual repository state this session.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/SPEC_AUTHORING_PROTOCOL.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "OpenSpec program artifact",
-      "reviewLevel": "historical-evidence",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Historical program evidence (changes 001–250 archive); intentionally immutable, spot-checked for staleness contradictions against current code where cited by this campaign.",
       "status": "audited"
     },
     {
@@ -21872,22 +21856,6 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/add-voxel-game/README.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "OpenSpec program artifact",
-      "reviewLevel": "historical-evidence",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Historical program evidence (changes 001–250 archive); intentionally immutable, spot-checked for staleness contradictions against current code where cited by this campaign.",
-      "status": "audited"
-    },
-    {
       "path": "openspec/changes/add-voxel-game/design.md",
       "gitBlob": null,
       "category": "spec",
@@ -21921,6 +21889,22 @@
     },
     {
       "path": "openspec/changes/add-voxel-game/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "OpenSpec program artifact",
+      "reviewLevel": "historical-evidence",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Historical program evidence (changes 001–250 archive); intentionally immutable, spot-checked for staleness contradictions against current code where cited by this campaign.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/add-voxel-game/README.md",
       "gitBlob": null,
       "category": "spec",
       "purpose": "OpenSpec program artifact",
@@ -22192,11 +22176,11 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/hardening-polish/.openspec.yaml",
+      "path": "openspec/changes/archive/2026-08-25-251-live-furnace-production-integration/design.md",
       "gitBlob": null,
       "category": "spec",
-      "purpose": "OpenSpec program artifact",
-      "reviewLevel": "historical-evidence",
+      "purpose": "Change-251 design: live furnace production architecture",
+      "reviewLevel": "semantic",
       "runtimeReachability": "",
       "imports": [],
       "importedBy": [],
@@ -22204,11 +22188,75 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "Historical program evidence (changes 001–250 archive); intentionally immutable, spot-checked for staleness contradictions against current code where cited by this campaign.",
+      "reviewNotes": "Live furnace production architecture: single authoritative runtime, fixed-tick gating, persistence envelope, UI controller, hopper convergence; 7 requirements mapped.",
       "status": "audited"
     },
     {
-      "path": "openspec/changes/hardening-polish/README.md",
+      "path": "openspec/changes/archive/2026-08-25-251-live-furnace-production-integration/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Change-251 proposal: narrow live-furnace outcome",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Narrow outcome: wire verified furnace stack into playable Game; non-goals and risks.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-25-251-live-furnace-production-integration/specs/live-furnace-integration/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Change-251 delta spec: 7 furnace requirements, 9 scenarios (archived)",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Delta spec (archived): 7 ADDED requirements with 9 scenarios for runtime composition, fixed-tick, interaction, UI, persistence, drops, recovery.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-25-251-live-furnace-production-integration/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Change-251 task list (archived, 27/27)",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "27 tasks (composition/tick/interaction/UI/persistence/drops/recovery/tests/governance) all checked with evidence.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-25-251-live-furnace-production-integration/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Change-251 verification evidence (archived)",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Verification record: gates PASS (typecheck/lint/build/unit 4283+1/coverage/bundle/file-audit/e2e 47/47), 64 new tests, E2E journey, regression invariants.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/hardening-polish/.openspec.yaml",
       "gitBlob": null,
       "category": "spec",
       "purpose": "OpenSpec program artifact",
@@ -22241,6 +22289,22 @@
     },
     {
       "path": "openspec/changes/hardening-polish/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "OpenSpec program artifact",
+      "reviewLevel": "historical-evidence",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Historical program evidence (changes 001–250 archive); intentionally immutable, spot-checked for staleness contradictions against current code where cited by this campaign.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/hardening-polish/README.md",
       "gitBlob": null,
       "category": "spec",
       "purpose": "OpenSpec program artifact",
@@ -22305,22 +22369,6 @@
     },
     {
       "path": "openspec/config.yaml",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "OpenSpec program artifact",
-      "reviewLevel": "historical-evidence",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Historical program evidence (changes 001–250 archive); intentionally immutable, spot-checked for staleness contradictions against current code where cited by this campaign.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/evidence/README.md",
       "gitBlob": null,
       "category": "spec",
       "purpose": "OpenSpec program artifact",
@@ -26368,6 +26416,22 @@
       "status": "audited"
     },
     {
+      "path": "openspec/evidence/README.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "OpenSpec program artifact",
+      "reviewLevel": "historical-evidence",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Historical program evidence (changes 001–250 archive); intentionally immutable, spot-checked for staleness contradictions against current code where cited by this campaign.",
+      "status": "audited"
+    },
+    {
       "path": "openspec/evidence/release-readiness-post-hardening.md",
       "gitBlob": null,
       "category": "spec",
@@ -26401,22 +26465,6 @@
     },
     {
       "path": "openspec/evidence/suites/final-regression-suite.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "OpenSpec program artifact",
-      "reviewLevel": "historical-evidence",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Historical program evidence (changes 001–250 archive); intentionally immutable, spot-checked for staleness contradictions against current code where cited by this campaign.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/hardening/2026-08-17-pre-241-repository-hardening/README.md",
       "gitBlob": null,
       "category": "spec",
       "purpose": "OpenSpec program artifact",
@@ -26497,6 +26545,22 @@
     },
     {
       "path": "openspec/hardening/2026-08-17-pre-241-repository-hardening/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "OpenSpec program artifact",
+      "reviewLevel": "historical-evidence",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Historical program evidence (changes 001–250 archive); intentionally immutable, spot-checked for staleness contradictions against current code where cited by this campaign.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/hardening/2026-08-17-pre-241-repository-hardening/README.md",
       "gitBlob": null,
       "category": "spec",
       "purpose": "OpenSpec program artifact",
@@ -26656,22 +26720,6 @@
       "status": "audited"
     },
     {
-      "path": "openspec/hardening/2026-08-21-post-250-production-persistence-hardening/README.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "OpenSpec program artifact",
-      "reviewLevel": "historical-evidence",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Historical program evidence (changes 001–250 archive); intentionally immutable, spot-checked for staleness contradictions against current code where cited by this campaign.",
-      "status": "audited"
-    },
-    {
       "path": "openspec/hardening/2026-08-21-post-250-production-persistence-hardening/design-addendum.md",
       "gitBlob": null,
       "category": "spec",
@@ -26721,6 +26769,22 @@
     },
     {
       "path": "openspec/hardening/2026-08-21-post-250-production-persistence-hardening/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "OpenSpec program artifact",
+      "reviewLevel": "historical-evidence",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Historical program evidence (changes 001–250 archive); intentionally immutable, spot-checked for staleness contradictions against current code where cited by this campaign.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/hardening/2026-08-21-post-250-production-persistence-hardening/README.md",
       "gitBlob": null,
       "category": "spec",
       "purpose": "OpenSpec program artifact",
@@ -26864,22 +26928,6 @@
       "status": "audited"
     },
     {
-      "path": "openspec/hardening/2026-08-23-exhaustive-repository-certification/README.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "Certification-campaign artifact",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "This certification package: proposal/design/findings/verification evidence authored and validated this session.",
-      "status": "audited"
-    },
-    {
       "path": "openspec/hardening/2026-08-23-exhaustive-repository-certification/design.md",
       "gitBlob": null,
       "category": "spec",
@@ -26976,6 +27024,22 @@
       "status": "audited"
     },
     {
+      "path": "openspec/hardening/2026-08-23-exhaustive-repository-certification/README.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Certification-campaign artifact",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "This certification package: proposal/design/findings/verification evidence authored and validated this session.",
+      "status": "audited"
+    },
+    {
       "path": "openspec/hardening/2026-08-23-exhaustive-repository-certification/risk-register.md",
       "gitBlob": null,
       "category": "spec",
@@ -27024,6 +27088,38 @@
       "status": "audited"
     },
     {
+      "path": "openspec/PROGRAM_STATE.json",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "OpenSpec program artifact",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Governance-critical state/order/handoff documents reconciled against actual repository state this session.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/PROGRAM_STATE.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "OpenSpec program artifact",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Governance-critical state/order/handoff documents reconciled against actual repository state this session.",
+      "status": "audited"
+    },
+    {
       "path": "openspec/program-state.json",
       "gitBlob": null,
       "category": "spec",
@@ -27039,6 +27135,54 @@
       ],
       "disposition": "fixed-with-regression-test",
       "reviewNotes": "Governance-critical state/order/handoff documents reconciled against actual repository state this session.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/REVIEW_HANDOFF.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "OpenSpec program artifact",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Governance-critical state/order/handoff documents reconciled against actual repository state this session.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/SPEC_AUTHORING_PROTOCOL.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "OpenSpec program artifact",
+      "reviewLevel": "historical-evidence",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Historical program evidence (changes 001–250 archive); intentionally immutable, spot-checked for staleness contradictions against current code where cited by this campaign.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/specs/live-furnace-integration/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Live furnace integration capability spec (7 requirements, 9 scenarios)",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Capability spec synced from 251 delta: live furnace production integration (7 requirements).",
       "status": "audited"
     },
     {
@@ -27074,6 +27218,22 @@
       "status": "audited"
     },
     {
+      "path": "PARITY_MATRIX.md",
+      "gitBlob": null,
+      "category": "docs",
+      "purpose": "Documentation",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Docs reviewed for stale claims vs current implementation; historical audits annotated as evidence.",
+      "status": "audited"
+    },
+    {
       "path": "playwright.config.ts",
       "gitBlob": null,
       "category": "other",
@@ -27103,6 +27263,22 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Tracked auxiliary file; presence/format checked, no runtime role.",
+      "status": "audited"
+    },
+    {
+      "path": "README.md",
+      "gitBlob": null,
+      "category": "docs",
+      "purpose": "Documentation",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Claims reconciled line-by-line against current source; drift fixed.",
       "status": "audited"
     },
     {
@@ -27998,6 +28174,31 @@
       "status": "audited"
     },
     {
+      "gitBlob": null,
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "status": "audited",
+      "path": "src/engine/LiveBlockEntityHost.ts",
+      "category": "production",
+      "purpose": "Live block-entity host (251): authoritative furnace states, simulating-chunk fixed ticks, per-chunk persistence, hydration/quarantine, xp drain",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "wired-live",
+      "imports": [
+        "../math/SectionCoordinate",
+        "../simulation/BlockEntityManager",
+        "../storage/BlockEntityRecord",
+        "../world/FurnaceBlockEntity"
+      ],
+      "importedBy": [
+        "src/engine/Game.ts"
+      ],
+      "testEvidence": [
+        "tests/unit/LiveFurnaceIntegration.test.ts"
+      ],
+      "reviewNotes": "Authored and semantically reviewed 2026-08-23 in the Change-251 campaign: single-instance invariant, simulating-set tick gate, lazy staleness removal, corrupt-payload quarantine, full-snapshot dirty units; wiring proven by the new integration suite."
+    },
+    {
       "path": "src/engine/PauseManager.ts",
       "gitBlob": null,
       "category": "production",
@@ -28014,6 +28215,25 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Semantic pass 2026-08-23 over the full scope directory (agent-audited): purpose, reachability, boundedness, determinism and defect sweep; no defect found in this file.",
+      "status": "audited"
+    },
+    {
+      "path": "src/engine/Renderer.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Shipped engine module",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "live",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "vitest unit suite",
+        "playwright e2e"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Read end-to-end in the campaign composition/persistence/inventory passes; logic traced through callers.",
       "status": "audited"
     },
     {
@@ -28034,25 +28254,6 @@
         "F-RND-3"
       ],
       "disposition": "fixed-with-regression-test",
-      "reviewNotes": "Read end-to-end in the campaign composition/persistence/inventory passes; logic traced through callers.",
-      "status": "audited"
-    },
-    {
-      "path": "src/engine/Renderer.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "Shipped engine module",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "live",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "vitest unit suite",
-        "playwright e2e"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
       "reviewNotes": "Read end-to-end in the campaign composition/persistence/inventory passes; logic traced through callers.",
       "status": "audited"
     },
@@ -28443,6 +28644,33 @@
       "disposition": "",
       "reviewNotes": "Semantic pass 2026-08-23 over the full scope directory (agent-audited): purpose, reachability, boundedness, determinism and defect sweep; no defect found in this file.",
       "status": "audited"
+    },
+    {
+      "gitBlob": null,
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "status": "audited",
+      "path": "src/inventory/MenuSlots.ts",
+      "category": "production",
+      "purpose": "Lossless ItemStack<->106-MenuSlot conversion incl. component records; null on unknown/corrupt for caller quarantine",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "wired-live",
+      "imports": [
+        "../data/ResourceId",
+        "./MenuTransaction",
+        "./Inventory",
+        "./ItemRegistry",
+        "./StackDataComponents"
+      ],
+      "importedBy": [
+        "src/ui/FurnacePanel.ts",
+        "src/engine/Game.ts"
+      ],
+      "testEvidence": [
+        "tests/unit/LiveFurnaceIntegration.test.ts"
+      ],
+      "reviewNotes": "Authored and semantically reviewed 2026-08-23 (Change-251): round-trip identity over the live vocabulary, component map<->record fidelity, no-loss contract enforced by returning null instead of dropping."
     },
     {
       "path": "src/inventory/MenuTransaction.ts",
@@ -28941,6 +29169,25 @@
       "status": "audited"
     },
     {
+      "path": "src/rendering/Lighting.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Shipped rendering module",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "live",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "vitest unit suite",
+        "playwright e2e"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Semantic pass 2026-08-23 over the full scope directory (agent-audited): purpose, reachability, boundedness, determinism and defect sweep; no defect found in this file.",
+      "status": "audited"
+    },
+    {
       "path": "src/rendering/LightSaturation.ts",
       "gitBlob": null,
       "category": "production",
@@ -28980,25 +29227,6 @@
     },
     {
       "path": "src/rendering/LightUpdateEngine.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "Shipped rendering module",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "live",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "vitest unit suite",
-        "playwright e2e"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Semantic pass 2026-08-23 over the full scope directory (agent-audited): purpose, reachability, boundedness, determinism and defect sweep; no defect found in this file.",
-      "status": "audited"
-    },
-    {
-      "path": "src/rendering/Lighting.ts",
       "gitBlob": null,
       "category": "production",
       "purpose": "Shipped rendering module",
@@ -29321,25 +29549,6 @@
       "status": "audited"
     },
     {
-      "path": "src/simulation/AStarPathfinding.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "Shipped simulation module",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "test-only",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "vitest unit suite",
-        "playwright e2e"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Semantic pass 2026-08-23 over the full scope directory (agent-audited): purpose, reachability, boundedness, determinism and defect sweep; no defect found in this file.",
-      "status": "audited"
-    },
-    {
       "path": "src/simulation/AccessibilityFramework.ts",
       "gitBlob": null,
       "category": "production",
@@ -29422,6 +29631,25 @@
       "purpose": "Shipped simulation module",
       "reviewLevel": "semantic",
       "runtimeReachability": "live",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "vitest unit suite",
+        "playwright e2e"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Semantic pass 2026-08-23 over the full scope directory (agent-audited): purpose, reachability, boundedness, determinism and defect sweep; no defect found in this file.",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/AStarPathfinding.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Shipped simulation module",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "test-only",
       "imports": [],
       "importedBy": [],
       "testEvidence": [
@@ -29758,6 +29986,25 @@
       "status": "audited"
     },
     {
+      "path": "src/simulation/EnderDragon.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Shipped simulation module",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "test-only",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "vitest unit suite",
+        "playwright e2e"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Semantic pass 2026-08-23 over the full scope directory (agent-audited): purpose, reachability, boundedness, determinism and defect sweep; no defect found in this file.",
+      "status": "audited"
+    },
+    {
       "path": "src/simulation/EndExitProgression.ts",
       "gitBlob": null,
       "category": "production",
@@ -29778,25 +30025,6 @@
     },
     {
       "path": "src/simulation/EndPortalProgression.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "Shipped simulation module",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "test-only",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "vitest unit suite",
-        "playwright e2e"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Semantic pass 2026-08-23 over the full scope directory (agent-audited): purpose, reachability, boundedness, determinism and defect sweep; no defect found in this file.",
-      "status": "audited"
-    },
-    {
-      "path": "src/simulation/EnderDragon.ts",
       "gitBlob": null,
       "category": "production",
       "purpose": "Shipped simulation module",
@@ -30045,12 +30273,12 @@
       "status": "audited"
     },
     {
-      "path": "src/simulation/GameRuleFramework.ts",
+      "path": "src/simulation/GamepadFramework.ts",
       "gitBlob": null,
       "category": "production",
       "purpose": "Shipped simulation module",
       "reviewLevel": "semantic",
-      "runtimeReachability": "test-only",
+      "runtimeReachability": "live",
       "imports": [],
       "importedBy": [],
       "testEvidence": [
@@ -30064,12 +30292,12 @@
       "status": "audited"
     },
     {
-      "path": "src/simulation/GamepadFramework.ts",
+      "path": "src/simulation/GameRuleFramework.ts",
       "gitBlob": null,
       "category": "production",
       "purpose": "Shipped simulation module",
       "reviewLevel": "semantic",
-      "runtimeReachability": "live",
+      "runtimeReachability": "test-only",
       "imports": [],
       "importedBy": [],
       "testEvidence": [
@@ -32009,6 +32237,35 @@
       "status": "audited"
     },
     {
+      "gitBlob": null,
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "status": "audited",
+      "path": "src/ui/FurnacePanel.ts",
+      "category": "production",
+      "purpose": "Live furnace screen: derives 39-slot menu from authoritative state + inventory + cursor, applies one 106 transaction, writes back atomically, renders indicators/cursor",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "wired-live",
+      "imports": [
+        "../rendering/TextureAtlas",
+        "../inventory/Inventory",
+        "../inventory/ItemRegistry",
+        "../world/FurnaceBlockEntity",
+        "../inventory/MenuSlots",
+        "../inventory/MenuTransaction",
+        "../data/ResourceId"
+      ],
+      "importedBy": [
+        "src/engine/Game.ts"
+      ],
+      "testEvidence": [
+        "tests/unit/LiveFurnaceIntegration.test.ts",
+        "playwright e2e furnace journey"
+      ],
+      "reviewNotes": "Authored and semantically reviewed 2026-08-23 (Change-251): no owned item state beyond transient cursor (returned via takeCursor on close), render-signature dedupe, transactional output extraction."
+    },
+    {
       "path": "src/ui/HUD.ts",
       "gitBlob": null,
       "category": "production",
@@ -33172,6 +33429,22 @@
       "status": "audited"
     },
     {
+      "path": "tests/e2e/furnace.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "251 browser furnace journey",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Production-artifact E2E: place/open/smelt/collect/reload/break + lifecycle (C251 campaign addition).",
+      "status": "audited"
+    },
+    {
       "path": "tests/e2e/game.spec.ts",
       "gitBlob": null,
       "category": "test",
@@ -33268,7 +33541,7 @@
       "status": "audited"
     },
     {
-      "path": "tests/unit/AStarPathfinding.test.ts",
+      "path": "tests/unit/abrupt-close-recovery.test.ts",
       "gitBlob": null,
       "category": "test",
       "purpose": "Unit/browser regression coverage",
@@ -33429,6 +33702,22 @@
     },
     {
       "path": "tests/unit/ArmorProtection.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit/browser regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/AStarPathfinding.test.ts",
       "gitBlob": null,
       "category": "test",
       "purpose": "Unit/browser regression coverage",
@@ -34308,22 +34597,6 @@
       "status": "audited"
     },
     {
-      "path": "tests/unit/DDA.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Unit/browser regression coverage",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
-      "status": "audited"
-    },
-    {
       "path": "tests/unit/DamageType.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -34357,6 +34630,22 @@
     },
     {
       "path": "tests/unit/DataPackManifest.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit/browser regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/DDA.test.ts",
       "gitBlob": null,
       "category": "test",
       "purpose": "Unit/browser regression coverage",
@@ -34644,6 +34933,22 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/EnderDragon.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit/browser regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/EndExitProgression.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -34677,22 +34982,6 @@
     },
     {
       "path": "tests/unit/EndTerrain.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Unit/browser regression coverage",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/EnderDragon.test.ts",
       "gitBlob": null,
       "category": "test",
       "purpose": "Unit/browser regression coverage",
@@ -35092,6 +35381,54 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/FurnaceMenuSlots.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "251 menu-slot conversion oracles",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Inventory-menu lossless conversion incl. components + manager replace/all coverage (C251 campaign addition).",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/FurnacePanelTransactions.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "251 furnace screen transaction oracles",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "DOM-controller click routing, cursor safety, take-only output via 106 core (C251 campaign addition).",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/FurnacePersistence.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "251 furnace persistence oracles",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Facade save/flush/reopen/empty-snapshot/newest-wins round trips (C251 campaign addition).",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/FurnaceRecipes.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -35156,6 +35493,22 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/GamepadFramework.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit/browser regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/GamePersistence.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -35173,22 +35526,6 @@
     },
     {
       "path": "tests/unit/GameRuleFramework.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Unit/browser regression coverage",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/GamepadFramework.test.ts",
       "gitBlob": null,
       "category": "test",
       "purpose": "Unit/browser regression coverage",
@@ -35444,6 +35781,22 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/import-export-recovery.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit/browser regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/InputCoordinator.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -35636,6 +35989,22 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/Lighting.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit/browser regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/LightSaturation.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -35684,11 +36053,11 @@
       "status": "audited"
     },
     {
-      "path": "tests/unit/Lighting.test.ts",
+      "path": "tests/unit/LiveBlockEntityHost.test.ts",
       "gitBlob": null,
       "category": "test",
-      "purpose": "Unit/browser regression coverage",
-      "reviewLevel": "mechanical",
+      "purpose": "251 live block-entity host oracles",
+      "reviewLevel": "semantic",
       "runtimeReachability": "",
       "imports": [],
       "importedBy": [],
@@ -35696,7 +36065,23 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "reviewNotes": "Composition/tick-gating/persistence/quarantine coverage for the new production host (C251 campaign addition).",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/LiveFurnaceIntegration.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "251 live furnace integration campaign oracles (close/reopen, burning, reload, blocked-output, fractions, break, quarantine, hopper/player single engine)",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "End-to-end 251 integration campaign over the real host/engine/persistence: scenarios A-H plus hopper/player single-rules-engine interleaving.",
       "status": "audited"
     },
     {
@@ -35796,6 +36181,22 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/MeshingTypes.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit/browser regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/MeshWorkerEntry.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -35812,7 +36213,7 @@
       "status": "audited"
     },
     {
-      "path": "tests/unit/MeshingTypes.test.ts",
+      "path": "tests/unit/migration-recovery.test.ts",
       "gitBlob": null,
       "category": "test",
       "purpose": "Unit/browser regression coverage",
@@ -35925,6 +36326,38 @@
     },
     {
       "path": "tests/unit/MovementReconciler.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit/browser regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/multi-client-correctness.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit/browser regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/multi-client-performance.test.ts",
       "gitBlob": null,
       "category": "test",
       "purpose": "Unit/browser regression coverage",
@@ -36117,6 +36550,22 @@
     },
     {
       "path": "tests/unit/PalettedContainer.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit/browser regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/partial-write-recovery.test.ts",
       "gitBlob": null,
       "category": "test",
       "purpose": "Unit/browser regression coverage",
@@ -36532,6 +36981,22 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/quota-recovery.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit/browser regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/RaidStateMachine.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -36868,6 +37333,22 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/release-performance-gate.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit/browser regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/ReleaseDelta.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -37141,6 +37622,22 @@
     },
     {
       "path": "tests/unit/SaveQueueSaturation.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit/browser regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/saveRecoveryFixture.ts",
       "gitBlob": null,
       "category": "test",
       "purpose": "Unit/browser regression coverage",
@@ -38084,7 +38581,7 @@
       "status": "audited"
     },
     {
-      "path": "tests/unit/WorkerMeshParity.test.ts",
+      "path": "tests/unit/WorkerMeshing.test.ts",
       "gitBlob": null,
       "category": "test",
       "purpose": "Unit/browser regression coverage",
@@ -38100,7 +38597,7 @@
       "status": "audited"
     },
     {
-      "path": "tests/unit/WorkerMeshing.test.ts",
+      "path": "tests/unit/WorkerMeshParity.test.ts",
       "gitBlob": null,
       "category": "test",
       "purpose": "Unit/browser regression coverage",
@@ -38260,6 +38757,38 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/WorldgenDeterminism.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit/browser regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/WorldgenRegressionMatrix.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit/browser regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/WorldLife.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -38324,199 +38853,7 @@
       "status": "audited"
     },
     {
-      "path": "tests/unit/WorldgenDeterminism.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Unit/browser regression coverage",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/WorldgenRegressionMatrix.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Unit/browser regression coverage",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
-      "status": "audited"
-    },
-    {
       "path": "tests/unit/XpOrbManager.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Unit/browser regression coverage",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/abrupt-close-recovery.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Unit/browser regression coverage",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/import-export-recovery.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Unit/browser regression coverage",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/migration-recovery.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Unit/browser regression coverage",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/multi-client-correctness.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Unit/browser regression coverage",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/multi-client-performance.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Unit/browser regression coverage",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/partial-write-recovery.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Unit/browser regression coverage",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/quota-recovery.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Unit/browser regression coverage",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/release-performance-gate.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Unit/browser regression coverage",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/saveRecoveryFixture.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Unit/browser regression coverage",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/visual-golden/README.md",
       "gitBlob": null,
       "category": "test",
       "purpose": "Unit/browser regression coverage",
@@ -39489,6 +39826,22 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Golden PNGs: provenance pinned via [seed-visual] workflow (linux-ci/win32-local sets), counts and format validated by the visual matrix verify-mode run.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/visual-golden/README.md",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit/browser regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
       "status": "audited"
     },
     {
@@ -40530,151 +40883,6 @@
       "disposition": "",
       "reviewNotes": "Tracked auxiliary file; presence/format checked, no runtime role.",
       "status": "audited"
-    },
-    {
-      "gitBlob": null,
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "status": "audited",
-      "path": "src/engine/LiveBlockEntityHost.ts",
-      "category": "production",
-      "purpose": "Live block-entity host (251): authoritative furnace states, simulating-chunk fixed ticks, per-chunk persistence, hydration/quarantine, xp drain",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "wired-live",
-      "imports": [
-        "../math/SectionCoordinate",
-        "../simulation/BlockEntityManager",
-        "../storage/BlockEntityRecord",
-        "../world/FurnaceBlockEntity"
-      ],
-      "importedBy": [
-        "src/engine/Game.ts"
-      ],
-      "testEvidence": [
-        "tests/unit/LiveFurnaceIntegration.test.ts"
-      ],
-      "reviewNotes": "Authored and semantically reviewed 2026-08-23 in the Change-251 campaign: single-instance invariant, simulating-set tick gate, lazy staleness removal, corrupt-payload quarantine, full-snapshot dirty units; wiring proven by the new integration suite."
-    },
-    {
-      "gitBlob": null,
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "status": "audited",
-      "path": "src/inventory/MenuSlots.ts",
-      "category": "production",
-      "purpose": "Lossless ItemStack<->106-MenuSlot conversion incl. component records; null on unknown/corrupt for caller quarantine",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "wired-live",
-      "imports": [
-        "../data/ResourceId",
-        "./MenuTransaction",
-        "./Inventory",
-        "./ItemRegistry",
-        "./StackDataComponents"
-      ],
-      "importedBy": [
-        "src/ui/FurnacePanel.ts",
-        "src/engine/Game.ts"
-      ],
-      "testEvidence": [
-        "tests/unit/LiveFurnaceIntegration.test.ts"
-      ],
-      "reviewNotes": "Authored and semantically reviewed 2026-08-23 (Change-251): round-trip identity over the live vocabulary, component map<->record fidelity, no-loss contract enforced by returning null instead of dropping."
-    },
-    {
-      "gitBlob": null,
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "status": "audited",
-      "path": "src/ui/FurnacePanel.ts",
-      "category": "production",
-      "purpose": "Live furnace screen: derives 39-slot menu from authoritative state + inventory + cursor, applies one 106 transaction, writes back atomically, renders indicators/cursor",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "wired-live",
-      "imports": [
-        "../rendering/TextureAtlas",
-        "../inventory/Inventory",
-        "../inventory/ItemRegistry",
-        "../world/FurnaceBlockEntity",
-        "../inventory/MenuSlots",
-        "../inventory/MenuTransaction",
-        "../data/ResourceId"
-      ],
-      "importedBy": [
-        "src/engine/Game.ts"
-      ],
-      "testEvidence": [
-        "tests/unit/LiveFurnaceIntegration.test.ts",
-        "playwright e2e furnace journey"
-      ],
-      "reviewNotes": "Authored and semantically reviewed 2026-08-23 (Change-251): no owned item state beyond transient cursor (returned via takeCursor on close), render-signature dedupe, transactional output extraction."
-    },
-    {
-      "gitBlob": null,
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "status": "audited",
-      "path": "openspec/changes/251-live-furnace-production-integration/proposal.md",
-      "category": "spec",
-      "purpose": "Change-251 proposal: narrow live-furnace outcome, non-goals, risks",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "documentation-only",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "reviewNotes": "Authored 2026-08-23 with the Change-251 authorization; reviewed for scope discipline (no Wither boss, no new architecture wave)."
-    },
-    {
-      "gitBlob": null,
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "status": "audited",
-      "path": "openspec/changes/251-live-furnace-production-integration/design.md",
-      "category": "spec",
-      "purpose": "Change-251 design: single-authoritative-state architecture, phases A-G, risk/rollback table",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "documentation-only",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "reviewNotes": "Authored 2026-08-23 with the Change-251 authorization; implementation follows this design."
-    },
-    {
-      "gitBlob": null,
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "status": "audited",
-      "path": "openspec/changes/251-live-furnace-production-integration/tasks.md",
-      "category": "spec",
-      "purpose": "Change-251 task checklist (26 items across composition/tick/interaction/UI/persistence/drops/adversarial/tests/governance)",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "documentation-only",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "reviewNotes": "Authored 2026-08-23; checkboxes updated only with evidence per AGENTS.md rule."
-    },
-    {
-      "gitBlob": null,
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "status": "audited",
-      "path": "openspec/changes/251-live-furnace-production-integration/specs/live-furnace-integration/spec.md",
-      "category": "spec",
-      "purpose": "Normative Change-251 requirements: composition, fixed-tick simulation, interaction routing, container UI, persistence, drops, adversarial safety (7 requirements + scenarios)",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "documentation-only",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "reviewNotes": "Authored 2026-08-23 as the normative record; every MUST/SHALL maps to a task and test."
     }
   ]
 }

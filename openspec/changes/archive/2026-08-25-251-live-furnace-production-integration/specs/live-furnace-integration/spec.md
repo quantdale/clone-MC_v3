@@ -11,13 +11,13 @@ interaction, fixed-tick updates, chunk activation/deactivation, chunk unload/rel
 save/load, furnace destruction, and Game disposal. UI, World, and persistence views of furnace
 state MUST be derived from — and written back atomically to — that single authoritative state.
 
-###### Scenario: Placement creates exactly one instance
+#### Scenario: Placement creates exactly one instance
 
 - **WHEN** a player places a furnace item and the placement commits
 - **THEN** the host contains exactly one tickable `furnace` instance at that position
 - **AND** repeated placements at occupied positions cannot create duplicates
 
-###### Scenario: Destruction removes exactly once
+#### Scenario: Destruction removes exactly once
 
 - **WHEN** a furnace block is broken
 - **THEN** the runtime instance is removed exactly once and the final state is returned to the
@@ -32,13 +32,13 @@ simulating set; paused/loading/non-simulating states SHALL stop smelting without
 ticking. Rendering frame rate MUST NOT alter smelting speed. Resume/reload MUST NOT
 double-consume fuel or double-produce output beyond the last committed state boundary.
 
-###### Scenario: Pause freezes smelting deterministically
+#### Scenario: Pause freezes smelting deterministically
 
 - **WHEN** simulation becomes inactive with a lit furnace mid-cook
 - **THEN** no tick advances burn or smelt timers until simulation resumes
 - **AND** after resume the cook completes in exactly the remaining canonical ticks
 
-###### Scenario: Reload never double-produces
+#### Scenario: Reload never double-produces
 
 - **WHEN** a furnace's committed snapshot records a completed smelt and the page reloads
 - **THEN** hydration restores exactly that snapshot and the next output merge happens only
@@ -52,7 +52,7 @@ death/world transition, and any product-mandated walk-away closure. Input MUST N
 through an open container into mining/placement. Closing SHALL return the cursor stack to the
 inventory or drop it when the inventory is full; it MUST NOT delete items.
 
-###### Scenario: Furnace click does not place
+#### Scenario: Furnace click does not place
 
 - **WHEN** the player right-clicks a placed furnace with a placeable block selected
 - **THEN** the furnace panel opens, the held stack is unchanged, and no block is placed
@@ -64,7 +64,7 @@ with burn and smelt progress indicators, built on the 106 transaction core and 2
 semantics (pickup/place, merge/swap, split-half/place-one, quick-move, hotbar interaction,
 cursor stack). Output extraction SHALL be transactional with no duplication or deletion.
 
-###### Scenario: Quick-move round trip is lossless
+#### Scenario: Quick-move round trip is lossless
 
 - **WHEN** a player shift-clicks a stack between the furnace region and the player region and
   back again
@@ -78,7 +78,7 @@ Persistence SHALL survive ordinary autosave, explicit flush, page reload, chunk 
 an edit racing a write-in-flight (newest snapshot wins), and break-after-reload. localStorage
 MUST NOT be used as authoritative world state.
 
-###### Scenario: Reload restores all eight fields
+#### Scenario: Reload restores all eight fields
 
 - **WHEN** a furnace with non-default values in all eight fields is saved and the page reloads
 - **THEN** hydration restores every field exactly
@@ -91,7 +91,7 @@ furnace item itself drops through its normal loot path, accumulated xp is droppe
 the block entity is removed exactly once, the persistent record is invalidated, and an open UI
 cannot retain a ghost reference to the destroyed furnace.
 
-###### Scenario: Breaking drops contents without loss or duplication
+#### Scenario: Breaking drops contents without loss or duplication
 
 - **WHEN** a furnace holding input/fuel/output stacks is broken
 - **THEN** the spawned item entities carry exactly those stacks, no runtime instance remains,
@@ -105,7 +105,7 @@ a furnace SHALL be ignored and lazily deleted. Full output stacks pause smelting
 is never consumed, insufficient inventory space on close drops rather than deletes, and
 storage failure follows the facade's offline-first degradation.
 
-###### Scenario: Corrupt payload degrades gracefully
+#### Scenario: Corrupt payload degrades gracefully
 
 - **WHEN** boot hydrates a furnace record failing strict validation
 - **THEN** the record is quarantined, a warning is surfaced through storage health, and the

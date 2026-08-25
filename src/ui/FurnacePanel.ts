@@ -194,11 +194,39 @@ export class FurnacePanel {
   private transact(transaction: MenuTransaction): void {
     const state = this.deps.getState();
     if (!state) return;
+    let before: ContainerMenu;
     let next: ContainerMenu;
     try {
-      next = applyFurnaceMenuTransaction(this.deriveMenu(state), transaction);
+      before = this.deriveMenu(state);
+      next = applyFurnaceMenuTransaction(before, transaction);
     } catch {
       return; // out-of-bounds guard; indices come from our own DOM so never thrown
+    }
+    // The furnace output is extraction-only: reject any transaction that would
+    // grow the output stack or insert into the empty output slot (a cursor swap
+    // or place-one aimed at the output). Pure removals/quick-moves pass.
+    const outBefore = extractFurnaceSlots(before).output;
+    const outAfter = extractFurnaceSlots(next).output;
+    if (
+      transaction.index === FURNACE_OUTPUT_SLOT &&
+      (outAfter.count > outBefore.count ||
+        (outBefore.item === null && outAfter.item !== null))
+    ) {
+      return;
+    }
+    // Atomicity guard: every content-bearing slot in the result must convert
+    // back to an inventory stack. If any would fail (unknown id / corrupt
+    // component payload), abort the whole transaction — never a partial write
+    // that could strand items between cursor, inventory, and furnace.
+    const resultSlots = [
+      ...Object.values(extractFurnaceSlots(next)),
+      ...extractFurnacePlayerSlots(next),
+      next.cursor as unknown as MenuSlot,
+    ];
+    for (const slot of resultSlots) {
+      if (slot.item !== null && slot.count > 0 && menuSlotToStack(slot, this.deps.registry) === null) {
+        return;
+      }
     }
     const furnaceSlots = extractFurnaceSlots(next);
     const applied = this.deps.applySlots(furnaceSlots);
@@ -213,13 +241,33 @@ export class FurnacePanel {
   private writeBackPlayerSlots(menuSlots: MenuSlot[]): void {
     const inventory = this.deps.inventory;
     for (let i = 0; i < 9; i++) {
-      const stack = menuSlotToStack(menuSlots[i]!, this.deps.registry);
-      inventory.slots[i] = stack ?? { id: inventory.slots[i]?.id ?? 0, count: 0 };
+      const slot = menuSlots[i]!;
+      const stack = menuSlotToStack(slot, this.deps.registry);
+      if (stack) {
+        inventory.slots[i] = stack;
+      } else if ((slot.count ?? 0) <= 0 || slot.item === null) {
+        // The transaction emptied this slot.
+        inventory.slots[i] = { id: inventory.slots[i]?.id ?? 0, count: 0 };
+      }
+      // else: the menu held content that failed conversion (unknown id/corrupt
+      // components). Keep the existing inventory stack — never delete items.
     }
-    const nextStorage = [];
+    const previousStorage = [...inventory.storage];
+    const nextStorage: typeof inventory.storage = [];
     for (let i = 9; i < 36; i++) {
-      const stack = menuSlotToStack(menuSlots[i]!, this.deps.registry);
-      if (stack) nextStorage.push(stack);
+      const slot = menuSlots[i]!;
+      const stack = menuSlotToStack(slot, this.deps.registry);
+      if (stack) {
+        nextStorage.push(stack);
+        continue;
+      }
+      if ((slot.count ?? 0) > 0 && slot.item !== null) {
+        // Conversion failure: preserve the original stack at this position
+        // verbatim so a transient problem cannot delete items.
+        const original = previousStorage[i - 9];
+        if (original && original.count > 0) nextStorage.push(original);
+      }
+      // else the transaction emptied this slot: nothing is pushed.
     }
     inventory.storage.length = 0;
     inventory.storage.push(...nextStorage);
