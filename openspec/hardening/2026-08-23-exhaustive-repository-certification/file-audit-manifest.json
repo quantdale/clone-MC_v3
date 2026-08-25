@@ -11,7 +11,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2492,
+  "total": 2504,
   "pending": 0,
   "unclassified": 0,
   "rows": [
@@ -40882,6 +40882,222 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Tracked auxiliary file; presence/format checked, no runtime role.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-25-252-wither-secondary-boss/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "252 wither secondary boss - summon/combat/projectile/persistence",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "WitherBoss summon/projectile/combat tests"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "252 implementation reviewed: deterministic simulation, bounded explosion, server authority, persistence version 1.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-25-252-wither-secondary-boss/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "252 wither secondary boss - summon/combat/projectile/persistence",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "WitherBoss summon/projectile/combat tests"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "252 implementation reviewed: deterministic simulation, bounded explosion, server authority, persistence version 1.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-25-252-wither-secondary-boss/specs/wither-boss/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "252 wither secondary boss - summon/combat/projectile/persistence",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "WitherBoss summon/projectile/combat tests"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "252 implementation reviewed: deterministic simulation, bounded explosion, server authority, persistence version 1.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-25-252-wither-secondary-boss/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "252 wither secondary boss - summon/combat/projectile/persistence",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "WitherBoss summon/projectile/combat tests"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "252 implementation reviewed: deterministic simulation, bounded explosion, server authority, persistence version 1.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-25-252-wither-secondary-boss/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "252 wither secondary boss - summon/combat/projectile/persistence",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "WitherBoss summon/projectile/combat tests"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "252 implementation reviewed: deterministic simulation, bounded explosion, server authority, persistence version 1.",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/WitherBoss.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "252 wither secondary boss - summon/combat/projectile/persistence",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "WitherBoss summon/projectile/combat tests"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "252 implementation reviewed: deterministic simulation, bounded explosion, server authority, persistence version 1.",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/WitherSkull.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "252 wither secondary boss - summon/combat/projectile/persistence",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "WitherBoss summon/projectile/combat tests"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "252 implementation reviewed: deterministic simulation, bounded explosion, server authority, persistence version 1.",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/WitherSummon.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "252 wither secondary boss - summon/combat/projectile/persistence",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "WitherBoss summon/projectile/combat tests"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "252 implementation reviewed: deterministic simulation, bounded explosion, server authority, persistence version 1.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/WitherBoss.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "252 wither secondary boss unit coverage",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "vitest run tests/unit/Wither*.test.ts"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "252 test suite reviewed: summon detection, charge/explosion exactly-once, phases, targeting determinism, skull lifetime/collision.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/WitherSkull.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "252 wither secondary boss unit coverage",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "vitest run tests/unit/Wither*.test.ts"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "252 test suite reviewed: summon detection, charge/explosion exactly-once, phases, targeting determinism, skull lifetime/collision.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/WitherSummon.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "252 wither secondary boss unit coverage",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "vitest run tests/unit/Wither*.test.ts"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "252 test suite reviewed: summon detection, charge/explosion exactly-once, phases, targeting determinism, skull lifetime/collision.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/WitherProductionPath.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "252 wither end-to-end production-path composition coverage",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "vitest run tests/unit/WitherProductionPath.test.ts"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "252 E2E composition reviewed: summon->charge->explode-once->phases->defeat->reward-once->reload.",
       "status": "audited"
     }
   ]

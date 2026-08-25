@@ -68,6 +68,8 @@ export interface GamePersistenceOpenResult {
   initialPlayerState: GamePlayerSnapshot | null;
   /** Bulk-loaded persisted block-entity records for this world (251 hydration source; empty when none). */
   initialBlockEntities: SerializedBlockEntity[];
+  /** Bulk-loaded wither records for this world (252 hydration; empty when none). */
+  initialWithers: unknown[];
   /** Migration audit trail; `null` when migration was skipped (marker present or no legacy source). */
   migrationReport: LegacyMigrationReport | null;
   /** Migration + load failures, user-observable; empty on a fully clean boot. */
@@ -243,6 +245,7 @@ export class GamePersistence implements WorldEditDurability {
   private initialEditsValue: WorldEditSnapshot | null = null;
   private initialPlayerStateValue: GamePlayerSnapshot | null = null;
   private initialBlockEntitiesValue: SerializedBlockEntity[] = [];
+  private initialWithersValue: unknown[] = [];
 
   constructor(opts: GamePersistenceOptions) {
     this.seed = opts.seed;
@@ -483,6 +486,15 @@ export class GamePersistence implements WorldEditDurability {
       } catch (e) {
         this.recordError(`load block entities: ${errorMessage(e)}`);
       }
+      // 252 hydration: wither records stored via raw wither data
+      let initialWithers: unknown[] = [];
+      try {
+        const data = await this.metadata.getWitherData(this.worldIdValue);
+        if (Array.isArray(data)) initialWithers = data;
+      } catch (e) {
+        this.recordError(`load withers: ${errorMessage(e)}`);
+      }
+      this.initialWithersValue = initialWithers;
     }
 
     // 5. Write/refresh the world's own metadata header (read-modify-write preserves createdAt).
@@ -523,8 +535,10 @@ export class GamePersistence implements WorldEditDurability {
     this.initialEditsValue = initialEdits;
     this.initialPlayerStateValue = initialPlayerState;
     this.initialBlockEntitiesValue = initialBlockEntities;
+    // initialWithers already set above; fallback to empty if fatal
+    if (fatal) this.initialWithersValue = [];
     this.opened = true;
-    this.lastResult = { status, initialEdits, initialPlayerState, initialBlockEntities, migrationReport, errors: [...this.errors] };
+    this.lastResult = { status, initialEdits, initialPlayerState, initialBlockEntities, initialWithers: this.initialWithersValue, migrationReport, errors: [...this.errors] };
     return this.lastResult;
   }
 
@@ -750,6 +764,17 @@ export class GamePersistence implements WorldEditDurability {
   /** Bulk-loaded persisted block-entity records for this world (251 hydration). */
   get initialBlockEntities(): SerializedBlockEntity[] {
     return this.initialBlockEntitiesValue;
+  }
+
+  /** Bulk-loaded wither records (252). */
+  get initialWithers(): unknown[] {
+    return this.initialWithersValue;
+  }
+
+  /** Persist wither list via raw wither data (252). */
+  saveWithers(payload: unknown[]): void {
+    if (this.disposed) return;
+    void this.metadata.putWitherData(this.worldIdValue, payload).catch((e) => this.recordError(`save withers: ${errorMessage(e)}`));
   }
 
   /** Last classified write failure observed by the monitoring sink, or `null` (debug surface). */

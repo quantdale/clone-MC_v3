@@ -213,6 +213,15 @@ export function createDefaultDamageTypeRegistry(): DamageTypeRegistry {
       kind: 'starvation',
       amount: 1,
     },
+    {
+      id: rid('wither'),
+      key: 'wither',
+      name: 'Wither',
+      flags: ['ENVIRONMENTAL', 'BYPASS_ARMOR'],
+      kind: 'periodic',
+      amount: 1,
+      interval: 2,
+    },
   ]);
 }
 

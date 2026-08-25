@@ -75,6 +75,10 @@ export const enum ItemId {
   Obsidian = 57,
   SoulSand = 58,
   NetherWart = 59,
+  SoulSoil = 60,
+  WitherSkull = 61,
+  WitherSkeletonSkull = 62,
+  NetherStar = 63,
 }
 
 /**
@@ -758,6 +762,41 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       iconTile: 61,
       stackSize: 64,
       placeBlock: rid('nether_wart'),
+    },
+    {
+      id: ItemId.SoulSoil,
+      resourceId: rid('soul_soil'),
+      key: 'soul_soil',
+      name: 'Soul Soil',
+      iconTile: 62,
+      stackSize: 64,
+      placeBlock: rid('soul_soil'),
+    },
+    {
+      id: ItemId.WitherSkull,
+      resourceId: rid('wither_skull'),
+      key: 'wither_skull',
+      name: 'Wither Skull',
+      iconTile: 63,
+      stackSize: 64,
+      placeBlock: rid('wither_skull'),
+    },
+    {
+      id: ItemId.WitherSkeletonSkull,
+      resourceId: rid('wither_skeleton_skull'),
+      key: 'wither_skeleton_skull',
+      name: 'Wither Skeleton Skull',
+      iconTile: 64,
+      stackSize: 64,
+      placeBlock: rid('wither_skull'),
+    },
+    {
+      id: ItemId.NetherStar,
+      resourceId: rid('nether_star'),
+      key: 'nether_star',
+      name: 'Nether Star',
+      iconTile: 65,
+      stackSize: 64,
     },
   ];
   assertDurableItemsDoNotStack(defs);

@@ -288,6 +288,7 @@ export function createDefaultStatusEffectRegistry(): StatusEffectTypeRegistry {
     { id: rid('hero_of_the_village'), key: 'hero_of_the_village', name: 'Hero of the Village', category: 'BENEFICIAL', flags: ['BENEFICIAL', 'DURATION_BASED'], defaultDuration: 100, maxDuration: 100, maxAmplifier: 0 },
     { id: rid('conduit_power'), key: 'conduit_power', name: 'Conduit Power', category: 'BENEFICIAL', flags: ['BENEFICIAL', 'DURATION_BASED', 'AMPLIFIER_SCALES'], defaultDuration: 180, maxDuration: 96000, maxAmplifier: 2 },
     { id: rid('dolphins_grace'), key: 'dolphins_grace', name: "Dolphin's Grace", category: 'BENEFICIAL', flags: ['BENEFICIAL', 'DURATION_BASED'], defaultDuration: 180, maxDuration: 96000, maxAmplifier: 0 },
+    { id: rid('wither'), key: 'wither', name: 'Wither', category: 'HARMFUL', flags: ['HARMFUL', 'DURATION_BASED', 'AMPLIFIER_SCALES'], defaultDuration: 10, maxDuration: 96000, maxAmplifier: 4 },
   ];
   return new StatusEffectTypeRegistry(types);
 }

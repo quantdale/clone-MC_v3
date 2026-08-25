@@ -125,9 +125,20 @@ import { menuSlotToStack } from '../inventory/MenuSlots';
 import type { MenuSlot } from '../inventory/MenuTransaction';
 import { FurnacePanel } from '../ui/FurnacePanel';
 import type { LootStack } from '../inventory/LootTable';
+import { createDefaultBossRegistry } from '../simulation/BossFramework';
+import type { BossDefinition } from '../simulation/BossFramework';
+import { createWither, tickWither, damageWither, serializeWithers, deserializeWithers, bossBarProgress, WITHER_SPAWN_EXPLOSION_STRENGTH } from '../simulation/WitherBoss';
+import type { WitherState } from '../simulation/WitherBoss';
+import { detectWitherSummon, consumeSummonStructure } from '../simulation/WitherSummon';
+import { createWitherSkull, stepWitherSkull, scaledWitherDuration } from '../simulation/WitherSkull';
+import type { WitherSkullState } from '../simulation/WitherSkull';
+import { CollisionResolver } from '../world/CollisionResolver';
+import { computeExplosion } from '../simulation/ExplosionCore';
 
 /** Maximum eye-to-furnace distance before an open furnace screen auto-closes (251). */
 const FURNACE_MAX_USE_DISTANCE = 8;
+/** Ticks a defeated wither lingers (with reward already granted) before despawn (252). */
+const WITHER_DESPAWN_TICKS = 400;
 
 /**
  * Wires the entire game together: renderer, world, player, interaction, UI, and
@@ -247,6 +258,17 @@ export class Game {
   /** Animal breeding (147): love-mode/cooldown/child-spawn system operating on passiveMobs' pig population. */
   private readonly breeding: BreedingSystem;
   private readonly pigBreedableSpecies: BreedableSpecies;
+  /** Wither boss (252): authoritative wither states and skull projectiles. */
+  private withers: WitherState[] = [];
+  private witherSkulls: WitherSkullState[] = [];
+  private nextWitherId = 1;
+  private readonly witherBossDefinition: BossDefinition;
+  private readonly collisionResolver = new CollisionResolver();
+  private readonly witherGroup = new THREE.Group();
+  private witherMeshes = new Map<number, THREE.Group>();
+  private skullMeshes = new Map<number, THREE.Mesh>();
+  private witherBossBarEl: HTMLElement | null = null;
+  private witherAttackCooldown = 0;
   private readonly overworldDimension: ResourceId;
   private readonly audio: GameAudio;
 
@@ -547,6 +569,26 @@ export class Game {
     this.resources.track(this.hostileMobRenderer);
     this.breeding = new BreedingSystem();
     this.pigBreedableSpecies = { typeId: entityRegistry.getByKey('pig')!.id, breedingFoodItemId: ItemId.Wheat };
+    // 252 wither boss setup
+    this.witherBossDefinition = createDefaultBossRegistry().getByKey('wither')!;
+    this.renderer.scene.add(this.witherGroup);
+    this.witherBossBarEl = document.createElement('div');
+    this.witherBossBarEl.id = 'wither-boss-bar';
+    this.witherBossBarEl.style.cssText = 'position:absolute;top:40px;left:50%;transform:translateX(-50%);width:300px;height:14px;background:#222;border:1px solid #555;display:none;z-index:5';
+    const fill=document.createElement('div');
+    fill.id='wither-boss-bar-fill';
+    fill.style.cssText='height:100%;width:50%;background:#555';
+    this.witherBossBarEl.appendChild(fill);
+    const hudEl=document.getElementById('hud');
+    hudEl?.appendChild(this.witherBossBarEl);
+    // hydrate withers if injected persistence already open
+    if (this.selfOpenPromise === null) {
+      this.hydrateWithers(this.persistenceImpl?.initialWithers ?? []);
+    } else {
+      void this.selfOpenPromise.then(() => {
+        if (!this.disposed) this.hydrateWithers((this.persistenceImpl as unknown as { initialWithers: unknown[] })?.initialWithers ?? []);
+      });
+    }
 
     this.player = new Player();
     this.spawnPlayerSafely(generator);
@@ -776,6 +818,7 @@ export class Game {
     // savePlayerStateDurable + the facade flush are about to persist (251).
     this.closeFurnace();
     this.savePlayerStateDurable();
+    this.saveWithers();
     this.saveTimer = 0;
     void this.persistenceImpl?.dispose().catch(() => undefined);
     if (this.unsubscribeHealth !== null) {
@@ -1061,6 +1104,9 @@ export class Game {
     // 3.5 Block entities (251): furnaces in simulating chunks advance one
     // canonical tick; pause/loading/non-simulating chunks stay frozen.
     this.blockEntityHost.tickFurnaces();
+
+    // 3.6 Wither boss (252): authoritative tick over live bosses + skulls.
+    this.tickWithers();
 
     // 4. Mobs: ambient life, passive mobs (+ renderer sync), breeding, then
     // hostile mobs (+ renderer sync) — passive always precedes hostile.
@@ -1741,6 +1787,25 @@ export class Game {
         ) {
           this.blockEntityHost.placeFurnace(coords.x, coords.y, coords.z);
         }
+        // 252 wither summon: localized T-pattern check authoritative
+        if (coords) {
+          const summonWorld = {
+            getBlock: (x: number, y: number, z: number) => this.world.getBlock(x, y, z),
+          };
+          const check = detectWitherSummon(summonWorld, coords);
+          if (check) {
+            const mutWorld = {
+              getBlock: summonWorld.getBlock,
+              setBlock: (x: number, y: number, z: number, id: number) => this.world.setBlock(x, y, z, id),
+            };
+            consumeSummonStructure(mutWorld, check);
+            const spawn = check.spawn;
+            const wither = createWither(this.nextWitherId++, spawn.x + 0.5, spawn.y + 1, spawn.z + 0.5, this.witherBossDefinition);
+            this.withers.push(wither);
+            this.saveWithers();
+            this.showToast('Wither summoned');
+          }
+        }
         this.hotbar.render();
         this.audio.play('place');
         this.showToast(`Placed ${name}`);
@@ -1862,6 +1927,263 @@ export class Game {
       this.xpOrbs.spawnXpOrb(taken, x + 0.5, y + 0.5, z + 0.5, {
         vy: CONFIG.xp.orbSpawnUpVelocity,
       });
+    }
+  }
+
+  // ── Wither boss (252) ──────────────────────────────────────────────────────
+
+  private hydrateWithers(payload: unknown[]): void {
+    try {
+      const list = deserializeWithers(payload);
+      this.withers = list;
+      let maxId = 0;
+      for (const w of list) maxId = Math.max(maxId, w.id);
+      this.nextWitherId = maxId + 1;
+    } catch {
+      this.bootSaveDegraded = true;
+      this.refreshSaveStatus();
+    }
+  }
+
+  private saveWithers(): void {
+    try {
+      const payload = serializeWithers(this.withers);
+      this.persistenceImpl?.saveWithers(payload as unknown as unknown[]);
+    } catch {
+      // best effort; surfaced through the save-status path on real failures
+    }
+  }
+
+  /** Test/E2E surface: current wither states. */
+  getWithers(): readonly WitherState[] {
+    return [...this.withers];
+  }
+
+  /** Apply damage to a wither by id. Returns true when damage landed. */
+  damageWitherById(id: number, amount: number, isProjectile = false): boolean {
+    const idx = this.withers.findIndex((w) => w.id === id);
+    if (idx === -1) return false;
+    const current = this.withers[idx]!;
+    const res = damageWither(current, this.witherBossDefinition, amount, isProjectile);
+    if (res.damageApplied <= 0) return false;
+    let next = res.state;
+    if (res.defeated && !next.hasDroppedReward) {
+      this.itemEntities.spawnLootStacks(
+        [{ item: ItemId.NetherStar, count: 1 }],
+        next.x,
+        next.y,
+        next.z,
+        Math.random,
+      );
+      this.experience.addXp(50);
+      next = { ...next, hasDroppedReward: true };
+      this.showToast('Wither defeated');
+    }
+    this.withers[idx] = next;
+    this.saveWithers();
+    return true;
+  }
+
+  /** One bounded wither explosion through the ExplosionCore seam. */
+  applyWitherExplosion(center: readonly [number, number, number], strength: number): void {
+    const world = this.world;
+    const explosionWorld = {
+      getBlockState: (x: number, y: number, z: number): number => world.getBlock(x, y, z),
+      isAir: (s: number): boolean => s === BlockId.Air,
+      isDestroyable: (s: number): boolean =>
+        s !== BlockId.Air && s !== BlockId.Bedrock && s !== BlockId.NetherPortal,
+      blastResistance: (s: number): number => {
+        if (s === BlockId.Bedrock || s === BlockId.NetherPortal) return 3600000;
+        if (s === BlockId.Obsidian) return 1200;
+        return 6;
+      },
+      dropFor: (): string | null => null,
+    };
+    const result = computeExplosion({ center, strength, world: explosionWorld });
+    const cap = Math.min(result.destroyed.length, 32);
+    for (let i = 0; i < cap; i++) {
+      const p = result.destroyed[i];
+      if (!p) continue;
+      if (world.getBlock(p[0], p[1], p[2]) !== BlockId.Air) world.setBlock(p[0], p[1], p[2], BlockId.Air);
+    }
+    const pos = this.player.position;
+    const d = Math.hypot(pos.x - center[0], pos.y - center[1], pos.z - center[2]);
+    if (d <= strength * 2) {
+      const dmg = Math.max(1, Math.floor((1 - d / (strength * 2)) * 7 * strength));
+      this.survival.damage(dmg, 'wither');
+    }
+  }
+
+  /** Advance every live wither + skull one simulation tick and sync presentation. */
+  private tickWithers(): void {
+    if (this.withers.length > 0 || this.witherSkulls.length > 0) {
+      const playerAlive = this.survival.health > 0;
+      const candidates = playerAlive
+        ? [{ id: 9999, x: this.player.position.x, y: this.player.position.y, z: this.player.position.z, alive: true }]
+        : [];
+      const next: WitherState[] = [];
+      let witherDirty = false;
+      for (const w of this.withers) {
+        const res = tickWither(w, this.witherBossDefinition, this.simTick, { candidates });
+        let state = res.state;
+        if (res.spawnExplosion) {
+          this.applyWitherExplosion(res.spawnExplosion, WITHER_SPAWN_EXPLOSION_STRENGTH);
+          witherDirty = true;
+        }
+        for (const s of res.spawnedSkulls) {
+          if (this.witherSkulls.length >= 12) this.witherSkulls.shift();
+          this.witherSkulls.push(createWitherSkull(s.x, s.y, s.z, s.vx, s.vy, s.vz, s.kind, w.id));
+        }
+        if (state.bossState.status === 'DEFEATED' && !state.hasDroppedReward) {
+          this.itemEntities.spawnLootStacks([{ item: ItemId.NetherStar, count: 1 }], state.x, state.y, state.z, Math.random);
+          this.experience.addXp(50);
+          state = { ...state, hasDroppedReward: true };
+          witherDirty = true;
+          this.showToast('Wither defeated');
+        }
+        next.push(state);
+      }
+      // Player melee against a near wither (attack-window paced).
+      if (this.witherAttackCooldown > 0) this.witherAttackCooldown--;
+      else if (playerAlive) {
+        for (let i = 0; i < next.length; i++) {
+          const w = next[i];
+          if (!w || w.bossState.status !== 'ACTIVE') continue;
+          const d = Math.hypot(w.x - this.player.position.x, w.y - this.player.position.y, w.z - this.player.position.z);
+          if (d < 4) {
+            const res = damageWither(w, this.witherBossDefinition, 5, false);
+            if (res.damageApplied > 0) {
+              let nw = res.state;
+              if (res.defeated && !nw.hasDroppedReward) {
+                this.itemEntities.spawnLootStacks([{ item: ItemId.NetherStar, count: 1 }], nw.x, nw.y, nw.z, Math.random);
+                this.experience.addXp(50);
+                nw = { ...nw, hasDroppedReward: true };
+                witherDirty = true;
+                this.showToast('Wither defeated');
+              }
+              next[i] = nw;
+              this.witherAttackCooldown = 10;
+              break;
+            }
+          }
+        }
+      }
+      // Remove long-dead bosses (reward already granted) so they never accumulate.
+      const kept = next.filter((w) => !(w.bossState.status === 'DEFEATED' && w.bossState.ticks > WITHER_DESPAWN_TICKS));
+      if (kept.length !== next.length) witherDirty = true;
+      this.withers = kept;
+      if (witherDirty) this.saveWithers();
+
+      // Skull stepping.
+      const shapeWorld = {
+        getBlock: (x: number, y: number, z: number): number => this.world.getBlock(x, y, z),
+        isOpaque: (x: number, y: number, z: number): boolean => this.blockRegistry.isOpaque(this.world.getBlock(x, y, z)),
+      } as unknown as import('../world/CollisionResolver').ShapeWorld;
+      const surviving: WitherSkullState[] = [];
+      for (const skull of this.witherSkulls) {
+        const targets = playerAlive
+          ? [{ id: 9999, x: this.player.position.x, y: this.player.position.y + 0.8, z: this.player.position.z, radius: 0.6 }]
+          : [];
+        const step = stepWitherSkull(shapeWorld, this.collisionResolver, skull, targets);
+        if (step.expired) continue;
+        if (step.hitBlock || step.hitEntityId !== null) {
+          this.applyWitherExplosion([step.state.x, step.state.y, step.state.z], skull.kind === 'blue' ? 2.5 : 1);
+          const dist = Math.hypot(
+            step.state.x - this.player.position.x,
+            step.state.y - this.player.position.y,
+            step.state.z - this.player.position.z,
+          );
+          if (playerAlive && dist < 4) {
+            const durTicks = scaledWitherDuration(skull.kind, 'normal');
+            if (durTicks > 0) {
+              this.playerEffects.add(createResourceId('minecraft', 'effect/wither'), durTicks / 20, 0);
+            }
+            this.survival.damage(skull.kind === 'blue' ? 12 : 8, 'wither');
+          }
+          continue;
+        }
+        surviving.push(step.state);
+      }
+      this.witherSkulls = surviving;
+
+      // Wither status effect periodic damage (1 HP per 2 s while active).
+      if (playerAlive && this.simTick % 40 === 0) {
+        if (this.playerEffects.get(createResourceId('minecraft', 'effect/wither'))) {
+          this.survival.damage(1, 'wither');
+        }
+      }
+    }
+    this.syncWitherPresentation();
+  }
+
+  /** Rebuild/sync the wither + skull meshes from authoritative state. Bounded. */
+  private syncWitherPresentation(): void {
+    const present = new Set(this.withers.map((w) => w.id));
+    for (const [id, group] of this.witherMeshes) {
+      if (!present.has(id)) {
+        this.witherGroup.remove(group);
+        this.witherMeshes.delete(id);
+      }
+    }
+    for (const w of this.withers) {
+      let g = this.witherMeshes.get(w.id);
+      if (!g) {
+        g = new THREE.Group();
+        const armored = w.bossState.phaseIndex >= 1;
+        const body = new THREE.Mesh(
+          new THREE.BoxGeometry(0.8, 0.8, 0.8),
+          new THREE.MeshLambertMaterial({ color: armored ? 0x550000 : 0x303030 }),
+        );
+        body.position.y = 0.6;
+        g.add(body);
+        const headMat = new THREE.MeshLambertMaterial({ color: 0x202020 });
+        const central = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 8), headMat);
+        central.name = 'central';
+        central.position.set(0, 1.2, 0);
+        g.add(central);
+        for (const [name, sx] of [['left', -0.7], ['right', 0.7]] as const) {
+          const head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), headMat);
+          head.name = name;
+          head.position.set(sx, 0.9, 0);
+          g.add(head);
+        }
+        this.witherGroup.add(g);
+        this.witherMeshes.set(w.id, g);
+      }
+      g.position.set(w.x, w.y, w.z);
+      g.rotation.y = THREE.MathUtils.degToRad(w.yaw);
+      const left = g.getObjectByName('left');
+      if (left) left.rotation.y = THREE.MathUtils.degToRad(w.sideHeadYaws[0] ?? 0);
+      const right = g.getObjectByName('right');
+      if (right) right.rotation.y = THREE.MathUtils.degToRad(w.sideHeadYaws[1] ?? 0);
+    }
+    // Skulls are few (cap 12); rebuild each tick.
+    for (const mesh of this.skullMeshes.values()) {
+      this.witherGroup.remove(mesh);
+      mesh.geometry.dispose();
+    }
+    this.skullMeshes.clear();
+    for (let i = 0; i < this.witherSkulls.length; i++) {
+      const s = this.witherSkulls[i];
+      if (!s) continue;
+      const mesh = new THREE.Mesh(
+        new THREE.SphereGeometry(0.15, 6, 6),
+        new THREE.MeshLambertMaterial({ color: s.kind === 'blue' ? 0x0066ff : 0x333333 }),
+      );
+      mesh.position.set(s.x, s.y, s.z);
+      this.witherGroup.add(mesh);
+      this.skullMeshes.set(i, mesh);
+    }
+    // Boss bar.
+    if (this.witherBossBarEl) {
+      const first = this.withers[0];
+      if (first) {
+        this.witherBossBarEl.style.display = 'block';
+        const fill = this.witherBossBarEl.querySelector('#wither-boss-bar-fill') as HTMLElement | null;
+        if (fill) fill.style.width = `${Math.round(bossBarProgress(first) * 100)}%`;
+      } else {
+        this.witherBossBarEl.style.display = 'none';
+      }
     }
   }
 

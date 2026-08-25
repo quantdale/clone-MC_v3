@@ -64,6 +64,8 @@ export const enum BlockId {
   Obsidian = 57,
   SoulSand = 58,
   NetherWart = 59,
+  SoulSoil = 60,
+  WitherSkull = 61,
 }
 
 /**
@@ -1239,6 +1241,38 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       dropItem: rid('nether_wart'),
       propertySchema: NETHER_WART_SCHEMA,
       defaultState: { age: 0 },
+    },
+    {
+      id: BlockId.SoulSoil,
+      resourceId: rid('soul_soil'),
+      key: 'soul_soil',
+      name: 'Soul Soil',
+      solid: true,
+      opaque: true,
+      breakable: true,
+      renderCategory: RenderCategory.Opaque,
+      topTile: 62,
+      bottomTile: 62,
+      sideTile: 62,
+      hardness: 0.5,
+      preferredTool: ToolKind.Shovel,
+      miningLevel: 0,
+      dropItem: rid('soul_soil'),
+    },
+    {
+      id: BlockId.WitherSkull,
+      resourceId: rid('wither_skull'),
+      key: 'wither_skull',
+      name: 'Wither Skull',
+      solid: false,
+      opaque: false,
+      breakable: true,
+      renderCategory: RenderCategory.Transparent,
+      topTile: 63,
+      bottomTile: 63,
+      sideTile: 63,
+      hardness: 1,
+      dropItem: rid('wither_skeleton_skull'),
     },
   ];
   return new BlockTypeRegistry(defs);

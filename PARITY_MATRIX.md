@@ -1,8 +1,8 @@
 # PARITY_MATRIX.md
 
 - **Schema version:** `v1`
-- **Generated:** 2026-08-25 (Change 251 VERIFIED and archived as `2026-08-25-251-live-furnace-production-integration`; 7 specs synced; C251 exact; 001–251 VERIFIED; provenance in `openspec/PROGRAM_STATE.json`)
-- **Scope:** one row per planned numbered change `001`–`251` (FeatureId `C<number>`), plus master-plan-only feature areas (`MP-<section>-<seq>`).
+- **Generated:** 2026-08-25 (Change 252 VERIFIED and archived as `2026-08-25-252-wither-secondary-boss`; C252/MP-19.4-1 exact; 001–252 VERIFIED; provenance in `openspec/PROGRAM_STATE.json`)
+- **Scope:** one row per planned numbered change `001`–`252` (FeatureId `C<number>`), plus master-plan-only feature areas (`MP-<section>-<seq>`).
 
 ## Sources of truth
 
@@ -282,6 +282,7 @@ Narrow-outcome text is quoted from `openspec/CHANGE_SEQUENCE.md` (authoritative 
 | C249 | `249-whole-codebase-adversarial-audit` | Security, correctness, reliability, data-loss, concurrency, performance and architecture audit. | n/a | `openspec/changes/249-whole-codebase-adversarial-audit/verification.md` (VERIFIED) | Documentation-only audit record (`report.md` + fragments); its blocking data-loss findings were remediated by the post-250 hardening interlock (`openspec/hardening/2026-08-21-post-250-production-persistence-hardening/`), superseding the historical `accepted` dispositions. | VERIFIED |
 | C250 | `250-final-program-verification` | All mandatory changes verified, complete evidence archive, final release-readiness decision. | n/a | `openspec/changes/250-final-program-verification/verification.md` (VERIFIED) | Documentation-only evidence archive (`openspec/evidence/`); its READY decision is superseded for current release authority by the post-250 interlock and the 2026-08-23 certification package (see `PROGRAM_STATE.json` `releaseAuthority`). | VERIFIED |
 | C251 | `251-live-furnace-production-integration` | Wire the verified furnace/block-entity stack into the playable Game: place, open, operate, persist, unload/reload, and break a furnace end-to-end. | exact | `openspec/changes/archive/2026-08-25-251-live-furnace-production-integration/verification.md` (VERIFIED) + `openspec/specs/live-furnace-integration/spec.md` (7 requirements, 9 scenarios) | — | VERIFIED |
+| C252 | `252-wither-secondary-boss` | Close MP-19.4-1: player-driven Wither-like secondary boss — summon structure detection/consumption, invulnerable charge with exactly-once spawn explosion via the Explosion Core, three-head targeting, normal/blue skull projectiles over the projectile core, difficulty-scaled wither status effect, armored-phase projectile immunity, exactly-once Nether-Star reward through the loot pipeline, versioned persistence, live block-placement/Game integration. | exact | `openspec/changes/archive/2026-08-25-252-wither-secondary-boss/verification.md` (VERIFIED) + `specs/wither-boss/spec.md` in the same archive | Known differences (original-asset policy): original procedural visuals/audio; wire-level wither codecs deferred until a transport consumer exists; mobGriefing destroyable-filter seam not yet wired to a gamerule UI toggle. | VERIFIED |
 
 ## Master-plan-only features
 
@@ -289,7 +290,7 @@ Feature areas named in `MINECRAFT_PARITY_MASTER_PLAN.md` that no single numbered
 
 | FeatureId | Feature | Reference area | Category | Evidence | Known differences / rationale | Status |
 |---|---|---|---|---|---|---|
-| MP-19.4-1 | Wither-like secondary boss | §19.4 names a second major boss after combat/summon-pattern/block-destruction systems stabilize; no change 001–250 implements it (C153 delivers only the reusable boss framework, C183 the ender dragon). | deferred | — | Roadmap: master-plan-only area; needs a future numbered change building on C153/C169/C183. | planned |
+| MP-19.4-1 | Wither-like secondary boss | §19.4 names a second major boss after combat/summon-pattern/block-destruction systems stabilize; implemented by C252 building on C153/C169/C183. | exact | `openspec/changes/archive/2026-08-25-252-wither-secondary-boss/verification.md` (VERIFIED) | Known differences (documented, original-asset policy): procedural visuals/audio instead of proprietary assets; wire-level wither message codecs deferred until a transport consumer exists (229 descriptors carry spawns/transforms); mobGriefing=false destroyable-filter seam present but not yet wired to a gamerule UI toggle. | VERIFIED |
 | MP-33-1 | Proprietary-service/asset features (Realms-like official infrastructure, Mojang assets/branding/decompiled code) | §2.3 and §33 explicitly exclude service-dependent and proprietary-asset features. | out-of-scope | — | Requires proprietary Mojang/Microsoft services, assets, and branding; forbidden by §33 legal guardrails and the original-asset policy. | n/a |
 
 **Coverage note (master plan → changes):** every other master-plan feature area maps onto numbered changes, so no further MP rows are invented: §2.2 secondary targets → C193/C194/C195 (hardcore/adventure/spectator), C209/C210 (gamepad/touch), C222–C237 (dedicated-authoritative-server multiplayer), C208 (Bedrock-inspired QoL/accessibility options); §17.4 utility/tameable mobs → C218 mob-content expansion; §25 performance → C075, C238–C240, C247; §26 test strategy → C055, C102, C173, C241–C247; §27 save compatibility/migrations → C040/C041; §30 Detailed Feature Checklist areas → the phase-mapped changes 002–221 (content-breadth bullets land via C215–C220).
@@ -298,14 +299,13 @@ Feature areas named in `MINECRAFT_PARITY_MASTER_PLAN.md` that no single numbered
 
 | Category | Rows |
 |---|---|
-| exact | 239 |
+| exact | 241 (incl. C252 and MP-19.4-1 Wither-like secondary boss via C252) |
 | equivalent | 4 |
 | approx | 5 |
-| deferred | 1 (MP-19.4-1 Wither-like secondary boss — future scope, intentionally not implemented) |
 | out-of-scope | 1 (MP-33-1 proprietary services/assets) |
 | n/a (documentation) | 3 (C248, C249, C250) |
-| **Total rows** | **253** (251 change rows + 2 master-plan rows) |
+| **Total rows** | **254** (252 change rows + 2 master-plan rows) |
 
-Change-rows-only split: exact 239 / equivalent 4 / approx 5 / n/a 3 / deferred 1 = 251.
+Change-rows-only split: exact 240 / equivalent 4 / approx 5 / n/a 3 = 252.
 
-**Coverage statement:** every planned change 001–251 appears in exactly one row (bijective `C001`…`C251`, no duplicates, no orphan rows), every completed change maps to at least one row citing its VERIFIED artifact, and `scripts/validate-state.mjs` cross-checks matrix rows against `PROGRAM_STATE.json` so a VERIFIED change can never silently regress to `deferred`/`planned` here. The two additional `MP-*` rows cover master-plan areas outside the numbered sequence.
+**Coverage statement:** every planned change 001–252 appears in exactly one row (bijective `C001`…`C252`, no duplicates, no orphan rows), every completed change maps to at least one row citing its VERIFIED artifact, and `scripts/validate-state.mjs` cross-checks matrix rows against `PROGRAM_STATE.json` so a VERIFIED change can never silently regress to `deferred`/`planned` here. The two additional `MP-*` rows cover master-plan areas outside the numbered sequence; MP-19.4-1 is now closed `exact` by C252.

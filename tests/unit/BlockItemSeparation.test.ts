@@ -191,7 +191,7 @@ describe('block/item registry separation', () => {
         expect(
           item.isFood === true ||
             item.toolKind !== undefined ||
-            ['stick', 'coal', 'raw_iron', 'iron_ingot', 'bedrock', 'lapis_lazuli', 'book', 'wheat', 'bone_meal'].includes(item.key),
+            ['stick', 'coal', 'raw_iron', 'iron_ingot', 'bedrock', 'lapis_lazuli', 'book', 'wheat', 'bone_meal', 'nether_star'].includes(item.key),
         ).toBe(true);
         continue;
       }
@@ -204,6 +204,7 @@ describe('block/item registry separation', () => {
       const PLACEMENT_KEY_OVERRIDES: Record<string, string> = {
         wheat_seeds: 'wheat',
         redstone: 'redstone_wire',
+        wither_skeleton_skull: 'wither_skull',
       };
       const expected = `minecraft:${PLACEMENT_KEY_OVERRIDES[item.key] ?? item.key}`;
       expect(resourceIdToString(item.placeBlock)).toBe(expected);

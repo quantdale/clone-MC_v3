@@ -179,6 +179,8 @@ export function createDefaultEntityRegistry(): EntityRegistry {
     def('skeleton', 'MONSTER', 20, 2, true, true),
     def('creeper', 'MONSTER', 20, 0, true, true),
     def('spider', 'MONSTER', 16, 2, true, true),
+    def('wither', 'MONSTER', 300, 8, true, true),
+    def('wither_skull', 'PROJECTILE', 1, 0, false, false),
     def('pig', 'CREATURE', 10, 0, true, true),
     def('cow', 'CREATURE', 10, 0, true, true),
     def('chicken', 'CREATURE', 4, 0, true, true),

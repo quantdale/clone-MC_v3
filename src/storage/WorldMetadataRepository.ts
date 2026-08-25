@@ -145,6 +145,25 @@ export class WorldMetadataRepository {
     await promisifyRequest(tx.objectStore(this.store).put(valid));
   }
 
+  /** Raw put for wither list bypassing WorldMetadata validation (252). */
+  async putWitherData(worldId: string, payload: unknown[]): Promise<void> {
+    const raw = {
+      worldId: `__wither__:${worldId}`,
+      payload,
+      updatedAt: Date.now(),
+    };
+    const tx = this.requireDb().transaction(this.store, 'readwrite');
+    await promisifyRequest(tx.objectStore(this.store).put(raw));
+  }
+
+  /** Raw get for wither list (252). Returns null when absent. */
+  async getWitherData(worldId: string): Promise<unknown[] | null> {
+    const tx = this.requireDb().transaction(this.store, 'readonly');
+    const result = await promisifyRequest(tx.objectStore(this.store).get(`__wither__:${worldId}`)) as { payload?: unknown } | undefined;
+    if (!result || !Array.isArray((result as { payload?: unknown }).payload)) return null;
+    return (result as { payload: unknown[] }).payload;
+  }
+
   /** Return the metadata for `worldId`, or `null` if absent. */
   async getMetadata(worldId: string): Promise<WorldMetadata | null> {
     const tx = this.requireDb().transaction(this.store, 'readonly');

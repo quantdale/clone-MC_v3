@@ -368,3 +368,4 @@ rules as the original sequence:
 | # | Change | Narrow outcome |
 |---|---|---|
 | 251 | `251-live-furnace-production-integration` | Wire the verified furnace/block-entity/recipe/fuel/container/persistence infrastructure into the playable Game: place, open, operate, persist, unload/reload, and break a furnace without duplication, loss, or headless-only shortcuts. |
+| 252 | `252-wither-secondary-boss` | Close MP-19.4-1: player-driven Wither-like secondary boss end-to-end — summon structure detection/consumption, invulnerable charge with exactly-once spawn explosion via the Explosion Core, three-head targeting, normal/blue skull projectiles over the projectile core, difficulty-scaled wither status effect, armored-phase projectile immunity, exactly-once Nether-Star reward through the loot pipeline, versioned persistence, live block-placement/Game integration, and full regression/gate coverage. |
