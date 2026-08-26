@@ -1,0 +1,1759 @@
+{
+  "summary": {
+    "generatedAt": "2026-08-26T16:45:05.214Z",
+    "scannedFiles": 676,
+    "totalHits": 192,
+    "byDisposition": {
+      "REMOVE": 19,
+      "MIGRATE": 107,
+      "TEST_ONLY": 66
+    },
+    "bySeverity": {
+      "Critical": 52,
+      "High": 140
+    },
+    "byCategory": {
+      "legacy-Chunk": 18,
+      "bare-id-storage": 34,
+      "legacy-height": 38,
+      "legacy-edit-map": 34,
+      "ChunkManager": 5,
+      "legacy-key": 21,
+      "legacy-range-clamp": 10,
+      "split-truth": 29,
+      "legacy-slab-key": 2,
+      "legacy-light-clamp": 1
+    },
+    "criticalHighProductionHits": 126
+  },
+  "hits": [
+    {
+      "pattern": "legacy-Chunk-class",
+      "category": "legacy-Chunk",
+      "severity": "Critical",
+      "file": "scripts/worldgen/author-worldgen-matrix.test.ts",
+      "line": 47,
+      "snippet": "chunk = new Chunk(cx, 0, cz);",
+      "disposition": "REMOVE"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "scripts/worldgen/author-worldgen-matrix.test.ts",
+      "line": 51,
+      "snippet": "return chunk.getLocal(x - cx * 16, y, z - cz * 16);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/engine/Game.ts",
+      "line": 1185,
+      "snippet": "const sectionsPerChunk = CONFIG.chunk.height / 16;",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/engine/Game.ts",
+      "line": 2346,
+      "snippet": "if (y < CONFIG.bedrockY || y >= CONFIG.chunk.height) return;",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/player/PlayerInteraction.ts",
+      "line": 496,
+      "snippet": "if (by < 0 || by >= CONFIG.chunk.height) {",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/rendering/MemoryResourceBudget.ts",
+      "line": 28,
+      "snippet": "| 'editOverlayChunks'",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/rendering/MemoryResourceBudget.ts",
+      "line": 38,
+      "snippet": "editOverlayChunks: number;",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/rendering/MemoryResourceBudget.ts",
+      "line": 92,
+      "snippet": "'editOverlayChunks',",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/rendering/MemoryResourceBudget.ts",
+      "line": 103,
+      "snippet": "editOverlayChunks: 'maxEditOverlayChunks',",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/rendering/MemoryResourceBudget.ts",
+      "line": 138,
+      "snippet": "editOverlayMaxChunks?: number;",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/rendering/MemoryResourceBudget.ts",
+      "line": 166,
+      "snippet": "maxEditOverlayChunks: opts.editOverlayMaxChunks ?? EDIT_OVERLAY_MAX_CHUNKS,",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/rendering/MemoryResourceBudget.ts",
+      "line": 239,
+      "snippet": "| 'editOverlays'",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/rendering/MemoryResourceBudget.ts",
+      "line": 251,
+      "snippet": "'editOverlays',",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/simulation/PassiveMobBaseline.ts",
+      "line": 55,
+      "snippet": "* (15 if unobstructed up to `CONFIG.chunk.height`, else 0); block light is always 0 (no block-light",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/simulation/PassiveMobBaseline.ts",
+      "line": 78,
+      "snippet": "for (let yy = y; yy < CONFIG.chunk.height; yy++) {",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-Chunk-class",
+      "category": "legacy-Chunk",
+      "severity": "Critical",
+      "file": "src/world/ChunkManager.ts",
+      "line": 48,
+      "snippet": "chunk = new Chunk(cx, cy, cz);",
+      "disposition": "REMOVE"
+    },
+    {
+      "pattern": "ChunkManager-authority",
+      "category": "ChunkManager",
+      "severity": "Critical",
+      "file": "src/world/ChunkManager.ts",
+      "line": 20,
+      "snippet": "export class ChunkManager {",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "slab-chunk-key",
+      "category": "legacy-key",
+      "severity": "High",
+      "file": "src/world/ChunkManager.ts",
+      "line": 40,
+      "snippet": "return this.chunks.get(chunkKey(cx, cy, cz));",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "slab-chunk-key",
+      "category": "legacy-key",
+      "severity": "High",
+      "file": "src/world/ChunkManager.ts",
+      "line": 45,
+      "snippet": "const key = chunkKey(cx, cy, cz);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "slab-chunk-key",
+      "category": "legacy-key",
+      "severity": "High",
+      "file": "src/world/ChunkManager.ts",
+      "line": 62,
+      "snippet": "const key = chunkKey(cx, cy, cz);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "src/world/ChunkMesher.ts",
+      "line": 140,
+      "snippet": "const id = chunk.getLocal(x, y, z);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "src/world/ChunkMesher.ts",
+      "line": 256,
+      "snippet": "return chunk.getLocal(nx, ny, nz);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "src/world/ChunkMesher.ts",
+      "line": 270,
+      "snippet": "return neighbor.getLocal(lx, ly, lz);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/world/TerrainGenerator.ts",
+      "line": 199,
+      "snippet": "const wy0 = chunk.cy * CHUNK_DIMENSIONS.height;",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/world/TerrainGenerator.ts",
+      "line": 230,
+      "snippet": "for (let ly = 0; ly < CHUNK_DIMENSIONS.height; ly++) {",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/world/TerrainGenerator.ts",
+      "line": 320,
+      "snippet": "lx >= 0 && lx < CHUNK_DIMENSIONS.width && ly >= 0 && ly < CHUNK_DIMENSIONS.height && lz >= 0 && lz < CHUNK_DIMENSIONS.depth",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/world/TerrainGenerator.ts",
+      "line": 338,
+      "snippet": "const wy0 = chunk.cy * CHUNK_DIMENSIONS.height;",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/world/TerrainGenerator.ts",
+      "line": 346,
+      "snippet": "if (ly < 0 || ly >= CHUNK_DIMENSIONS.height) {",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/world/TerrainGenerator.ts",
+      "line": 401,
+      "snippet": "const wy0 = chunk.cy * CHUNK_DIMENSIONS.height;",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/world/TerrainGenerator.ts",
+      "line": 423,
+      "snippet": "if (ly < 0 || ly >= CHUNK_DIMENSIONS.height) {",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-y-clamp-64",
+      "category": "legacy-range-clamp",
+      "severity": "High",
+      "file": "src/world/TerrainGenerator.ts",
+      "line": 230,
+      "snippet": "for (let ly = 0; ly < CHUNK_DIMENSIONS.height; ly++) {",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-y-clamp-64",
+      "category": "legacy-range-clamp",
+      "severity": "High",
+      "file": "src/world/TerrainGenerator.ts",
+      "line": 320,
+      "snippet": "lx >= 0 && lx < CHUNK_DIMENSIONS.width && ly >= 0 && ly < CHUNK_DIMENSIONS.height && lz >= 0 && lz < CHUNK_DIMENSIONS.depth",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-y-clamp-64",
+      "category": "legacy-range-clamp",
+      "severity": "High",
+      "file": "src/world/TerrainGenerator.ts",
+      "line": 346,
+      "snippet": "if (ly < 0 || ly >= CHUNK_DIMENSIONS.height) {",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-y-clamp-64",
+      "category": "legacy-range-clamp",
+      "severity": "High",
+      "file": "src/world/TerrainGenerator.ts",
+      "line": 423,
+      "snippet": "if (ly < 0 || ly >= CHUNK_DIMENSIONS.height) {",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "src/world/TerrainGenerator.ts",
+      "line": 277,
+      "snippet": "chunk.setLocal(lx, ly, lz, id);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "src/world/TerrainGenerator.ts",
+      "line": 321,
+      "snippet": "? chunk.getLocal(lx, ly, lz)",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "src/world/TerrainGenerator.ts",
+      "line": 323,
+      "snippet": "setLocal: (lx, ly, lz, id) => chunk.setLocal(lx, ly, lz, id),",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "src/world/TerrainGenerator.ts",
+      "line": 349,
+      "snippet": "chunk.setLocal(block.x - wx0, ly, block.z - wz0, block.blockId);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "src/world/TerrainGenerator.ts",
+      "line": 437,
+      "snippet": "chunk.setLocal(lx, ly, lz, block.blockId);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "ChunkManager-authority",
+      "category": "ChunkManager",
+      "severity": "Critical",
+      "file": "src/world/World.ts",
+      "line": 12,
+      "snippet": "import { ChunkManager } from './ChunkManager';",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "ChunkManager-authority",
+      "category": "ChunkManager",
+      "severity": "Critical",
+      "file": "src/world/World.ts",
+      "line": 12,
+      "snippet": "import { ChunkManager } from './ChunkManager';",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "ChunkManager-authority",
+      "category": "ChunkManager",
+      "severity": "Critical",
+      "file": "src/world/World.ts",
+      "line": 142,
+      "snippet": "private readonly chunkManager: ChunkManager;",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "ChunkManager-authority",
+      "category": "ChunkManager",
+      "severity": "Critical",
+      "file": "src/world/World.ts",
+      "line": 317,
+      "snippet": "this.chunkManager = new ChunkManager(opts.registry);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "src/world/World.ts",
+      "line": 190,
+      "snippet": "private readonly stateOverlay = new Map<string, Map<number, BlockStateId>>();",
+      "disposition": "REMOVE"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "src/world/World.ts",
+      "line": 192,
+      "snippet": "private readonly stateOverlayWriteOrder: string[] = [];",
+      "disposition": "REMOVE"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "src/world/World.ts",
+      "line": 408,
+      "snippet": "const stateLayer = this.stateOverlay.get(key);",
+      "disposition": "REMOVE"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "src/world/World.ts",
+      "line": 412,
+      "snippet": "this.stateOverlay.delete(key);",
+      "disposition": "REMOVE"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "src/world/World.ts",
+      "line": 506,
+      "snippet": "let layer = this.stateOverlay.get(key);",
+      "disposition": "REMOVE"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "src/world/World.ts",
+      "line": 509,
+      "snippet": "this.stateOverlay.set(key, layer);",
+      "disposition": "REMOVE"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "src/world/World.ts",
+      "line": 523,
+      "snippet": "const index = this.stateOverlayWriteOrder.indexOf(key);",
+      "disposition": "REMOVE"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "src/world/World.ts",
+      "line": 525,
+      "snippet": "this.stateOverlayWriteOrder.splice(index, 1);",
+      "disposition": "REMOVE"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "src/world/World.ts",
+      "line": 527,
+      "snippet": "this.stateOverlayWriteOrder.push(key);",
+      "disposition": "REMOVE"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "src/world/World.ts",
+      "line": 529,
+      "snippet": "while (this.stateOverlay.size > World.STATE_OVERLAY_MAX_CHUNKS) {",
+      "disposition": "REMOVE"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "src/world/World.ts",
+      "line": 530,
+      "snippet": "const lruKey = this.stateOverlayWriteOrder.shift();",
+      "disposition": "REMOVE"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "src/world/World.ts",
+      "line": 534,
+      "snippet": "this.stateOverlay.delete(lruKey);",
+      "disposition": "REMOVE"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "src/world/World.ts",
+      "line": 540,
+      "snippet": "const index = this.stateOverlayWriteOrder.indexOf(key);",
+      "disposition": "REMOVE"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "src/world/World.ts",
+      "line": 542,
+      "snippet": "this.stateOverlayWriteOrder.splice(index, 1);",
+      "disposition": "REMOVE"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "src/world/World.ts",
+      "line": 559,
+      "snippet": "const stateId = this.stateOverlay.get(key)?.get(index);",
+      "disposition": "REMOVE"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "src/world/World.ts",
+      "line": 1669,
+      "snippet": "this.stateOverlay.clear();",
+      "disposition": "REMOVE"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "src/world/World.ts",
+      "line": 1670,
+      "snippet": "this.stateOverlayWriteOrder.length = 0;",
+      "disposition": "REMOVE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 160,
+      "snippet": "private readonly editOverlay = new Map<string, Map<number, number>>();",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 164,
+      "snippet": "private readonly editOverlayAccessOrder: string[] = [];",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 185,
+      "snippet": "* bounded like {@link editOverlay}: at most",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 425,
+      "snippet": "let overlay = this.editOverlay.get(key);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 428,
+      "snippet": "this.editOverlay.set(key, overlay);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 586,
+      "snippet": "for (const [key, overlay] of this.editOverlay) {",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 620,
+      "snippet": "let overlay = this.editOverlay.get(key);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 623,
+      "snippet": "this.editOverlay.set(key, overlay);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 649,
+      "snippet": "this.editOverlay.delete(key);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 657,
+      "snippet": "return this.editOverlay.size;",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 663,
+      "snippet": "for (const overlay of this.editOverlay.values()) {",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 1170,
+      "snippet": "let overlay = this.editOverlay.get(key);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 1176,
+      "snippet": "this.editOverlay.set(key, overlay);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 1226,
+      "snippet": "if (this.editOverlay.has(key)) {",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 1229,
+      "snippet": "this.editOverlay.set(key, overlay);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 1256,
+      "snippet": "const index = this.editOverlayAccessOrder.indexOf(key);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 1258,
+      "snippet": "this.editOverlayAccessOrder.splice(index, 1);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 1260,
+      "snippet": "this.editOverlayAccessOrder.push(key);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 1262,
+      "snippet": "while (this.editOverlay.size > World.EDIT_OVERLAY_MAX_CHUNKS) {",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 1263,
+      "snippet": "const lruKey = this.editOverlayAccessOrder.shift();",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 1267,
+      "snippet": "const evicted = this.editOverlay.get(lruKey);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 1272,
+      "snippet": "this.editOverlay.delete(lruKey);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 1667,
+      "snippet": "this.editOverlay.clear();",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 1668,
+      "snippet": "this.editOverlayAccessOrder.length = 0;",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 227,
+      "snippet": "y >= CONFIG.bedrockY && y < CHUNK_DIMENSIONS.height,",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 233,
+      "snippet": "private readonly sectionsPerChunk = CHUNK_DIMENSIONS.height / 16;",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 315,
+      "snippet": "this.minChunkY = opts.dimension ? Math.floor(opts.dimension.minY / CHUNK_DIMENSIONS.height) : 0;",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 316,
+      "snippet": "this.chunkLayerCount = opts.dimension ? Math.ceil(opts.dimension.height / CHUNK_DIMENSIONS.height) : 1;",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 326,
+      "snippet": "{ minY: CONFIG.bedrockY, maxY: CHUNK_DIMENSIONS.height },",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 373,
+      "snippet": "const cy = Math.floor(y / CHUNK_DIMENSIONS.height);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 381,
+      "snippet": "y - cy * CHUNK_DIMENSIONS.height,",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 394,
+      "snippet": "if (y < 0 || y >= CHUNK_DIMENSIONS.height) {",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 493,
+      "snippet": "if (y < 0 || y >= CHUNK_DIMENSIONS.height) {",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 629,
+      "snippet": "index >= CHUNK_DIMENSIONS.width * CHUNK_DIMENSIONS.height * CHUNK_DIMENSIONS.depth ||",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 858,
+      "snippet": "const oy = chunk.cy * CHUNK_DIMENSIONS.height;",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 1058,
+      "snippet": "if (y <= CONFIG.bedrockY || y >= CHUNK_DIMENSIONS.height || !Number.isInteger(x) || !Number.isInteger(z)) {",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 1068,
+      "snippet": "if (y < 0 || y >= CHUNK_DIMENSIONS.height) return false;",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 1070,
+      "snippet": "const cy = Math.floor(y / CHUNK_DIMENSIONS.height);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 1311,
+      "snippet": "const py = chunk.cy * CHUNK_DIMENSIONS.height;",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 1374,
+      "snippet": "const sectionsY = CHUNK_DIMENSIONS.height / 16;",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 1388,
+      "snippet": "const baseY = chunk.cy * CHUNK_DIMENSIONS.height + sectionIndex * 16;",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "cy-eq-0",
+      "category": "legacy-slab-key",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 388,
+      "snippet": "// single vertical slab (cy === 0), so y must fall within the chunk height;",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-y-clamp-64",
+      "category": "legacy-range-clamp",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 227,
+      "snippet": "y >= CONFIG.bedrockY && y < CHUNK_DIMENSIONS.height,",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-y-clamp-64",
+      "category": "legacy-range-clamp",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 394,
+      "snippet": "if (y < 0 || y >= CHUNK_DIMENSIONS.height) {",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-y-clamp-64",
+      "category": "legacy-range-clamp",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 493,
+      "snippet": "if (y < 0 || y >= CHUNK_DIMENSIONS.height) {",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-y-clamp-64",
+      "category": "legacy-range-clamp",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 1058,
+      "snippet": "if (y <= CONFIG.bedrockY || y >= CHUNK_DIMENSIONS.height || !Number.isInteger(x) || !Number.isInteger(z)) {",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-y-clamp-64",
+      "category": "legacy-range-clamp",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 1068,
+      "snippet": "if (y < 0 || y >= CHUNK_DIMENSIONS.height) return false;",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "slab-chunk-key",
+      "category": "legacy-key",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 45,
+      "snippet": "keyToChunk,",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "slab-chunk-key",
+      "category": "legacy-key",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 404,
+      "snippet": "const key = chunkKey(cx, cy, cz);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "slab-chunk-key",
+      "category": "legacy-key",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 505,
+      "snippet": "const key = chunkKey(cx, cy, cz);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "slab-chunk-key",
+      "category": "legacy-key",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 558,
+      "snippet": "const key = chunkKey(cx, cy, cz);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "slab-chunk-key",
+      "category": "legacy-key",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 619,
+      "snippet": "const key = chunkKey(cx, cy, cz);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "slab-chunk-key",
+      "category": "legacy-key",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 898,
+      "snippet": "const [cx, cy, cz] = keyToChunk(key);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "slab-chunk-key",
+      "category": "legacy-key",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 1269,
+      "snippet": "const [cx, cy, cz] = keyToChunk(lruKey);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "slab-chunk-key",
+      "category": "legacy-key",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 1444,
+      "snippet": "const record = pipeline.getRecord(chunkKey(cx, cy, cz));",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "slab-chunk-key",
+      "category": "legacy-key",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 1522,
+      "snippet": "this.lightDirtyChunks.add(chunkKey(cx, cy, cz));",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 379,
+      "snippet": "return chunk.getLocal(",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 420,
+      "snippet": "if (chunk && chunk.getLocal(lx, ly, lz) === id) {",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 442,
+      "snippet": "const oldId = chunk.getLocal(lx, ly, lz);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 443,
+      "snippet": "chunk.setLocal(lx, ly, lz, id);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 865,
+      "snippet": "const id = chunk.getLocal(x, y, z);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-light-bounds",
+      "category": "legacy-light-clamp",
+      "severity": "High",
+      "file": "src/world/World.ts",
+      "line": 227,
+      "snippet": "y >= CONFIG.bedrockY && y < CHUNK_DIMENSIONS.height,",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "src/world/WorldCoordinates.ts",
+      "line": 9,
+      "snippet": "const CHUNK_HEIGHT = CONFIG.chunk.height;",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "slab-chunk-key",
+      "category": "legacy-key",
+      "severity": "High",
+      "file": "src/world/WorldCoordinates.ts",
+      "line": 46,
+      "snippet": "export function keyToChunk(key: string): [number, number, number] {",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "src/worldgen/OreVeinFeature.ts",
+      "line": 97,
+      "snippet": "const current = sink.getLocal(lx, ly, lz);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "src/worldgen/OreVeinFeature.ts",
+      "line": 99,
+      "snippet": "sink.setLocal(lx, ly, lz, def.blockId);",
+      "disposition": "MIGRATE"
+    },
+    {
+      "pattern": "legacy-y-clamp-64",
+      "category": "legacy-range-clamp",
+      "severity": "High",
+      "file": "tests/unit/CaveCarver.test.ts",
+      "line": 69,
+      "snippet": "if (y < 0 || y >= 64) {",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "legacy-Chunk-class",
+      "category": "legacy-Chunk",
+      "severity": "Critical",
+      "file": "tests/unit/ChunkMesher.test.ts",
+      "line": 25,
+      "snippet": "const chunk = new Chunk(0, 0, 0);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "legacy-Chunk-class",
+      "category": "legacy-Chunk",
+      "severity": "Critical",
+      "file": "tests/unit/ChunkMesher.test.ts",
+      "line": 31,
+      "snippet": "const neighbor = new Chunk(0, 0, 0);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "legacy-Chunk-class",
+      "category": "legacy-Chunk",
+      "severity": "Critical",
+      "file": "tests/unit/ChunkMesher.test.ts",
+      "line": 44,
+      "snippet": "const chunk = new Chunk(0, 0, 0);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "legacy-Chunk-class",
+      "category": "legacy-Chunk",
+      "severity": "Critical",
+      "file": "tests/unit/ChunkMesher.test.ts",
+      "line": 62,
+      "snippet": "const chunk = new Chunk(0, 0, 0);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "legacy-Chunk-class",
+      "category": "legacy-Chunk",
+      "severity": "Critical",
+      "file": "tests/unit/ChunkMesher.test.ts",
+      "line": 75,
+      "snippet": "const chunk = new Chunk(0, 0, 0);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "legacy-Chunk-class",
+      "category": "legacy-Chunk",
+      "severity": "Critical",
+      "file": "tests/unit/ChunkMesher.test.ts",
+      "line": 79,
+      "snippet": "const neighbor = new Chunk(1, 0, 0);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "legacy-Chunk-class",
+      "category": "legacy-Chunk",
+      "severity": "Critical",
+      "file": "tests/unit/ChunkMesher.test.ts",
+      "line": 94,
+      "snippet": "const chunk = new Chunk(0, 0, 0);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "legacy-Chunk-class",
+      "category": "legacy-Chunk",
+      "severity": "Critical",
+      "file": "tests/unit/ChunkMesher.test.ts",
+      "line": 109,
+      "snippet": "const chunk = new Chunk(0, 0, 0);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "legacy-Chunk-class",
+      "category": "legacy-Chunk",
+      "severity": "Critical",
+      "file": "tests/unit/ChunkMesher.test.ts",
+      "line": 126,
+      "snippet": "const chunk = new Chunk(0, 0, 0);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "cy-eq-0",
+      "category": "legacy-slab-key",
+      "severity": "High",
+      "file": "tests/unit/ChunkMesher.test.ts",
+      "line": 84,
+      "snippet": "const result = mesher.mesh(chunk, (cx, cy, cz) => (cx === 1 && cy === 0 && cz === 0 ? neighbor : undefined));",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "tests/unit/ChunkMesher.test.ts",
+      "line": 46,
+      "snippet": "chunk.setLocal(8, 32, 8, BlockId.Stone);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "tests/unit/ChunkMesher.test.ts",
+      "line": 64,
+      "snippet": "chunk.setLocal(8, 32, 8, BlockId.Water);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "tests/unit/ChunkMesher.test.ts",
+      "line": 77,
+      "snippet": "chunk.setLocal(15, 32, 8, BlockId.Stone);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "tests/unit/ChunkMesher.test.ts",
+      "line": 81,
+      "snippet": "neighbor.setLocal(0, 32, 8, BlockId.Stone);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "tests/unit/ChunkMesher.test.ts",
+      "line": 96,
+      "snippet": "chunk.setLocal(8, 32, 8, BlockId.Water);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "tests/unit/ChunkMesher.test.ts",
+      "line": 97,
+      "snippet": "chunk.setLocal(8, 33, 8, BlockId.Leaves);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "tests/unit/ChunkMesher.test.ts",
+      "line": 111,
+      "snippet": "chunk.setLocal(8, 32, 8, BlockId.Water);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "tests/unit/ChunkMesher.test.ts",
+      "line": 112,
+      "snippet": "chunk.setLocal(9, 32, 8, BlockId.Water);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "tests/unit/ChunkMesher.test.ts",
+      "line": 128,
+      "snippet": "chunk.setLocal(8, 32, 8, BlockId.Grass);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "legacy-Chunk-class",
+      "category": "legacy-Chunk",
+      "severity": "Critical",
+      "file": "tests/unit/GoldenSeed.test.ts",
+      "line": 41,
+      "snippet": "chunk = new Chunk(cx, 0, cz);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "tests/unit/GoldenSeed.test.ts",
+      "line": 45,
+      "snippet": "return chunk.getLocal(x - cx * 16, y, z - cz * 16);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "tests/unit/HotPathEquivalence.test.ts",
+      "line": 61,
+      "snippet": "if (y < 0 || y >= CONFIG.chunk.height) continue;",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "tests/unit/HotPathEquivalence.test.ts",
+      "line": 65,
+      "snippet": "if (y < 0 || y >= CONFIG.chunk.height) continue;",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "tests/unit/HotPathEquivalence.test.ts",
+      "line": 77,
+      "snippet": "expect(cy).toBe(Math.floor(y / CONFIG.chunk.height));",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "tests/unit/HotPathEquivalence.test.ts",
+      "line": 80,
+      "snippet": "expect(ly).toBe(y - cy * CONFIG.chunk.height);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "tests/unit/MemoryResourceBudget.test.ts",
+      "line": 30,
+      "snippet": "editOverlayChunks: 0,",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "editOverlay",
+      "category": "legacy-edit-map",
+      "severity": "High",
+      "file": "tests/unit/MemoryResourceBudget.test.ts",
+      "line": 176,
+      "snippet": "'editOverlayChunks',",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "tests/unit/StateOverlayBoundedness.test.ts",
+      "line": 59,
+      "snippet": "expect(stateOverlaySizeHack(world)).toBe(STATE_OVERLAY_MAX_CHUNKS);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "tests/unit/StateOverlayBoundedness.test.ts",
+      "line": 63,
+      "snippet": "expect(stateOverlaySizeHack(world)).toBe(STATE_OVERLAY_MAX_CHUNKS);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "tests/unit/StateOverlayBoundedness.test.ts",
+      "line": 66,
+      "snippet": "expect(stateOverlayHas(world, '0,0,0')).toBe(false);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "tests/unit/StateOverlayBoundedness.test.ts",
+      "line": 67,
+      "snippet": "expect(stateOverlayHas(world, `0,0,${STATE_OVERLAY_MAX_CHUNKS}`)).toBe(true);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "tests/unit/StateOverlayBoundedness.test.ts",
+      "line": 85,
+      "snippet": "expect(stateOverlaySizeHack(world)).toBeLessThanOrEqual(STATE_OVERLAY_MAX_CHUNKS);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "tests/unit/StateOverlayBoundedness.test.ts",
+      "line": 94,
+      "snippet": "function stateOverlaySizeHack(world: World): number {",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "tests/unit/StateOverlayBoundedness.test.ts",
+      "line": 96,
+      "snippet": "stateOverlay: Map<string, Map<number, unknown>>;",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "tests/unit/StateOverlayBoundedness.test.ts",
+      "line": 98,
+      "snippet": "return internals.stateOverlay.size;",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "tests/unit/StateOverlayBoundedness.test.ts",
+      "line": 102,
+      "snippet": "function stateOverlayHas(world: World, key: string): boolean {",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "tests/unit/StateOverlayBoundedness.test.ts",
+      "line": 104,
+      "snippet": "stateOverlay: Map<string, Map<number, unknown>>;",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "tests/unit/StateOverlayBoundedness.test.ts",
+      "line": 106,
+      "snippet": "return internals.stateOverlay.has(key);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "legacy-Chunk-class",
+      "category": "legacy-Chunk",
+      "severity": "Critical",
+      "file": "tests/unit/StructureGenerator.test.ts",
+      "line": 204,
+      "snippet": "const chunk = new Chunk(start.chunkX, 0, start.chunkZ);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "tests/unit/StructureGenerator.test.ts",
+      "line": 208,
+      "snippet": "expect(chunk.getLocal(lx, originY + corner.y - 0, lz)).toBe(BlockId.Cobblestone);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "legacy-Chunk-class",
+      "category": "legacy-Chunk",
+      "severity": "Critical",
+      "file": "tests/unit/TerrainGenerator.test.ts",
+      "line": 10,
+      "snippet": "return new Chunk(cx, cy, cz);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "tests/unit/TerrainGenerator.test.ts",
+      "line": 64,
+      "snippet": "for (let ly = CONFIG.seaLevel + 1; ly < CONFIG.chunk.height; ly++) {",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "tests/unit/TerrainGenerator.test.ts",
+      "line": 94,
+      "snippet": "for (let ly = 1; ly < CONFIG.chunk.height; ly++) {",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "tests/unit/TerrainGenerator.test.ts",
+      "line": 149,
+      "snippet": "for (let ly = 0; ly < CONFIG.chunk.height; ly++) {",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "tests/unit/TerrainGenerator.test.ts",
+      "line": 40,
+      "snippet": "expect(chunk.getLocal(lx, 0, lz)).toBe(BlockId.Bedrock);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "tests/unit/TerrainGenerator.test.ts",
+      "line": 67,
+      "snippet": "expect(chunk.getLocal(lx, ly, lz)).not.toBe(BlockId.Water);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "tests/unit/TerrainGenerator.test.ts",
+      "line": 97,
+      "snippet": "if (chunk.getLocal(lx, ly, lz) === BlockId.Wood) {",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "tests/unit/TerrainGenerator.test.ts",
+      "line": 98,
+      "snippet": "const below = chunk.getLocal(lx, ly - 1, lz);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "tests/unit/TerrainGenerator.test.ts",
+      "line": 150,
+      "snippet": "if (chunk.getLocal(lx, ly, lz) !== BlockId.Air) {",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "tests/unit/TerrainGenerator.test.ts",
+      "line": 161,
+      "snippet": "expect(chunk.getLocal(lx, height, lz)).toBe(BlockId.Grass);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "legacy-height-constant",
+      "category": "legacy-height",
+      "severity": "High",
+      "file": "tests/unit/WorldCoordinates.test.ts",
+      "line": 18,
+      "snippet": "const H = CONFIG.chunk.height;",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "slab-chunk-key",
+      "category": "legacy-key",
+      "severity": "High",
+      "file": "tests/unit/WorldCoordinates.test.ts",
+      "line": 7,
+      "snippet": "keyToChunk,",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "slab-chunk-key",
+      "category": "legacy-key",
+      "severity": "High",
+      "file": "tests/unit/WorldCoordinates.test.ts",
+      "line": 100,
+      "snippet": "expect(keyToChunk(chunkKey(cx, cy, cz))).toEqual([cx, cy, cz]);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "slab-chunk-key",
+      "category": "legacy-key",
+      "severity": "High",
+      "file": "tests/unit/WorldCoordinates.test.ts",
+      "line": 100,
+      "snippet": "expect(keyToChunk(chunkKey(cx, cy, cz))).toEqual([cx, cy, cz]);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "stateOverlay",
+      "category": "split-truth",
+      "severity": "Critical",
+      "file": "tests/unit/WorldEditDurability.test.ts",
+      "line": 215,
+      "snippet": "// stateOverlay untouched by any of this (defaults only).",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "slab-chunk-key",
+      "category": "legacy-key",
+      "severity": "High",
+      "file": "tests/unit/WorldEditDurability.test.ts",
+      "line": 30,
+      "snippet": "this.captures.set(chunkKey(cx, cy, cz), new Map(changes));",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "slab-chunk-key",
+      "category": "legacy-key",
+      "severity": "High",
+      "file": "tests/unit/WorldEditDurability.test.ts",
+      "line": 34,
+      "snippet": "this.captures.set(chunkKey(cx, cy, cz), new Map(changes));",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "slab-chunk-key",
+      "category": "legacy-key",
+      "severity": "High",
+      "file": "tests/unit/WorldEditDurability.test.ts",
+      "line": 38,
+      "snippet": "return this.pendingCopies.get(chunkKey(cx, cy, cz)) ?? null;",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "slab-chunk-key",
+      "category": "legacy-key",
+      "severity": "High",
+      "file": "tests/unit/WorldEditDurability.test.ts",
+      "line": 42,
+      "snippet": "const key = chunkKey(cx, cy, cz);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "slab-chunk-key",
+      "category": "legacy-key",
+      "severity": "High",
+      "file": "tests/unit/WorldEditDurability.test.ts",
+      "line": 48,
+      "snippet": "return Promise.resolve(this.committed.get(chunkKey(cx, cy, cz)) ?? null);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "legacy-Chunk-class",
+      "category": "legacy-Chunk",
+      "severity": "Critical",
+      "file": "tests/unit/WorldgenDeterminism.test.ts",
+      "line": 42,
+      "snippet": "const chunk = new Chunk(cx, 0, cz);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "legacy-Chunk-class",
+      "category": "legacy-Chunk",
+      "severity": "Critical",
+      "file": "tests/unit/WorldgenDeterminism.test.ts",
+      "line": 65,
+      "snippet": "const c = new Chunk(cx, 0, cz);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "legacy-Chunk-class",
+      "category": "legacy-Chunk",
+      "severity": "Critical",
+      "file": "tests/unit/WorldgenDeterminism.test.ts",
+      "line": 73,
+      "snippet": "const c = new Chunk(cx, 0, cz);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "legacy-Chunk-class",
+      "category": "legacy-Chunk",
+      "severity": "Critical",
+      "file": "tests/unit/WorldgenRegressionMatrix.test.ts",
+      "line": 63,
+      "snippet": "chunk = new Chunk(cx, 0, cz);",
+      "disposition": "TEST_ONLY"
+    },
+    {
+      "pattern": "bare-id-persist",
+      "category": "bare-id-storage",
+      "severity": "High",
+      "file": "tests/unit/WorldgenRegressionMatrix.test.ts",
+      "line": 67,
+      "snippet": "return chunk.getLocal(x - cx * 16, y, z - cz * 16);",
+      "disposition": "TEST_ONLY"
+    }
+  ]
+}

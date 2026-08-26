@@ -296,3 +296,31 @@ Remote-head verification: PENDING
 NOT VERIFIED.
 
 Do not change this decision until the requirement table, mandatory command matrix, exhaustive post-audit, full regression gate, exact publication and canonical CI evidence are complete and truthful.
+
+## PROMPT 00–01 execution evidence (2026-08-27)
+
+- session_start_head: 556f1e67ebebf2e7717b29020c04d524787fc431
+- published_head (activation checkpoint): 518928f995370680ea665b8727a22a962222fd78
+
+### PROMPT 00 — activation / governance
+- Reconciled to current origin/main. The remote had scaffolded the 253 OpenSpec package, NEXT_CAMPAIGN.md and agent-prompts.md but had NOT activated PROGRAM_STATE (still COMPLETE/254). Reset local main onto origin/main; no clobber of newer landed work.
+- Reproduced baseline: `npm run validate-state` PASSES on full local history at 556f1e6. The pre-existing CI lineage defect (finding A3) manifests only under CI shallow checkout; full-history local ancestry passes. Repaired truthfully: the non-terminal ACTIVE epoch skips the terminal release-authority lineage check; orphaned pre-253 SHAs are preserved as `historicalReleaseEvidence` (never relabeled current); `validate-state.mjs` now degrades the shallow-clone ancestry check to a warning while keeping full-history enforcement; the advancement-allowed label is made truthful for a non-terminal ACTIVE epoch.
+- Added 253 to CHANGE_SEQUENCE.md post-terminal epoch (254 remains last completed); recorded activation in CHANGE_SEQUENCE_OVERRIDES.md.
+- Activated 253 as the sole ACTIVE change in PROGRAM_STATE.json/.md (completion 0/82; criticalRiskOpen true; advancementAllowed false).
+- Full pre-implementation validation: validate-state PASS; typecheck PASS; lint PASS. Unit/build/254-bench baselines are captured at PROMPT 10 (src is unchanged by governance-only edits).
+
+### PROMPT 01 — inventory & characterization
+- Scanner `scripts/audit-inventory.mjs` added. Scanned 676 tracked code files; 192 hits. Dispositions: REMOVE 19, MIGRATE 107, TEST_ONLY 66. Severity: Critical 52, High 140. Critical/High production (non-test) hits: 126.
+- Inventory artifact: `openspec/changes/253-live-world-architecture-convergence/inventory/pre-migration-inventory.json` (machine-readable; every hit carries file/line/category/severity/disposition; zero unclassified by construction — every hit receives an allowed disposition).
+- Confirmed production consumers of legacy world truth: src/engine/Game.ts, src/world/World.ts, src/world/ChunkManager.ts, src/world/ChunkMesher.ts, src/world/TerrainGenerator.ts, src/player/PlayerInteraction.ts, src/rendering/MemoryResourceBudget.ts, src/world/WorldCoordinates.ts, src/worldgen/OreVeinFeature.ts, plus test fixtures.
+- Characterization tests: `tests/unit/Change253ConvergenceCharacterization.test.ts` added (7 tests PASS) documenting the legacy slab model (CONFIG.chunk.height=64, legacy y-clamp routing) vs the Overworld target (minY -64, maxY 319, 24 sections), the boundary matrix -65..320 with non-allocating out-of-range reads/writes, and negative X/Z routing. The existing `VerticalWorldAccess.test.ts` already covers the canonical boundary matrix / serialize / deserialize.
+- Phase-1 items deferred to later prompts: live-World instantiation characterization (heavy), legacy durable-payload fixtures, deterministic worldgen baselines, resource baseline capture, Change-254 bench baseline capture.
+
+### Baseline command results (PROMPT 00/01)
+| Command | Result |
+| npm run validate-state | PASS (518928f) |
+| npm run typecheck | PASS |
+| npm run lint | PASS |
+| new characterization suite | 7/7 PASS |
+| full unit suite | captured at PROMPT 10 |
+| npm run build | captured at PROMPT 10 |

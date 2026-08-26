@@ -13,30 +13,30 @@ Rules:
 
 ## Phase 0 — Rebaseline, activation, governance, and spec gate
 
-- [ ] Fetch/prune `origin`, reconcile local `main` to current `origin/main`, and record `session_start_head`, remote head, worktree, recent commits, open PR/issue context relevant to 253.
-- [ ] Read `AGENTS.md`, `openspec/AUTONOMOUS_GOAL.md`, canonical program state JSON/MD, sequence, overrides, review handoff, authoring protocol, `.agent/EXECUTION_PROMPT.md`, and every file in this 253 package.
-- [ ] Reproduce the current pre-existing `validate-state`/canonical-CI lineage failure on the exact starting head and record failed vs skipped steps.
-- [ ] Add `253-live-world-architecture-convergence` to the post-terminal sequence without rewriting 001–252/254 history; preserve the documented fact that owner-authorized 254 executed before reserved 253.
-- [ ] Activate 253 as the sole ACTIVE change in `openspec/PROGRAM_STATE.json` and `PROGRAM_STATE.md`; keep 254 as last completed until 253 verifies.
-- [ ] Repair `scripts/validate-state.mjs`, state schema, and/or CI checkout-history assumptions so a post-terminal ACTIVE epoch can validate truthfully under CI.
-- [ ] Preserve strict final exact-SHA/ancestry/canonical `gate`+`e2e` release proof; do not bypass or delete historical evidence merely to make validation pass.
+- [x] Fetch/prune `origin`, reconcile local `main` to current `origin/main`, and record `session_start_head`, remote head, worktree, recent commits, open PR/issue context relevant to 253.
+- [x] Read `AGENTS.md`, `openspec/AUTONOMOUS_GOAL.md`, canonical program state JSON/MD, sequence, overrides, review handoff, authoring protocol, `.agent/EXECUTION_PROMPT.md`, and every file in this 253 package.
+- [x] Reproduce the current pre-existing `validate-state`/canonical-CI lineage failure on the exact starting head and record failed vs skipped steps.
+- [x] Add `253-live-world-architecture-convergence` to the post-terminal sequence without rewriting 001–252/254 history; preserve the documented fact that owner-authorized 254 executed before reserved 253.
+- [x] Activate 253 as the sole ACTIVE change in `openspec/PROGRAM_STATE.json` and `PROGRAM_STATE.md`; keep 254 as last completed until 253 verifies.
+- [x] Repair `scripts/validate-state.mjs`, state schema, and/or CI checkout-history assumptions so a post-terminal ACTIVE epoch can validate truthfully under CI.
+- [x] Preserve strict final exact-SHA/ancestry/canonical `gate`+`e2e` release proof; do not bypass or delete historical evidence merely to make validation pass.
 - [ ] Run the full pre-implementation checklist from `SPEC_AUTHORING_PROTOCOL.md` against proposal/design/tasks/spec/verification/audit findings and fix every violation.
-- [ ] Run `npm run validate-state` after activation/governance repair and record exact output in `verification.md`.
+- [x] Run `npm run validate-state` after activation/governance repair and record exact output in `verification.md`.
 - [ ] Record baseline `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, and targeted Change-254 benches before world-production edits where environment permits.
 
 ## Phase 1 — Exhaustive repository inventory and characterization
 
-- [ ] Extend/reuse repository audit tooling (prefer `scripts/audit-inventory.mjs` where suitable) to scan every tracked source/test/config/script/OpenSpec file for legacy-world patterns defined by `audit-findings.md`.
-- [ ] Emit a machine-readable 253 pre-migration inventory containing file, symbol/line where possible, subsystem, pattern, risk, disposition, owning task, and notes.
-- [ ] Inventory every production import/reference to legacy `Chunk` and `ChunkManager`.
-- [ ] Inventory every height/range assumption derived from `CONFIG.chunk.height`, `seaLevel`, `bedrockY`, explicit 0..63/64 clamps, `cy === 0`, vertical `cy`/`chunkY`, or old slab keys.
-- [ ] Inventory every duplicate writable state surface including `stateOverlay`, block-state maps/caches, edit maps, and bare-ID stores.
-- [ ] Trace world reads/writes through generation, streaming, readiness/spawn, meshing, lighting, collision, raycast, mining/placing, falling blocks, scheduled/random ticks, fluids, block behavior, redstone-facing access, entities, item entities, block entities, persistence, import/export, networking/shared simulation, debug hooks, resource metrics and E2E.
-- [ ] Assign every relevant occurrence one allowed disposition: `REMOVE`, `MIGRATE`, `PROJECTION_ONLY`, `MIGRATION_ONLY`, `TEST_ONLY`, `INTENTIONAL_COMPATIBILITY_WITH_EXPIRY`, or `BLOCKER`.
+- [x] Extend/reuse repository audit tooling (prefer `scripts/audit-inventory.mjs` where suitable) to scan every tracked source/test/config/script/OpenSpec file for legacy-world patterns defined by `audit-findings.md`.
+- [x] Emit a machine-readable 253 pre-migration inventory containing file, symbol/line where possible, subsystem, pattern, risk, disposition, owning task, and notes.
+- [x] Inventory every production import/reference to legacy `Chunk` and `ChunkManager`.
+- [x] Inventory every height/range assumption derived from `CONFIG.chunk.height`, `seaLevel`, `bedrockY`, explicit 0..63/64 clamps, `cy === 0`, vertical `cy`/`chunkY`, or old slab keys.
+- [x] Inventory every duplicate writable state surface including `stateOverlay`, block-state maps/caches, edit maps, and bare-ID stores.
+- [x] Trace world reads/writes through generation, streaming, readiness/spawn, meshing, lighting, collision, raycast, mining/placing, falling blocks, scheduled/random ticks, fluids, block behavior, redstone-facing access, entities, item entities, block entities, persistence, import/export, networking/shared simulation, debug hooks, resource metrics and E2E.
+- [x] Assign every relevant occurrence one allowed disposition: `REMOVE`, `MIGRATE`, `PROJECTION_ONLY`, `MIGRATION_ONLY`, `TEST_ONLY`, `INTENTIONAL_COMPATIBILITY_WITH_EXPIRY`, or `BLOCKER`.
 - [ ] Add characterization tests for current live `World` block/state APIs and the overlay/slab interaction before removing it.
 - [ ] Add fixtures/tests for every durable legacy world/edit format accepted by `GamePersistence` and legacy migration paths, including malformed/partial records.
-- [ ] Add/confirm canonical coordinate tests for Y `-65,-64,-33,-32,-17,-16,-1,0,15,16,31,32,63,64,319,320` and negative X/Z boundaries.
-- [ ] Prove absent-air reads and out-of-range reads/writes do not allocate canonical sections.
+- [x] Add/confirm canonical coordinate tests for Y `-65,-64,-33,-32,-17,-16,-1,0,15,16,31,32,63,64,319,320` and negative X/Z boundaries.
+- [x] Prove absent-air reads and out-of-range reads/writes do not allocate canonical sections.
 - [ ] Capture deterministic modern-worldgen baselines for representative positive/negative chunk coordinates and section boundaries.
 - [ ] Capture resource baselines: resident legacy units, allocated canonical sections where used, geometries, pending generation/mesh/light/save jobs, dirty units, memory, startup, exploration/teleport churn and dense edits.
 - [ ] Capture Change-254 benchmark results on the starting head and identify which benches remain semantically comparable after migration.

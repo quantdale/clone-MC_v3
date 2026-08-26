@@ -186,3 +186,7 @@ Every result must receive one of: `REMOVE`, `MIGRATE`, `PROJECTION_ONLY`, `MIGRA
 Proceed with **Change 253: Live World Architecture Convergence**.
 
 Success means the playable game has one dimension-aware canonical world truth, not merely that more modern subsystems exist in isolation. All Critical/High findings above are blocking until fixed or explicitly disproved by evidence.
+
+## Scanner confirmation (2026-08-27)
+
+An executable every-file scan (`scripts/audit-inventory.mjs`) was run over 676 tracked code files on the activation head 556f1e6. Result: 192 hits (Critical 52, High 140), dispositions REMOVE 19 / MIGRATE 107 / TEST_ONLY 66; 126 Critical/High production (non-test) hits. The scanner output — not the planner prose — is now the execution source of truth. It confirms the planning findings: the split-brain legacy `Chunk`/`ChunkManager`/`stateOverlay` authority and legacy-height assumptions are concentrated in src/engine/Game.ts, src/world/World.ts, src/world/ChunkManager.ts, src/world/ChunkMesher.ts, src/world/TerrainGenerator.ts, src/player/PlayerInteraction.ts, src/rendering/MemoryResourceBudget.ts, src/world/WorldCoordinates.ts and src/worldgen/OreVeinFeature.ts. No planning finding was disproved; the canonical primitives (DimensionType/VerticalWorldAccess/ChunkColumn/ChunkSection) are correctly absent from the flagged set. Inventory artifact: `openspec/changes/253-live-world-architecture-convergence/inventory/pre-migration-inventory.json`.
