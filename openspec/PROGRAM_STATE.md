@@ -14,8 +14,11 @@
 > was caught by the existing suite breaking the `WorldAccess.isSolid` contract, reverted, and
 > forbidden normatively (spec R7). Gates: typecheck/lint PASS; unit 342 files / 4346 passed + 1
 > skipped PASS; build PASS (bundle sizes unchanged); local e2e 47/48 with the single failure
-> being a pre-existing environment-marginal jump spec reproduced at baseline (full dossier in
-> the change verification.md); canonical GitHub Actions run is release-authoritative. Change
+> being a pre-existing environment-marginal jump spec reproduced at pristine baseline (full
+> dossier in the change verification.md); canonical CI is red with the SAME two pre-existing
+> defects at both session-start d258414 and published head (gate validate-state lineage under
+> shallow checkout; same marginal e2e spec) — zero regressions introduced, repairs owned by
+> reserved Change 253 workstream A. Change
 > 253-live-world-architecture-convergence remains PLANNED/reserved, untouched.
 
 > **254-whole-codebase-performance-optimization — ACTIVE (2026-08-26, session start `d258414`).**

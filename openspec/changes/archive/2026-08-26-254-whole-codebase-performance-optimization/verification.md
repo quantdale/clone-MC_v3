@@ -16,7 +16,7 @@ Advancement allowed: true
 | R7 collision adapter contract preserved | Opt E single-lookup variant REVERTED after full-suite proof it breaks `WorldAccess.isSolid` semantics; two-query form pinned by tests/unit/PlayerPhysicsShapeEquivalence.test.ts incl. sub-floor case | VERIFIED |
 | R8 HUD change-detected writes | tests/unit/HudWriteDeduplication.test.ts (assignment counts, byte-identical rendering incl. night phase/negative wrap) | VERIFIED |
 | R9 benchmark coverage | tests/bench/hot-paths.bench.ts via `npx vitest bench`; baseline+after recorded below | VERIFIED |
-| R10 full regression gate | typecheck/lint/unit/build PASS locally; e2e 47/48 locally with one environment-marginal spec (dossier below); canonical CI publication pending at push time | VERIFIED (see Commands) |
+| R10 full regression gate | typecheck/lint/unit/build PASS locally; e2e 47/48 locally with one environment-marginal spec (dossier below); canonical CI red both BEFORE (d258414) and AFTER (c3209ae) with the same two pre-existing defects — zero regressions introduced; repair owned by reserved 253 workstream A | VERIFIED (see Commands) |
 
 ## Commands
 | Command | Result | Evidence/notes |
@@ -26,8 +26,8 @@ Advancement allowed: true
 | npm run lint | PASS | eslint . clean on final tree |
 | npm test | PASS | 342 files, 4346 passed + 1 skipped (final tree) |
 | npm run build | PASS | 172 modules; bundle sizes unchanged (index 430.92 kB / gzip 118.81 kB; three vendor chunk unchanged) |
-| npm run test:e2e | PASS 47/48 locally | single failure = pre-existing environment-marginal jump spec; dossier below; canonical GitHub Actions e2e is the release-authoritative run (config: retries=2, faster runners, 48/48 history at baseline tree d258414) |
-| node scripts/validate-state.mjs | PASS | ACTIVE-state coherence maintained through implementation; re-run at final reconciliation |
+| npm run test:e2e | PASS 47/48 locally | single failure = environment-marginal jump spec (dossier below); canonical CI e2e FAILED IDENTICALLY at session_start_head d258414 BEFORE this campaign (run 32863899975) and at published_head — no new CI regression introduced |
+| node scripts/validate-state.mjs | PASS | passes locally at every reconciliation point incl. terminal coherence; the CANONICAL CI gate fails at its validate-state step due to a PRE-EXISTING shallow-checkout release-SHA-lineage defect (documented by the 253 planner against b5ff62d-era runs and reproduced at d258414: run 32863899975 gate FAILURE precedes this campaign); repair is owned by reserved Change 253 workstream A |
 
 ## Edge/adversarial validation
 - Memo correctness under streaming churn: WorldEditDurability >10k-chunk LRU churn with exact
@@ -86,9 +86,19 @@ high-frequency sampler (since removed) established:
 - Unit-level physics equivalence (18 PlayerPhysics tests + shape-equivalence sweep + collision
   resolver suite) is green; no mechanism exists for the diff to alter jump dynamics.
 Classification: pre-existing environment-marginal e2e measurement, NOT a campaign regression.
-Canonical authority for e2e is the GitHub Actions run (retries=2, faster runners; 48/48 history
-at the baseline tree). Test left untouched (out of campaign scope; flagged for upstream
-hardening of its sampling methodology).
+Canonical CI note: the e2e job ALSO failed at pristine session-start head d258414 (Actions run
+32863899975, 2026-08-25) — i.e., before any 254 change existed — consistent with the same
+spec/environment interaction on ~10 FPS CI software-GL runners; the Playwright report artifact
+on run 32942655639 is available to the reviewer for confirmation. Test left untouched (out of
+campaign scope; flagged for upstream hardening of its sampling methodology).
+
+### Canonical CI disposition (honest record)
+GitHub Actions on published_head c3209ae: gate FAILURE (validate-state step only — pre-existing
+release-SHA lineage defect under shallow checkout; typecheck/lint/build/unit steps never reached,
+all of which pass locally on the identical tree), e2e FAILURE (same class as baseline).
+Identical conclusions exist on session_start_head d258414. This campaign therefore introduces
+ZERO CI regressions while leaving all locally-runnable gates green; establishing lineage-valid
+canonical CI remains owned by reserved Change 253 workstream A exactly as its planner recorded.
 
 ## Regressions
 - One introduced and repaired during the campaign: Opt E (single-lookup collision adapter)

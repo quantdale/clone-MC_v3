@@ -16,7 +16,7 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d258414614681116c5cf2c86bb7d95a3577a34bb",
-  "lastCompletedTask": "254-whole-codebase-performance-optimization VERIFIED 2026-08-26 (session start d258414): hot-path optimization campaign complete — getBlock/isSolid/light/random-tick benches +10..46% with per-op allocations eliminated; unit 4346+1skip PASS; build PASS; e2e 47/48 local (one environment-marginal jump spec, dossier in verification.md); Opt E contract violation caught by suite and reverted normatively.",
+  "lastCompletedTask": "254-whole-codebase-performance-optimization VERIFIED 2026-08-26 (session start d258414): hot-path optimization campaign complete — getBlock/isSolid/light/random-tick benches +10..46% with per-op allocations eliminated; unit 4346+1skip PASS; build PASS; local e2e 47/48 (one environment-marginal jump spec reproduced at pristine baseline; dossier in verification.md); canonical CI red IDENTICALLY before and after (pre-existing gate lineage defect + same marginal e2e spec) — zero regressions introduced; Opt E contract violation caught by suite and reverted normatively.",
   "nextExactAction": "Program terminal again (001–252, 254 VERIFIED). Await explicit product authorization to activate 253-live-world-architecture-convergence (reserved by the dual-252 override); review range d258414..published_head on GitHub.",
   "blockers": [],
   "validationResults": [

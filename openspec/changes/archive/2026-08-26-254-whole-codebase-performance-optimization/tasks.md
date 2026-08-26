@@ -26,5 +26,9 @@
 - `game.spec.ts "player can jump"` sampling methodology is marginal on slow/software-GL hosts;
   recommend upstream hardening (in-page high-frequency arc sampling) in a later owner-authorized
   change — evidence dossier in verification.md.
+- Canonical CI `gate` fails at its validate-state step on shallow checkouts (release-SHA
+  lineage checks vs depth-1 fetch); pre-existing at d258414 and earlier; repair owned by
+  reserved Change 253 workstream A ("make validate-state model post-terminal epochs truthfully,
+  including historical release evidence whose commits are outside the current ancestry").
 - Change 253-live-world-architecture-convergence remains PLANNED/reserved; its storage migration
   may supersede parts of the memoized legacy-Chunk surface optimized here.
