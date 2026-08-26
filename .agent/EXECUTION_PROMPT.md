@@ -1,162 +1,299 @@
-# Execution Campaign: Change 252 — Live World Architecture Convergence
+# Execution Campaign: Change 253 — Live World Architecture Convergence
 
 Status: ACTIVE
-Planned-From: 254d259c3193b6d7a74d04bf5a117309cd00794a
-Planned-At: 2026-08-25T15:21:00+08:00
-Target-Branch: main
+Planned-From: `a8021f55ef233fb8aa0f983905a22a3859add88a`
+Planned-At: `2026-08-26T23:52:00+08:00`
+Target-Branch: `main`
+Requested-Active-Execution-Window: `12 hours`
+OpenSpec: `openspec/changes/253-live-world-architecture-convergence/`
+Prompt-Queue: `openspec/changes/253-live-world-architecture-convergence/agent-prompts.md`
 
 ## Mission
 
-Make the playable single-player game actually run on the modern dimension-aware world architecture already implemented in this repository. Replace the live legacy `Chunk` / 16×64×16 block-id slab as the authoritative runtime with the existing `DimensionType` + `VerticalWorldAccess` + `ChunkColumn` + `ChunkSection` block-state model, wire the Overworld dimension through the real `Game` composition root, migrate generation/streaming/meshing/lighting/simulation/persistence consumers, and remove the split-brain state overlay/legacy-Y assumptions from live execution.
+Make the **actual playable game** use one modern, dimension-aware canonical world architecture.
 
-This is an implementation campaign. It is not a documentation-only hardening pass and it must not be reduced to isolated edits around the files named below.
+The repository already contains `DimensionType`, `VerticalWorldAccess`, lazy `ChunkColumn`/`ChunkSection` storage, property-bearing `BlockStateId`s, section mesh versions, modern worldgen, persistence repositories, migrations, deterministic test infrastructure and strong release tooling. The live `Game`/`World` path still retains the original 16×64×16 legacy `Chunk` slab, legacy-height assumptions and a separate block-state overlay as part of playable world truth.
 
-## Why this is the highest-value next campaign
+Change 253 converges these systems. It does **not** invent a third world store.
 
-The numbered program says modern vertical storage, dimension types, modern-height world generation, dimensions, persistence, networking and final verification are already VERIFIED, but the current playable runtime still composes `World` without an active `DimensionType`, keeps block data in legacy `Chunk`, clamps many live paths to the configured 0–63 slab, and stores richer block-state mutations in a separate session overlay. The result is a structural gap between verified headless architecture and the actual game.
+The target is:
 
-Concrete planner findings at `Planned-From`:
+```text
+Game
+  -> active OVERWORLD_DIMENSION_TYPE
+  -> World
+       -> one canonical dimension-aware block-state facade
+            -> VerticalWorldAccess
+                 -> ChunkColumn(chunkX, chunkZ)
+                      -> lazy ChunkSection(sectionY)
+                           -> BlockStateId
+       -> section-aware generation / streaming / render / light
+       -> gameplay + simulation consumers
+       -> existing canonical persistence / migration
+```
 
-- `src/config/index.ts` still defines a 16×64×16 legacy chunk height.
-- `src/world/Chunk.ts` is a flat block-id array for 16×64×16 slabs.
-- `src/world/ChunkManager.ts` explicitly retains the legacy `Chunk` map as source of truth for `World.ts` callers.
-- `src/world/VerticalWorldAccess.ts`, `ChunkColumn.ts`, `ChunkSection.ts`, and `DimensionType.ts` already provide modern full-height block-state storage, negative-Y-safe section routing, lazy sections, dirty propagation, heightmaps and serialization.
-- `src/engine/Game.ts` creates the live `World` without passing a `DimensionType`; its later Overworld identifier is not the live world type.
-- `src/world/World.ts` still contains single-slab checks, `cy === 0` import restrictions, 0..chunkHeight clamps and a separate block-state overlay despite partial dimension scaffolding.
-- Historical `PROGRAM_STATE.json` entries repeatedly record modules as additive/unconsumed or having no `Game.ts` consumer. A VERIFIED roadmap entry is therefore not sufficient evidence that a capability is live.
-- Current GitHub Actions on `Planned-From` are not fully green: run 32813182576 has E2E SUCCESS but `gate` FAILS at `npm run validate-state` because release-authority/publication SHAs (`67aafd3…`, `c58f972…`, `e56b83a…`) are no longer ancestors of current `HEAD`. Downstream gate steps were skipped, not failed.
+Success means verified subsystem architecture and user-facing runtime are the same architecture.
 
-## Non-negotiable execution behavior
+## Why this is the next campaign
 
-1. Start by fetching/pruning and reconciling against current `origin/main`; do not assume `Planned-From` is still HEAD.
-2. Read `AGENTS.md`, `.agent/PLANNER_HANDOFF.md`, this file, `openspec/AUTONOMOUS_GOAL.md`, `PROGRAM_STATE.json`, `PROGRAM_STATE.md`, `CHANGE_SEQUENCE.md`, `CHANGE_SEQUENCE_OVERRIDES.md`, `REVIEW_HANDOFF.md`, `SPEC_AUTHORING_PROTOCOL.md`, and every artifact under `openspec/changes/252-live-world-architecture-convergence/`.
-3. Before production implementation, formally authorize/activate Change 252 in the native OpenSpec control plane. Append the exact change name/outcome to the post-terminal sequence and reconcile JSON/Markdown state. Repair any post-terminal validator/schema assumptions required for a truthful ACTIVE state rather than weakening validation.
-4. Treat the current failed `validate-state` CI as a real baseline defect. Do not hide it, delete evidence, force-push history, or mark it resolved merely because ACTIVE-state validation bypasses terminal release-authority checks. Preserve orphaned historical evidence in an explicitly historical/non-authoritative representation and establish lineage-valid release authority during final closure.
-5. Perform a whole-codebase consumer/dependency audit before implementation. Trace every production consumer of legacy `Chunk`, `CHUNK_DIMENSIONS.height`, `chunk.cy`, block-state overlay data, hard-coded Y bounds, chunk keys, chunk streaming, meshing, lighting, collision/raycast, random/scheduled ticks, entities/block entities, persistence, imports/exports, networking snapshots, tests and E2E hooks. Do not audit only recently changed files.
-6. Implement the campaign through the real playable path. Headless adapters or tests alone do not satisfy the mission.
-7. After implementation, perform another whole-codebase audit specifically looking for stale legacy consumers, duplicated sources of truth, new regressions, architecture drift, data-loss risk and performance blowups caused by the migration.
-8. Continue through all safe independent work. Stop only for a genuine durable blocker defined by repository goal rules; do not stop because one workstream completed.
-9. Do not implement unrelated new game content, Nether/End live switching, Wither content, multiplayer UI, or broad visual redesign in this campaign.
-10. End only after required validation, state reconciliation, detailed full-session commit reporting, direct publication to `origin/main`, and remote-head verification.
+`openspec/CHANGE_SEQUENCE_OVERRIDES.md` explicitly reserves `253-live-world-architecture-convergence` and says it MUST be activated under that name when its owner activation arrives. `openspec/PROGRAM_STATE.json` currently says the program is terminal after verified 254 and its next exact action is to await explicit product authorization for 253.
 
-## Target architecture
+The owner’s next-campaign instruction that produced this file is that authorization.
 
-### Authoritative world storage
+Do not renumber or rewrite historical 001–252/254 work. 254 was owner-authorized and executed before reserved 253; preserve that truth in sequence/state.
 
-- `VerticalWorldAccess`/`ChunkColumn`/`ChunkSection` become the authoritative live block-state store.
-- Every live block read/write operates on `BlockState`, with `BlockId` projected only where a legacy API genuinely requires an id.
-- The session-only `World.stateOverlay` must be removed from the authoritative path. Temporary compatibility adapters are allowed only if they have an explicit removal task inside this campaign and cannot diverge from the canonical store.
-- The live Overworld uses `OVERWORLD_DIMENSION_TYPE` (`minY=-64`, `height=384`) and its derived section range. Out-of-range reads resolve safely; writes do not allocate or mutate.
+## Read-first contract
 
-### Streaming and generation
+On session start, fetch/prune/synchronize to current `origin/main`, record `session_start_head`, then read in order:
 
-- Loaded residency is column/section aware. Do not materialize all 24 sections in every column merely because the dimension is 384 blocks high.
-- Reuse the modern world-generation pipeline (`OverworldTerrain` and subsequent verified stages) where possible rather than scaling the old 64-high generator by six.
-- Generation results must populate canonical block states across the true Overworld Y range and preserve deterministic seed behavior.
-- Existing spawn/readiness semantics must remain bounded and usable; if spawn selection depends on old sea-level/Y constants, migrate it deliberately.
+1. `AGENTS.md`
+2. `.agent/PLANNER_HANDOFF.md`
+3. this file
+4. `openspec/AUTONOMOUS_GOAL.md`
+5. `openspec/PROGRAM_STATE.json`
+6. `openspec/PROGRAM_STATE.md`
+7. `openspec/CHANGE_SEQUENCE.md`
+8. `openspec/CHANGE_SEQUENCE_OVERRIDES.md`
+9. `openspec/REVIEW_HANDOFF.md`
+10. `openspec/SPEC_AUTHORING_PROTOCOL.md`
+11. **every file** under `openspec/changes/253-live-world-architecture-convergence/`
+12. broader master-plan/history only when a concrete design question requires it.
 
-### Meshing and lighting
+The active 253 package contains:
 
-- Mesh ownership/versioning must align to 16³ sections and existing `ChunkSection.meshVersion`/dirty-section semantics.
-- Edits at section/column boundaries must invalidate the correct neighbors without remeshing an entire 384-high column unnecessarily.
-- Skylight, block light and AO/tint sampling must use dimension bounds and section-local storage. No implicit 0..63 clamp may remain in live lighting paths.
-- Stale worker results must remain rejectable by identity/version checks.
+- `audit-findings.md` — refreshed planning-time audit and mandatory exhaustive-scan contract;
+- `proposal.md` — scope, goals, non-goals, migration and Definition of Done;
+- `design.md` — target architecture, invariants, flows, failure behavior and implementation guidance;
+- `tasks.md` — dependency-ordered executable task graph;
+- `specs/live-world-architecture/spec.md` — normative MUST/SHALL contract;
+- `verification.md` — initially-unverified evidence matrix;
+- `agent-prompts.md` — PROMPT 00 through PROMPT 11 for the requested 12-hour execution window.
 
-### Simulation and interaction
+## Mandatory start sequence
 
-- Collision, raycast, mining, placing, falling blocks, random ticks, scheduled ticks, fluids, redstone-facing world access, entities/block entities and gameplay systems must work across negative Y and section boundaries where they consume world blocks.
-- Preserve existing live furnace behavior from Change 251 through open/operate/tick/persist/unload/reload/break flows.
-- Boundary contract must be explicitly tested at `y=-65,-64,-1,0,15,16,63,64,319,320` as applicable.
+Do not begin production world edits immediately.
 
-### Persistence and compatibility
+1. Rebaseline to the actual current remote head; `Planned-From` is historical context, not permission to overwrite newer work.
+2. Reproduce the known pre-existing post-terminal CI/state-lineage problem on the exact starting head and distinguish failed steps from skipped downstream steps.
+3. Add 253 to the canonical post-terminal sequence while preserving that 254 executed first under the documented override.
+4. Set 253 as the sole ACTIVE change in canonical program state; 254 remains the last completed change until 253 verifies.
+5. Repair post-terminal/shallow-checkout `validate-state` / CI history assumptions truthfully. Prefer giving validation enough Git history rather than disabling ancestry checks.
+6. Preserve strict final release proof: full exact candidate SHA in current lineage plus canonical `gate` and `e2e` evidence required by repository governance.
+7. Run the pre-implementation `SPEC_AUTHORING_PROTOCOL.md` quality gate over the complete 253 package and fix any spec defect before production edits.
+8. Run `npm run validate-state` after activation/governance repair; it must be truthful before world production implementation proceeds.
+9. Capture typecheck/lint/unit/build and semantically comparable Change-254 benchmark baselines.
+10. Execute the exhaustive pre-migration every-file inventory before changing the world architecture.
 
-- Reuse the existing versioned `ChunkSectionRepository`/column codecs and migration infrastructure instead of inventing a parallel save format.
-- Existing user worlds/legacy sparse edits must not be silently lost. Define and implement deterministic one-way migration or compatibility loading, with idempotency and partial-failure behavior covered by tests.
-- Block-state properties must survive save/reload; no downgrade to bare block ids on the live path.
-- Dirty save behavior must remain bounded and failure-visible. Do not reintroduce the data-loss classes previously fixed by persistence hardening.
+## Highest-risk audit findings
 
-### Performance/resource constraints
+### 1. Split world authority — CRITICAL
 
-- Do not create a 6× residency/geometry explosion by eagerly allocating full-height data for every loaded column.
-- Empty sections stay lazy; reads do not allocate.
-- Meshing, generation and lighting work must be section-scoped/budgeted and compatible with current worker/backpressure/stale-result machinery.
-- Rebaseline `MemoryResourceBudget`, release performance measurements and relevant streaming bounds when the old chunk-count semantics no longer describe the real resource model. Do not merely raise ceilings to silence regressions.
+The live path still uses `Chunk`/`ChunkManager` and a separate richer-state overlay. The end state permits one writable canonical block-state authority only. Compatibility APIs can project from canonical state but cannot maintain another independently writable copy.
 
-## Ordered workstreams
+### 2. Legacy 16×64×16 live vertical model — CRITICAL
 
-### A. Rebaseline, governance and characterization
+`src/config/index.ts` still configures the legacy slab height as 64. The playable Overworld target is `OVERWORLD_DIMENSION_TYPE` with valid block Y `[-64,319]`. Live vertical bounds/section count must derive from `DimensionType`, not duplicated legacy constants.
 
-- Capture branch/HEAD/origin/worktree/recent commits/open PR/issue state.
-- Reproduce the current canonical CI/state failure and document exact root cause.
-- Authorize Change 252 in `CHANGE_SEQUENCE.md`; activate it in `PROGRAM_STATE.json` and `PROGRAM_STATE.md` without rewriting 001–251 history.
-- Make `validate-state` model post-terminal ACTIVE epochs truthfully, including historical release evidence whose commits are outside the current ancestry. Never weaken exact-SHA release proof for the eventual new terminal candidate.
-- Build a machine-checkable legacy-consumer inventory and characterization tests before migration.
+### 3. Modern primitives already exist — REUSE, DO NOT REINVENT
 
-### B. Canonical block-state world core
+`ChunkSection` already supplies paletted block-state storage and mesh versions. `ChunkColumn` already supplies lazy sections, arbitrary vertical range, dirty sections, heightmaps, status and serialization. `VerticalWorldAccess` already supplies dimension-aware negative-safe routing.
 
-- Refactor `World` around one dimension-aware block-state access layer.
-- Convert or replace `ChunkManager` so canonical residency is `(chunkX,chunkZ)` columns with section data, not `(cx,cy,cz)` legacy slabs.
-- Eliminate live state-overlay dual truth and explicit `cy===0` / 0..64 assumptions.
-- Preserve public seams used by gameplay while migrating them to projections over canonical state.
+Use them. A new third backing store is prohibited.
 
-### C. Modern Overworld generation and streaming
+### 4. Live composition is not dimension-authoritative — CRITICAL
 
-- Wire `OVERWORLD_DIMENSION_TYPE` from the real composition root.
-- Populate canonical columns/sections from the modern worldgen pipeline across `[-64,319]`.
-- Reconcile preload/readiness/streaming/unload semantics with column residency and lazy sections.
-- Preserve deterministic edits over regenerated terrain and safe unload/reload behavior.
+The real `Game` must bind the active `OVERWORLD_DIMENSION_TYPE` and feed that contract through `World`, generation/streaming, rendering/lighting, gameplay/simulation and persistence.
 
-### D. Section rendering and lighting convergence
+### 5. Persistence architecture already exists — REUSE
 
-- Migrate mesh construction, mesh identity/versioning, geometry bookkeeping and neighbor invalidation to section units.
-- Feed canonical block states and dimension-aware light samples into the renderer.
-- Keep worker/stale-job correctness and dispose GPU resources on unload/replacement.
+Use existing `src/storage/**`, including canonical section persistence, dirty-save/autosave, migrations, entity/block-entity repositories and `GamePersistence`. Do not add a parallel world database.
 
-### E. Gameplay/simulation consumer migration
+Legacy migration must be deterministic, versioned, idempotent, failure-visible and non-destructive until canonical durable commit succeeds.
 
-- Migrate every audited world consumer away from old slab bounds/data access.
-- Explicitly cover negative-Y and section-boundary collision/raycast/mining/placing/falling/ticks/fluids/block entities.
-- Prove the Change-251 furnace live path remains correct.
+### 6. Change-254 performance evidence is a baseline — HIGH
 
-### F. Persistence and migration
+253 may structurally supersede optimized legacy surfaces, but it must preserve bounded hot-path/resource behavior and run comparable 254 benchmarks. Do not remove benchmarks or inflate budgets merely because migration regresses.
 
-- Persist/load canonical columns through the verified IndexedDB repositories and migration chain.
-- Convert legacy sparse/block-id-only data without loss; preserve block-state properties.
-- Validate abrupt close, quota/write failure, import/export and unload/reload against the new live path.
+### 7. CI lineage defect belongs to 253 workstream A — HIGH
 
-### G. Resource/performance reconciliation
+Completed 254 records canonical CI state validation failing under shallow-checkout release-history assumptions both before and after 254, with repair assigned to reserved 253. Fix it honestly; do not weaken exact release evidence.
 
-- Reconcile memory/geometry/job metrics with columns+sections.
-- Run dense/edit/exploration/load/save stress tests and investigate regressions rather than masking them with budget inflation.
-- Keep empty-section allocation and remesh work bounded.
+## Exhaustive every-file requirement
 
-### H. Whole-repository post-migration audit and certification
+Before implementation and again after implementation, run a machine-checkable scan over all tracked source/test/config/script/OpenSpec files. Reuse/extend `scripts/audit-inventory.mjs` where suitable.
 
-- Re-scan the entire repository for direct production imports/usages of legacy `Chunk`, old chunk-height Y clamps, `cy===0`, state-overlay authority, or duplicated chunk stores.
-- Classify every remaining occurrence as removed, test-only, migration-only, intentional compatibility adapter with expiry, or blocker.
-- Run the full required repository gate plus targeted new integration/E2E tests.
-- Reconcile OpenSpec/design/tasks/verification/PARITY_MATRIX/state against actual implementation.
-- Establish a new lineage-valid release candidate and exact-SHA canonical CI evidence before returning the program to COMPLETE/VERIFIED.
+At minimum classify all occurrences of:
 
-## Acceptance criteria
+- `Chunk`, `ChunkManager`;
+- `CONFIG.chunk.height`, old sea/bedrock/range assumptions, explicit 0..63/64 clamps;
+- `cy`, `chunkY`, `cy === 0`, legacy slab-shaped keys;
+- `stateOverlay` and duplicate writable world/edit/state maps;
+- bare-ID persistence where canonical state is required;
+- legacy geometry/light/worker keys;
+- worldgen paths emitting legacy chunks instead of canonical states;
+- collision/raycast/mining/placing/ticks/fluids/block behavior/redstone consumers;
+- entity/item/block-entity ownership tied to slab lifecycle;
+- persistence/import/export/network/shared-simulation/debug/E2E legacy projections;
+- resource metrics/budgets whose units assume one legacy slab equals one world column.
 
-The campaign is complete only when all of the following are true:
+Every hit receives one of exactly:
 
-- The actual playable `Game` constructs and uses a dimension-aware Overworld with canonical `ChunkColumn`/`ChunkSection` block states.
-- Live world reads/writes cover the Overworld `[-64,319]` range and no production gameplay path assumes 0..63 solely because of the legacy chunk model.
-- Legacy `Chunk` is not an authoritative production store. Any remaining reference is explicitly non-authoritative/test/migration-only and audited.
-- The separate live block-state overlay is gone as a source of truth.
-- Modern worldgen feeds the canonical storage path and deterministic seed behavior remains tested.
-- Section-scoped meshing/dirtying/stale-result handling works across horizontal and vertical boundaries.
-- Lighting and gameplay queries are dimension-aware.
-- Existing saves/edits migrate or load compatibly without silent loss, including stateful blocks.
-- Change-251 furnace behavior and all previously working core gameplay remain passing.
-- New integration/E2E coverage proves negative-Y traversal/edit/save-reload and a vertical section-boundary edit/render path.
-- Pre- and post-implementation whole-codebase audits are recorded and no unresolved Critical/High correctness, data-loss, security or architecture regression remains.
-- `npm run validate-state`, `npm run typecheck`, `npm run lint`, `npm test`, `npm run test:coverage`, `npm run build`, dependency audits, file-audit checks, and `npm run test:e2e` all satisfy repository thresholds with zero mandatory skips unless a repository-defined environment-only exception is explicitly evidenced.
-- The exact published terminal candidate has canonical GitHub Actions `gate` and `e2e` SUCCESS, and release-authority evidence references only lineage-valid commits under the repaired schema.
-- Change 252 is VERIFIED/archived, state and parity evidence match reality, `.agent/EXECUTION_PROMPT.md` is marked COMPLETED, and `origin/main` equals the reported published head.
+`REMOVE`, `MIGRATE`, `PROJECTION_ONLY`, `MIGRATION_ONLY`, `TEST_ONLY`, `INTENTIONAL_COMPATIBILITY_WITH_EXPIRY`, `BLOCKER`.
 
-## Completion and Git requirements
+The post-scan must have zero unclassified production hits and zero unresolved Critical/High split-truth/data-loss/correctness/stale-worker/compatibility/resource blockers.
 
-Use detailed commits that explain the complete engineering checkpoint, including architecture migrated, compatibility behavior, tests/evidence, unresolved non-blocking debt and next action. Never force-push or rewrite published history. Publish coherent checkpoints directly to `origin/main` as required by repository policy. The final report must include `session_start_head`, `published_head`, active change/status, exact completed/total task count, validation results, blockers/debt, canonical CI evidence and next exact action.
+## Non-negotiable architecture constraints
+
+- One writable canonical world authority.
+- Playable Overworld valid Y `[-64,319]`; out-of-range operations are safe and non-allocating.
+- Negative X/Y/Z routing uses floor-division/local-coordinate helpers.
+- Absent-air reads do not allocate sections.
+- Horizontal residency does not eagerly allocate/mesh all 24 Overworld sections.
+- Property-bearing block states survive live read/write, unload/reload, save/reload and import/export.
+- User/durable edits override generated baseline and are not lost by regeneration.
+- Existing-world generation semantics are preserved unless a separate explicit world-upgrade decision exists.
+- Dirty unload cannot silently discard world state.
+- Section mesh/light jobs are identity/version guarded; stale results never replace current state.
+- Interior edits stay localized; face edits invalidate required face-sharing neighbors, including vertical neighbors.
+- Lighting/AO/tint sampling is dimension-aware and canonical-state-backed.
+- Player physics, raycast, block interaction, ticks, fluids, entities/block entities and every audited live consumer work outside the old 0..63 slab.
+- Entity/block-entity restore remains exactly once across residency cycles.
+- Existing persistence/migration repositories remain the durable authority.
+- Worker/resource/residency maps stay bounded under churn.
+- No threshold inflation or test weakening to hide regressions.
+- No force-push/history rewrite.
+
+## Mandatory real-play proof
+
+At least one normal-composition Playwright/live-game journey must prove all of the following together:
+
+1. game boots through the real `Game` composition root;
+2. active dimension is the modern Overworld range;
+3. valid content below Y=0 participates in real collision/interaction;
+4. a vertical section boundary is crossed/edited;
+5. a property-bearing block state is mutated and observed canonically;
+6. rendering/collision see the same state;
+7. save/reload preserves exact semantics;
+8. column unload/reload preserves exact semantics;
+9. no hidden legacy-only debug mutation is used as the authoritative shortcut.
+
+## 12-hour execution contract
+
+Execute `openspec/changes/253-live-world-architecture-convergence/agent-prompts.md` from **PROMPT 00 through PROMPT 11** in dependency order.
+
+The requested execution window is twelve hours of active engineering work. Pacing labels are guidance, not permission to cut requirements. If an early phase overruns, continue the task graph rather than skipping work. If implementation finishes early, use remaining active capacity for:
+
+- exhaustive post-audit repetitions;
+- adversarial boundary/failure/race testing;
+- migration interruption/retry/idempotency testing;
+- worker stale-result races;
+- long exploration/teleport/dense-edit/save stress;
+- benchmark repetitions and hot-path profiling;
+- memory/geometry/job/listener/resource leak hunting;
+- deterministic worldgen/replay/golden validation;
+- E2E flake/root-cause analysis;
+- full diff review and spec/source reconciliation;
+- canonical CI/evidence closure.
+
+Do not idle and do not invent unrelated product features merely to fill time. Stop early only for a genuine durable blocker when no safe independent 253 task remains; checkpoint it precisely.
+
+## Prompt queue summary
+
+- **PROMPT 00:** rebaseline, activate 253, repair governance/state validation, capture baselines.
+- **PROMPT 01:** exhaustive every-file inventory + characterization.
+- **PROMPT 02:** canonical live block-state authority; eliminate split truth.
+- **PROMPT 03:** bind Overworld; modern generation and column/section streaming.
+- **PROMPT 04:** section rendering, lighting and stale-worker correctness.
+- **PROMPT 05:** gameplay/simulation/entity/block-entity migration.
+- **PROMPT 06:** persistence, legacy migration, recovery, import/export.
+- **PROMPT 07:** modularity hardening and compatibility-adapter deletion.
+- **PROMPT 08:** performance/resource reconciliation and stress.
+- **PROMPT 09:** whole-repository post-audit + adversarial defect hunt.
+- **PROMPT 10:** full verification, E2E certification, spec reconciliation.
+- **PROMPT 11:** publish, canonical CI evidence, archive, remaining-time hardening.
+
+The full instructions are in `agent-prompts.md`; do not treat this summary as a substitute.
+
+## Validation contract
+
+Use focused tests after every logical unit, then complete closure at minimum includes:
+
+```bash
+npm run validate-state
+npm run typecheck
+npm run lint
+npm test
+npm run test:coverage
+npm run build
+npm run test:e2e
+```
+
+Also run:
+
+- 253 exhaustive inventory pre/post;
+- every targeted 253 suite;
+- repository-required dependency/security/file audits;
+- semantically comparable Change-254 benchmarks;
+- generation/mesh/light queue stress;
+- exploration/teleport resource plateau stress;
+- dense multi-section edit stress;
+- dirty-save/migration/import stress;
+- exact canonical GitHub Actions evidence required by `REVIEW_HANDOFF.md` and state policy.
+
+Do not fabricate evidence. A failed/unverified mandatory requirement blocks VERIFIED status.
+
+## Git and durable-state behavior
+
+- Begin from current remote main and record `session_start_head`.
+- Reconcile `Planned-From` with newer landed work; never clobber it.
+- Update tasks/verification/program state after meaningful groups, failures, successful verification, before compaction and before ending.
+- Commit coherent checkpoints with detailed engineering messages.
+- Publish to `origin/main` normally as repository policy requires.
+- Refetch remote and verify exact head after publication.
+- Never force-push or rewrite published history.
+- Mark `Status: COMPLETED` here only after 253 is truthfully VERIFIED/archived and the final published state is self-consistent.
+
+## Definition of Done
+
+The campaign is complete only when:
+
+- normal playable `Game` uses dimension-aware canonical `ChunkColumn`/`ChunkSection` block-state truth;
+- active Overworld valid Y is `[-64,319]` through real runtime composition;
+- legacy `Chunk`/overlay is not another writable production authority;
+- generation/streaming/render/light/gameplay/simulation/entity/persistence consumers converge on canonical state;
+- legacy world data migrates/loads safely, idempotently and without silent loss;
+- property-bearing states round-trip live and durably;
+- negative-Y and vertical-boundary real-play behavior is proven;
+- worker stale-result and resource/disposal invariants are proven;
+- Change-254 comparable performance remains defensible;
+- exhaustive pre/post scan leaves zero unclassified production legacy authority and zero unresolved Critical/High blockers;
+- mandatory local tests, stress/bench and full E2E satisfy repository policy;
+- exact published candidate has truthful canonical CI/release evidence;
+- OpenSpec/state/tasks/verification match implementation;
+- intended changes are published and remote head verified;
+- 253 reaches 100% task completion unless a repository-valid explicit advancement exception is both necessary and proven.
+
+## Final executor report
+
+Report exactly:
+
+- `session_start_head`;
+- implementation candidate SHA(s);
+- final `published_head`;
+- 253 lifecycle status;
+- completed / total tasks and percentage;
+- pre/post exhaustive inventory counts and unresolved classifications;
+- mandatory local command results with exact unit/E2E counts;
+- benchmark/resource/stress summary;
+- migration/property-preservation evidence;
+- canonical CI run/job evidence;
+- fixed Critical/High findings;
+- residual non-blocking debt;
+- blockers, if any;
+- next exact action.
+
+## Human one-line handoff
+
+After the executor pulls the repository, the only instruction needed is:
+
+> **Read `.agent/EXECUTION_PROMPT.md` and execute Change 253 autonomously from PROMPT 00 through PROMPT 11. Continue active engineering for the full 12-hour campaign contract, obey OpenSpec/state/Git gates, fix all Critical/High findings, publish coherent checkpoints to `origin/main`, and stop early only for a genuine durable blocker with no safe independent 253 work remaining.**
