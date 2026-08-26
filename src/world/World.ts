@@ -329,17 +329,58 @@ export class World implements WorldAccess {
 
   // ── WorldAccess ────────────────────────────────────────────────────────────
 
+  /** Revision of the chunk map when the one-entry lookup cache was filled. */
+  private memoRevision = -1;
+  /** Cached lookup coordinates (NaN when unset). */
+  private memoCx = NaN;
+  private memoCy = NaN;
+  private memoCz = NaN;
+  /** Cached chunk (or undefined for a cached miss). Valid only while
+   *  `memoRevision === chunkManager.revision`. Hot block reads hit the same
+   *  chunk repeatedly, so this avoids per-call string-key map hashing. */
+  private memoChunk: Chunk | undefined;
+
+  /** Allocation-friendly chunk resolution: numeric compare against the
+   *  revision-guarded one-entry cache, falling back to the string-keyed map on
+   *  a miss and repopulating the cache. Any chunk-map mutation bumps the
+   *  revision, invalidating the cache wholesale. */
+  private chunkAt(cx: number, cy: number, cz: number): Chunk | undefined {
+    const manager = this.chunkManager;
+    if (
+      this.memoRevision === manager.revision &&
+      this.memoCx === cx &&
+      this.memoCy === cy &&
+      this.memoCz === cz
+    ) {
+      return this.memoChunk;
+    }
+    const chunk = manager.getChunk(cx, cy, cz);
+    this.memoRevision = manager.revision;
+    this.memoCx = cx;
+    this.memoCy = cy;
+    this.memoCz = cz;
+    this.memoChunk = chunk;
+    return chunk;
+  }
+
   getBlock(x: number, y: number, z: number): number {
     if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(z)) {
       return BlockId.Air;
     }
-    const [cx, cy, cz] = worldToChunk(x, y, z);
-    const chunk = this.chunkManager.getChunk(cx, cy, cz);
+    // Inline floor-div/floor-mod (identical to worldToChunk/worldToLocal for
+    // integer inputs) so the hottest engine path allocates nothing.
+    const cx = Math.floor(x / CHUNK_DIMENSIONS.width);
+    const cy = Math.floor(y / CHUNK_DIMENSIONS.height);
+    const cz = Math.floor(z / CHUNK_DIMENSIONS.depth);
+    const chunk = this.chunkAt(cx, cy, cz);
     if (!chunk) {
       return BlockId.Air;
     }
-    const [lx, ly, lz] = worldToLocal(x, y, z);
-    return chunk.getLocal(lx, ly, lz);
+    return chunk.getLocal(
+      x - cx * CHUNK_DIMENSIONS.width,
+      y - cy * CHUNK_DIMENSIONS.height,
+      z - cz * CHUNK_DIMENSIONS.depth,
+    );
   }
 
   setBlock(x: number, y: number, z: number, id: number): void {
@@ -1025,8 +1066,10 @@ export class World implements WorldAccess {
 
   private isLoadedAt(x: number, y: number, z: number): boolean {
     if (y < 0 || y >= CHUNK_DIMENSIONS.height) return false;
-    const [cx, cy, cz] = worldToChunk(x, y, z);
-    return this.chunkManager.getChunk(cx, cy, cz)?.generated === true;
+    const cx = Math.floor(x / CHUNK_DIMENSIONS.width);
+    const cy = Math.floor(y / CHUNK_DIMENSIONS.height);
+    const cz = Math.floor(z / CHUNK_DIMENSIONS.depth);
+    return this.chunkAt(cx, cy, cz)?.generated === true;
   }
 
   // ── Queues ─────────────────────────────────────────────────────────────────

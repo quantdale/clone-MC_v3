@@ -21,10 +21,18 @@ export class ChunkManager {
   private readonly chunks = new Map<string, Chunk>();
   /** Authoritative per-chunk lifecycle records (status/tickets/tokens/queues). */
   readonly pipeline = new ChunkPipeline();
+  /** Bumped on every chunk-map mutation so callers can guard cheap lookup caches
+   *  against staleness without re-hashing string keys. */
+  private revisionValue = 0;
 
   constructor(_registry: BlockRegistry) {
     // Registry is part of the constructor contract but not used by this
     // manager; chunk block data is addressed by the caller.
+  }
+
+  /** Monotonic mutation counter for the chunk map (create/remove/dispose). */
+  get revision(): number {
+    return this.revisionValue;
   }
 
   /** Look up a loaded chunk by chunk coordinates. Returns undefined if not loaded. */
@@ -40,6 +48,7 @@ export class ChunkManager {
       chunk = new Chunk(cx, cy, cz);
       this.chunks.set(key, chunk);
       this.pipeline.register(cx, cy, cz);
+      this.revisionValue++;
     }
     return chunk;
   }
@@ -56,6 +65,7 @@ export class ChunkManager {
       this.pipeline.finalizeEviction(key);
     }
     this.chunks.delete(key);
+    this.revisionValue++;
   }
 
   /** Iterate over every loaded chunk. */
@@ -120,5 +130,6 @@ export class ChunkManager {
   dispose(): void {
     this.pipeline.clear();
     this.chunks.clear();
+    this.revisionValue++;
   }
 }

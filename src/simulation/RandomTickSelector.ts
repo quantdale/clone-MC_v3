@@ -6,7 +6,7 @@
  * caller-provided block predicate, with bounded attempts so a full sub-chunk of ineligible blocks
  * cannot hang the loop.
  */
-import { SECTION_VOLUME, SECTION_SIZE, localFromIndex } from '../math/SectionCoordinate';
+import { SECTION_VOLUME, SECTION_SIZE } from '../math/SectionCoordinate';
 
 /** Default random cells per sub-chunk per tick (Java `randomTickSpeed` default). */
 export const RANDOM_TICKS_PER_SUB_CHUNK = 3;
@@ -25,6 +25,27 @@ export function hash32(...values: number[]): number {
     h = Math.imul(h, 16777619);
   }
   return h >>> 0;
+}
+
+/**
+ * Fixed-arity fast path for the six-argument calls in this module. Performs the identical
+ * FNV-1a op sequence as {@link hash32} over `(a..f)` without allocating a rest-args array;
+ * the hot random-tick loop invokes this millions of times per second.
+ */
+export function hash32_6(a: number, b: number, c: number, d: number, e: number, f: number): number {
+  let h = 2166136261 >>> 0;
+  h ^= a | 0;
+  h = Math.imul(h, 16777619);
+  h ^= b | 0;
+  h = Math.imul(h, 16777619);
+  h ^= c | 0;
+  h = Math.imul(h, 16777619);
+  h ^= d | 0;
+  h = Math.imul(h, 16777619);
+  h ^= e | 0;
+  h = Math.imul(h, 16777619);
+  h ^= f | 0;
+  return Math.imul(h, 16777619) >>> 0;
 }
 
 export interface RandomTickSelectorOptions {
@@ -59,7 +80,7 @@ export class RandomTickSelector {
     if (count <= 0) return [];
     const out: number[] = new Array(count);
     for (let attempt = 0; attempt < count; attempt++) {
-      out[attempt] = hash32(seed, sectionX, sectionY, sectionZ, tick, attempt) % SECTION_VOLUME;
+      out[attempt] = hash32_6(seed, sectionX, sectionY, sectionZ, tick, attempt) % SECTION_VOLUME;
     }
     return out;
   }
@@ -82,12 +103,17 @@ export class RandomTickSelector {
     const out: Array<[number, number, number]> = [];
     let attempts = 0;
     while (out.length < count && attempts < this.maxEligibleAttempts * count) {
-      const index = hash32(seed, sectionX, sectionY, sectionZ, tick, attempts) % SECTION_VOLUME;
+      const index = hash32_6(seed, sectionX, sectionY, sectionZ, tick, attempts) % SECTION_VOLUME;
       attempts++;
-      const local = localFromIndex(index);
-      const x = sectionX * SECTION_SIZE + local.localX;
-      const y = sectionY * SECTION_SIZE + local.localY;
-      const z = sectionZ * SECTION_SIZE + local.localZ;
+      // Inline decode of localFromIndex for indices in [0, 4096): the layout is
+      // x + y*16 + z*256, so z = top byte, y = middle nibble, x = low nibble.
+      const localZ = index >>> 8;
+      const remainder = index & 255;
+      const localY = remainder >>> 4;
+      const localX = remainder & 15;
+      const x = sectionX * SECTION_SIZE + localX;
+      const y = sectionY * SECTION_SIZE + localY;
+      const z = sectionZ * SECTION_SIZE + localZ;
       if (isEligible(x, y, z)) {
         out.push([x, y, z]);
       }

@@ -109,6 +109,12 @@ export class PlayerPhysics {
   /**
    * Shape-world adapter: non-solid cells are EMPTY; solid cells answer their
    * registered collision shape or the full-cube default.
+   *
+   * Change 254 note: collapsing this to a single `getBlock` lookup via
+   * `registry.isSolid` was attempted and REVERTED — the `WorldAccess.isSolid`
+   * contract is independent of `registry.isSolid(getBlock(...))` (headless
+   * stubs and the invisible sub-bedrock floor rely on that freedom), so the
+   * two-query form below is the correct behavior-preserving shape.
    */
   private readonly shapeWorld: ShapeWorld = {
     getCollisionShape: (x: number, y: number, z: number): VoxelShape => {

@@ -2,6 +2,34 @@
 
 ## Current checkpoint
 
+> **254-whole-codebase-performance-optimization — VERIFIED (2026-08-26, session start `d258414`).**
+> Owner-authorized repository-wide performance campaign executed through the OpenSpec control
+> plane: behavior-preserving hot-path optimizations with measured wins — world block reads
+> +20%, isSolid +35%, random-tick selection +10% (worst case) / +44% (sparse), light-storage
+> cell access +46% — via allocation-free `World.getBlock` with a revision-guarded chunk memo,
+> numeric-cached `WorldLightStorage`, alloc-free section indexing, fixed-arity FNV hashing with
+> bit-identical golden-equivalence proofs, a registry-derived random-tick eligibility table,
+> and change-detected HUD writes. A durable vitest bench suite (`tests/bench/hot-paths.bench.ts`)
+> pins the hot paths for future sessions. One optimization (single-lookup collision adapter)
+> was caught by the existing suite breaking the `WorldAccess.isSolid` contract, reverted, and
+> forbidden normatively (spec R7). Gates: typecheck/lint PASS; unit 342 files / 4346 passed + 1
+> skipped PASS; build PASS (bundle sizes unchanged); local e2e 47/48 with the single failure
+> being a pre-existing environment-marginal jump spec reproduced at baseline (full dossier in
+> the change verification.md); canonical GitHub Actions run is release-authoritative. Change
+> 253-live-world-architecture-convergence remains PLANNED/reserved, untouched.
+
+> **254-whole-codebase-performance-optimization — ACTIVE (2026-08-26, session start `d258414`).**
+> Explicit owner instruction (session message of 2026-08-26) authorized a repository-wide
+> performance-optimization campaign, activating post-terminal change 254 ahead of the planned
+> but not-yet-activated convergence campaign (reserved as 253 by the dual-252 override).
+> Scope: behavior-preserving elimination of allocation churn and redundant computation on the
+> live engine's hottest paths (World voxel access + revision-guarded chunk memo,
+> WorldLightStorage numeric section caching, alloc-free section indexing,
+> RandomTickSelector fixed-arity hashing with golden equivalence, registry-derived random-tick
+> eligibility table, single-lookup physics shape adapter, HUD change-detected DOM writes),
+> plus a durable vitest bench hot-path suite. Numbering/ordering rationale recorded in
+> `CHANGE_SEQUENCE_OVERRIDES.md`. No 253 work is performed; 001–252 history untouched.
+
 > **252-wither-secondary-boss — VERIFIED and ARCHIVED as `2026-08-25-252-wither-secondary-boss` (2026-08-25, session start `254d259`).** The Wither-like secondary boss (master-plan §19.4, MP-19.4-1) is implemented, live-integrated, and certified: player-driven T-summon (soul sand/soil + 3 skulls, both orientations, localized bounded detection, structure consumption, duplicate rejection) through `WitherSummon.ts`; 220-tick invulnerable charge with exactly-once strength-7 spawn explosion via the verified 169 ExplosionCore; three-head combat (central + independent side-head targeting, deterministic id-sorted bounded scans, undead exclusion, kill-heal) in `WitherBoss.ts` over the 153 BossFramework; normal/blue skull projectiles over 142 ProjectileCore (lifetime 120, owner immunity, global cap 12) applying difficulty-scaled wither effect (014/121 registries extended; periodic 1 HP/2 s BYPASS_ARMOR damage type); armored phase at ≤150 HP with projectile immunity and heal-back phase restoration; exactly-one Nether-Star reward through ItemEntityManager + 50 XP; versioned v1 persistence via GamePersistence raw metadata records with hydrate/degrade; state-driven rendering (per-head yaws, armored recolor, skull meshes, charge-scaled boss bar) that leaves all 245 visual goldens untouched. New content: soul_soil/wither_skull blocks (60–61), soul_soil/wither_skull/wither_skeleton_skull/nether_star items (60–63), wither+wither_skull entity types, wither status-effect + damage types. 35 new tests (WitherBoss 17, WitherSummon 10, WitherSkull 7, WitherProductionPath E2E composition 1). Full gate: typecheck/lint PASS, unit 4318+1skip PASS (334 files), build PASS (171 modules), e2e 48/48 PASS incl. visual regression. Archived with spec synced; `PARITY_MATRIX.md` MP-19.4-1 now `exact`. Program COMPLETE (001–252 VERIFIED).
 
 > **251-live-furnace-production-integration — VERIFIED and ARCHIVED as `2026-08-25-251-live-furnace-production-integration` (2026-08-25, session start `3efd7a3`).** Production furnace wiring hardened and certified: `LiveBlockEntityHost` envelope+version quarantine (bounded warn, degraded banner), `GamePersistence.listAllBlockEntities`, `FurnacePanel` extraction-only+atomicity (inventory preserved), `Game` walk-away/focus/dispose lifecycle, 64 new 251 tests (`LiveBlockEntityHost` 17 + `FurnacePersistence` 6 + `FurnacePanel` 11 + `FurnaceMenuSlots` 8 + `LiveFurnaceIntegration` 22) covering close/reopen, burning without UI, autosave/reload via real IndexedDB, blocked-output, fractional XP determinism, break/no-resurrection, hostile batches, and hopper/player single-engine interleaving (166 `transferOneItem` vs 106 transactions). E2E furnace journey 2/2 PASS (place→open→insert→smelt→collect→reload→break), game non-visual 47/47 PASS, file-audit 2490 rows PASS, typecheck/lint/build/bundle/audits PASS, coverage functions 95% held (lines 84.34≥84). Archived with 7 specs synced to `openspec/specs/live-furnace-integration/spec.md`; `PARITY_MATRIX.md` C251 now `exact` VERIFIED. Program COMPLETE (001–251 VERIFIED).
@@ -41,12 +69,12 @@
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys).
      "None (hardening interlock ...)" is the sanctioned form while an interlock governs release
      authority; nextChange stays null because no Change 251 exists. -->
-- Active implementation change: **none (001–252 VERIFIED and archived; program COMPLETE — `252-wither-secondary-boss` archived as `2026-08-25-252-*`; wither spec at `openspec/changes/archive/2026-08-25-252-wither-secondary-boss/specs/wither-boss/spec.md`)**
-- Next change: **null (await explicit product authorization for 253)**
+- Active implementation change: **254-whole-codebase-performance-optimization — VERIFIED and archived as `2026-08-26-254-whole-codebase-performance-optimization` (owner-authorized whole-codebase performance optimization campaign)**
+- Next change: **null (await explicit product authorization to activate 253-live-world-architecture-convergence)**
 - 240 advancement allowed: **yes**
 
 - Program: **COMPLETE — 001–252 VERIFIED (252 archived as `2026-08-25-252-wither-secondary-boss`; MP-19.4-1 closed `exact`)**
-- Last completed change: **252-wither-secondary-boss — VERIFIED and ARCHIVED (2026-08-25)**
+- Last completed change: **254-whole-codebase-performance-optimization — VERIFIED and ARCHIVED (2026-08-26)**
 - All changes 001–252: **VERIFIED** — zero DEFERRED, zero UNCLASSIFIED
 - Historical Change 250-era bullets (preserved; superseded **for current release authority** by `openspec/evidence/release-readiness-post-hardening.md`): 250 required-test gate PASS at head `502d021` / byte-identical tree `b56529e`; historical release-readiness READY RC-1..RC-9 (`openspec/evidence/release-readiness.md`); final parity audit PASS with DL dispositions later rejected by this interlock (`openspec/evidence/parity/final-parity-audit.md`); evidence archive complete (`openspec/evidence/`)
 - Post-250 hardening interlock: **VERIFIED at remediation checkpoint `aa92a5c229a753f10f8c1677e836136962b5d07a` — canonical CI run 32589457819 SUCCESS (gate job 97078975848, e2e job 97078975868); tasks 78/78; release decision READY (`openspec/evidence/release-readiness-post-hardening.md`)**
@@ -54,7 +82,7 @@
 - Release authority: **certification package above; verdict READY WITH EXPLICIT NON-BLOCKING DEBT conditioned on canonical exact-SHA CI (gate + e2e SUCCESS)** — gate job 97148797875 (run 32620103123) is SUCCESS on follow-up head `e56b83a`; e2e pending at last checkpoint; `candidateSha` stays null until both jobs are green
 - Publication history: **stale scalars retired into `PROGRAM_STATE.json` `publicationHistory` (67aafd3e era → c58f972 certification → e56b83a lint fix); follow-up commits carry no independent release claim**
 - Section milestone: **PROGRAM COMPLETE — every planned change 001–250 VERIFIED and the mandatory post-250 hardening interlock VERIFIED with canonical exact-SHA CI proof**: program control (001), data/registry foundation (002–020), vertical world/chunk storage (021–033), persistent storage (034–043), fixed-tick simulation (044–055), block geometry/rendering (056–075), fluids (076–084), worldgen (085–102), crafting/containers/progression (103–128), entity framework/mobs (129–153), redstone/automation (154–173), dimensions/major progression (174–195), environment/UX/accessibility (196–210), resource/data packs/content breadth (211–221), multiplayer (222–237), hardening/verification matrices (238–247), parity matrix reconciliation (248), whole-codebase adversarial audit (249), final program verification (250), post-250 production persistence hardening (interlock).
-- Next exact action: **Await explicit product authorization for Change 253; no active change (001–252 VERIFIED and archived).**
+- Next exact action: **Await explicit product authorization to activate 253-live-world-architecture-convergence; program terminal with 001–252 + 254 VERIFIED.**
 
 ## What 250 implemented
 

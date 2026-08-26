@@ -11,7 +11,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2510,
+  "total": 2524,
   "pending": 0,
   "unclassified": 0,
   "rows": [
@@ -41194,6 +41194,248 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Placeholder verified truthful: explicitly discredits pre-credited primitives; consistent with PROGRAM_STATE terminal state.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-26-254-whole-codebase-performance-optimization/proposal.md",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 254 proposal: goals/non-goals/risks/gate for the owner-authorized hot-path optimization campaign",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored this session from code-level inspection evidence at d258414; scope excludes functional/storage/API changes.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-26-254-whole-codebase-performance-optimization/design.md",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 254 design: current/target hot-path state, invariants, memo/cache designs, rejected alternatives incl. the reverted single-lookup physics adapter",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Documents the WorldAccess.isSolid contract discovery that forced the Opt E revert.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-26-254-whole-codebase-performance-optimization/tasks.md",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 254 task list (9 tasks) with checkbox rule compliance",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Tasks checked only after implementation+tests+evidence exist.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-26-254-whole-codebase-performance-optimization/verification.md",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 254 verification: baseline/after benchmark numbers plus gate evidence",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Baseline recorded pre-change on 2026-08-26; after-numbers recorded post-implementation from the same machine/session class.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-26-254-whole-codebase-performance-optimization/specs/engine-hot-paths/spec.md",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Normative MUST/SHALL contract R1-R10 for behavior-preserving hot-path optimization",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "R7 amended after full-suite proof that collapsing the collision adapter lookup breaks WorldAccess semantics; every requirement has scenarios.",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/RandomTickEligibility.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Registry-derived id-to-has-random-tick byte table replacing two registry lookups per random-tick attempt; unregistered ids fall through to the direct path preserving exceptions",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "tests/unit/RandomTickEligibilityTable.test.ts"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Bit-identical decisions derived from blockRegistry.all() + behaviorRegistry.getBehavior; rebuilds when probing ids beyond the table.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/bench/hot-paths.bench.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "vitest bench suite measuring world block reads, light storage cell access, and random-tick selection throughput",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npx vitest bench --run tests/bench/hot-paths.bench.ts"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Benchmark-only file; excluded from vitest test include pattern; run via npx vitest bench.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/HotPathEquivalence.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 254 regression coverage: HotPathEquivalence pins equivalence/validation/dedup contracts against independent reference implementations or exact messages",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npm test"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored alongside the corresponding optimization; green in the full gate run.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/WorldChunkMemo.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 254 regression coverage: WorldChunkMemo pins equivalence/validation/dedup contracts against independent reference implementations or exact messages",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npm test"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored alongside the corresponding optimization; green in the full gate run.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/LightStorageFastPath.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 254 regression coverage: LightStorageFastPath pins equivalence/validation/dedup contracts against independent reference implementations or exact messages",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npm test"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored alongside the corresponding optimization; green in the full gate run.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/RandomTickGolden.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 254 regression coverage: RandomTickGolden pins equivalence/validation/dedup contracts against independent reference implementations or exact messages",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npm test"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored alongside the corresponding optimization; green in the full gate run.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/PlayerPhysicsShapeEquivalence.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 254 regression coverage: PlayerPhysicsShapeEquivalence pins equivalence/validation/dedup contracts against independent reference implementations or exact messages",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npm test"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored alongside the corresponding optimization; green in the full gate run.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/HudWriteDeduplication.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 254 regression coverage: HudWriteDeduplication pins equivalence/validation/dedup contracts against independent reference implementations or exact messages",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npm test"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored alongside the corresponding optimization; green in the full gate run.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/RandomTickEligibilityTable.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 254 regression coverage: full-catalog agreement between the eligibility table and direct registry lookups, rebuild behavior, and identical unknown-id errors",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npm test"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored alongside the eligibility-table optimization; green in the full gate run.",
       "status": "audited"
     }
   ]

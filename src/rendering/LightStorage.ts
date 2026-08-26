@@ -7,7 +7,7 @@
  * typed-array snapshot/restore for persistence/worker transport. Propagation (067/068) and meshing
  * (070) consume these.
  */
-import { localIndex, SECTION_VOLUME, type LocalCoord } from '../math/SectionCoordinate';
+import { SECTION_SIZE, SECTION_VOLUME } from '../math/SectionCoordinate';
 
 /** Bytes backing one 4096-cell nibble array. */
 const NIBBLE_BYTES = SECTION_VOLUME / 2;
@@ -77,14 +77,6 @@ export interface SectionLightData {
   block: Uint8Array;
 }
 
-function assertCoord(coord: LocalCoord): void {
-  for (const axis of [coord.localX, coord.localY, coord.localZ]) {
-    if (!Number.isInteger(axis) || axis < 0 || axis >= 16) {
-      throw new RangeError(`SectionLightStorage: local coordinates must be in [0, 16): ${axis}`);
-    }
-  }
-}
-
 /** Sky + block light for one 16³ section. */
 export class SectionLightStorage {
   private readonly sky: NibbleArray;
@@ -96,9 +88,18 @@ export class SectionLightStorage {
   }
 
   private indexFor(x: number, y: number, z: number): number {
-    const coord = { localX: x, localY: y, localZ: z };
-    assertCoord(coord);
-    return localIndex(coord.localX, coord.localY, coord.localZ);
+    // Ordered validation mirrors the historical assertCoord: first failure of
+    // x, then y, then z throws with that axis's value; non-integers rejected.
+    if (!Number.isInteger(x) || x < 0 || x >= 16) {
+      throw new RangeError(`SectionLightStorage: local coordinates must be in [0, 16): ${x}`);
+    }
+    if (!Number.isInteger(y) || y < 0 || y >= 16) {
+      throw new RangeError(`SectionLightStorage: local coordinates must be in [0, 16): ${y}`);
+    }
+    if (!Number.isInteger(z) || z < 0 || z >= 16) {
+      throw new RangeError(`SectionLightStorage: local coordinates must be in [0, 16): ${z}`);
+    }
+    return x + y * SECTION_SIZE + z * SECTION_SIZE * SECTION_SIZE;
   }
 
   getSkyLight(x: number, y: number, z: number): number {
@@ -214,8 +215,12 @@ export interface WorldLightSnapshot {
  */
 export class WorldLightStorage {
   private readonly sections = new Map<string, SectionLightStorage>();
-  /** One-entry lookup cache: propagation touches the same section many times in a row. */
-  private cacheKey: string | null = null;
+  /** One-entry lookup cache keyed by numeric section coords (propagation is
+   *  strongly section-local); the string map key is built only on a miss. */
+  private cacheValid = false;
+  private cacheSx = 0;
+  private cacheSy = 0;
+  private cacheSz = 0;
   private cacheSection: SectionLightStorage | null = null;
 
   /** Number of stored sections. */
@@ -228,12 +233,16 @@ export class WorldLightStorage {
   }
 
   private sectionFor(sx: number, sy: number, sz: number): SectionLightStorage | undefined {
-    const key = this.key(sx, sy, sz);
-    if (this.cacheKey === key) return this.cacheSection!;
-    const section = this.sections.get(key);
+    if (this.cacheValid && this.cacheSx === sx && this.cacheSy === sy && this.cacheSz === sz) {
+      return this.cacheSection!;
+    }
+    const section = this.sections.get(this.key(sx, sy, sz));
     if (section !== undefined) {
-      this.cacheKey = key;
+      this.cacheSx = sx;
+      this.cacheSy = sy;
+      this.cacheSz = sz;
       this.cacheSection = section;
+      this.cacheValid = true;
     }
     return section;
   }
@@ -246,8 +255,11 @@ export class WorldLightStorage {
       section = new SectionLightStorage();
       this.sections.set(key, section);
     }
-    this.cacheKey = key;
+    this.cacheSx = sx;
+    this.cacheSy = sy;
+    this.cacheSz = sz;
     this.cacheSection = section;
+    this.cacheValid = true;
     return section;
   }
 
@@ -260,7 +272,7 @@ export class WorldLightStorage {
   deleteSection(sx: number, sy: number, sz: number): boolean {
     const removed = this.sections.delete(this.key(sx, sy, sz));
     if (removed) {
-      this.cacheKey = null;
+      this.cacheValid = false;
       this.cacheSection = null;
     }
     return removed;
@@ -269,7 +281,7 @@ export class WorldLightStorage {
   /** Remove every section. */
   clear(): void {
     this.sections.clear();
-    this.cacheKey = null;
+    this.cacheValid = false;
     this.cacheSection = null;
   }
 

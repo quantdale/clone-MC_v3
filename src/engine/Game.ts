@@ -23,6 +23,7 @@ import { World } from '../world/World';
 import type { WorldEditSnapshot } from '../world/World';
 import { BlockStateRegistry, createDefaultBlockStateRegistry } from '../world/BlockStateRegistry';
 import { BlockBehaviorRegistry } from '../simulation/BlockBehavior';
+import { RandomTickEligibility } from '../simulation/RandomTickEligibility';
 import { CropBlockBehavior } from '../simulation/CropBehavior';
 import { FarmlandBlockBehavior } from '../simulation/FarmlandBehavior';
 import { FireBlockBehavior } from '../simulation/FireBehavior';
@@ -208,6 +209,8 @@ export class Game {
   private readonly furnacePanel: FurnacePanel;
   /** Monotonic simulation tick counter driving random-tick seeding. */
   private simTick = 0;
+  /** Registry-derived random-tick eligibility table (254); built lazily. */
+  private readonly randomTickEligibility: RandomTickEligibility;
   /**
    * Fixed-tick owner (044/045): turns rAF frame deltas into deterministic
    * 20 TPS ticks. The tick body ({@link runFixedTick}) runs the whole ordered
@@ -463,6 +466,7 @@ export class Game {
     this.behaviorRegistry.register(this.blockRegistry.get(BlockId.Wheat).key, this.cropBehavior);
     this.behaviorRegistry.register(this.blockRegistry.get(BlockId.Farmland).key, this.farmlandBehavior);
     this.behaviorRegistry.register(this.blockRegistry.get(BlockId.Fire).key, this.fireBehavior);
+    this.randomTickEligibility = new RandomTickEligibility(this.blockRegistry, this.behaviorRegistry);
     this.randomTickSelector = new RandomTickSelector();
     this.lootTables = new LootTableRegistry(buildCurrentLootTables(this.blockRegistry, this.itemRegistry), this.itemRegistry);
     this.enchantmentRegistry = createDefaultEnchantmentRegistry();
@@ -1262,8 +1266,7 @@ export class Game {
     if (id === BlockId.Air) {
       return false;
     }
-    const behavior = this.behaviorRegistry.getBehavior(this.blockRegistry.get(id).key);
-    return typeof behavior.onRandomTick === 'function';
+    return this.randomTickEligibility.has(id);
   }
 
   private spawnPlayerSafely(generator: TerrainGenerator): void {

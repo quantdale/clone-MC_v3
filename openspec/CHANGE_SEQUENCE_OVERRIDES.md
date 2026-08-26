@@ -1,5 +1,17 @@
 # Change Sequence Overrides
 
+## Post-terminal ordering: owner-authorized Change 254 ahead of reserved 253 (2026-08-26)
+
+The product owner explicitly authorized a repository-wide performance-optimization campaign
+in the session instruction of 2026-08-26 while `253-live-world-architecture-convergence`
+remained PLANNED and not activated. Per the universal handoff rule that explicit user/product
+instructions are authoritative, that campaign is numbered **254** and was implemented first;
+253 remains reserved exactly as pinned by the dual-252 reconciliation below and MUST still be
+activated under that name when its own activation decision arrives. No work belonging to 253
+was performed under 254; the two campaigns touch overlapping files only insofar as both edit
+the live world layer, and 254's changes are behavior-preserving optimizations that 253 may
+supersede wholesale during its storage migration.
+
 ## Dual-252 numbering reconciliation (2026-08-25)
 
 Two independently authorized campaigns were numbered `252` concurrently:
