@@ -12,6 +12,10 @@ was performed under 254; the two campaigns touch overlapping files only insofar 
 the live world layer, and 254's changes are behavior-preserving optimizations that 253 may
 supersede wholesale during its storage migration.
 
+## 253 activation (2026-08-27)
+
+Change 253 (`253-live-world-architecture-convergence`) was activated this session per the explicit product authorization carried by the execution campaign. The change directory was renamed from `252-live-world-architecture-convergence` (committed earlier on the remote) under the dual-252 reconciliation rule; the number 252 remains consumed by the archived `252-wither-secondary-boss`. Canonical state (`PROGRAM_STATE.json`/`.md`) now names 253 the sole active implementation change (non-terminal ACTIVE epoch); 254 remains VERIFIED and last completed. The reserved-number rule above is satisfied.
+
 ## Dual-252 numbering reconciliation (2026-08-25)
 
 Two independently authorized campaigns were numbered `252` concurrently:

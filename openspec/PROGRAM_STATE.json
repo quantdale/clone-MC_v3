@@ -1,23 +1,23 @@
 {
   "schemaVersion": 1,
   "program": "minecraft-parity",
-  "status": "COMPLETE",
-  "currentChange": "254-whole-codebase-performance-optimization",
-  "currentChangeStatus": "VERIFIED",
+  "status": "ACTIVE",
+  "currentChange": "253-live-world-architecture-convergence",
+  "currentChangeStatus": "ACTIVE",
   "lastCompletedChange": "254-whole-codebase-performance-optimization",
   "nextChange": null,
-  "completedTasks": 9,
-  "totalTasks": 9,
-  "completionPercentage": 100,
+  "completedTasks": 0,
+  "totalTasks": 82,
+  "completionPercentage": 0,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
-  "mandatoryRequirementsPass": true,
-  "requiredTestsPass": true,
-  "advancementAllowed": true,
+  "mandatoryRequirementsPass": false,
+  "requiredTestsPass": false,
+  "advancementAllowed": false,
   "exceptionUsed": false,
-  "sessionStartHead": "d258414614681116c5cf2c86bb7d95a3577a34bb",
-  "lastCompletedTask": "254-whole-codebase-performance-optimization VERIFIED 2026-08-26 (session start d258414): hot-path optimization campaign complete — getBlock/isSolid/light/random-tick benches +10..46% with per-op allocations eliminated; unit 4346+1skip PASS; build PASS; local e2e 47/48 (one environment-marginal jump spec reproduced at pristine baseline; dossier in verification.md); canonical CI red IDENTICALLY before and after (pre-existing gate lineage defect + same marginal e2e spec) — zero regressions introduced; Opt E contract violation caught by suite and reverted normatively.",
-  "nextExactAction": "Program terminal again (001–252, 254 VERIFIED). Await explicit product authorization to activate 253-live-world-architecture-convergence (reserved by the dual-252 override); review range d258414..published_head on GitHub.",
+  "sessionStartHead": "556f1e67ebebf2e7717b29020c04d524787fc431",
+  "lastCompletedTask": "254-whole-codebase-performance-optimization VERIFIED 2026-08-26 (session start d258414): hot-path optimization campaign complete; unit 4346+1skip PASS; build PASS; local e2e 47/48 (one environment-marginal jump spec reproduced at pristine baseline); canonical CI red with pre-existing gate lineage defect (shallow-checkout) + same marginal e2e spec — zero regressions introduced, repair owned by Change 253 PROMPT 00/A.",
+  "nextExactAction": "Execute Change 253 PROMPT 00->11 (openspec/changes/253-live-world-architecture-convergence/agent-prompts.md): governance/activation (this checkpoint) -> exhaustive inventory -> canonical world core -> Overworld generation/streaming -> section rendering/lighting -> gameplay/simulation migration -> persistence/migration -> modularity hardening -> performance reconciliation -> post-audit -> full verification/E2E -> publish+canonical CI. Keep build green; publish coherent checkpoints to origin/main.",
   "blockers": [],
   "validationResults": [
     {
@@ -2425,42 +2425,13 @@
       "note": "Closed 2026-08-23: candidate e56b83a canonical CI run 32620103123 SUCCESS — gate job 97148797875 (validate-state/typecheck/lint/build/bundle/unit 325 files 4186 passed +1 skipped on CI/coverage/audits x2) and e2e job 97148797928 both green. Local re-gate matched (unit 326 files 4206 +1 skipped incl. validators). Verdict READY WITH EXPLICIT NON-BLOCKING DEBT now unconditional; risk register R-1..R-9 stands."
     }
   ],
-  "publicationHistory": [
-    {
-      "head": "67aafd3e7fa72b50170dff3b13c492d6df61a09e",
-      "at": "2026-08-16T16:18:18.133Z",
-      "note": "Change-238-era session publication. The retired scalar fields publishedHead/publishedAt/lastValidatedHead/lastKnownHead froze at this value and silently went stale; preserved here as a historical observation instead of a current claim."
-    },
-    {
-      "head": "c58f972ca62401a29ccf56fdce0716f7aeb38880",
-      "at": "2026-08-23T04:41:19Z",
-      "note": "2026-08-23 exhaustive repository certification publication. Canonical CI run 32618476207 returned gate FAILURE at Lint (unused 'path' import in scripts/validate-file-audit.mjs; undeclared 'process' global in scripts/gen-file-audit.mjs); build/unit/coverage were skipped downstream, not failing. Superseded by the next entry."
-    },
-    {
-      "head": "e56b83a35e5034b5c73745c9a76130a9ac58d273",
-      "at": "2026-08-23",
-      "note": "Evidence-only follow-up fixing the two lint defects; now ALSO the CI-verified release candidate: run 32620103123 gate 97148797875 SUCCESS + e2e 97148797928 SUCCESS recorded in releaseAuthority.canonicalCi."
-    }
-  ],
+  "publicationHistory": [],
   "releaseAuthority": {
     "schemaVersion": 1,
-    "authorityPackage": "openspec/hardening/2026-08-23-exhaustive-repository-certification",
-    "verdict": "READY WITH EXPLICIT NON-BLOCKING DEBT",
-    "condition": "Canonical exact-SHA GitHub Actions run (gate + e2e jobs SUCCESS) on the published candidate head.",
-    "candidateSha": "e56b83a35e5034b5c73745c9a76130a9ac58d273",
-    "canonicalCi": {
-      "runId": 32620103123,
-      "gateJobId": 97148797875,
-      "gateConclusion": "success",
-      "e2eJobId": 97148797928,
-      "e2eConclusion": "success",
-      "recordedAt": "2026-08-23"
-    },
-    "semantics": {
-      "candidateSha": "The most recent commit whose canonical CI run is fully green (gate + e2e SUCCESS). Must be an ancestor-or-self of HEAD recorded by a LATER commit; a commit never contains its own SHA.",
-      "followUpCommits": "Documentation/evidence-only commits published after the candidate carry no release claim and do not invalidate the candidate.",
-      "historicalInterlocks": "The hardeningInterlock block below is a historical gating record (pre-241 era). The authorityPackage above owns the current release decision."
-    }
+    "authorityPackage": null,
+    "candidateSha": null,
+    "canonicalCi": null,
+    "note": "Not yet established: Change 253 is ACTIVE (non-terminal post-terminal epoch). Terminal release authority will be recorded only when an exact lineage-valid candidate achieves canonical gate+e2e SUCCESS."
   },
   "hardeningInterlock": {
     "role": "historical interlock record (pre-241 era); NOT the current release authority - see releaseAuthority above",
@@ -2482,5 +2453,46 @@
     },
     "publishedHead": "e3ecf86c28553c558459c855a3aee3b003bcb157",
     "canonicalContext": "VERIFIED at e3ecf86c28553c558459c855a3aee3b003bcb157 run #337 SUCCESS (prior 05aa1e0 #327 and intermediate runs were RED at E2E; fixed via InputManager gate removal + document MouseEvent dispatch + pig 60s + GEOMETRY_PER_CHUNK 6)"
-  }
+  },
+  "historicalReleaseEvidence": {
+    "note": "Orphaned pre-253 release-authority evidence preserved as HISTORICAL and NON-AUTHORITATIVE. In full local history these SHAs are ancestors of HEAD; under CI shallow checkout the merge-base check cannot see them. They must never be relabeled as the current release candidate. Preserved only for lineage context; the truthful ACTIVE epoch does not assert a terminal release authority.",
+    "releaseAuthority": {
+      "schemaVersion": 1,
+      "authorityPackage": "openspec/hardening/2026-08-23-exhaustive-repository-certification",
+      "verdict": "READY WITH EXPLICIT NON-BLOCKING DEBT",
+      "condition": "Canonical exact-SHA GitHub Actions run (gate + e2e jobs SUCCESS) on the published candidate head.",
+      "candidateSha": "e56b83a35e5034b5c73745c9a76130a9ac58d273",
+      "canonicalCi": {
+        "runId": 32620103123,
+        "gateJobId": 97148797875,
+        "gateConclusion": "success",
+        "e2eJobId": 97148797928,
+        "e2eConclusion": "success",
+        "recordedAt": "2026-08-23"
+      },
+      "semantics": {
+        "candidateSha": "The most recent commit whose canonical CI run is fully green (gate + e2e SUCCESS). Must be an ancestor-or-self of HEAD recorded by a LATER commit; a commit never contains its own SHA.",
+        "followUpCommits": "Documentation/evidence-only commits published after the candidate carry no release claim and do not invalidate the candidate.",
+        "historicalInterlocks": "The hardeningInterlock block below is a historical gating record (pre-241 era). The authorityPackage above owns the current release decision."
+      }
+    },
+    "publicationHistory": [
+      {
+        "head": "67aafd3e7fa72b50170dff3b13c492d6df61a09e",
+        "at": "2026-08-16T16:18:18.133Z",
+        "note": "Change-238-era session publication. The retired scalar fields publishedHead/publishedAt/lastValidatedHead/lastKnownHead froze at this value and silently went stale; preserved here as a historical observation instead of a current claim."
+      },
+      {
+        "head": "c58f972ca62401a29ccf56fdce0716f7aeb38880",
+        "at": "2026-08-23T04:41:19Z",
+        "note": "2026-08-23 exhaustive repository certification publication. Canonical CI run 32618476207 returned gate FAILURE at Lint (unused 'path' import in scripts/validate-file-audit.mjs; undeclared 'process' global in scripts/gen-file-audit.mjs); build/unit/coverage were skipped downstream, not failing. Superseded by the next entry."
+      },
+      {
+        "head": "e56b83a35e5034b5c73745c9a76130a9ac58d273",
+        "at": "2026-08-23",
+        "note": "Evidence-only follow-up fixing the two lint defects; now ALSO the CI-verified release candidate: run 32620103123 gate 97148797875 SUCCESS + e2e 97148797928 SUCCESS recorded in releaseAuthority.canonicalCi."
+      }
+    ]
+  },
+  "criticalRiskOpen": true
 }

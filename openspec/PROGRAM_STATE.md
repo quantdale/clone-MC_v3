@@ -2,6 +2,8 @@
 
 ## Current checkpoint
 
+> **253-live-world-architecture-convergence — ACTIVE (post-terminal epoch activated 2026-08-27, session start head `556f1e6`).** Per the explicit product authorization (`.agent/EXECUTION_PROMPT.md` + `NEXT_CAMPAIGN.md`), reserved Change 253 is now the sole ACTIVE implementation change. The live playable Overworld will converge on the verified dimension-aware `VerticalWorldAccess`/`ChunkColumn`/`ChunkSection` block-state store, removing the legacy 16×64×16 `Chunk` slab and the separate block-state overlay as independent production authorities. Governance baselined: the terminal `validate-state` lineage defect (only manifests under CI shallow checkout; full local history passes) is handled truthfully — the ACTIVE epoch skips the terminal release-authority check, orphaned pre-253 SHAs are preserved as `historicalReleaseEvidence`, and `validate-state.mjs` now degrades the shallow-clone ancestry check to a warning while keeping full-history enforcement. 82 tasks, 0 complete at activation.
+
 > **254-whole-codebase-performance-optimization — VERIFIED (2026-08-26, session start `d258414`).**
 > Owner-authorized repository-wide performance campaign executed through the OpenSpec control
 > plane: behavior-preserving hot-path optimizations with measured wins — world block reads
@@ -72,13 +74,13 @@
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys).
      "None (hardening interlock ...)" is the sanctioned form while an interlock governs release
      authority; nextChange stays null because no Change 251 exists. -->
-- Active implementation change: **254-whole-codebase-performance-optimization — VERIFIED and archived as `2026-08-26-254-whole-codebase-performance-optimization` (owner-authorized whole-codebase performance optimization campaign)**
-- Next change: **null (await explicit product authorization to activate 253-live-world-architecture-convergence)**
-- 240 advancement allowed: **yes**
+- Active implementation change: **253-live-world-architecture-convergence — ACTIVE (post-terminal epoch activated 2026-08-27)**
+- Next change: **null (Change 253 is the active post-terminal convergence campaign; no successor planned)**
+- 240 advancement allowed: **no (active change not yet verified)**
 
-- Program: **COMPLETE — 001–252 VERIFIED (252 archived as `2026-08-25-252-wither-secondary-boss`; MP-19.4-1 closed `exact`)**
+- Program: **ACTIVE — 253 convergence in progress; 001–252 and 254 VERIFIED (252 archived as `2026-08-25-252-wither-secondary-boss`; MP-19.4-1 closed `exact`)**
 - Last completed change: **254-whole-codebase-performance-optimization — VERIFIED and ARCHIVED (2026-08-26)**
-- All changes 001–252: **VERIFIED** — zero DEFERRED, zero UNCLASSIFIED
+- All changes 001–252, 254: **VERIFIED** — zero DEFERRED, zero UNCLASSIFIED; 253 **ACTIVE**
 - Historical Change 250-era bullets (preserved; superseded **for current release authority** by `openspec/evidence/release-readiness-post-hardening.md`): 250 required-test gate PASS at head `502d021` / byte-identical tree `b56529e`; historical release-readiness READY RC-1..RC-9 (`openspec/evidence/release-readiness.md`); final parity audit PASS with DL dispositions later rejected by this interlock (`openspec/evidence/parity/final-parity-audit.md`); evidence archive complete (`openspec/evidence/`)
 - Post-250 hardening interlock: **VERIFIED at remediation checkpoint `aa92a5c229a753f10f8c1677e836136962b5d07a` — canonical CI run 32589457819 SUCCESS (gate job 97078975848, e2e job 97078975868); tasks 78/78; release decision READY (`openspec/evidence/release-readiness-post-hardening.md`)**
 - Certification campaign: **openspec/hardening/2026-08-23-exhaustive-repository-certification — findings fixed with oracles; manifest reviewed; risk register R-1..R-9 accepted debt**
