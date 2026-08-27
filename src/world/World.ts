@@ -228,13 +228,13 @@ export class World implements WorldAccess {
   private readonly mesherLightSampler = {
     inBounds: (x: number, y: number, z: number): boolean =>
       Number.isInteger(x) && Number.isInteger(y) && Number.isInteger(z) &&
-      y >= CONFIG.bedrockY && y < CHUNK_DIMENSIONS.height,
+      this.dimension.containsY(y),
     isOpaque: (x: number, y: number, z: number): boolean => this.registry.isOpaque(this.getBlock(x, y, z)),
     getSkyLight: (x: number, y: number, z: number): number => this.lightStorage.getSkyLight(x, y, z),
     getBlockLight: (x: number, y: number, z: number): number => this.lightStorage.getBlockLight(x, y, z),
   };
   /** 16³ light sections per chunk column (chunk height / section size). */
-  private readonly sectionsPerChunk = CHUNK_DIMENSIONS.height / 16;
+  private readonly sectionsPerChunk: number;
 
   // ── Worker meshing plumbing (toggleable; OFF until validated) ──────────────
   /**
@@ -322,8 +322,9 @@ export class World implements WorldAccess {
     this.simulationDistance = opts.simulationDistance ?? CONFIG.simulationDistance;
     this.rsd = new RenderSimulationDistance(this.renderDistance, this.simulationDistance);
     // Vertical window: 64-block chunk layers derived from the dimension's block extent.
-    this.minChunkY = opts.dimension ? Math.floor(opts.dimension.minY / CHUNK_DIMENSIONS.height) : 0;
-    this.chunkLayerCount = opts.dimension ? Math.ceil(opts.dimension.height / CHUNK_DIMENSIONS.height) : 1;
+    this.minChunkY = Math.floor(this.dimension.minY / CHUNK_DIMENSIONS.height);
+    this.chunkLayerCount = Math.ceil(this.dimension.height / CHUNK_DIMENSIONS.height);
+    this.sectionsPerChunk = Math.ceil(this.dimension.height / 16);
     this.chunkManager = new ChunkManager(opts.registry);
     this.monitor = opts.monitor ?? null;
     this.uvRectFor = opts.uvRectFor ?? null;
@@ -333,7 +334,7 @@ export class World implements WorldAccess {
         isOpaque: (x, y, z) => this.registry.isOpaque(this.getBlock(x, y, z)),
         getLuminance: (x, y, z) => blockLuminance(this.getBlock(x, y, z)),
       },
-      { minY: CONFIG.bedrockY, maxY: CHUNK_DIMENSIONS.height },
+      { minY: this.dimension.minY, maxY: this.dimension.minY + this.dimension.height },
     );
   }
 

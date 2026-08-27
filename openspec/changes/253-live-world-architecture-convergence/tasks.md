@@ -60,7 +60,7 @@ Rules:
 ## Phase 3 — Live Overworld composition, generation, and streaming
 
 - [x] Bind `OVERWORLD_DIMENSION_TYPE` in the real `Game` composition root and expose its active range to `World`/debug/test seams.
-- [ ] Derive `minY`, `maxY`, `minSectionY`, `sectionCount`, spawn bounds and vertical iteration from `DimensionType`, not duplicated literals.
+- [x] Derive `minY`, `maxY`, `minSectionY`, `sectionCount`, spawn bounds and vertical iteration from `DimensionType`, not duplicated literals.
 - [ ] Audit the current `src/worldgen/**` stage graph and document the exact live adapter/composition chosen.
 - [ ] Make missing-column generation populate canonical `BlockState`s across the active Overworld range.
 - [ ] Eliminate permanent generation of independently authoritative 64-high slabs.
