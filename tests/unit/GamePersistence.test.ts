@@ -30,6 +30,9 @@ import type {
   IdbRequestLike,
 } from "../../src/storage/WorldMetadataRepository";
 import type { WorldEditDurability } from "../../src/world/World";
+import { ChunkColumn } from "../../src/world/ChunkColumn";
+import { createDefaultBlockStateRegistry } from "../../src/world/BlockStateRegistry";
+import { BlockId } from "../../src/world/BlockRegistry";
 import { createIdbFactoryMock } from "./IdbFactoryMock";
 
 // -----------------------------------------------------------------------------------------
@@ -837,6 +840,45 @@ describe("GamePersistence — composition convenience", () => {
       flushTarget: null,
     });
     await reopened.dispose();
+    await p.dispose();
+  });
+
+  it("saveChunkColumn persists a canonical column and loadChunkColumn retrieves it", async () => {
+    const factory = new FaultIdbFactory();
+    const p = new GamePersistence({
+      seed: SEED,
+      factory,
+      flushTarget: null,
+    });
+    await p.open();
+
+    const stateRegistry = createDefaultBlockStateRegistry();
+    const column = new ChunkColumn({
+      chunkX: 3,
+      chunkZ: -5,
+      sectionCount: 24,
+      minSectionY: -4,
+      registry: stateRegistry,
+    });
+    // Set a property-bearing block state in section 0 (Y = 0)
+    const wheatState = stateRegistry.lookup(BlockId.Wheat, { age: 7 });
+    column.setBlockState(0, 8, 8, wheatState);
+
+    p.saveChunkColumn(column);
+    const flushed = await p.flush();
+    expect(flushed.committed).toBe(1);
+
+    const loaded = await p.loadChunkColumn(3, -5);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.chunkX).toBe(3);
+    expect(loaded!.chunkZ).toBe(-5);
+    expect(loaded!.minSectionY).toBe(-4);
+    expect(loaded!.sectionCount).toBe(24);
+
+    // Verify round-trip deserialization preserves block state
+    const restored = ChunkColumn.deserialize(loaded!, stateRegistry);
+    expect(restored.getBlockState(0, 8, 8).getProperty("age")).toBe("7");
+
     await p.dispose();
   });
 });

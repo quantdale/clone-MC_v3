@@ -107,10 +107,10 @@ Rules:
 
 ## Phase 6 — Persistence, migration, import/export, and recovery
 
-- [ ] Route canonical column persistence through existing `ChunkSectionRepository`/column codecs and migration infrastructure.
-- [ ] Integrate canonical world storage with live `GamePersistence` rather than adding a parallel database.
+- [x] Route canonical column persistence through existing `ChunkSectionRepository`/column codecs and migration infrastructure.
+- [x] Integrate canonical world storage with live `GamePersistence` rather than adding a parallel database.
 - [ ] Implement deterministic legacy read-old/write-new conversion for every characterized supported payload.
-- [ ] Preserve property-bearing `BlockStateId`/properties through save/load.
+- [x] Preserve property-bearing `BlockStateId`/properties through save/load.
 - [ ] Make migration idempotent across repeated startup.
 - [ ] Prevent duplicate edits, columns, entities, block entities, inventories, item entities and other persisted records after migration/retry.
 - [ ] Keep the only recoverable legacy source untouched until replacement canonical data is durably committed.
@@ -118,7 +118,7 @@ Rules:
 - [ ] Coordinate dirty canonical saves with unload; failed writes retain/requeue dirty ownership.
 - [ ] Re-run autosave/pagehide/abrupt-close/partial-write/quota/private-mode/storage-health/recovery scenarios against the new live path.
 - [ ] Reconcile import/export around canonical columns plus player/entity/block-entity data.
-- [ ] Add save/reload + unload/reload integration for negative-Y, upper-section and property-bearing edits.
+- [x] Add save/reload + unload/reload integration for negative-Y, upper-section and property-bearing edits.
 - [ ] Add repeated migration/restart tests proving exact idempotency.
 
 ## Phase 7 — Modularity and architecture hardening while touching hotspots

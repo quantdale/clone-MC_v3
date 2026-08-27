@@ -46,6 +46,7 @@ import {
   type LegacyMigrationReport,
   type StorageLike,
 } from './LegacyLocalStorageMigrator';
+import type { ChunkColumn, SerializedChunkColumn } from '../world/ChunkColumn';
 import type { WorldEditDurability, WorldEditSnapshot } from '../world/World';
 
 /** The game-level player snapshot the facade persists/restores (see `Game.savePlayerState`). */
@@ -637,6 +638,36 @@ export class GamePersistence implements WorldEditDurability {
       return await this.blockEntities.getChunkEntities(this.worldIdValue, cx, cz);
     } catch (e) {
       this.recordError(`load block entities (${cx},${cz}): ${errorMessage(e)}`);
+      void this.healthMonitor.check().catch(() => undefined);
+      return null;
+    }
+  }
+
+  /**
+   * Enqueue a canonical chunk column's sections as a full-snapshot deduplicated dirty unit.
+   */
+  saveChunkColumn(column: ChunkColumn): void {
+    if (this.disposed) return;
+    const serialized = column.serialize();
+    this.coordinator.markDirty({
+      key: `chunk-sections|${this.worldIdValue}|${column.chunkX}|${column.chunkZ}`,
+      kind: 'chunk-sections',
+      worldId: this.worldIdValue,
+      chunkX: column.chunkX,
+      chunkZ: column.chunkZ,
+      payload: serialized,
+    });
+  }
+
+  /**
+   * Committed-copy lookup for a serialized chunk column. NEVER throws: a failure is
+   * recorded internally and triggers a health check; the caller receives `null`.
+   */
+  async loadChunkColumn(chunkX: number, chunkZ: number): Promise<SerializedChunkColumn | null> {
+    try {
+      return await this.chunkSections.getColumn(this.worldIdValue, chunkX, chunkZ);
+    } catch (e) {
+      this.recordError(`load chunk column (${chunkX},${chunkZ}): ${errorMessage(e)}`);
       void this.healthMonitor.check().catch(() => undefined);
       return null;
     }
