@@ -593,7 +593,7 @@ export class World implements WorldAccess {
   isSolid(x: number, y: number, z: number): boolean {
     // An invisible solid floor below the world prevents the player from
     // falling forever if a chunk is momentarily un-generated or unloaded.
-    if (y < CONFIG.bedrockY) {
+    if (y < this.dimension.minY) {
       return true;
     }
     return this.registry.isSolid(this.getBlock(x, y, z));
@@ -1077,7 +1077,7 @@ export class World implements WorldAccess {
       const [x, y, z] = this.fallingQueue.shift()!;
       this.fallingSet.delete(`${x},${y},${z}`);
       if (
-        y <= CONFIG.bedrockY ||
+        y <= this.dimension.minY ||
         !this.isLoadedAt(x, y, z) ||
         !this.isLoadedAt(x, y - 1, z)
       ) {
@@ -1094,7 +1094,7 @@ export class World implements WorldAccess {
   }
 
   private enqueueFalling(x: number, y: number, z: number): void {
-    if (y <= CONFIG.bedrockY || y >= CHUNK_DIMENSIONS.height || !Number.isInteger(x) || !Number.isInteger(z)) {
+    if (y <= this.dimension.minY || !this.dimension.containsY(y) || !Number.isInteger(x) || !Number.isInteger(z)) {
       return;
     }
     const key = `${x},${y},${z}`;
@@ -1104,7 +1104,7 @@ export class World implements WorldAccess {
   }
 
   private isLoadedAt(x: number, y: number, z: number): boolean {
-    if (y < 0 || y >= CHUNK_DIMENSIONS.height) return false;
+    if (!this.dimension.containsY(y)) return false;
     const cx = Math.floor(x / CHUNK_DIMENSIONS.width);
     const cy = Math.floor(y / CHUNK_DIMENSIONS.height);
     const cz = Math.floor(z / CHUNK_DIMENSIONS.depth);

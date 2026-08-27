@@ -92,12 +92,12 @@ Rules:
 
 ## Phase 5 — Gameplay and simulation consumer migration
 
-- [ ] Migrate player collision/shape queries to canonical dimension-aware world access, including terrain below Y=0 and top/bottom boundaries.
-- [ ] Migrate raycast/selection to canonical states and negative/high Y.
-- [ ] Migrate mining and placing so stateful blocks are not flattened and section invalidation/persistence triggers correctly.
-- [ ] Migrate falling-block and general world-mutation helpers discovered by inventory.
+- [x] Migrate player collision/shape queries to canonical dimension-aware world access, including terrain below Y=0 and top/bottom boundaries.
+- [x] Migrate raycast/selection to canonical states and negative/high Y.
+- [x] Migrate mining and placing so stateful blocks are not flattened and section invalidation/persistence triggers correctly.
+- [x] Migrate falling-block and general world-mutation helpers discovered by inventory.
 - [ ] Migrate scheduled/random tick access and neighbor-update paths that still depend on legacy slab assumptions.
-- [ ] Migrate live fluids/waterlogging and block simulations (fire/crop/farmland/etc.) discovered by inventory.
+- [x] Migrate live fluids/waterlogging and block simulations (fire/crop/farmland/etc.) discovered by inventory.
 - [ ] Migrate current redstone-facing/block-behavior world access without adding unrelated new redstone content.
 - [ ] Reconcile item/entity/block-entity lifecycle with horizontal column residency and valid negative/high Y.
 - [ ] Verify stable entity/block-entity identity across unload/reload; no duplicates or resurrection.
