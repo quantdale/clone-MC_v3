@@ -6,9 +6,9 @@
   "currentChangeStatus": "ACTIVE",
   "lastCompletedChange": "254-whole-codebase-performance-optimization",
   "nextChange": null,
-  "completedTasks": 0,
+  "completedTasks": 18,
   "totalTasks": 82,
-  "completionPercentage": 0,
+  "completionPercentage": 22,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": false,
@@ -17,7 +17,7 @@
   "exceptionUsed": false,
   "sessionStartHead": "556f1e67ebebf2e7717b29020c04d524787fc431",
   "lastCompletedTask": "254-whole-codebase-performance-optimization VERIFIED 2026-08-26 (session start d258414): hot-path optimization campaign complete; unit 4346+1skip PASS; build PASS; local e2e 47/48 (one environment-marginal jump spec reproduced at pristine baseline); canonical CI red with pre-existing gate lineage defect (shallow-checkout) + same marginal e2e spec — zero regressions introduced, repair owned by Change 253 PROMPT 00/A.",
-  "nextExactAction": "Execute Change 253 PROMPT 00->11 (openspec/changes/253-live-world-architecture-convergence/agent-prompts.md): governance/activation (this checkpoint) -> exhaustive inventory -> canonical world core -> Overworld generation/streaming -> section rendering/lighting -> gameplay/simulation migration -> persistence/migration -> modularity hardening -> performance reconciliation -> post-audit -> full verification/E2E -> publish+canonical CI. Keep build green; publish coherent checkpoints to origin/main.",
+  "nextExactAction": "Continue Change 253 PROMPT 02->11 (Phase 2 canonical World wiring: migrate World to CanonicalWorldStorage, remove stateOverlay, convert ChunkManager to column residency, eliminate legacy clamps, wire Overworld dimension from Game). PROMPT 00 (activation) and PROMPT 01 (inventory/characterization) published; PROMPT 02 facade introduced (src/world/CanonicalWorldStorage.ts 8 PASS). Execute PROMPT 00->11: governance -> inventory -> canonical core -> Overworld generation/streaming -> section rendering/lighting -> gameplay/simulation migration -> persistence/migration -> modularity -> performance -> post-audit -> verification/E2E -> publish+CI. Keep build green; publish coherent checkpoints to origin/main. (openspec/changes/253-live-world-architecture-convergence/agent-prompts.md): governance/activation (this checkpoint) -> exhaustive inventory -> canonical world core -> Overworld generation/streaming -> section rendering/lighting -> gameplay/simulation migration -> persistence/migration -> modularity hardening -> performance reconciliation -> post-audit -> full verification/E2E -> publish+canonical CI. Keep build green; publish coherent checkpoints to origin/main.",
   "blockers": [],
   "validationResults": [
     {

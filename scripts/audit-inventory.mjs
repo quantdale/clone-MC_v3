@@ -41,9 +41,6 @@ const OUT = resolveOut(ROOT);
 // Only code/config, never markdown/docs (the change's own prose would self-match).
 const SCAN_EXT = new Set(['.ts', '.tsx', '.js', '.mjs']);
 const EXCLUDE_DIRS = new Set(['node_modules', 'dist', '.git', 'openspec', 'docs', 'tests/e2e', 'tests/bench']);
-// Historical/archived source that must NOT be flagged as current production debt.
-const HISTORICAL_ROOTS = ['openspec/'];
-
 function trackedFiles() {
   let files;
   try {
@@ -78,7 +75,6 @@ function trackedFiles() {
 
 // Pattern families. Each: { id, re (global, multiline), category, severity, disposition(file,line,m)->string }
 const isTest = (f) => f.startsWith('tests/');
-const inWorld = (f) => f.startsWith('src/world') || f.includes('World');
 
 const PATTERNS = [
   {

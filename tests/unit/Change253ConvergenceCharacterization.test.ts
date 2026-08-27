@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { CONFIG } from '../../src/config';
 import { worldToChunk, CHUNK_DIMENSIONS } from '../../src/world/WorldCoordinates';
 import { VerticalWorldAccess } from '../../src/world/VerticalWorldAccess';
-import { BlockState, createDefaultBlockStateRegistry } from '../../src/world/BlockStateRegistry';
+import { createDefaultBlockStateRegistry } from '../../src/world/BlockStateRegistry';
 import { BlockId } from '../../src/world/BlockRegistry';
-import { DimensionType, createDefaultDimensionTypeRegistry } from '../../src/data/DimensionType';
+import { DimensionType } from '../../src/data/DimensionType';
 import { createResourceId } from '../../src/data/ResourceId';
 
 /**
@@ -87,6 +87,8 @@ describe('Change 253 — canonical Overworld target contract', () => {
       [320, false],
     ];
     for (const [y, inRange] of matrix) {
+      // The dimension contract must agree with the matrix (defines in/out-of-range).
+      expect(overworld.containsY(y)).toBe(inRange);
       // Before any write, every in-range cell is air and no column is materialized.
       expect(w.getBlockState(0, y, 0).id).toBe(air.id);
     }

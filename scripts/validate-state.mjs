@@ -480,15 +480,20 @@ function validate() {
   // 9. PARITY_MATRIX cross-check.
   validateParityMatrix(json, errors);
 
-  return errors;
+  return { errors, warnings };
 }
 
 function main() {
   const { errors, warnings } = validate();
   if (errors.length === 0) {
+    if (warnings.length > 0) {
+      for (const warning of warnings) {
+        console.error(`  - WARNING: ${warning}`);
+      }
+    }
     console.log('State validation PASSED');
     process.exit(0);
-    } else {
+  } else {
     if (warnings.length > 0) {
       for (const warning of warnings) {
         console.error(`  - WARNING: ${warning}`);

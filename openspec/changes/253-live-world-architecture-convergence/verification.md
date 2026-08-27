@@ -324,3 +324,9 @@ Do not change this decision until the requirement table, mandatory command matri
 | new characterization suite | 7/7 PASS |
 | full unit suite | captured at PROMPT 10 |
 | npm run build | captured at PROMPT 10 |
+
+### PROMPT 02 — canonical facade (partial, 2026-08-27)
+- Introduced `src/world/CanonicalWorldStorage.ts`: thin `WorldAccess` facade over verified `VerticalWorldAccess`/`ChunkColumn`/`ChunkSection`; single writable canonical authority, no third backing store. Delegates `getBlock` as projection of canonical `BlockState.blockId`, `setBlock` via default state, `setBlockState` via `lookup`, `isSolid` via `BlockRegistry`; column/dirty/serialize delegation preserves lazy, dirty, serialize contracts.
+- Tests `tests/unit/CanonicalWorldStorage.test.ts` 8 PASS: dimension bounds (-64..319), projection/default-state write, out-of-range no-alloc, invalid-id no-op, property-bearing preservation through canonical path (default + non-default via `schema.parse`/`lookup`), `isSolid`, dirty/serialize round-trip, vertical section boundary (15/16) under one column.
+- Fixed `Change253ConvergenceCharacterization` to use `inRange` + `containsY` agreement and removed unused imports.
+- Remaining Phase 2 tasks (World wiring to canonical storage, `stateOverlay` removal, `ChunkManager` column conversion, legacy clamps, negative routing, mutation invalidation, dirty-unload, legacy `Chunk` demotion, focused overlay-elimination tests) remain and are the next exact action.

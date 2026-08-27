@@ -43,7 +43,7 @@ Rules:
 
 ## Phase 2 — Canonical live block-state authority
 
-- [ ] Introduce/refine a thin dimension-aware live-world storage facade over `VerticalWorldAccess`/`ChunkColumn`/`ChunkSection`; do not create a third backing store.
+- [x] Introduce/refine a thin dimension-aware live-world storage facade over `VerticalWorldAccess`/`ChunkColumn`/`ChunkSection`; do not create a third backing store.
 - [ ] Make `World` own/use the canonical storage as the single writable block-state authority.
 - [ ] Preserve `World.getBlock()` only as a projection from canonical `BlockState.blockId` where compatibility requires it.
 - [ ] Route block-ID writes through registered default `BlockState` and stateful writes through canonical `setBlockState`.
