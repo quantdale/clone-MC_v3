@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { BlockId, BlockRegistry, RenderCategory } from './BlockRegistry';
+import type { BlockState } from './BlockStateRegistry';
+import type { ChunkSection } from './ChunkSection';
 import { Chunk } from './Chunk';
 import { CHUNK_DIMENSIONS } from './WorldCoordinates';
 import type { TextureAtlas } from '../rendering/TextureAtlas';
@@ -9,6 +11,7 @@ import { inPlaneAxes, quadVertexLightsInto } from '../rendering/VertexLighting';
 import {
   MeshBuildResultBuilder,
   emitQuad,
+  emptyMeshBuildResult,
   emptyMeshStream,
   type MeshStreamName,
   type UvRect,
@@ -268,6 +271,136 @@ export class ChunkMesher {
       return BlockId.Air;
     }
     return neighbor.getLocal(lx, ly, lz);
+  }
+
+  /**
+   * Builds indexed BufferGeometry streams for a single 16³ chunk section using
+   * face-culled meshing and canonical world-coordinate neighbor queries.
+   */
+  meshSection(
+    sx: number,
+    sy: number,
+    sz: number,
+    section: ChunkSection,
+    getBlockState: (wx: number, wy: number, wz: number) => BlockState,
+    options?: ChunkMeshOptions,
+  ): ChunkMeshResult {
+    const inputVersion = options?.inputVersion ?? section.meshVersion;
+    if (section.isEmpty()) {
+      return {
+        opaque: null,
+        transparent: null,
+        cutout: null,
+        translucent: null,
+        fluid: null,
+        streams: emptyMeshBuildResult(inputVersion),
+      };
+    }
+
+    const light = options?.lightSampler;
+    const renderLayerOf =
+      options?.renderLayerOf ??
+      ((id: number): MeshStreamName =>
+        this.registry.get(id).renderCategory === RenderCategory.Transparent ? 'translucent' : 'opaque');
+
+    SCRATCH.reset();
+
+    const ox = sx * 16;
+    const oy = sy * 16;
+    const oz = sz * 16;
+
+    for (let y = 0; y < 16; y++) {
+      const wy = oy + y;
+      for (let z = 0; z < 16; z++) {
+        const wz = oz + z;
+        for (let x = 0; x < 16; x++) {
+          const wx = ox + x;
+          const state = section.getStateAt(x, y, z);
+          const id = state.blockId;
+          if (id === BlockId.Air) {
+            continue;
+          }
+          const def = this.registry.get(id);
+          const isTransparent = def.renderCategory === RenderCategory.Transparent;
+
+          for (const face of FACES) {
+            const nwx = wx + face.dir[0];
+            const nwy = wy + face.dir[1];
+            const nwz = wz + face.dir[2];
+            const inLocal =
+              x + face.dir[0] >= 0 && x + face.dir[0] < 16 &&
+              y + face.dir[1] >= 0 && y + face.dir[1] < 16 &&
+              z + face.dir[2] >= 0 && z + face.dir[2] < 16;
+            const neighborState = inLocal
+              ? section.getStateAt(x + face.dir[0], y + face.dir[1], z + face.dir[2])
+              : getBlockState(nwx, nwy, nwz);
+            const neighborDef = this.registry.get(neighborState.blockId);
+
+            let emit: boolean;
+            if (isTransparent) {
+              emit = !neighborDef.opaque && neighborDef.renderCategory !== RenderCategory.Transparent;
+            } else {
+              emit = !neighborDef.opaque;
+            }
+            if (!emit) {
+              continue;
+            }
+
+            const tile = face.dir[1] === 1 ? def.topTile : face.dir[1] === -1 ? def.bottomTile : def.sideTile;
+            const uvRaw = this.atlas.uv(tile);
+            SCRATCH_UV.u0 = uvRaw.u0;
+            SCRATCH_UV.v0 = uvRaw.v0;
+            SCRATCH_UV.u1 = uvRaw.u1;
+            SCRATCH_UV.v1 = uvRaw.v1;
+
+            this.sampleCornerShading(light, face, wx, wy, wz);
+
+            let tintR = 1;
+            let tintG = 1;
+            let tintB = 1;
+            if (options?.tintRgbOf) {
+              const rgb = options.tintRgbOf(id);
+              tintR = rgb[0];
+              tintG = rgb[1];
+              tintB = rgb[2];
+            }
+
+            for (let c = 0; c < 4; c++) {
+              const corner = face.corners[c]!;
+              SCRATCH_CORNERS[c]![0] = x + corner[0];
+              SCRATCH_CORNERS[c]![1] = y + corner[1];
+              SCRATCH_CORNERS[c]![2] = z + corner[2];
+            }
+
+            const streamName = renderLayerOf(id);
+            emitQuad(
+              SCRATCH.builder(streamName),
+              SCRATCH_CORNERS,
+              face.normal[0],
+              face.normal[1],
+              face.normal[2],
+              SCRATCH_UV,
+              SCRATCH_LIGHTS,
+              SCRATCH_AO,
+              tintR,
+              tintG,
+              tintB,
+            );
+          }
+        }
+      }
+    }
+
+    const streams: MeshBuildResult = SCRATCH.build(inputVersion);
+    const translucent = buildGeometry(streams.streams.translucent);
+    return {
+      opaque: buildGeometry(streams.streams.opaque),
+      transparent: translucent,
+      cutout: buildGeometry(streams.streams.cutout),
+      translucent,
+      fluid: buildGeometry(streams.streams.fluid),
+      streams,
+    };
   }
 }
 

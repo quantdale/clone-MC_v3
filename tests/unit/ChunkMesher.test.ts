@@ -2,7 +2,9 @@ import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
 import { ChunkMesher } from '../../src/world/ChunkMesher';
 import { Chunk } from '../../src/world/Chunk';
+import { ChunkSection } from '../../src/world/ChunkSection';
 import { BlockId, createDefaultBlockRegistry } from '../../src/world/BlockRegistry';
+import { createDefaultBlockStateRegistry } from '../../src/world/BlockStateRegistry';
 import { tileUV } from '../../src/rendering/TextureAtlas';
 import type { TextureAtlas } from '../../src/rendering/TextureAtlas';
 
@@ -161,5 +163,49 @@ describe('ChunkMesher', () => {
         expect(u === sideU1 || u === sideU2).toBe(true);
       }
     }
+  });
+
+  describe('meshSection', () => {
+    const stateRegistry = createDefaultBlockStateRegistry();
+
+    it('returns empty result for an all-air section without scanning', () => {
+      const section = new ChunkSection(0, stateRegistry);
+      const mesher = new ChunkMesher({ registry, atlas: fakeAtlas });
+      const result = mesher.meshSection(0, 0, 0, section, () => stateRegistry.getDefaultState(BlockId.Air));
+
+      expect(result.opaque).toBeNull();
+      expect(result.transparent).toBeNull();
+      expect(result.streams.streams.opaque.indexCount).toBe(0);
+    });
+
+    it('meshes a single stone block inside a 16³ section with 12 triangles', () => {
+      const section = new ChunkSection(0, stateRegistry);
+      section.setAt(8, 8, 8, stateRegistry.getDefaultState(BlockId.Stone));
+      const mesher = new ChunkMesher({ registry, atlas: fakeAtlas });
+      const result = mesher.meshSection(0, 0, 0, section, () => stateRegistry.getDefaultState(BlockId.Air));
+
+      expect(result.opaque).not.toBeNull();
+      expect(result.transparent).toBeNull();
+      expect(countTriangles(result.opaque!)).toBe(12);
+    });
+
+    it('culls section-boundary faces against neighbor section solid blocks', () => {
+      const section = new ChunkSection(0, stateRegistry);
+      // Put a stone block at the edge of the section (x=15)
+      section.setAt(15, 8, 8, stateRegistry.getDefaultState(BlockId.Stone));
+      const mesher = new ChunkMesher({ registry, atlas: fakeAtlas });
+
+      // When the neighbor at (x=16, y=8, z=8) is stone, the +X face is culled
+      const result = mesher.meshSection(0, 0, 0, section, (wx, wy, wz) => {
+        if (wx === 16 && wy === 8 && wz === 8) {
+          return stateRegistry.getDefaultState(BlockId.Stone);
+        }
+        return stateRegistry.getDefaultState(BlockId.Air);
+      });
+
+      expect(result.opaque).not.toBeNull();
+      // 5 visible faces (10 triangles) instead of 6 faces (12 triangles)
+      expect(countTriangles(result.opaque!)).toBe(10);
+    });
   });
 });

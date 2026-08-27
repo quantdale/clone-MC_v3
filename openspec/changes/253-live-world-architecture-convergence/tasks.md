@@ -76,11 +76,11 @@ Rules:
 ## Phase 4 — Section-scoped rendering and lighting
 
 - [ ] Inventory the exact live render/light ownership keys and all worker protocols before modifying them.
-- [ ] Change live geometry/mesh identity to explicit canonical section identity `(chunkX,sectionY,chunkZ)` or equivalent.
+- [x] Change live geometry/mesh identity to explicit canonical section identity `(chunkX,sectionY,chunkZ)` or equivalent.
 - [ ] Capture `ChunkSection.meshVersion` (and required neighbor versions/snapshots) at job submission.
 - [ ] Reject stale/duplicate/mismatched mesh/light results after edit, unload, replacement or version advance.
-- [ ] Feed canonical block states into live meshing instead of legacy block arrays.
-- [ ] Preserve render-layer/model/AO/biome-tint/vertex-light behavior through canonical neighbor queries.
+- [x] Feed canonical block states into live meshing instead of legacy block arrays.
+- [x] Preserve render-layer/model/AO/biome-tint/vertex-light behavior through canonical neighbor queries.
 - [ ] Make one interior edit invalidate only the affected section unless a documented dependency proves more work is necessary.
 - [ ] Make a face edit invalidate the affected section plus only required existing face-sharing neighbor(s), including vertical faces.
 - [ ] Make skylight/blocklight initialization/propagation dimension-aware from -64 through 319.
