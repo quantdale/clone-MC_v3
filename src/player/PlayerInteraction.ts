@@ -4,6 +4,7 @@ import { Player } from './Player';
 import { InputState } from '../engine/InputTypes';
 import { WorldAccess } from '../world/WorldAccess';
 import { BlockRegistry, BlockId, type BlockTypeDefinition } from '../world/BlockRegistry';
+import { OVERWORLD_DIMENSION_TYPE } from '../data/DimensionTypes';
 import { ItemTypeRegistry, ItemId } from '../inventory/ItemRegistry';
 import { type HarvestRules } from '../world/HarvestRules';
 import { BlockSelector } from '../inventory/BlockSelector';
@@ -491,9 +492,9 @@ export class PlayerInteraction {
     const by = Math.floor(this.target.blockY + this.target.ny);
     const bz = Math.floor(this.target.blockZ + this.target.nz);
 
-    // Guard against placement outside the world's vertical bounds (Overworld
-    // [-64,319]). Rejecting here avoids the phantom-edit path in setBlock.
-    if (by < -64 || by > 319) {
+    // Guard against placement outside the world's vertical bounds (dimension-aware via OVERWORLD_DIMENSION_TYPE;
+    // World/WorldAccess will also reject, but rejecting here avoids phantom-edit). Replace hard literal with dimension check.
+    if (!OVERWORLD_DIMENSION_TYPE.containsY(by)) {
       this.onAction?.('blocked', selectedId);
       return false;
     }
