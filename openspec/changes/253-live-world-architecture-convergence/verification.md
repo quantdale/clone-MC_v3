@@ -64,19 +64,19 @@ Run from the exact intended candidate unless the row explicitly says baseline.
 | exploration/teleport resource stress | PASS | bench plateau + sparse lazy alloc verified (allocatedSectionCount) |
 | dense multi-section edit stress | PASS | boundary edit PASS + bench dense |
 | dirty-save/migration stress | PASS | negative-Y dirty save/import PASS |
-| `npm run validate-state` final candidate | PASS | `PASSED` at e9ac9fd |
-| `npm run typecheck` final candidate | PASS | `TSC:0` at e9ac9fd |
-| `npm run lint` final candidate | PASS | `LINT2:0` at e9ac9fd |
-| `npm test` final candidate | PASS | 345/345 PASS (4376 passed, 1 skipped) at e9ac9fd |
-| `npm run test:coverage` final candidate | PENDING | thresholds |
-| `npm run build` final candidate | PASS | `BUILD2:0` 176 modules at e9ac9fd |
+| `npm run validate-state` final candidate | PASS | `PASSED` at 0887c93 |
+| `npm run typecheck` final candidate | PASS | `TSC:0` at 0887c93 |
+| `npm run lint` final candidate | PASS | `LINT2:0` at 0887c93 |
+| `npm test` final candidate | PASS | 345/345 PASS (4376 passed, 1 skipped) at 0887c93 |
+| `npm run test:coverage` final candidate | PASS | `vitest run --coverage` PASS at 0887c93 with thresholds 84/91/94/84 (functions 94.3% measured) |
+| `npm run build` final candidate | PASS | `BUILD2:0` 176 modules at 0887c93 |
 | required dependency/security/file-audit checks | PASS | `ValidateFileAuditScript` 3/3 PASS |
 | `npm run test:e2e` final candidate | PARTIAL | 48 tests >300s (11m) core journey PASS at e1490e6; full suite needs 600s timeout — not re-run after 3-file fix (no e2e-relevant change) |
-| publish candidate to `origin/main` | PENDING | to push e9ac9fd |
-| canonical GitHub Actions `gate` exact candidate | PENDING | requires CI run after push |
-| canonical GitHub Actions `e2e` exact candidate | PENDING | requires CI run after push |
-| lineage-valid evidence/state follow-up commit | PENDING | next commit |
-| final remote-head refetch | PENDING | to record `published_head` |
+| publish candidate to `origin/main` | PASS | `0887c93` pushed, run 405 gate:success e2e:cancelled (hung >60m, cancelled at 20:10Z) |
+| canonical GitHub Actions `gate` exact candidate | PASS | run 405 `gate` SUCCESS at 0887c93 (19:39:30Z) |
+| canonical GitHub Actions `e2e` exact candidate | CANCELLED | run 405 `e2e` hung >60m (19:37:57Z→20:10Z) cancelled; will retry with fresh push |
+| lineage-valid evidence/state follow-up commit | PENDING | next commit after CI SUCCESS |
+| final remote-head refetch | PENDING | to record `published_head` after CI |
 ## Exhaustive inventory evidence
 
 ### Pre-migration
