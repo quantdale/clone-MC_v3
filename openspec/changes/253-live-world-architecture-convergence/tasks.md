@@ -96,10 +96,10 @@ Rules:
 - [x] Migrate raycast/selection to canonical states and negative/high Y.
 - [x] Migrate mining and placing so stateful blocks are not flattened and section invalidation/persistence triggers correctly.
 - [x] Migrate falling-block and general world-mutation helpers discovered by inventory.
-- [ ] Migrate scheduled/random tick access and neighbor-update paths that still depend on legacy slab assumptions.
+- [x] Migrate scheduled/random tick access and neighbor-update paths that still depend on legacy slab assumptions.
 - [x] Migrate live fluids/waterlogging and block simulations (fire/crop/farmland/etc.) discovered by inventory.
-- [ ] Migrate current redstone-facing/block-behavior world access without adding unrelated new redstone content.
-- [ ] Reconcile item/entity/block-entity lifecycle with horizontal column residency and valid negative/high Y.
+- [x] Migrate current redstone-facing/block-behavior world access without adding unrelated new redstone content.
+- [x] Reconcile item/entity/block-entity lifecycle with horizontal column residency and valid negative/high Y.
 - [ ] Verify stable entity/block-entity identity across unload/reload; no duplicates or resurrection.
 - [ ] Migrate networking/shared-simulation/debug/test projections that expose legacy world representation.
 - [ ] Add gameplay tests at `-64/-1/0`, `15/16`, `63/64`, and `319/320` boundaries as applicable.
