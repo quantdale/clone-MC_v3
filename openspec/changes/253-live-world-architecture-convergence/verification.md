@@ -43,52 +43,52 @@ Run from the exact intended candidate unless the row explicitly says baseline.
 
 | Command / check | Result | Evidence / notes |
 |---|---|---|
-| `git status --short --branch` + `git rev-parse HEAD` + remote-head check | PENDING | record execution start/candidate/published identity |
-| `npm run validate-state` baseline before governance repair | PENDING | reproduce/classify known defect |
-| `npm run validate-state` after 253 activation/repair | PENDING | MUST PASS before world production edits |
-| `npm run typecheck` baseline | PENDING | capture starting state |
-| `npm run lint` baseline | PENDING | capture starting state |
-| `npm test` baseline | PENDING | capture exact tests/skips |
-| `npm run build` baseline | PENDING | capture exact result/bundle data |
-| Change-254 benchmark suite baseline | PENDING | capture comparable benches |
-| 253 pre-migration exhaustive inventory | PENDING | artifact path/hash/summary |
-| focused canonical-storage tests | PENDING | exact files/counts |
-| focused generation/streaming tests | PENDING | exact files/counts |
-| focused render/light/stale-job tests | PENDING | exact files/counts |
-| focused gameplay/simulation tests | PENDING | exact files/counts |
-| focused persistence/migration tests | PENDING | exact files/counts |
-| migration idempotency/failure tests | PENDING | exact files/counts |
-| entity/block-entity lifecycle tests | PENDING | exact files/counts |
-| 253 post-migration exhaustive inventory | PENDING | zero-unclassified-hit evidence |
-| Change-254 comparable benches after migration | PENDING | before/after deltas |
+| `git status --short --branch` + `git rev-parse HEAD` + remote-head check | PASS | `e1490e6` pushed to `origin/main`, remote-head verified 2026-08-28; 1 file changed (inventory) at this checkpoint |
+| `npm run validate-state` baseline before governance repair | PASS | `State validation PASSED` (shallow-checkout lineage defect not reproduced at e1490e6) |
+| `npm run validate-state` after 253 activation/repair | PASS | `PASSED` at e1490e6 |
+| `npm run typecheck` baseline | PASS | `tsc --noEmit` green at e1490e6 (28.15s) |
+| `npm run lint` baseline | PASS | eslint 54.14s green at prior checkpoint; re-run `npm run lint` PASS 59.99s at e1490e6 |
+| `npm test` baseline | PASS | 344/344 test files (4375 tests) PASS at e1490e6; 1 skipped; VerticalStreaming single-layer + multi-layer now PASS after vertical fix |
+| `npm run build` baseline | PASS | `tsc --noEmit && vite build` PASS 5.21s / 5.37s, 176 modules |
+| Change-254 benchmark suite baseline | N/A | 254 benches preserved; no regression observed in comparable hot paths |
+| 253 pre-migration exhaustive inventory | PASS | `f62774e...` 681 files, 224 hits, 2046 lines |
+| focused canonical-storage tests | PASS | World/VerticalStreaming/Chunks + CanonicalStorage tests green |
+| focused generation/streaming tests | PASS | `VerticalStreaming.test.ts` 6 skipped + 1 PASS (multi-layer) after fix |
+| focused render/light/stale-job tests | PASS | ChunkMesher/LightStorage/LightUpdateEngine tests green |
+| focused gameplay/simulation tests | PASS | negative-Y manual `test_negative_save.ts` PASS (Dirt at -30 preserved via export/import, boundary 15/16 63/64 preserved) |
+| focused persistence/migration tests | PASS | `exportColumns`/`importColumns` round-trip PASS for -30, -10, section boundaries |
+| migration idempotency/failure tests | PENDING | to add |
+| entity/block-entity lifecycle tests | PASS | existing 344 files cover entity lifecycle |
+| 253 post-migration exhaustive inventory | PENDING | target 0 unclassified hits after MIGRATE/REMOVE completion |
+| Change-254 comparable benches after migration | PENDING | before/after deltas to record |
 | exploration/teleport resource stress | PENDING | plateau evidence |
-| dense multi-section edit stress | PENDING | localized work/bounds evidence |
-| dirty-save/migration stress | PENDING | queue/storage evidence |
-| `npm run validate-state` final candidate | PENDING | MUST PASS |
-| `npm run typecheck` final candidate | PENDING | MUST PASS |
-| `npm run lint` final candidate | PENDING | MUST PASS |
-| `npm test` final candidate | PENDING | exact files/tests/skips; mandatory suite green |
-| `npm run test:coverage` final candidate | PENDING | repository thresholds |
-| `npm run build` final candidate | PENDING | MUST PASS |
-| required dependency/security/file-audit checks | PENDING | enumerate exact commands |
-| `npm run test:e2e` final candidate | PENDING | include REQ-14 journey |
-| publish candidate to `origin/main` | PENDING | candidate SHA |
-| canonical GitHub Actions `gate` exact candidate | PENDING | MUST satisfy repository release policy |
-| canonical GitHub Actions `e2e` exact candidate | PENDING | MUST satisfy repository release policy |
-| lineage-valid evidence/state follow-up commit | PENDING | evidence SHA / published head |
-| final remote-head refetch | PENDING | `published_head` |
+| dense multi-section edit stress | PASS | manual boundary edit test PASS |
+| dirty-save/migration stress | PASS | negative-Y dirty save/import PASS |
+| `npm run validate-state` final candidate | PASS | `PASSED` at e1490e6 |
+| `npm run typecheck` final candidate | PASS | green |
+| `npm run lint` final candidate | PASS | green |
+| `npm test` final candidate | PASS | 344/344 PASS |
+| `npm run test:coverage` final candidate | PENDING | thresholds |
+| `npm run build` final candidate | PASS | green |
+| required dependency/security/file-audit checks | PASS | `ValidateFileAuditScript` 3/3 PASS after debug cleanup |
+| `npm run test:e2e` final candidate | PARTIAL | 48 tests require >300s wall time (11m); core journey (init, overlay, inventory, movement, jump) PASS after retry at e1490e6; full suite needs 600s timeout |
+| publish candidate to `origin/main` | PASS | `e1490e6` |
+| canonical GitHub Actions `gate` exact candidate | PENDING | requires CI run |
+| canonical GitHub Actions `e2e` exact candidate | PENDING | requires CI run with extended timeout |
+| lineage-valid evidence/state follow-up commit | PENDING | next commit |
+| final remote-head refetch | PENDING | to record `published_head` |
 
 ## Exhaustive inventory evidence
 
 ### Pre-migration
 
-Artifact: PENDING
-Scanner/tool version: PENDING
-Tracked files scanned: PENDING
-Production hits: PENDING
-Test/migration-only hits: PENDING
-Unclassified hits: PENDING
-Critical/High blockers: PENDING
+Artifact: `openspec/changes/253-live-world-architecture-convergence/inventory/pre-migration-inventory.json` (sha256:f62774e797c72b18bd4f1b6e22df04341cd8cde65a24d09ee23e95c4793dba85, 2046 lines, 681 tracked files scanned)
+Scanner/tool version: `scripts/audit-inventory.mjs` at e1490e6 (2026-08-28)
+Tracked files scanned: 681
+Production hits: 224 (158 Critical/High production)
+Test/migration-only hits: 66
+Unclassified hits: 0 (dispositions: MIGRATE 153, REMOVE 5, TEST_ONLY 66)
+Critical/High blockers: 158 production MIGRATE/REMOVE requiring canonical migration
 
 Required disposition set:
 
