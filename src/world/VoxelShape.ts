@@ -259,14 +259,19 @@ export interface BlockShapeVariants {
  */
 export class BlockShapeTable {
   private readonly entries = new Map<number, Required<BlockShapeVariants>>();
+  private readonly fastEntries: Array<Required<BlockShapeVariants> | undefined> = [];
 
   /** Register (or replace) the variants for one block id. Chainable. */
   set(blockId: number, variants: BlockShapeVariants): this {
-    this.entries.set(blockId, Object.freeze({
+    const frozen: Required<BlockShapeVariants> = Object.freeze({
       collision: variants.collision ?? VoxelShape.FULL_CUBE,
       selection: variants.selection ?? variants.collision ?? VoxelShape.FULL_CUBE,
       occlusion: variants.occlusion ?? variants.collision ?? VoxelShape.FULL_CUBE,
-    }));
+    });
+    this.entries.set(blockId, frozen);
+    if (blockId >= 0 && blockId < 65536) {
+      this.fastEntries[blockId] = frozen;
+    }
     return this;
   }
 
@@ -275,14 +280,14 @@ export class BlockShapeTable {
   }
 
   getCollisionShape(blockId: number): VoxelShape {
-    return this.entries.get(blockId)?.collision ?? VoxelShape.FULL_CUBE;
+    return (this.fastEntries[blockId] ?? this.entries.get(blockId))?.collision ?? VoxelShape.FULL_CUBE;
   }
 
   getSelectionShape(blockId: number): VoxelShape {
-    return this.entries.get(blockId)?.selection ?? VoxelShape.FULL_CUBE;
+    return (this.fastEntries[blockId] ?? this.entries.get(blockId))?.selection ?? VoxelShape.FULL_CUBE;
   }
 
   getOcclusionShape(blockId: number): VoxelShape {
-    return this.entries.get(blockId)?.occlusion ?? VoxelShape.FULL_CUBE;
+    return (this.fastEntries[blockId] ?? this.entries.get(blockId))?.occlusion ?? VoxelShape.FULL_CUBE;
   }
 }

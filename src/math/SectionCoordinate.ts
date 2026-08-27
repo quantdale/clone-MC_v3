@@ -63,15 +63,14 @@ export function worldToLocal(x: number, y: number, z: number): LocalCoord {
 
 /** Pack in-section local coordinates into a single index in `[0, SECTION_VOLUME)`. */
 export function localIndex(localX: number, localY: number, localZ: number): number {
-  return localX + localY * SECTION_SIZE + localZ * SECTION_SIZE * SECTION_SIZE;
+  return localX + (localY << 4) + (localZ << 8);
 }
 
 /** Inverse of {@link localIndex}. */
 export function localFromIndex(index: number): LocalCoord {
-  const localZ = Math.floor(index / (SECTION_SIZE * SECTION_SIZE));
-  const remainder = index - localZ * SECTION_SIZE * SECTION_SIZE;
-  const localY = Math.floor(remainder / SECTION_SIZE);
-  const localX = remainder - localY * SECTION_SIZE;
+  const localZ = index >> 8;
+  const localY = (index >> 4) & 15;
+  const localX = index & 15;
   return { localX, localY, localZ };
 }
 

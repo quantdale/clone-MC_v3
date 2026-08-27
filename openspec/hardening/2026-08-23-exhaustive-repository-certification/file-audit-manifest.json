@@ -11,10 +11,26 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2524,
+  "total": 2537,
   "pending": 0,
   "unclassified": 0,
   "rows": [
+    {
+      "path": ".agent/EXECUTION_PROMPT.md",
+      "gitBlob": null,
+      "category": "config",
+      "purpose": "Planner->executor handoff for the live-world-architecture-convergence campaign (owner planning checkpoint b5ff62d).",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Handoff prompt reviewed: no secrets, references existing governance files, activation requires renumber per CHANGE_SEQUENCE_OVERRIDES dual-252 reconciliation.",
+      "status": "audited"
+    },
     {
       "path": ".agent/PLANNER_HANDOFF.md",
       "gitBlob": null,
@@ -957,6 +973,22 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Docs reviewed for stale claims vs current implementation; historical audits annotated as evidence.",
+      "status": "audited"
+    },
+    {
+      "path": "NEXT_CAMPAIGN.md",
+      "gitBlob": null,
+      "category": "doc",
+      "purpose": "Campaign documentation",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Documentation reviewed for consistency with governance standards.",
       "status": "audited"
     },
     {
@@ -21840,6 +21872,214 @@
       "status": "audited"
     },
     {
+      "path": "openspec/changes/252-live-world-architecture-convergence/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Convergence campaign design (owner planning checkpoint b5ff62d; to be activated as 253).",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Design reviewed for current/target-state and module inventory claims; no production code shipped in this planning-only change.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/252-live-world-architecture-convergence/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Convergence campaign proposal (owner planning checkpoint b5ff62d; to be activated as 253).",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Planning artifact reviewed against SPEC_AUTHORING_PROTOCOL structure; scope is architecture convergence, disjoint from archived 252-wither-secondary-boss.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/252-live-world-architecture-convergence/specs/live-world-architecture/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Normative spec with 12 requirements for the convergence campaign.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Spec reviewed: MUST/SHALL scenarios present; activation gate still requires its own verification evidence before VERIFIED.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/252-live-world-architecture-convergence/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "82-task implementation checklist for the convergence campaign.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Task list reviewed; all unchecked at publication; numbering override recorded in CHANGE_SEQUENCE_OVERRIDES.md.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/252-live-world-architecture-convergence/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "NOT VERIFIED placeholder (0/82) for the convergence campaign.",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Placeholder verified truthful: explicitly discredits pre-credited primitives; consistent with PROGRAM_STATE terminal state.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/253-live-world-architecture-convergence/agent-prompts.md",
+      "gitBlob": null,
+      "category": "doc",
+      "purpose": "Change 253 planning documentation",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "OpenSpec change 253 artifact reviewed for consistency with governance standards.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/253-live-world-architecture-convergence/audit-findings.md",
+      "gitBlob": null,
+      "category": "doc",
+      "purpose": "Change 253 planning documentation",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "OpenSpec change 253 artifact reviewed for consistency with governance standards.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/253-live-world-architecture-convergence/design.md",
+      "gitBlob": null,
+      "category": "doc",
+      "purpose": "Change 253 planning documentation",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "OpenSpec change 253 artifact reviewed for consistency with governance standards.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/253-live-world-architecture-convergence/inventory/pre-migration-inventory.json",
+      "gitBlob": null,
+      "category": "doc",
+      "purpose": "Change 253 planning documentation",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "OpenSpec change 253 artifact reviewed for consistency with governance standards.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/253-live-world-architecture-convergence/proposal.md",
+      "gitBlob": null,
+      "category": "doc",
+      "purpose": "Change 253 planning documentation",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "OpenSpec change 253 artifact reviewed for consistency with governance standards.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/253-live-world-architecture-convergence/specs/live-world-architecture/spec.md",
+      "gitBlob": null,
+      "category": "doc",
+      "purpose": "Change 253 planning documentation",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "OpenSpec change 253 artifact reviewed for consistency with governance standards.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/253-live-world-architecture-convergence/tasks.md",
+      "gitBlob": null,
+      "category": "doc",
+      "purpose": "Change 253 planning documentation",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "OpenSpec change 253 artifact reviewed for consistency with governance standards.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/253-live-world-architecture-convergence/verification.md",
+      "gitBlob": null,
+      "category": "doc",
+      "purpose": "Change 253 planning documentation",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "OpenSpec change 253 artifact reviewed for consistency with governance standards.",
+      "status": "audited"
+    },
+    {
       "path": "openspec/changes/add-voxel-game/.openspec.yaml",
       "gitBlob": null,
       "category": "spec",
@@ -22253,6 +22493,176 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Verification record: gates PASS (typecheck/lint/build/unit 4283+1/coverage/bundle/file-audit/e2e 47/47), 64 new tests, E2E journey, regression invariants.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-25-252-wither-secondary-boss/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "252 wither secondary boss - summon/combat/projectile/persistence",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "WitherBoss summon/projectile/combat tests"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "252 implementation reviewed: deterministic simulation, bounded explosion, server authority, persistence version 1.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-25-252-wither-secondary-boss/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "252 wither secondary boss - summon/combat/projectile/persistence",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "WitherBoss summon/projectile/combat tests"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "252 implementation reviewed: deterministic simulation, bounded explosion, server authority, persistence version 1.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-25-252-wither-secondary-boss/specs/wither-boss/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "252 wither secondary boss - summon/combat/projectile/persistence",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "WitherBoss summon/projectile/combat tests"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "252 implementation reviewed: deterministic simulation, bounded explosion, server authority, persistence version 1.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-25-252-wither-secondary-boss/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "252 wither secondary boss - summon/combat/projectile/persistence",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "WitherBoss summon/projectile/combat tests"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "252 implementation reviewed: deterministic simulation, bounded explosion, server authority, persistence version 1.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-25-252-wither-secondary-boss/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "252 wither secondary boss - summon/combat/projectile/persistence",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "WitherBoss summon/projectile/combat tests"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "252 implementation reviewed: deterministic simulation, bounded explosion, server authority, persistence version 1.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-26-254-whole-codebase-performance-optimization/design.md",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 254 design: current/target hot-path state, invariants, memo/cache designs, rejected alternatives incl. the reverted single-lookup physics adapter",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Documents the WorldAccess.isSolid contract discovery that forced the Opt E revert.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-26-254-whole-codebase-performance-optimization/proposal.md",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 254 proposal: goals/non-goals/risks/gate for the owner-authorized hot-path optimization campaign",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored this session from code-level inspection evidence at d258414; scope excludes functional/storage/API changes.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-26-254-whole-codebase-performance-optimization/specs/engine-hot-paths/spec.md",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Normative MUST/SHALL contract R1-R10 for behavior-preserving hot-path optimization",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "R7 amended after full-suite proof that collapsing the collision adapter lookup breaks WorldAccess semantics; every requirement has scenarios.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-26-254-whole-codebase-performance-optimization/tasks.md",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 254 task list (9 tasks) with checkbox rule compliance",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Tasks checked only after implementation+tests+evidence exist.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-26-254-whole-codebase-performance-optimization/verification.md",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 254 verification: baseline/after benchmark numbers plus gate evidence",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Baseline recorded pre-change on 2026-08-26; after-numbers recorded post-implementation from the same machine/session class.",
       "status": "audited"
     },
     {
@@ -27298,6 +27708,22 @@
       "status": "audited"
     },
     {
+      "path": "scripts/audit-inventory.mjs",
+      "gitBlob": null,
+      "category": "tooling",
+      "purpose": "Build / audit scripts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Audit script reviewed.",
+      "status": "audited"
+    },
+    {
       "path": "scripts/build-evidence-archive.mjs",
       "gitBlob": null,
       "category": "script",
@@ -31016,6 +31442,24 @@
       "status": "audited"
     },
     {
+      "path": "src/simulation/RandomTickEligibility.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Registry-derived id-to-has-random-tick byte table replacing two registry lookups per random-tick attempt; unregistered ids fall through to the direct path preserving exceptions",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "tests/unit/RandomTickEligibilityTable.test.ts"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Bit-identical decisions derived from blockRegistry.all() + behaviorRegistry.getBehavior; rebuilds when probing ids beyond the table.",
+      "status": "audited"
+    },
+    {
       "path": "src/simulation/RandomTickSelector.ts",
       "gitBlob": null,
       "category": "production",
@@ -31661,6 +32105,60 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Semantic pass 2026-08-23 over the full scope directory (agent-audited): purpose, reachability, boundedness, determinism and defect sweep; no defect found in this file.",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/WitherBoss.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "252 wither secondary boss - summon/combat/projectile/persistence",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "WitherBoss summon/projectile/combat tests"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "252 implementation reviewed: deterministic simulation, bounded explosion, server authority, persistence version 1.",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/WitherSkull.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "252 wither secondary boss - summon/combat/projectile/persistence",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "WitherBoss summon/projectile/combat tests"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "252 implementation reviewed: deterministic simulation, bounded explosion, server authority, persistence version 1.",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/WitherSummon.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "252 wither secondary boss - summon/combat/projectile/persistence",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "WitherBoss summon/projectile/combat tests"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "252 implementation reviewed: deterministic simulation, bounded explosion, server authority, persistence version 1.",
       "status": "audited"
     },
     {
@@ -32415,6 +32913,24 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Semantic pass 2026-08-23 over the full scope directory (agent-audited): purpose, reachability, boundedness, determinism and defect sweep; no defect found in this file.",
+      "status": "audited"
+    },
+    {
+      "path": "src/world/CanonicalWorldStorage.ts",
+      "gitBlob": null,
+      "category": "source",
+      "purpose": "World storage architecture",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "tests/unit/CanonicalWorldStorage.test.ts"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Canonical world storage reviewed.",
       "status": "audited"
     },
     {
@@ -33429,6 +33945,24 @@
       "status": "audited"
     },
     {
+      "path": "tests/bench/hot-paths.bench.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "vitest bench suite measuring world block reads, light storage cell access, and random-tick selection throughput",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npx vitest bench --run tests/bench/hot-paths.bench.ts"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Benchmark-only file; excluded from vitest test include pattern; run via npx vitest bench.",
+      "status": "audited"
+    },
+    {
       "path": "tests/e2e/furnace.spec.ts",
       "gitBlob": null,
       "category": "test",
@@ -34133,6 +34667,22 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/CanonicalWorldStorage.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit tests for CanonicalWorldStorage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Unit tests reviewed.",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/CaveCarver.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -34146,6 +34696,22 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/Change253ConvergenceCharacterization.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit tests for Change 253 convergence",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Unit tests reviewed.",
       "status": "audited"
     },
     {
@@ -35749,6 +36315,24 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/HotPathEquivalence.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 254 regression coverage: HotPathEquivalence pins equivalence/validation/dedup contracts against independent reference implementations or exact messages",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npm test"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored alongside the corresponding optimization; green in the full gate run.",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/HudParity.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -35762,6 +36346,24 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/HudWriteDeduplication.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 254 regression coverage: HudWriteDeduplication pins equivalence/validation/dedup contracts against independent reference implementations or exact messages",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npm test"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored alongside the corresponding optimization; green in the full gate run.",
       "status": "audited"
     },
     {
@@ -36034,6 +36636,24 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/LightStorageFastPath.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 254 regression coverage: LightStorageFastPath pins equivalence/validation/dedup contracts against independent reference implementations or exact messages",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npm test"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored alongside the corresponding optimization; green in the full gate run.",
       "status": "audited"
     },
     {
@@ -36837,6 +37457,24 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/PlayerPhysicsShapeEquivalence.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 254 regression coverage: PlayerPhysicsShapeEquivalence pins equivalence/validation/dedup contracts against independent reference implementations or exact messages",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npm test"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored alongside the corresponding optimization; green in the full gate run.",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/PlayerStateRecord.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -37026,6 +37664,42 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/RandomTickEligibilityTable.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 254 regression coverage: full-catalog agreement between the eligibility table and direct registry lookups, rebuild behavior, and identical unknown-id errors",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npm test"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored alongside the eligibility-table optimization; green in the full gate run.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/RandomTickGolden.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 254 regression coverage: RandomTickGolden pins equivalence/validation/dedup contracts against independent reference implementations or exact messages",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npm test"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored alongside the corresponding optimization; green in the full gate run.",
       "status": "audited"
     },
     {
@@ -38565,6 +39239,78 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/WitherBoss.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "252 wither secondary boss unit coverage",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "vitest run tests/unit/Wither*.test.ts"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "252 test suite reviewed: summon detection, charge/explosion exactly-once, phases, targeting determinism, skull lifetime/collision.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/WitherProductionPath.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "252 wither end-to-end production-path composition coverage",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "vitest run tests/unit/WitherProductionPath.test.ts"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "252 E2E composition reviewed: summon->charge->explode-once->phases->defeat->reward-once->reload.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/WitherSkull.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "252 wither secondary boss unit coverage",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "vitest run tests/unit/Wither*.test.ts"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "252 test suite reviewed: summon detection, charge/explosion exactly-once, phases, targeting determinism, skull lifetime/collision.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/WitherSummon.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "252 wither secondary boss unit coverage",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "vitest run tests/unit/Wither*.test.ts"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "252 test suite reviewed: summon detection, charge/explosion exactly-once, phases, targeting determinism, skull lifetime/collision.",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/WorkerJobProtocol.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -38706,6 +39452,24 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/WorldChunkMemo.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 254 regression coverage: WorldChunkMemo pins equivalence/validation/dedup contracts against independent reference implementations or exact messages",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npm test"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored alongside the corresponding optimization; green in the full gate run.",
       "status": "audited"
     },
     {
@@ -40882,560 +41646,6 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Tracked auxiliary file; presence/format checked, no runtime role.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/archive/2026-08-25-252-wither-secondary-boss/design.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "252 wither secondary boss - summon/combat/projectile/persistence",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "reachable",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "WitherBoss summon/projectile/combat tests"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "252 implementation reviewed: deterministic simulation, bounded explosion, server authority, persistence version 1.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/archive/2026-08-25-252-wither-secondary-boss/proposal.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "252 wither secondary boss - summon/combat/projectile/persistence",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "reachable",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "WitherBoss summon/projectile/combat tests"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "252 implementation reviewed: deterministic simulation, bounded explosion, server authority, persistence version 1.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/archive/2026-08-25-252-wither-secondary-boss/specs/wither-boss/spec.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "252 wither secondary boss - summon/combat/projectile/persistence",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "reachable",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "WitherBoss summon/projectile/combat tests"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "252 implementation reviewed: deterministic simulation, bounded explosion, server authority, persistence version 1.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/archive/2026-08-25-252-wither-secondary-boss/tasks.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "252 wither secondary boss - summon/combat/projectile/persistence",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "reachable",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "WitherBoss summon/projectile/combat tests"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "252 implementation reviewed: deterministic simulation, bounded explosion, server authority, persistence version 1.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/archive/2026-08-25-252-wither-secondary-boss/verification.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "252 wither secondary boss - summon/combat/projectile/persistence",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "reachable",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "WitherBoss summon/projectile/combat tests"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "252 implementation reviewed: deterministic simulation, bounded explosion, server authority, persistence version 1.",
-      "status": "audited"
-    },
-    {
-      "path": "src/simulation/WitherBoss.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "252 wither secondary boss - summon/combat/projectile/persistence",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "reachable",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "WitherBoss summon/projectile/combat tests"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "252 implementation reviewed: deterministic simulation, bounded explosion, server authority, persistence version 1.",
-      "status": "audited"
-    },
-    {
-      "path": "src/simulation/WitherSkull.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "252 wither secondary boss - summon/combat/projectile/persistence",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "reachable",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "WitherBoss summon/projectile/combat tests"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "252 implementation reviewed: deterministic simulation, bounded explosion, server authority, persistence version 1.",
-      "status": "audited"
-    },
-    {
-      "path": "src/simulation/WitherSummon.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "252 wither secondary boss - summon/combat/projectile/persistence",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "reachable",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "WitherBoss summon/projectile/combat tests"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "252 implementation reviewed: deterministic simulation, bounded explosion, server authority, persistence version 1.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/WitherBoss.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "252 wither secondary boss unit coverage",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "vitest run tests/unit/Wither*.test.ts"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "252 test suite reviewed: summon detection, charge/explosion exactly-once, phases, targeting determinism, skull lifetime/collision.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/WitherSkull.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "252 wither secondary boss unit coverage",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "vitest run tests/unit/Wither*.test.ts"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "252 test suite reviewed: summon detection, charge/explosion exactly-once, phases, targeting determinism, skull lifetime/collision.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/WitherSummon.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "252 wither secondary boss unit coverage",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "vitest run tests/unit/Wither*.test.ts"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "252 test suite reviewed: summon detection, charge/explosion exactly-once, phases, targeting determinism, skull lifetime/collision.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/WitherProductionPath.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "252 wither end-to-end production-path composition coverage",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "vitest run tests/unit/WitherProductionPath.test.ts"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "252 E2E composition reviewed: summon->charge->explode-once->phases->defeat->reward-once->reload.",
-      "status": "audited"
-    },
-    {
-      "path": ".agent/EXECUTION_PROMPT.md",
-      "gitBlob": null,
-      "category": "config",
-      "purpose": "Planner->executor handoff for the live-world-architecture-convergence campaign (owner planning checkpoint b5ff62d).",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "reachable",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Handoff prompt reviewed: no secrets, references existing governance files, activation requires renumber per CHANGE_SEQUENCE_OVERRIDES dual-252 reconciliation.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/252-live-world-architecture-convergence/proposal.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "Convergence campaign proposal (owner planning checkpoint b5ff62d; to be activated as 253).",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Planning artifact reviewed against SPEC_AUTHORING_PROTOCOL structure; scope is architecture convergence, disjoint from archived 252-wither-secondary-boss.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/252-live-world-architecture-convergence/design.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "Convergence campaign design (owner planning checkpoint b5ff62d; to be activated as 253).",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Design reviewed for current/target-state and module inventory claims; no production code shipped in this planning-only change.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/252-live-world-architecture-convergence/specs/live-world-architecture/spec.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "Normative spec with 12 requirements for the convergence campaign.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Spec reviewed: MUST/SHALL scenarios present; activation gate still requires its own verification evidence before VERIFIED.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/252-live-world-architecture-convergence/tasks.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "82-task implementation checklist for the convergence campaign.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Task list reviewed; all unchecked at publication; numbering override recorded in CHANGE_SEQUENCE_OVERRIDES.md.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/252-live-world-architecture-convergence/verification.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "NOT VERIFIED placeholder (0/82) for the convergence campaign.",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Placeholder verified truthful: explicitly discredits pre-credited primitives; consistent with PROGRAM_STATE terminal state.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/archive/2026-08-26-254-whole-codebase-performance-optimization/proposal.md",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Change 254 proposal: goals/non-goals/risks/gate for the owner-authorized hot-path optimization campaign",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Authored this session from code-level inspection evidence at d258414; scope excludes functional/storage/API changes.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/archive/2026-08-26-254-whole-codebase-performance-optimization/design.md",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Change 254 design: current/target hot-path state, invariants, memo/cache designs, rejected alternatives incl. the reverted single-lookup physics adapter",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Documents the WorldAccess.isSolid contract discovery that forced the Opt E revert.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/archive/2026-08-26-254-whole-codebase-performance-optimization/tasks.md",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Change 254 task list (9 tasks) with checkbox rule compliance",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Tasks checked only after implementation+tests+evidence exist.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/archive/2026-08-26-254-whole-codebase-performance-optimization/verification.md",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Change 254 verification: baseline/after benchmark numbers plus gate evidence",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Baseline recorded pre-change on 2026-08-26; after-numbers recorded post-implementation from the same machine/session class.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/archive/2026-08-26-254-whole-codebase-performance-optimization/specs/engine-hot-paths/spec.md",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Normative MUST/SHALL contract R1-R10 for behavior-preserving hot-path optimization",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "R7 amended after full-suite proof that collapsing the collision adapter lookup breaks WorldAccess semantics; every requirement has scenarios.",
-      "status": "audited"
-    },
-    {
-      "path": "src/simulation/RandomTickEligibility.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "Registry-derived id-to-has-random-tick byte table replacing two registry lookups per random-tick attempt; unregistered ids fall through to the direct path preserving exceptions",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "tests/unit/RandomTickEligibilityTable.test.ts"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Bit-identical decisions derived from blockRegistry.all() + behaviorRegistry.getBehavior; rebuilds when probing ids beyond the table.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/bench/hot-paths.bench.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "vitest bench suite measuring world block reads, light storage cell access, and random-tick selection throughput",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "npx vitest bench --run tests/bench/hot-paths.bench.ts"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Benchmark-only file; excluded from vitest test include pattern; run via npx vitest bench.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/HotPathEquivalence.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Change 254 regression coverage: HotPathEquivalence pins equivalence/validation/dedup contracts against independent reference implementations or exact messages",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "npm test"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Authored alongside the corresponding optimization; green in the full gate run.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/WorldChunkMemo.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Change 254 regression coverage: WorldChunkMemo pins equivalence/validation/dedup contracts against independent reference implementations or exact messages",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "npm test"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Authored alongside the corresponding optimization; green in the full gate run.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/LightStorageFastPath.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Change 254 regression coverage: LightStorageFastPath pins equivalence/validation/dedup contracts against independent reference implementations or exact messages",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "npm test"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Authored alongside the corresponding optimization; green in the full gate run.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/RandomTickGolden.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Change 254 regression coverage: RandomTickGolden pins equivalence/validation/dedup contracts against independent reference implementations or exact messages",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "npm test"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Authored alongside the corresponding optimization; green in the full gate run.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/PlayerPhysicsShapeEquivalence.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Change 254 regression coverage: PlayerPhysicsShapeEquivalence pins equivalence/validation/dedup contracts against independent reference implementations or exact messages",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "npm test"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Authored alongside the corresponding optimization; green in the full gate run.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/HudWriteDeduplication.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Change 254 regression coverage: HudWriteDeduplication pins equivalence/validation/dedup contracts against independent reference implementations or exact messages",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "npm test"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Authored alongside the corresponding optimization; green in the full gate run.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/RandomTickEligibilityTable.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Change 254 regression coverage: full-catalog agreement between the eligibility table and direct registry lookups, rebuild behavior, and identical unknown-id errors",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "npm test"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Authored alongside the eligibility-table optimization; green in the full gate run.",
       "status": "audited"
     }
   ]

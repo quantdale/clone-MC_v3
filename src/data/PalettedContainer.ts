@@ -41,14 +41,19 @@ export interface SerializedPalettedContainer {
 export class PackedIntegerArray {
   bitsPerEntry: number;
   readonly capacity: number;
-  private words: number[];
+  private words: Uint32Array;
 
-  constructor(bitsPerEntry: number, capacity: number, words?: number[]) {
+  constructor(bitsPerEntry: number, capacity: number, words?: number[] | Uint32Array) {
     this.bitsPerEntry = bitsPerEntry;
     this.capacity = capacity;
     const wordCount = PackedIntegerArray.wordCount(bitsPerEntry, capacity);
-    this.words =
-      words && words.length === wordCount ? words.slice() : new Array<number>(wordCount).fill(0);
+    if (words instanceof Uint32Array && words.length === wordCount) {
+      this.words = words.slice();
+    } else if (Array.isArray(words) && words.length === wordCount) {
+      this.words = new Uint32Array(words);
+    } else {
+      this.words = new Uint32Array(wordCount);
+    }
   }
 
   static wordCount(bits: number, capacity: number): number {
@@ -106,7 +111,7 @@ export class PackedIntegerArray {
   }
 
   serialize(): number[] {
-    return this.words.slice();
+    return Array.from(this.words);
   }
 
   static deserialize(bitsPerEntry: number, capacity: number, words: number[]): PackedIntegerArray {
@@ -145,9 +150,6 @@ export class PalettedContainer<T> {
     this.keyToOrdinal = new Map();
     this.storage = new PackedIntegerArray(this.bits, this.capacity);
     this.registerValue(this.defaultValue);
-    for (let i = 0; i < this.capacity; i++) {
-      this.storage.set(i, 0);
-    }
   }
 
   private registerValue(value: T): number {

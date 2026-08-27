@@ -239,7 +239,7 @@ function inBoundsY(ctx: LightChannelContext, y: number): boolean {
 export class ChannelUpdateQueue {
   private removalQueue: number[] = []; // x, y, z, level, ...
   private addQueue: number[] = []; // x, y, z, ...
-  private pendingInvalidations = new Set<string>();
+  private pendingInvalidations = new Map<string, { x: number; y: number; z: number }>();
   private versionValue: LightVersion = 0;
 
   /** Version token advanced once per drain that performed work. */
@@ -282,7 +282,7 @@ export class ChannelUpdateQueue {
     if (!inBoundsY(ctx, y)) return;
     const key = `${x},${y},${z}`;
     if (this.pendingInvalidations.has(key)) return;
-    this.pendingInvalidations.add(key);
+    this.pendingInvalidations.set(key, { x, y, z });
     if (ctx.consumesEqualDown) {
       for (
         let cy = y - 1;
@@ -291,7 +291,7 @@ export class ChannelUpdateQueue {
       ) {
         const belowKey = `${x},${cy},${z}`;
         if (!this.pendingInvalidations.has(belowKey))
-          this.pendingInvalidations.add(belowKey);
+          this.pendingInvalidations.set(belowKey, { x, y: cy, z });
       }
     }
   }
@@ -299,11 +299,7 @@ export class ChannelUpdateQueue {
   /** Fold deduped pending invalidations into the removal queue (called at drain start). */
   private flushPending(ctx: LightChannelContext): void {
     if (this.pendingInvalidations.size === 0) return;
-    for (const key of this.pendingInvalidations) {
-      const parts = key.split(",");
-      const x = Number(parts[0]);
-      const y = Number(parts[1]);
-      const z = Number(parts[2]);
+    for (const { x, y, z } of this.pendingInvalidations.values()) {
       const current = ctx.get(x, y, z);
       if (ctx.emit) {
         const emission = Math.min(15, ctx.emit(x, y, z));

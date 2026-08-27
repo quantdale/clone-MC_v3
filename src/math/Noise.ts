@@ -16,6 +16,8 @@ function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
+const INV_2POW32 = 1 / 4294967296;
+
 /** 2D value noise in [0, 1] at integer lattice scale. */
 export function valueNoise2(x: number, z: number, seed: number): number {
   const xi = Math.floor(x);
@@ -23,10 +25,10 @@ export function valueNoise2(x: number, z: number, seed: number): number {
   const xf = x - xi;
   const zf = z - zi;
 
-  const a = hash2(xi, zi, seed) / 4294967296;
-  const b = hash2(xi + 1, zi, seed) / 4294967296;
-  const c = hash2(xi, zi + 1, seed) / 4294967296;
-  const d = hash2(xi + 1, zi + 1, seed) / 4294967296;
+  const a = hash2(xi, zi, seed) * INV_2POW32;
+  const b = hash2(xi + 1, zi, seed) * INV_2POW32;
+  const c = hash2(xi, zi + 1, seed) * INV_2POW32;
+  const d = hash2(xi + 1, zi + 1, seed) * INV_2POW32;
 
   const u = smoothstep(xf);
   const v = smoothstep(zf);
@@ -43,14 +45,14 @@ export function valueNoise3(x: number, y: number, z: number, seed: number): numb
   const yf = y - yi;
   const zf = z - zi;
 
-  const aaa = hash3(xi, yi, zi, seed) / 4294967296;
-  const baa = hash3(xi + 1, yi, zi, seed) / 4294967296;
-  const aba = hash3(xi, yi + 1, zi, seed) / 4294967296;
-  const bba = hash3(xi + 1, yi + 1, zi, seed) / 4294967296;
-  const aab = hash3(xi, yi, zi + 1, seed) / 4294967296;
-  const bab = hash3(xi + 1, yi, zi + 1, seed) / 4294967296;
-  const abb = hash3(xi, yi + 1, zi + 1, seed) / 4294967296;
-  const bbb = hash3(xi + 1, yi + 1, zi + 1, seed) / 4294967296;
+  const aaa = hash3(xi, yi, zi, seed) * INV_2POW32;
+  const baa = hash3(xi + 1, yi, zi, seed) * INV_2POW32;
+  const aba = hash3(xi, yi + 1, zi, seed) * INV_2POW32;
+  const bba = hash3(xi + 1, yi + 1, zi, seed) * INV_2POW32;
+  const aab = hash3(xi, yi, zi + 1, seed) * INV_2POW32;
+  const bab = hash3(xi + 1, yi, zi + 1, seed) * INV_2POW32;
+  const abb = hash3(xi, yi + 1, zi + 1, seed) * INV_2POW32;
+  const bbb = hash3(xi + 1, yi + 1, zi + 1, seed) * INV_2POW32;
 
   const u = smoothstep(xf);
   const v = smoothstep(yf);

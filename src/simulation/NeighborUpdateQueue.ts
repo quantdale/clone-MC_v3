@@ -23,7 +23,8 @@ export class NeighborUpdateQueue {
   private readonly maxPerDrain: number;
   private readonly maxQueueSize: number;
   private readonly pending = new Map<string, [number, number, number]>();
-  private readonly order: string[] = [];
+  private order: string[] = [];
+  private head = 0;
 
   constructor(opts: NeighborUpdateQueueOptions = {}) {
     this.maxPerDrain = opts.maxPerDrain ?? 64;
@@ -50,13 +51,20 @@ export class NeighborUpdateQueue {
    */
   drain(handler: NeighborUpdateHandler): number {
     let processed = 0;
-    while (this.order.length > 0 && processed < this.maxPerDrain) {
-      const key = this.order.shift()!;
+    while (this.head < this.order.length && processed < this.maxPerDrain) {
+      const key = this.order[this.head++]!;
       const position = this.pending.get(key);
       if (position === undefined) continue; // already processed (defensive)
       this.pending.delete(key);
       handler(position[0], position[1], position[2]);
       processed++;
+    }
+    if (this.head >= this.order.length) {
+      this.order.length = 0;
+      this.head = 0;
+    } else if (this.head > 128 && this.head * 2 >= this.order.length) {
+      this.order = this.order.slice(this.head);
+      this.head = 0;
     }
     return processed;
   }
@@ -75,5 +83,6 @@ export class NeighborUpdateQueue {
   clear(): void {
     this.pending.clear();
     this.order.length = 0;
+    this.head = 0;
   }
 }

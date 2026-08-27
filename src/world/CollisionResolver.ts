@@ -4,7 +4,7 @@
  * (X → Y → Z) with face snapping: a collided axis is clamped to the shape face and flagged, while the
  * other axes keep their deltas. Deterministic and headless-testable with fixture shape worlds.
  */
-import { VoxelShape, type Aabb } from './VoxelShape';
+import { VoxelShape } from './VoxelShape';
 
 /** A world that answers each block cell's collision shape. */
 export interface ShapeWorld {
@@ -131,19 +131,30 @@ export class CollisionResolver {
           if (shape.isEmpty) continue;
 
           for (const aabb of shape.boxes) {
-            const face = translate(aabb, cx, cy, cz);
-            if (!overlapsOnOtherAxes(axis, face, minX, minY, minZ, maxX, maxY, maxZ)) {
-              continue;
+            const fMinX = aabb.minX + cx;
+            const fMinY = aabb.minY + cy;
+            const fMinZ = aabb.minZ + cz;
+            const fMaxX = aabb.maxX + cx;
+            const fMaxY = aabb.maxY + cy;
+            const fMaxZ = aabb.maxZ + cz;
+
+            if (axis === 'x') {
+              if (fMaxY < minY || fMinY > maxY || fMaxZ < minZ || fMinZ > maxZ) continue;
+            } else if (axis === 'y') {
+              if (fMaxX < minX || fMinX > maxX || fMaxZ < minZ || fMinZ > maxZ) continue;
+            } else {
+              if (fMaxX < minX || fMinX > maxX || fMaxY < minY || fMinY > maxY) continue;
             }
+
             if (delta > 0) {
               // Moving forward: the box's leading edge (start + size) must not pass the face.
-              const faceMin = axis === 'x' ? face.minX : axis === 'y' ? face.minY : face.minZ;
+              const faceMin = axis === 'x' ? fMinX : axis === 'y' ? fMinY : fMinZ;
               if (faceMin > start && final > faceMin - size) {
                 final = Math.min(final, faceMin - size);
               }
             } else {
               // Moving backward: the box's trailing edge (start) must not pass the face.
-              const faceMax = axis === 'x' ? face.maxX : axis === 'y' ? face.maxY : face.maxZ;
+              const faceMax = axis === 'x' ? fMaxX : axis === 'y' ? fMaxY : fMaxZ;
               if (faceMax < start + size && final < faceMax) {
                 final = Math.max(final, faceMax);
               }
@@ -155,35 +166,4 @@ export class CollisionResolver {
 
     return final;
   }
-}
-
-function translate(aabb: Aabb, cx: number, cy: number, cz: number): Aabb {
-  return {
-    minX: aabb.minX + cx,
-    minY: aabb.minY + cy,
-    minZ: aabb.minZ + cz,
-    maxX: aabb.maxX + cx,
-    maxY: aabb.maxY + cy,
-    maxZ: aabb.maxZ + cz,
-  };
-}
-
-/** Whether the shape face overlaps the entity box on the two non-moving axes. */
-function overlapsOnOtherAxes(
-  axis: 'x' | 'y' | 'z',
-  face: Aabb,
-  minX: number,
-  minY: number,
-  minZ: number,
-  maxX: number,
-  maxY: number,
-  maxZ: number,
-): boolean {
-  if (axis === 'x') {
-    return face.maxY >= minY && face.minY <= maxY && face.maxZ >= minZ && face.minZ <= maxZ;
-  }
-  if (axis === 'y') {
-    return face.maxX >= minX && face.minX <= maxX && face.maxZ >= minZ && face.minZ <= maxZ;
-  }
-  return face.maxX >= minX && face.minX <= maxX && face.maxY >= minY && face.minY <= maxY;
 }

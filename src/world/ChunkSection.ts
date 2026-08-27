@@ -83,6 +83,7 @@ export class ChunkSection {
 
   /** Count of slots whose block state is not air. */
   nonAirCount(): number {
+    if (this.isEmpty()) return 0;
     let count = 0;
     for (let i = 0; i < SECTION_VOLUME; i++) {
       if (this.storage.get(i) !== this.airId) count++;

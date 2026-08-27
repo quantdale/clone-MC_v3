@@ -126,36 +126,34 @@ const PLANES: readonly FacePlane[] = [
 type VisibleCell = { id: number; key: string } | null;
 
 /**
- * Build the 16×16 visibility grid for one face slice: `grid[u][v]` is the face's id/key when the
- * cell at the slice is opaque and its outward neighbor is not opaque.
+ * Build the 16×16 visibility grid for one face slice into a flat 256-element array:
+ * `grid[v * 16 + u]` is the face's id/key when the cell at the slice is opaque and
+ * its outward neighbor is not opaque.
  */
-function buildVisibilityGrid(
+function fillVisibilityGrid(
+  grid: VisibleCell[],
   getCell: FaceCellSampler,
   isOpaque: OpaquePredicate,
   faceKey: FaceKeyFn,
   plane: FacePlane,
   slice: number,
-): VisibleCell[][] {
-  // Rows are indexed by v, columns by u (grid[v][u]).
-  const grid: VisibleCell[][] = [];
+): void {
+  let idx = 0;
   for (let v = 0; v < SECTION; v++) {
-    const row: VisibleCell[] = [];
     for (let u = 0; u < SECTION; u++) {
       const cell = planeCell(getCell, plane, slice, u, v);
       if (cell === null || !isOpaque(cell)) {
-        row.push(null);
+        grid[idx++] = null;
         continue;
       }
       const neighbor = planeNeighbor(getCell, plane, slice, u, v);
       if (neighbor !== null && isOpaque(neighbor)) {
-        row.push(null);
+        grid[idx++] = null;
         continue;
       }
-      row.push({ id: cell, key: faceKey(cell, plane.face) });
+      grid[idx++] = { id: cell, key: faceKey(cell, plane.face) };
     }
-    grid.push(row);
   }
-  return grid;
 }
 
 /** The cell at (slice, u, v) for a plane. */
@@ -247,37 +245,36 @@ interface MergeSignature {
 
 /** Per-slice memo of cell signatures, indexed by `v * SECTION + u`. */
 class SignatureCache {
-  private readonly entries = new Map<number, MergeSignature>();
+  private readonly entries: Array<MergeSignature | null> = new Array(SECTION * SECTION).fill(null);
 
   constructor(
-    private readonly grid: VisibleCell[][],
+    private readonly grid: readonly VisibleCell[],
     plane: FacePlane,
     slice: number,
     private readonly resolvers: MergeClassResolvers,
   ) {
-    // `plane`/`slice` identify the cache's scope; the per-slice lifecycle makes them
-    // implicit (one cache instance per slice), so they are accepted for signature clarity only.
     void plane;
     void slice;
   }
 
   /** Whether a visible (non-null) cell exists at `(v, u)`. */
   has(v: number, u: number): boolean {
-    return this.grid[v] !== undefined && this.grid[v]![u] !== null && this.grid[v]![u] !== undefined;
+    const cell = this.grid[v * SECTION + u];
+    return cell !== null && cell !== undefined;
   }
 
   get(v: number, u: number): MergeSignature {
     const index = v * SECTION + u;
-    let entry = this.entries.get(index);
-    if (entry === undefined) {
-      const cell = this.grid[v]![u]!;
+    let entry = this.entries[index];
+    if (!entry) {
+      const cell = this.grid[index]!;
       entry = {
         baseKey: cell.key,
         tintClass: this.resolvers.tintClassOf ? this.resolvers.tintClassOf(cell.id) : 0,
         animationClass: this.resolvers.animationClassOf ? this.resolvers.animationClassOf(cell.id) : 0,
         transparencyClass: this.resolvers.transparencyClassOf ? this.resolvers.transparencyClassOf(cell.id) : 0,
       };
-      this.entries.set(index, entry);
+      this.entries[index] = entry;
     }
     return entry;
   }
@@ -310,24 +307,28 @@ export function greedyMergeOpaqueFaces(
 ): OpaqueFaceQuad[] {
   const out: OpaqueFaceQuad[] = [];
   const resolvers: MergeClassResolvers = options ?? {};
+  const grid: VisibleCell[] = new Array(SECTION * SECTION);
+  const consumed = new Uint8Array(SECTION * SECTION);
 
   for (const plane of PLANES) {
     for (let slice = 0; slice < plane.slices; slice++) {
-      const grid = buildVisibilityGrid(getCell, isOpaque, faceKey, plane, slice);
-      const consumed: boolean[][] = grid.map((row) => row.map(() => false));
+      fillVisibilityGrid(grid, getCell, isOpaque, faceKey, plane, slice);
+      consumed.fill(0);
       const signatures = new SignatureCache(grid, plane, slice, resolvers);
 
       for (let v = 0; v < SECTION; v++) {
+        const vOffset = v * SECTION;
         for (let u = 0; u < SECTION; u++) {
-          if (consumed[v]![u] || grid[v]![u] === null) continue;
+          const idx = vOffset + u;
+          if (consumed[idx] === 1 || grid[idx] === null) continue;
 
           // Extend width along u while the full signature matches the seed.
           const seed = signatures.get(v, u);
           let width = 1;
           while (
             u + width < SECTION &&
-            !consumed[v]![u + width] &&
-            grid[v]![u + width] !== null &&
+            consumed[vOffset + u + width] === 0 &&
+            grid[vOffset + u + width] !== null &&
             signatures.matches(v, u + width, seed)
           ) {
             width++;
@@ -336,8 +337,9 @@ export function greedyMergeOpaqueFaces(
           // Extend height along v while every row cell matches the seed.
           let height = 1;
           outer: while (v + height < SECTION) {
+            const nextRowOffset = (v + height) * SECTION;
             for (let w = 0; w < width; w++) {
-              if (consumed[v + height]![u + w] || !signatures.matches(v + height, u + w, seed)) {
+              if (consumed[nextRowOffset + u + w] === 1 || !signatures.matches(v + height, u + w, seed)) {
                 break outer;
               }
             }
@@ -346,8 +348,9 @@ export function greedyMergeOpaqueFaces(
 
           // Consume the rectangle.
           for (let dv = 0; dv < height; dv++) {
+            const rOffset = (v + dv) * SECTION + u;
             for (let du = 0; du < width; du++) {
-              consumed[v + dv]![u + du] = true;
+              consumed[rOffset + du] = 1;
             }
           }
 
@@ -359,7 +362,7 @@ export function greedyMergeOpaqueFaces(
             z,
             width,
             height,
-            blockId: grid[v]![u]!.id,
+            blockId: grid[idx]!.id,
             ...withVertexShading(light, plane, slice, x, y, z, width, height),
             tintClass: seed.tintClass,
             animationClass: seed.animationClass,
@@ -386,12 +389,14 @@ export function enumerateOpaqueFacesNaive(
   options?: MergeOptions,
 ): OpaqueFaceQuad[] {
   const out: OpaqueFaceQuad[] = [];
+  const grid: VisibleCell[] = new Array(SECTION * SECTION);
   for (const plane of PLANES) {
     for (let slice = 0; slice < plane.slices; slice++) {
-      const grid = buildVisibilityGrid(getCell, isOpaque, faceKey, plane, slice);
+      fillVisibilityGrid(grid, getCell, isOpaque, faceKey, plane, slice);
       for (let v = 0; v < SECTION; v++) {
+        const vOffset = v * SECTION;
         for (let u = 0; u < SECTION; u++) {
-          const cell = grid[v]![u];
+          const cell = grid[vOffset + u];
           if (!cell) continue;
           const [x, y, z] = quadPosition(plane, slice, u, v);
           out.push({

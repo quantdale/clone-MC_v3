@@ -45,11 +45,6 @@ export function outwardLayerCoord(ctx: FaceLightContext): number {
   return ctx.isMax ? cell + 1 : cell;
 }
 
-/** Cell indices adjacent to an in-plane corner coordinate: integer → pair, fractional → containing cell. */
-function adjacentIndices(c: number): [number, number] | [number] {
-  if (Number.isInteger(c)) return [c - 1, c];
-  return [Math.floor(c)];
-}
 
 /**
  * Sample sky/block light at one corner `(u, v)` of a face (in-plane coordinates, world units).
@@ -62,22 +57,51 @@ export function sampleCornerLight(
   u: number,
   v: number,
 ): VertexLight {
+  const out: VertexLight = { sky: 0, block: 0 };
+  sampleCornerLightInto(light, ctx, u, v, out);
+  return out;
+}
+
+/**
+ * Write sampled sky/block light at one corner `(u, v)` directly into `out`.
+ */
+export function sampleCornerLightInto(
+  light: LightSampler,
+  ctx: FaceLightContext,
+  u: number,
+  v: number,
+  out: VertexLight,
+): void {
   const [uAxis, vAxis] = inPlaneAxes(ctx.axis);
   const layer = outwardLayerCoord(ctx);
-  const us = adjacentIndices(u);
-  const vs = adjacentIndices(v);
+  const uIsInt = Number.isInteger(u);
+  const vIsInt = Number.isInteger(v);
+  const uMin = uIsInt ? u - 1 : Math.floor(u);
+  const uMax = uIsInt ? u : uMin;
+  const vMin = vIsInt ? v - 1 : Math.floor(v);
+  const vMax = vIsInt ? v : vMin;
 
   let skySum = 0;
   let blockSum = 0;
   let count = 0;
 
-  for (const ui of us) {
-    for (const vi of vs) {
-      const coords: [number, number, number] = [ctx.cellX, ctx.cellY, ctx.cellZ];
-      coords[ctx.axis] = layer;
-      coords[uAxis] = ui;
-      coords[vAxis] = vi;
-      const [x, y, z] = coords;
+  for (let ui = uMin; ui <= uMax; ui++) {
+    for (let vi = vMin; vi <= vMax; vi++) {
+      let x = ctx.cellX;
+      let y = ctx.cellY;
+      let z = ctx.cellZ;
+      if (ctx.axis === 0) x = layer;
+      else if (ctx.axis === 1) y = layer;
+      else z = layer;
+
+      if (uAxis === 0) x = ui;
+      else if (uAxis === 1) y = ui;
+      else z = ui;
+
+      if (vAxis === 0) x = vi;
+      else if (vAxis === 1) y = vi;
+      else z = vi;
+
       if (!light.inBounds(x, y, z)) continue;
       if (light.isOpaque(x, y, z)) {
         count++;
@@ -89,8 +113,13 @@ export function sampleCornerLight(
     }
   }
 
-  if (count === 0) return { sky: 0, block: 0 };
-  return { sky: Math.round(skySum / count), block: Math.round(blockSum / count) };
+  if (count === 0) {
+    out.sky = 0;
+    out.block = 0;
+  } else {
+    out.sky = Math.round(skySum / count);
+    out.block = Math.round(blockSum / count);
+  }
 }
 
 /**
@@ -131,16 +160,8 @@ export function quadVertexLightsInto(
 ): void {
   const maxU = minU + width;
   const maxV = minV + height;
-  const c0 = sampleCornerLight(light, ctx, minU, minV);
-  out[0].sky = c0.sky;
-  out[0].block = c0.block;
-  const c1 = sampleCornerLight(light, ctx, maxU, minV);
-  out[1].sky = c1.sky;
-  out[1].block = c1.block;
-  const c2 = sampleCornerLight(light, ctx, minU, maxV);
-  out[2].sky = c2.sky;
-  out[2].block = c2.block;
-  const c3 = sampleCornerLight(light, ctx, maxU, maxV);
-  out[3].sky = c3.sky;
-  out[3].block = c3.block;
+  sampleCornerLightInto(light, ctx, minU, minV, out[0]!);
+  sampleCornerLightInto(light, ctx, maxU, minV, out[1]!);
+  sampleCornerLightInto(light, ctx, minU, maxV, out[2]!);
+  sampleCornerLightInto(light, ctx, maxU, maxV, out[3]!);
 }

@@ -75,10 +75,14 @@ function assertValidPosition(x: number, y: number, z: number, tickTime: number):
 export class ScheduledTickQueue {
   private readonly pending = new Map<string, PendingEntry>();
   private nextSeq = 0;
+  private minDueTick = Number.POSITIVE_INFINITY;
 
   /** Schedule (or re-schedule) a tick at the absolute `dueTick` for `(x, y, z)`. */
   schedule(x: number, y: number, z: number, dueTick: number): void {
     assertValidPosition(x, y, z, dueTick);
+    if (dueTick < this.minDueTick) {
+      this.minDueTick = dueTick;
+    }
     const key = positionKey(x, y, z);
     const existing = this.pending.get(key);
     if (existing) {
@@ -101,16 +105,23 @@ export class ScheduledTickQueue {
    * array when nothing is due.
    */
   tick(nowTick: number): ScheduledTick[] {
+    if (this.pending.size === 0 || this.minDueTick > nowTick) {
+      return [];
+    }
     const due: PendingEntry[] = [];
+    let nextMin = Number.POSITIVE_INFINITY;
     for (const entry of this.pending.values()) {
       if (entry.tick.tickTime <= nowTick) {
         due.push(entry);
+      } else if (entry.tick.tickTime < nextMin) {
+        nextMin = entry.tick.tickTime;
       }
     }
     due.sort((a, b) => a.tick.tickTime - b.tick.tickTime || a.seq - b.seq);
     for (const entry of due) {
       this.pending.delete(positionKey(entry.tick.x, entry.tick.y, entry.tick.z));
     }
+    this.minDueTick = this.pending.size === 0 ? Number.POSITIVE_INFINITY : nextMin;
     return due.map((e) => e.tick);
   }
 
@@ -121,13 +132,19 @@ export class ScheduledTickQueue {
 
   /** Remove a pending tick (idempotent). */
   cancel(x: number, y: number, z: number): void {
-    this.pending.delete(positionKey(x, y, z));
+    const key = positionKey(x, y, z);
+    if (this.pending.delete(key)) {
+      if (this.pending.size === 0) {
+        this.minDueTick = Number.POSITIVE_INFINITY;
+      }
+    }
   }
 
   /** Remove all pending ticks. */
   clear(): void {
     this.pending.clear();
     this.nextSeq = 0;
+    this.minDueTick = Number.POSITIVE_INFINITY;
   }
 
   /** Number of pending ticks. */
@@ -153,6 +170,9 @@ export class ScheduledTickQueue {
     for (const tick of valid.entries) {
       const key = positionKey(tick.x, tick.y, tick.z);
       this.pending.set(key, { tick, seq: this.nextSeq++ });
+      if (tick.tickTime < this.minDueTick) {
+        this.minDueTick = tick.tickTime;
+      }
     }
   }
 }

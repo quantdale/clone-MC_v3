@@ -518,19 +518,6 @@ const PACKED_FACE_LAYOUTS: readonly PackedFaceLayout[] = [
   { normal: [-1, 0, 0], origin: [0, 0, 0], uDir: [0, 0, 1], vDir: [0, 1, 0] }, // west  (-X)
 ];
 
-/** Expanded per-stream scratch used while decoding one packed buffer. */
-interface ExpandStream {
-  positions: number[];
-  normals: number[];
-  uvs: number[];
-  skyLight: number[];
-  blockLight: number[];
-  ao: number[];
-  tint: number[];
-  indices: number[];
-  vertices: number;
-}
-
 /** Main-thread collaborators `expandPackedMeshResult` needs (keeps this file THREE-free). */
 export interface PackedMeshExpandInfo {
   /** Atlas UV rectangle for a block id + canonical face index. */
@@ -549,14 +536,6 @@ export interface PackedMeshGeometries {
   fluid: THREE.BufferGeometry | null;
 }
 
-function emptyExpandStream(): ExpandStream {
-  return {
-    positions: [], normals: [], uvs: [],
-    skyLight: [], blockLight: [], ao: [], tint: [],
-    indices: [], vertices: 0,
-  };
-}
-
 /**
  * Decode a packed tint class id into normalized RGB (Phase 11.4): the class is a
  * resolved 24-bit biome color (`biomeTintClassId`); 0 means untinted white.
@@ -566,13 +545,6 @@ export function packedTintRgb(classId: number): [number, number, number] {
   return [((classId >> 16) & 255) / 255, ((classId >> 8) & 255) / 255, (classId & 255) / 255];
 }
 
-/**
- * Decode a stride-22 packed quad buffer ({@link packQuadsToTypedArrays} output) into four-stream
- * BufferGeometries. Main-thread only (builds geometry via `info.buildGeometry`); deterministic.
- *
- * Tint classes carry resolved 24-bit biome colors through the packed layout; they are decoded
- * here via {@link packedTintRgb} so worker-path output matches the sync mesher's tints.
- */
 /**
  * Corner geometry inputs for one packed quad, shared by `expandPackedMeshResult` and parity
  * testing: the four corners in canonical `(minU,minV), (maxU,minV), (minU,maxV), (maxU,maxV)`
@@ -596,13 +568,130 @@ export function packedQuadGeometryInputs(
   return { corners, normal: [...layout.normal] as [number, number, number], faceIndex };
 }
 
+class TypedExpandStream {
+  readonly positions: Float32Array;
+  readonly normals: Float32Array;
+  readonly uvs: Float32Array;
+  readonly skyLight: Uint8Array;
+  readonly blockLight: Uint8Array;
+  readonly ao: Uint8Array;
+  readonly tint: Float32Array;
+  readonly indices: Uint32Array;
+  vIdx = 0;
+  iIdx = 0;
+
+  constructor(quadCount: number) {
+    this.positions = new Float32Array(quadCount * 12);
+    this.normals = new Float32Array(quadCount * 12);
+    this.uvs = new Float32Array(quadCount * 8);
+    this.skyLight = new Uint8Array(quadCount * 4);
+    this.blockLight = new Uint8Array(quadCount * 4);
+    this.ao = new Uint8Array(quadCount * 4);
+    this.tint = new Float32Array(quadCount * 12);
+    this.indices = new Uint32Array(quadCount * 6);
+  }
+
+  pushQuad(
+    x: number,
+    y: number,
+    z: number,
+    width: number,
+    height: number,
+    layout: PackedFaceLayout,
+    uv: UvRect,
+    packedData: Float32Array,
+    offset: number,
+    tintRgb: [number, number, number],
+  ): void {
+    const base = this.vIdx / 3;
+    const [tr, tg, tb] = tintRgb;
+    const nx = layout.normal[0];
+    const ny = layout.normal[1];
+    const nz = layout.normal[2];
+
+    for (let c = 0; c < 4; c++) {
+      const cu = c === 1 || c === 3 ? width : 0;
+      const cv = c >= 2 ? height : 0;
+
+      const pIdx = this.vIdx;
+      this.positions[pIdx] = x + layout.origin[0] + layout.uDir[0] * cu + layout.vDir[0] * cv;
+      this.positions[pIdx + 1] = y + layout.origin[1] + layout.uDir[1] * cu + layout.vDir[1] * cv;
+      this.positions[pIdx + 2] = z + layout.origin[2] + layout.uDir[2] * cu + layout.vDir[2] * cv;
+
+      this.normals[pIdx] = nx;
+      this.normals[pIdx + 1] = ny;
+      this.normals[pIdx + 2] = nz;
+
+      this.tint[pIdx] = tr;
+      this.tint[pIdx + 1] = tg;
+      this.tint[pIdx + 2] = tb;
+
+      const uvIdx = (base + c) * 2;
+      this.uvs[uvIdx] = c === 1 || c === 3 ? uv.u1 : uv.u0;
+      this.uvs[uvIdx + 1] = c >= 2 ? uv.v1 : uv.v0;
+
+      const lightBase = offset + 10 + c * 3;
+      const cIdx = base + c;
+      this.skyLight[cIdx] = packedData[lightBase]!;
+      this.blockLight[cIdx] = packedData[lightBase + 1]!;
+      this.ao[cIdx] = packedData[lightBase + 2]!;
+
+      this.vIdx += 3;
+    }
+
+    const idx = this.iIdx;
+    this.indices[idx] = base;
+    this.indices[idx + 1] = base + 1;
+    this.indices[idx + 2] = base + 2;
+    this.indices[idx + 3] = base;
+    this.indices[idx + 4] = base + 2;
+    this.indices[idx + 5] = base + 3;
+    this.iIdx += 6;
+  }
+
+  toStream(): MeshStreamData {
+    return {
+      positions: this.positions,
+      normals: this.normals,
+      uvs: this.uvs,
+      skyLight: this.skyLight,
+      blockLight: this.blockLight,
+      ao: this.ao,
+      tint: this.tint,
+      indices: this.indices,
+      vertexCount: this.vIdx / 3,
+      indexCount: this.iIdx,
+    };
+  }
+}
+
 export function expandPackedMeshResult(packed: PackedMeshResult, info: PackedMeshExpandInfo): PackedMeshGeometries {
-  const streams: Record<MeshStreamName, ExpandStream> = {
-    opaque: emptyExpandStream(),
-    cutout: emptyExpandStream(),
-    translucent: emptyExpandStream(),
-    fluid: emptyExpandStream(),
+  if (packed.quadCount === 0) {
+    return { opaque: null, cutout: null, translucent: null, fluid: null };
+  }
+
+  // Count quads per stream in a fast first pass
+  const quadCounts: Record<MeshStreamName, number> = {
+    opaque: 0,
+    cutout: 0,
+    translucent: 0,
+    fluid: 0,
   };
+  const streamNames: MeshStreamName[] = new Array(packed.quadCount);
+
+  for (let q = 0; q < packed.quadCount; q++) {
+    const o = q * packed.stride;
+    const blockId = packed.data[o + 5]!;
+    const name = info.renderLayerOf(blockId);
+    streamNames[q] = name;
+    quadCounts[name]++;
+  }
+
+  const streams: Partial<Record<MeshStreamName, TypedExpandStream>> = {};
+  if (quadCounts.opaque > 0) streams.opaque = new TypedExpandStream(quadCounts.opaque);
+  if (quadCounts.cutout > 0) streams.cutout = new TypedExpandStream(quadCounts.cutout);
+  if (quadCounts.translucent > 0) streams.translucent = new TypedExpandStream(quadCounts.translucent);
+  if (quadCounts.fluid > 0) streams.fluid = new TypedExpandStream(quadCounts.fluid);
 
   for (let q = 0; q < packed.quadCount; q++) {
     const o = q * packed.stride;
@@ -614,59 +703,19 @@ export function expandPackedMeshResult(packed: PackedMeshResult, info: PackedMes
     const blockId = packed.data[o + 5]!;
     const faceIndex = Math.min(5, Math.max(0, Math.round(packed.data[o + 6]!)));
     const layout = PACKED_FACE_LAYOUTS[faceIndex]!;
-    const stream = streams[info.renderLayerOf(blockId)]!;
+    const streamName = streamNames[q]!;
+    const stream = streams[streamName]!;
 
-    const base = stream.vertices;
     const uv = info.uvFor(blockId, faceIndex);
-    const cornerUv: ReadonlyArray<readonly [number, number]> = [
-      [uv.u0, uv.v0],
-      [uv.u1, uv.v0],
-      [uv.u0, uv.v1],
-      [uv.u1, uv.v1],
-    ];
-    for (let c = 0; c < 4; c++) {
-      const cu = c === 1 || c === 3 ? width : 0;
-      const cv = c >= 2 ? height : 0;
-      stream.positions.push(
-        x + layout.origin[0] + layout.uDir[0] * cu + layout.vDir[0] * cv,
-        y + layout.origin[1] + layout.uDir[1] * cu + layout.vDir[1] * cv,
-        z + layout.origin[2] + layout.uDir[2] * cu + layout.vDir[2] * cv,
-      );
-      stream.normals.push(layout.normal[0], layout.normal[1], layout.normal[2]);
-      stream.uvs.push(cornerUv[c]![0], cornerUv[c]![1]);
-      const lightBase = o + 10 + c * 3;
-      stream.skyLight.push(packed.data[lightBase]!);
-      stream.blockLight.push(packed.data[lightBase + 1]!);
-      stream.ao.push(packed.data[lightBase + 2]!);
-      const [tr, tg, tb] = packedTintRgb(packed.data[o + 7]!);
-      stream.tint.push(tr, tg, tb);
-      stream.vertices++;
-    }
-    // CCW winding matching MeshingTypes' pushQuadIndices convention.
-    stream.indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
+    const tintRgb = packedTintRgb(packed.data[o + 7]!);
+
+    stream.pushQuad(x, y, z, width, height, layout, uv, packed.data, o, tintRgb);
   }
 
   return {
-    opaque: buildExpandedGeometry(streams.opaque, info, 'opaque'),
-    cutout: buildExpandedGeometry(streams.cutout, info, 'cutout'),
-    translucent: buildExpandedGeometry(streams.translucent, info, 'translucent'),
-    fluid: buildExpandedGeometry(streams.fluid, info, 'fluid'),
+    opaque: streams.opaque ? info.buildGeometry(streams.opaque.toStream(), 'opaque') : null,
+    cutout: streams.cutout ? info.buildGeometry(streams.cutout.toStream(), 'cutout') : null,
+    translucent: streams.translucent ? info.buildGeometry(streams.translucent.toStream(), 'translucent') : null,
+    fluid: streams.fluid ? info.buildGeometry(streams.fluid.toStream(), 'fluid') : null,
   };
-}
-
-function buildExpandedGeometry(s: ExpandStream, info: PackedMeshExpandInfo, name: MeshStreamName): THREE.BufferGeometry | null {
-  if (s.vertices === 0) return null;
-  const data: MeshStreamData = {
-    positions: new Float32Array(s.positions),
-    normals: new Float32Array(s.normals),
-    uvs: new Float32Array(s.uvs),
-    skyLight: new Uint8Array(s.skyLight),
-    blockLight: new Uint8Array(s.blockLight),
-    ao: new Uint8Array(s.ao),
-    tint: new Float32Array(s.tint),
-    indices: new Uint32Array(s.indices),
-    vertexCount: s.vertices,
-    indexCount: s.indices.length,
-  };
-  return info.buildGeometry(data, name);
 }

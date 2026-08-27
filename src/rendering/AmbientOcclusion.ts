@@ -10,8 +10,30 @@ import type { AOLevel, LightSampler } from './GreedyMesher';
 import type { FaceLightContext } from './VertexLighting';
 import { inPlaneAxes, outwardLayerCoord } from './VertexLighting';
 
-/** True when the cell is in section and opaque (occludes a corner). */
-function isOccluding(light: LightSampler, x: number, y: number, z: number): boolean {
+function checkOccluding(
+  light: LightSampler,
+  ctx: FaceLightContext,
+  layer: number,
+  uAxis: 0 | 1 | 2,
+  vAxis: 0 | 1 | 2,
+  uVal: number,
+  vVal: number,
+): boolean {
+  let x = ctx.cellX;
+  let y = ctx.cellY;
+  let z = ctx.cellZ;
+  if (ctx.axis === 0) x = layer;
+  else if (ctx.axis === 1) y = layer;
+  else z = layer;
+
+  if (uAxis === 0) x = uVal;
+  else if (uAxis === 1) y = uVal;
+  else z = uVal;
+
+  if (vAxis === 0) x = vVal;
+  else if (vAxis === 1) y = vVal;
+  else z = vVal;
+
   return light.inBounds(x, y, z) && light.isOpaque(x, y, z);
 }
 
@@ -26,17 +48,9 @@ export function sampleCornerAO(light: LightSampler, ctx: FaceLightContext, u: nu
   const fu = Math.floor(u);
   const fv = Math.floor(v);
 
-  const cellAt = (du: number, dv: number): [number, number, number] => {
-    const coords: [number, number, number] = [ctx.cellX, ctx.cellY, ctx.cellZ];
-    coords[ctx.axis] = layer;
-    coords[uAxis] = fu + du;
-    coords[vAxis] = fv + dv;
-    return coords;
-  };
-
-  const side1 = isOccluding(light, ...cellAt(-1, 0));
-  const side2 = isOccluding(light, ...cellAt(0, -1));
-  const corner = isOccluding(light, ...cellAt(-1, -1));
+  const side1 = checkOccluding(light, ctx, layer, uAxis, vAxis, fu - 1, fv);
+  const side2 = checkOccluding(light, ctx, layer, uAxis, vAxis, fu, fv - 1);
+  const corner = checkOccluding(light, ctx, layer, uAxis, vAxis, fu - 1, fv - 1);
 
   if (side1 && side2) return 0;
   if (side1 || side2) return corner ? 1 : 2;

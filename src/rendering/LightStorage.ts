@@ -33,7 +33,7 @@ export class NibbleArray {
   get(index: number): number {
     this.assertIndex(index);
     const byte = this.data[index >> 1]!;
-    return index % 2 === 0 ? byte & 0x0f : (byte >> 4) & 0x0f;
+    return (index & 1) === 0 ? byte & 0x0f : (byte >> 4) & 0x0f;
   }
 
   /** Set the value at `index`; values > 15 throw. */
@@ -44,7 +44,7 @@ export class NibbleArray {
     }
     const byteIndex = index >> 1;
     const byte = this.data[byteIndex]!;
-    this.data[byteIndex] = index % 2 === 0 ? (byte & 0xf0) | value : (byte & 0x0f) | (value << 4);
+    this.data[byteIndex] = (index & 1) === 0 ? (byte & 0xf0) | value : (byte & 0x0f) | (value << 4);
   }
 
   /** Number of cells (4096). */
@@ -77,6 +77,15 @@ export interface SectionLightData {
   block: Uint8Array;
 }
 
+<<<<<<< HEAD
+=======
+function assertAxis(axis: number): void {
+  if (!Number.isInteger(axis) || axis < 0 || axis >= 16) {
+    throw new RangeError(`SectionLightStorage: local coordinates must be in [0, 16): ${axis}`);
+  }
+}
+
+>>>>>>> dba454e (perf: comprehensive repository-wide optimization campaign)
 /** Sky + block light for one 16³ section. */
 export class SectionLightStorage {
   private readonly sky: NibbleArray;
@@ -88,6 +97,7 @@ export class SectionLightStorage {
   }
 
   private indexFor(x: number, y: number, z: number): number {
+<<<<<<< HEAD
     // Ordered validation mirrors the historical assertCoord: first failure of
     // x, then y, then z throws with that axis's value; non-integers rejected.
     if (!Number.isInteger(x) || x < 0 || x >= 16) {
@@ -100,6 +110,12 @@ export class SectionLightStorage {
       throw new RangeError(`SectionLightStorage: local coordinates must be in [0, 16): ${z}`);
     }
     return x + y * SECTION_SIZE + z * SECTION_SIZE * SECTION_SIZE;
+=======
+    assertAxis(x);
+    assertAxis(y);
+    assertAxis(z);
+    return x + (y << 4) + (z << 8);
+>>>>>>> dba454e (perf: comprehensive repository-wide optimization campaign)
   }
 
   getSkyLight(x: number, y: number, z: number): number {

@@ -78,6 +78,73 @@ function reconstruct(cameFrom: Map<string, PathNode>, start: PathNode, target: P
   return nodes;
 }
 
+class OpenHeap {
+  private readonly data: OpenEntry[] = [];
+
+  get length(): number {
+    return this.data.length;
+  }
+
+  push(entry: OpenEntry): void {
+    this.data.push(entry);
+    this.bubbleUp(this.data.length - 1);
+  }
+
+  pop(): OpenEntry | undefined {
+    if (this.data.length === 0) return undefined;
+    const top = this.data[0]!;
+    const bottom = this.data.pop()!;
+    if (this.data.length > 0) {
+      this.data[0] = bottom;
+      this.bubbleDown(0);
+    }
+    return top;
+  }
+
+  private isBetter(a: OpenEntry, b: OpenEntry): boolean {
+    return a.f < b.f || (a.f === b.f && a.seq < b.seq);
+  }
+
+  private bubbleUp(index: number): void {
+    while (index > 0) {
+      const parentIndex = (index - 1) >> 1;
+      const current = this.data[index]!;
+      const parent = this.data[parentIndex]!;
+      if (this.isBetter(current, parent)) {
+        this.data[index] = parent;
+        this.data[parentIndex] = current;
+        index = parentIndex;
+      } else {
+        break;
+      }
+    }
+  }
+
+  private bubbleDown(index: number): void {
+    const length = this.data.length;
+    while (true) {
+      const left = (index << 1) + 1;
+      const right = left + 1;
+      let best = index;
+
+      if (left < length && this.isBetter(this.data[left]!, this.data[best]!)) {
+        best = left;
+      }
+      if (right < length && this.isBetter(this.data[right]!, this.data[best]!)) {
+        best = right;
+      }
+      if (best !== index) {
+        const temp = this.data[index]!;
+        this.data[index] = this.data[best]!;
+        this.data[best] = temp;
+        index = best;
+      } else {
+        break;
+      }
+    }
+  }
+}
+
 /**
  * Search for a path from `start` to `goal`. Returns `null` exactly when
  * `start` itself is not standable. Otherwise returns a `PathResult`: the goal
@@ -100,7 +167,8 @@ export function findPath(
 
   let seq = 0;
   const startH = manhattan(start, goal);
-  const open: OpenEntry[] = [{ node: start, g: 0, h: startH, f: startH, seq: seq++ }];
+  const open = new OpenHeap();
+  open.push({ node: start, g: 0, h: startH, f: startH, seq: seq++ });
   const bestG = new Map<string, number>([[key(start.x, start.y, start.z), 0]]);
   const cameFrom = new Map<string, PathNode>();
 
@@ -119,15 +187,7 @@ export function findPath(
       break;
     }
 
-    let bestIndex = 0;
-    for (let i = 1; i < open.length; i++) {
-      const a = open[i]!;
-      const b = open[bestIndex]!;
-      if (a.f < b.f || (a.f === b.f && a.seq < b.seq)) {
-        bestIndex = i;
-      }
-    }
-    const current = open.splice(bestIndex, 1)[0]!;
+    const current = open.pop()!;
     expanded++;
 
     if (current.node.x === goal.x && current.node.y === goal.y && current.node.z === goal.z) {

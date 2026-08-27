@@ -47,24 +47,38 @@ function intersectBox(
   box: Aabb,
   out: BoxHit,
 ): boolean {
+  return intersectBoxDirect(
+    ox, oy, oz, dx, dy, dz,
+    box.minX, box.maxX, box.minY, box.maxY, box.minZ, box.maxZ,
+    out,
+  );
+}
+
+function intersectBoxDirect(
+  ox: number,
+  oy: number,
+  oz: number,
+  dx: number,
+  dy: number,
+  dz: number,
+  minX: number,
+  maxX: number,
+  minY: number,
+  maxY: number,
+  minZ: number,
+  maxZ: number,
+  out: BoxHit,
+): boolean {
   let tMin = -Infinity;
   let tMax = Infinity;
   let axis = -1;
 
-  const entries: Array<{ origin: number; dir: number; min: number; max: number }> = [
-    { origin: ox, dir: dx, min: box.minX, max: box.maxX },
-    { origin: oy, dir: dy, min: box.minY, max: box.maxY },
-    { origin: oz, dir: dz, min: box.minZ, max: box.maxZ },
-  ];
-
-  for (let a = 0; a < 3; a++) {
-    const { origin, dir, min, max } = entries[a]!;
-    if (Math.abs(dir) < EPS) {
-      if (origin < min || origin > max) return false; // parallel and outside
-      continue;
-    }
-    let t1 = (min - origin) / dir;
-    let t2 = (max - origin) / dir;
+  // X axis
+  if (Math.abs(dx) < EPS) {
+    if (ox < minX || ox > maxX) return false;
+  } else {
+    let t1 = (minX - ox) / dx;
+    let t2 = (maxX - ox) / dx;
     if (t1 > t2) {
       const swap = t1;
       t1 = t2;
@@ -72,7 +86,45 @@ function intersectBox(
     }
     if (t1 > tMin) {
       tMin = t1;
-      axis = a;
+      axis = 0;
+    }
+    tMax = Math.min(tMax, t2);
+    if (tMin > tMax) return false;
+  }
+
+  // Y axis
+  if (Math.abs(dy) < EPS) {
+    if (oy < minY || oy > maxY) return false;
+  } else {
+    let t1 = (minY - oy) / dy;
+    let t2 = (maxY - oy) / dy;
+    if (t1 > t2) {
+      const swap = t1;
+      t1 = t2;
+      t2 = swap;
+    }
+    if (t1 > tMin) {
+      tMin = t1;
+      axis = 1;
+    }
+    tMax = Math.min(tMax, t2);
+    if (tMin > tMax) return false;
+  }
+
+  // Z axis
+  if (Math.abs(dz) < EPS) {
+    if (oz < minZ || oz > maxZ) return false;
+  } else {
+    let t1 = (minZ - oz) / dz;
+    let t2 = (maxZ - oz) / dz;
+    if (t1 > t2) {
+      const swap = t1;
+      t1 = t2;
+      t2 = swap;
+    }
+    if (t1 > tMin) {
+      tMin = t1;
+      axis = 2;
     }
     tMax = Math.min(tMax, t2);
     if (tMin > tMax) return false;
@@ -116,23 +168,25 @@ export function intersectRayBoxes(
   boxes: readonly Aabb[],
   maxT: number,
 ): RayBoxesHit | null {
-  let best: BoxHit | null = null;
+  let bestT = Infinity;
+  let bestAxis = -1;
   const hit: BoxHit = { t: 0, axis: -1 };
   for (const candidate of boxes) {
     if (!intersectBox(ox, oy, oz, dx, dy, dz, candidate, hit)) continue;
     if (hit.t > maxT) continue;
-    if (best === null || hit.t < best.t) {
-      best = { t: hit.t, axis: hit.axis };
+    if (hit.t < bestT) {
+      bestT = hit.t;
+      bestAxis = hit.axis;
     }
   }
-  if (best === null) return null;
-  const dirOnAxis = best.axis === 0 ? dx : best.axis === 1 ? dy : dz;
-  const n = entryNormal(best.axis, dirOnAxis);
+  if (bestAxis === -1) return null;
+  const dirOnAxis = bestAxis === 0 ? dx : bestAxis === 1 ? dy : dz;
+  const n = entryNormal(bestAxis, dirOnAxis);
   return {
-    t: best.t,
-    nx: best.axis === 0 ? n : 0,
-    ny: best.axis === 1 ? n : 0,
-    nz: best.axis === 2 ? n : 0,
+    t: bestT,
+    nx: bestAxis === 0 ? n : 0,
+    ny: bestAxis === 1 ? n : 0,
+    nz: bestAxis === 2 ? n : 0,
   };
 }
 
@@ -183,25 +237,47 @@ export function raycastSelection(
   let tMaxY = dirY !== 0 ? (stepY > 0 ? y + 1 - originY : originY - y) * tDeltaY : Infinity;
   let tMaxZ = dirZ !== 0 ? (stepZ > 0 ? z + 1 - originZ : originZ - z) * tDeltaZ : Infinity;
 
+  const hit: BoxHit = { t: 0, axis: -1 };
   const tryCell = (cx: number, cy: number, cz: number): ShapeRayHit | null => {
     const shape = world.getSelectionShape(cx, cy, cz);
     if (shape.isEmpty) return null;
 
-    const worldBoxes = shape.boxes.map((b) => translate(b, cx, cy, cz));
-    const best = intersectRayBoxes(originX, originY, originZ, dirX, dirY, dirZ, worldBoxes, maxDistance);
-    if (best === null) return null;
+    let bestT = Infinity;
+    let bestAxis = -1;
+    for (const b of shape.boxes) {
+      if (
+        !intersectBoxDirect(
+          originX, originY, originZ,
+          dirX, dirY, dirZ,
+          b.minX + cx, b.maxX + cx,
+          b.minY + cy, b.maxY + cy,
+          b.minZ + cz, b.maxZ + cz,
+          hit,
+        )
+      ) {
+        continue;
+      }
+      if (hit.t > maxDistance) continue;
+      if (hit.t < bestT) {
+        bestT = hit.t;
+        bestAxis = hit.axis;
+      }
+    }
+    if (bestAxis === -1) return null;
 
+    const dirOnAxis = bestAxis === 0 ? dirX : bestAxis === 1 ? dirY : dirZ;
+    const n = entryNormal(bestAxis, dirOnAxis);
     return {
       blockX: cx,
       blockY: cy,
       blockZ: cz,
-      nx: best.nx,
-      ny: best.ny,
-      nz: best.nz,
-      pointX: originX + dirX * best.t,
-      pointY: originY + dirY * best.t,
-      pointZ: originZ + dirZ * best.t,
-      distance: best.t,
+      nx: bestAxis === 0 ? n : 0,
+      ny: bestAxis === 1 ? n : 0,
+      nz: bestAxis === 2 ? n : 0,
+      pointX: originX + dirX * bestT,
+      pointY: originY + dirY * bestT,
+      pointZ: originZ + dirZ * bestT,
+      distance: bestT,
     };
   };
 
@@ -232,15 +308,4 @@ export function raycastSelection(
   }
 
   return null;
-}
-
-function translate(box: Aabb, cx: number, cy: number, cz: number): Aabb {
-  return {
-    minX: box.minX + cx,
-    minY: box.minY + cy,
-    minZ: box.minZ + cz,
-    maxX: box.maxX + cx,
-    maxY: box.maxY + cy,
-    maxZ: box.maxZ + cz,
-  };
 }
