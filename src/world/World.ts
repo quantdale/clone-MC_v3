@@ -8,6 +8,8 @@ import {
   createDefaultBlockStateRegistry,
 } from './BlockStateRegistry';
 import { DimensionType } from '../data/DimensionType';
+import { OVERWORLD_DIMENSION_TYPE } from '../data/DimensionTypes';
+import { CanonicalWorldStorage } from './CanonicalWorldStorage';
 import { Chunk, ChunkState } from './Chunk';
 import { ChunkManager } from './ChunkManager';
 import { ChunkMesher, geometryFromMeshStream } from './ChunkMesher';
@@ -138,6 +140,8 @@ export interface WorldEditDurability {
  * survives chunk unload/reload.
  */
 export class World implements WorldAccess {
+  readonly dimension: DimensionType;
+  readonly storage: CanonicalWorldStorage;
   private readonly registry: BlockRegistry;
   private readonly chunkManager: ChunkManager;
   private readonly scene: THREE.Scene;
@@ -307,6 +311,12 @@ export class World implements WorldAccess {
     this.generator = opts.generator;
     this.materials = opts.materials;
     this.stateRegistry = opts.stateRegistry ?? createDefaultBlockStateRegistry();
+    this.dimension = opts.dimension ?? OVERWORLD_DIMENSION_TYPE;
+    this.storage = new CanonicalWorldStorage({
+      dimension: this.dimension,
+      blockRegistry: this.registry,
+      stateRegistry: this.stateRegistry,
+    });
     this.editDurability = opts.editDurability ?? null;
     this.renderDistance = opts.renderDistance ?? CONFIG.renderDistance;
     this.simulationDistance = opts.simulationDistance ?? CONFIG.simulationDistance;
@@ -442,6 +452,7 @@ export class World implements WorldAccess {
     const oldId = chunk.getLocal(lx, ly, lz);
     chunk.setLocal(lx, ly, lz, id);
     chunk.markDirty();
+    this.storage.setBlock(x, y, z, id);
 
     // Keep the voxel tally accurate for already-generated chunks.
     if (chunk.generated && oldId !== id) {
@@ -498,6 +509,7 @@ export class World implements WorldAccess {
     }
     const state = this.stateRegistry.lookup(blockId, { ...properties });
     this.setBlock(x, y, z, blockId);
+    this.storage.setBlockState(x, y, z, blockId, properties);
 
     const [cx, cy, cz] = worldToChunk(x, y, z);
     const [lx, ly, lz] = worldToLocal(x, y, z);
@@ -551,6 +563,12 @@ export class World implements WorldAccess {
   getBlockState(x: number, y: number, z: number): BlockState {
     if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(z)) {
       return this.stateRegistry.getDefaultState(BlockId.Air);
+    }
+    if (this.storage.dimension.containsY(y)) {
+      const canonical = this.storage.getBlockState(x, y, z);
+      if (canonical.id !== this.stateRegistry.getDefaultState(BlockId.Air).id) {
+        return canonical;
+      }
     }
     const [cx, cy, cz] = worldToChunk(x, y, z);
     const [lx, ly, lz] = worldToLocal(x, y, z);

@@ -19,9 +19,9 @@ import {
 import { HarvestRules } from '../world/HarvestRules';
 import { TerrainGenerator } from '../world/TerrainGenerator';
 import { ChunkMesher } from '../world/ChunkMesher';
-import { World } from '../world/World';
-import type { WorldEditSnapshot } from '../world/World';
+import { World, type WorldEditSnapshot } from '../world/World';
 import { BlockStateRegistry, createDefaultBlockStateRegistry } from '../world/BlockStateRegistry';
+import { OVERWORLD_DIMENSION_TYPE } from '../data/DimensionTypes';
 import { BlockBehaviorRegistry } from '../simulation/BlockBehavior';
 import { RandomTickEligibility } from '../simulation/RandomTickEligibility';
 import { CropBlockBehavior } from '../simulation/CropBehavior';
@@ -516,6 +516,7 @@ export class Game {
       },
       renderDistance,
       simulationDistance: this.runtimeSimulationDistance(),
+      dimension: OVERWORLD_DIMENSION_TYPE,
       stateRegistry: this.stateRegistry,
       editDurability: this.persistenceImpl ?? undefined,
       monitor: this.worldMonitor,

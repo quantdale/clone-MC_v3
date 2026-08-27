@@ -44,9 +44,9 @@ Rules:
 ## Phase 2 — Canonical live block-state authority
 
 - [x] Introduce/refine a thin dimension-aware live-world storage facade over `VerticalWorldAccess`/`ChunkColumn`/`ChunkSection`; do not create a third backing store.
-- [ ] Make `World` own/use the canonical storage as the single writable block-state authority.
-- [ ] Preserve `World.getBlock()` only as a projection from canonical `BlockState.blockId` where compatibility requires it.
-- [ ] Route block-ID writes through registered default `BlockState` and stateful writes through canonical `setBlockState`.
+- [x] Make `World` own/use the canonical storage as the single writable block-state authority.
+- [x] Preserve `World.getBlock()` only as a projection from canonical `BlockState.blockId` where compatibility requires it.
+- [x] Route block-ID writes through registered default `BlockState` and stateful writes through canonical `setBlockState`.
 - [ ] Remove `World.stateOverlay` (or equivalent) as an independent writable/read authority.
 - [ ] Convert/replace `ChunkManager` residency so authoritative ownership is horizontal `(chunkX,chunkZ)` columns with lazy vertical sections.
 - [ ] Remove production `cy === 0`, legacy 0..63 range guards, and slab-only import/edit assumptions from canonical world operations.
@@ -55,11 +55,11 @@ Rules:
 - [ ] Ensure absent-air reads do not call APIs that eagerly materialize sections (e.g. distinguish read-only lookup from `getSection()` if needed).
 - [ ] Define dirty unload semantics: removal cannot silently discard unsaved canonical state.
 - [ ] Demote/delete legacy `Chunk` from production authority after its consumers migrate; retained uses must be classified and non-writable relative to live truth.
-- [ ] Add focused tests for ID projection, property-bearing state writes, negative coordinates, bounds, lazy allocation, dirty tracking and overlay elimination.
+- [x] Add focused tests for ID projection, property-bearing state writes, negative coordinates, bounds, lazy allocation, dirty tracking and overlay elimination.
 
 ## Phase 3 — Live Overworld composition, generation, and streaming
 
-- [ ] Bind `OVERWORLD_DIMENSION_TYPE` in the real `Game` composition root and expose its active range to `World`/debug/test seams.
+- [x] Bind `OVERWORLD_DIMENSION_TYPE` in the real `Game` composition root and expose its active range to `World`/debug/test seams.
 - [ ] Derive `minY`, `maxY`, `minSectionY`, `sectionCount`, spawn bounds and vertical iteration from `DimensionType`, not duplicated literals.
 - [ ] Audit the current `src/worldgen/**` stage graph and document the exact live adapter/composition chosen.
 - [ ] Make missing-column generation populate canonical `BlockState`s across the active Overworld range.
