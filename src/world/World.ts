@@ -593,7 +593,8 @@ export class World implements WorldAccess {
   isSolid(x: number, y: number, z: number): boolean {
     // An invisible solid floor below the world prevents the player from
     // falling forever if a chunk is momentarily un-generated or unloaded.
-    if (y < this.dimension.minY) {
+    const bottomY = this.minChunkY * CHUNK_DIMENSIONS.height;
+    if (y < bottomY) {
       return true;
     }
     return this.registry.isSolid(this.getBlock(x, y, z));
