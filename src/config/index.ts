@@ -119,8 +119,8 @@ export const CONFIG = {
 
   /** Conservative quality defaults for automated/headless browser sessions. */
   headless: {
-    renderDistance: 2,
-    simulationDistance: 2,
+    renderDistance: 1,
+    simulationDistance: 1,
     maxPixelRatio: 1,
     clouds: false,
   },

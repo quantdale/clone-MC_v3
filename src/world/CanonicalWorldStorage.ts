@@ -101,6 +101,18 @@ export class CanonicalWorldStorage implements WorldAccess {
     return this.vwa.removeColumn(chunkX, chunkZ);
   }
 
+  /** Replace or insert a column directly (bulk import, idempotent by chunkX/chunkZ). */
+  importColumn(column: ChunkColumn): void {
+    // VWA has no public setter; use its columnMap via the same pattern
+    // `CanonicalWorldStorage.deserialize` already uses — centralized here so
+    // callers do not repeat the private cast.
+    this.vwa.removeColumn(column.chunkX, column.chunkZ);
+    (this.vwa as unknown as { columnMap: Map<string, ChunkColumn> }).columnMap.set(
+      `${column.chunkX},${column.chunkZ}`,
+      column,
+    );
+  }
+
   get size(): number {
     return this.vwa.size;
   }

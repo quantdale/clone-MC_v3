@@ -329,6 +329,12 @@ export class LegacyLocalStorageMigrator {
   /**
    * Import the legacy edits and player state for `seed` into the repositories. Never throws out of
    * the method: storage/validation/write/verification failures are collected in `report.errors`.
+   * Idempotent: `putChunkEdits`/`putColumn` overwrite by (worldId,cx,cy,cz) /
+   * (worldId,cx,cz) key, so repeated `migrate(seed)` calls with the same
+   * legacy payload produce identical durable state without duplication. Negative-Y
+   * edits (e.g., y=-10 → chunkY=-1) are faithfully preserved via
+   * `decodeFullChunkIndex` → `columnSectionY = cy*4+sectionY` and survive
+   * round-trip verification.
    */
   async migrate(seed: number): Promise<LegacyMigrationReport> {
     const worldId = this.worldIdForSeed(seed);

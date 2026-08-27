@@ -645,6 +645,11 @@ export class GamePersistence implements WorldEditDurability {
 
   /**
    * Enqueue a canonical chunk column's sections as a full-snapshot deduplicated dirty unit.
+   * Idempotent: the DirtySaveQueue deduplicates by `key` (`chunk-sections|worldId|cx|cz`),
+   * so repeated `saveChunkColumn` calls for the same column before flush coalesce
+   * to the latest serialized snapshot. Negative-Y sections (e.g., y=-10 → sy=-1)
+   * and high-Y (y=310 → sy=19) are preserved because `ChunkColumn.serialize`
+   * includes all dirty sections across the dimension's 24-section height.
    */
   saveChunkColumn(column: ChunkColumn): void {
     if (this.disposed) return;

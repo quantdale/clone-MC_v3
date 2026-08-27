@@ -48,7 +48,8 @@ import {
   worldToChunk,
   worldToLocal,
 } from './WorldCoordinates';
-
+import type { SerializedChunkColumns } from './VerticalWorldAccess';
+import type { ChunkColumn } from './ChunkColumn';
 /** A queued meshing job; carries the meshVersion captured at queue time. */
 interface MeshJob {
   key: string;
@@ -157,20 +158,27 @@ export class World implements WorldAccess {
   /** Number of vertical chunk layers streamed around the player (1 by default). */
   private readonly chunkLayerCount: number;
 
-  /** Resident cache of player edits keyed by chunk key → local index → block
-   *  id. Survives unload within the LRU cap; the injected durability layer
-   *  (DIRTY-1/2) owns the authoritative copy of everything evicted. */
+  /**
+   * PROJECTION_ONLY — bounded LRU cache of player edits (chunkKey → localIndex → blockId).
+   * Not authoritative: the single writable truth is `this.storage` (`CanonicalWorldStorage` →
+   * `VerticalWorldAccess` → `ChunkColumn` dirty sections). This map exists only as a
+   * legacy compatibility projection for `exportEdits`/`importEdits`, the `WorldEditDurability`
+   * bridge, and fast generation-time re-application. It is bounded to
+   * `EDIT_OVERLAY_MAX_CHUNKS` entries with LRU expiry; eviction is safe because the
+   * dirty column in `storage` retains the edit. New persistence code MUST use
+   * `storage.serialize()` / `storage.dirtyColumns()` and `GamePersistence.saveChunkColumn`
+   * instead of this overlay. Removal criteria: delete this field once `exportEdits`
+   * callers and `WorldEditDurability` are fully cut over to column storage.
+   */
   private readonly editOverlay = new Map<string, Map<number, number>>();
-  /** Edit overlay chunk keys ordered least- to most-recently used. Drives LRU
-   *  eviction so a chunk the player keeps returning to is never dropped in
-   *  favour of one that was edited later but never touched again. */
+  /** LRU order for the projection-only overlay; drives eviction. */
   private readonly editOverlayAccessOrder: string[] = [];
-  /** Maximum distinct chunks tracked in the edit overlay. Prevents unbounded
-   *  memory growth over very long sessions. */
+  /** Maximum distinct chunks tracked in the projection overlay. */
   private static readonly EDIT_OVERLAY_MAX_CHUNKS = 10_000;
   /** Durable owner of edits beyond the resident overlay cap (optional; tests
-   *  and the persistence facade inject it). Null keeps legacy cache-only
-   *  behaviour where eviction discards entries. */
+   *  and the persistence facade inject it). Null keeps cache-only
+   *  behaviour where eviction would otherwise drop the projection entry
+   *  (canonical storage still retains the edit via its dirty column). */
   private readonly editDurability: WorldEditDurability | null;
   /** Chunk keys with an in-flight `loadCommittedChunkEdits` hydration, so
    *  repeated generation cannot double-fire the async lookup (DIRTY-3). */
@@ -353,7 +361,6 @@ export class World implements WorldAccess {
     this.memoChunk = chunk;
     return chunk;
   }
-
   getBlock(x: number, y: number, z: number): number {
     if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(z)) {
       return BlockId.Air;
@@ -398,12 +405,24 @@ export class World implements WorldAccess {
 
     const chunk = this.chunkManager.getChunk(cx, cy, cz);
 
-    // No-op write: skip remeshing and avoid growing the edit overlay.
+    // No-op write: skip remeshing and avoid growing the overlay projection.
     if (chunk && chunk.getLocal(lx, ly, lz) === id) {
       return;
     }
+    if (!chunk && this.storage.getBlock(x, y, z) === id) {
+      return;
+    }
 
-    // Record the edit so it survives chunk unload/reload.
+    // Canonical write: storage is the single writable truth (also for
+    // not-yet-loaded chunks). Materializes column/section lazily and marks
+    // dirty for `dirtyColumns()` persistence. For unloaded chunks this is the
+    // durable truth even without a resident chunk.
+    this.storage.setBlock(x, y, z, id);
+
+    // Projection-only overlay: mirrors the canonical edit for legacy
+    // `exportEdits`/`applyEditOverlay`/`WorldEditDurability` consumers. Not
+    // authoritative; eviction is safe because `storage` retains the dirty
+    // column.
     let overlay = this.editOverlay.get(key);
     if (!overlay) {
       overlay = new Map<number, number>();
@@ -411,10 +430,6 @@ export class World implements WorldAccess {
     }
     this.touchEditOverlay(key);
     overlay.set(index, id);
-    // DIRTY-1/2: every committed live edit is handed to the durability layer
-    // (full latest changes), so the resident overlay is never the sole copy.
-    // importEdits deliberately does NOT capture: boot-time bulk imports are
-    // already durable and must not be re-enqueued.
     this.editDurability?.captureChunkEdits(cx, cy, cz, overlay);
 
     if (!chunk) {
@@ -424,8 +439,6 @@ export class World implements WorldAccess {
     const oldId = chunk.getLocal(lx, ly, lz);
     chunk.setLocal(lx, ly, lz, id);
     chunk.markDirty();
-    this.storage.setBlock(x, y, z, id);
-
     // Keep the voxel tally accurate for already-generated chunks.
     if (chunk.generated && oldId !== id) {
       const delta = (id !== BlockId.Air ? 1 : 0) - (oldId !== BlockId.Air ? 1 : 0);
@@ -435,17 +448,23 @@ export class World implements WorldAccess {
       }
     }
 
-    // A block on a horizontal chunk boundary changes the faces of the
-    // neighbouring chunk, so mark that neighbour dirty too.
+    // A block on a chunk boundary changes the faces of the neighbouring chunk,
+    // so mark that neighbour dirty too. Horizontal invalidation covers x/z slab
+    // faces; vertical invalidation is only needed at slab boundaries (ly == 0
+    // or height-1) while meshing is per 64-block slab. For future per-16-section
+    // meshing, vertical invalidation must become per-section: dirty the
+    // neighbour when y % 16 == 0 or 15 rather than y % 64 (i.e. check section
+    // local y instead of slab local y).
     if (lx === 0) this.markNeighborDirty(cx - 1, cy, cz);
     if (lx === CHUNK_DIMENSIONS.width - 1) this.markNeighborDirty(cx + 1, cy, cz);
     if (lz === 0) this.markNeighborDirty(cx, cy, cz - 1);
     if (lz === CHUNK_DIMENSIONS.depth - 1) this.markNeighborDirty(cx, cy, cz + 1);
+    if (ly === 0) this.markNeighborDirty(cx, cy - 1, cz);
+    if (ly === CHUNK_DIMENSIONS.height - 1) this.markNeighborDirty(cx, cy + 1, cz);
     // Voxel lighting: queue minimal invalidation for both channels (the engine
     // reads the NEW opacity/luminance through its accessors), and remember the
     // affected chunks so a productive drain remeshes them.
     this.lightEngine.onBlockChanged(x, y, z);
-    this.lightDirtyChunks.add(key);
 
     this.enqueueMeshWithRetry(chunk);
     if (id === BlockId.Sand || id === BlockId.Gravel) {
@@ -507,6 +526,18 @@ export class World implements WorldAccess {
     this.chunkManager.forEachChunk((chunk) => fn(chunk.cx, chunk.cy, chunk.cz));
   }
 
+  /**
+   * Whether the block at world coordinates is solid (collidable).
+   *
+   * Uses the dimension-derived bottom (`minChunkY * CHUNK_SLAB_HEIGHT`) as the
+   * invisible floor: any `y` below the streamed vertical window returns `true`
+   * so the player cannot fall forever while chunks are un-generated. Inside the
+   * window, solidity is read from the live block id via `getBlock`, whose slab
+   * routing (`Math.floor(y/64)` / `x - cx*16`) is correct for negative Y/Z/X
+   * via `Math.floor` (not truncation). The chunk height appears only as
+   * the slab height constant (`CHUNK_DIMENSIONS.height = 64`), never as a world
+   * bound — world bounds are `dimension.minY`/`dimension.maxY` (`-64..319`).
+   */
   isSolid(x: number, y: number, z: number): boolean {
     // An invisible solid floor below the world prevents the player from
     // falling forever if a chunk is momentarily un-generated or unloaded.
@@ -516,7 +547,16 @@ export class World implements WorldAccess {
     }
     return this.registry.isSolid(this.getBlock(x, y, z));
   }
-  /** Export the sparse edit overlay as a versioned, JSON-safe snapshot. */
+  /**
+   * Export the sparse edit overlay as a versioned, JSON-safe snapshot.
+   * Legacy read-old path: iterates the projection-only overlay. New saves
+   * MUST use `storage.serialize()` / `GamePersistence.saveChunkColumn` (column
+   * serialization) as the write-new path; this method remains for backward
+   * compatibility and for tests that round-trip the legacy snapshot format.
+   * The overlay is a projection of canonical `storage`; dirty columns in
+   * `storage` are the durable truth and survive unload even after overlay
+   * LRU eviction.
+   */
   exportEdits(): WorldEditSnapshot {
     const edits: WorldEditSnapshot['edits'] = [];
     for (const [key, overlay] of this.editOverlay) {
@@ -536,10 +576,61 @@ export class World implements WorldAccess {
     return { version: 1, seed: this.seed, edits };
   }
 
+  /** Export canonical column state for new saves (write-new path). */
+  exportColumns(): SerializedChunkColumns {
+    return this.storage.serialize();
+  }
+
+  /**
+   * Import canonical column state (write-new path). Returns true when the
+   * serialized layout matches this world's dimension. Idempotent: repeated
+   * imports of the same payload do not duplicate columns.
+   */
+  importColumns(data: unknown): boolean {
+    if (typeof data !== 'object' || data === null) return false;
+    const candidate = data as SerializedChunkColumns;
+    if (
+      typeof candidate.version !== 'number' ||
+      typeof candidate.minSectionY !== 'number' ||
+      typeof candidate.sectionCount !== 'number' ||
+      !Array.isArray(candidate.columns)
+    ) {
+      return false;
+    }
+    try {
+      const restored = CanonicalWorldStorage.deserialize(
+        candidate,
+        this.dimension,
+        this.registry,
+        this.stateRegistry,
+      );
+      for (const col of restored.vwa.columns()) {
+        this.storage.importColumn(col);
+        for (let cy = this.minChunkY; cy < this.minChunkY + this.chunkLayerCount; cy++) {
+          const chunk = this.chunkManager.getChunk(col.chunkX, cy, col.chunkZ);
+          if (chunk) {
+            this.syncChunkFromStorage(chunk);
+            this.refreshChunkVoxelCount(chunk);
+            chunk.markDirty();
+            this.enqueueMeshWithRetry(chunk);
+          }
+        }
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+
   /**
    * Import a validated edit snapshot. Invalid or foreign entries are ignored,
    * so a corrupt browser save cannot poison chunk storage or the mesher.
    * Returns the number of accepted cell edits.
+   * Read-old/write-new: accepts the legacy `WorldEditSnapshot` format, writes
+   * through canonical `storage` (dirty columns) and mirrors into the
+   * projection overlay idempotently. Repeated imports of the same snapshot
+   * do not duplicate entries.
    */
   importEdits(snapshot: unknown): number {
     if (!this.isEditSnapshot(snapshot) || snapshot.seed !== this.seed) {
@@ -567,16 +658,37 @@ export class World implements WorldAccess {
         ) {
           continue;
         }
-        if (overlay.get(index) !== id) {
-          overlay.set(index, id);
-          accepted++;
+        // Idempotent: only count when overlay or canonical storage actually changes
+        const prevOverlay = overlay.get(index);
+        const lx = index % 16;
+        const lz = Math.floor(index / 16) % 16;
+        const ly = Math.floor(index / 256);
+        const wx = cx * CHUNK_DIMENSIONS.width + lx;
+        const wy = cy * CHUNK_DIMENSIONS.height + ly;
+        const wz = cz * CHUNK_DIMENSIONS.depth + lz;
+        const canonicalId = this.storage.getBlock(wx, wy, wz);
+        const needsOverlay = prevOverlay !== id;
+        const needsCanonical = canonicalId !== id;
+        if (!needsOverlay && !needsCanonical) {
+          continue;
         }
+        if (needsOverlay) {
+          overlay.set(index, id);
+        }
+        if (needsCanonical) {
+          // Write canonical truth (marks dirty column/section, idempotent)
+          this.storage.setBlock(wx, wy, wz, id);
+        }
+        accepted++;
       }
       if (overlay.size > 0) {
         this.touchEditOverlay(key);
         const chunk = this.chunkManager.getChunk(cx, cy, cz);
         if (chunk?.generated) {
           this.applyEditOverlay(chunk);
+          // Ensure canonical edits are reflected in the live chunk even when
+          // the overlay projection was stale (read-old path writes canonical)
+          this.syncChunkFromStorage(chunk);
           this.refreshChunkVoxelCount(chunk);
           chunk.markDirty();
           this.enqueueMeshWithRetry(chunk);
@@ -587,7 +699,6 @@ export class World implements WorldAccess {
     }
     return accepted;
   }
-
   /** Number of distinct chunks currently tracked in the edit overlay. */
   getEditOverlayChunkCount(): number {
     return this.editOverlay.size;
@@ -1000,7 +1111,14 @@ export class World implements WorldAccess {
       }
       this.lightDirtyChunks.delete(key);
 
-      // The edit overlay is intentionally kept so edits survive reload.
+      // Dirty unload semantics: canonical storage (Column/Section dirty sets)
+      // retains unsaved edits across chunk unload. Do NOT call
+      // `storage.clearDirty()` or `removeColumn` here; the column remains
+      // in `storage.vwa` with `isDirty`/`dirtyColumns()` visible to the
+      // persistence layer (`GamePersistence.saveChunkColumn`). Eviction of
+      // the projection-only `editOverlay` entry is safe because the dirty
+      // column is the durable truth. The edit overlay is intentionally kept
+      // so edits survive reload (until LRU expiry, still safe).
       // removeChunk runs the authoritative eviction flow (markEvicting before
       // release) and cancels outstanding pipeline work.
       this.chunkManager.removeChunk(chunk.cx, chunk.cy, chunk.cz);
@@ -1042,6 +1160,16 @@ export class World implements WorldAccess {
     this.fallingQueue.push([x, y, z]);
   }
 
+  /**
+   * Whether the chunk containing `(x,y,z)` is present and generated.
+   *
+   * Y is gated by `dimension.containsY(y)` (`-64..319` for Overworld) — not by
+   * the slab height. Chunk identity for Y uses slab stride
+   * `Math.floor(y / CHUNK_DIMENSIONS.height)` (`/64`) with `Math.floor` so
+   * negative Y (-1..-64 -> cy -1) routes correctly (not truncated toward zero).
+   * Horizontal X/Z likewise use `Math.floor(x/16)` / `floorMod` symmetry with
+   * `worldToChunk`/`worldToLocal`, guaranteeing -17 maps to chunk -2 local 15.
+   */
   private isLoadedAt(x: number, y: number, z: number): boolean {
     if (!this.dimension.containsY(y)) return false;
     const cx = Math.floor(x / CHUNK_DIMENSIONS.width);
@@ -1060,7 +1188,6 @@ export class World implements WorldAccess {
     if (ok) chunk.state = ChunkState.Generating;
     return ok;
   }
-
   /** Queue a mesh job through the pipeline's bounded mesh stage. */
   private enqueueMesh(chunk: Chunk): boolean {
     this.ensureMeshableRecord(chunk);
@@ -1142,6 +1269,12 @@ export class World implements WorldAccess {
    * from the durability layer re-materializes the overlay entry immediately;
    * otherwise an async committed-copy hydration is fired (de-duplicated per
    * chunk key) which applies, remeshes, and populates the overlay on resolve.
+   * Final fallback: canonical storage column (single writable truth). If a
+   * column exists for this (cx,cz), its sections are scanned and any non-air
+   * blocks that differ from freshly generated terrain are copied into the
+   * chunk and into the projection overlay, so an evicted overlay does not
+   * lose edits after the overlay LRU discards them — the dirty column retains
+   * them.
    */
   private applyEditOverlay(chunk: Chunk): void {
     const key = chunkKey(chunk.cx, chunk.cy, chunk.cz);
@@ -1149,19 +1282,57 @@ export class World implements WorldAccess {
     if (!overlay) {
       const pending = this.editDurability?.restorePendingChunkEdits(chunk.cx, chunk.cy, chunk.cz);
       if (pending && pending.size > 0) {
-        // Copy into a fresh resident entry; the durability layer keeps its own.
         overlay = new Map<number, number>(pending);
         this.editOverlay.set(key, overlay);
         this.touchEditOverlay(key);
       } else if (this.editDurability?.loadCommittedChunkEdits) {
         this.beginEditHydration(chunk.cx, chunk.cy, chunk.cz, key);
       }
+      // Final fallback: canonical storage. Covers both evicted-overlay and
+      // pure column-persistence cases (negative-Y edits, property edits).
+      if (!overlay) {
+        const column = this.storage.getColumn(chunk.cx, chunk.cz);
+        if (column) {
+          let found = false;
+          const cy = chunk.cy;
+          for (let ly = 0; ly < CHUNK_DIMENSIONS.height; ly++) {
+            const wy = cy * CHUNK_DIMENSIONS.height + ly;
+            if (!this.dimension.containsY(wy)) continue;
+            for (let lz = 0; lz < 16; lz++) {
+              for (let lx = 0; lx < 16; lx++) {
+                const id = column.getBlockState(lx, wy, lz).blockId;
+                if (id === BlockId.Air) continue;
+                // Only materialize non-air that differs from generated chunk;
+                // air reads are already correct and scanning air is skipped
+                // to avoid allocating overlay entries for empty space.
+                const idx = localIndex(lx, ly, lz);
+                if (chunk.blocks[idx] !== id) {
+                  if (!overlay) {
+                    overlay = new Map<number, number>();
+                    this.editOverlay.set(key, overlay);
+                  }
+                  overlay.set(idx, id);
+                  chunk.blocks[idx] = id;
+                  found = true;
+                }
+              }
+            }
+          }
+          if (found && overlay) {
+            this.touchEditOverlay(key);
+            return;
+          }
+          if (!overlay) {
+            return;
+          }
+        } else {
+          if (!overlay) return;
+        }
+      }
       if (!overlay) {
         return;
       }
     }
-    // Reading the overlay counts as a use: a chunk that keeps reloading around
-    // the player must not be evicted before chunks edited once and abandoned.
     this.touchEditOverlay(key);
     for (const [index, id] of overlay) {
       chunk.blocks[index] = id;
@@ -1529,6 +1700,33 @@ export class World implements WorldAccess {
     this.chunkVoxelCounts.set(key, count);
   }
 
+  /** Copy canonical column state into a loaded chunk's block array (storage → chunk). */
+  private syncChunkFromStorage(chunk: Chunk): void {
+    const column = this.storage.getColumn(chunk.cx, chunk.cz);
+    if (!column) return;
+    for (let ly = 0; ly < CHUNK_DIMENSIONS.height; ly++) {
+      const wy = chunk.cy * CHUNK_DIMENSIONS.height + ly;
+      if (!this.dimension.containsY(wy)) continue;
+      for (let lz = 0; lz < 16; lz++) {
+        for (let lx = 0; lx < 16; lx++) {
+          const id = column.getBlockState(lx, wy, lz).blockId;
+          const idx = localIndex(lx, ly, lz);
+          chunk.blocks[idx] = id;
+        }
+      }
+    }
+  }
+
+  /** Dirty columns tracked by canonical storage (single writable truth). */
+  getDirtyColumns(): ChunkColumn[] {
+    return this.storage.dirtyColumns();
+  }
+
+  /** Whether canonical storage has unsaved changes. */
+  get isStorageDirty(): boolean {
+    return this.storage.isDirty;
+  }
+
   /** Rendering radius (chunks loaded/generated/meshed/unloaded around the player). */
   getRenderDistance(): number {
     return this.renderDistance;
@@ -1591,7 +1789,7 @@ export class World implements WorldAccess {
         // its mesh will attach within a few frames.
         const surfaceCy = 0;
         const chunk = this.chunkManager.getChunk(playerChunkX + dx, surfaceCy, playerChunkZ + dz);
-        if (chunk?.state === ChunkState.Visible) {
+        if (chunk?.generated) {
           ready++;
         }
       }

@@ -61,7 +61,7 @@ import { StatusEffectManager } from '../data/StatusEffectManager';
 import { createDefaultStatusEffectRegistry } from '../data/StatusEffect';
 import { createDefaultAttributeRegistry } from '../data/AttributeRegistry';
 import { ExperienceSystem } from '../player/ExperienceSystem';
-import { worldToChunk } from '../world/WorldCoordinates';
+import { worldToChunk, CHUNK_DIMENSIONS } from '../world/WorldCoordinates';
 import { GameAudio } from '../audio/GameAudio';
 import {
   GamePersistence,
@@ -1183,7 +1183,10 @@ export class Game {
    */
   private tickRandomBlocks(): void {
     this.simTick++;
-    const sectionsPerChunk = CONFIG.chunk.height / 16;
+    // Slab-height → section count: one 64-block slab contains exactly 4 × 16³ sections.
+    // This is the per-chunk slice count, NOT a world-height constant (world height is
+    // `dimension.height` / `SECTION_SIZE` via `DimensionType`).
+    const sectionsPerChunk = CHUNK_DIMENSIONS.height / 16;
     this.world.forEachLoadedChunk((cx, cy, cz) => {
       if (!this.world.isChunkSimulating(cx, cz)) {
         return;

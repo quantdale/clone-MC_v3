@@ -51,8 +51,9 @@ export interface PassiveMobWorldDeps {
 /**
  * Bridges `World`/`TerrainGenerator`/`BiomeRegistry` to {@link PassiveMobWorld}. Every solid block
  * collides as a full cube (partial shapes not modeled); sky light is a simplified open-column scan
- * (15 if unobstructed up to `CONFIG.chunk.height`, else 0); block light is always 0 (no block-light
- * sources modeled) — documented simplifications, see design.md.
+ * (15 if unobstructed up to the slab top, else 0) (legacy simplification — real sky light
+ * uses dimension-aware `dimension.height` and section storage); block light is always 0
+ * (no block-light sources modeled) — documented simplifications, see design.md.
  */
 export class PassiveMobWorldAdapter implements PassiveMobWorld {
   private readonly world: World;

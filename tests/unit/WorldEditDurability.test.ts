@@ -212,10 +212,14 @@ describe('world edit durability bridge', () => {
 
     // Boundedness: mock holds exactly the distinct edited chunks, once each.
     expect(durability.captures.size).toBe(distinctChunks);
-    // stateOverlay untouched by any of this (defaults only).
-    expect(world.getBlockState(3, 5, 3).blockId).toBe(world.getBlock(3, 5, 3));
-    expect(world.getBlockState(7, 3, 27).blockId).toBe(world.getBlock(7, 3, 27));
-
+    // Canonical storage is the durable truth for unloaded chunks: getBlock
+    // (chunk-only) returns Air when no chunk is resident, while storage and
+    // getBlockState reflect the Dirt edit. StateOverlay is still defaults.
+    expect(world.getBlock(3, 5, 3)).toBe(BlockId.Air);
+    expect(world.storage.getBlock(3, 5, 3)).toBe(BlockId.Dirt);
+    expect(world.getBlockState(3, 5, 3).blockId).toBe(BlockId.Dirt);
+    expect(world.getBlockState(7, 3, 27).blockId).toBe(BlockId.Air);
+    expect(world.getBlock(7, 3, 27)).toBe(BlockId.Air);
     // Save/reload equivalence: canonical snapshot → fresh world (same seed),
     // then compare FULL canonical edit state cell-by-cell (DIRTY-5).
     const snapshot = snapshotFrom(canonicalState(world, durability), seed);
