@@ -3,7 +3,6 @@ import { CONFIG } from '../config';
 import { BlockId, BlockRegistry, RenderCategory } from './BlockRegistry';
 import {
   BlockState,
-  BlockStateId,
   BlockStateRegistry,
   createDefaultBlockStateRegistry,
 } from './BlockStateRegistry';
@@ -177,28 +176,9 @@ export class World implements WorldAccess {
    *  repeated generation cannot double-fire the async lookup (DIRTY-3). */
   private readonly hydrationPending = new Set<string>();
 
-  /**
-   * In-memory block-state overrides keyed by chunk key → cell index →
-   * BlockStateId, mirroring the edit overlay. Stateful blocks (e.g. wheat) write
-   * their resolved state id here on {@link setBlockState}; {@link getBlockState}
-   * prefers it over the block's default state.
-   *
-   * Lifetime (hardening 2026-08-23): entries survive chunk unload/reload within a
-   * session but are NOT persisted across page reload — crop/farmland/fire age
-   * reset deterministically to the block default, exactly as before. The map is
-   * bounded like {@link editOverlay}: at most
-   * {@link STATE_OVERLAY_MAX_CHUNKS} distinct chunks, least-recently-written
-   * entries evicted first. This is session-cache bounding, not durability;
-   * durable persistence of block states remains documented non-release debt.
-   */
-  private readonly stateOverlay = new Map<string, Map<number, BlockStateId>>();
-  /** Chunk keys ordered least- to most-recently written, driving eviction. */
-  private readonly stateOverlayWriteOrder: string[] = [];
-  /** Maximum distinct chunks tracked in the state overlay (mirrors the edit overlay cap). */
-  private static readonly STATE_OVERLAY_MAX_CHUNKS = 10_000;
-
   /** Block-state registry used to resolve/read canonical block states. */
   private readonly stateRegistry: BlockStateRegistry;
+
 
   /** Per-frame time-budget scheduler over the four chunk-task classes (audit 04).
    *  Class budgets derive from CONFIG.budgets; count caps stay as hard limits. */
@@ -416,17 +396,6 @@ export class World implements WorldAccess {
     const index = localIndex(lx, ly, lz);
     const key = chunkKey(cx, cy, cz);
 
-    // A plain block-id write invalidates any recorded state for this cell so a
-    // stale state never outlives the block it described (125).
-    const stateLayer = this.stateOverlay.get(key);
-    if (stateLayer) {
-      stateLayer.delete(index);
-      if (stateLayer.size === 0) {
-        this.stateOverlay.delete(key);
-        this.removeFromStateOverlayOrder(key);
-      }
-    }
-
     const chunk = this.chunkManager.getChunk(cx, cy, cz);
 
     // No-op write: skip remeshing and avoid growing the edit overlay.
@@ -441,7 +410,7 @@ export class World implements WorldAccess {
       this.editOverlay.set(key, overlay);
     }
     this.touchEditOverlay(key);
-    overlay.set(localIndex(lx, ly, lz), id);
+    overlay.set(index, id);
     // DIRTY-1/2: every committed live edit is handed to the durability layer
     // (full latest changes), so the resident overlay is never the sole copy.
     // importEdits deliberately does NOT capture: boot-time bulk imports are
@@ -513,50 +482,8 @@ export class World implements WorldAccess {
     }
     this.setBlock(x, y, z, blockId);
     this.storage.setBlockState(x, y, z, blockId, properties);
-
-    const [cx, cy, cz] = worldToChunk(x, y, z);
-    const [lx, ly, lz] = worldToLocal(x, y, z);
-    const index = localIndex(lx, ly, lz);
-    const key = chunkKey(cx, cy, cz);
-    let layer = this.stateOverlay.get(key);
-    if (!layer) {
-      layer = new Map<number, BlockStateId>();
-      this.stateOverlay.set(key, layer);
-    }
-    layer.set(index, this.stateRegistry.lookup(blockId, { ...properties }).id);
-    this.touchStateOverlay(key);
   }
 
-  /**
-   * Mark a state-overlay chunk key as most recently written and enforce the
-   * size cap by evicting least-recently-written keys. Eviction discards only the
-   * resident cache copy: affected blocks fall back to their default state (the
-   * same observable behavior as a page reload), and no durability contract is
-   * broken because block-state persistence was never shipped.
-   */
-  private touchStateOverlay(key: string): void {
-    const index = this.stateOverlayWriteOrder.indexOf(key);
-    if (index !== -1) {
-      this.stateOverlayWriteOrder.splice(index, 1);
-    }
-    this.stateOverlayWriteOrder.push(key);
-
-    while (this.stateOverlay.size > World.STATE_OVERLAY_MAX_CHUNKS) {
-      const lruKey = this.stateOverlayWriteOrder.shift();
-      if (lruKey === undefined) {
-        break; // Write order exhausted; nothing left to evict.
-      }
-      this.stateOverlay.delete(lruKey);
-    }
-  }
-
-  /** Drop a chunk key from the eviction-order index when its layer empties. */
-  private removeFromStateOverlayOrder(key: string): void {
-    const index = this.stateOverlayWriteOrder.indexOf(key);
-    if (index !== -1) {
-      this.stateOverlayWriteOrder.splice(index, 1);
-    }
-  }
 
   /**
    * The block state at (x, y, z): the canonical live state from dimension-aware
@@ -826,26 +753,48 @@ export class World implements WorldAccess {
       chunk.state = ChunkState.Generated;
       this.countChunkVoxels(chunk);
 
-      // Sync non-air blocks into canonical storage
-      for (let lz = 0; lz < 16; lz++) {
-        const wz = chunk.cz * 16 + lz;
-        for (let lx = 0; lx < 16; lx++) {
-          const wx = chunk.cx * 16 + lx;
-          for (let ly = 0; ly < 64; ly++) {
-            const wy = chunk.cy * 64 + ly;
-            const blockId = chunk.getLocal(lx, ly, lz);
-            if (blockId !== BlockId.Air) {
-              this.storage.vwa.setBlockState(
-                wx,
-                wy,
-                wz,
-                this.stateRegistry.getDefaultState(blockId),
-              );
+      // Sync non-air blocks into canonical storage. Fast path for uniform
+      // chunks (e.g. stone fill in tests) uses section fills (4× fill vs
+      // 16k per-cell writes); heterogeneous chunks fall back to per-cell.
+      const firstId = chunk.blocks[0]!;
+      let uniform = true;
+      for (let i = 1; i < CHUNK_BLOCK_COUNT; i++) {
+        if (chunk.blocks[i] !== firstId) {
+          uniform = false;
+          break;
+        }
+      }
+      if (uniform) {
+        if (firstId !== BlockId.Air) {
+          const column = this.storage.vwa.ensureColumn(chunk.cx, chunk.cz);
+          const state = this.stateRegistry.getDefaultState(firstId);
+          for (let syOffset = 0; syOffset < CHUNK_DIMENSIONS.height / 16; syOffset++) {
+            const globalSectionY = chunk.cy * (CHUNK_DIMENSIONS.height / 16) + syOffset;
+            const inColumnSy = globalSectionY - this.dimension.minSectionY;
+            column.getSection(inColumnSy).fill(state);
+            column.markSectionDirty(inColumnSy);
+          }
+        }
+      } else {
+        for (let lz = 0; lz < 16; lz++) {
+          const wz = chunk.cz * 16 + lz;
+          for (let lx = 0; lx < 16; lx++) {
+            const wx = chunk.cx * 16 + lx;
+            for (let ly = 0; ly < 64; ly++) {
+              const wy = chunk.cy * 64 + ly;
+              const blockId = chunk.getLocal(lx, ly, lz);
+              if (blockId !== BlockId.Air) {
+                this.storage.vwa.setBlockState(
+                  wx,
+                  wy,
+                  wz,
+                  this.stateRegistry.getDefaultState(blockId),
+                );
+              }
             }
           }
         }
       }
-
       // Bookkeeping advance through the features/light stages: terrain,
       // overlay application and light seeding all happened above.
       pipeline.completeStage(job.key, 'generate', job.version);
@@ -1702,8 +1651,6 @@ export class World implements WorldAccess {
     this.chunkVoxelCounts.clear();
     this.editOverlay.clear();
     this.editOverlayAccessOrder.length = 0;
-    this.stateOverlay.clear();
-    this.stateOverlayWriteOrder.length = 0;
     this.streamCenterX = null;
     this.streamCenterZ = null;
     this.needsEnsure = true;

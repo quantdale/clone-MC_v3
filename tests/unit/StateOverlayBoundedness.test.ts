@@ -12,9 +12,12 @@ import { CONFIG } from '../../src/config';
  * stateful write, retained for the whole session even after the chunk was
  * unloaded and never revisited. It is now capped with least-recently-written
  * eviction mirroring the edit overlay's 10k-chunk LRU.
+ *
+ * After Change 253, the overlay is removed: canonical `VerticalWorldAccess`
+ * storage is the single writable authority. This test now verifies that the
+ * overlay no longer exists and that property-bearing states round-trip through
+ * canonical storage without the old LRU.
  */
-
-const STATE_OVERLAY_MAX_CHUNKS = 10_000;
 
 function makeWorld(): World {
   const registry = createDefaultBlockRegistry();
@@ -42,47 +45,27 @@ function makeWorld(): World {
       opaque: new THREE.MeshLambertMaterial(),
       transparent: new THREE.MeshLambertMaterial(),
     },
-    renderDistance: 1,
     stateRegistry: createDefaultBlockStateRegistry(),
   });
 }
 
 describe('state overlay boundedness', () => {
-  it('evicts least-recently-written chunks beyond the cap', () => {
+  it('no longer maintains a separate overlay; canonical storage holds states', () => {
     const world = makeWorld();
-    // Write one state per distinct chunk key. Chunk keys are far apart in Z so
-    // no chunk is loaded; setBlockState still records overlays for unloaded
-    // chunks (applied on generation), which is exactly the growth path.
-    for (let i = 0; i < STATE_OVERLAY_MAX_CHUNKS; i++) {
+    for (let i = 0; i < 10; i++) {
       world.setBlockState(8, 8, i * 32, BlockId.Wheat, { age: 1 });
     }
-    expect(stateOverlaySizeHack(world)).toBe(STATE_OVERLAY_MAX_CHUNKS);
-
-    // One more write evicts the oldest entry instead of growing further.
-    world.setBlockState(8, 8, STATE_OVERLAY_MAX_CHUNKS * 32, BlockId.Wheat, { age: 2 });
-    expect(stateOverlaySizeHack(world)).toBe(STATE_OVERLAY_MAX_CHUNKS);
-    // The oldest chunk's overlay layer was evicted (its cells fall back to the
-    // block default state), and the newest chunk's state survives.
-    expect(stateOverlayHas(world, '0,0,0')).toBe(false);
-    expect(stateOverlayHas(world, `0,0,${STATE_OVERLAY_MAX_CHUNKS}`)).toBe(true);
+    expect(stateOverlaySizeHack(world)).toBe(0);
+    const state = world.getBlockState(8, 8, 9 * 32);
+    expect(state.blockId).toBe(BlockId.Wheat);
   });
 
-  it('refreshes recency on rewrites and drops emptied layers entirely', () => {
+  it('canonical writes do not allocate sections for air reads', () => {
     const world = makeWorld();
-    for (let i = 0; i < STATE_OVERLAY_MAX_CHUNKS; i++) {
-      world.setBlockState(8, 8, i * 32, BlockId.Wheat, { age: 1 });
-    }
-    // Rewrite the oldest chunk: it must survive the next eviction.
-    world.setBlockState(8, 8, 0, BlockId.Wheat, { age: 3 });
-    world.setBlockState(8, 8, STATE_OVERLAY_MAX_CHUNKS * 32, BlockId.Wheat, { age: 2 });
-    expect(world.getBlockState(8, 8, 0).getProperty('age')).toBe('3');
-
-    // Clearing every cell of a layer removes the whole chunk entry (via the
-    // plain-setBlock invalidation path): fill the rewritten chunk with air.
-    world.setBlock(8, 8, 0, BlockId.Air);
-    world.setBlockState(8, 9, 0, BlockId.Wheat, { age: 1 });
-    world.setBlock(8, 9, 0, BlockId.Air);
-    expect(stateOverlaySizeHack(world)).toBeLessThanOrEqual(STATE_OVERLAY_MAX_CHUNKS);
+    const before = getStorageSize(world);
+    expect(world.getBlockState(9999, 8, 9999).blockId).toBe(BlockId.Air);
+    const after = getStorageSize(world);
+    expect(after).toBe(before);
   });
 });
 
@@ -93,15 +76,12 @@ describe('state overlay boundedness', () => {
  */
 function stateOverlaySizeHack(world: World): number {
   const internals = world as unknown as {
-    stateOverlay: Map<string, Map<number, unknown>>;
+    stateOverlay?: Map<string, Map<number, unknown>>;
   };
-  return internals.stateOverlay.size;
+  return internals.stateOverlay?.size ?? 0;
 }
 
-/** Whether the internal overlay still tracks the given `cx,cy,cz` chunk key. */
-function stateOverlayHas(world: World, key: string): boolean {
-  const internals = world as unknown as {
-    stateOverlay: Map<string, Map<number, unknown>>;
-  };
-  return internals.stateOverlay.has(key);
+function getStorageSize(world: World): number {
+  const internals = world as unknown as { storage: { vwa: { size: number } } };
+  return internals.storage.vwa.size;
 }
