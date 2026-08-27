@@ -322,8 +322,8 @@ export class World implements WorldAccess {
     this.simulationDistance = opts.simulationDistance ?? CONFIG.simulationDistance;
     this.rsd = new RenderSimulationDistance(this.renderDistance, this.simulationDistance);
     // Vertical window: 64-block chunk layers derived from the dimension's block extent.
-    this.minChunkY = Math.floor(this.dimension.minY / CHUNK_DIMENSIONS.height);
-    this.chunkLayerCount = Math.ceil(this.dimension.height / CHUNK_DIMENSIONS.height);
+    this.minChunkY = opts.dimension ? Math.floor(opts.dimension.minY / CHUNK_DIMENSIONS.height) : 0;
+    this.chunkLayerCount = opts.dimension ? Math.ceil(opts.dimension.height / CHUNK_DIMENSIONS.height) : 1;
     this.sectionsPerChunk = Math.ceil(this.dimension.height / 16);
     this.chunkManager = new ChunkManager(opts.registry);
     this.monitor = opts.monitor ?? null;
@@ -835,6 +835,26 @@ export class World implements WorldAccess {
       chunk.generated = true;
       chunk.state = ChunkState.Generated;
       this.countChunkVoxels(chunk);
+
+      // Sync non-air blocks into canonical storage
+      for (let lz = 0; lz < 16; lz++) {
+        const wz = chunk.cz * 16 + lz;
+        for (let lx = 0; lx < 16; lx++) {
+          const wx = chunk.cx * 16 + lx;
+          for (let ly = 0; ly < 64; ly++) {
+            const wy = chunk.cy * 64 + ly;
+            const blockId = chunk.getLocal(lx, ly, lz);
+            if (blockId !== BlockId.Air) {
+              this.storage.vwa.setBlockState(
+                wx,
+                wy,
+                wz,
+                this.stateRegistry.getDefaultState(blockId),
+              );
+            }
+          }
+        }
+      }
 
       // Bookkeeping advance through the features/light stages: terrain,
       // overlay application and light seeding all happened above.
