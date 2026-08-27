@@ -222,6 +222,8 @@ export class WorldLightStorage {
   private cacheSy = 0;
   private cacheSz = 0;
   private cacheSection: SectionLightStorage | null = null;
+  /** Per-section light version: bumped on every write, used to reject stale async light applications. */
+  private readonly sectionVersions = new Map<string, number>();
 
   /** Number of stored sections. */
   get size(): number {
@@ -231,6 +233,22 @@ export class WorldLightStorage {
   private key(sx: number, sy: number, sz: number): string {
     return `${sx},${sy},${sz}`;
   }
+
+  private bumpVersion(sx: number, sy: number, sz: number): void {
+    const k = this.key(sx, sy, sz);
+    this.sectionVersions.set(k, (this.sectionVersions.get(k) ?? 0) + 1);
+  }
+
+  /** Current version of a light section; 0 for absent. */
+  getSectionVersion(sx: number, sy: number, sz: number): number {
+    return this.sectionVersions.get(this.key(sx, sy, sz)) ?? 0;
+  }
+
+  /** True when the section's version differs from a captured version. */
+  isSectionStale(sx: number, sy: number, sz: number, capturedVersion: number): boolean {
+    return this.getSectionVersion(sx, sy, sz) !== capturedVersion;
+  }
+
 
   private sectionFor(sx: number, sy: number, sz: number): SectionLightStorage | undefined {
     if (this.cacheValid && this.cacheSx === sx && this.cacheSy === sy && this.cacheSz === sz) {
@@ -270,10 +288,12 @@ export class WorldLightStorage {
 
   /** Drop one section's light. */
   deleteSection(sx: number, sy: number, sz: number): boolean {
-    const removed = this.sections.delete(this.key(sx, sy, sz));
+    const k = this.key(sx, sy, sz);
+    const removed = this.sections.delete(k);
     if (removed) {
       this.cacheValid = false;
       this.cacheSection = null;
+      this.sectionVersions.delete(k);
     }
     return removed;
   }
@@ -281,6 +301,7 @@ export class WorldLightStorage {
   /** Remove every section. */
   clear(): void {
     this.sections.clear();
+    this.sectionVersions.clear();
     this.cacheValid = false;
     this.cacheSection = null;
   }
@@ -305,7 +326,11 @@ export class WorldLightStorage {
     this.assertWorldCoord(x, 'x');
     this.assertWorldCoord(y, 'y');
     this.assertWorldCoord(z, 'z');
-    this.getOrCreateSection(x >> 4, y >> 4, z >> 4).setSkyLight(x & 15, y & 15, z & 15, value);
+    const sx = x >> 4;
+    const sy = y >> 4;
+    const sz = z >> 4;
+    this.getOrCreateSection(sx, sy, sz).setSkyLight(x & 15, y & 15, z & 15, value);
+    this.bumpVersion(sx, sy, sz);
   }
 
   /** Block light at world coordinates; 0 outside any known section. */
@@ -322,8 +347,13 @@ export class WorldLightStorage {
     this.assertWorldCoord(x, 'x');
     this.assertWorldCoord(y, 'y');
     this.assertWorldCoord(z, 'z');
-    this.getOrCreateSection(x >> 4, y >> 4, z >> 4).setBlockLight(x & 15, y & 15, z & 15, value);
+    const sx = x >> 4;
+    const sy = y >> 4;
+    const sz = z >> 4;
+    this.getOrCreateSection(sx, sy, sz).setBlockLight(x & 15, y & 15, z & 15, value);
+    this.bumpVersion(sx, sy, sz);
   }
+
 
   /**
    * Read a section-border slice into `dest` (or a fresh array). Missing sections yield zeros.
@@ -374,6 +404,7 @@ export class WorldLightStorage {
       if (channel === 'sky') section.setSkyLight(x, y, z, v);
       else section.setBlockLight(x, y, z, v);
     }
+    this.bumpVersion(sx, sy, sz);
   }
 
   /** Deep snapshot as plain typed arrays (copies; safe to structured-clone). */

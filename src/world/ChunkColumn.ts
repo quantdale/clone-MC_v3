@@ -82,7 +82,8 @@ export class ChunkColumn {
     this.heightmapsValid = true;
   }
 
-  private sectionIndexForY(worldY: number): number {
+  /** In-column section index for a world Y (0..sectionCount-1). Public so World can map Y without duplicating dimension math. */
+  sectionIndexForY(worldY: number): number {
     return sectionIndex(worldY) - this.minSectionY;
   }
 
@@ -109,7 +110,28 @@ export class ChunkColumn {
     return this.ensureSection(sy);
   }
 
-  /** Resolved block state at local chunk coords (x,z in `[0,16)`) and world Y. */
+  /** Materialized section if it exists, or undefined when the section is still lazy air. Read-only; does not allocate. */
+  getSectionIfExists(sy: number): ChunkSection | undefined {
+    this.checkSection(sy);
+    return this.sections.get(sy);
+  }
+
+  /** Alias for {@link getSectionIfExists} existence check — read path MUST use this, not {@link getSection}, to keep absent-air reads non-allocating. */
+  hasSection(sy: number): boolean {
+    this.checkSection(sy);
+    return this.sections.has(sy);
+  }
+
+  /** Peek without allocating; same as {@link getSectionIfExists} but named for the storage read contract. */
+  peekSection(sy: number): ChunkSection | undefined {
+    this.checkSection(sy);
+    return this.sections.get(sy);
+  }
+
+  /** Number of materialized (allocated) sections; 0 for a fresh column. Used to keep column loading lazy (verify no eager 24-section allocation). */
+  allocatedSectionCount(): number {
+    return this.sections.size;
+  }
   getBlockState(localX: number, worldY: number, localZ: number): BlockState {
     const sy = this.sectionIndexForY(worldY);
     this.checkSection(sy);

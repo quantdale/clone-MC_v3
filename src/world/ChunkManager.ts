@@ -11,6 +11,12 @@ import { ChunkTicket } from './ChunkTicket';
 
 /**
  * Owns the set of loaded chunks, keyed by their chunk-coordinate triple.
+ * Residency is horizontal (chunkX, chunkZ) columns with lazy vertical sections:
+ * the outer map is keyed by column `${cx},${cz}`, each entry lazily holds the
+ * resident 16×64×16 slabs for that column's `cy` layers. No vertical slab is
+ * allocated until explicitly created; an absent-air read never materializes a
+ * section. This mirrors canonical `VerticalWorldAccess`'s column residency while
+ * preserving the existing slab `Chunk` contract for World.ts meshing/generation.
  *
  * Storage delegates lifecycle bookkeeping to the {@link ChunkPipeline}: every chunk created here
  * gets an authoritative lifecycle record (status, tickets, generation token), and removals go
@@ -18,7 +24,8 @@ import { ChunkTicket } from './ChunkTicket';
  * source of truth for block data so existing callers (World.ts) compile unchanged.
  */
 export class ChunkManager {
-  private readonly chunks = new Map<string, Chunk>();
+  /** Column residency: outer key `${cx},${cz}` → inner map `cy → Chunk` (lazy vertical). */
+  private readonly columns = new Map<string, Map<number, Chunk>>();
   /** Authoritative per-chunk lifecycle records (status/tickets/tokens/queues). */
   readonly pipeline = new ChunkPipeline();
   /** Bumped on every chunk-map mutation so callers can guard cheap lookup caches
@@ -30,6 +37,10 @@ export class ChunkManager {
     // manager; chunk block data is addressed by the caller.
   }
 
+  private static columnKey(cx: number, cz: number): string {
+    return `${cx},${cz}`;
+  }
+
   /** Monotonic mutation counter for the chunk map (create/remove/dispose). */
   get revision(): number {
     return this.revisionValue;
@@ -37,16 +48,38 @@ export class ChunkManager {
 
   /** Look up a loaded chunk by chunk coordinates. Returns undefined if not loaded. */
   getChunk(cx: number, cy: number, cz: number): Chunk | undefined {
-    return this.chunks.get(chunkKey(cx, cy, cz));
+    return this.columns.get(ChunkManager.columnKey(cx, cz))?.get(cy);
+  }
+
+  /** Whether the column at (cx,cz) has any resident slabs. */
+  hasColumn(cx: number, cz: number): boolean {
+    const col = this.columns.get(ChunkManager.columnKey(cx, cz));
+    return col !== undefined && col.size > 0;
+  }
+
+  /** All resident slabs for a column (snapshot), or empty if absent. */
+  getColumnSlabs(cx: number, cz: number): readonly Chunk[] {
+    const col = this.columns.get(ChunkManager.columnKey(cx, cz));
+    return col ? [...col.values()] : [];
+  }
+
+  /** Number of resident columns (horizontal residency). */
+  get columnCount(): number {
+    return this.columns.size;
   }
 
   /** Create (or return the existing) chunk at the given coordinates, registering its lifecycle record. */
   createChunk(cx: number, cy: number, cz: number): Chunk {
-    const key = chunkKey(cx, cy, cz);
-    let chunk = this.chunks.get(key);
+    const colKey = ChunkManager.columnKey(cx, cz);
+    let col = this.columns.get(colKey);
+    if (!col) {
+      col = new Map<number, Chunk>();
+      this.columns.set(colKey, col);
+    }
+    let chunk = col.get(cy);
     if (!chunk) {
       chunk = new Chunk(cx, cy, cz);
-      this.chunks.set(key, chunk);
+      col.set(cy, chunk);
       this.pipeline.register(cx, cy, cz);
       this.revisionValue++;
     }
@@ -56,30 +89,55 @@ export class ChunkManager {
   /**
    * Remove a chunk from the map, freeing its block storage. Runs the authoritative eviction flow:
    * outstanding work is cancelled, the record passes through `Evicting`, then the record and the
-   * chunk are dropped.
+   * chunk are dropped. The column entry is pruned when its last slab leaves so column residency
+   * accurately reflects loaded columns. Canonical `CanonicalWorldStorage` columns are NOT removed
+   * here; dirty columns remain visible via `storage.dirtyColumns()` for persistence.
    */
   removeChunk(cx: number, cy: number, cz: number): void {
+    const colKey = ChunkManager.columnKey(cx, cz);
+    const col = this.columns.get(colKey);
+    if (!col || !col.has(cy)) return;
     const key = chunkKey(cx, cy, cz);
-    if (!this.chunks.has(key)) return;
     if (this.pipeline.markEvicting(key).ok) {
       this.pipeline.finalizeEviction(key);
     }
-    this.chunks.delete(key);
+    col.delete(cy);
+    if (col.size === 0) {
+      this.columns.delete(colKey);
+    }
+    this.revisionValue++;
+  }
+
+  /** Remove all slabs for a column (used only by tests/cleanup); runs eviction per slab. */
+  removeColumn(cx: number, cz: number): void {
+    const colKey = ChunkManager.columnKey(cx, cz);
+    const col = this.columns.get(colKey);
+    if (!col) return;
+    for (const cy of [...col.keys()]) {
+      const key = chunkKey(cx, cy, cz);
+      if (this.pipeline.markEvicting(key).ok) {
+        this.pipeline.finalizeEviction(key);
+      }
+    }
+    this.columns.delete(colKey);
     this.revisionValue++;
   }
 
   /** Iterate over every loaded chunk. */
   forEachChunk(fn: (chunk: Chunk) => void): void {
-    for (const chunk of this.chunks.values()) {
-      fn(chunk);
+    for (const col of this.columns.values()) {
+      for (const chunk of col.values()) {
+        fn(chunk);
+      }
     }
   }
 
-  /** Number of loaded chunks. */
+  /** Number of loaded slabs (total across all columns). */
   get size(): number {
-    return this.chunks.size;
+    let n = 0;
+    for (const col of this.columns.values()) n += col.size;
+    return n;
   }
-
   // ── Lifecycle / ticket queries ─────────────────────────────────────────────
 
   /** Current lifecycle stage of the chunk (or of nothing when absent). */
@@ -129,7 +187,7 @@ export class ChunkManager {
   /** Drop all chunks and lifecycle state. */
   dispose(): void {
     this.pipeline.clear();
-    this.chunks.clear();
+    this.columns.clear();
     this.revisionValue++;
   }
 }

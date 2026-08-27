@@ -365,6 +365,44 @@ export class ChannelUpdateQueue {
     this.pendingInvalidations.clear();
   }
 
+  /**
+   * Remove pending work for cells matching `predicate`. Used to discard stale
+   * light work for unloaded chunks/sections so a later drain does not resurrect
+   * deleted light sections.
+   */
+  prune(predicate: (x: number, y: number, z: number) => boolean): void {
+    for (const key of [...this.pendingInvalidations.keys()]) {
+      const pos = this.pendingInvalidations.get(key)!;
+      if (predicate(pos.x, pos.y, pos.z)) {
+        this.pendingInvalidations.delete(key);
+      }
+    }
+    if (this.removalQueue.length > 0) {
+      const filtered: number[] = [];
+      for (let i = 0; i < this.removalQueue.length; i += 4) {
+        const x = this.removalQueue[i]!;
+        const y = this.removalQueue[i + 1]!;
+        const z = this.removalQueue[i + 2]!;
+        if (!predicate(x, y, z)) {
+          filtered.push(this.removalQueue[i]!, this.removalQueue[i + 1]!, this.removalQueue[i + 2]!, this.removalQueue[i + 3]!);
+        }
+      }
+      this.removalQueue = filtered;
+    }
+    if (this.addQueue.length > 0) {
+      const filtered: number[] = [];
+      for (let i = 0; i < this.addQueue.length; i += 3) {
+        const x = this.addQueue[i]!;
+        const y = this.addQueue[i + 1]!;
+        const z = this.addQueue[i + 2]!;
+        if (!predicate(x, y, z)) {
+          filtered.push(x, y, z);
+        }
+      }
+      this.addQueue = filtered;
+    }
+  }
+
   /** One removal BFS pop: darken the cell and classify its neighbors. */
   private stepRemoval(ctx: LightChannelContext): void {
     const base = this.removalQueue.length - 4;
@@ -570,7 +608,32 @@ export class LightUpdateEngine {
     this.blockQueue.clear();
   }
 
-  /** The shared storage this engine reads and writes. */
+  /** Discard queued light work for cells inside a slab chunk (unload/version advance). */
+  pruneChunk(cx: number, cy: number, cz: number): void {
+    const minX = cx * 16;
+    const maxX = minX + 15;
+    const minY = cy * 64;
+    const maxY = minY + 63;
+    const minZ = cz * 16;
+    const maxZ = minZ + 15;
+    const pred = (x: number, y: number, z: number): boolean => x >= minX && x <= maxX && y >= minY && y <= maxY && z >= minZ && z <= maxZ;
+    this.skyQueue.prune(pred);
+    this.blockQueue.prune(pred);
+  }
+
+  /** Discard queued work for one 16³ section (section-aware unload). */
+  pruneSection(sx: number, sy: number, sz: number): void {
+    const minX = sx * 16;
+    const maxX = minX + 15;
+    const minY = sy * 16;
+    const maxY = minY + 15;
+    const minZ = sz * 16;
+    const maxZ = minZ + 15;
+    const pred = (x: number, y: number, z: number): boolean => x >= minX && x <= maxX && y >= minY && y <= maxY && z >= minZ && z <= maxZ;
+    this.skyQueue.prune(pred);
+    this.blockQueue.prune(pred);
+  }
+
   get lightStorage(): WorldLightStorage {
     return this.storage;
   }

@@ -10,7 +10,8 @@ import { applySurfaceRules, validateSurfaceRules, type SurfaceRule } from '../wo
 import { createDefaultOreVeinDefinitions, stampChunkOreVeins, type OreVeinDefinition } from '../worldgen/OreVeinFeature';
 import { Chunk } from './Chunk';
 import { CHUNK_DIMENSIONS } from './WorldCoordinates';
-
+import type { ChunkColumn } from './ChunkColumn';
+import type { BlockStateRegistry } from './BlockStateRegistry';
 /** Probability that a given column is a tree location. */
 const TREE_DENSITY = 0.012;
 /** Half the vertical range of the height noise around sea level. */
@@ -71,10 +72,26 @@ function createDefaultSurfaceRules(seaLevel: number): SurfaceRule[] {
 /**
  * Deterministic, seed-driven terrain generation.
  *
- * Generation stage order (audit 04 "World generation" / roadmap Phase 6), executed
- * per chunk in `generateChunk`:
+ * Live adapter (Phase 3): `TerrainGenerator` is the worldgen stage adapter over the
+ * `src/worldgen/**` pipeline. The stage graph is:
  *
- *   1. CLIMATE  — five-field `ClimateSampler` per column (cached per chunk pass)
+ *   TERRAIN (OverworldTerrain / heightmap) → CLIMATE (ClimateSampler) → BIOMES
+ *   → SURFACE (SurfaceRuleEngine) → CAVES (CaveCarver / isCaveAt) → FLUIDS
+ *   (water fill at/below seaLevel) → FEATURES (OreVeinFeature, TreeFeature,
+ *   PlacedFeature, StructureGenerator) → FINAL.
+ *
+ * `GenerationPipeline` tracks per-column stage progress (TERRAIN..FINAL) with
+ * monotonic forward transitions. The live `World` drives this pipeline via
+ * `processGeneration`'s `generate`→`features`→`light` bookkeeping — the modern
+ * `VerticalWorldAccess`/`ChunkColumn` path is populated by `generateColumn`,
+ * while the legacy `generateChunk(Chunk)` slab path remains only as a
+ * compatibility projection (it fills `Chunk.blocks` 16×64×16 and the caller
+ * copies non-air into canonical sections, never the reverse).
+ *
+ * Generation stage order (audit 04 "World generation" / roadmap Phase 6), executed
+ * per chunk in `generateChunk` and per column in `generateColumn`:
+ *
+ *   1. CLIMATE  — five-field `ClimateSampler` per column (cached per chunk/column pass)
  *   2. BIOMES   — climate fields classified into the live biome keys
  *   3. TERRAIN  — heightmap density fill: bedrock / stone / dirt / water / air
  *   4. CAVES    — two-noise carving of stone-band cells (surface/sea guards kept)
@@ -437,6 +454,163 @@ export class TerrainGenerator {
             chunk.setLocal(lx, ly, lz, block.blockId);
           }
         }
+      }
+    }
+  }
+
+  /**
+   * Populate a canonical `ChunkColumn` across the full Overworld vertical range
+   * (`column.minY` .. `column.maxY`, derived from `DimensionType` — for the
+   * Overworld -64..319). Writes `BlockState`s via `stateRegistry` so the column
+   * is the canonical truth; air cells are never written so empty sections stay
+   * lazy (no eager allocation of all 24 sections). Deterministic: identical to
+   * the per-slab `generateChunk` output when compared cell-for-cell, but covers
+   * the entire column in one call.
+   *
+   * This is the live generation entry point for missing columns. The legacy
+   * `generateChunk(Chunk)` slab path remains only as a compatibility projection:
+   * it still fills `Chunk.blocks` (16×64×16) but the live `World` copies its
+   * non-air results into canonical sections — the column is authoritative.
+   */
+  generateColumn(column: ChunkColumn, stateRegistry: BlockStateRegistry): void {
+    const chunkX = column.chunkX;
+    const chunkZ = column.chunkZ;
+    const minY = column.minY;
+    const maxY = column.maxY;
+    const wx0 = chunkX * CHUNK_DIMENSIONS.width;
+    const wz0 = chunkZ * CHUNK_DIMENSIONS.depth;
+    const width = CHUNK_DIMENSIONS.width;
+    const depth = CHUNK_DIMENSIONS.depth;
+    // Cache biome indices per column (16x16) — same as generateChunk's per-slab cache.
+    const biomes = new Uint8Array(width * depth);
+    for (let lx = 0; lx < width; lx++) {
+      for (let lz = 0; lz < depth; lz++) {
+        biomes[lx + lz * width] = this.biomeIndex(wx0 + lx, wz0 + lz);
+      }
+    }
+    const surfaceCtx = {
+      biomeKey: '',
+      x: 0,
+      y: 0,
+      z: 0,
+      depthFromSurface: 0,
+      noise: (id: string, x: number, y: number, z: number): number =>
+        id === 'seafloor_gravel' ? this.seaFloorNoise.sample(x * 0.08, y * 0.1, z * 0.08) : 0,
+    };
+    // Pass 1: base terrain + caves + surface rules — write directly into column sections.
+    // Only non-air writes materialize a section, preserving laziness.
+    for (let lx = 0; lx < width; lx++) {
+      const wx = wx0 + lx;
+      for (let lz = 0; lz < depth; lz++) {
+        const wz = wz0 + lz;
+        const height = this.getHeightAt(wx, wz);
+        const biome = BIOME_KEYS[biomes[lx + lz * width]!]!;
+        for (let wy = minY; wy <= maxY; wy++) {
+          let id: number;
+          if (wy === CONFIG.bedrockY) {
+            id = BlockId.Bedrock;
+          } else if (wy < height) {
+            id = wy >= height - 3 ? BlockId.Dirt : BlockId.Stone;
+          } else if (wy === height) {
+            id = BlockId.Dirt;
+          } else if (wy <= CONFIG.seaLevel) {
+            id = BlockId.Water;
+          } else {
+            id = BlockId.Air;
+          }
+          if (id === BlockId.Stone && this.isLavaAt(wx, wy, wz, height)) id = BlockId.Lava;
+          if ((id === BlockId.Stone || id === BlockId.Dirt) && this.isCaveAt(wx, wy, wz, height)) id = BlockId.Air;
+          const depthFromSurface = height - wy;
+          if (depthFromSurface >= 0 && depthFromSurface < MAX_SURFACE_DEPTH && id !== BlockId.Air && id !== BlockId.Water && id !== BlockId.Bedrock) {
+            surfaceCtx.biomeKey = biome;
+            surfaceCtx.x = wx;
+            surfaceCtx.y = wy;
+            surfaceCtx.z = wz;
+            surfaceCtx.depthFromSurface = depthFromSurface;
+            const ruled = applySurfaceRules(this.surfaceRules, surfaceCtx, id);
+            if (ruled !== null) id = ruled;
+          }
+          if (id !== BlockId.Air) {
+            const state = stateRegistry.getDefaultState(id);
+            column.setBlockState(lx, wy, lz, state);
+          }
+        }
+      }
+    }
+    // Pass 2: owner-chunk ore veins — reuse the per-slab logic via transient slabs
+    // so the exact same region-hashed placement is preserved, but write results into the column.
+    // We iterate each 64-high slab that overlaps the column's range.
+    const minChunkY = Math.floor(minY / CHUNK_DIMENSIONS.height);
+    const maxChunkY = Math.floor(maxY / CHUNK_DIMENSIONS.height);
+    for (let cy = minChunkY; cy <= maxChunkY; cy++) {
+      const wy0 = cy * CHUNK_DIMENSIONS.height;
+      // Build a transient chunk for this slab, populate it via the same height/cave logic is
+      // already done above, so for ores we directly stamp onto the column by reusing stamp logic
+      // with a column-backed adapter.
+      const colAdapter = {
+        getLocal: (lx: number, ly: number, lz: number): number | null => {
+          if (lx < 0 || lx >= width || ly < 0 || ly >= CHUNK_DIMENSIONS.height || lz < 0 || lz >= depth) return null;
+          const wy = wy0 + ly;
+          if (wy < minY || wy > maxY) return null;
+          return column.getBlockState(lx, wy, lz).blockId;
+        },
+        setLocal: (lx: number, ly: number, lz: number, id: number): void => {
+          const wy = wy0 + ly;
+          if (wy < minY || wy > maxY) return;
+          const state = stateRegistry.getDefaultState(id);
+          column.setBlockState(lx, wy, lz, state);
+        },
+      };
+      stampChunkOreVeins(
+        this.oreVeins,
+        ['overworld/stone_ore_replaceables'],
+        chunkX,
+        chunkZ,
+        this.seed,
+        colAdapter,
+        CHUNK_DIMENSIONS,
+        { x: wx0, z: wz0 },
+        (wx, wz) => Math.hypot(wx, wz) > SPAWN_PLAINS_RADIUS * 0.66,
+      );
+    }
+    // Pass 3: trees — iterate anchor columns whose canopy could reach this column and write
+    // into the column where the target y lies within [minY,maxY] and the cell is currently air.
+    {
+      const half = this.treeConfig.foliage.radius;
+      for (let ax = wx0 - half; ax <= wx0 + width - 1 + half; ax++) {
+        for (let az = wz0 - half; az <= wz0 + depth - 1 + half; az++) {
+          const spec = this.treeSpec(ax, az);
+          if (!spec) continue;
+          const surface = this.getHeightAt(ax, az);
+          if (surface <= CONFIG.seaLevel) continue;
+          const blocks = buildTreeBlocks(this.treeConfig, { nextFloat: () => spec.rng.next() });
+          const baseY = surface;
+          for (const block of blocks) {
+            const wx = ax + block.dx;
+            const wy = baseY + block.dy;
+            const wz = az + block.dz;
+            if (wy < minY || wy > maxY) continue;
+            if (wx < wx0 || wx >= wx0 + width || wz < wz0 || wz >= wz0 + depth) continue;
+            const lx = wx - wx0;
+            const lz = wz - wz0;
+            if (column.getBlockState(lx, wy, lz).blockId !== BlockId.Air) continue;
+            column.setBlockState(lx, wy, lz, stateRegistry.getDefaultState(block.blockId));
+          }
+        }
+      }
+    }
+    // Pass 4: structures — deterministic template blocks that overwrite terrain.
+    {
+      const blocks = this.structures.blocksForChunk(chunkX, chunkZ, {
+        biomeKey: (x, z) => this.getBiomeAt(x, z),
+        surfaceY: (x, z) => this.getHeightAt(x, z),
+      });
+      for (const block of blocks) {
+        if (block.y < minY || block.y > maxY) continue;
+        if (block.x < wx0 || block.x >= wx0 + width || block.z < wz0 || block.z >= wz0 + depth) continue;
+        const lx = block.x - wx0;
+        const lz = block.z - wz0;
+        column.setBlockState(lx, block.y, lz, stateRegistry.getDefaultState(block.blockId));
       }
     }
   }

@@ -48,6 +48,7 @@ import {
   worldToChunk,
   worldToLocal,
 } from './WorldCoordinates';
+import { localCoord, sectionIndex } from '../math/SectionCoordinate';
 import type { SerializedChunkColumns } from './VerticalWorldAccess';
 import type { ChunkColumn } from './ChunkColumn';
 /** A queued meshing job; carries the meshVersion captured at queue time. */
@@ -448,19 +449,29 @@ export class World implements WorldAccess {
       }
     }
 
-    // A block on a chunk boundary changes the faces of the neighbouring chunk,
-    // so mark that neighbour dirty too. Horizontal invalidation covers x/z slab
-    // faces; vertical invalidation is only needed at slab boundaries (ly == 0
-    // or height-1) while meshing is per 64-block slab. For future per-16-section
-    // meshing, vertical invalidation must become per-section: dirty the
-    // neighbour when y % 16 == 0 or 15 rather than y % 64 (i.e. check section
-    // local y instead of slab local y).
-    if (lx === 0) this.markNeighborDirty(cx - 1, cy, cz);
-    if (lx === CHUNK_DIMENSIONS.width - 1) this.markNeighborDirty(cx + 1, cy, cz);
-    if (lz === 0) this.markNeighborDirty(cx, cy, cz - 1);
-    if (lz === CHUNK_DIMENSIONS.depth - 1) this.markNeighborDirty(cx, cy, cz + 1);
-    if (ly === 0) this.markNeighborDirty(cx, cy - 1, cz);
-    if (ly === CHUNK_DIMENSIONS.height - 1) this.markNeighborDirty(cx, cy + 1, cz);
+    // A block on a chunk/section boundary changes the faces of the neighbouring
+    // section, so mark that neighbour dirty too. Horizontal invalidation covers
+    // x/z section faces (local 0/15); vertical invalidation uses section-local
+    // y (y % 16) so interior edits at y 10 do not dirty neighbor sections at
+    // same cx/cz different sy, while a face at ly 15/0 still dirties the
+    // face-sharing vertical neighbor (including slab boundaries ly 0/63 which
+    // correspond to section-local 0/15). Only the face-sharing neighbor is
+    // dirtied — interior edits invalidate only the affected section.
+    const lxSec = localCoord(x);
+    const lzSec = localCoord(z);
+    const lySec = localCoord(y);
+    if (lxSec === 0) this.markNeighborDirty(cx - 1, cy, cz);
+    if (lxSec === 15) this.markNeighborDirty(cx + 1, cy, cz);
+    if (lzSec === 0) this.markNeighborDirty(cx, cy, cz - 1);
+    if (lzSec === 15) this.markNeighborDirty(cx, cy, cz + 1);
+    if (lySec === 0) {
+      const ncy = sectionIndex(y - 1) !== sectionIndex(y) ? Math.floor((y - 1) / CHUNK_DIMENSIONS.height) : cy;
+      if (ncy !== cy) this.markNeighborDirty(cx, ncy, cz);
+    }
+    if (lySec === 15) {
+      const ncy = sectionIndex(y + 1) !== sectionIndex(y) ? Math.floor((y + 1) / CHUNK_DIMENSIONS.height) : cy;
+      if (ncy !== cy) this.markNeighborDirty(cx, ncy, cz);
+    }
     // Voxel lighting: queue minimal invalidation for both channels (the engine
     // reads the NEW opacity/luminance through its accessors), and remember the
     // affected chunks so a productive drain remeshes them.
@@ -858,55 +869,194 @@ export class World implements WorldAccess {
         continue;
       }
 
-      this.generator.generateChunk(chunk);
-      this.applyEditOverlay(chunk);
-      chunk.generated = true;
-      chunk.state = ChunkState.Generated;
-      this.countChunkVoxels(chunk);
-
-      // Sync non-air blocks into canonical storage. Fast path for uniform
-      // chunks (e.g. stone fill in tests) uses section fills (4× fill vs
-      // 16k per-cell writes); heterogeneous chunks fall back to per-cell.
-      const firstId = chunk.blocks[0]!;
-      let uniform = true;
-      for (let i = 1; i < CHUNK_BLOCK_COUNT; i++) {
-        if (chunk.blocks[i] !== firstId) {
-          uniform = false;
-          break;
+      // Missing-column generation populates canonical BlockStates across the full
+      // Overworld range (-64..319). The legacy slab path (generateChunk 16x64x16)
+      // is no longer authoritative: a missing column is filled via
+      // TerrainGenerator.generateColumn(column, stateRegistry) which writes
+      // directly into the column's 24 sections (air stays lazy, only touched
+      // sections allocate - verified via getSectionIfExists vs getSection).
+      // Durable edits are applied AFTER the baseline so regen never overwrites them.
+      const existingColumn = this.storage.getColumn(job.cx, job.cz);
+      const hasGenerateColumn = typeof (this.generator as unknown as { generateColumn?: unknown }).generateColumn === 'function';
+      if (!existingColumn && hasGenerateColumn) {
+        const column = this.storage.vwa.ensureColumn(job.cx, job.cz);
+        (this.generator as unknown as { generateColumn: (c: ChunkColumn, r: BlockStateRegistry) => void }).generateColumn(column, this.stateRegistry);
+        this.syncChunkFromStorage(chunk);
+        this.applyEditOverlay(chunk);
+        chunk.generated = true;
+        chunk.state = ChunkState.Generated;
+        this.countChunkVoxels(chunk);
+        for (let lz = 0; lz < 16; lz++) {
+          for (let lx = 0; lx < 16; lx++) {
+            for (let ly = 0; ly < CHUNK_DIMENSIONS.height; ly++) {
+              const wy = chunk.cy * CHUNK_DIMENSIONS.height + ly;
+              const id = chunk.getLocal(lx, ly, lz);
+              const existingId = column.getBlockState(lx, wy, lz).blockId;
+              if (id !== existingId) {
+                const wx = chunk.cx * 16 + lx;
+                const wz = chunk.cz * 16 + lz;
+                if (id === BlockId.Air) {
+                  const sy = column.sectionIndexForY(wy);
+                  if (column.getSectionIfExists(sy)) {
+                    this.storage.vwa.setBlockState(wx, wy, wz, this.stateRegistry.getDefaultState(BlockId.Air));
+                  }
+                } else {
+                  this.storage.vwa.setBlockState(wx, wy, wz, this.stateRegistry.getDefaultState(id));
+                }
+              }
+            }
+          }
         }
-      }
-      if (uniform) {
-        if (firstId !== BlockId.Air) {
-          const column = this.storage.vwa.ensureColumn(chunk.cx, chunk.cz);
-          const state = this.stateRegistry.getDefaultState(firstId);
-          for (let syOffset = 0; syOffset < CHUNK_DIMENSIONS.height / 16; syOffset++) {
-            const globalSectionY = chunk.cy * (CHUNK_DIMENSIONS.height / 16) + syOffset;
-            const inColumnSy = globalSectionY - this.dimension.minSectionY;
-            column.getSection(inColumnSy).fill(state);
-            column.markSectionDirty(inColumnSy);
+      } else if (existingColumn) {
+        // Existing column but this chunk's layer may be ungenerated (e.g. two-layer test: first slab filled 0..3, second slab 4..7 still lazy).
+        // Detect whether any section for this cy is already allocated. If none, this layer has not been generated yet.
+        let layerHasSection = false;
+        for (let syOffset = 0; syOffset < CHUNK_DIMENSIONS.height / 16; syOffset++) {
+          const globalSectionY = chunk.cy * (CHUNK_DIMENSIONS.height / 16) + syOffset;
+          const inColumnSy = globalSectionY - this.dimension.minSectionY;
+          if (existingColumn.getSectionIfExists(inColumnSy)) { layerHasSection = true; break; }
+        }
+        if (!layerHasSection) {
+          // Missing layer: populate via the appropriate generator path.
+          if (hasGenerateColumn) {
+            const column = this.storage.vwa.ensureColumn(job.cx, job.cz);
+            (this.generator as unknown as { generateColumn: (c: ChunkColumn, r: BlockStateRegistry) => void }).generateColumn(column, this.stateRegistry);
+            this.syncChunkFromStorage(chunk);
+            this.applyEditOverlay(chunk);
+            chunk.generated = true;
+            chunk.state = ChunkState.Generated;
+            this.countChunkVoxels(chunk);
+            // Keep storage ↔ chunk consistent (column now has real blocks; chunk was synced above, so no extra copy needed beyond the post-sync reconciliation loop).
+            for (let lz = 0; lz < 16; lz++) {
+              for (let lx = 0; lx < 16; lx++) {
+                for (let ly = 0; ly < CHUNK_DIMENSIONS.height; ly++) {
+                  const wy = chunk.cy * CHUNK_DIMENSIONS.height + ly;
+                  const id = chunk.getLocal(lx, ly, lz);
+                  const existingId = column.getBlockState(lx, wy, lz).blockId;
+                  if (id !== existingId) {
+                    const wx = chunk.cx * 16 + lx;
+                    const wz = chunk.cz * 16 + lz;
+                    if (id === BlockId.Air) {
+                      const sy = column.sectionIndexForY(wy);
+                      if (column.getSectionIfExists(sy)) {
+                        this.storage.vwa.setBlockState(wx, wy, wz, this.stateRegistry.getDefaultState(BlockId.Air));
+                      }
+                    } else {
+                      this.storage.vwa.setBlockState(wx, wy, wz, this.stateRegistry.getDefaultState(id));
+                    }
+                  }
+                }
+              }
+            }
+          } else {
+            // Legacy slab generator: generate the chunk itself then populate its column sections.
+            this.generator.generateChunk(chunk);
+            this.applyEditOverlay(chunk);
+            chunk.generated = true;
+            chunk.state = ChunkState.Generated;
+            this.countChunkVoxels(chunk);
+            const firstId = chunk.blocks[0]!;
+            let uniform = true;
+            for (let i = 1; i < CHUNK_BLOCK_COUNT; i++) {
+              if (chunk.blocks[i] !== firstId) { uniform = false; break; }
+            }
+            if (uniform) {
+              if (firstId !== BlockId.Air) {
+                const column = this.storage.vwa.ensureColumn(chunk.cx, chunk.cz);
+                const state = this.stateRegistry.getDefaultState(firstId);
+                for (let syOffset = 0; syOffset < CHUNK_DIMENSIONS.height / 16; syOffset++) {
+                  const globalSectionY = chunk.cy * (CHUNK_DIMENSIONS.height / 16) + syOffset;
+                  const inColumnSy = globalSectionY - this.dimension.minSectionY;
+                  column.getSection(inColumnSy).fill(state);
+                  column.markSectionDirty(inColumnSy);
+                }
+              }
+            } else {
+              for (let lz = 0; lz < 16; lz++) {
+                const wz = chunk.cz * 16 + lz;
+                for (let lx = 0; lx < 16; lx++) {
+                  const wx = chunk.cx * 16 + lx;
+                  for (let ly = 0; ly < CHUNK_DIMENSIONS.height; ly++) {
+                    const wy = chunk.cy * CHUNK_DIMENSIONS.height + ly;
+                    const blockId = chunk.getLocal(lx, ly, lz);
+                    if (blockId !== BlockId.Air) {
+                      this.storage.vwa.setBlockState(wx, wy, wz, this.stateRegistry.getDefaultState(blockId));
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } else {
+          this.syncChunkFromStorage(chunk);
+          this.applyEditOverlay(chunk);
+          chunk.generated = true;
+          chunk.state = ChunkState.Generated;
+          this.countChunkVoxels(chunk);
+          for (let lz = 0; lz < 16; lz++) {
+            for (let lx = 0; lx < 16; lx++) {
+              for (let ly = 0; ly < CHUNK_DIMENSIONS.height; ly++) {
+                const wy = chunk.cy * CHUNK_DIMENSIONS.height + ly;
+                const id = chunk.getLocal(lx, ly, lz);
+                const existingId = existingColumn.getBlockState(lx, wy, lz).blockId;
+                if (id !== existingId) {
+                  const wx = chunk.cx * 16 + lx;
+                  const wz = chunk.cz * 16 + lz;
+                  if (id === BlockId.Air) {
+                    const sy = existingColumn.sectionIndexForY(wy);
+                    if (existingColumn.getSectionIfExists(sy)) {
+                      this.storage.vwa.setBlockState(wx, wy, wz, this.stateRegistry.getDefaultState(BlockId.Air));
+                    }
+                  } else {
+                    this.storage.vwa.setBlockState(wx, wy, wz, this.stateRegistry.getDefaultState(id));
+                  }
+                }
+              }
+            }
           }
         }
       } else {
-        for (let lz = 0; lz < 16; lz++) {
-          const wz = chunk.cz * 16 + lz;
-          for (let lx = 0; lx < 16; lx++) {
-            const wx = chunk.cx * 16 + lx;
-            for (let ly = 0; ly < 64; ly++) {
-              const wy = chunk.cy * 64 + ly;
-              const blockId = chunk.getLocal(lx, ly, lz);
-              if (blockId !== BlockId.Air) {
-                this.storage.vwa.setBlockState(
-                  wx,
-                  wy,
-                  wz,
-                  this.stateRegistry.getDefaultState(blockId),
-                );
+        this.generator.generateChunk(chunk);
+        this.applyEditOverlay(chunk);
+        chunk.generated = true;
+        chunk.state = ChunkState.Generated;
+        this.countChunkVoxels(chunk);
+        const firstId = chunk.blocks[0]!;
+        let uniform = true;
+        for (let i = 1; i < CHUNK_BLOCK_COUNT; i++) {
+          if (chunk.blocks[i] !== firstId) {
+            uniform = false;
+            break;
+          }
+        }
+        if (uniform) {
+          if (firstId !== BlockId.Air) {
+            const column = this.storage.vwa.ensureColumn(chunk.cx, chunk.cz);
+            const state = this.stateRegistry.getDefaultState(firstId);
+            for (let syOffset = 0; syOffset < CHUNK_DIMENSIONS.height / 16; syOffset++) {
+              const globalSectionY = chunk.cy * (CHUNK_DIMENSIONS.height / 16) + syOffset;
+              const inColumnSy = globalSectionY - this.dimension.minSectionY;
+              column.getSection(inColumnSy).fill(state);
+              column.markSectionDirty(inColumnSy);
+            }
+          }
+        } else {
+          for (let lz = 0; lz < 16; lz++) {
+            const wz = chunk.cz * 16 + lz;
+            for (let lx = 0; lx < 16; lx++) {
+              const wx = chunk.cx * 16 + lx;
+              for (let ly = 0; ly < CHUNK_DIMENSIONS.height; ly++) {
+                const wy = chunk.cy * CHUNK_DIMENSIONS.height + ly;
+                const blockId = chunk.getLocal(lx, ly, lz);
+                if (blockId !== BlockId.Air) {
+                  this.storage.vwa.setBlockState(wx, wy, wz, this.stateRegistry.getDefaultState(blockId));
+                }
               }
             }
           }
         }
       }
-      // Bookkeeping advance through the features/light stages: terrain,
+            // Bookkeeping advance through the features/light stages: terrain,
       // overlay application and light seeding all happened above.
       pipeline.completeStage(job.key, 'generate', job.version);
       const features = pipeline.beginStage(job.key, 'features', job.version);

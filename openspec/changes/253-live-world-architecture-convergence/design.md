@@ -396,6 +396,25 @@ Expose test-safe read-only metrics sourced from canonical state:
 
 Debug hooks MUST project canonical truth and must not mutate a hidden legacy store.
 
+
+## Phase 3 Audit — Worldgen Stage Graph (2026-08-28)
+
+Audited `src/worldgen/**` (23 modules). Stage vocabulary (`src/worldgen/GenerationPipeline.ts:GENERATION_STAGES`):
+`TERRAIN -> CLIMATE -> BIOMES -> SURFACE -> CAVES -> FLUIDS -> FEATURES -> FINAL` with monotonic `advanceTo` per column (forward-only, unknown columns default to TERRAIN).
+
+Live terrain composition (`src/world/TerrainGenerator.ts`):
+- Stages 1-2 CLIMATE/BIOMES: `ClimateSampler` per column cached as dense `Uint8Array` biome index (plains/forest/desert/taiga), spawn ring forced plains.
+- Stages 3-5 TERRAIN/CAVES/SURFACE: per-column vertical sweep over `height = getHeightAt(x,z)` (fbm4), bedrock at `bedrockY`, stone/dirt bands, water fill at/below `seaLevel`, lava pockets via `isLavaAt`, caves via `isCaveAt` (dual 3D noise), declarative `SurfaceRuleEngine` (desert/taiga/underwater/grass) on `depthFromSurface 0..3`.
+- Stage 6 ORES: `OreVeinFeature.stampChunkOreVeins` per owner chunk (region-hashed), only replaces stone.
+- Stages 7-8 VEGETATION/STRUCTURES: `TreeFeature.buildTreeBlocks` per anchor column (owner canopy overlap recomputed identically) and `StructureGenerator.blocksForChunk` (region-owned starts, overwrite).
+
+Live adapter:
+`TerrainGenerator` is the adapter over `GenerationPipeline` + `VerticalWorldAccess/ChunkColumn`. `World.processGeneration` drives the pipeline (`generate -> features -> light`) and the canonical path is `TerrainGenerator.generateColumn(column, stateRegistry)` which writes `BlockState`s directly into the column's 24 sections for the full Overworld range `-64..319` (`column.minY/maxY` from `OVERWORLD_DIMENSION_TYPE`). `generateChunk(Chunk)` remains only as a compatibility projection (16x64x16 `Chunk.blocks`) that the live World copies into canonical sections — never the reverse — and is not used for missing-column generation. Missing-column generation therefore populates the canonical store lazily: air sections are never written (`getSectionIfExists` vs `getSection`), only touched sections allocate. This satisfies the Phase 3 contract: full-height generation, no permanent 64-high slab authority, and `VerticalWorldAccess` lazy via `sections.get(sy)` on reads vs `ensureSection` on writes.
+
+Streaming/generation/status reconciled around horizontal columns + sections: `World` derives `minChunkY = floor(minY/64)` and `chunkLayerCount = ceil(height/64)` from the active `DimensionType` (Overworld: -1 and 6), iterates `cy` in `[minChunkY, minChunkY+chunkLayerCount)` in `ensureChunks`, `preloadChunks`, `getReadyProgress`, and `RenderSimulationDistance` (render/simulation Chebyshev radii remain horizontal). `preload radius 1` therefore enqueues at most `9*6=54` slabs but the canonical column stays lazy (only ~8-12 sections materialized for stone terrain, verified via `allocatedSectionCount()`).
+
+Durable edits: `applyEditOverlay` (and column-level `applyColumnDurable` via overlay/durability bridge) runs AFTER the baseline generation/sync, so a regen after unload cannot overwrite stored player edits. The overlay remains projection-only LRU (`EDIT_OVERLAY_MAX_CHUNKS`) over the single writable truth `CanonicalWorldStorage -> VerticalWorldAccess`.
+
 ## Affected files/symbols
 
 Expected direct impact:
