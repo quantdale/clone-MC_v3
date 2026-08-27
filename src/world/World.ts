@@ -324,7 +324,7 @@ export class World implements WorldAccess {
     // Vertical window: 64-block chunk layers derived from the dimension's block extent.
     this.minChunkY = opts.dimension ? Math.floor(opts.dimension.minY / CHUNK_DIMENSIONS.height) : 0;
     this.chunkLayerCount = opts.dimension ? Math.ceil(opts.dimension.height / CHUNK_DIMENSIONS.height) : 1;
-    this.sectionsPerChunk = Math.ceil(this.dimension.height / 16);
+    this.sectionsPerChunk = CHUNK_DIMENSIONS.height / 16;
     this.chunkManager = new ChunkManager(opts.registry);
     this.monitor = opts.monitor ?? null;
     this.uvRectFor = opts.uvRectFor ?? null;
@@ -395,14 +395,16 @@ export class World implements WorldAccess {
   }
 
   setBlock(x: number, y: number, z: number, id: number): void {
-    // Guard against invalid/out-of-bounds coordinates. The world occupies a
-    // single vertical slab (cy === 0), so y must fall within the chunk height;
-    // anything outside would write an overlay entry for a chunk that never
-    // loads (unbounded dead entries), or read/write an invalid cell.
+    // Guard against invalid/out-of-bounds coordinates. The valid Y window is
+    // the chunk residency derived from the dimension (single-layer 0..63 for
+    // legacy test worlds, 6-layer -64..319 for the live Overworld). Out-of-range
+    // writes are no-ops and must not allocate storage or overlay entries.
     if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(z)) {
       return;
     }
-    if (y < 0 || y >= CHUNK_DIMENSIONS.height) {
+    const minY = this.minChunkY * CHUNK_DIMENSIONS.height;
+    const maxYExclusive = (this.minChunkY + this.chunkLayerCount) * CHUNK_DIMENSIONS.height;
+    if (y < minY || y >= maxYExclusive) {
       return;
     }
     if (!Number.isInteger(id) || !this.registry.has(id)) {
@@ -470,7 +472,6 @@ export class World implements WorldAccess {
     if (lx === CHUNK_DIMENSIONS.width - 1) this.markNeighborDirty(cx + 1, cy, cz);
     if (lz === 0) this.markNeighborDirty(cx, cy, cz - 1);
     if (lz === CHUNK_DIMENSIONS.depth - 1) this.markNeighborDirty(cx, cy, cz + 1);
-
     // Voxel lighting: queue minimal invalidation for both channels (the engine
     // reads the NEW opacity/luminance through its accessors), and remember the
     // affected chunks so a productive drain remeshes them.
@@ -502,13 +503,14 @@ export class World implements WorldAccess {
     if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(z)) {
       return;
     }
-    if (y < 0 || y >= CHUNK_DIMENSIONS.height) {
+    const minY = this.minChunkY * CHUNK_DIMENSIONS.height;
+    const maxYExclusive = (this.minChunkY + this.chunkLayerCount) * CHUNK_DIMENSIONS.height;
+    if (y < minY || y >= maxYExclusive) {
       return;
     }
     if (!Number.isInteger(blockId) || !this.registry.has(blockId)) {
       return;
     }
-    const state = this.stateRegistry.lookup(blockId, { ...properties });
     this.setBlock(x, y, z, blockId);
     this.storage.setBlockState(x, y, z, blockId, properties);
 
@@ -521,7 +523,7 @@ export class World implements WorldAccess {
       layer = new Map<number, BlockStateId>();
       this.stateOverlay.set(key, layer);
     }
-    layer.set(index, state.id);
+    layer.set(index, this.stateRegistry.lookup(blockId, { ...properties }).id);
     this.touchStateOverlay(key);
   }
 
@@ -557,29 +559,17 @@ export class World implements WorldAccess {
   }
 
   /**
-   * The block state at (x, y, z): the recorded state from a prior
-   * {@link setBlockState}, or the block's default state when none is recorded.
-   * Out-of-bounds coordinates resolve to the air default state.
+   * The block state at (x, y, z): the canonical live state from dimension-aware
+   * storage. Out-of-bounds coordinates resolve to the air default state.
    */
   getBlockState(x: number, y: number, z: number): BlockState {
     if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(z)) {
       return this.stateRegistry.getDefaultState(BlockId.Air);
     }
-    if (this.storage.dimension.containsY(y)) {
-      const canonical = this.storage.getBlockState(x, y, z);
-      if (canonical.id !== this.stateRegistry.getDefaultState(BlockId.Air).id) {
-        return canonical;
-      }
+    if (!this.dimension.containsY(y)) {
+      return this.stateRegistry.getDefaultState(BlockId.Air);
     }
-    const [cx, cy, cz] = worldToChunk(x, y, z);
-    const [lx, ly, lz] = worldToLocal(x, y, z);
-    const index = localIndex(lx, ly, lz);
-    const key = chunkKey(cx, cy, cz);
-    const stateId = this.stateOverlay.get(key)?.get(index);
-    if (stateId !== undefined) {
-      return this.stateRegistry.getState(stateId);
-    }
-    return this.stateRegistry.getDefaultState(this.getBlock(x, y, z));
+    return this.storage.getBlockState(x, y, z);
   }
 
   /**
@@ -599,7 +589,6 @@ export class World implements WorldAccess {
     }
     return this.registry.isSolid(this.getBlock(x, y, z));
   }
-
   /** Export the sparse edit overlay as a versioned, JSON-safe snapshot. */
   exportEdits(): WorldEditSnapshot {
     const edits: WorldEditSnapshot['edits'] = [];
@@ -633,7 +622,7 @@ export class World implements WorldAccess {
     let accepted = 0;
     for (const entry of snapshot.edits) {
       const [cx, cy, cz] = entry.chunk;
-      if (cy !== 0) {
+      if (cy < this.minChunkY || cy >= this.minChunkY + this.chunkLayerCount) {
         continue;
       }
       const key = chunkKey(cx, cy, cz);
@@ -1645,7 +1634,14 @@ export class World implements WorldAccess {
     let ready = 0;
     for (let dx = -radius; dx <= radius; dx++) {
       for (let dz = -radius; dz <= radius; dz++) {
-        const chunk = this.chunkManager.getChunk(playerChunkX + dx, this.minChunkY, playerChunkZ + dz);
+        // Overworld has 6 vertical slabs ( -1..4 ). Checking only the bottom
+        // slab (-1) is not where the player spawns (surface at cy 0). Check
+        // the surface slab (cy 0) where the spawn height (~32) lives; for
+        // single-layer legacy worlds minChunkY is 0 so this is still correct.
+        // A generated surface chunk is sufficient to hide the loading screen;
+        // its mesh will attach within a few frames.
+        const surfaceCy = 0;
+        const chunk = this.chunkManager.getChunk(playerChunkX + dx, surfaceCy, playerChunkZ + dz);
         if (chunk?.state === ChunkState.Visible) {
           ready++;
         }

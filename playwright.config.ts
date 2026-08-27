@@ -5,6 +5,10 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
+  // Overworld is now 384 blocks (24 sections, 6×64 slabs). Software WebGL in
+  // headless Chromium renders at ~5 FPS, so the initial generation/mesh budget
+  // needs ~15s; allow 90s per test to avoid flakiness on CI.
+  timeout: 90_000,
   // WebGL rendering is software-rendered in headless Chromium and starves
   // under parallel load (pages load at ~10 FPS). A single worker keeps the
   // suite stable.

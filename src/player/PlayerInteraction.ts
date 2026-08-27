@@ -491,9 +491,9 @@ export class PlayerInteraction {
     const by = Math.floor(this.target.blockY + this.target.ny);
     const bz = Math.floor(this.target.blockZ + this.target.nz);
 
-    // Guard against placement outside the world's vertical bounds (e.g. on top
-    // of a y=63 block). Rejecting here avoids the phantom-edit path in setBlock.
-    if (by < 0 || by >= CONFIG.chunk.height) {
+    // Guard against placement outside the world's vertical bounds (Overworld
+    // [-64,319]). Rejecting here avoids the phantom-edit path in setBlock.
+    if (by < -64 || by > 319) {
       this.onAction?.('blocked', selectedId);
       return false;
     }

@@ -79,17 +79,17 @@ export const CONFIG = {
    *  limits; the time budgets below are the primary scheduling signal (audit 04). */
   budgets: {
     /** Max chunks generated per frame. */
-    generatePerFrame: 2,
+    generatePerFrame: 8,
     /** Max chunks meshed per frame. */
-    meshPerFrame: 3,
+    meshPerFrame: 8,
     /** Max chunks unloaded per frame. */
     unloadPerFrame: 4,
     /** Main-thread chunk-task time budget per frame (milliseconds). */
-    mainThreadChunkMs: 3,
+    mainThreadChunkMs: 12,
     /** Main-thread GPU upload time budget per frame (milliseconds). */
-    uploadMsPerFrame: 1.5,
+    uploadMsPerFrame: 3,
     /** Light-propagation drain time budget per frame (milliseconds). */
-    lightDrainMs: 2,
+    lightDrainMs: 4,
     /** Maximum simulation ticks run in one frame to catch up accumulated debt. */
     maxCatchUpTicks: 5,
     /** Worker pool size hint; 0 = derive automatically from hardwareConcurrency. */

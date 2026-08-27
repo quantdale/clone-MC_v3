@@ -13,7 +13,6 @@
  */
 import type { World } from '../world/World';
 import type { TerrainGenerator } from '../world/TerrainGenerator';
-import { CONFIG } from '../config';
 import { VoxelShape } from '../world/VoxelShape';
 import type { ShapeWorld } from '../world/CollisionResolver';
 import { CollisionResolver } from '../world/CollisionResolver';
@@ -75,7 +74,7 @@ export class PassiveMobWorldAdapter implements PassiveMobWorld {
   }
 
   getSkyLight(x: number, y: number, z: number): number {
-    for (let yy = y; yy < CONFIG.chunk.height; yy++) {
+    for (let yy = y; yy < 64; yy++) {
       if (this.world.isSolid(x, yy, z)) return 0;
     }
     return 15;

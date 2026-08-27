@@ -14,8 +14,10 @@ async function waitForGame(page: Page): Promise<void> {
   await page.goto('/');
   // The loading panel is visible on boot; wait for it to be hidden (world ready).
   // `#loading` becomes `display:none` via the `hidden` class, so use the 'hidden'
-  // state rather than 'visible'.
-  await page.waitForSelector('#loading', { state: 'hidden', timeout: 30_000 });
+  // state rather than 'visible'. Overworld is now 6×64 slabs (384 blocks, 24
+  // sections) so initial generation is ~6× the legacy single-slab cost; allow
+  // 60s for software WebGL at ~5 FPS in headless CI.
+  await page.waitForSelector('#loading', { state: 'hidden', timeout: 60_000 });
 }
 
 /** Enter pointer lock by clicking the canvas. */

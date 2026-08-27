@@ -2344,7 +2344,7 @@ export class Game {
     if (!state || state.seed !== this.seed) return;
     const [x, y, z] = state.player.position;
     if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) return;
-    if (y < CONFIG.bedrockY || y >= CONFIG.chunk.height) return;
+    if (y < -64 || y > 319) return;
     this.player.position.set(x, y, z);
     this.player.yaw = state.player.yaw;
     this.player.pitch = state.player.pitch;
