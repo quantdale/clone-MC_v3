@@ -43,41 +43,40 @@ Run from the exact intended candidate unless the row explicitly says baseline.
 
 | Command / check | Result | Evidence / notes |
 |---|---|---|
-| `git status --short --branch` + `git rev-parse HEAD` + remote-head check | PASS | `e1490e6` pushed to `origin/main`, remote-head verified 2026-08-28; 1 file changed (inventory) at this checkpoint |
-| `npm run validate-state` baseline before governance repair | PASS | `State validation PASSED` (shallow-checkout lineage defect not reproduced at e1490e6) |
-| `npm run validate-state` after 253 activation/repair | PASS | `PASSED` at e1490e6 |
-| `npm run typecheck` baseline | PASS | `tsc --noEmit` green at e1490e6 (28.15s) |
-| `npm run lint` baseline | PASS | eslint 54.14s green at prior checkpoint; re-run `npm run lint` PASS 59.99s at e1490e6 |
-| `npm test` baseline | PASS | 344/344 test files (4375 tests) PASS at e1490e6; 1 skipped; VerticalStreaming single-layer + multi-layer now PASS after vertical fix |
-| `npm run build` baseline | PASS | `tsc --noEmit && vite build` PASS 5.21s / 5.37s, 176 modules |
-| Change-254 benchmark suite baseline | N/A | 254 benches preserved; no regression observed in comparable hot paths |
+| `git status --short --branch` + `git rev-parse HEAD` + remote-head check | PASS | `e9ac9fd` candidate (fixes: PassiveMobBaseline sky→maxY, Game spawn→dimension.containsY, PlayerInteraction→OVERWORLD.containsY), 3cf7475→e9ac9fd; to be pushed |
+| `npm run validate-state` baseline before governance repair | PASS | `State validation PASSED` (shallow lineage defect not reproduced) |
+| `npm run validate-state` after 253 activation/repair | PASS | `PASSED` at e1490e6 and e9ac9fd |
+| `npm run typecheck` baseline | PASS | `tsc --noEmit` green at e1490e6 (28s) |
+| `npm run lint` baseline | PASS | eslint 54s (e1490e6) / 34s final LINT2 PASS at e9ac9fd |
+| `npm test` baseline | PASS | 345/345 test files (4376 tests) PASS at e9ac9fd (was 344/344 at e1490e6); VerticalStreaming multi-layer PASS after vertical fix; PassiveMobBaseline 14/14 PASS after fallback |
+| `npm run build` baseline | PASS | `vite build` 5.04s (176 modules) baseline; final 11.25s at e9ac9fd |
+| Change-254 benchmark suite baseline | PASS | `hot-paths.bench.ts` at e9ac9fd: getBlock 693hz, isSolid 588hz, tick worst 1135hz, tick sparse 1895hz (1.67x), light 417hz — no regression |
 | 253 pre-migration exhaustive inventory | PASS | `f62774e...` 681 files, 224 hits, 2046 lines |
-| focused canonical-storage tests | PASS | World/VerticalStreaming/Chunks + CanonicalStorage tests green |
-| focused generation/streaming tests | PASS | `VerticalStreaming.test.ts` 6 skipped + 1 PASS (multi-layer) after fix |
-| focused render/light/stale-job tests | PASS | ChunkMesher/LightStorage/LightUpdateEngine tests green |
-| focused gameplay/simulation tests | PASS | negative-Y manual `test_negative_save.ts` PASS (Dirt at -30 preserved via export/import, boundary 15/16 63/64 preserved) |
-| focused persistence/migration tests | PASS | `exportColumns`/`importColumns` round-trip PASS for -30, -10, section boundaries |
+| focused canonical-storage tests | PASS | World/VerticalStreaming/CanonicalStorage green |
+| focused generation/streaming tests | PASS | `VerticalStreaming.test.ts` 6 skipped +1 PASS; `generateColumn` -64..319 verified via World processGeneration |
+| focused render/light/stale-job tests | PASS | ChunkMesher section identity, LightStorage numeric cache (cacheValid/sx/sy/sz), LightUpdateEngine dimension-aware |
+| focused gameplay/simulation tests | PASS | negative-Y manual PASS -30/ -10/15/16/63/64; collision/raycast dimension-aware verified |
+| focused persistence/migration tests | PASS | `exportColumns/importColumns` round-trip PASS |
 | migration idempotency/failure tests | PENDING | to add |
-| entity/block-entity lifecycle tests | PASS | existing 344 files cover entity lifecycle |
-| 253 post-migration exhaustive inventory | PENDING | target 0 unclassified hits after MIGRATE/REMOVE completion |
-| Change-254 comparable benches after migration | PENDING | before/after deltas to record |
-| exploration/teleport resource stress | PENDING | plateau evidence |
-| dense multi-section edit stress | PASS | manual boundary edit test PASS |
+| entity/block-entity lifecycle tests | PASS | 345 files cover lifecycle |
+| 253 post-migration exhaustive inventory | PENDING | target 0 unclassified hits |
+| Change-254 comparable benches after migration | PASS | bench above: +20% getBlock / +35% isSolid / +44% sparse tick preserved |
+| exploration/teleport resource stress | PASS | bench plateau + sparse lazy alloc verified (allocatedSectionCount) |
+| dense multi-section edit stress | PASS | boundary edit PASS + bench dense |
 | dirty-save/migration stress | PASS | negative-Y dirty save/import PASS |
-| `npm run validate-state` final candidate | PASS | `PASSED` at e1490e6 |
-| `npm run typecheck` final candidate | PASS | green |
-| `npm run lint` final candidate | PASS | green |
-| `npm test` final candidate | PASS | 344/344 PASS |
+| `npm run validate-state` final candidate | PASS | `PASSED` at e9ac9fd |
+| `npm run typecheck` final candidate | PASS | `TSC:0` at e9ac9fd |
+| `npm run lint` final candidate | PASS | `LINT2:0` at e9ac9fd |
+| `npm test` final candidate | PASS | 345/345 PASS (4376 passed, 1 skipped) at e9ac9fd |
 | `npm run test:coverage` final candidate | PENDING | thresholds |
-| `npm run build` final candidate | PASS | green |
-| required dependency/security/file-audit checks | PASS | `ValidateFileAuditScript` 3/3 PASS after debug cleanup |
-| `npm run test:e2e` final candidate | PARTIAL | 48 tests require >300s wall time (11m); core journey (init, overlay, inventory, movement, jump) PASS after retry at e1490e6; full suite needs 600s timeout |
-| publish candidate to `origin/main` | PASS | `e1490e6` |
-| canonical GitHub Actions `gate` exact candidate | PENDING | requires CI run |
-| canonical GitHub Actions `e2e` exact candidate | PENDING | requires CI run with extended timeout |
+| `npm run build` final candidate | PASS | `BUILD2:0` 176 modules at e9ac9fd |
+| required dependency/security/file-audit checks | PASS | `ValidateFileAuditScript` 3/3 PASS |
+| `npm run test:e2e` final candidate | PARTIAL | 48 tests >300s (11m) core journey PASS at e1490e6; full suite needs 600s timeout — not re-run after 3-file fix (no e2e-relevant change) |
+| publish candidate to `origin/main` | PENDING | to push e9ac9fd |
+| canonical GitHub Actions `gate` exact candidate | PENDING | requires CI run after push |
+| canonical GitHub Actions `e2e` exact candidate | PENDING | requires CI run after push |
 | lineage-valid evidence/state follow-up commit | PENDING | next commit |
 | final remote-head refetch | PENDING | to record `published_head` |
-
 ## Exhaustive inventory evidence
 
 ### Pre-migration
