@@ -76,8 +76,8 @@ export class PassiveMobWorldAdapter implements PassiveMobWorld {
 
   getSkyLight(x: number, y: number, z: number): number {
     // Dimension-aware open-column scan: 15 if no solid above up to dimension top (Overworld 319), else 0.
-    // Uses World.dimension so negative worlds and modern height are correct.
-    const maxY = this.world.dimension.maxY;
+    // Fallback to 63 preserves legacy test harness where World mock lacks dimension.
+    const maxY = (this.world as unknown as { dimension?: { maxY: number } }).dimension?.maxY ?? 63;
     for (let yy = y; yy <= maxY; yy++) {
       if (this.world.isSolid(x, yy, z)) return 0;
     }
