@@ -2427,8 +2427,8 @@
   ],
   "publicationHistory": [
     {
-      "head": "f04b5371343a84b1767260efc4f001224dd8eb22",
-      "at": "2026-08-28T22:37:00Z",
+      "head": "afd3130212e413092df9859008ea989a022f7dbd",
+      "at": "2026-08-28T22:38:55Z",
       "note": "Change 253 publication-metadata checkpoint published normally to origin/main. It records the full-worktree checkpoint, preserves task 23 as unchecked because browser heap/renderer/entity sampling is blocked by the reproduced six-mode Chromium fillRect hang, and makes no canonical gate/e2e claim."
     }
   ],
