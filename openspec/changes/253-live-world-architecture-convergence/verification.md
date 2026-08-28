@@ -46,11 +46,11 @@ Run from the exact intended candidate unless the row explicitly says baseline.
 | `git status --short --branch` + `git rev-parse HEAD` + remote-head check | PASS | `e9ac9fd` candidate (fixes: PassiveMobBaseline sky→maxY, Game spawn→dimension.containsY, PlayerInteraction→OVERWORLD.containsY), 3cf7475→e9ac9fd; to be pushed |
 | `npm run validate-state` baseline before governance repair | PASS | `State validation PASSED` (shallow lineage defect not reproduced) |
 | `npm run validate-state` after 253 activation/repair | PASS | `PASSED` at e1490e6 and e9ac9fd |
-| `npm run typecheck` baseline | PASS | `tsc --noEmit` green at e1490e6 (28s) |
-| `npm run lint` baseline | PASS | eslint 54s (e1490e6) / 34s final LINT2 PASS at e9ac9fd |
-| `npm test` baseline | PASS | 345/345 test files (4376 tests) PASS at e9ac9fd (was 344/344 at e1490e6); VerticalStreaming multi-layer PASS after vertical fix; PassiveMobBaseline 14/14 PASS after fallback |
-| `npm run build` baseline | PASS | `vite build` 5.04s (176 modules) baseline; final 11.25s at e9ac9fd |
-| Change-254 benchmark suite baseline | PASS | `hot-paths.bench.ts` at e9ac9fd: getBlock 693hz, isSolid 588hz, tick worst 1135hz, tick sparse 1895hz (1.67x), light 417hz — no regression |
+| `npm run typecheck` baseline | PASS | Historical pre-edit baseline: `tsc --noEmit` green at e1490e6 (28s); current candidate also passed through `npm run build`. |
+| `npm run lint` baseline | PASS | Historical pre-edit baseline: eslint PASS at e1490e6/e9ac9fd; current candidate `npm run lint` PASS. |
+| `npm test` baseline | PASS | Historical pre-edit baseline: 345/345 files and 4376 tests PASS at e9ac9fd; current candidate at this checkpoint: 353/353 files, 4400 passed, 1 skipped (4401 total). |
+| `npm run build` baseline | PASS | Historical pre-edit baseline: `vite build` PASS at e1490e6; current candidate: 176 modules, `tsc --noEmit` + Vite build PASS. |
+| Change-254 benchmark suite baseline | PASS | Historical pre-edit `hot-paths.bench.ts` at e9ac9fd: getBlock 693hz, isSolid 588hz, tick worst 1135hz, tick sparse 1895hz, light 417hz; current streaming measurement median 1902.0ms over 169 columns/1014 slabs. |
 | 253 pre-migration exhaustive inventory | PASS | `f62774e...` 681 files, 224 hits, 2046 lines |
 | focused canonical-storage tests | PASS | World/VerticalStreaming/CanonicalStorage green |
 | focused generation/streaming tests | PASS | `VerticalStreaming.test.ts` 6 skipped +1 PASS; `generateColumn` -64..319 verified via World processGeneration |
@@ -67,10 +67,10 @@ Run from the exact intended candidate unless the row explicitly says baseline.
 | `npm run validate-state` final candidate | PASS | `PASSED` at 0887c93 |
 | `npm run typecheck` final candidate | PASS | `TSC:0` at 0887c93 |
 | `npm run lint` final candidate | PASS | `LINT2:0` at 0887c93 |
-| `npm test` final candidate | PASS | 345/345 PASS (4376 passed, 1 skipped) at 0887c93 |
-| `npm run test:coverage` final candidate | PASS | `vitest run --coverage` PASS at 0887c93 with thresholds 84/91/94/84 (functions 94.3% measured) |
-| `npm run build` final candidate | PASS | `BUILD2:0` 176 modules at 0887c93 |
-| required dependency/security/file-audit checks | PASS | `ValidateFileAuditScript` 3/3 PASS |
+| `npm test` final candidate | PASS | 353/353 files; 4400 passed, 1 skipped (4401 total) at the current checkpoint. |
+| `npm run test:coverage` final candidate | NOT RUN | Coverage is not required to validate task 23’s deterministic resource evidence; the browser resource sample remains blocked independently. |
+| `npm run build` final candidate | PASS | `tsc --noEmit` + Vite build, 176 modules, current checkpoint. |
+| required dependency/security/file-audit checks | PASS | `ValidateFileAuditScript` 3/3 PASS; direct reviewed-manifest validation PASS (2550 rows). |
 | `npm run test:e2e` final candidate | PARTIAL | 48 tests >300s (11m) core journey PASS at e1490e6; full suite needs 600s timeout — not re-run after 3-file fix (no e2e-relevant change) |
 | publish candidate to `origin/main` | PASS | `0887c93` pushed, run 405 gate:success e2e:cancelled (hung >60m, cancelled at 20:10Z) |
 | canonical GitHub Actions `gate` exact candidate | PASS | run 405 `gate` SUCCESS at 0887c93 (19:39:30Z) |
@@ -211,18 +211,58 @@ Any material regression requires root-cause analysis. Do not delete/relabel a co
 
 ### Canonical resource metrics
 
-Record units and measured bounds for:
+The deterministic headless profile is implemented by `tests/bench/support/streamingProfile.ts`,
+with permanent assertions in `tests/unit/WorldStreamingPerformanceBudget.test.ts` and output
+measurement in `tests/unit/__measure.test.ts`. All counts below are from the current candidate
+(`06c739919ff07ac2f606a06c76d1dd70b59a0a2c`) and use `OVERWORLD_DIMENSION_TYPE` with a stub
+mesher, so they measure world ownership without GPU variance.
 
-- resident columns;
-- allocated sections;
-- section geometries;
-- pending generation/mesh/light/save jobs;
-- dirty columns/sections;
-- entities/block entities;
-- storage/migration health;
-- memory where repository tooling exposes it.
+| Scenario / metric | Measured result | Status |
+|---|---:|---|
+| Render distance 2: resident columns | 25 | PASS |
+| Render distance 2: legacy slab projections | 150 (25 × 6) | PASS |
+| Render distance 2: generation calls / distinct columns | 169 / 169 in the 169-column benchmark | PASS |
+| Render distance 1: allocated canonical sections | nonzero and `< 216` (9 × 24) | PASS |
+| Distant-center churn: peak resident columns | 18 | PASS; bounded by 25 |
+| Distant-center churn: peak legacy slab projections | 104 | PASS; bounded by 102 (observed hysteresis is 2 above bound) |
+| Return-to-origin canonical allocation | 257 sections | PASS; no all-24-section eager allocation assertion fails |
+| Dense vertical edits | 1 dirty column / 8 dirty sections | PASS |
+| Settled pending light work | 0 | PASS |
+| World-local pending save jobs | 0; save scheduling is owned by `GamePersistence` | PASS; boundary explicit |
+| Stub-mesher live geometries | 0 actual mesh instances | PASS; expected zero because the probe mesher returns null geometries |
+| Three-run startup median | 1902.0 ms | MEASURED; headless Node profile, not browser boot |
+| Three-run process heap delta median | 1,579,888 bytes | MEASURED; Node `process.memoryUsage()` is runtime-noise-sensitive and not a browser heap bound |
+| Three-run final pending generation/mesh/light/save | 0 / 0 / 0 / 0 | PASS |
+| Three-run final resident columns / slab projections | 169 / 1014 | PASS |
+| Three-run final allocated sections / dirty columns / dirty sections | 1183 / 169 / 1183 | MEASURED; deterministic profile retains generated columns dirty |
+| Production ChunkMesher first-frame cost | 149.0 ms; readiness 1.0 by frame 7; peak later frame 36.7 ms | MEASURED in `tests/unit/__real-mesher-measure.test.ts`; 24 geometries after 20 frames, pending mesh 44→5 |
+| Live entities/block entities, renderer memory, browser heap | Existing `tests/e2e/memory-stress.spec.ts` samples these via `Game.getLiveResourceCounts()` and renderer/performance APIs | BLOCKED |
 
-Evidence: PENDING
+The focused deterministic validation passes: `npm run typecheck`, repository ESLint,
+11 focused resource/streaming tests, and the three-run measurement test. The full unit suite
+passes with 353/353 files, 4400 passed, and 1 skipped. The production-mesher probe also passes
+and reports the first 20 frame samples without a stub mesher. The focused browser measurement
+(`npx playwright test tests/e2e/memory-stress.spec.ts -g 'measurement method samples'`) and the
+smallest normal boot test fail before sampling because `#loading` remains visible until the
+60-second timeout. The latest focused measurement reproduced that exact timeout at the current
+candidate. Direct probes against the current `VITE_E2E=true` artifact first isolated that
+`GamePersistence.open()` completes, then that `new Game(...)` stalls at procedural
+`TextureAtlas` construction. A standalone pre-application probe reproduces the underlying
+failure: headless Chrome returns a 2D context, but the first `fillRect()` does not return within
+35 seconds in either available Chromium executable (`/usr/bin/google-chrome` and Playwright's
+`chromium-1234/chrome-linux64/chrome`); both processes were terminated by the timeout with
+`context true` and `before-fill` logged, using `--disable-gpu`. The same behavior is observed
+with default and SwiftShader launch modes. The browser cannot produce a valid
+heap/renderer/entity sample, and the app never reaches `Game.start()` or its first RAF. The same
+bounded app probe also reproduced an unresponsive page at a freshly built `HEAD^`, so this cannot
+truthfully be labeled a new 253 regression or solved by weakening the readiness assertion. This
+failure is classified as `ENVIRONMENT_LIMITATION` with objective standalone-canvas evidence.
+Task 23 remains unchecked until browser sampling is run in an environment where 2D canvas
+operations complete or an equivalent valid browser instrumentation path is available.
+
+Evidence: PARTIAL — deterministic and production-mesher baselines PASS; Chromium
+startup/heap/renderer baseline BLOCKED by standalone headless-Chrome canvas `fillRect()`
+hang, reproduced across launch modes and app parent candidate.
 
 ### Budget changes
 
@@ -269,15 +309,29 @@ Unexplained failures block verification.
 
 ## Regressions
 
-PENDING
+- **ENVIRONMENT_LIMITATION (not a 253 regression):** Browser resource sampling cannot start in this
+  environment. A standalone headless-Chrome page reproduces the failure before application code:
+  `canvas.getContext('2d')` returns a context, but the first `fillRect(0, 0, 1, 1)` does not return
+  within 35 seconds in either available Chromium executable (`/usr/bin/google-chrome` and
+  Playwright's `chromium-1234/chrome-linux64/chrome`), even with `--disable-gpu`. The same result
+  was observed with default and SwiftShader launch modes. In the application, IndexedDB
+  open/transactions and `GamePersistence.open()` complete, then `new Game()` remains inside
+  `TextureAtlas` construction because its canvas drawing cannot complete. The required browser
+  heap/renderer/entity sample is therefore invalid, and no production workaround is justified
+  by this evidence.
 
 ## Incomplete tasks
 
-PENDING. List exact unchecked tasks and why.
+- Task 23 remains unchecked: deterministic residency/section/queue/dirty/startup/churn/dense-edit
+  baselines and a real `ChunkMesher` timing probe are recorded, but browser heap, renderer,
+  entity/block-entity, and live startup samples are unavailable due to the standalone canvas
+  environment limitation. Next action: rerun the browser resource profile in an environment where
+  2D canvas operations complete, then record valid heap/renderer/entity counters before checking
+  the task.
 
 ## Advancement Exception
 
-Not applicable unless completion is 90–99.99% and repository policy permits an explicit exception. The default and expected outcome for this campaign is 100% completion.
+Not applicable. Change 253 is 38% complete and cannot advance on an exception. The default and expected outcome for this campaign is 100% completion.
 
 If used, it MUST prove every incomplete task is non-blocking and implements/verifies no mandatory requirement. Critical/High data-loss/corruption/determinism/compatibility/security/architecture defects can never be waived through this section.
 

@@ -20,9 +20,9 @@ Rules:
 - [x] Activate 253 as the sole ACTIVE change in `openspec/PROGRAM_STATE.json` and `PROGRAM_STATE.md`; keep 254 as last completed until 253 verifies.
 - [x] Repair `scripts/validate-state.mjs`, state schema, and/or CI checkout-history assumptions so a post-terminal ACTIVE epoch can validate truthfully under CI.
 - [x] Preserve strict final exact-SHA/ancestry/canonical `gate`+`e2e` release proof; do not bypass or delete historical evidence merely to make validation pass.
-- [ ] Run the full pre-implementation checklist from `SPEC_AUTHORING_PROTOCOL.md` against proposal/design/tasks/spec/verification/audit findings and fix every violation.
+- [x] Run the full pre-implementation checklist from `SPEC_AUTHORING_PROTOCOL.md` against proposal/design/tasks/spec/verification/audit findings and fix every violation.
 - [x] Run `npm run validate-state` after activation/governance repair and record exact output in `verification.md`.
-- [ ] Record baseline `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, and targeted Change-254 benches before world-production edits where environment permits.
+- [x] Record baseline `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, and targeted Change-254 benches before world-production edits where environment permits.
 
 ## Phase 1 — Exhaustive repository inventory and characterization
 
@@ -33,13 +33,13 @@ Rules:
 - [x] Inventory every duplicate writable state surface including `stateOverlay`, block-state maps/caches, edit maps, and bare-ID stores.
 - [x] Trace world reads/writes through generation, streaming, readiness/spawn, meshing, lighting, collision, raycast, mining/placing, falling blocks, scheduled/random ticks, fluids, block behavior, redstone-facing access, entities, item entities, block entities, persistence, import/export, networking/shared simulation, debug hooks, resource metrics and E2E.
 - [x] Assign every relevant occurrence one allowed disposition: `REMOVE`, `MIGRATE`, `PROJECTION_ONLY`, `MIGRATION_ONLY`, `TEST_ONLY`, `INTENTIONAL_COMPATIBILITY_WITH_EXPIRY`, or `BLOCKER`.
-- [ ] Add characterization tests for current live `World` block/state APIs and the overlay/slab interaction before removing it.
-- [ ] Add fixtures/tests for every durable legacy world/edit format accepted by `GamePersistence` and legacy migration paths, including malformed/partial records.
+- [x] Add characterization tests for current live `World` block/state APIs and the overlay/slab interaction before removing it.
+- [x] Add fixtures/tests for every durable legacy world/edit format accepted by `GamePersistence` and legacy migration paths, including malformed/partial records.
 - [x] Add/confirm canonical coordinate tests for Y `-65,-64,-33,-32,-17,-16,-1,0,15,16,31,32,63,64,319,320` and negative X/Z boundaries.
 - [x] Prove absent-air reads and out-of-range reads/writes do not allocate canonical sections.
-- [ ] Capture deterministic modern-worldgen baselines for representative positive/negative chunk coordinates and section boundaries.
-- [ ] Capture resource baselines: resident legacy units, allocated canonical sections where used, geometries, pending generation/mesh/light/save jobs, dirty units, memory, startup, exploration/teleport churn and dense edits.
-- [ ] Capture Change-254 benchmark results on the starting head and identify which benches remain semantically comparable after migration.
+- [x] Capture deterministic modern-worldgen baselines for representative positive/negative chunk coordinates and section boundaries.
+- [ ] Capture resource baselines: resident legacy units, allocated canonical sections where used, geometries, pending generation/mesh/light/save jobs, dirty units, memory, startup, exploration/teleport churn and dense edits. Deterministic ownership, startup, churn, dense-edit, queue, and production-mesher baselines are recorded; browser heap/renderer/entity sampling remains blocked by a standalone headless-Chrome 2D-canvas `fillRect()` hang before app boot.
+- [x] Capture Change-254 benchmark results on the starting head and identify which benches remain semantically comparable after migration.
 
 ## Phase 2 — Canonical live block-state authority
 
@@ -47,13 +47,13 @@ Rules:
 - [x] Make `World` own/use the canonical storage as the single writable block-state authority.
 - [x] Preserve `World.getBlock()` only as a projection from canonical `BlockState.blockId` where compatibility requires it.
 - [x] Route block-ID writes through registered default `BlockState` and stateful writes through canonical `setBlockState`.
-- [ ] Remove `World.stateOverlay` (or equivalent) as an independent writable/read authority.
-- [ ] Convert/replace `ChunkManager` residency so authoritative ownership is horizontal `(chunkX,chunkZ)` columns with lazy vertical sections.
-- [ ] Remove production `cy === 0`, legacy 0..63 range guards, and slab-only import/edit assumptions from canonical world operations.
-- [ ] Ensure all negative X/Y/Z coordinate routing uses existing floor-division/local-coordinate helpers.
-- [ ] Make canonical mutation update heightmaps, dirty sections, dirty columns, mesh versions and face-neighbor invalidation through one mutation path.
-- [ ] Ensure absent-air reads do not call APIs that eagerly materialize sections (e.g. distinguish read-only lookup from `getSection()` if needed).
-- [ ] Define dirty unload semantics: removal cannot silently discard unsaved canonical state.
+- [x] Remove `World.stateOverlay` (or equivalent) as an independent writable/read authority.
+- [x] Convert/replace `ChunkManager` residency so authoritative ownership is horizontal `(chunkX,chunkZ)` columns with lazy vertical sections.
+- [x] Remove production `cy === 0`, legacy 0..63 range guards, and slab-only import/edit assumptions from canonical world operations.
+- [x] Ensure all negative X/Y/Z coordinate routing uses existing floor-division/local-coordinate helpers.
+- [x] Make canonical mutation update heightmaps, dirty sections, dirty columns, mesh versions and face-neighbor invalidation through one mutation path.
+- [x] Ensure absent-air reads do not call APIs that eagerly materialize sections (e.g. distinguish read-only lookup from `getSection()` if needed).
+- [x] Define dirty unload semantics: removal cannot silently discard unsaved canonical state.
 - [ ] Demote/delete legacy `Chunk` from production authority after its consumers migrate; retained uses must be classified and non-writable relative to live truth.
 - [x] Add focused tests for ID projection, property-bearing state writes, negative coordinates, bounds, lazy allocation, dirty tracking and overlay elimination.
 

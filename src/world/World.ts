@@ -44,6 +44,8 @@ import {
   CHUNK_BLOCK_COUNT,
   CHUNK_DIMENSIONS,
   chunkKey,
+  decodeLegacySlabIndex,
+  floorDiv,
   keyToChunk,
   localIndex,
   worldToChunk,
@@ -155,10 +157,12 @@ export class World implements WorldAccess {
   private readonly simulationDistance: number;
   /** Classifier for the two independent radii; streaming stays on `renderDistance`. */
   private readonly rsd: RenderSimulationDistance;
-  /** Lowest streamed chunk-Y layer (derived from the dimension; 0 by default). */
+  /** Lowest streamed chunk-Y layer (derived from the explicit dimension when supplied). */
   private readonly minChunkY: number;
   /** Number of vertical chunk layers streamed around the player (1 by default). */
   private readonly chunkLayerCount: number;
+  /** Omitted dimensions retain the narrow legacy fixture contract; live Game always supplies one. */
+  private readonly usesExplicitDimension: boolean;
 
   /**
    * PROJECTION_ONLY — bounded LRU cache of player edits (chunkKey → localIndex → blockId).
@@ -311,9 +315,18 @@ export class World implements WorldAccess {
     this.renderDistance = opts.renderDistance ?? CONFIG.renderDistance;
     this.simulationDistance = opts.simulationDistance ?? CONFIG.simulationDistance;
     this.rsd = new RenderSimulationDistance(this.renderDistance, this.simulationDistance);
-    // Vertical window: 64-block chunk layers derived from the dimension's block extent.
-    this.minChunkY = opts.dimension ? Math.floor(opts.dimension.minY / CHUNK_DIMENSIONS.height) : 0;
-    this.chunkLayerCount = opts.dimension ? Math.ceil(opts.dimension.height / CHUNK_DIMENSIONS.height) : 1;
+    // Explicit live dimensions cover every slab intersecting [minY, maxY].
+    // Omitted dimensions retain the narrow legacy fixture contract; the
+    // production Game composition always supplies a dimension.
+    this.usesExplicitDimension = opts.dimension !== undefined;
+    if (this.usesExplicitDimension) {
+      this.minChunkY = floorDiv(this.dimension.minY, CHUNK_DIMENSIONS.height);
+      const maxChunkY = floorDiv(this.dimension.maxY, CHUNK_DIMENSIONS.height);
+      this.chunkLayerCount = maxChunkY - this.minChunkY + 1;
+    } else {
+      this.minChunkY = 0;
+      this.chunkLayerCount = 1;
+    }
     this.sectionsPerChunk = CHUNK_DIMENSIONS.height / 16;
     this.chunkManager = new ChunkManager(opts.registry);
     this.monitor = opts.monitor ?? null;
@@ -373,36 +386,37 @@ export class World implements WorldAccess {
     if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(z)) {
       return BlockId.Air;
     }
-    // Inline floor-div/floor-mod (identical to worldToChunk/worldToLocal for
-    // integer inputs) so the hottest engine path allocates nothing.
-    const cx = Math.floor(x / CHUNK_DIMENSIONS.width);
-    const cy = Math.floor(y / CHUNK_DIMENSIONS.height);
-    const cz = Math.floor(z / CHUNK_DIMENSIONS.depth);
-    const chunk = this.chunkAt(cx, cy, cz);
-    if (!chunk) {
+    if (this.usesExplicitDimension && !this.dimension.containsY(y)) {
       return BlockId.Air;
     }
-    return chunk.getLocal(
-      x - cx * CHUNK_DIMENSIONS.width,
-      y - cy * CHUNK_DIMENSIONS.height,
-      z - cz * CHUNK_DIMENSIONS.depth,
-    );
+    // ID reads are a projection of canonical storage. Resident `Chunk.blocks`
+    // remains a meshing projection only; consulting it here would make an edit
+    // disappear as soon as its slab unloads.
+    return this.storage.getBlock(x, y, z);
   }
 
   setBlock(x: number, y: number, z: number, id: number): void {
-    // Guard against invalid/out-of-bounds coordinates. The valid Y window is
-    // the chunk residency derived from the dimension (single-layer 0..63 for
-    // legacy test worlds, 6-layer -64..319 for the live Overworld). Out-of-range
-    // writes are no-ops and must not allocate storage or overlay entries.
+    if (!Number.isInteger(id) || !this.registry.has(id)) {
+      return;
+    }
+    this.applyCanonicalState(x, y, z, this.stateRegistry.getDefaultState(id));
+  }
+
+  /**
+   * Write a resolved canonical state and update the resident compatibility
+   * projection, invalidation, lighting, and edit bridge exactly once.
+   */
+  private applyCanonicalState(x: number, y: number, z: number, state: BlockState): void {
     if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(z)) {
       return;
     }
-    const minY = this.minChunkY * CHUNK_DIMENSIONS.height;
-    const maxYExclusive = (this.minChunkY + this.chunkLayerCount) * CHUNK_DIMENSIONS.height;
-    if (y < minY || y >= maxYExclusive) {
-      return;
-    }
-    if (!Number.isInteger(id) || !this.registry.has(id)) {
+    const minY = this.usesExplicitDimension
+      ? this.dimension.minY
+      : this.minChunkY * CHUNK_DIMENSIONS.height;
+    const maxYExclusive = this.usesExplicitDimension
+      ? this.dimension.maxY + 1
+      : (this.minChunkY + this.chunkLayerCount) * CHUNK_DIMENSIONS.height;
+    if (y < minY || y >= maxYExclusive || !this.registry.has(state.blockId)) {
       return;
     }
 
@@ -410,60 +424,47 @@ export class World implements WorldAccess {
     const [lx, ly, lz] = worldToLocal(x, y, z);
     const index = localIndex(lx, ly, lz);
     const key = chunkKey(cx, cy, cz);
-
     const chunk = this.chunkManager.getChunk(cx, cy, cz);
+    const oldState = this.storage.getBlockState(x, y, z);
 
-    // No-op write: skip remeshing and avoid growing the overlay projection.
-    if (chunk && chunk.getLocal(lx, ly, lz) === id) {
+    // Compare the canonical state id, not just blockId: property-bearing state
+    // changes must invalidate and remesh even when the block type is unchanged.
+    if (oldState.id === state.id) {
       return;
     }
-    if (!chunk && this.storage.getBlock(x, y, z) === id) {
-      return;
-    }
 
-    // Canonical write: storage is the single writable truth (also for
-    // not-yet-loaded chunks). Materializes column/section lazily and marks
-    // dirty for `dirtyColumns()` persistence. For unloaded chunks this is the
-    // durable truth even without a resident chunk.
-    this.storage.setBlock(x, y, z, id);
+    // Canonical write: this is the single writable mutation path. It updates
+    // section version, dirty section/column state, and heightmaps once.
+    this.storage.setCanonicalState(x, y, z, state);
 
     // Projection-only overlay: mirrors the canonical edit for legacy
-    // `exportEdits`/`applyEditOverlay`/`WorldEditDurability` consumers. Not
-    // authoritative; eviction is safe because `storage` retains the dirty
-    // column.
+    // `exportEdits`/`applyEditOverlay`/`WorldEditDurability` consumers.
     let overlay = this.editOverlay.get(key);
     if (!overlay) {
       overlay = new Map<number, number>();
       this.editOverlay.set(key, overlay);
     }
     this.touchEditOverlay(key);
-    overlay.set(index, id);
+    overlay.set(index, state.blockId);
     this.editDurability?.captureChunkEdits(cx, cy, cz, overlay);
 
     if (!chunk) {
-      return; // Not loaded yet; the edit is applied when the chunk generates.
+      return;
     }
 
     const oldId = chunk.getLocal(lx, ly, lz);
-    chunk.setLocal(lx, ly, lz, id);
+    chunk.setLocal(lx, ly, lz, state.blockId);
     chunk.markDirty();
-    // Keep the voxel tally accurate for already-generated chunks.
-    if (chunk.generated && oldId !== id) {
-      const delta = (id !== BlockId.Air ? 1 : 0) - (oldId !== BlockId.Air ? 1 : 0);
+    if (chunk.generated && oldId !== state.blockId) {
+      const delta = (state.blockId !== BlockId.Air ? 1 : 0) - (oldId !== BlockId.Air ? 1 : 0);
       if (delta !== 0) {
         this.voxels += delta;
         this.chunkVoxelCounts.set(key, (this.chunkVoxelCounts.get(key) ?? 0) + delta);
       }
     }
 
-    // A block on a chunk/section boundary changes the faces of the neighbouring
-    // section, so mark that neighbour dirty too. Horizontal invalidation covers
-    // x/z section faces (local 0/15); vertical invalidation uses section-local
-    // y (y % 16) so interior edits at y 10 do not dirty neighbor sections at
-    // same cx/cz different sy, while a face at ly 15/0 still dirties the
-    // face-sharing vertical neighbor (including slab boundaries ly 0/63 which
-    // correspond to section-local 0/15). Only the face-sharing neighbor is
-    // dirtied — interior edits invalidate only the affected section.
+    // Invalidate face-sharing slab projections and lighting after the canonical
+    // mutation. Section-local Y uses the canonical 16-block coordinate helper.
     const lxSec = localCoord(x);
     const lzSec = localCoord(z);
     const lySec = localCoord(y);
@@ -472,20 +473,16 @@ export class World implements WorldAccess {
     if (lzSec === 0) this.markNeighborDirty(cx, cy, cz - 1);
     if (lzSec === 15) this.markNeighborDirty(cx, cy, cz + 1);
     if (lySec === 0) {
-      const ncy = sectionIndex(y - 1) !== sectionIndex(y) ? Math.floor((y - 1) / CHUNK_DIMENSIONS.height) : cy;
+      const ncy = sectionIndex(y - 1) !== sectionIndex(y) ? floorDiv(y - 1, CHUNK_DIMENSIONS.height) : cy;
       if (ncy !== cy) this.markNeighborDirty(cx, ncy, cz);
     }
     if (lySec === 15) {
-      const ncy = sectionIndex(y + 1) !== sectionIndex(y) ? Math.floor((y + 1) / CHUNK_DIMENSIONS.height) : cy;
+      const ncy = sectionIndex(y + 1) !== sectionIndex(y) ? floorDiv(y + 1, CHUNK_DIMENSIONS.height) : cy;
       if (ncy !== cy) this.markNeighborDirty(cx, ncy, cz);
     }
-    // Voxel lighting: queue minimal invalidation for both channels (the engine
-    // reads the NEW opacity/luminance through its accessors), and remember the
-    // affected chunks so a productive drain remeshes them.
     this.lightEngine.onBlockChanged(x, y, z);
-
     this.enqueueMeshWithRetry(chunk);
-    if (id === BlockId.Sand || id === BlockId.Gravel) {
+    if (state.blockId === BlockId.Sand || state.blockId === BlockId.Gravel) {
       this.enqueueFalling(x, y, z);
     }
     this.enqueueFalling(x, y + 1, z);
@@ -493,11 +490,8 @@ export class World implements WorldAccess {
 
   /**
    * Write the canonical block state for `blockId` with the given property values
-   * at (x, y, z). Resolves the state through the {@link BlockStateRegistry},
-   * writes the block id via {@link setBlock} (edits/dirty/mesh), and records the
-   * resolved state id so {@link getBlockState} returns it. Invalid coordinates or
-   * an unregistered block id are a no-op; an illegal property assignment throws
-   * from the registry's `lookup`.
+   * at (x, y, z). Resolve before mutation so invalid assignments cannot partially
+   * alter the world, and route the resolved state through one mutation path.
    */
   setBlockState(
     x: number,
@@ -509,16 +503,20 @@ export class World implements WorldAccess {
     if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(z)) {
       return;
     }
-    const minY = this.minChunkY * CHUNK_DIMENSIONS.height;
-    const maxYExclusive = (this.minChunkY + this.chunkLayerCount) * CHUNK_DIMENSIONS.height;
+    const minY = this.usesExplicitDimension
+      ? this.dimension.minY
+      : this.minChunkY * CHUNK_DIMENSIONS.height;
+    const maxYExclusive = this.usesExplicitDimension
+      ? this.dimension.maxY + 1
+      : (this.minChunkY + this.chunkLayerCount) * CHUNK_DIMENSIONS.height;
     if (y < minY || y >= maxYExclusive) {
       return;
     }
     if (!Number.isInteger(blockId) || !this.registry.has(blockId)) {
       return;
     }
-    this.setBlock(x, y, z, blockId);
-    this.storage.setBlockState(x, y, z, blockId, properties);
+    const state = this.stateRegistry.lookup(blockId, { ...properties });
+    this.applyCanonicalState(x, y, z, state);
   }
 
 
@@ -559,9 +557,14 @@ export class World implements WorldAccess {
   isSolid(x: number, y: number, z: number): boolean {
     // An invisible solid floor below the world prevents the player from
     // falling forever if a chunk is momentarily un-generated or unloaded.
-    const bottomY = this.minChunkY * CHUNK_DIMENSIONS.height;
+    const bottomY = this.usesExplicitDimension
+      ? this.dimension.minY
+      : this.minChunkY * CHUNK_DIMENSIONS.height;
     if (y < bottomY) {
       return true;
+    }
+    if (this.usesExplicitDimension && y > this.dimension.maxY) {
+      return false;
     }
     return this.registry.isSolid(this.getBlock(x, y, z));
   }
@@ -658,9 +661,6 @@ export class World implements WorldAccess {
     let accepted = 0;
     for (const entry of snapshot.edits) {
       const [cx, cy, cz] = entry.chunk;
-      if (cy < this.minChunkY || cy >= this.minChunkY + this.chunkLayerCount) {
-        continue;
-      }
       const key = chunkKey(cx, cy, cz);
       let overlay = this.editOverlay.get(key);
       if (!overlay) {
@@ -678,12 +678,18 @@ export class World implements WorldAccess {
         }
         // Idempotent: only count when overlay or canonical storage actually changes
         const prevOverlay = overlay.get(index);
-        const lx = index % 16;
-        const lz = Math.floor(index / 16) % 16;
-        const ly = Math.floor(index / 256);
-        const wx = cx * CHUNK_DIMENSIONS.width + lx;
-        const wy = cy * CHUNK_DIMENSIONS.height + ly;
-        const wz = cz * CHUNK_DIMENSIONS.depth + lz;
+        const local = decodeLegacySlabIndex(index);
+        if (!local) continue;
+        const wx = cx * CHUNK_DIMENSIONS.width + local.lx;
+        const wy = cy * CHUNK_DIMENSIONS.height + local.ly;
+        const wz = cz * CHUNK_DIMENSIONS.depth + local.lz;
+        // Legacy slab payloads may straddle a dimension boundary (for example
+        // cy=-1 contains -64..-1 when minY=-1). Validate the actual cell Y,
+        // not only the slab coordinate, before touching the projection or
+        // canonical storage.
+        if (!this.dimension.containsY(wy)) {
+          continue;
+        }
         const canonicalId = this.storage.getBlock(wx, wy, wz);
         const needsOverlay = prevOverlay !== id;
         const needsCanonical = canonicalId !== id;
@@ -1309,9 +1315,9 @@ export class World implements WorldAccess {
    */
   private isLoadedAt(x: number, y: number, z: number): boolean {
     if (!this.dimension.containsY(y)) return false;
-    const cx = Math.floor(x / CHUNK_DIMENSIONS.width);
-    const cy = Math.floor(y / CHUNK_DIMENSIONS.height);
-    const cz = Math.floor(z / CHUNK_DIMENSIONS.depth);
+    const cx = floorDiv(x, CHUNK_DIMENSIONS.width);
+    const cy = floorDiv(y, CHUNK_DIMENSIONS.height);
+    const cz = floorDiv(z, CHUNK_DIMENSIONS.depth);
     return this.chunkAt(cx, cy, cz)?.generated === true;
   }
 
@@ -1523,6 +1529,19 @@ export class World implements WorldAccess {
         // copy, so leave it untouched rather than visually reverting it.
         if (this.editOverlay.has(key)) {
           return;
+        }
+        // Legacy committed edits are read-old input. Convert them into the
+        // canonical column before retaining the bounded compatibility
+        // projection, so eviction/unload cannot make hydration lossy.
+        for (const [index, id] of overlay) {
+          const local = decodeLegacySlabIndex(index);
+          if (!local) continue;
+          const worldX = cx * CHUNK_DIMENSIONS.width + local.lx;
+          const worldY = cy * CHUNK_DIMENSIONS.height + local.ly;
+          const worldZ = cz * CHUNK_DIMENSIONS.depth + local.lz;
+          if (this.dimension.containsY(worldY)) {
+            this.storage.setBlock(worldX, worldY, worldZ, id);
+          }
         }
         this.editOverlay.set(key, overlay);
         this.touchEditOverlay(key);
@@ -1870,10 +1889,11 @@ export class World implements WorldAccess {
     const baseX = chunk.cx * width;
     const baseZ = chunk.cz * depth;
     for (const [index, id] of applied) {
-      // Inverse of `localIndex(lx, ly, lz)` = `lx + lz * width + ly * width * depth`.
-      const lx = index % width;
-      const lz = Math.floor(index / width) % depth;
-      const ly = Math.floor(index / (width * depth));
+      const local = decodeLegacySlabIndex(index);
+      if (!local) continue;
+      const lx = local.lx;
+      const lz = local.lz;
+      const ly = local.ly;
       const wy = baseY + ly;
       if (!this.dimension.containsY(wy)) continue;
       if (column.getBlockState(lx, wy, lz).blockId === id) continue;
@@ -1895,14 +1915,33 @@ export class World implements WorldAccess {
   private syncChunkFromStorage(chunk: Chunk): void {
     const column = this.storage.getColumn(chunk.cx, chunk.cz);
     if (!column) return;
-    for (let ly = 0; ly < CHUNK_DIMENSIONS.height; ly++) {
-      const wy = chunk.cy * CHUNK_DIMENSIONS.height + ly;
-      if (!this.dimension.containsY(wy)) continue;
-      for (let lz = 0; lz < 16; lz++) {
-        for (let lx = 0; lx < 16; lx++) {
-          const id = column.getBlockState(lx, wy, lz).blockId;
-          const idx = localIndex(lx, ly, lz);
-          chunk.blocks[idx] = id;
+    const { width, height, depth } = CHUNK_DIMENSIONS;
+    const layer = width * depth;
+    const baseY = chunk.cy * height;
+
+    // Section-wise rather than cell-wise. `localIndex` is
+    // `lx + lz * width + ly * width * depth`, so the `SECTION_SIZE` Y-levels of
+    // one section occupy a contiguous index range — an absent (lazy air) section
+    // is a single typed-array fill instead of 4096 lookups, and a present one
+    // resolves its section once instead of per cell.
+    for (let sectionBase = 0; sectionBase < height; sectionBase += SECTION_SIZE) {
+      const worldY = baseY + sectionBase;
+      const from = sectionBase * layer;
+      const to = (sectionBase + SECTION_SIZE) * layer;
+      if (!this.dimension.containsY(worldY)) continue;
+      const section = column.getSectionIfExists(column.sectionIndexForY(worldY));
+      if (section === undefined) {
+        chunk.blocks.fill(BlockId.Air, from, to);
+        continue;
+      }
+      for (let ly = sectionBase; ly < sectionBase + SECTION_SIZE; ly++) {
+        const sectionLocalY = ly & (SECTION_SIZE - 1);
+        const rowBase = ly * layer;
+        for (let lz = 0; lz < depth; lz++) {
+          const colBase = rowBase + lz * width;
+          for (let lx = 0; lx < width; lx++) {
+            chunk.blocks[colBase + lx] = section.getStateAt(lx, sectionLocalY, lz).blockId;
+          }
         }
       }
     }
@@ -1948,8 +1987,33 @@ export class World implements WorldAccess {
   }
 
   getStats(): WorldStats {
+    let allocatedSections = 0;
+    let dirtyColumns = 0;
+    let dirtySections = 0;
+    for (const column of this.storage.columns()) {
+      allocatedSections += column.allocatedSectionCount();
+      const sectionDirty = column.dirtySectionIndices();
+      if (sectionDirty.length > 0) dirtyColumns++;
+      dirtySections += sectionDirty.length;
+    }
+    let geometries = 0;
+    for (const meshes of this.meshGroups.values()) {
+      geometries += meshes.length;
+    }
     return {
+      // `residentColumns` is the canonical horizontal ownership metric. Keep
+      // `loadedChunks` as a compatibility projection count until all render,
+      // simulation and debug consumers use section/column identity directly.
+      residentColumns: this.chunkManager.columnCount,
       loadedChunks: this.chunkManager.size,
+      allocatedSections,
+      dirtyColumns,
+      dirtySections,
+      geometries,
+      pendingLight: this.lightEngine.pendingCounts().total,
+      // Persistence owns save scheduling; World only exposes canonical dirty
+      // ownership above, so there is no world-local save queue to count.
+      pendingSave: 0,
       pendingGeneration: this.chunkManager.pipeline.queueDepth('generate'),
       pendingMesh:
         this.chunkManager.pipeline.queueDepth('mesh') +
@@ -1972,13 +2036,17 @@ export class World implements WorldAccess {
     let ready = 0;
     for (let dx = -radius; dx <= radius; dx++) {
       for (let dz = -radius; dz <= radius; dz++) {
-        // Overworld has 6 vertical slabs ( -1..4 ). Checking only the bottom
-        // slab (-1) is not where the player spawns (surface at cy 0). Check
-        // the surface slab (cy 0) where the spawn height (~32) lives; for
-        // single-layer legacy worlds minChunkY is 0 so this is still correct.
-        // A generated surface chunk is sufficient to hide the loading screen;
-        // its mesh will attach within a few frames.
-        const surfaceCy = 0;
+        // Readiness follows the generated surface slab instead of assuming
+        // `cy=0`. Explicit dimensions may place the playable surface in any
+        // slab (including dimensions whose minY is positive or negative).
+        const worldX = (playerChunkX + dx) * CHUNK_DIMENSIONS.width + Math.floor(CHUNK_DIMENSIONS.width / 2);
+        const worldZ = (playerChunkZ + dz) * CHUNK_DIMENSIONS.depth + Math.floor(CHUNK_DIMENSIONS.depth / 2);
+        const legacyMinY = this.minChunkY * CHUNK_DIMENSIONS.height;
+        const legacyMaxY = (this.minChunkY + this.chunkLayerCount) * CHUNK_DIMENSIONS.height - 1;
+        const minY = this.usesExplicitDimension ? this.dimension.minY : legacyMinY;
+        const maxY = this.usesExplicitDimension ? this.dimension.maxY : legacyMaxY;
+        const surfaceY = Math.max(minY, Math.min(maxY, this.generator.getHeightAt(worldX, worldZ)));
+        const surfaceCy = floorDiv(surfaceY, CHUNK_DIMENSIONS.height);
         const chunk = this.chunkManager.getChunk(playerChunkX + dx, surfaceCy, playerChunkZ + dz);
         if (chunk?.generated) {
           ready++;
@@ -1994,11 +2062,14 @@ export class World implements WorldAccess {
    * can paint immediately and the main thread never stalls on a large preload.
    */
   preloadChunks(playerChunkX: number, playerChunkZ: number, radius = 3): void {
-    for (let dx = -radius; dx <= radius; dx++) {
-      for (let dz = -radius; dz <= radius; dz++) {
-        const cx = playerChunkX + dx;
-        const cz = playerChunkZ + dz;
-        for (let cy = this.minChunkY; cy < this.minChunkY + this.chunkLayerCount; cy++) {
+    // Match the live streaming scan order: nearest columns must enter the
+    // bounded generation queue before far preload columns, otherwise a full
+    // preload can strand the readiness ring behind work that is not needed to
+    // hide the loading screen.
+    for (const [dx, dz] of this.streamScanOffsets(radius)) {
+      const cx = playerChunkX + dx;
+      const cz = playerChunkZ + dz;
+      for (let cy = this.minChunkY; cy < this.minChunkY + this.chunkLayerCount; cy++) {
           let chunk = this.chunkManager.getChunk(cx, cy, cz);
           if (!chunk) {
             chunk = this.chunkManager.createChunk(cx, cy, cz);
@@ -2014,7 +2085,6 @@ export class World implements WorldAccess {
           }
         }
       }
-    }
     this.needsEnsure = true;
   }
 
