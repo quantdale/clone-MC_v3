@@ -43,7 +43,7 @@ Run from the exact intended candidate unless the row explicitly says baseline.
 
 | Command / check | Result | Evidence / notes |
 |---|---|---|
-| `git status --short --branch` + `git rev-parse HEAD` + remote-head check | PASS | `e9ac9fd` candidate (fixes: PassiveMobBaseline sky→maxY, Game spawn→dimension.containsY, PlayerInteraction→OVERWORLD.containsY), 3cf7475→e9ac9fd; to be pushed |
+| `git status --short --branch` + `git rev-parse HEAD` + remote-head check | PASS | Published implementation checkpoint `c7c3df66a08bf0253fddf87a82570a7fcd7b84ee`; `origin/main` refetch matches exactly. Unrelated pre-existing worktree edits remain unstaged and outside this checkpoint. |
 | `npm run validate-state` baseline before governance repair | PASS | `State validation PASSED` (shallow lineage defect not reproduced) |
 | `npm run validate-state` after 253 activation/repair | PASS | `PASSED` at e1490e6 and e9ac9fd |
 | `npm run typecheck` baseline | PASS | Historical pre-edit baseline: `tsc --noEmit` green at e1490e6 (28s); current candidate also passed through `npm run build`. |
@@ -65,18 +65,18 @@ Run from the exact intended candidate unless the row explicitly says baseline.
 | dense multi-section edit stress | PASS | boundary edit PASS + bench dense |
 | dirty-save/migration stress | PASS | negative-Y dirty save/import PASS |
 | `npm run validate-state` final candidate | PASS | `PASSED` at 0887c93 |
-| `npm run typecheck` final candidate | PASS | `TSC:0` at 0887c93 |
-| `npm run lint` final candidate | PASS | `LINT2:0` at 0887c93 |
-| `npm test` final candidate | PASS | 353/353 files; 4400 passed, 1 skipped (4401 total) at the current checkpoint. |
+| `npm run typecheck` final candidate | PASS | `tsc --noEmit` at published implementation checkpoint `c7c3df66a08bf0253fddf87a82570a7fcd7b84ee`. |
+| `npm run lint` final candidate | PASS | `eslint .` at published implementation checkpoint `c7c3df66a08bf0253fddf87a82570a7fcd7b84ee`. |
+| `npm test` final candidate | PASS | 353/353 files; 4400 passed, 1 skipped (4401 total) on the Change-253 checkpoint worktree before publication. |
 | `npm run test:coverage` final candidate | NOT RUN | Coverage is not required to validate task 23’s deterministic resource evidence; the browser resource sample remains blocked independently. |
-| `npm run build` final candidate | PASS | `tsc --noEmit` + Vite build, 176 modules, current checkpoint. |
-| required dependency/security/file-audit checks | PASS | `ValidateFileAuditScript` 3/3 PASS; direct reviewed-manifest validation PASS (2550 rows). |
-| `npm run test:e2e` final candidate | PARTIAL | 48 tests >300s (11m) core journey PASS at e1490e6; full suite needs 600s timeout — not re-run after 3-file fix (no e2e-relevant change) |
-| publish candidate to `origin/main` | PASS | `0887c93` pushed, run 405 gate:success e2e:cancelled (hung >60m, cancelled at 20:10Z) |
-| canonical GitHub Actions `gate` exact candidate | PASS | run 405 `gate` SUCCESS at 0887c93 (19:39:30Z) |
-| canonical GitHub Actions `e2e` exact candidate | CANCELLED | run 405 `e2e` hung >60m (19:37:57Z→20:10Z) cancelled; will retry with fresh push |
-| lineage-valid evidence/state follow-up commit | PENDING | next commit after CI SUCCESS |
-| final remote-head refetch | PENDING | to record `published_head` after CI |
+| `npm run build` final candidate | PASS | `tsc --noEmit` + Vite build, 176 modules, at the published implementation checkpoint `c7c3df66a08bf0253fddf87a82570a7fcd7b84ee`. |
+| required dependency/security/file-audit checks | PASS | `npm run validate-state`, direct reviewed-manifest validation (2550 rows), and staged diff checks passed before publication. |
+| `npm run test:e2e` final candidate | PARTIAL | Focused browser resource test (`npm run test:e2e -- --grep 'measurement method samples'`) reproduced the environment limitation: `page.waitForSelector('#loading', { state: 'hidden' })` timed out after 60s before counters were sampled. Full E2E remains blocked by the same pre-application Chromium canvas failure documented below. |
+| publish candidate to `origin/main` | PASS | Implementation checkpoint `c7c3df66a08bf0253fddf87a82570a7fcd7b84ee` pushed normally to `origin/main`; refetched remote head matched exactly. |
+| canonical GitHub Actions `gate` exact candidate | PENDING | No canonical CI run was requested or obtained for this partial ACTIVE checkpoint. |
+| canonical GitHub Actions `e2e` exact candidate | PENDING | No canonical CI run was requested or obtained for this partial ACTIVE checkpoint. |
+| lineage-valid evidence/state follow-up commit | PENDING | This publication/state evidence follow-up is being recorded after the implementation checkpoint; its SHA will be recorded by a later commit. |
+| final remote-head refetch | PASS | `git ls-remote origin refs/heads/main` returned `c7c3df66a08bf0253fddf87a82570a7fcd7b84ee`. |
 ## Exhaustive inventory evidence
 
 ### Pre-migration
@@ -337,12 +337,12 @@ If used, it MUST prove every incomplete task is non-blocking and implements/veri
 
 ## Publication / CI evidence
 
-`session_start_head`: PENDING
-Implementation candidate: PENDING
-Canonical CI run(s): PENDING
-Evidence/state commit: PENDING
-`published_head`: PENDING
-Remote-head verification: PENDING
+`session_start_head`: `556f1e67ebebf2e7717b29020c04d524787fc431`
+Implementation candidate: `c7c3df66a08bf0253fddf87a82570a7fcd7b84ee` (published implementation checkpoint)
+Canonical CI run(s): PENDING — no canonical `gate`/`e2e` run is claimed for this partial ACTIVE checkpoint.
+Evidence/state commit: PENDING — this field is recorded by the follow-up commit after publication.
+`published_head`: `c7c3df66a08bf0253fddf87a82570a7fcd7b84ee` (remote refetch matched)
+Remote-head verification: PASS — `git ls-remote origin refs/heads/main` matched the implementation checkpoint.
 
 ## Final decision
 
