@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@1.8.0"],
+      "description": "Repository-local DIAGNOSTIC only. Official Google Chrome DevTools MCP (ChromeDevTools/chrome-devtools-mcp, Apache-2.0). Runtime profiling, IndexedDB inspection, memory/resource lifetime and complex browser-state inspection of a LOCAL Chrome/Chromium. Diagnostic authority only; no repository write/commit authority. Local/preview scope only."
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp@4.0.3"],
+      "description": "Repository-local DOCS only. Official Upstash Context7 MCP (upstash/context7, MIT). Version-aware Three.js/TypeScript/Vite documentation and code examples. Read-only; no repository write authority. Optional CONTEXT7_API_KEY may be supplied via the environment for higher rate limits (never committed)."
+    }
+  }
+}
