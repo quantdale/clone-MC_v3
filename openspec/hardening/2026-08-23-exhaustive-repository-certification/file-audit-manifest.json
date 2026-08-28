@@ -11,7 +11,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2545,
+  "total": 2546,
   "pending": 0,
   "unclassified": 0,
   "rows": [
@@ -38310,6 +38310,22 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/SeedChunkLightEquivalence.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit/browser regression coverage",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Change 253 Phase 8 visual-fidelity gate for the section-bulk skylight seeding fast path. Re-implements the original per-cell seeding loop as a reference and asserts exact cell-for-cell sky/block light equality over real generated terrain, and asserts the bulk path is actually exercised so the comparison is meaningful.",
       "status": "audited"
     },
     {

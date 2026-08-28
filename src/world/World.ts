@@ -28,6 +28,7 @@ import {
   createChunkTicket,
 } from './ChunkTicket';
 import { ChunkLifecycleStage, ChunkStatus, isChunkStatusAtLeast } from './ChunkStatus';
+import { SECTION_SIZE } from '../math/SectionCoordinate';
 import type { ChunkMeshResult } from './MeshingTypes';
 import type { UvRect, MeshStreamName } from './MeshingTypes';
 import {
@@ -328,6 +329,12 @@ export class World implements WorldAccess {
   }
 
   // ── WorldAccess ────────────────────────────────────────────────────────────
+
+  /** Reused per-(x,z) skylight carry buffer for {@link seedChunkLight}; avoids a
+   *  256-entry allocation per generated chunk. */
+  private readonly skySeedScratch = new Uint8Array(
+    CHUNK_DIMENSIONS.width * CHUNK_DIMENSIONS.depth,
+  );
 
   /** Revision of the chunk map when the one-entry lookup cache was filled. */
   private memoRevision = -1;
@@ -939,7 +946,7 @@ export class World implements WorldAccess {
         // `applyEditOverlay` is the only writer that can make this slab diverge
         // from the column it was just synced from, so reconciling its reported
         // cells replaces the previous full 16x16x64 comparison sweep.
-        const applied = this.applyEditOverlay(chunk);
+        const applied = this.applyEditOverlay(chunk, true);
         chunk.generated = true;
         chunk.state = ChunkState.Generated;
         this.countChunkVoxels(chunk);
@@ -1032,21 +1039,51 @@ export class World implements WorldAccess {
     const oy = chunk.cy * CHUNK_DIMENSIONS.height;
     const oz = chunk.cz * CHUNK_DIMENSIONS.depth;
     const { width, height, depth } = CHUNK_DIMENSIONS;
-    for (let x = 0; x < width; x++) {
-      for (let z = 0; z < depth; z++) {
-        let sky = 15;
-        for (let y = height - 1; y >= 0; y--) {
-          const id = chunk.getLocal(x, y, z);
-          if (sky > 0 && this.registry.isOpaque(id)) {
-            sky = 0;
+    const column = this.storage.getColumn(chunk.cx, chunk.cz);
+
+    // Sky descends through the slab per (x,z), reset to 15 at the slab top and
+    // zeroed at the first opaque block. Tracked across sections so the bulk path
+    // below can tell whether any column is already obstructed.
+    const sky = this.skySeedScratch;
+    sky.fill(15);
+    let openColumns = width * depth;
+
+    // Top-down, one 16-high section at a time. Most of a column is empty sky:
+    // an all-air section under a fully unobstructed slab seeds to uniform
+    // skylight 15 with zero block light, which is a single bulk fill instead of
+    // 4096 per-cell writes. The per-cell path below is the original loop and
+    // produces identical values whenever the fast path does not apply.
+    for (let sectionBase = height - SECTION_SIZE; sectionBase >= 0; sectionBase -= SECTION_SIZE) {
+      const worldY = oy + sectionBase;
+      let sectionIsAir = false;
+      if (column !== undefined && this.dimension.containsY(worldY)) {
+        // A lazy (absent) canonical section holds no non-air block, and the slab
+        // was populated from this column, so the slab region is air too.
+        sectionIsAir = column.getSectionIfExists(column.sectionIndexForY(worldY)) === undefined;
+      }
+      if (sectionIsAir && openColumns === width * depth) {
+        this.lightStorage.fillSectionSky(ox, worldY, oz, 15);
+        continue;
+      }
+      for (let x = 0; x < width; x++) {
+        for (let z = 0; z < depth; z++) {
+          const columnIndex = x + z * width;
+          let cellSky = sky[columnIndex]!;
+          for (let y = sectionBase + SECTION_SIZE - 1; y >= sectionBase; y--) {
+            const id = chunk.getLocal(x, y, z);
+            if (cellSky > 0 && this.registry.isOpaque(id)) {
+              cellSky = 0;
+              openColumns--;
+            }
+            if (cellSky > 0) {
+              this.lightStorage.setSkyLight(ox + x, oy + y, oz + z, cellSky);
+            }
+            const luminance = blockLuminance(id);
+            if (luminance > 0) {
+              this.lightStorage.setBlockLight(ox + x, oy + y, oz + z, Math.min(15, luminance));
+            }
           }
-          if (sky > 0) {
-            this.lightStorage.setSkyLight(ox + x, oy + y, oz + z, sky);
-          }
-          const luminance = blockLuminance(id);
-          if (luminance > 0) {
-            this.lightStorage.setBlockLight(ox + x, oy + y, oz + z, Math.min(15, luminance));
-          }
+          sky[columnIndex] = cellSky;
         }
       }
     }
@@ -1376,7 +1413,10 @@ export class World implements WorldAccess {
    * lose edits after the overlay LRU discards them — the dirty column retains
    * them.
    */
-  private applyEditOverlay(chunk: Chunk): ReadonlyMap<number, number> | undefined {
+  private applyEditOverlay(
+    chunk: Chunk,
+    slabMatchesColumn = false,
+  ): ReadonlyMap<number, number> | undefined {
     const key = chunkKey(chunk.cx, chunk.cy, chunk.cz);
     let overlay = this.editOverlay.get(key);
     if (!overlay) {
@@ -1390,7 +1430,13 @@ export class World implements WorldAccess {
       }
       // Final fallback: canonical storage. Covers both evicted-overlay and
       // pure column-persistence cases (negative-Y edits, property edits).
-      if (!overlay) {
+      //
+      // `slabMatchesColumn` is set by callers that have just run
+      // `syncChunkFromStorage` on this slab. The rescue below only reports cells
+      // where the column and the slab disagree, so when the slab was copied from
+      // that column moments ago it cannot find anything — skipping it avoids a
+      // dead 16x16x64 `getBlockState` scan on every generated chunk.
+      if (!overlay && !slabMatchesColumn) {
         const column = this.storage.getColumn(chunk.cx, chunk.cz);
         if (column) {
           let found = false;

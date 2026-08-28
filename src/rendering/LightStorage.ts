@@ -118,6 +118,19 @@ export class SectionLightStorage {
     this.block.set(this.indexFor(x, y, z), value);
   }
 
+  /**
+   * Set every sky light cell to `value`, leaving block light untouched.
+   *
+   * Bulk equivalent of 4096 {@link setSkyLight} calls; used to seed a section
+   * that is known to be entirely air with unobstructed sky.
+   */
+  fillSky(value: number): void {
+    if (!Number.isInteger(value) || value < 0 || value > 15) {
+      throw new RangeError(`SectionLightStorage.fillSky: value out of range [0, 15]: ${value}`);
+    }
+    this.sky.replaceBytes(new Uint8Array(NIBBLE_BYTES).fill(value * 0x11));
+  }
+
   /** Set every sky and block light cell to `value`. */
   fill(value: number): void {
     if (!Number.isInteger(value) || value < 0 || value > 15) {
@@ -319,6 +332,22 @@ export class WorldLightStorage {
     this.assertWorldCoord(z, 'z');
     const section = this.sectionFor(x >> 4, y >> 4, z >> 4);
     return section ? section.getSkyLight(x & 15, y & 15, z & 15) : 0;
+  }
+
+  /**
+   * Set sky light for every cell of the section containing `(x, y, z)`, creating
+   * it when absent. Block light is left untouched. Bulk equivalent of 4096
+   * {@link setSkyLight} calls with the same version bump.
+   */
+  fillSectionSky(x: number, y: number, z: number, value: number): void {
+    this.assertWorldCoord(x, 'x');
+    this.assertWorldCoord(y, 'y');
+    this.assertWorldCoord(z, 'z');
+    const sx = x >> 4;
+    const sy = y >> 4;
+    const sz = z >> 4;
+    this.getOrCreateSection(sx, sy, sz).fillSky(value);
+    this.bumpVersion(sx, sy, sz);
   }
 
   /** Set sky light at world coordinates, creating the section when absent. */
