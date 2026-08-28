@@ -458,3 +458,89 @@ Names are illustrative; fit existing repository conventions. Extraction is requi
 ## Downstream dependencies
 
 Convergence makes later dimension switching, full modern-height gameplay, richer stateful content, large structures/entities, networking/shared simulation, and future optimization campaigns operate on honest live architecture rather than adapter debt. It also reduces false confidence from isolated subsystem verification.
+## Phase 4 Defect — Live Streaming Under Queue Saturation (2026-08-28)
+
+Converging the live Overworld multiplied the streaming work set by the vertical
+layer count: at the desktop render distance of 6 the resident set is
+`13 x 13 x 6 = 1014` chunks against pipeline queues capped at 64 (`generate`)
+and 96 (`mesh`). Queue saturation is therefore the *normal* boot condition for
+the playable game, and two latent defects in `World` only reproduce once the
+queues are actually full.
+
+Almost no existing gate could see either defect. The unit harness and every
+E2E spec that boots normally run below saturation —
+`CONFIG.headless.renderDistance` is 1 on the `navigator.webdriver` path
+(narrowed from 2 in `2be9695` to fix E2E boot time), which loads
+`3 x 3 x 6 = 54` chunks and never fills a queue. The playable desktop path was
+effectively the only configuration that saturated, so a green boot gate
+coexisted with a game that could not boot.
+
+The one exception is `tests/e2e/visual-regression.spec.ts`, which injects
+`renderDistance` 2 and 4 through the `__voxelQualityProfile` E2E seam. `Game`
+reads that seam as `quality?.renderDistance ?? runtimeRenderDistance()`, so it
+bypasses the headless override and does saturate. D1 froze each of its 60 cells
+against a 30-minute per-test timeout — the mechanism behind the canonical CI
+`e2e` run recorded as "CANCELLED (hung >60m)" in `3cc55a5`. See
+`verification.md` for the measured attribution of every local E2E failure.
+
+### D1 — Parked-mesh re-admission never terminated (CRITICAL)
+
+`processMeshing` re-admitted mesh jobs that had been parked while the mesh
+queue was at capacity:
+
+```ts
+while (this.retryMeshQueue.length > 0) {
+  const job = this.retryMeshQueue.shift()!;
+  this.retryMeshSet.delete(job.key);
+  const chunk = this.chunkManager.getChunk(job.cx, job.cy, job.cz);
+  if (chunk) this.enqueueMeshWithRetry(chunk);
+}
+```
+
+When the mesh queue is full and the job's priority does not beat the queue's
+worst entry, `ChunkPipeline.enqueue` returns false, so `enqueueMeshWithRetry`
+re-parks the job — at the **tail** of the same queue the loop is draining from
+the head. The length never reaches zero: the loop spins forever inside one
+frame, hard-locking the main thread. The user-visible symptom is a browser
+frozen on the loading screen at whatever progress the last painted frame
+showed; the tab stops responding entirely (`page.evaluate` never returns).
+
+Fix: bound the drain by the parked count on entry, and stop at the first job
+that re-parks — a saturated queue has no room for the rest either, and each
+probe calls `ensureMeshableRecord`, which cancels and resets the chunk's
+pipeline record. Probing every parked job every frame would thrash every
+resident chunk's record; probing one costs nothing. Shifting before re-parking
+rotates the queue head, so no parked job is starved.
+
+### D2 — `ensureChunks` filled the bounded generate queue far-edge-first (HIGH)
+
+`ensureChunks` scanned `dx = -rd..rd`, `dz = -rd..rd` in raster order and
+`break scan`s as soon as the generate queue is at its cap. Scan order — not
+job priority — therefore decides what gets queued at all: the walk starts at
+the far corner of the render distance, fills all 64 slots with `Rings`-priority
+chunks, and aborts before ever reaching the spawn ring. Chunks in the
+`getReadyProgress` safety ring were left resident-but-ungenerated with no
+queued generation job (`queuedKeys.generate` false), so readiness parked below
+1 and the loading screen stayed up until the far rings happened to drain.
+
+Fix: `streamScanOffsets(rd)` caches the column offsets ordered nearest-first by
+Chebyshev distance (matching `streamPriorityFor`'s tiers), rebuilt only when
+the render distance changes. The spawn ring is now queued first, so the bounded
+queue always holds the most boot-critical work.
+
+### Measured effect
+
+Headless Chromium launched with `--use-angle=swiftshader` (software WebGL,
+~11 FPS) against the Vite dev server, fresh profile, with
+`navigator.webdriver` spoofed to false via an init script so the desktop
+`renderDistance` 6 path is taken. Wall-clock figures are inflated by software
+rasterization; the comparison between rows is the signal:
+
+| Build | Loading screen | Spawn-ring progress |
+| --- | --- | --- |
+| Before | never clears (main thread hard-locked ~15s after boot) | freezes at 44% |
+| D1 only | clears at ~84s | 44% for ~35s, then climbs |
+| D1 + D2 | clears at 15-28s across runs | monotonic, e.g. 40/68/88/100 |
+
+Resident chunk creation also stays bounded at the 294-chunk spawn preload
+instead of ballooning past 760 far-edge chunks before the spawn ring finishes.

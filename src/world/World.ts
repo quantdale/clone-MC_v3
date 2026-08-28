@@ -783,6 +783,44 @@ export class World implements WorldAccess {
     return ChunkStreamPriority.Rings;
   }
 
+  /** Render distance the cached scan offsets were built for, or -1 when unbuilt. */
+  private streamScanOffsetsRd = -1;
+  /** Cached `[dx, dz]` column offsets, nearest-first (see {@link streamScanOffsets}). */
+  private streamScanOffsetsCache: readonly (readonly [number, number])[] = [];
+
+  /**
+   * Column offsets for {@link ensureChunks}, ordered nearest-first by Chebyshev
+   * distance (matching {@link streamPriorityFor}'s tiers).
+   *
+   * The scan aborts as soon as the bounded generate queue is full, so scan
+   * order — not job priority — decides what actually gets queued: a raster
+   * `dx = -rd..rd` walk fills the queue from the far corner of the render
+   * distance and strands the boot-critical spawn ring at `getReadyProgress`
+   * below 1, holding the loading screen up until the far rings happen to
+   * drain. Nearest-first queues the spawn ring first.
+   *
+   * Cached per render distance; a quality-tier change rebuilds it.
+   */
+  private streamScanOffsets(rd: number): readonly (readonly [number, number])[] {
+    if (this.streamScanOffsetsRd === rd) return this.streamScanOffsetsCache;
+    const offsets: [number, number][] = [];
+    for (let dx = -rd; dx <= rd; dx++) {
+      for (let dz = -rd; dz <= rd; dz++) {
+        offsets.push([dx, dz]);
+      }
+    }
+    offsets.sort((a, b) => {
+      const ra = Math.max(Math.abs(a[0]), Math.abs(a[1]));
+      const rb = Math.max(Math.abs(b[0]), Math.abs(b[1]));
+      if (ra !== rb) return ra - rb;
+      if (a[0] !== b[0]) return a[0] - b[0];
+      return a[1] - b[1];
+    });
+    this.streamScanOffsetsCache = offsets;
+    this.streamScanOffsetsRd = rd;
+    return this.streamScanOffsetsCache;
+  }
+
   /** Create and queue generation for every missing chunk around the player. */
   private ensureChunks(playerChunkX: number, playerChunkZ: number): boolean {
     const centerChanged = this.streamCenterX !== playerChunkX || this.streamCenterZ !== playerChunkZ;
@@ -800,36 +838,34 @@ export class World implements WorldAccess {
     const pipeline = this.chunkManager.pipeline;
     let queueFull = false;
     scan:
-    for (let dx = -rd; dx <= rd; dx++) {
-      for (let dz = -rd; dz <= rd; dz++) {
-        const cx = playerChunkX + dx;
-        const cz = playerChunkZ + dz;
-        for (let cy = this.minChunkY; cy < this.minChunkY + this.chunkLayerCount; cy++) {
-          const existing = this.chunkManager.getChunk(cx, cy, cz);
-          if (!existing) {
-            // Hard safety cap: don't create a chunk whose generation job cannot
-            // be queued — it would sit as an un-generated void. ensureChunks
-            // runs every frame, so the area is retried once the queue drains.
-            // The cap is the pipeline's own generate bound (the old
-            // CONFIG.maxQueueSize guard could never trip before it).
-            if (pipeline.queueDepth('generate') >= CHUNK_PIPELINE_QUEUE_CAPS.generate) {
-              queueFull = true;
-              break scan;
-            }
-            const chunk = this.chunkManager.createChunk(cx, cy, cz);
-            // Player ticket: the reason this chunk is kept resident at all.
-            this.chunkManager.acquireTicket(cx, cy, cz, createChunkTicket(ChunkTicketType.Player));
-            if (!this.enqueueGeneration(chunk, this.streamPriorityFor(dx, dz))) {
-              queueFull = true; // rejected at cap: retry on the next scan
-              break scan;
-            }
-          } else if (!existing.generated) {
-            // A chunk created earlier whose generation job was dropped or
-            // displaced re-queues here; enqueue deduplicates per stage.
-            if (!this.enqueueGeneration(existing, this.streamPriorityFor(dx, dz))) {
-              queueFull = true;
-              break scan;
-            }
+    for (const [dx, dz] of this.streamScanOffsets(rd)) {
+      const cx = playerChunkX + dx;
+      const cz = playerChunkZ + dz;
+      for (let cy = this.minChunkY; cy < this.minChunkY + this.chunkLayerCount; cy++) {
+        const existing = this.chunkManager.getChunk(cx, cy, cz);
+        if (!existing) {
+          // Hard safety cap: don't create a chunk whose generation job cannot
+          // be queued — it would sit as an un-generated void. ensureChunks
+          // runs every frame, so the area is retried once the queue drains.
+          // The cap is the pipeline's own generate bound (the old
+          // CONFIG.maxQueueSize guard could never trip before it).
+          if (pipeline.queueDepth('generate') >= CHUNK_PIPELINE_QUEUE_CAPS.generate) {
+            queueFull = true;
+            break scan;
+          }
+          const chunk = this.chunkManager.createChunk(cx, cy, cz);
+          // Player ticket: the reason this chunk is kept resident at all.
+          this.chunkManager.acquireTicket(cx, cy, cz, createChunkTicket(ChunkTicketType.Player));
+          if (!this.enqueueGeneration(chunk, this.streamPriorityFor(dx, dz))) {
+            queueFull = true; // rejected at cap: retry on the next scan
+            break scan;
+          }
+        } else if (!existing.generated) {
+          // A chunk created earlier whose generation job was dropped or
+          // displaced re-queues here; enqueue deduplicates per stage.
+          if (!this.enqueueGeneration(existing, this.streamPriorityFor(dx, dz))) {
+            queueFull = true;
+            break scan;
           }
         }
       }
@@ -1150,12 +1186,27 @@ export class World implements WorldAccess {
   private processMeshing(): void {
     const pipeline = this.chunkManager.pipeline;
     // Re-admit mesh jobs that were parked while the queue was at capacity.
-    while (this.retryMeshQueue.length > 0) {
-      const job = this.retryMeshQueue.shift()!;
+    // Bounded by the parked count on entry: a job that still cannot be admitted
+    // re-parks at the tail via `enqueueMeshWithRetry`, so draining until the
+    // queue is empty never terminates once the bounded mesh queue is saturated
+    // — which the dimension-aware vertical column reaches on the very first
+    // spawn preload (13x13x6 chunks against a 96-job mesh cap).
+    for (let remaining = this.retryMeshQueue.length; remaining > 0; remaining--) {
+      const job = this.retryMeshQueue.shift();
+      if (!job) break;
       this.retryMeshSet.delete(job.key);
       const chunk = this.chunkManager.getChunk(job.cx, job.cy, job.cz);
-      if (chunk) {
-        this.enqueueMeshWithRetry(chunk);
+      if (!chunk) continue;
+      const parked = this.retryMeshQueue.length;
+      this.enqueueMeshWithRetry(chunk);
+      if (this.retryMeshQueue.length > parked) {
+        // Re-parked at the tail: the mesh queue has no room for this priority,
+        // so the rest of the parked set cannot be admitted this frame either.
+        // Stopping here costs one probe per frame instead of one per parked job
+        // (each probe resets the chunk's pipeline record, so a saturated queue
+        // would otherwise thrash every resident chunk every frame). Shifting
+        // before re-parking rotates the head, so no job is starved.
+        break;
       }
     }
 

@@ -329,3 +329,100 @@ Do not change this decision until the requirement table, mandatory command matri
 - Tests `tests/unit/CanonicalWorldStorage.test.ts` 8 PASS: dimension bounds (-64..319), projection/default-state write, out-of-range no-alloc, invalid-id no-op, property-bearing preservation through canonical path (default + non-default via `schema.parse`/`lookup`), `isSolid`, dirty/serialize round-trip, vertical section boundary (15/16) under one column.
 - Fixed `Change253ConvergenceCharacterization` to use `inRange` + `containsY` agreement and removed unused imports.
 - Remaining Phase 2 tasks (World wiring to canonical storage, `stateOverlay` removal, `ChunkManager` column conversion, legacy clamps, negative routing, mutation invalidation, dirty-unload, legacy `Chunk` demotion, focused overlay-elimination tests) remain and are the next exact action.
+
+### Live loading-screen freeze — diagnosis and repair (2026-08-28)
+
+Owner report: "i am stuck on the loading screen". Reproduced and fixed; see
+`design.md` § "Phase 4 Defect — Live Streaming Under Queue Saturation" for the
+mechanism of both defects.
+
+Reproduction method (the reason no existing gate caught this): the E2E and unit
+harnesses run at `CONFIG.headless.renderDistance` 1, which loads 54 chunks and
+never saturates the bounded pipeline queues. Driving Chromium with
+`navigator.webdriver` spoofed to false takes the desktop `renderDistance` 6
+path (1014 chunks) and reproduces the freeze on the first boot, every time.
+
+- D1 `World.processMeshing` parked-mesh re-admission spun forever once the mesh
+  queue saturated — main thread hard-locked, loading screen frozen at 44%.
+  Repaired by bounding the drain to the parked count on entry and stopping at
+  the first re-park.
+- D2 `World.ensureChunks` filled the bounded generate queue from the far corner
+  of the render distance and aborted at the cap, stranding the spawn ring with
+  no queued generation job. Repaired by `streamScanOffsets(rd)`, a cached
+  nearest-first (Chebyshev) scan order.
+
+| Evidence | Result |
+| --- | --- |
+| Browser repro before fix | loading screen never clears; main thread hard-locked (`page.evaluate` times out indefinitely) |
+| Browser repro after fix | clears at 15-28s across runs under software WebGL at ~11 FPS; spawn-ring progress monotonic (e.g. 40/68/88/100) |
+| npm run typecheck | PASS |
+| npm run lint | PASS |
+| Full unit suite | PASS — 346/346 files, 4379 tests (1 skipped) |
+| npm run validate-state | PASS |
+| validate-file-audit (reviewed manifest) | PASS — 2542 rows |
+| New regression suite | `tests/unit/WorldStreamingSaturation.test.ts` 3 PASS |
+| Full E2E suite | 34 passed / 14 failed — every failure attributed to the baseline head, see "E2E attribution" below |
+
+Regression-test teeth were verified by reverting each fix in isolation:
+reverting D1 makes "terminates a frame whose mesh queue is saturated" hang (the
+faithful signature — a blocked event loop cannot be interrupted by vitest's
+per-test timeout, so CI reports it as a timeout); reverting D2 makes "fills the
+bounded generate queue nearest-first" fail on the player's own column being
+absent after the first scan. The saturation test also asserts that the run
+actually reached the mesh-queue cap, so it cannot silently stop exercising the
+parked path.
+
+Manifest note: registering the new test also cleared three rows that commit
+`42f3d19` had landed without manifest entries (`.mcp.json`,
+`docs/agent-integrations/REPOSITORY_LOCAL_ADDONS_IMPLEMENTATION.md`,
+`scripts/verify-mcp-addons.mjs`), which had left `validate-file-audit` red at
+that head independently of this work.
+
+#### E2E attribution (2026-08-28, win32-local)
+
+Full local suite with the fix: **34 passed, 14 failed (25.4m)**. Every failure
+was attributed by re-running it on the stashed baseline head `42f3d19`.
+
+| Failing spec | Baseline `42f3d19` | Attribution |
+| --- | --- | --- |
+| `memory-stress.spec.ts` (all 9) | all 9 fail identically | pre-existing |
+| `furnace.spec.ts:298` focus loss | fails (`waitForBlockAt` 8s timeout in `placeFurnace`) | pre-existing |
+| `game.spec.ts:326` jump | fails (`maxY` 35 vs `> 35.5`) | pre-existing; already recorded as environment-marginal in `PROGRAM_STATE.json` |
+| `persistence.spec.ts:397` migrated legacy save | fails (`player.yaw` 0 vs 45) | pre-existing |
+| `visual-regression.spec.ts:171` golden matrix | **cannot run — hangs** | see below |
+
+`visual-regression` is the spec D1 was hanging. It injects `renderDistance` 2/4
+through the `__voxelQualityProfile` E2E seam, which bypasses
+`runtimeRenderDistance()`'s headless override entirely — so it is the one spec
+that saturates the mesh queue, and at baseline each of its 60 cells locks the
+browser against a `test.setTimeout(1_800_000)`. **This is the mechanism behind
+the canonical CI `e2e` run recorded as "CANCELLED (hung >60m)" in `3cc55a5`.**
+With D1 in place the spec runs to completion for the first time on this branch.
+
+It then fails on golden comparison. Measured on the six `render-world` cells
+(`SCREEN_FILTER=render-world`), `changedFraction` per cell:
+
+| Cell | D1 only | D1 + D2 |
+| --- | --- | --- |
+| low/1280x720 | pass | pass |
+| low/1920x1080 | 0.0279 | 0.0279 |
+| default/1280x720 | 0.0236 | 0.0236 |
+| default/1920x1080 | 0.0363 | 0.0363 |
+| high/1280x720 | 0.0357 | 0.0406 |
+| high/1920x1080 | pass | 0.0513 |
+
+Three cells mismatch identically with and without D2, so the goldens
+(committed `a06b042`, 2026-08-23) are stale against the 253 vertical world
+convergence independently of this work. D2 adds a small delta at the `high`
+profile (`renderDistance` 4) and pushes one further cell over the 2% threshold:
+because the spawn ring now generates first, the loading screen clears earlier
+and slightly less distant terrain is meshed at the capture instant. The capture
+point is `#loading` hidden plus a fixed `SETTLE_MS`, not streaming quiescence,
+so the harness is sensitive to boot ordering.
+
+Goldens are deliberately **not** refreshed here. Refreshing them would erase
+the pre-existing 253-era terrain evidence and is release evidence requiring
+owner authorization. Recommended follow-up, in this order: (1) gate the capture
+on streaming quiescence rather than `#loading` + delay, so the matrix stops
+depending on boot ordering; (2) re-baseline the goldens against converged 253
+terrain under owner authorization.
