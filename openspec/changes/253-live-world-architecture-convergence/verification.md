@@ -251,8 +251,10 @@ candidate. Direct probes against the current `VITE_E2E=true` artifact first isol
 failure: headless Chrome returns a 2D context, but the first `fillRect()` does not return within
 35 seconds in either available Chromium executable (`/usr/bin/google-chrome` and Playwright's
 `chromium-1234/chrome-linux64/chrome`); both processes were terminated by the timeout with
-`context true` and `before-fill` logged, using `--disable-gpu`. The same behavior is observed
-with default and SwiftShader launch modes. The browser cannot produce a valid
+`context true` and `before-fill` logged, using `--disable-gpu`. A fresh bounded Playwright probe
+on the same published checkpoint independently reproduced the hang in all six combinations:
+both executables × default, SwiftShader, and `--disable-gpu`, with each `fillRect()` timing out
+at 12 seconds before application code. The browser cannot produce a valid
 heap/renderer/entity sample, and the app never reaches `Game.start()` or its first RAF. The same
 bounded app probe also reproduced an unresponsive page at a freshly built `HEAD^`, so this cannot
 truthfully be labeled a new 253 regression or solved by weakening the readiness assertion. This
@@ -340,9 +342,9 @@ If used, it MUST prove every incomplete task is non-blocking and implements/veri
 `session_start_head`: `556f1e67ebebf2e7717b29020c04d524787fc431`
 Implementation candidate: `c7c3df66a08bf0253fddf87a82570a7fcd7b84ee` (published implementation checkpoint)
 Canonical CI run(s): PENDING — no canonical `gate`/`e2e` run is claimed for this partial ACTIVE checkpoint.
-Evidence/state commit: `c93efd8fdf8d813145b5f7e64b569b02b0783da3` (published metadata follow-up; this field intentionally names its parent commit).
-`published_head`: `c93efd8fdf8d813145b5f7e64b569b02b0783da3` (remote refetch matched)
-Remote-head verification: PASS — `git ls-remote origin refs/heads/main` matched `c93efd8fdf8d813145b5f7e64b569b02b0783da3` before this final metadata-only follow-up.
+Evidence/state commit: `5f0fca22df8e67482b6a606502830957e8b110a4` (published blocker-evidence parent; this field intentionally names the parent commit).
+`published_head`: `5f0fca22df8e67482b6a606502830957e8b110a4` (remote refetch matched)
+Remote-head verification: PASS — `git ls-remote origin refs/heads/main` matched `5f0fca22df8e67482b6a606502830957e8b110a4` before this blocker-evidence follow-up.
 
 ## Final decision
 

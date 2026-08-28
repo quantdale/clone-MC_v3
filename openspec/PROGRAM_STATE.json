@@ -2427,9 +2427,9 @@
   ],
   "publicationHistory": [
     {
-      "head": "c93efd8fdf8d813145b5f7e64b569b02b0783da3",
-      "at": "2026-08-28T19:53:00Z",
-      "note": "Change 253 publication metadata repair published normally to origin/main. State/audit validation passed; task 23 remains unchecked, browser sampling remains environment-blocked, and no canonical gate/e2e claim is made."
+      "head": "5f0fca22df8e67482b6a606502830957e8b110a4",
+      "at": "2026-08-28T20:05:00Z",
+      "note": "Change 253 blocker-evidence checkpoint published normally to origin/main. A fresh bounded Playwright probe reproduced the pre-application fillRect hang across both available Chromium executables and default, SwiftShader, and --disable-gpu modes; task 23 remains unchecked and no canonical gate/e2e claim is made."
     }
   ],
   "releaseAuthority": {
