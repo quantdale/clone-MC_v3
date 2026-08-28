@@ -2427,9 +2427,9 @@
   ],
   "publicationHistory": [
     {
-      "head": "db5b0e8a7ec18ca4dc7ad927e314474c4ff08a50",
-      "at": "2026-08-28T22:32:12Z",
-      "note": "Change 253 full-worktree checkpoint published normally to origin/main. The complete staged worktree was committed; task 23 remains unchecked because browser heap/renderer/entity sampling is blocked by the reproduced six-mode Chromium fillRect hang, and no canonical gate/e2e claim is made."
+      "head": "cb74736c7a879e653331a4b1e6ee6ea4b15d3788",
+      "at": "2026-08-28T22:33:22Z",
+      "note": "Change 253 publication-metadata checkpoint published normally to origin/main. It records the full-worktree checkpoint, preserves task 23 as unchecked because browser heap/renderer/entity sampling is blocked by the reproduced six-mode Chromium fillRect hang, and makes no canonical gate/e2e claim."
     }
   ],
   "releaseAuthority": {
