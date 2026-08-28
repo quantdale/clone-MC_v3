@@ -2427,8 +2427,8 @@
   ],
   "publicationHistory": [
     {
-      "head": "5f0fca22df8e67482b6a606502830957e8b110a4",
-      "at": "2026-08-28T20:05:00Z",
+      "head": "30d059af46823d7a6bffd817ef391867167be28b2",
+      "at": "2026-08-28T20:05:37Z",
       "note": "Change 253 blocker-evidence checkpoint published normally to origin/main. A fresh bounded Playwright probe reproduced the pre-application fillRect hang across both available Chromium executables and default, SwiftShader, and --disable-gpu modes; task 23 remains unchecked and no canonical gate/e2e claim is made."
     }
   ],
