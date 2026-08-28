@@ -2427,9 +2427,9 @@
   ],
   "publicationHistory": [
     {
-      "head": "30d059af46823d7a6bffd817ef391867167be28b2",
-      "at": "2026-08-28T20:05:37Z",
-      "note": "Change 253 blocker-evidence checkpoint published normally to origin/main. A fresh bounded Playwright probe reproduced the pre-application fillRect hang across both available Chromium executables and default, SwiftShader, and --disable-gpu modes; task 23 remains unchecked and no canonical gate/e2e claim is made."
+      "head": "db5b0e8a7ec18ca4dc7ad927e314474c4ff08a50",
+      "at": "2026-08-28T22:32:12Z",
+      "note": "Change 253 full-worktree checkpoint published normally to origin/main. The complete staged worktree was committed; task 23 remains unchecked because browser heap/renderer/entity sampling is blocked by the reproduced six-mode Chromium fillRect hang, and no canonical gate/e2e claim is made."
     }
   ],
   "releaseAuthority": {
