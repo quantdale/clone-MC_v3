@@ -342,9 +342,9 @@ If used, it MUST prove every incomplete task is non-blocking and implements/veri
 `session_start_head`: `556f1e67ebebf2e7717b29020c04d524787fc431`
 Implementation candidate: `c7c3df66a08bf0253fddf87a82570a7fcd7b84ee` (published implementation checkpoint)
 Canonical CI run(s): PENDING — no canonical `gate`/`e2e` run is claimed for this partial ACTIVE checkpoint.
-Evidence/state commit: `0a494e66577e019f627d6e049f3495b8ccd79903` (published metadata parent; this field intentionally names the parent commit).
-`published_head`: `0a494e66577e019f627d6e049f3495b8ccd79903` (remote refetch matched)
-Remote-head verification: PASS — `git ls-remote origin refs/heads/main` matched `0a494e66577e019f627d6e049f3495b8ccd79903` before this metadata follow-up.
+Evidence/state commit: `d2d153b04e8ecfb83301103b30905095c7dc7db3` (published metadata parent; this field intentionally names the parent commit).
+`published_head`: `d2d153b04e8ecfb83301103b30905095c7dc7db3` (remote refetch matched)
+Remote-head verification: PASS — `git ls-remote origin refs/heads/main` matched `d2d153b04e8ecfb83301103b30905095c7dc7db3` before this metadata follow-up.
 
 ## Final decision
 
