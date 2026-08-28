@@ -36,5 +36,8 @@
     "typescript-eslint": "^8.11.0",
     "vite": "^6.4.3",
     "vitest": "^3.2.7"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-win32-x64-msvc": "4.62.4"
   }
 }
