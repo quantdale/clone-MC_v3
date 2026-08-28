@@ -2425,7 +2425,13 @@
       "note": "Closed 2026-08-23: candidate e56b83a canonical CI run 32620103123 SUCCESS — gate job 97148797875 (validate-state/typecheck/lint/build/bundle/unit 325 files 4186 passed +1 skipped on CI/coverage/audits x2) and e2e job 97148797928 both green. Local re-gate matched (unit 326 files 4206 +1 skipped incl. validators). Verdict READY WITH EXPLICIT NON-BLOCKING DEBT now unconditional; risk register R-1..R-9 stands."
     }
   ],
-  "publicationHistory": [],
+  "publicationHistory": [
+    {
+      "head": "e4d77a9773f87cd19c6e922c96616218809f4b30",
+      "at": "2026-08-28T19:52:00Z",
+      "note": "Change 253 evidence/state follow-up published normally to origin/main. It records the c7c3df6 implementation checkpoint, exact local validation results, and the focused browser #loading timeout; canonical gate/e2e remain intentionally pending while task 23 is unchecked."
+    }
+  ],
   "releaseAuthority": {
     "schemaVersion": 1,
     "authorityPackage": null,
