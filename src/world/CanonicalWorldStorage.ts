@@ -8,6 +8,7 @@ import {
 import { DimensionType } from '../data/DimensionType';
 import { VerticalWorldAccess, SerializedChunkColumns } from './VerticalWorldAccess';
 import { ChunkColumn } from './ChunkColumn';
+import { ChunkStatus } from './ChunkStatus';
 import type { WorldAccess } from './WorldAccess';
 
 export interface CanonicalWorldStorageOptions {
@@ -106,6 +107,13 @@ export class CanonicalWorldStorage implements WorldAccess {
     // VWA has no public setter; use its columnMap via the same pattern
     // `CanonicalWorldStorage.deserialize` already uses — centralized here so
     // callers do not repeat the private cast.
+    //
+    // A column arriving from persistence/import is already generated terrain:
+    // mark it `Full` so the live streaming path never re-runs `generateColumn`
+    // over it. Without this, above-terrain chunk layers would re-stamp the
+    // generator's output across the whole column and refill blocks the player
+    // had mined out (see tests/unit/WorldColumnGenerationIdempotency.test.ts).
+    column.advanceStatusTo(ChunkStatus.Full);
     this.vwa.removeColumn(column.chunkX, column.chunkZ);
     (this.vwa as unknown as { columnMap: Map<string, ChunkColumn> }).columnMap.set(
       `${column.chunkX},${column.chunkZ}`,
@@ -150,6 +158,8 @@ export class CanonicalWorldStorage implements WorldAccess {
     const storage = new CanonicalWorldStorage({ dimension, blockRegistry, stateRegistry, airId });
     const restored = VerticalWorldAccess.deserialize(data, stateRegistry, dimension, airId);
     for (const column of restored.columns()) {
+      // Restored terrain is generated terrain — same contract as `importColumn`.
+      column.advanceStatusTo(ChunkStatus.Full);
       storage.vwa.removeColumn(column.chunkX, column.chunkZ);
       (storage.vwa as unknown as { columnMap: Map<string, ChunkColumn> }).columnMap.set(
         `${column.chunkX},${column.chunkZ}`,
