@@ -2427,9 +2427,9 @@
   ],
   "publicationHistory": [
     {
-      "head": "e4d77a9773f87cd19c6e922c96616218809f4b30",
-      "at": "2026-08-28T19:52:00Z",
-      "note": "Change 253 evidence/state follow-up published normally to origin/main. It records the c7c3df6 implementation checkpoint, exact local validation results, and the focused browser #loading timeout; canonical gate/e2e remain intentionally pending while task 23 is unchecked."
+      "head": "c93efd8fdf8d813145b5f7e64b569b02b0783da3",
+      "at": "2026-08-28T19:53:00Z",
+      "note": "Change 253 publication metadata repair published normally to origin/main. State/audit validation passed; task 23 remains unchecked, browser sampling remains environment-blocked, and no canonical gate/e2e claim is made."
     }
   ],
   "releaseAuthority": {
