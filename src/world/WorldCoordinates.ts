@@ -130,6 +130,25 @@ export function localIndex(lx: number, ly: number, lz: number): number {
   return lx + lz * CHUNK_WIDTH + ly * CHUNK_WIDTH * CHUNK_DEPTH;
 }
 
+/**
+ * Decode one legacy `WorldEditSnapshot` cell index.
+ *
+ * This is deliberately named and isolated because the v1 edit payload is a
+ * read-old compatibility format with a 64-block vertical stride; canonical
+ * column/section access must use the 16-block section helpers instead.
+ */
+export function decodeLegacySlabIndex(
+  index: number,
+): { lx: number; ly: number; lz: number } | undefined {
+  if (!Number.isInteger(index) || index < 0 || index >= CHUNK_BLOCK_COUNT) {
+    return undefined;
+  }
+  const lx = index % CHUNK_WIDTH;
+  const lz = Math.floor(index / CHUNK_WIDTH) % CHUNK_DEPTH;
+  const ly = Math.floor(index / (CHUNK_WIDTH * CHUNK_DEPTH));
+  return { lx, ly, lz };
+}
+
 /** Number of blocks in a chunk slab. */
 export const CHUNK_BLOCK_COUNT = CHUNK_WIDTH * CHUNK_HEIGHT * CHUNK_DEPTH;
 

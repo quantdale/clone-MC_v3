@@ -26,7 +26,15 @@ const sixLayer = new DimensionType({
   hasSkylight: true,
 });
 
-function makeWorld(renderDistance: number): World {
+const elevatedSurface = new DimensionType({
+  id: createResourceId('minecraft', 'elevated_surface'),
+  minY: 128,
+  height: 128,
+  logicalHeight: 128,
+  hasSkylight: true,
+});
+
+function makeWorld(renderDistance: number, dimension: DimensionType = sixLayer, surfaceY = CONFIG.seaLevel + 1): World {
   const registry = createDefaultBlockRegistry();
   const scene = new THREE.Scene();
   const materials = {
@@ -38,7 +46,7 @@ function makeWorld(renderDistance: number): World {
       chunk.fill(BlockId.Stone);
     },
     getHeightAt(): number {
-      return CONFIG.seaLevel + 1;
+      return surfaceY;
     },
   };
   const mesher = {
@@ -54,7 +62,7 @@ function makeWorld(renderDistance: number): World {
     generator: generator as never,
     materials,
     renderDistance,
-    dimension: sixLayer,
+    dimension,
   });
 }
 
@@ -115,6 +123,20 @@ describe('World streaming under queue saturation', () => {
         }
       }
     }
+    world.dispose();
+  });
+
+  it('checks readiness in the dimension-derived surface slab', () => {
+    const world = makeWorld(0, elevatedSurface, 129);
+    world.preloadChunks(0, 0, 0);
+
+    let ready = 0;
+    for (let frame = 0; frame < 200 && ready < 1; frame++) {
+      world.update(1 / 60, 0, 0);
+      ready = world.getReadyProgress(0, 0);
+    }
+
+    expect(ready).toBe(1);
     world.dispose();
   });
 

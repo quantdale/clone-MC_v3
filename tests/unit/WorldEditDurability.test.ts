@@ -212,10 +212,9 @@ describe('world edit durability bridge', () => {
 
     // Boundedness: mock holds exactly the distinct edited chunks, once each.
     expect(durability.captures.size).toBe(distinctChunks);
-    // Canonical storage is the durable truth for unloaded chunks: getBlock
-    // (chunk-only) returns Air when no chunk is resident, while storage and
-    // getBlockState reflect the Dirt edit. StateOverlay is still defaults.
-    expect(world.getBlock(3, 5, 3)).toBe(BlockId.Air);
+    // Canonical storage is the durable truth for unloaded chunks, and the
+    // public ID projection remains visible after the slab projection evicts.
+    expect(world.getBlock(3, 5, 3)).toBe(BlockId.Dirt);
     expect(world.storage.getBlock(3, 5, 3)).toBe(BlockId.Dirt);
     expect(world.getBlockState(3, 5, 3).blockId).toBe(BlockId.Dirt);
     expect(world.getBlockState(7, 3, 27).blockId).toBe(BlockId.Air);
@@ -278,6 +277,9 @@ describe('world edit durability bridge', () => {
     await vi.waitFor(() => {
       expect(world.getBlock(2 * 16 + 5, 20, 3 * 16 + 5)).toBe(BlockId.Dirt);
     });
+    // Hydration must write through to canonical column storage before updating
+    // the compatibility projection; otherwise a later unload/reload loses it.
+    expect(world.storage.getBlock(2 * 16 + 5, 20, 3 * 16 + 5)).toBe(BlockId.Dirt);
     // Resolved edits land in the overlay even though the chunk was unloaded
     // and regenerated during the pending window.
     const entry = world.exportEdits().edits.find((e) => chunkKey(...e.chunk) === '2,0,3');

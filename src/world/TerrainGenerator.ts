@@ -505,7 +505,13 @@ export class TerrainGenerator {
         const wz = wz0 + lz;
         const height = this.getHeightAt(wx, wz);
         const biome = BIOME_KEYS[biomes[lx + lz * width]!]!;
-        for (let wy = minY; wy <= maxY; wy++) {
+        // Everything strictly above both the terrain surface and sea level is
+        // unconditionally air, and air is never written into the column, so the
+        // loop stops there instead of walking to the top of the dimension. For
+        // the Overworld that skips ~250 of 384 levels per (x,z) with no change
+        // to the generated result.
+        const topSolidY = Math.min(maxY, Math.max(height, CONFIG.seaLevel));
+        for (let wy = minY; wy <= topSolidY; wy++) {
           let id: number;
           if (wy === CONFIG.bedrockY) {
             id = BlockId.Bedrock;

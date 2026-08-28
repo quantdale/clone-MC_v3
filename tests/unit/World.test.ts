@@ -122,7 +122,7 @@ describe('world dirty propagation and edits', () => {
     expect(world.getBlock(8, 9, 8)).toBe(BlockId.Sand);
   });
 
-  it('setBlock records an edit that survives unload/reload', () => {
+  it('setBlock records an edit that survives streaming away and reload', () => {
     const world = makeWorld();
     streamUntilGenerated(world, 0, 0);
     expect(world.getBlock(8, 8, 8)).toBe(BlockId.Stone);
@@ -131,22 +131,19 @@ describe('world dirty propagation and edits', () => {
     world.setBlock(8, 8, 8, BlockId.Sand);
     expect(world.getBlock(8, 8, 8)).toBe(BlockId.Sand);
 
-    // Invalid ids are rejected before they can corrupt the Uint8Array or make
-    // the mesher throw while resolving block properties.
+    // Invalid ids are rejected before they can corrupt canonical storage or
+    // make the mesher throw while resolving block properties.
     world.setBlock(8, 8, 8, 255);
     expect(world.getBlock(8, 8, 8)).toBe(BlockId.Sand);
 
-    // Unload the chunk by streaming far away (run many frames — unload is
-    // budgeted to a few chunks per frame).
+    // Stream far away. Canonical storage remains authoritative even after the
+    // resident slab projection is evicted.
     for (let i = 0; i < 500; i++) {
       world.update(0.016, 100, 100);
-      if (world.getBlock(8, 8, 8) === BlockId.Air) {
-        break;
-      }
     }
-    expect(world.getBlock(8, 8, 8)).toBe(BlockId.Air); // unloaded
+    expect(world.getBlock(8, 8, 8)).toBe(BlockId.Sand);
 
-    // Return — the edit must be re-applied after regeneration.
+    // Return — the edit must still be present after regeneration.
     streamUntilGenerated(world, 0, 0);
     expect(world.getBlock(8, 8, 8)).toBe(BlockId.Sand);
   });

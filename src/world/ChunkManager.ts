@@ -9,6 +9,14 @@ import {
 import { ChunkLifecycleStage, isChunkLifecycleAtLeast } from './ChunkStatus';
 import { ChunkTicket } from './ChunkTicket';
 
+/** Read-only horizontal residency projection over the legacy slab projections. */
+export interface ChunkColumnResidency {
+  readonly chunkX: number;
+  readonly chunkZ: number;
+  /** Resident vertical slab projections; absent layers are not materialized. */
+  readonly slabs: readonly Chunk[];
+}
+
 /**
  * Owns the set of loaded chunks, keyed by their chunk-coordinate triple.
  * Residency is horizontal (chunkX, chunkZ) columns with lazy vertical sections:
@@ -61,6 +69,27 @@ export class ChunkManager {
   getColumnSlabs(cx: number, cz: number): readonly Chunk[] {
     const col = this.columns.get(ChunkManager.columnKey(cx, cz));
     return col ? [...col.values()] : [];
+  }
+
+  /** Read-only horizontal column projection; absent vertical layers stay absent. */
+  getColumnResidency(cx: number, cz: number): ChunkColumnResidency | undefined {
+    const slabs = this.getColumnSlabs(cx, cz);
+    if (slabs.length === 0) return undefined;
+    return { chunkX: cx, chunkZ: cz, slabs };
+  }
+
+  /** Iterate resident horizontal columns without exposing the mutable residency map. */
+  forEachColumn(fn: (column: ChunkColumnResidency) => void): void {
+    for (const [key, slabsByY] of this.columns) {
+      const slabs = [...slabsByY.values()];
+      if (slabs.length === 0) continue;
+      const comma = key.indexOf(',');
+      fn({
+        chunkX: Number(key.slice(0, comma)),
+        chunkZ: Number(key.slice(comma + 1)),
+        slabs,
+      });
+    }
   }
 
   /** Number of resident columns (horizontal residency). */

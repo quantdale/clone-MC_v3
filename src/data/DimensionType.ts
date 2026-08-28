@@ -70,9 +70,10 @@ export class DimensionType {
     this.natural = def.natural ?? true;
     this.fixedTime = def.fixedTime ?? null;
 
+    this.maxY = def.minY + def.height - 1;
     this.minSectionY = Math.floor(def.minY / 16);
-    this.sectionCount = Math.ceil(def.height / 16);
-    this.maxSectionY = this.minSectionY + this.sectionCount - 1;
+    this.maxSectionY = Math.floor(this.maxY / 16);
+    this.sectionCount = this.maxSectionY - this.minSectionY + 1;
     this.maxY = def.minY + def.height - 1;
   }
 

@@ -442,7 +442,22 @@ export interface ChunkMeshResult {
 
 /** World diagnostics exposed to the debug overlay. */
 export interface WorldStats {
+  /** Materialized legacy slab projections retained for render/simulation compatibility. */
   loadedChunks: number;
+  /** Authoritative horizontal column residency count. */
+  residentColumns: number;
+  /** Canonical sections materialized across resident columns. */
+  allocatedSections: number;
+  /** Canonical columns containing unsaved state. */
+  dirtyColumns: number;
+  /** Canonical dirty sections across all resident columns. */
+  dirtySections: number;
+  /** Live scene mesh groups owned by resident slab projections. */
+  geometries: number;
+  /** Queued, not-yet-applied light invalidations. */
+  pendingLight: number;
+  /** Persistence jobs are owned by GamePersistence; World exposes zero until such jobs are attached. */
+  pendingSave: number;
   pendingGeneration: number;
   pendingMesh: number;
   triangles: number;

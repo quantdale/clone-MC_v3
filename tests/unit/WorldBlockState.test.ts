@@ -92,6 +92,31 @@ describe('World block-state access (125)', () => {
     expect(world.getBlockState(8, 8, 8).getProperty('age')).toBeUndefined();
   });
 
+  it('resolves invalid properties before mutation', () => {
+    const world = makeWorld();
+    streamUntilGenerated(world, 0, 0);
+    world.setBlock(8, 8, 8, BlockId.Stone);
+
+    expect(() => world.setBlockState(8, 8, 8, BlockId.Wheat, { age: 99 })).toThrow();
+    expect(world.getBlock(8, 8, 8)).toBe(BlockId.Stone);
+    expect(world.getBlockState(8, 8, 8).blockId).toBe(BlockId.Stone);
+  });
+
+  it('changes property-bearing states through one canonical mutation', () => {
+    const world = makeWorld();
+    streamUntilGenerated(world, 0, 0);
+    const column = world.storage.getColumn(0, 0);
+    expect(column).toBeDefined();
+    const sectionY = column!.sectionIndexForY(8);
+
+    world.setBlockState(8, 8, 8, BlockId.Wheat, { age: 1 });
+    const afterFirstWrite = column!.sectionMeshVersion(sectionY);
+    world.setBlockState(8, 8, 8, BlockId.Wheat, { age: 5 });
+
+    expect(column!.sectionMeshVersion(sectionY)).toBe(afterFirstWrite + 1);
+    expect(world.getBlockState(8, 8, 8).getProperty('age')).toBe('5');
+  });
+
   it('setBlockState is a no-op for out-of-bounds or unregistered blocks', () => {
     const world = makeWorld();
     streamUntilGenerated(world, 0, 0);

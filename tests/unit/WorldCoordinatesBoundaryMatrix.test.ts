@@ -13,6 +13,7 @@ import {
   CHUNK_DIMENSIONS,
   CHUNK_SLAB_HEIGHT,
   CANONICAL_SECTION_SIZE,
+  localIndex,
 } from '../../src/world/WorldCoordinates';
 import { CONFIG } from '../../src/config';
 import { SECTION_SIZE, sectionIndex, localCoord } from '../../src/math/SectionCoordinate';
@@ -20,6 +21,8 @@ import { VerticalWorldAccess } from '../../src/world/VerticalWorldAccess';
 import { createDefaultBlockStateRegistry } from '../../src/world/BlockStateRegistry';
 import { BlockId, createDefaultBlockRegistry } from '../../src/world/BlockRegistry';
 import { OVERWORLD_DIMENSION_TYPE } from '../../src/data/DimensionTypes';
+import { DimensionType } from '../../src/data/DimensionType';
+import { createResourceId } from '../../src/data/ResourceId';
 import { World } from '../../src/world/World';
 import { Chunk } from '../../src/world/Chunk';
 
@@ -41,7 +44,7 @@ const Y_MATRIX = [-65, -64, -33, -32, -17, -16, -1, 0, 15, 16, 31, 32, 63, 64, 3
 const XZ_MATRIX = [-17, -16, -1, 0, 15, 16, 17, 31, 32];
 
 /** Small world factory with overworld dimension (6 layers: -64..319). */
-function makeOverworldWorld(): World {
+function makeOverworldWorld(dimension = OVERWORLD_DIMENSION_TYPE): World {
   const registry = createDefaultBlockRegistry();
   const scene = new THREE.Scene();
   const materials = {
@@ -69,7 +72,7 @@ function makeOverworldWorld(): World {
     mesher: mesher as never,
     generator: generator as never,
     materials,
-    dimension: OVERWORLD_DIMENSION_TYPE,
+    dimension,
     renderDistance: 1,
   });
 }
@@ -227,6 +230,72 @@ describe('WorldCoordinates: slab (64) vs canonical (16) boundary matrix', () => 
 });
 
 describe('Canonical storage honors Overworld boundaries without allocating out-of-range', () => {
+  it('derives the streamed slab window from non-aligned dimension bounds', () => {
+    const dimension = new DimensionType({
+      id: createResourceId('minecraft', 'test_dimension'),
+      minY: -1,
+      height: 66,
+      logicalHeight: 66,
+      hasSkylight: true,
+    });
+    const world = makeOverworldWorld(dimension);
+
+    expect(world.getMinChunkY()).toBe(-1);
+    expect(world.getChunkLayerCount()).toBe(3);
+    expect(world.isSolid(0, 64, 0)).toBe(false);
+
+    world.setBlock(0, -2, 0, BlockId.Stone);
+    world.setBlock(0, -1, 0, BlockId.Stone);
+    world.setBlock(0, 63, 0, BlockId.Dirt);
+    world.setBlock(0, 64, 0, BlockId.Stone);
+
+    expect(world.storage.getBlock(0, -2, 0)).toBe(BlockId.Air);
+    expect(world.storage.getBlock(0, -1, 0)).toBe(BlockId.Stone);
+    expect(world.storage.getBlock(0, 63, 0)).toBe(BlockId.Dirt);
+    expect(world.storage.getBlock(0, 64, 0)).toBe(BlockId.Stone);
+  });
+
+  it('filters legacy slab cells that fall outside non-aligned dimension bounds', () => {
+    const dimension = new DimensionType({
+      id: createResourceId('minecraft', 'legacy_import_boundary'),
+      minY: -1,
+      height: 66,
+      logicalHeight: 66,
+      hasSkylight: true,
+    });
+    const world = makeOverworldWorld(dimension);
+
+    const accepted = world.importEdits({
+      version: 1,
+      seed: 1337,
+      edits: [
+        {
+          // cy=-1 spans -64..-1: only local y=63 is in range.
+          chunk: [0, -1, 0],
+          changes: [
+            [localIndex(0, 62, 0), BlockId.Stone],
+            [localIndex(0, 63, 0), BlockId.Dirt],
+          ],
+        },
+        {
+          // cy=1 spans 64..127: only local y=0 is in range.
+          chunk: [0, 1, 0],
+          changes: [
+            [localIndex(0, 0, 0), BlockId.Glass],
+            [localIndex(0, 1, 0), BlockId.Stone],
+          ],
+        },
+      ],
+    });
+
+    expect(accepted).toBe(2);
+    expect(world.getBlock(0, -2, 0)).toBe(BlockId.Air);
+    expect(world.getBlock(0, -1, 0)).toBe(BlockId.Dirt);
+    expect(world.getBlock(0, 64, 0)).toBe(BlockId.Glass);
+    expect(world.getBlock(0, 65, 0)).toBe(BlockId.Air);
+    expect(world.getEditCount()).toBe(2);
+  });
+
   it('VerticalWorldAccess containsY matches the required out-of-range matrix', () => {
     const registry = createDefaultBlockStateRegistry();
     const vwa = new VerticalWorldAccess({ dimension: OVERWORLD_DIMENSION_TYPE, registry });
@@ -269,10 +338,9 @@ describe('Canonical storage honors Overworld boundaries without allocating out-o
     expect(world.getBlock(0, 320, 0)).toBe(BlockId.Air);
     expect(world.storage.size).toBe(0);
 
-    // Boundary in-range write via storage path allocates and round-trips
+    // Boundary in-range write via canonical storage allocates and round-trips
     world.setBlock(0, -64, 0, BlockId.Stone);
-    expect(world.getBlock(0, -64, 0)).toBe(BlockId.Air); // chunk not yet generated, so ChunkManager still air
-    // But canonical storage must have it (lazy column)
+    expect(world.getBlock(0, -64, 0)).toBe(BlockId.Stone);
     expect(world.storage.getBlock(0, -64, 0)).toBe(BlockId.Stone);
     expect(world.storage.size).toBe(1);
 

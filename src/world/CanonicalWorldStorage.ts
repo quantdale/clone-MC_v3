@@ -70,6 +70,14 @@ export class CanonicalWorldStorage implements WorldAccess {
     return this.vwa.getBlockState(x, y, z);
   }
 
+  /** Write an already-resolved registered state through the canonical mutation path. */
+  setCanonicalState(x: number, y: number, z: number, state: BlockState): void {
+    if (!(state instanceof BlockState)) return;
+    if (!this.dimension.containsY(y)) return;
+    if (!this.blockRegistry.has(state.blockId)) return;
+    this.vwa.setBlockState(x, y, z, state);
+  }
+
   /** Write a canonical state for `blockId` with the given property values. */
   setBlockState(
     x: number,

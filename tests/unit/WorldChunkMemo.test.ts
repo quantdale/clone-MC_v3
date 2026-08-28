@@ -42,9 +42,12 @@ function makeWorld(seed = 1337): World {
 }
 
 describe('World chunk memo lifecycle (254 R2)', () => {
-  it('a warm memo reverts to air after the chunk unloads and sees it again on reload', () => {
+  it('keeps canonical reads stable after the resident chunk projection unloads', () => {
     const world = makeWorld();
-    // Warm the memo for chunk (0,0,0) with a real read.
+    const manager = (world as unknown as {
+      chunkManager: { getChunk: (cx: number, cy: number, cz: number) => Chunk | undefined };
+    }).chunkManager;
+    // Warm the canonical read and the resident projection for chunk (0,0,0).
     let ready = false;
     for (let i = 0; i < 200 && !ready; i++) {
       world.update(0.016, 0, 0);
@@ -52,23 +55,51 @@ describe('World chunk memo lifecycle (254 R2)', () => {
     }
     expect(ready).toBe(true);
     expect(world.getBlock(8, 8, 8)).toBe(BlockId.Stone);
+    expect(manager.getChunk(0, 0, 0)).toBeDefined();
 
-    // Stream far away so (0,0,0) leaves render distance + hysteresis and is
-    // unloaded while the memo still holds its coordinates.
+    // Stream far away until the resident slab projection is evicted. The
+    // canonical column remains materialized and remains the public read truth.
     let unloaded = false;
     for (let i = 0; i < 400 && !unloaded; i++) {
       world.update(0.016, 12, 0);
-      unloaded = world.getBlock(8, 8, 8) === BlockId.Air;
+      unloaded = manager.getChunk(0, 0, 0) === undefined;
     }
     expect(unloaded).toBe(true);
+    expect(world.getBlock(8, 8, 8)).toBe(BlockId.Stone);
 
-    // Return home: the chunk regenerates and reads become live again.
+    // Return home: the slab projection regenerates without changing canonical data.
     let reloaded = false;
     for (let i = 0; i < 200 && !reloaded; i++) {
       world.update(0.016, 0, 0);
-      reloaded = world.getBlock(8, 8, 8) === BlockId.Stone;
+      reloaded = manager.getChunk(0, 0, 0)?.generated === true;
     }
     expect(reloaded).toBe(true);
+    expect(world.getBlock(8, 8, 8)).toBe(BlockId.Stone);
+  });
+
+  it('retains dirty canonical ownership after the resident slab unloads', () => {
+    const world = makeWorld();
+    const manager = (world as unknown as {
+      chunkManager: { getChunk: (cx: number, cy: number, cz: number) => Chunk | undefined };
+    }).chunkManager;
+
+    for (let i = 0; i < 200 && manager.getChunk(0, 0, 0) === undefined; i++) {
+      world.update(0.016, 0, 0);
+    }
+    expect(manager.getChunk(0, 0, 0)).toBeDefined();
+    world.storage.clearDirty();
+    world.setBlock(8, 8, 8, BlockId.Sand);
+    expect(world.storage.getBlock(8, 8, 8)).toBe(BlockId.Sand);
+    expect(world.isStorageDirty).toBe(true);
+
+    let unloaded = false;
+    for (let i = 0; i < 400 && !unloaded; i++) {
+      world.update(0.016, 12, 0);
+      unloaded = manager.getChunk(0, 0, 0) === undefined;
+    }
+    expect(unloaded).toBe(true);
+    expect(world.getDirtyColumns().some((column) => column.chunkX === 0 && column.chunkZ === 0)).toBe(true);
+    expect(world.getBlock(8, 8, 8)).toBe(BlockId.Sand);
   });
 
   it('interleaved reads of two chunks never cross-contaminate', () => {
