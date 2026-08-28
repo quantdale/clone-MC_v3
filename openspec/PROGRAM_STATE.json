@@ -2427,9 +2427,9 @@
   ],
   "publicationHistory": [
     {
-      "head": "eb2b6497c6632392ca407de26813c8239e5442cb",
-      "at": "2026-08-28T22:40:12Z",
-      "note": "Change 253 publication-metadata checkpoint published normally to origin/main. It records the full-worktree checkpoint, preserves task 23 as unchecked because browser heap/renderer/entity sampling is blocked by the reproduced six-mode Chromium fillRect hang, and makes no canonical gate/e2e claim."
+      "head": "8d56d86b9068354c6be06a689a54589be215e4be",
+      "at": "2026-08-28T23:12:56Z",
+      "note": "Change 253 publication-metadata checkpoint published normally to origin/main. It records the Windows Rollup native optional-dependency fix, preserves task 23 as unchecked because browser heap/renderer/entity sampling is blocked by the reproduced six-mode Chromium fillRect hang, and makes no canonical gate/e2e claim."
     }
   ],
   "releaseAuthority": {
