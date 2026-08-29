@@ -65,20 +65,20 @@ Rules:
 - [x] Make missing-column generation populate canonical `BlockState`s across the active Overworld range.
 - [x] Eliminate permanent generation of independently authoritative 64-high slabs.
 - [x] Preserve deterministic seed/world-version semantics for fresh worlds.
-- [ ] Preserve existing-world baseline semantics when persistence stores seed/version + sparse edits; do not silently regenerate old worlds under a materially different algorithm.
-- [ ] Apply durable/user edits after generated baseline so regeneration cannot overwrite them.
-- [ ] Reconcile generation status, preload, readiness progress, render distance, simulation distance and unload around horizontal columns + section work.
-- [ ] Migrate surface/spawn selection to canonical heightmaps/dimension bounds.
-- [ ] Ensure loading a column does not eagerly allocate all 24 Overworld sections.
-- [ ] Add integration tests for generation below zero, upper valid Y, negative chunk coordinates, and vertical/horizontal section boundaries.
-- [ ] Add sparse-column and long-exploration tests proving bounded section allocation/residency.
+- [x] Preserve existing-world baseline semantics when persistence stores seed/version + sparse edits; do not silently regenerate old worlds under a materially different algorithm.
+- [x] Apply durable/user edits after generated baseline so regeneration cannot overwrite them.
+- [x] Reconcile generation status, preload, readiness progress, render distance, simulation distance and unload around horizontal columns + section work.
+- [x] Migrate surface/spawn selection to canonical heightmaps/dimension bounds.
+- [x] Ensure loading a column does not eagerly allocate all 24 Overworld sections.
+- [x] Add integration tests for generation below zero, upper valid Y, negative chunk coordinates, and vertical/horizontal section boundaries.
+- [x] Add sparse-column and long-exploration tests proving bounded section allocation/residency.
 
 ## Phase 4 — Section-scoped rendering and lighting
 
-- [ ] Inventory the exact live render/light ownership keys and all worker protocols before modifying them.
+- [x] Inventory the exact live render/light ownership keys and all worker protocols before modifying them.
 - [x] Change live geometry/mesh identity to explicit canonical section identity `(chunkX,sectionY,chunkZ)` or equivalent.
-- [ ] Capture `ChunkSection.meshVersion` (and required neighbor versions/snapshots) at job submission.
-- [ ] Reject stale/duplicate/mismatched mesh/light results after edit, unload, replacement or version advance.
+- [x] Capture `ChunkSection.meshVersion` (and required neighbor versions/snapshots) at job submission.
+- [x] Reject stale/duplicate/mismatched mesh/light results after edit, unload, replacement or version advance.
 - [x] Feed canonical block states into live meshing instead of legacy block arrays.
 - [x] Preserve render-layer/model/AO/biome-tint/vertex-light behavior through canonical neighbor queries.
 - [ ] Make one interior edit invalidate only the affected section unless a documented dependency proves more work is necessary.

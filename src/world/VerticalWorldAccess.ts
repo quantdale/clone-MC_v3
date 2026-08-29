@@ -1,4 +1,4 @@
-import { BlockId } from './BlockRegistry';
+import { BlockId, type BlockTypeRegistry } from './BlockRegistry';
 import { BlockState, BlockStateId, BlockStateRegistry } from './BlockStateRegistry';
 import { ChunkColumn, SerializedChunkColumn } from './ChunkColumn';
 import { DimensionType } from '../data/DimensionType';
@@ -17,6 +17,8 @@ const CHUNK_COLUMNS_VERSION = 1;
 export interface VerticalWorldAccessOptions {
   dimension: DimensionType;
   registry: BlockStateRegistry;
+  /** Block registry used by canonical motion-blocking heightmaps. */
+  blockRegistry?: BlockTypeRegistry;
   airId?: BlockStateId;
 }
 
@@ -33,6 +35,7 @@ export class VerticalWorldAccess {
   readonly registry: BlockStateRegistry;
   private readonly airId: BlockStateId;
   private readonly airState: BlockState;
+  private readonly blockRegistry?: BlockTypeRegistry;
   private readonly minSectionY: number;
   private readonly sectionCount: number;
   private readonly columnMap = new Map<string, ChunkColumn>();
@@ -42,6 +45,7 @@ export class VerticalWorldAccess {
     this.registry = opts.registry;
     this.airId = opts.airId ?? opts.registry.getDefaultState(BlockId.Air).id;
     this.airState = this.registry.getState(this.airId);
+    this.blockRegistry = opts.blockRegistry;
     this.minSectionY = opts.dimension.minSectionY;
     this.sectionCount = opts.dimension.sectionCount;
   }
@@ -71,6 +75,7 @@ export class VerticalWorldAccess {
         sectionCount: this.sectionCount,
         minSectionY: this.minSectionY,
         registry: this.registry,
+        blockRegistry: this.blockRegistry,
         airId: this.airId,
       });
       this.columnMap.set(key, column);
@@ -212,8 +217,9 @@ export class VerticalWorldAccess {
     registry: BlockStateRegistry,
     dimension: DimensionType,
     airId?: BlockStateId,
+    blockRegistry?: BlockTypeRegistry,
   ): VerticalWorldAccess {
-    const world = new VerticalWorldAccess({ dimension, registry, airId });
+    const world = new VerticalWorldAccess({ dimension, registry, blockRegistry, airId });
     if (data.minSectionY !== dimension.minSectionY || data.sectionCount !== dimension.sectionCount) {
       throw new Error(
         `VerticalWorldAccess layout mismatch: stored minSectionY=${data.minSectionY}/sectionCount=${data.sectionCount}, ` +
@@ -221,7 +227,7 @@ export class VerticalWorldAccess {
       );
     }
     for (const serialized of data.columns) {
-      const column = ChunkColumn.deserialize(serialized, registry, airId);
+      const column = ChunkColumn.deserialize(serialized, registry, airId, blockRegistry);
       world.columnMap.set(VerticalWorldAccess.columnKey(column.chunkX, column.chunkZ), column);
     }
     return world;

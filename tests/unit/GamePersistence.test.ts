@@ -289,6 +289,7 @@ describe("GamePersistence", () => {
     const r1 = await p1.open();
 
     expect(r1.status).toBe("ok");
+    expect(r1.generationBaseline).toBe("legacy-unknown");
     expect(r1.errors).toEqual([]);
     expect(spy1).toHaveBeenCalledTimes(1);
     expect(r1.migrationReport?.errors).toEqual([]);
@@ -324,6 +325,7 @@ describe("GamePersistence", () => {
 
     expect(spy2).toHaveBeenCalledTimes(0);
     expect(r2.status).toBe("ok");
+    expect(r2.generationBaseline).toBe("legacy-unknown");
     expect(r2.migrationReport).toBeNull(); // skipped via marker
     expect(r2.initialEdits).toEqual(r1.initialEdits);
     expect(r2.initialPlayerState).toEqual(r1.initialPlayerState);
@@ -840,6 +842,56 @@ describe("GamePersistence — composition convenience", () => {
       flushTarget: null,
     });
     await reopened.dispose();
+    await p.dispose();
+  });
+
+  it("preserves an unsupported worldgen baseline and bulk-loads canonical columns", async () => {
+    const factory = createIdbFactoryMock();
+    const metadata = new WorldMetadataRepository({ factory });
+    await metadata.open();
+    await metadata.putMetadata({
+      schemaVersion: 1,
+      worldId: WORLD_ID,
+      seed: SEED,
+      dimensionId: "minecraft:overworld",
+      minY: -64,
+      height: 384,
+      generationVersion: "future-worldgen-v99",
+      createdAt: 10,
+      updatedAt: 20,
+    });
+    const stateRegistry = createDefaultBlockStateRegistry();
+    const column = new ChunkColumn({
+      chunkX: 4,
+      chunkZ: -2,
+      sectionCount: 24,
+      minSectionY: -4,
+      registry: stateRegistry,
+    });
+    column.setBlockState(1, 319, 2, stateRegistry.getDefaultState(BlockId.Stone));
+    const sections = new ChunkSectionRepository({ factory });
+    await sections.open();
+    await sections.putColumn(WORLD_ID, column.serialize());
+
+    const p = new GamePersistence({
+      seed: SEED,
+      factory,
+      legacyStorage: null,
+      flushTarget: null,
+    });
+    const result = await p.open();
+
+    expect(result.status).toBe("degraded");
+    expect(result.generationBaseline).toBe("unsupported");
+    expect(result.initialColumns).toHaveLength(1);
+    expect(result.initialColumns[0]?.chunkX).toBe(4);
+    expect(result.initialColumns[0]?.chunkZ).toBe(-2);
+    expect(result.errors.some((error) => error.includes("unsupported"))).toBe(true);
+    expect((await getMetadataRecord(factory, WORLD_ID))).toMatchObject({
+      generationVersion: "future-worldgen-v99",
+      createdAt: 10,
+    });
+
     await p.dispose();
   });
 

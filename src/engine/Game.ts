@@ -19,7 +19,8 @@ import {
 import { HarvestRules } from '../world/HarvestRules';
 import { TerrainGenerator } from '../world/TerrainGenerator';
 import { ChunkMesher } from '../world/ChunkMesher';
-import { World, type WorldEditSnapshot } from '../world/World';
+import { World, type WorldEditSnapshot, type WorldGenerationBaseline } from '../world/World';
+import type { SerializedChunkColumn } from '../world/ChunkColumn';
 import { BlockStateRegistry, createDefaultBlockStateRegistry } from '../world/BlockStateRegistry';
 import { OVERWORLD_DIMENSION_TYPE } from '../data/DimensionTypes';
 import { BlockBehaviorRegistry } from '../simulation/BlockBehavior';
@@ -438,7 +439,7 @@ export class Game {
       this.selfOpenPromise = composed
         .open()
         .then((result) => {
-          this.applyInitialEdits(result.initialEdits);
+          this.applyInitialWorldData(result.initialColumns, result.generationBaseline, result.initialEdits);
           this.applyInitialPlayerState(result.initialPlayerState);
           this.blockEntityHost.hydrate(result.initialBlockEntities);
           if (result.status !== 'ok') {
@@ -531,10 +532,14 @@ export class Game {
       },
     });
     this.worldBlockAccess = new WorldBlockAccess(this.world);
-    // Injected persistence is already open: apply its bulk-loaded edits now.
-    // The self-composed path applies them when its open promise settles.
+    // Injected persistence is already open: restore the canonical baseline before
+    // applying sparse edits. The self-composed path does this when open settles.
     if (this.selfOpenPromise === null) {
-      this.applyInitialEdits(this.persistenceImpl?.initialEdits ?? null);
+      this.applyInitialWorldData(
+        this.persistenceImpl?.initialColumns ?? [],
+        this.persistenceImpl?.generationBaseline ?? 'current',
+        this.persistenceImpl?.initialEdits ?? null,
+      );
     }
 
     // 251: the live block-entity host owns every placed furnace's authoritative
@@ -596,7 +601,7 @@ export class Game {
     }
 
     this.player = new Player();
-    this.spawnPlayerSafely(generator);
+    this.spawnPlayerSafely();
     this.spawnPosition = this.player.position.clone();
     this.inventory = new Inventory();
     this.survival = new SurvivalSystem(undefined, (event, amount) => this.onSurvivalEvent(event, amount));
@@ -1273,23 +1278,23 @@ export class Game {
     return this.randomTickEligibility.has(id);
   }
 
-  private spawnPlayerSafely(generator: TerrainGenerator): void {
-    // Find a spawn column that is above sea level, has flat terrain around it
-    // (so the player isn't boxed in by a hill or pit), and has clear space
-    // directly in front to move into.
+  private spawnPlayerSafely(): void {
+    // Find a dimension-bounded canonical motion-blocking surface with flat
+    // terrain around it. Fresh columns use the world's non-allocating generator
+    // fallback; loaded columns use persisted/generated heightmaps.
     for (let attempt = 0; attempt < 128; attempt++) {
       const x = attempt * 7;
       const z = attempt * 11;
-      const height = generator.getHeightAt(x, z);
-      if (height <= CONFIG.seaLevel) {
+      const height = this.world.getMotionBlockingHeight(x, z);
+      if (height < this.world.dimension.minY) {
         continue;
       }
       // Check the surrounding 5x5 area for flatness (±1 block).
       let flat = true;
       for (let dx = -2; dx <= 2; dx++) {
         for (let dz = -2; dz <= 2; dz++) {
-          const h = generator.getHeightAt(x + dx, z + dz);
-          if (Math.abs(h - height) > 1) {
+          const h = this.world.getMotionBlockingHeight(x + dx, z + dz);
+          if (h < this.world.dimension.minY || Math.abs(h - height) > 1) {
             flat = false;
             break;
           }
@@ -1299,16 +1304,22 @@ export class Game {
       if (!flat) {
         continue;
       }
-      this.player.position.set(x + 0.5, height + 1, z + 0.5);
+      this.player.position.set(
+        x + 0.5,
+        Math.min(height + 1, this.world.dimension.maxY + 1),
+        z + 0.5,
+      );
       return;
     }
-    // Fallback: spawn above the origin terrain surface with a small clearance.
-    // Using the actual terrain height avoids embedding the player inside a hill
-    // (the fixed sea-level offset could be below a tall origin column). The
-    // The streaming gate keeps the area safe while frame-budgeted preload
-    // catches up, so fallback placement never embeds the player in terrain.
-    const height = generator.getHeightAt(0, 0);
-    this.player.position.set(0.5, Math.max(height, CONFIG.seaLevel) + 1, 0.5);
+    // Fallback: spawn above the origin's canonical surface with a small
+    // clearance, clamped to the active dimension instead of sea level.
+    const height = this.world.getMotionBlockingHeight(0, 0);
+    const safeHeight = Math.max(this.world.dimension.minY, height);
+    this.player.position.set(
+      0.5,
+      Math.min(safeHeight + 1, this.world.dimension.maxY + 1),
+      0.5,
+    );
   }
 
   private updateHotbar(): void {
@@ -2331,10 +2342,23 @@ export class Game {
     this.saveTimer = 0;
   };
 
-  /** Apply a bulk-loaded edit snapshot; `importEdits` validates internally. */
-  private applyInitialEdits(snapshot: WorldEditSnapshot | null): void {
-    if (snapshot) {
-      this.world.importEdits(snapshot);
+  /** Restore persisted canonical columns and then project sparse edits over their baseline. */
+  private applyInitialWorldData(
+    columns: readonly SerializedChunkColumn[],
+    baseline: WorldGenerationBaseline,
+    edits: WorldEditSnapshot | null,
+  ): void {
+    this.world.setGenerationBaseline(baseline);
+    if (columns.length > 0) {
+      this.world.importColumns({
+        version: 1,
+        minSectionY: OVERWORLD_DIMENSION_TYPE.minSectionY,
+        sectionCount: OVERWORLD_DIMENSION_TYPE.sectionCount,
+        columns: [...columns],
+      });
+    }
+    if (edits) {
+      this.world.importEdits(edits);
     }
   }
 

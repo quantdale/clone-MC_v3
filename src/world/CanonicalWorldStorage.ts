@@ -44,6 +44,7 @@ export class CanonicalWorldStorage implements WorldAccess {
     this.vwa = new VerticalWorldAccess({
       dimension: opts.dimension,
       registry: this.stateRegistry,
+      blockRegistry: this.blockRegistry,
       airId: opts.airId,
     });
   }
@@ -164,7 +165,13 @@ export class CanonicalWorldStorage implements WorldAccess {
     airId?: BlockStateId,
   ): CanonicalWorldStorage {
     const storage = new CanonicalWorldStorage({ dimension, blockRegistry, stateRegistry, airId });
-    const restored = VerticalWorldAccess.deserialize(data, stateRegistry, dimension, airId);
+    const restored = VerticalWorldAccess.deserialize(
+      data,
+      stateRegistry,
+      dimension,
+      airId,
+      blockRegistry,
+    );
     for (const column of restored.columns()) {
       // Restored terrain is generated terrain — same contract as `importColumn`.
       column.advanceStatusTo(ChunkStatus.Full);

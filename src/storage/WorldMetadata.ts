@@ -43,6 +43,8 @@ export interface WorldMetadata {
   minY: number;
   /** Total block height of the dimension. */
   height: number;
+  /** Worldgen baseline contract used to create this world. Missing means pre-contract legacy data. */
+  generationVersion?: string;
   /** Epoch millis when the world was created. */
   createdAt: number;
   /** Epoch millis of the last metadata update. */
@@ -89,6 +91,9 @@ export function validateWorldMetadata(input: unknown): WorldMetadata {
   if (!isInteger(r.height) || r.height <= 0) {
     throw new Error('WorldMetadata: height must be a positive integer');
   }
+  if (r.generationVersion !== undefined && !isNonEmptyString(r.generationVersion)) {
+    throw new Error('WorldMetadata: generationVersion must be a non-empty string when present');
+  }
   if (!isFiniteNumber(r.createdAt)) {
     throw new Error('WorldMetadata: createdAt must be a finite number');
   }
@@ -103,6 +108,7 @@ export function validateWorldMetadata(input: unknown): WorldMetadata {
     dimensionId: r.dimensionId,
     minY: r.minY,
     height: r.height,
+    ...(r.generationVersion === undefined ? {} : { generationVersion: r.generationVersion }),
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
   };

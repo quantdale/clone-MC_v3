@@ -35,6 +35,9 @@ function validPayload(): MeshSectionRequestPayload {
     sectionX: 3,
     sectionY: 1,
     sectionZ: 2,
+    versionSnapshot: {
+      sections: [{ sectionX: 3, sectionY: 1, sectionZ: 2, meshVersion: 4, lightVersion: 5, target: true }],
+    },
     cells,
     opaqueIds: [1],
     skyLight: new Array(4096).fill(15),
@@ -68,6 +71,7 @@ describe('MeshWorkerEntry mesh-section handler', () => {
     expect(payload.sectionX).toBe(3);
     expect(payload.sectionY).toBe(1);
     expect(payload.sectionZ).toBe(2);
+    expect(payload.versionSnapshot).toEqual(validPayload().versionSnapshot);
     expect(payload.stride).toBe(PACKED_QUAD_STRIDE);
     expect(payload.quadCount).toBeGreaterThan(0);
     const data = payload.data as Float32Array;

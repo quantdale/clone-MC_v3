@@ -214,7 +214,7 @@ describe("WorkerPool", () => {
     const job = submit(pool, { generationToken: 7 });
     scopes[0]!.emit({ generationToken: 9, payload: "wrong-revision" });
     expect(job.results).toEqual([]);
-    expect(job.failures).toEqual([]);
+    expect(job.failures).toEqual(["stale generation token"]);
     let stats = pool.stats();
     expect(stats.stale).toBe(1);
     expect(stats.completed).toBe(0);

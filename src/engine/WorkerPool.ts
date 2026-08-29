@@ -446,6 +446,12 @@ export class WorkerPool {
       this.slots[slotIndex]?.inFlight.delete(result.jobId);
       this.recycle(entry);
       this.statsInternal.stale++;
+      try {
+        entry.onFailure("stale generation token", result.jobId);
+      } catch {
+        // Failure callbacks must not break pool dispatch after stale-result cleanup.
+      }
+      this.dispatch();
       return;
     }
     const jobId = result.jobId;

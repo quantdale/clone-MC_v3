@@ -64,6 +64,134 @@ Exact validation on the task-67 candidate:
 - `git diff --check` — PASS.
 - Focused worldgen/canonical-generation suite — PASS: 4 files, 32 tests (`WorldgenDeterminism`, `WorldgenRegressionMatrix`, `TerrainColumnGenerationEquivalence`, `WorldColumnGenerationIdempotency`).
 
+## Task 68/69 evidence — existing-world baseline protection and edit ordering
+
+Status: PASS for task 68 and task 69 scope. `WorldMetadata.generationVersion` records the executable worldgen baseline contract, sourced from the pinned `WORLDGEN_MATRIX_VERSION`. `GamePersistence.open()` bulk-loads canonical columns before live generation, classifies fresh worlds as `current`, legacy/migrated worlds as `legacy-unknown`, and mismatched seed/dimension/bounds or unknown future versions as `unsupported`. Metadata/column/edit read failures fail closed to `legacy-unknown`; existing metadata is never silently stamped with the current generator version. `World` refuses baseline generation for protected existing worlds, while `Game` restores imported canonical columns and then applies sparse edits. Imported columns advance to `Full`, and the edit projection therefore cannot be overwritten by regeneration.
+
+Regression evidence covers: fresh-world current-baseline stamping; legacy migration and second-boot idempotency with `legacy-unknown`; unsupported future baseline preservation and canonical-column bulk load; protected worlds never invoking a compatibility generator; and edit application after baseline restoration.
+
+Exact validation on the task-68/69 candidate:
+
+- `npm run typecheck` — PASS (`tsc --noEmit`).
+- `npm run lint` — PASS (`eslint .`).
+- Focused persistence/world suite — PASS: 5 files, 49 tests (`GamePersistence`, `World`, `WorldColumnGenerationIdempotency`, `CanonicalWorldStorage`, `VerticalStreaming`).
+- Full unit suite — PASS: 353 files, 4404 passed, 1 skipped (4405 total).
+- `npm run build` — PASS (`tsc --noEmit` + Vite build, 177 modules).
+- `npm run validate-state` — PASS.
+- `npm run test:e2e` — PARTIAL: alternate-port run completed 36 passed / 12 failed. Failures were the documented pre-existing memory-stress, migrated-save yaw, furnace focus, and stale/missing visual-golden suites; the default attempt was initially blocked by an unrelated `/home/box/repos/ironwild` preview server on port 4173. No task-68/69 persistence/world regression was observed.
+- `git diff --check` — PASS for semantic content; the repository reports CRLF/trailing-whitespace diagnostics on newly added lines in the existing LF/CRLF mixed worktree.
+
+## Task 70 evidence — horizontal streaming, readiness, radii, and bounded unload
+
+Status: PASS for task 70 scope. `World` derives the streamed vertical slab window from the active `DimensionType`, queues/preloads horizontal columns with bounded per-stage work, keeps render distance independent from simulation distance, and retries incomplete scans after queue displacement. Readiness follows the dimension-derived surface slab and requires generated canonical data plus an attached compatibility mesh; transactional mesh replacement preserves readiness during remesh without creating a visible gap. Budgeted unload uses the existing hysteresis and per-frame cap, while the remaining out-of-radius slab backlog is exposed through `WorldStats.pendingUnload` and the monitor unload depth.
+
+Exact validation on the task-70 candidate:
+
+- Focused streaming suite — PASS: 5 files, 38 tests (`World`, `WorldStreamingSaturation`, `VerticalStreaming`, `RenderSimulationDistance`, `WorldChunkMemo`).
+- Regression evidence — PASS: nearest-first saturated generation reaches full readiness; generated-only surface slabs are not ready; far teleports report a positive unload backlog and drain it monotonically within the configured budget; render/simulation radii remain independent.
+- `npm run typecheck` — PASS (`tsc --noEmit`).
+- `npm run lint` — PASS (`eslint .`).
+- `npm test` — PASS: 353 files, 4406 passed, 1 skipped (4407 total).
+- `npm run build` — PASS (`tsc --noEmit` + Vite build, 177 modules).
+- `npm run validate-state` — PASS.
+## Task 71 evidence — canonical surface/spawn selection and dimension bounds
+
+Status: PASS for task 71 scope. `World.getMotionBlockingHeight` reads the maintained canonical `ChunkColumn` motion-blocking heightmap for resident columns and uses a non-allocating deterministic generator fallback only when the horizontal column is absent. Results are clamped to the active `DimensionType` range. `Game.spawnPlayerSafely` uses that canonical query for candidate and flatness checks and clamps spawn clearance to `world.dimension`, with no sea-level or legacy 0..63 assumption.
+
+Exact validation:
+
+- Focused canonical/heightmap/world suite — PASS: 5 files, 57 tests (`World`, `ChunkColumn`, `CanonicalWorldStorage`, `VerticalWorldAccess`, `HeightmapStorage`).
+- Regression evidence — PASS: absent-column surface lookup does not allocate a resident column; resident canonical motion-blocking heightmap wins over generator fallback and excludes water; valid top-bound content is accepted while `320` is rejected; spawn code uses dimension-derived bounds.
+- `npm run typecheck` — PASS (`tsc --noEmit`).
+- `npm run lint` — PASS (`eslint .`).
+
+## Task 72 evidence — lazy Overworld column loading
+
+Status: PASS for task 72 scope. `ChunkColumn` stores sections in a lazy map; `getBlockState` reads an absent section as air without materialization, while `ensureColumn` allocates only column metadata. `VerticalWorldAccess.deserialize` and `CanonicalWorldStorage.deserialize` insert only serialized sections and do not iterate/materialize the dimension's 24 possible Overworld sections. Live generation writes only non-air canonical states, so untouched sections remain absent.
+
+Exact validation:
+
+- Focused lazy-column/streaming suite — PASS: 6 files, 65 tests (`CanonicalWorldStorage`, `ChunkColumn`, `HeightmapStorage`, `VerticalWorldAccess`, `VerticalStreaming`, `World`).
+- Regression evidence — PASS: an explicit Overworld serialized column with `sectionCount: 24` and empty `sections` loads with `allocatedSectionCount() === 0`; a read at Y=319 still returns air without allocation; existing sparse/generation tests preserve lazy section behavior.
+- `npm run typecheck` — PASS (`tsc --noEmit`).
+- `npm run lint` — PASS (`eslint .`).
+- `git diff --check` — semantic content is clean; the existing LF/CRLF mixed worktree reports CRLF/trailing-whitespace diagnostics only on pre-existing task-68/69 additions in `tests/unit/World.test.ts`.
+
+
+## Task 73 evidence — live generation and coordinate-boundary integration
+
+Status: PASS for task 73 scope. The real `TerrainGenerator` is exercised through the real `World` composition at negative stream coordinates. The regression verifies a canonical Overworld column at `(-2,-2)`, true-world Y coverage below zero, the upper valid/out-of-range behavior at `319/320`, negative X/Z floor-division at `-17/-16`, and edits spanning horizontal and vertical section boundaries (`15/16`). Existing full-range generation/equivalence and coordinate-matrix tests cover the complete required Y boundary set and canonical section routing.
+
+Exact validation:
+
+- Focused generation/boundary suite — PASS: 5 files, 28 tests (`WorldColumnGenerationIdempotency`, `TerrainColumnGenerationEquivalence`, `WorldCoordinatesBoundaryMatrix`, `WorldgenDeterminism`, `VerticalStreaming`).
+- Regression evidence — PASS: live negative-coordinate column reaches `ChunkStatus.Full`; canonical terrain is present below Y=0; Y=320 remains out of range; `-17/-16` writes resolve to columns `-2/-1`; `15/16` writes resolve to adjacent canonical sections.
+- `npm run typecheck` — PASS (`tsc --noEmit`).
+- `npm run lint` — PASS (`eslint .`).
+
+## Task 74 evidence — sparse allocation and bounded exploration residency
+
+Status: PASS for task 74 scope. The permanent `WorldStreamingPerformanceBudget` oracle runs real `World` generation/streaming with `OVERWORLD_DIMENSION_TYPE`, cycles through distant positive/negative centers, and applies edits across all eight representative Y boundaries from `-64` through `319`. It asserts resident columns and compatibility slabs plateau within the configured hysteresis bounds, dirty ownership remains one column/eight sections, pending light work drains, and settled canonical section allocation remains below `residentColumns × 24`.
+
+Exact validation:
+
+- Focused resource/residency suite — PASS: 4 files, 30 tests (`WorldStreamingPerformanceBudget`, `WorldColumnGenerationIdempotency`, `WorldCoordinatesBoundaryMatrix`, `CanonicalWorldStorage`).
+- Measured deterministic resource profile — PASS: `peakResidentColumns=18`, `peakLoadedChunks=104`, `finalAllocatedSections=257`, `editedDirtyColumns=1`, `editedDirtySections=8`, `pendingLight=0`.
+- Settled render-distance profiles — PASS: render distance 1 reaches 9 columns/54 compatibility slabs with allocation below `9 × 24`; render distance 2 reaches 25 columns/150 compatibility slabs; generation remains exactly once per resident column.
+- `npm run typecheck` — PASS (`tsc --noEmit`).
+- `npm run lint` — PASS (`eslint .`).
+
+
+## Task 75 evidence — render/light ownership and worker protocol inventory
+
+Status: PASS for task 75 scope. `inventory/render-light-worker-ownership.json` records the live ownership keys, lifecycle owners, versions, dispositions, and migration gaps for canonical `ChunkColumn`/`ChunkSection` storage, legacy `ChunkManager` slab projections, `ChunkPipeline`, `World` mesh/light maps, `WorldLightStorage`, `LightUpdateEngine`, `WorkerJobProtocol`, `MeshWorkerClient`, and `ChunkMesher`. The characterization test pins negative canonical section identity, floor-based negative light section routing/versioning, and worker foreign-identity/token rejection semantics without changing production behavior.
+
+Exact validation:
+
+- Focused render/light/worker suite — PASS: 5 files, 52 tests (`RenderLightWorkerOwnership`, `WorkerJobProtocol`, `WorkerMeshing`, `LightStorage`, `LightUpdateEngine`).
+- Inventory JSON parse — PASS (`render-light-worker-ownership.json`).
+- `npm run validate-state` — PASS (`State validation PASSED`).
+- `npm run typecheck` — PASS (`tsc --noEmit`).
+- `npm run lint` — PASS (`eslint .`).
+- `git diff --check` — semantic content is clean; the existing LF/CRLF mixed worktree reports trailing-whitespace diagnostics only on pre-existing additions in `tests/unit/World.test.ts`.
+
+Known task-75 boundary: live `World` render ownership and `lightDirtyChunks` remain legacy slab keyed, while canonical worker payloads/light storage already carry section identity. Task 76 must capture canonical section mesh/light versions at live job submission before broader stale-result migration.
+
+## Task 76 evidence — canonical mesh/light submission snapshots
+
+Status: PASS for task 76 scope. `SectionVersionSnapshot` captures target canonical sections and all six face-sharing neighbors for each section in the current compatibility projection. `World` captures the snapshot immediately before synchronous or worker mesh submission; canonical mesh versions use non-materializing `ChunkColumn.getSectionIfExists` access and light versions use `WorldLightStorage` section versions. The snapshot is carried through `ChunkMeshResult`, worker requests, worker results, and packed worker-entry transport. Existing stale-result behavior is intentionally unchanged; task 77 consumes this captured contract.
+
+Exact validation:
+
+- Focused render/light/worker/meshing suite — PASS: 7 files, 66 tests (`RenderLightWorkerOwnership`, `MeshWorkerEntry`, `WorkerJobProtocol`, `WorkerMeshing`, `ChunkMesher`, `LightStorage`, `LightUpdateEngine`).
+- Characterization evidence — PASS: negative/upper canonical section routing, negative floor-based light versions, target/neighbor snapshot coverage with absent-section zero versions, and exact worker snapshot round-trip.
+- `npm run typecheck` — PASS (`tsc --noEmit`).
+- `npm run lint` — PASS (`eslint .`).
+- `npm run validate-state` — PASS (`State validation PASSED`).
+- Inventory JSON parse — PASS (`render-light-worker-ownership.json`).
+
+Task-76 boundary: snapshots are explicit submission metadata but task 77 must reject stale, duplicate, mismatched, unloaded, and superseded mesh/light results at application time.
+
+## Task 77 evidence — transactional stale-result rejection and worker ownership
+
+Status: PASS for task 77 scope. Live mesh application now requires matching canonical target identity, captured mesh/light snapshot currentness, resident chunk identity, pipeline generation, and chunk mesh version. Worker results are accumulated per chunk batch and are attached only after every section passes validation; stale or mismatched batches dispose temporary geometries, cancel sibling jobs, fail/requeue the mesh stage when residency is still current, and cannot partially replace an existing visible mesh. Section geometry uses the local compatibility-section offset derived from canonical `sectionY`, including negative Overworld sections.
+
+Worker ownership is settled exactly once across detached and pooled paths. Owned jobs reject stale generation tokens, foreign section identity, malformed/error payloads, snapshot mismatches, worker loss, unload, regeneration, and disposal. Underlying `WorkerPool` job IDs are retained and cancelled with the local client; stale pool tokens invoke `onFailure` after freeing the worker slot and dispatching bounded queued work. Detached callers without an explicit rejection hook retain the generic pending-on-token-mismatch compatibility contract.
+
+Exact validation:
+
+- Focused render/light/worker/world suite — PASS: 5 files, 70 tests (`RenderLightWorkerOwnership`, `WorkerMeshing`, `WorkerPool`, `WorkerJobProtocol`, `World`).
+- Regression evidence — PASS: canonical snapshot equality/currentness detects mesh/light version changes; owned stale-token and snapshot-mismatch results settle once with zero pending jobs; detached stale-token behavior remains compatible; pooled cancellation reaches the underlying pool; transactional batches buffer/dispose geometry and preserve late-result safety; negative/high section offsets are derived correctly.
+- `npm run typecheck` — PASS (`tsc --noEmit`).
+- `npm run lint` — PASS (`eslint .`).
+- `npm test -- --run` — PASS: 354 files, 4416 passed, 1 skipped (4417 total). The reviewed file-audit subprocess emits expected failures for its synthetic invalid-manifest cases; the corresponding three tests all pass.
+- `npm run build` — PASS (`tsc --noEmit` + Vite build, 178 modules).
+- `npm run validate-state` — PASS (`State validation PASSED`).
+- Reviewed file-audit manifest — PASS: 2553-row full-bijection validation; task-77 inventory, snapshot implementation, and regression test rows were added.
+- `npm run test:e2e` — BLOCKED before test start because the repository config hardcodes port 4173, occupied by an unrelated `/home/box/repos/ironwild` preview server. An isolated temporary Playwright config on port 4174 ran 47 of 48 tests before the 30-minute harness timeout: 33 passed and 14 known baseline-sensitive tests failed (furnace focus/journey, placement, memory/GPU resource stress, and migrated-save state); the visual-regression test was not reached. No task-77 stale-result or worker-ownership regression was identified. The isolated preview process was terminated after the run.
+
+Task-77 boundary: broader localized invalidation, dimension-wide lighting, visual/E2E seam evidence, and later entity/persistence tasks remain unchecked and are not claimed by this evidence.
+
 
 Status: PASS for task 66 scope. The production `Game` composition constructs a `TerrainGenerator` exposing `generateColumn`; `World.processGeneration` selects that path, generates once per horizontal `ChunkColumn`, writes canonical sections, and synchronizes each resident `Chunk` only as a bounded compatibility/meshing projection. The remaining `TerrainGenerator.generateChunk(Chunk)` and `World` fallback branch are retained for legacy generators and test fixtures only. The fallback copies IDs into canonical storage when used and does not make slabs persistence or live world authority; no production `Game` path can select it.
 

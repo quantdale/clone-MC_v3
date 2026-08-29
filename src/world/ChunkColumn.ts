@@ -308,6 +308,7 @@ export class ChunkColumn {
     data: SerializedChunkColumn,
     registry: BlockStateRegistry,
     airId?: BlockStateId,
+    blockRegistry?: BlockTypeRegistry,
   ): ChunkColumn {
     if (data.version !== CHUNK_COLUMN_VERSION) {
       throw new Error(`Unsupported chunk column version: ${data.version}`);
@@ -318,6 +319,7 @@ export class ChunkColumn {
       sectionCount: data.sectionCount,
       minSectionY: data.minSectionY,
       registry,
+      blockRegistry,
       airId,
     });
     for (const key of Object.keys(data.sections)) {

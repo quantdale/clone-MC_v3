@@ -14,6 +14,7 @@ import {
   UNVERSIONED_TOKEN,
   WORKER_PROTOCOL_VERSION,
   WorkerJobClient,
+  validateWorkerResult,
   type ResolvedOutcome,
   type WorkerResult,
 } from './WorkerJobProtocol';
@@ -27,12 +28,19 @@ import {
 import type { ModelFace } from '../data/BlockModel';
 import type * as THREE from 'three';
 import type { MeshStreamData, MeshStreamName, UvRect } from '../world/MeshingTypes';
+import {
+  validateSectionVersionSnapshot,
+  sectionVersionSnapshotsEqual,
+  type SectionVersionSnapshot,
+} from '../world/SectionVersionSnapshot';
 
 /** A section-meshing job request (plain data; structured-clone-safe). */
 export interface MeshSectionRequestPayload {
   sectionX: number;
   sectionY: number;
   sectionZ: number;
+  /** Canonical mesh/light versions captured at submission, including face neighbors. */
+  versionSnapshot?: SectionVersionSnapshot;
   /** 4096 world-cell block ids; `null` = air. Index = x + 16*(y + 16*z). */
   cells: Array<number | null>;
   /** Block ids treated as opaque. */
@@ -48,6 +56,8 @@ export interface MeshSectionResultPayload {
   sectionX: number;
   sectionY: number;
   sectionZ: number;
+  /** The exact canonical versions captured by the submitting mesh job. */
+  versionSnapshot?: SectionVersionSnapshot;
   quads: OpaqueFaceQuad[];
   /** Version/generation token echoed from the request (present on pooled results). */
   generationToken?: number;
@@ -81,6 +91,9 @@ export function validateMeshSectionResult(input: unknown): MeshSectionResultPayl
     sectionX: r.sectionX as number,
     sectionY: r.sectionY as number,
     sectionZ: r.sectionZ as number,
+    versionSnapshot: r.versionSnapshot === undefined
+      ? undefined
+      : validateSectionVersionSnapshot(r.versionSnapshot),
     ...validateResultBody(r),
   };
 }
@@ -183,6 +196,9 @@ export function validateMeshSectionRequest(input: unknown): MeshSectionRequestPa
     sectionX: r.sectionX as number,
     sectionY: r.sectionY as number,
     sectionZ: r.sectionZ as number,
+    versionSnapshot: r.versionSnapshot === undefined
+      ? undefined
+      : validateSectionVersionSnapshot(r.versionSnapshot),
     cells: r.cells as Array<number | null>,
     opaqueIds: r.opaqueIds as number[],
     skyLight: r.skyLight as number[],
@@ -310,6 +326,7 @@ export function processMeshSectionRequest(
     sectionX: payload.sectionX,
     sectionY: payload.sectionY,
     sectionZ: payload.sectionZ,
+    versionSnapshot: payload.versionSnapshot,
     quads,
   };
   if (generationToken !== undefined) result.generationToken = generationToken;
@@ -325,10 +342,13 @@ export function processMeshSectionRequest(
 export class MeshWorkerClient {
   private readonly jobs = new WorkerJobClient();
   private readonly callbacks = new Map<string, (result: MeshSectionResultPayload) => void>();
+  private readonly rejectionCallbacks = new Map<string, () => void>();
   /** Submission-time token per pending job (mirrors `WorkerJobClient` state for cancellation sweeps). */
   private readonly tokens = new Map<string, number>();
   /** Submission payload per pending job (identity matching against result coordinates). */
   private readonly requests = new Map<string, MeshSectionRequestPayload>();
+  /** Underlying pool correlation ids, used to cancel real worker work with the local job. */
+  private readonly poolJobs = new Map<string, string>();
   private pool: WorkerPool | null = null;
   private generationToken = 0;
 
@@ -350,16 +370,21 @@ export class MeshWorkerClient {
     this.generationToken = token;
   }
 
-  /** Submit a section meshing job; `onResult` fires exactly once on a valid resolution. */
-  requestSection(payload: MeshSectionRequestPayload, onResult: (result: MeshSectionResultPayload) => void): string {
+  /** Submit a section meshing job; callbacks fire at most once. */
+  requestSection(
+    payload: MeshSectionRequestPayload,
+    onResult: (result: MeshSectionResultPayload) => void,
+    onRejected?: () => void,
+  ): string {
     const token = this.generationToken;
     const jobId = this.jobs.submit('mesh-section', token);
     this.callbacks.set(jobId, onResult);
+    if (onRejected) this.rejectionCallbacks.set(jobId, onRejected);
     this.tokens.set(jobId, token);
     this.requests.set(jobId, payload);
     if (this.pool) {
       try {
-        this.pool.submit({
+        const poolJobId = this.pool.submit({
           kind: 'mesh-section',
           generationToken: token,
           payload,
@@ -370,20 +395,21 @@ export class MeshWorkerClient {
             try {
               validated = validateMeshSectionResult(result);
             } catch {
-              this.abandon(jobId); // malformed payload can never satisfy the job
+              this.reject(jobId); // malformed payload can never satisfy the job
               return;
             }
-            if (!this.matchesRequest(jobId, validated)) {
-              this.abandon(jobId); // foreign/stale identity must not resolve the job
+            if (!this.matchesRequest(jobId, validated) || !this.matchesSnapshot(jobId, validated)) {
+              this.reject(jobId); // foreign/stale identity or version snapshot must not resolve the job
               return;
             }
             this.complete(jobId, validated, token);
           },
           onFailure: () => {
-            // Abandon the job (worker loss/dispose): no result is delivered; late results become stale.
-            this.abandon(jobId);
+            // Worker loss/dispose rejects the owning batch; late results become stale.
+            this.reject(jobId);
           },
         });
+        this.poolJobs.set(jobId, poolJobId);
       } catch (err) {
         // Synchronous pool rejection (bounded queue full): keep bookkeeping truthful.
         this.abandon(jobId);
@@ -400,20 +426,42 @@ export class MeshWorkerClient {
    */
   handleMessage(input: unknown): MeshSectionResultPayload | null {
     const outcome: ResolvedOutcome | null = this.jobs.resolveResult(input);
-    if (outcome === null || !outcome.ok || outcome.payload === undefined) return null;
+    if (outcome === null) {
+      // WorkerJobClient intentionally keeps generic token-mismatch jobs pending. A live mesh
+      // batch, however, must settle its owner exactly once rather than leaking an in-flight job.
+      try {
+        const stale = validateWorkerResult(input);
+        if (stale.kind === 'mesh-section' && this.rejectionCallbacks.has(stale.jobId)) {
+          this.reject(stale.jobId);
+        }
+      } catch {
+        // Invalid/unknown messages remain harmless and do not mutate pending ownership.
+      }
+      return null;
+    }
+    if (!outcome.ok || outcome.payload === undefined) {
+      this.reject(outcome.jobId);
+      return null;
+    }
 
     let payload: MeshSectionResultPayload;
     try {
       payload = validateMeshSectionResult(outcome.payload);
     } catch {
-      return null; // malformed payload: never resolves the job
+      this.reject(outcome.jobId);
+      return null;
     }
-    if (!this.matchesRequest(outcome.jobId, payload)) return null;
+    if (!this.matchesRequest(outcome.jobId, payload) || !this.matchesSnapshot(outcome.jobId, payload)) {
+      this.reject(outcome.jobId);
+      return null;
+    }
     return this.complete(outcome.jobId, payload, outcome.generationToken);
   }
 
   /** Cancel a pending job (its late result becomes stale). */
   cancel(jobId: string): boolean {
+    const poolJobId = this.poolJobs.get(jobId);
+    if (poolJobId !== undefined) this.pool?.cancel(poolJobId);
     const removed = this.jobs.cancel(jobId);
     this.abandon(jobId);
     return removed;
@@ -426,8 +474,7 @@ export class MeshWorkerClient {
   cancelByToken(generationToken: number): number {
     let cancelled = 0;
     for (const [jobId, token] of this.tokens) {
-      if (token === generationToken && this.jobs.cancel(jobId)) {
-        this.abandon(jobId);
+      if (token === generationToken && this.cancel(jobId)) {
         cancelled++;
       }
     }
@@ -466,6 +513,15 @@ export class MeshWorkerClient {
     );
   }
 
+  /** Whether a validated result carries the exact submission snapshot, when one was supplied. */
+  private matchesSnapshot(jobId: string, result: MeshSectionResultPayload): boolean {
+    const request = this.requests.get(jobId);
+    return request !== undefined && sectionVersionSnapshotsEqual(
+      request.versionSnapshot,
+      result.versionSnapshot,
+    );
+  }
+
   /**
    * Shared exactly-once completion. Authority is the callbacks map (the unified client already
    * consumed the protocol-level pending record during resolution), so both the pooled path and
@@ -481,12 +537,23 @@ export class MeshWorkerClient {
     return result;
   }
 
-  /** Drop all per-job bookkeeping without invoking the callback (failure/stale/invalid paths). */
+  /** Reject a consumed worker result/failure exactly once and notify its owner. */
+  private reject(jobId: string): boolean {
+    const callback = this.rejectionCallbacks.get(jobId);
+    if (!this.callbacks.has(jobId) && callback === undefined) return false;
+    this.abandon(jobId);
+    callback?.();
+    return true;
+  }
+
+  /** Drop all per-job bookkeeping without invoking callbacks. */
   private abandon(jobId: string): void {
     this.jobs.cancel(jobId);
     this.callbacks.delete(jobId);
+    this.rejectionCallbacks.delete(jobId);
     this.tokens.delete(jobId);
     this.requests.delete(jobId);
+    this.poolJobs.delete(jobId);
   }
 }
 

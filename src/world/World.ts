@@ -54,6 +54,12 @@ import {
 import { localCoord, sectionIndex } from '../math/SectionCoordinate';
 import type { SerializedChunkColumns } from './VerticalWorldAccess';
 import type { ChunkColumn } from './ChunkColumn';
+import {
+  captureSectionVersionSnapshot,
+  isSectionVersionSnapshotCurrent,
+  findSectionVersionSnapshot,
+  type SectionVersionSnapshot,
+} from './SectionVersionSnapshot';
 /** A queued meshing job; carries the meshVersion captured at queue time. */
 interface MeshJob {
   key: string;
@@ -61,6 +67,25 @@ interface MeshJob {
   cy: number;
   cz: number;
   version: number;
+}
+
+interface WorkerMeshBatch {
+  readonly key: string;
+  readonly generation: number;
+  readonly meshVersion: number;
+  readonly chunkY: number;
+  readonly versionSnapshot: SectionVersionSnapshot;
+  readonly jobIds: Set<string>;
+  readonly geometries: Array<{
+    geometry: THREE.BufferGeometry | null;
+    material: THREE.MeshLambertMaterial | undefined;
+    renderOrder: number;
+    castShadow: boolean;
+    offsetY: number;
+  }>;
+  remaining: number;
+  failed: boolean;
+  completed: boolean;
 }
 
 /**
@@ -122,6 +147,9 @@ export interface WorldEditSnapshot {
   }>;
 }
 
+/** Persisted worldgen baseline compatibility used to protect existing-world regeneration. */
+export type WorldGenerationBaseline = 'current' | 'legacy-unknown' | 'unsupported';
+
 /**
  * Durable-ownership seam for player edits (DIRTY-1..5). Implementations own the
  * authoritative copy of unsaved edits; World's edit overlay is only a resident
@@ -163,6 +191,8 @@ export class World implements WorldAccess {
   private readonly chunkLayerCount: number;
   /** Omitted dimensions retain the narrow legacy fixture contract; live Game always supplies one. */
   private readonly usesExplicitDimension: boolean;
+  /** Generator contract selected by persistence; non-current existing worlds never regenerate. */
+  private generationBaseline: WorldGenerationBaseline;
 
   /**
    * PROJECTION_ONLY — bounded LRU cache of player edits (chunkKey → localIndex → blockId).
@@ -241,6 +271,7 @@ export class World implements WorldAccess {
   private readonly useWorkers = false;
   private workerPool: WorkerPool | null = null;
   private workerClient: MeshWorkerClient | null = null;
+  private readonly workerMeshBatches = new Map<string, WorkerMeshBatch>();
   /** Optional atlas UV lookup for the worker path's packed-result expansion.
    *  Without it, worker results cannot be textured and are dropped. */
   private readonly uvRectFor: ((blockId: number, faceIndex: number) => UvRect) | null;
@@ -263,6 +294,8 @@ export class World implements WorldAccess {
   private needsEnsure = true;
   /** True while budgeted unloading still has out-of-range chunks to remove. */
   private needsUnload = false;
+  /** Number of out-of-range resident slabs remaining after the last unload pass. */
+  private pendingUnloadValue = 0;
 
   /** Live scene meshes per chunk key (for disposal on unload / re-mesh). */
   private readonly meshGroups = new Map<string, THREE.Mesh[]>();
@@ -319,6 +352,7 @@ export class World implements WorldAccess {
     // Omitted dimensions retain the narrow legacy fixture contract; the
     // production Game composition always supplies a dimension.
     this.usesExplicitDimension = opts.dimension !== undefined;
+    this.generationBaseline = 'current';
     if (this.usesExplicitDimension) {
       this.minChunkY = floorDiv(this.dimension.minY, CHUNK_DIMENSIONS.height);
       const maxChunkY = floorDiv(this.dimension.maxY, CHUNK_DIMENSIONS.height);
@@ -339,6 +373,16 @@ export class World implements WorldAccess {
       },
       { minY: this.dimension.minY, maxY: this.dimension.minY + this.dimension.height },
     );
+  }
+
+  /** Select the persisted generator contract before streaming starts. */
+  setGenerationBaseline(baseline: WorldGenerationBaseline): void {
+    this.generationBaseline = baseline;
+  }
+
+  /** Whether this world may create a new generated baseline. */
+  get canGenerateBaseline(): boolean {
+    return this.generationBaseline === 'current';
   }
 
   // ── WorldAccess ────────────────────────────────────────────────────────────
@@ -938,7 +982,20 @@ export class World implements WorldAccess {
         typeof (this.generator as unknown as { generateColumn?: unknown }).generateColumn ===
         'function';
 
-      if (hasGenerateColumn) {
+      if (!this.canGenerateBaseline) {
+        // Existing worlds with an unknown/unsupported baseline are protected from silent terrain
+        // replacement regardless of which generator API a compatibility adapter exposes.
+        // Persisted columns were imported before this job; an absent column remains canonical air
+        // until an explicit compatible generator/upgrade is supplied.
+        const column = this.storage.vwa.ensureColumn(job.cx, job.cz);
+        column.advanceStatusTo(ChunkStatus.Full);
+        this.syncChunkFromStorage(chunk);
+        const applied = this.applyEditOverlay(chunk, true);
+        chunk.generated = true;
+        chunk.state = ChunkState.Generated;
+        this.countChunkVoxels(chunk);
+        this.reconcileEditedCellsIntoColumn(chunk, column, applied);
+      } else if (hasGenerateColumn) {
         const column = this.storage.vwa.ensureColumn(job.cx, job.cz);
         if (!isChunkStatusAtLeast(column.getStatus(), ChunkStatus.Full)) {
           (
@@ -1178,11 +1235,13 @@ export class World implements WorldAccess {
         break;
       }
 
+      const versionSnapshot = this.captureSectionVersions(chunk);
       if (this.useWorkers) {
-        this.submitWorkerMeshJob(chunk, record.generation, chunk.meshVersion);
+        this.submitWorkerMeshJob(chunk, record.generation, chunk.meshVersion, versionSnapshot);
       } else {
         const result = this.mesher.mesh(chunk, (cx, cy, cz) => this.chunkManager.getChunk(cx, cy, cz), {
           inputVersion: record.generation,
+          versionSnapshot,
           lightSampler: this.mesherLightSampler,
         });
         // Stale rejection: drop results built against a superseded generation. Legacy
@@ -1229,6 +1288,7 @@ export class World implements WorldAccess {
       if (!this.budgets.tryAcquire('unload', World.TASK_ESTIMATE_MS.unload)) break;
       const key = chunkKey(chunk.cx, chunk.cy, chunk.cz);
 
+      this.cancelWorkerMeshBatch(key);
       this.removeMeshesForChunk(chunk);
 
       const voxelCount = this.chunkVoxelCounts.get(key);
@@ -1267,7 +1327,9 @@ export class World implements WorldAccess {
       this.chunkManager.removeChunk(chunk.cx, chunk.cy, chunk.cz);
       unloaded++;
     }
-    return candidates.length > unloaded;
+    this.needsUnload = candidates.length > unloaded;
+    this.pendingUnloadValue = candidates.length - unloaded;
+    return this.needsUnload;
   }
 
   /** Resolve a bounded number of unsupported sand/gravel cells per frame. */
@@ -1365,6 +1427,9 @@ export class World implements WorldAccess {
       return; // Fresh flow advances stage by stage during generation.
     }
     const reset = (() => {
+      // Cancel worker transport and temporary geometry before invalidating the
+      // pipeline record, so a late result cannot touch replacement residency.
+      this.cancelWorkerMeshBatch(key);
       // Cancel any queued/in-flight work first: enqueue() deduplicates by
       // keeping the earliest queued job, so a superseded entry must be removed
       // or its captured (now-stale) version would block the fresh one.
@@ -1623,30 +1688,39 @@ export class World implements WorldAccess {
       material: THREE.MeshLambertMaterial | undefined;
       renderOrder: number;
       castShadow: boolean;
+      offsetY?: number;
     }>,
   ): void {
     const key = chunkKey(chunk.cx, chunk.cy, chunk.cz);
-    this.removeMeshesForChunk(chunk);
-
     const meshes: THREE.Mesh[] = [];
     let tris = 0;
     const px = chunk.cx * CHUNK_DIMENSIONS.width;
     const py = chunk.cy * CHUNK_DIMENSIONS.height;
     const pz = chunk.cz * CHUNK_DIMENSIONS.depth;
 
+    // Build the replacement completely before removing the currently attached
+    // group. Readiness can therefore remain true while a visible chunk is being
+    // re-meshed; a failed/partial build never creates a visible gap.
     for (const entry of entries) {
-      if (!entry.geometry || !entry.material) continue;
+      if (!entry.geometry) continue;
+      if (!entry.material) {
+        entry.geometry.dispose();
+        continue;
+      }
       const mesh = new THREE.Mesh(entry.geometry, entry.material);
-      mesh.position.set(px, py, pz);
+      mesh.position.set(px, py + (entry.offsetY ?? 0), pz);
       mesh.renderOrder = entry.renderOrder;
       mesh.castShadow = entry.castShadow;
       mesh.receiveShadow = true;
-      this.scene.add(mesh);
       meshes.push(mesh);
       tris += this.triangleCount(entry.geometry);
       this.uploadBytesThisFrame += estimateGeometryBytes(entry.geometry);
     }
 
+    this.removeMeshesForChunk(chunk);
+    for (const mesh of meshes) {
+      this.scene.add(mesh);
+    }
     this.meshGroups.set(key, meshes);
     this.chunkTriangles.set(key, tris);
     this.triangles += tris;
@@ -1671,10 +1745,41 @@ export class World implements WorldAccess {
   }
 
   /**
+   * Capture canonical mesh/light versions for this legacy projection without
+   * materializing absent columns or sections. The projection's target sections
+   * and their face-sharing neighbors are included for the later stale-result
+   * gate; task 76 records only, task 77 enforces.
+   */
+  private captureSectionVersions(chunk: Chunk): SectionVersionSnapshot {
+    return captureSectionVersionSnapshot(
+      chunk.cx,
+      chunk.cy,
+      chunk.cz,
+      this.sectionsPerChunk,
+      {
+        meshVersionAt: (sectionX, sectionY, sectionZ) => {
+          const column = this.storage.getColumn(sectionX, sectionZ);
+          if (!column) return 0;
+          const inColumnSection = sectionY - this.dimension.minSectionY;
+          if (inColumnSection < 0 || inColumnSection >= column.sectionCount) return 0;
+          return column.sectionMeshVersion(inColumnSection);
+        },
+        lightVersionAt: (sectionX, sectionY, sectionZ) =>
+          this.lightStorage.getSectionVersion(sectionX, sectionY, sectionZ),
+      },
+    );
+  }
+
+  /**
    * Submit one per-section meshing job for a chunk (worker path). Results are
    * consumed through the same stale-check + attach path as sync builds.
    */
-  private submitWorkerMeshJob(chunk: Chunk, generation: number, meshVersion: number): void {
+  private submitWorkerMeshJob(
+    chunk: Chunk,
+    generation: number,
+    meshVersion: number,
+    versionSnapshot: SectionVersionSnapshot,
+  ): void {
     if (!this.ensureWorkerMeshing() || !this.workerClient) {
       // Workers unavailable (e.g. no uvRectFor): fall back to the sync mesher
       // so the chunk never strands unmeshed.
@@ -1682,6 +1787,7 @@ export class World implements WorldAccess {
       if (!record) return;
       const result = this.mesher.mesh(chunk, (cx, cy, cz) => this.chunkManager.getChunk(cx, cy, cz), {
         inputVersion: generation,
+        versionSnapshot,
         lightSampler: this.mesherLightSampler,
       });
       // Legacy results without a streams stamp attach unconditionally (see sync path).
@@ -1694,19 +1800,57 @@ export class World implements WorldAccess {
       return;
     }
 
+    const key = chunkKey(chunk.cx, chunk.cy, chunk.cz);
+    const batch: WorkerMeshBatch = {
+      key,
+      generation,
+      meshVersion,
+      versionSnapshot,
+      chunkY: chunk.cy,
+      jobIds: new Set(),
+      geometries: [],
+      remaining: 0,
+      failed: false,
+      completed: false,
+    };
+    this.cancelWorkerMeshBatch(key);
+    this.workerMeshBatches.set(key, batch);
+
     const sectionsY = CHUNK_DIMENSIONS.height / 16;
-    for (let sy = 0; sy < sectionsY; sy++) {
-      const payload = this.buildSectionPayload(chunk, sy);
-      if (!payload) continue;
-      this.workerClient.setGenerationToken(generation);
-      this.workerClient.requestSection(payload, (result) => {
-        this.consumeWorkerMeshResult(chunk.cx, chunk.cy, chunk.cz, generation, meshVersion, result);
-      });
+    try {
+      for (let sy = 0; sy < sectionsY; sy++) {
+        const payload = this.buildSectionPayload(chunk, sy, versionSnapshot);
+        if (!payload) continue;
+        this.workerClient.setGenerationToken(generation);
+        const jobId = this.workerClient.requestSection(
+          payload,
+          (result) => this.consumeWorkerMeshResult(
+            batch,
+            jobId,
+            payload.sectionX,
+            payload.sectionY,
+            payload.sectionZ,
+            result,
+          ),
+          () => this.rejectWorkerMeshBatch(batch),
+        );
+        batch.jobIds.add(jobId);
+        batch.remaining++;
+      }
+    } catch (error) {
+      this.rejectWorkerMeshBatch(batch);
+      throw error;
     }
+
+    if (batch.remaining === 0) this.completeWorkerMeshBatch(batch);
   }
 
   /** Build the structured-clone payload for one 16³ section, or null when empty. */
-  private buildSectionPayload(chunk: Chunk, sectionIndex: number): MeshSectionRequestPayload | null {
+  private buildSectionPayload(
+    chunk: Chunk,
+    sectionIndex: number,
+    versionSnapshot: SectionVersionSnapshot,
+  ): MeshSectionRequestPayload | null {
     const baseX = chunk.cx * CHUNK_DIMENSIONS.width;
     const baseY = chunk.cy * CHUNK_DIMENSIONS.height + sectionIndex * 16;
     const baseZ = chunk.cz * CHUNK_DIMENSIONS.depth;
@@ -1744,6 +1888,7 @@ export class World implements WorldAccess {
       sectionX: chunk.cx * (CHUNK_DIMENSIONS.width / 16),
       sectionY: chunk.cy * this.sectionsPerChunk + sectionIndex,
       sectionZ: chunk.cz * (CHUNK_DIMENSIONS.depth / 16),
+      versionSnapshot,
       cells,
       opaqueIds,
       skyLight,
@@ -1752,25 +1897,138 @@ export class World implements WorldAccess {
   }
 
   /**
-   * Stale-check + attach for one finished worker section. The whole chunk
-   * re-meshes through the sync path if any section arrives stale.
+   * Reject a worker batch exactly once, canceling sibling section jobs and requeueing the
+   * chunk against a new pipeline generation. A late result can therefore never attach to a
+   * replacement chunk or leave the mesh stage permanently in flight.
+   */
+  private rejectWorkerMeshBatch(batch: WorkerMeshBatch): void {
+    if (batch.failed || batch.completed) return;
+    batch.failed = true;
+    if (this.workerMeshBatches.get(batch.key) === batch) {
+      this.workerMeshBatches.delete(batch.key);
+    }
+    if (this.workerClient) {
+      for (const jobId of batch.jobIds) this.workerClient.cancel(jobId);
+    }
+    this.disposeWorkerMeshBatchGeometries(batch);
+    const record = this.chunkManager.pipeline.getRecord(batch.key);
+    if (record?.generation === batch.generation) {
+      this.chunkManager.pipeline.failStage(batch.key, 'mesh');
+      const chunk = this.chunkManager.getChunk(record.cx, record.cy, record.cz);
+      if (chunk?.generated) {
+        chunk.markDirty();
+        this.enqueueMeshWithRetry(chunk);
+      }
+    }
+    batch.jobIds.clear();
+    batch.remaining = 0;
+  }
+
+  /** Dispose temporary geometry that has not yet been transferred to the scene. */
+  private disposeWorkerMeshBatchGeometries(batch: WorkerMeshBatch): void {
+    for (const entry of batch.geometries) {
+      entry.geometry?.dispose();
+    }
+    batch.geometries.length = 0;
+  }
+
+  /** Cancel a worker batch because its residency is being replaced or unloaded. */
+  private cancelWorkerMeshBatch(key: string): void {
+    const batch = this.workerMeshBatches.get(key);
+    if (!batch) return;
+    batch.failed = true;
+    this.workerMeshBatches.delete(key);
+    if (this.workerClient) {
+      for (const jobId of batch.jobIds) this.workerClient.cancel(jobId);
+    }
+    this.disposeWorkerMeshBatchGeometries(batch);
+    batch.jobIds.clear();
+    batch.remaining = 0;
+  }
+
+  /** Complete the batch only after every section result passed all stale checks. */
+  private completeWorkerMeshBatch(batch: WorkerMeshBatch): void {
+    if (batch.failed || batch.completed || batch.remaining !== 0) return;
+    const pipeline = this.chunkManager.pipeline;
+    const record = pipeline.getRecord(batch.key);
+    const chunk = record && this.chunkManager.getChunk(record.cx, record.cy, record.cz);
+    if (
+      !record ||
+      record.generation !== batch.generation ||
+      !chunk ||
+      chunk.meshVersion !== batch.meshVersion ||
+      !this.isSectionVersionSnapshotCurrent(batch.versionSnapshot)
+    ) {
+      this.rejectWorkerMeshBatch(batch);
+      return;
+    }
+    batch.completed = true;
+    if (this.workerMeshBatches.get(batch.key) === batch) {
+      this.workerMeshBatches.delete(batch.key);
+    }
+    this.attachGeometries(chunk, batch.geometries);
+    batch.geometries.length = 0;
+    chunk.dirty = false;
+    chunk.state = ChunkState.Visible;
+    pipeline.completeStage(batch.key, 'mesh', batch.generation);
+    pipeline.beginStage(batch.key, 'upload', batch.generation);
+    pipeline.completeStage(batch.key, 'upload', batch.generation);
+  }
+
+  /** Read current canonical mesh/light versions without materializing absent sections. */
+  private isSectionVersionSnapshotCurrent(snapshot: SectionVersionSnapshot): boolean {
+    return isSectionVersionSnapshotCurrent(snapshot, {
+      meshVersionAt: (sectionX, sectionY, sectionZ) => {
+        const column = this.storage.getColumn(sectionX, sectionZ);
+        if (!column) return 0;
+        const inColumnSection = sectionY - this.dimension.minSectionY;
+        if (inColumnSection < 0 || inColumnSection >= column.sectionCount) return 0;
+        return column.sectionMeshVersion(inColumnSection);
+      },
+      lightVersionAt: (sectionX, sectionY, sectionZ) =>
+        this.lightStorage.getSectionVersion(sectionX, sectionY, sectionZ),
+    });
+  }
+
+  /**
+   * Stale-check + attach for one finished worker section. The result must belong to the
+   * submitted target section and all captured canonical versions must still match.
    */
   private consumeWorkerMeshResult(
-    cx: number,
-    cy: number,
-    cz: number,
-    generation: number,
-    meshVersion: number,
+    batch: WorkerMeshBatch,
+    jobId: string,
+    sectionX: number,
+    sectionY: number,
+    sectionZ: number,
     result: MeshSectionResultPayload,
   ): void {
-    const pipeline = this.chunkManager.pipeline;
-    const record = pipeline.getRecord(chunkKey(cx, cy, cz));
-    // Stale rejection: chunk gone or regenerated since submission.
-    if (!record || record.generation !== generation) return;
-    // Same-generation edits are caught by the legacy meshVersion guard.
-    const chunk = this.chunkManager.getChunk(cx, cy, cz);
-    if (!chunk || chunk.meshVersion !== meshVersion) return;
-    if (!this.uvRectFor) return; // cannot texture packed quads without atlas UVs
+    if (batch.failed || batch.completed) return;
+    const entry = result.versionSnapshot && findSectionVersionSnapshot(
+      result.versionSnapshot,
+      result.sectionX,
+      result.sectionY,
+      result.sectionZ,
+    );
+    const record = this.chunkManager.pipeline.getRecord(batch.key);
+    const chunk = record && this.chunkManager.getChunk(record.cx, record.cy, record.cz);
+    if (
+      result.sectionX !== sectionX ||
+      result.sectionY !== sectionY ||
+      result.sectionZ !== sectionZ ||
+      !entry?.target ||
+      !record ||
+      record.generation !== batch.generation ||
+      !chunk ||
+      chunk.meshVersion !== batch.meshVersion ||
+      !this.isSectionVersionSnapshotCurrent(batch.versionSnapshot)
+    ) {
+      this.rejectWorkerMeshBatch(batch);
+      return;
+    }
+    if (!this.uvRectFor) {
+      this.rejectWorkerMeshBatch(batch);
+      return;
+    }
 
     const info: PackedMeshExpandInfo = {
       uvFor: (blockId, faceIndex) => this.uvRectFor!(blockId, faceIndex),
@@ -1780,17 +2038,18 @@ export class World implements WorldAccess {
           : ('opaque' as MeshStreamName),
       buildGeometry: geometryFromMeshStream,
     };
-    // Both transport forms share one expansion route: quad results pack here, packed
-    // worker-entry results arrive pre-packed; either way the stride-22 buffer decodes
-    // into four-stream geometries.
     const packed = result.packed ?? packQuadsToTypedArrays(result.quads);
     const geometries = expandPackedMeshResult(packed, info);
-    this.attachGeometries(chunk, [
-      { geometry: geometries.opaque, material: this.materials.opaque, renderOrder: 0, castShadow: true },
-      { geometry: geometries.cutout, material: this.materials.cutout, renderOrder: 0, castShadow: true },
-      { geometry: geometries.translucent, material: this.materials.transparent, renderOrder: 1, castShadow: false },
-      { geometry: geometries.fluid, material: this.materials.fluid, renderOrder: 2, castShadow: false },
-    ]);
+    const offsetY = (sectionY - batch.chunkY * this.sectionsPerChunk) * 16;
+    batch.geometries.push(
+      { geometry: geometries.opaque, material: this.materials.opaque, renderOrder: 0, castShadow: true, offsetY },
+      { geometry: geometries.cutout, material: this.materials.cutout, renderOrder: 0, castShadow: true, offsetY },
+      { geometry: geometries.translucent, material: this.materials.transparent, renderOrder: 1, castShadow: false, offsetY },
+      { geometry: geometries.fluid, material: this.materials.fluid, renderOrder: 2, castShadow: false, offsetY },
+    );
+    batch.jobIds.delete(jobId);
+    batch.remaining--;
+    this.completeWorkerMeshBatch(batch);
   }
 
   // ── Observability ──────────────────────────────────────────────────────────
@@ -1802,7 +2061,7 @@ export class World implements WorldAccess {
     this.monitor.setQueueDepth('generate', pipeline.queueDepth('generate'));
     this.monitor.setQueueDepth('mesh', pipeline.queueDepth('mesh') + this.retryMeshQueue.length);
     this.monitor.setQueueDepth('upload', pipeline.queueDepth('upload'));
-    this.monitor.setQueueDepth('unload', 0);
+    this.monitor.setQueueDepth('unload', this.pendingUnloadValue);
     this.monitor.setOldestJobAgeMs(pipeline.oldestJobAgeMs());
     this.monitor.recordUploadBytes(this.uploadBytesThisFrame);
   }
@@ -1951,6 +2210,27 @@ export class World implements WorldAccess {
     }
   }
 
+  /**
+   * Return the canonical motion-blocking surface Y for a world column.
+   * Existing columns use their maintained heightmap; an absent column falls
+   * back to deterministic generation without allocating canonical storage.
+   * The result is bounded to the active dimension and may be `minY - 1` for
+   * an empty column.
+   */
+  getMotionBlockingHeight(worldX: number, worldZ: number): number {
+    if (!Number.isInteger(worldX) || !Number.isInteger(worldZ)) {
+      return this.dimension.minY - 1;
+    }
+    const chunkX = sectionIndex(worldX);
+    const chunkZ = sectionIndex(worldZ);
+    const column = this.storage.getColumn(chunkX, chunkZ);
+    const height =
+      column === undefined
+        ? this.generator.getHeightAt(worldX, worldZ)
+        : column.getMotionBlockingHeight(localCoord(worldX), localCoord(worldZ));
+    return Math.max(this.dimension.minY - 1, Math.min(this.dimension.maxY, height));
+  }
+
   /** Dirty columns tracked by canonical storage (single writable truth). */
   getDirtyColumns(): ChunkColumn[] {
     return this.storage.dirtyColumns();
@@ -2023,6 +2303,7 @@ export class World implements WorldAccess {
         this.chunkManager.pipeline.queueDepth('mesh') +
         this.chunkManager.pipeline.queueDepth('upload') +
         this.retryMeshQueue.length,
+      pendingUnload: this.pendingUnloadValue,
       triangles: this.triangles,
       voxels: this.voxels,
     };
@@ -2052,7 +2333,8 @@ export class World implements WorldAccess {
         const surfaceY = Math.max(minY, Math.min(maxY, this.generator.getHeightAt(worldX, worldZ)));
         const surfaceCy = floorDiv(surfaceY, CHUNK_DIMENSIONS.height);
         const chunk = this.chunkManager.getChunk(playerChunkX + dx, surfaceCy, playerChunkZ + dz);
-        if (chunk?.generated) {
+        const hasAttachedMesh = chunk !== undefined && this.meshGroups.has(chunkKey(chunk.cx, chunk.cy, chunk.cz));
+        if (chunk?.generated && (chunk.state === ChunkState.Visible || (chunk.state === ChunkState.Meshing && hasAttachedMesh))) {
           ready++;
         }
       }
@@ -2093,6 +2375,7 @@ export class World implements WorldAccess {
   }
 
   dispose(): void {
+    for (const key of this.workerMeshBatches.keys()) this.cancelWorkerMeshBatch(key);
     this.chunkManager.forEachChunk((chunk) => this.removeMeshesForChunk(chunk));
     // Outstanding jobs fail through pool.dispose → onFailure, which cancels
     // the client's pending entries; late results resolve as stale.

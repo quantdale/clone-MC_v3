@@ -22,6 +22,7 @@ serveWorkerRequests({
         sectionX: result.sectionX,
         sectionY: result.sectionY,
         sectionZ: result.sectionZ,
+        versionSnapshot: result.versionSnapshot,
         data: packed.data,
         quadCount: packed.quadCount,
         stride: packed.stride,

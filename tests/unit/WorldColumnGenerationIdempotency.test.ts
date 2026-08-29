@@ -5,6 +5,7 @@ import { createDefaultBlockRegistry, BlockId } from '../../src/world/BlockRegist
 import { createDefaultBlockStateRegistry } from '../../src/world/BlockStateRegistry';
 import { TerrainGenerator } from '../../src/world/TerrainGenerator';
 import { OVERWORLD_DIMENSION_TYPE } from '../../src/data/DimensionTypes';
+import { ChunkStatus } from '../../src/world/ChunkStatus';
 
 /**
  * Change 253 Phase 3/8 regression gate.
@@ -64,8 +65,8 @@ function makeWorld(seed = 1337): {
   };
 }
 
-function streamToQuiescence(world: World, frames = 2000): void {
-  for (let i = 0; i < frames; i++) world.update(0.016, 0, 0);
+function streamToQuiescence(world: World, frames = 2000, chunkX = 0, chunkZ = 0): void {
+  for (let i = 0; i < frames; i++) world.update(0.016, chunkX, chunkZ);
 }
 
 describe('live column generation is performed exactly once per column', () => {
@@ -86,6 +87,34 @@ describe('live column generation is performed exactly once per column', () => {
     // The six 64-high resident projections are compatibility views only; the
     // production TerrainGenerator-backed path must never generate through them.
     expect(generateChunkCalls()).toBe(0);
+  });
+
+  it('streams true-world-Y terrain at negative chunk coordinates and preserves section boundaries', () => {
+    const { world } = makeWorld(4242);
+    streamToQuiescence(world, 2000, -2, -2);
+
+    const column = world.storage.getColumn(-2, -2);
+    expect(column).toBeDefined();
+    expect(column!.sectionCount).toBe(24);
+    expect(column!.getStatus()).toBe(ChunkStatus.Full);
+
+    const worldX = -24;
+    const worldZ = -24;
+    const belowZeroY = Array.from({ length: 64 }, (_, i) => -64 + i).find(
+      (y) => world.getBlock(worldX, y, worldZ) !== BlockId.Air,
+    );
+    expect(belowZeroY).toBeGreaterThanOrEqual(-64);
+    expect(world.getBlock(worldX, 319, worldZ)).toBe(BlockId.Air);
+    expect(world.getBlock(worldX, 320, worldZ)).toBe(BlockId.Air);
+
+    world.setBlock(-17, 15, -17, BlockId.Stone);
+    world.setBlock(-16, 16, -16, BlockId.Dirt);
+    expect(world.getBlock(-17, 15, -17)).toBe(BlockId.Stone);
+    expect(world.getBlock(-16, 16, -16)).toBe(BlockId.Dirt);
+    expect(world.storage.hasColumn(-2, -2)).toBe(true);
+    expect(world.storage.hasColumn(-1, -1)).toBe(true);
+    expect(world.storage.getColumn(-2, -2)!.getBlockState(15, 15, 15).blockId).toBe(BlockId.Stone);
+    expect(world.storage.getColumn(-1, -1)!.getBlockState(0, 16, 0).blockId).toBe(BlockId.Dirt);
   });
 
   it('does not re-generate terrain over a column restored from persistence', () => {

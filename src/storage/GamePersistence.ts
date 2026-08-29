@@ -47,7 +47,11 @@ import {
   type StorageLike,
 } from './LegacyLocalStorageMigrator';
 import type { ChunkColumn, SerializedChunkColumn } from '../world/ChunkColumn';
-import type { WorldEditDurability, WorldEditSnapshot } from '../world/World';
+import type { WorldEditDurability, WorldEditSnapshot, WorldGenerationBaseline } from '../world/World';
+import { WORLDGEN_MATRIX_VERSION } from '../worldgen/WorldgenRegressionMatrix';
+
+/** The currently executable generated-world baseline. */
+export const CURRENT_WORLDGEN_VERSION = WORLDGEN_MATRIX_VERSION;
 
 /** The game-level player snapshot the facade persists/restores (see `Game.savePlayerState`). */
 export interface GamePlayerSnapshot {
@@ -71,6 +75,10 @@ export interface GamePersistenceOpenResult {
   initialBlockEntities: SerializedBlockEntity[];
   /** Bulk-loaded wither records for this world (252 hydration; empty when none). */
   initialWithers: unknown[];
+  /** Bulk-loaded canonical columns used to restore existing terrain before streaming. */
+  initialColumns: SerializedChunkColumn[];
+  /** World generation baseline compatibility classification. */
+  generationBaseline: 'current' | 'legacy-unknown' | 'unsupported';
   /** Migration audit trail; `null` when migration was skipped (marker present or no legacy source). */
   migrationReport: LegacyMigrationReport | null;
   /** Migration + load failures, user-observable; empty on a fully clean boot. */
@@ -247,6 +255,9 @@ export class GamePersistence implements WorldEditDurability {
   private initialPlayerStateValue: GamePlayerSnapshot | null = null;
   private initialBlockEntitiesValue: SerializedBlockEntity[] = [];
   private initialWithersValue: unknown[] = [];
+  private initialColumnsValue: SerializedChunkColumn[] = [];
+  /** World generation baseline compatibility classification. */
+  private generationBaselineValue: WorldGenerationBaseline = 'current';
 
   constructor(opts: GamePersistenceOptions) {
     this.seed = opts.seed;
@@ -355,6 +366,12 @@ export class GamePersistence implements WorldEditDurability {
     let fatal = false;
     let health: StorageStatus = this.healthMonitor.status;
     let migrationReport: LegacyMigrationReport | null = null;
+    let existingWorldMetadata: WorldMetadata | null = null;
+    let initialColumns: SerializedChunkColumn[] = [];
+    let metadataReadSucceeded = false;
+    let columnsReadSucceeded = false;
+    let durableEditsReadSucceeded = false;
+    let hasDurableEdits = false;
 
     // 1. Open all six repositories.
     try {
@@ -461,7 +478,66 @@ export class GamePersistence implements WorldEditDurability {
       }
     }
 
-    // 4. Bulk-load committed state (never silent).
+    // 4. Classify the persisted generation baseline before any live world can regenerate a column.
+    if (!fatal) {
+      try {
+        existingWorldMetadata = await this.metadata.getMetadata(this.worldIdValue);
+        metadataReadSucceeded = true;
+      } catch (e) {
+        this.generationBaselineValue = 'legacy-unknown';
+        this.recordError(`world metadata read: ${errorMessage(e)}`);
+      }
+      try {
+        initialColumns = await this.chunkSections.listColumns(this.worldIdValue);
+        columnsReadSucceeded = true;
+      } catch (e) {
+        this.recordError(`load committed columns: ${errorMessage(e)}`);
+      }
+      try {
+        const records = await this.chunkEdits.listChunkEdits(this.worldIdValue);
+        hasDurableEdits = records.some((record) => record.changes.length > 0);
+        durableEditsReadSucceeded = true;
+      } catch (e) {
+        this.recordError(`load committed edits: ${errorMessage(e)}`);
+      }
+      if (!metadataReadSucceeded || !columnsReadSucceeded || !durableEditsReadSucceeded) {
+        this.generationBaselineValue = 'legacy-unknown';
+      } else if (existingWorldMetadata === null) {
+        this.generationBaselineValue =
+          initialColumns.length === 0 && !hasDurableEdits ? 'current' : 'legacy-unknown';
+      } else if (
+        existingWorldMetadata.seed !== this.seed ||
+        existingWorldMetadata.dimensionId !== 'minecraft:overworld' ||
+        existingWorldMetadata.minY !== -64 ||
+        existingWorldMetadata.height !== 384
+      ) {
+        this.generationBaselineValue = 'unsupported';
+      } else if (existingWorldMetadata.generationVersion === undefined) {
+        this.generationBaselineValue = 'legacy-unknown';
+      } else if (existingWorldMetadata.generationVersion === CURRENT_WORLDGEN_VERSION) {
+        this.generationBaselineValue = 'current';
+      } else {
+        this.generationBaselineValue = 'unsupported';
+      }
+    }
+    // A successful legacy localStorage migration is an existing world even when it had no
+    // prior IndexedDB header. Do not stamp it with the current generator by omission.
+    if (
+      existingWorldMetadata === null &&
+      migrationReport !== null &&
+      (migrationReport.importedColumns > 0 ||
+        (migrationReport.importedEditRecords ?? 0) > 0 ||
+        migrationReport.playerStateImported)
+    ) {
+      this.generationBaselineValue = 'legacy-unknown';
+    }
+    if (this.generationBaselineValue === 'unsupported') {
+      this.recordError(
+        `world generation baseline ${this.generationBaselineValue}: existing terrain will not be regenerated without an explicit compatible generator`,
+      );
+    }
+
+    // 5. Bulk-load committed state (never silent).
     let initialEdits: WorldEditSnapshot | null = null;
     let initialPlayerState: GamePlayerSnapshot | null = null;
     const initialBlockEntities: SerializedBlockEntity[] = [];
@@ -498,20 +574,27 @@ export class GamePersistence implements WorldEditDurability {
       this.initialWithersValue = initialWithers;
     }
 
-    // 5. Write/refresh the world's own metadata header (read-modify-write preserves createdAt).
+    // 6. Write/refresh the world's own metadata header (read-modify-write preserves createdAt).
+    // Existing legacy/unsupported headers are deliberately preserved: writing the current
+    // version here would falsely authorize a materially different baseline on the next boot.
     if (!fatal) {
       try {
-        const existing = await this.metadata.getMetadata(this.worldIdValue);
-        await this.metadata.putMetadata({
+        const metadata: WorldMetadata = {
           schemaVersion: 1,
           worldId: this.worldIdValue,
           seed: this.seed,
           dimensionId: 'minecraft:overworld',
           minY: -64,
           height: 384,
-          createdAt: existing?.createdAt ?? Date.now(),
-          updatedAt: existing?.updatedAt ?? Date.now(),
-        });
+          createdAt: existingWorldMetadata?.createdAt ?? Date.now(),
+          updatedAt: existingWorldMetadata?.updatedAt ?? Date.now(),
+          ...(this.generationBaselineValue === 'current'
+            ? { generationVersion: CURRENT_WORLDGEN_VERSION }
+            : existingWorldMetadata?.generationVersion === undefined
+              ? {}
+              : { generationVersion: existingWorldMetadata.generationVersion }),
+        };
+        await this.metadata.putMetadata(metadata);
       } catch (e) {
         this.recordError(`write world metadata: ${errorMessage(e)}`);
       }
@@ -536,10 +619,24 @@ export class GamePersistence implements WorldEditDurability {
     this.initialEditsValue = initialEdits;
     this.initialPlayerStateValue = initialPlayerState;
     this.initialBlockEntitiesValue = initialBlockEntities;
+    this.initialColumnsValue = initialColumns;
     // initialWithers already set above; fallback to empty if fatal
-    if (fatal) this.initialWithersValue = [];
+    if (fatal) {
+      this.initialWithersValue = [];
+      this.initialColumnsValue = [];
+    }
     this.opened = true;
-    this.lastResult = { status, initialEdits, initialPlayerState, initialBlockEntities, initialWithers: this.initialWithersValue, migrationReport, errors: [...this.errors] };
+    this.lastResult = {
+      status,
+      initialEdits,
+      initialPlayerState,
+      initialBlockEntities,
+      initialWithers: this.initialWithersValue,
+      initialColumns: this.initialColumnsValue,
+      generationBaseline: this.generationBaselineValue,
+      migrationReport,
+      errors: [...this.errors],
+    };
     return this.lastResult;
   }
 
@@ -805,6 +902,16 @@ export class GamePersistence implements WorldEditDurability {
   /** Bulk-loaded wither records (252). */
   get initialWithers(): unknown[] {
     return this.initialWithersValue;
+  }
+
+  /** Bulk-loaded persisted canonical columns for this world. */
+  get initialColumns(): SerializedChunkColumn[] {
+    return this.initialColumnsValue;
+  }
+
+  /** Baseline compatibility selected during open. */
+  get generationBaseline(): WorldGenerationBaseline {
+    return this.generationBaselineValue;
   }
 
   /** Persist wither list via raw wither data (252). */

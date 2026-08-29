@@ -101,6 +101,33 @@ describe('CanonicalWorldStorage (253 single authority facade)', () => {
     expect(restored.isDirty).toBe(false);
   });
 
+  it('loads an empty Overworld column without allocating all 24 sections', () => {
+    const restored = CanonicalWorldStorage.deserialize(
+      {
+        version: 1,
+        minSectionY: overworld.minSectionY,
+        sectionCount: overworld.sectionCount,
+        columns: [{
+          version: 1,
+          chunkX: 4,
+          chunkZ: -3,
+          sectionCount: overworld.sectionCount,
+          minSectionY: overworld.minSectionY,
+          sections: {},
+        }],
+      },
+      overworld,
+      blockRegistry,
+      stateRegistry,
+    );
+    const column = restored.getColumn(4, -3);
+    expect(column).toBeDefined();
+    expect(column!.sectionCount).toBe(24);
+    expect(column!.allocatedSectionCount()).toBe(0);
+    expect(restored.getBlock(4 * 16 + 7, 319, -3 * 16 + 7)).toBe(BlockId.Air);
+    expect(column!.allocatedSectionCount()).toBe(0);
+  });
+
   it('honors a vertical section boundary (y=15 and y=16 in adjacent sections) under one column', () => {
     const s = makeStorage();
     s.setBlock(0, 15, 0, BlockId.Stone);

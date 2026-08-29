@@ -2,14 +2,16 @@ import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
 import { World } from '../../src/world/World';
 import { createDefaultBlockRegistry, BlockId } from '../../src/world/BlockRegistry';
-import { Chunk } from '../../src/world/Chunk';
+import { Chunk, ChunkState } from '../../src/world/Chunk';
 import { CONFIG } from '../../src/config';
+import { OVERWORLD_DIMENSION_TYPE } from '../../src/data/DimensionTypes';
+import type { DimensionType } from '../../src/data/DimensionType';
 
 /**
  * Build a World with a stub mesher/generator so we can exercise its dirty-state
  * and edit-overlay logic without a full renderer.
  */
-function makeWorld(seed = 1): World {
+function makeWorld(seed = 1, dimension?: DimensionType): World {
   const registry = createDefaultBlockRegistry();
   const scene = new THREE.Scene();
   const materials = {
@@ -37,6 +39,7 @@ function makeWorld(seed = 1): World {
     generator: generator as never,
     materials,
     renderDistance: 2,
+    dimension,
   });
 }
 
@@ -95,6 +98,32 @@ describe('world dirty propagation and edits', () => {
   it('getBlock returns air for unloaded chunks', () => {
     const world = makeWorld();
     expect(world.getBlock(0, 0, 0)).toBe(BlockId.Air);
+  });
+
+  it('uses a non-allocating generator fallback for absent surface columns', () => {
+    const world = makeWorld();
+    expect(world.getStats().residentColumns).toBe(0);
+    expect(world.getMotionBlockingHeight(8, 8)).toBe(CONFIG.seaLevel + 1);
+    expect(world.getStats().residentColumns).toBe(0);
+  });
+
+  it('uses the canonical motion-blocking heightmap when a column exists', () => {
+    const world = makeWorld();
+    world.setBlock(8, 10, 8, BlockId.Stone);
+    world.setBlock(8, 25, 8, BlockId.Water);
+
+    // Water is a surface block but not motion-blocking; the canonical heightmap
+    // must win over the generator fallback once the column exists.
+    expect(world.getMotionBlockingHeight(8, 8)).toBe(10);
+    world.setBlock(8, 10, 8, BlockId.Air);
+    expect(world.getMotionBlockingHeight(8, 8)).toBe(-65);
+  });
+
+  it('clamps canonical surface queries to the active dimension bounds', () => {
+    const world = makeWorld(1, OVERWORLD_DIMENSION_TYPE);
+    world.setBlock(8, 319, 8, BlockId.Stone);
+    world.setBlock(8, 320, 8, BlockId.Stone);
+    expect(world.getMotionBlockingHeight(8, 8)).toBe(319);
   });
 
   it('queues preload work instead of generating synchronously', () => {
@@ -192,6 +221,48 @@ describe('world dirty propagation and edits', () => {
     expect(world.isReady()).toBe(true);
   });
 
+  it('readiness excludes a generated surface slab until it is visible', () => {
+    const world = makeWorld();
+    for (let i = 0; i < 60; i++) {
+      world.update(0.016, 0, 0);
+    }
+    expect(world.isReady()).toBe(true);
+
+    const manager = (world as unknown as {
+      getChunk: never;
+      chunkManager: { getChunk: (cx: number, cy: number, cz: number) => Chunk | undefined };
+    }).chunkManager;
+    const surface = manager.getChunk(0, 0, 0);
+    expect(surface?.state).toBe(ChunkState.Visible);
+    surface!.state = ChunkState.Generated;
+    expect(world.getReadyProgress(0, 0)).toBeLessThan(1);
+    surface!.state = ChunkState.Visible;
+    expect(world.getReadyProgress(0, 0)).toBe(1);
+  });
+
+  it('reports and drains the bounded unload backlog after a far teleport', () => {
+    const world = makeWorld();
+    for (let i = 0; i < 120; i++) {
+      world.update(0.016, 0, 0);
+    }
+    expect(world.getStats().residentColumns).toBe(25);
+    expect(world.getStats().pendingUnload).toBe(0);
+
+    world.update(0.016, 100, 100);
+    const firstPending = world.getStats().pendingUnload;
+    expect(firstPending).toBeGreaterThan(0);
+    expect(firstPending).toBeGreaterThanOrEqual(25 - CONFIG.budgets.unloadPerFrame);
+
+    let previous = firstPending;
+    for (let i = 0; i < 20 && world.getStats().pendingUnload > 0; i++) {
+      world.update(0.016, 100, 100);
+      const pending = world.getStats().pendingUnload;
+      expect(pending).toBeLessThanOrEqual(previous);
+      previous = pending;
+    }
+    expect(world.getStats().pendingUnload).toBe(0);
+  });
+
   it('keeps generation queue bounded', () => {
     const world = makeWorld();
     world.update(0.016, 0, 0);
@@ -233,6 +304,41 @@ describe('world dirty propagation and edits', () => {
       edits: [{ chunk: [0, 0, 0], changes: [[999999, BlockId.Stone], [0, 999]] }],
     })).toBe(0);
     expect(world.getEditCount()).toBe(0);
+  });
+
+  it('does not invoke a compatibility generator for a protected legacy baseline', () => {
+    let generatedChunks = 0;
+    const registry = createDefaultBlockRegistry();
+    const scene = new THREE.Scene();
+    const materials = {
+      opaque: new THREE.MeshLambertMaterial(),
+      transparent: new THREE.MeshLambertMaterial(),
+    };
+    const generator = {
+      generateChunk(chunk: Chunk): void {
+        generatedChunks++;
+        chunk.fill(BlockId.Stone);
+      },
+      getHeightAt(): number {
+        return CONFIG.seaLevel + 1;
+      },
+    };
+    const world = new World({
+      registry,
+      seed: 11,
+      scene,
+      mesher: { mesh: () => ({ opaque: null, transparent: null }) } as never,
+      generator: generator as never,
+      materials,
+      renderDistance: 0,
+    });
+
+    world.setGenerationBaseline('legacy-unknown');
+    world.preloadChunks(0, 0, 0);
+    world.update(0.016, 0, 0);
+
+    expect(generatedChunks).toBe(0);
+    expect(world.getBlock(8, 8, 8)).toBe(BlockId.Air);
   });
 });
 

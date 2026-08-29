@@ -11,7 +11,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2550,
+  "total": 2553,
   "pending": 0,
   "unclassified": 0,
   "rows": [
@@ -38769,8 +38769,14 @@
       "runtimeReachability": "test-only",
       "imports": [],
       "importedBy": [],
-      "testEvidence": ["ChunkManager horizontal column residency: 3 tests"],
-      "riskAreas": ["residency", "eviction", "lifecycle"],
+      "testEvidence": [
+        "ChunkManager horizontal column residency: 3 tests"
+      ],
+      "riskAreas": [
+        "residency",
+        "eviction",
+        "lifecycle"
+      ],
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Change 253 Phase 2 coverage. Verifies one horizontal column owns multiple lazy vertical projections, column enumeration snapshots, and pruning only after the final slab leaves.",
@@ -38785,8 +38791,14 @@
       "runtimeReachability": "test-only",
       "imports": [],
       "importedBy": [],
-      "testEvidence": ["measure: median of 3 streaming profiles"],
-      "riskAreas": ["performance", "streaming", "resource-bounds"],
+      "testEvidence": [
+        "measure: median of 3 streaming profiles"
+      ],
+      "riskAreas": [
+        "performance",
+        "streaming",
+        "resource-bounds"
+      ],
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Change 253 performance evidence harness. Runs three bounded streaming profiles and reports median generation, frame, and residency measurements; it is not production runtime code.",
@@ -38801,8 +38813,14 @@
       "runtimeReachability": "test-only",
       "imports": [],
       "importedBy": [],
-      "testEvidence": ["real mesher resource probe: first 20 production-mesher frames"],
-      "riskAreas": ["performance", "meshing", "resource-bounds"],
+      "testEvidence": [
+        "real mesher resource probe: first 20 production-mesher frames"
+      ],
+      "riskAreas": [
+        "performance",
+        "meshing",
+        "resource-bounds"
+      ],
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Change 253 measurement-only probe. Instantiates the production ChunkMesher and TerrainGenerator in a headless Three.js scene, reports bounded frame cost/readiness/queue/geometry counters, and does not participate in shipped runtime behavior.",
@@ -41856,6 +41874,79 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Tracked auxiliary file; presence/format checked, no runtime role.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/253-live-world-architecture-convergence/inventory/render-light-worker-ownership.json",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Machine-readable ownership inventory for canonical section render, light, and worker protocols.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "test-and-documentation",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "tests/unit/RenderLightWorkerOwnership.test.ts"
+      ],
+      "riskAreas": [
+        "stale-result ownership",
+        "section identity"
+      ],
+      "findingIds": [],
+      "disposition": "TEST_ONLY",
+      "reviewNotes": "Reviewed with Change 253 task 77; records ownership keys and lifecycle dispositions without production authority.",
+      "status": "audited"
+    },
+    {
+      "path": "src/world/SectionVersionSnapshot.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Captures and validates canonical mesh/light versions for target sections and face-sharing neighbors.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "live-world-meshing-and-worker-transport",
+      "imports": [],
+      "importedBy": [
+        "src/world/World.ts",
+        "src/world/ChunkMesher.ts",
+        "src/rendering/WorkerMeshing.ts"
+      ],
+      "testEvidence": [
+        "tests/unit/RenderLightWorkerOwnership.test.ts",
+        "tests/unit/WorkerMeshing.test.ts"
+      ],
+      "riskAreas": [
+        "stale-result rejection",
+        "negative section coordinates",
+        "light-version races"
+      ],
+      "findingIds": [],
+      "disposition": "MIGRATE",
+      "reviewNotes": "Reviewed for non-materializing lookup, structured-clone validation, equality, and currentness checks used by task 77.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/RenderLightWorkerOwnership.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Regression coverage for canonical render/light ownership and worker stale-result races.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unit-test-only",
+      "imports": [
+        "src/world/SectionVersionSnapshot.ts",
+        "src/rendering/WorkerMeshing.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "focused task 77 suite: 5 files, 70 tests"
+      ],
+      "riskAreas": [
+        "duplicate callbacks",
+        "snapshot mismatch",
+        "stale token disposal"
+      ],
+      "findingIds": [],
+      "disposition": "TEST_ONLY",
+      "reviewNotes": "Focused task 77 regression suite; verifies exact-once rejection, snapshot currentness, and detached compatibility behavior.",
       "status": "audited"
     }
   ]

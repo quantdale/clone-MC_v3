@@ -1,4 +1,5 @@
 import type * as THREE from 'three';
+import type { SectionVersionSnapshot } from './SectionVersionSnapshot';
 import type { AOLevel, OpaqueFaceQuad, VertexLight } from '../rendering/GreedyMesher';
 
 /**
@@ -436,6 +437,8 @@ export interface ChunkMeshResult {
   translucent: THREE.BufferGeometry | null;
   /** Fluid surface stream geometry. */
   fluid: THREE.BufferGeometry | null;
+  /** The canonical mesh/light versions captured when this build was submitted. */
+  versionSnapshot?: SectionVersionSnapshot;
   /** The canonical four-stream typed build the geometries were derived from. */
   streams: MeshBuildResult;
 }
@@ -460,6 +463,8 @@ export interface WorldStats {
   pendingSave: number;
   pendingGeneration: number;
   pendingMesh: number;
+  /** Resident slab projections still awaiting budgeted out-of-radius unload. */
+  pendingUnload: number;
   triangles: number;
   voxels: number;
 }

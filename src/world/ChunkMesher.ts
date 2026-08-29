@@ -19,6 +19,7 @@ import {
   type MeshBuildResult,
   type MeshStreamData,
 } from './MeshingTypes';
+import type { SectionVersionSnapshot } from './SectionVersionSnapshot';
 
 /**
  * A single cube face: its outward direction (used to look up the neighbor),
@@ -71,6 +72,8 @@ function faceAxis(face: Face): 0 | 1 | 2 {
  */
 export interface ChunkMeshOptions {
   inputVersion?: number;
+  /** Canonical target/neighbor mesh and light versions captured at submission. */
+  versionSnapshot?: SectionVersionSnapshot;
   renderLayerOf?(id: number): MeshStreamName;
   lightSampler?: LightSampler;
   tintRgbOf?(id: number): [number, number, number];
@@ -223,6 +226,7 @@ export class ChunkMesher {
       cutout: buildGeometry(streams.streams.cutout),
       translucent,
       fluid: buildGeometry(streams.streams.fluid),
+      versionSnapshot: options?.versionSnapshot,
       streams,
     };
   }
@@ -293,6 +297,7 @@ export class ChunkMesher {
         cutout: null,
         translucent: null,
         fluid: null,
+        versionSnapshot: options?.versionSnapshot,
         streams: emptyMeshBuildResult(inputVersion),
       };
     }
@@ -399,6 +404,7 @@ export class ChunkMesher {
       cutout: buildGeometry(streams.streams.cutout),
       translucent,
       fluid: buildGeometry(streams.streams.fluid),
+      versionSnapshot: options?.versionSnapshot,
       streams,
     };
   }

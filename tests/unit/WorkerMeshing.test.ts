@@ -463,6 +463,12 @@ class FakePool {
     onFailure: () => void;
   }> = [];
   throwOnSubmit = false;
+  cancelled: string[] = [];
+
+  cancel(jobId: string): boolean {
+    this.cancelled.push(jobId);
+    return true;
+  }
 
   submit(opts: {
     kind: string;
