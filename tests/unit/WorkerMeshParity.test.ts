@@ -17,6 +17,13 @@ import {
   type MeshStreamName,
 } from '../../src/world/MeshingTypes';
 import { validateMeshSectionResult } from '../../src/rendering/WorkerMeshing';
+import { ChunkMesher } from '../../src/world/ChunkMesher';
+import { ChunkSection } from '../../src/world/ChunkSection';
+import { BlockId, createDefaultBlockRegistry } from '../../src/world/BlockRegistry';
+import { createDefaultBlockStateRegistry } from '../../src/world/BlockStateRegistry';
+import { tileUV, type TextureAtlas } from '../../src/rendering/TextureAtlas';
+import { meshFluidSurface } from '../../src/rendering/FluidSurfaceMesher';
+import { createFluidState } from '../../src/world/FluidState';
 
 
 
@@ -77,7 +84,142 @@ function makeInfo(capture?: Capture): PackedMeshExpandInfo {
   };
 }
 
-/** Path A: direct emission of the same quads through the shared emitter conventions. */
+const REFERENCE_REGISTRY = createDefaultBlockRegistry();
+const REFERENCE_STATE_REGISTRY = createDefaultBlockStateRegistry();
+const REFERENCE_ATLAS = { uv: (tile: number) => tileUV(tile) } as unknown as TextureAtlas;
+const FACE_NAMES: readonly OpaqueFaceQuad['face'][] = ['up', 'down', 'north', 'south', 'east', 'west'];
+
+function referenceUvFor(blockId: number, faceIndex: number): { u0: number; v0: number; u1: number; v1: number } {
+  const def = REFERENCE_REGISTRY.get(blockId);
+  const face = FACE_NAMES[Math.min(FACE_NAMES.length - 1, Math.max(0, Math.round(faceIndex)))]!;
+  const tile = face === 'up' ? def.topTile : face === 'down' ? def.bottomTile : def.sideTile;
+  return REFERENCE_ATLAS.uv(tile);
+}
+
+function referenceLayerOf(blockId: number): MeshStreamName {
+  if (blockId === BlockId.Leaves) return 'cutout';
+  if (blockId === BlockId.Glass) return 'translucent';
+  if (blockId === BlockId.Water) return 'fluid';
+  return 'opaque';
+}
+
+function referenceLayerTable(): number[] {
+  const layers = new Array(64).fill(0);
+  layers[BlockId.Leaves] = 1;
+  layers[BlockId.Glass] = 2;
+  layers[BlockId.Water] = 3;
+  return layers;
+}
+
+function referenceLightSampler(payload: MeshSectionRequestPayload) {
+  return {
+    inBounds: (x: number, y: number, z: number) => x >= 0 && x < 16 && y >= 0 && y < 16 && z >= 0 && z < 16,
+    isOpaque: (x: number, y: number, z: number) => {
+      if (x < 0 || x >= 16 || y < 0 || y >= 16 || z < 0 || z >= 16) return false;
+      return payload.opaqueIds.includes(payload.cells[x + y * 16 + z * 256] ?? -1);
+    },
+    getSkyLight: (x: number, y: number, z: number) =>
+      x >= 0 && x < 16 && y >= 0 && y < 16 && z >= 0 && z < 16 ? payload.skyLight[x + y * 16 + z * 256]! : 0,
+    getBlockLight: (x: number, y: number, z: number) =>
+      x >= 0 && x < 16 && y >= 0 && y < 16 && z >= 0 && z < 16 ? payload.blockLight[x + y * 16 + z * 256]! : 0,
+  };
+}
+
+function referenceTintRgb(payload: MeshSectionRequestPayload, blockId: number): [number, number, number] {
+  const first = payload.cells.findIndex((id) => id === blockId);
+  return packedTintRgb(first >= 0 ? payload.tintClasses?.[first] ?? 0 : 0);
+}
+
+function streamsFromQuads(
+  quads: readonly OpaqueFaceQuad[],
+  layerOf: (blockId: number) => MeshStreamName,
+  uvOf: (blockId: number, faceIndex: number) => { u0: number; v0: number; u1: number; v1: number },
+): Record<MeshStreamName, MeshStreamData> {
+  const builder = new MeshBuildResultBuilder();
+  for (const quad of quads) {
+    const sb = builder.builder(layerOf(quad.blockId));
+    const { corners, normal, faceIndex } = packedQuadGeometryInputs(quad);
+    const uv = uvOf(quad.blockId, faceIndex);
+    const cornerUv: ReadonlyArray<readonly [number, number]> = [
+      [uv.u0, uv.v0], [uv.u1, uv.v0], [uv.u1, uv.v1], [uv.u0, uv.v1],
+    ];
+    for (let c = 0; c < 4; c++) {
+      const [x, y, z] = corners[c]!;
+      const light = quad.vertexLights[c]!;
+      sb.pushVertex(x, y, z, normal[0], normal[1], normal[2], cornerUv[c]![0], cornerUv[c]![1],
+        light.sky, light.block, quad.vertexAO[c]!, ...packedTintRgb(quad.tintClass ?? 0));
+    }
+    sb.pushQuadIndices(sb.vertexCount - 1);
+  }
+  return builder.build(quads.length).streams;
+}
+
+function realRegistryPayload(): MeshSectionRequestPayload {
+  const fluidLevels = new Array<number>(4096).fill(-1);
+  const tintClasses = new Array<number>(4096).fill(0);
+  const payload: MeshSectionRequestPayload = {
+    sectionX: 0,
+    sectionY: 0,
+    sectionZ: 0,
+    cells: new Array(4096).fill(null),
+    opaqueIds: [BlockId.Stone],
+    layerById: referenceLayerTable(),
+    fluidLevels,
+    tintClasses,
+    skyLight: new Array(4096).fill(15),
+    blockLight: new Array(4096).fill(0),
+  };
+  payload.cells[0] = BlockId.Stone;
+  payload.cells[4] = BlockId.Leaves;
+  payload.cells[8] = BlockId.Glass;
+  payload.cells[18] = BlockId.Water;
+  fluidLevels[18] = 0;
+  tintClasses[4] = 0x5aa85a;
+  tintClasses[18] = 0x3f76e4;
+  payload.translucentSortOrigin = [0, 0, 0];
+  return payload;
+}
+
+function referenceStreams(payload: MeshSectionRequestPayload): Record<MeshStreamName, MeshStreamData> {
+  const section = new ChunkSection(0, REFERENCE_STATE_REGISTRY);
+  for (let i = 0; i < payload.cells.length; i++) {
+    const id = payload.cells[i];
+    if (id !== null && id !== undefined && id !== BlockId.Air) {
+      section.set(i, REFERENCE_STATE_REGISTRY.getDefaultState(id));
+    }
+  }
+  const mesher = new ChunkMesher({ registry: REFERENCE_REGISTRY, atlas: REFERENCE_ATLAS });
+  const result = mesher.meshSection(0, 0, 0, section, () => REFERENCE_STATE_REGISTRY.getDefaultState(BlockId.Air), {
+    renderLayerOf: referenceLayerOf,
+    lightSampler: referenceLightSampler(payload),
+    tintRgbOf: (id) => referenceTintRgb(payload, id),
+  });
+  const streams = { ...result.streams.streams };
+  const fluidWorld = {
+    getFluidState: (x: number, y: number, z: number) => {
+      if (x < 0 || x >= 16 || y < 0 || y >= 16 || z < 0 || z >= 16) return null;
+      const index = x + y * 16 + z * 256;
+      const id = payload.cells[index];
+      const level = payload.fluidLevels?.[index] ?? -1;
+      return id === BlockId.Water && level >= 0 ? createFluidState(BlockId.Water, level) : null;
+    },
+  };
+  const fluidQuads: OpaqueFaceQuad[] = [];
+  for (let i = 0; i < payload.cells.length; i++) {
+    if (payload.cells[i] !== BlockId.Water) continue;
+    const x = i & 15;
+    const y = (i >> 4) & 15;
+    const z = i >> 8;
+    fluidQuads.push(...meshFluidSurface(fluidWorld, BlockId.Water, referenceLightSampler(payload), x, y, z));
+  }
+  streams.fluid = streamsFromQuads(fluidQuads.map((quad) => ({
+    ...quad,
+    tintClass: payload.tintClasses?.[18] ?? 0,
+  })), () => 'fluid', referenceUvFor).fluid;
+  return streams;
+}
+
+
 function directStreams(quads: ReturnType<typeof processMeshSectionRequest>['quads']): Record<MeshStreamName, MeshStreamData> {
   const builder = new MeshBuildResultBuilder();
   for (const quad of quads) {
@@ -88,8 +230,8 @@ function directStreams(quads: ReturnType<typeof processMeshSectionRequest>['quad
     const cornerUv: ReadonlyArray<readonly [number, number]> = [
       [uv.u0, uv.v0],
       [uv.u1, uv.v0],
-      [uv.u0, uv.v1],
       [uv.u1, uv.v1],
+      [uv.u0, uv.v1],
     ];
     for (let c = 0; c < 4; c++) {
       const [x, y, z] = corners[c]!;
@@ -116,11 +258,60 @@ function expectStreamsEqual(a: Record<MeshStreamName, MeshStreamData>, b: Record
     expect(Array.from(a[name]!.skyLight), `${name} skyLight`).toEqual(Array.from(b[name]!.skyLight));
     expect(Array.from(a[name]!.blockLight), `${name} blockLight`).toEqual(Array.from(b[name]!.blockLight));
     expect(Array.from(a[name]!.ao), `${name} ao`).toEqual(Array.from(b[name]!.ao));
+    expect(Array.from(a[name]!.tint), `${name} tint`).toEqual(Array.from(b[name]!.tint));
     expect(Array.from(a[name]!.indices), `${name} indices`).toEqual(Array.from(b[name]!.indices));
   }
 }
 
+function quadSignatures(stream: MeshStreamData): string[] {
+  const signatures: string[] = [];
+  for (let vertex = 0; vertex < stream.vertexCount; vertex += 4) {
+    signatures.push(JSON.stringify({
+      positions: Array.from(stream.positions.slice(vertex * 3, (vertex + 4) * 3)),
+      normals: Array.from(stream.normals.slice(vertex * 3, (vertex + 4) * 3)),
+      uvs: Array.from(stream.uvs.slice(vertex * 2, (vertex + 4) * 2)),
+      skyLight: Array.from(stream.skyLight.slice(vertex, vertex + 4)),
+      blockLight: Array.from(stream.blockLight.slice(vertex, vertex + 4)),
+      ao: Array.from(stream.ao.slice(vertex, vertex + 4)),
+      tint: Array.from(stream.tint.slice(vertex * 3, (vertex + 4) * 3)),
+    }));
+  }
+  return signatures.sort();
+}
+
+function expectCanonicalStreamsEqual(
+  reference: Record<MeshStreamName, MeshStreamData>,
+  worker: Record<MeshStreamName, MeshStreamData>,
+): void {
+  for (const name of MESH_STREAM_NAMES) {
+    expect(quadSignatures(worker[name]!), `${name} canonical quads`).toEqual(quadSignatures(reference[name]!));
+  }
+}
+
 describe('worker packed-mesh path parity (P10)', () => {
+  it('matches the synchronous reference mesher for real mixed render layers', () => {
+    const payload = realRegistryPayload();
+    const workerQuads = processMeshSectionRequest(payload).quads;
+    const capture: Capture = { byName: {} };
+    expandPackedMeshResult(packQuadsToTypedArrays(workerQuads), {
+      uvFor: referenceUvFor,
+      renderLayerOf: referenceLayerOf,
+      buildGeometry: (stream, name) => {
+        capture.byName[name] = stream;
+        return null;
+      },
+    });
+    const workerStreams = {} as Record<MeshStreamName, MeshStreamData>;
+    for (const name of MESH_STREAM_NAMES) workerStreams[name] = capture.byName[name] ?? emptyMeshStream();
+    expectCanonicalStreamsEqual(referenceStreams(payload), workerStreams);
+    expect(workerQuads.map((quad) => quad.renderStream)).toEqual([
+      ...workerQuads.filter((quad) => quad.renderStream === 'opaque').map(() => 'opaque'),
+      ...workerQuads.filter((quad) => quad.renderStream === 'cutout').map(() => 'cutout'),
+      ...workerQuads.filter((quad) => quad.renderStream === 'translucent').map(() => 'translucent'),
+      ...workerQuads.filter((quad) => quad.renderStream === 'fluid').map(() => 'fluid'),
+    ]);
+  });
+
   it('packed expansion equals direct shared-emitter output per stream', () => {
     for (const payload of [emptyPayload(), multiStreamPayload()]) {
       const quads = processMeshSectionRequest(payload).quads;
@@ -174,6 +365,42 @@ describe('worker packed-mesh path parity (P10)', () => {
       validateMeshSectionResult({ ...envelope, quadCount: packed.quadCount + 1 }),
     ).toThrow();
     expect(() => validateMeshSectionResult({ ...envelope, stride: 21 })).toThrow();
+  });
+
+  it('packed stream identity overrides registry fallback and is strictly validated', () => {
+    const cornerLight = { sky: 15, block: 0 };
+    const quad: OpaqueFaceQuad = {
+      x: 0,
+      y: 0,
+      z: 0,
+      width: 1,
+      height: 1,
+      blockId: 1,
+      face: 'up',
+      vertexLights: [cornerLight, cornerLight, cornerLight, cornerLight],
+      vertexAO: [3, 3, 3, 3],
+      renderStream: 'fluid',
+    };
+    const packed = packQuadsToTypedArrays([quad]);
+    expect(packed.streamNames).toEqual(['fluid']);
+    const capture: Capture = { byName: {} };
+    expandPackedMeshResult(packed, makeInfo(capture));
+    expect(capture.byName.fluid?.vertexCount).toBe(4);
+    expect(capture.byName.fluid?.indexCount).toBe(6);
+    expect(capture.byName.opaque).toBeUndefined();
+
+    const envelope = {
+      sectionX: 0,
+      sectionY: 0,
+      sectionZ: 0,
+      data: packed.data,
+      quadCount: packed.quadCount,
+      stride: packed.stride,
+      streamNames: packed.streamNames,
+    };
+    expect(validateMeshSectionResult(structuredClone(envelope)).packed?.streamNames).toEqual(['fluid']);
+    expect(() => validateMeshSectionResult({ ...envelope, streamNames: ['not-a-stream'] })).toThrow(/streamNames/);
+    expect(() => validateMeshSectionResult({ ...envelope, streamNames: [] })).toThrow(/streamNames/);
   });
 
   it('non-zero tintClass decodes identically on packed and direct paths', () => {

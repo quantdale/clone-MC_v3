@@ -23,17 +23,18 @@
 > reserved Change 253 workstream A. Change
 > 253-live-world-architecture-convergence remains PLANNED/reserved, untouched.
 
-> **254-whole-codebase-performance-optimization — ACTIVE (2026-08-26, session start `d258414`).**
-> Explicit owner instruction (session message of 2026-08-26) authorized a repository-wide
-> performance-optimization campaign, activating post-terminal change 254 ahead of the planned
-> but not-yet-activated convergence campaign (reserved as 253 by the dual-252 override).
-> Scope: behavior-preserving elimination of allocation churn and redundant computation on the
-> live engine's hottest paths (World voxel access + revision-guarded chunk memo,
-> WorldLightStorage numeric section caching, alloc-free section indexing,
-> RandomTickSelector fixed-arity hashing with golden equivalence, registry-derived random-tick
-> eligibility table, single-lookup physics shape adapter, HUD change-detected DOM writes),
-> plus a durable vitest bench hot-path suite. Numbering/ordering rationale recorded in
-> `CHANGE_SEQUENCE_OVERRIDES.md`. No 253 work is performed; 001–252 history untouched.
+> **255-high-performance-voxel-engine — ACTIVE (2026-08-29, session start `93dbb092`).**
+> Owner-authorized post-253 scalability campaign activated only after Changes 253 and 254 were
+> VERIFIED. The complete OpenSpec package is present at
+> `openspec/changes/255-high-performance-voxel-engine/`; tasks 1-5 are complete (5/37,
+> 13.51%). Task 5 adds immutable content-derived worker registry tables, versioned initialization
+> validation, table-backed requests without per-request registry reconstruction, and respawn coverage.
+> Next exact action: task 6 typed transferable buffers and ownership validation; no advancement exception applies.
+
+> **254-whole-codebase-performance-optimization — VERIFIED (2026-08-26, session start `d258414`).**
+> Owner-authorized repository-wide performance campaign completed with behavior-preserving
+> hot-path optimizations and durable benchmark evidence. It is the last completed change before
+> 255 activation; its verification package remains the baseline authority.
 
 > **252-wither-secondary-boss — VERIFIED and ARCHIVED as `2026-08-25-252-wither-secondary-boss` (2026-08-25, session start `254d259`).** The Wither-like secondary boss (master-plan §19.4, MP-19.4-1) is implemented, live-integrated, and certified: player-driven T-summon (soul sand/soil + 3 skulls, both orientations, localized bounded detection, structure consumption, duplicate rejection) through `WitherSummon.ts`; 220-tick invulnerable charge with exactly-once strength-7 spawn explosion via the verified 169 ExplosionCore; three-head combat (central + independent side-head targeting, deterministic id-sorted bounded scans, undead exclusion, kill-heal) in `WitherBoss.ts` over the 153 BossFramework; normal/blue skull projectiles over 142 ProjectileCore (lifetime 120, owner immunity, global cap 12) applying difficulty-scaled wither effect (014/121 registries extended; periodic 1 HP/2 s BYPASS_ARMOR damage type); armored phase at ≤150 HP with projectile immunity and heal-back phase restoration; exactly-one Nether-Star reward through ItemEntityManager + 50 XP; versioned v1 persistence via GamePersistence raw metadata records with hydrate/degrade; state-driven rendering (per-head yaws, armored recolor, skull meshes, charge-scaled boss bar) that leaves all 245 visual goldens untouched. New content: soul_soil/wither_skull blocks (60–61), soul_soil/wither_skull/wither_skeleton_skull/nether_star items (60–63), wither+wither_skull entity types, wither status-effect + damage types. 35 new tests (WitherBoss 17, WitherSummon 10, WitherSkull 7, WitherProductionPath E2E composition 1). Full gate: typecheck/lint PASS, unit 4318+1skip PASS (334 files), build PASS (171 modules), e2e 48/48 PASS incl. visual regression. Archived with spec synced; `PARITY_MATRIX.md` MP-19.4-1 now `exact`. Program COMPLETE (001–252 VERIFIED).
 
@@ -72,13 +73,13 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **253-live-world-architecture-convergence — VERIFIED and ARCHIVED (2026-08-29)**
-- Next change: **null (program terminal; no successor planned)**
-- 240 advancement allowed: **yes**
+- Active implementation change: **255-high-performance-voxel-engine — ACTIVE (2026-08-29)**
+- Next change: **null (255 is the sole active post-terminal change; no later change may begin)**
+- 240 advancement allowed: **no (active change not yet verified)**
 
-- Program: **COMPLETE — Change 253 is VERIFIED and archived; changes 001–253 and 254 are VERIFIED with zero DEFERRED or UNCLASSIFIED numbered changes**
-- Last completed change: **253-live-world-architecture-convergence — VERIFIED and ARCHIVED (2026-08-29)**
-- All changes 001–253, 254: **VERIFIED** — Change 253 has 138/138 tasks complete; canonical capability spec is synced.
+- Program: **ACTIVE — Change 255 is in progress; Changes 253 and 254 remain VERIFIED and 255 has 5/37 tasks complete (13.51%)**
+- Last completed change: **254-whole-codebase-performance-optimization — VERIFIED**
+- All changes 001–254: **VERIFIED** — Change 255 is ACTIVE with its complete OpenSpec package and tasks 1–5 complete.
 - Historical Change 250-era bullets (preserved; superseded **for current release authority** by `openspec/evidence/release-readiness-post-hardening.md`): 250 required-test gate PASS at head `502d021` / byte-identical tree `b56529e`; historical release-readiness READY RC-1..RC-9 (`openspec/evidence/release-readiness.md`); final parity audit PASS with DL dispositions later rejected by this interlock (`openspec/evidence/parity/final-parity-audit.md`); evidence archive complete (`openspec/evidence/`)
 - Post-250 hardening interlock: **VERIFIED at remediation checkpoint `aa92a5c229a753f10f8c1677e836136962b5d07a` — canonical CI run 32589457819 SUCCESS (gate job 97078975848, e2e job 97078975868); tasks 78/78; release decision READY (`openspec/evidence/release-readiness-post-hardening.md`)**
 - Certification campaign: **openspec/hardening/2026-08-23-exhaustive-repository-certification — findings fixed with oracles; manifest reviewed; risk register R-1..R-9 accepted debt**
@@ -86,7 +87,7 @@
 - Publication history: **current terminal publication and exact candidate/archive handoff are recorded in `PROGRAM_STATE.json` `publicationHistory`.**
 - Section milestone: **PROGRAM COMPLETE — every numbered change 001–253 and owner-authorized 254 is VERIFIED; Change 253 converged live world architecture onto canonical dimension-aware storage and is archived with its capability spec synced.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ring with no queued generation job; scan order is now cached nearest-first by Chebyshev distance. Boot in software-WebGL Chromium at `renderDistance` 6: never clears -> ~28s, spawn-ring progress monotonic. D1 is also the mechanism behind the canonical CI `e2e` run recorded CANCELLED (hung >60m) in `3cc55a5` — `tests/e2e/visual-regression.spec.ts` injects `renderDistance` 2/4 through the `__voxelQualityProfile` seam, bypassing the headless override, and was the one spec that saturated. Regression gate `tests/unit/WorldStreamingSaturation.test.ts` (3 PASS, teeth verified by reverting each fix in isolation); 346/346 unit files / 4379 tests PASS; typecheck/lint/build/validate-state/validate-file-audit PASS. Details in `openspec/changes/253-live-world-architecture-convergence/design.md` and `verification.md`.
-- Next exact action: **No further Change-253 action is required; the archived verification and terminal state are the authoritative release handoff.**
+- Next exact action: **Begin Change-255 task 6: replace hot-path nested JS arrays with validated typed buffers and transferable ownership; test detached/duplicate ownership behavior.**
 
 ## What 250 implemented
 

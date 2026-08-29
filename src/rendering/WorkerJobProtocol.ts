@@ -61,6 +61,40 @@ export interface WorkerResult {
   error?: string;
 }
 
+/** One-time worker initialization message (main -> worker). */
+export interface WorkerInitializationMessage {
+  protocolVersion: 2;
+  type: 'initialize';
+  kind: WorkerJobKind;
+  payload: unknown;
+}
+
+/** Validate a one-time worker initialization envelope before dispatching its payload. */
+export function validateWorkerInitializationMessage(input: unknown): WorkerInitializationMessage {
+  if (typeof input !== 'object' || input === null) {
+    throw new Error('WorkerInitializationMessage: expected an object');
+  }
+  const r = input as Record<string, unknown>;
+  if (r.protocolVersion !== WORKER_PROTOCOL_VERSION) {
+    throw new Error(`WorkerInitializationMessage: unsupported protocol version ${String(r.protocolVersion)}`);
+  }
+  if (r.type !== 'initialize') {
+    throw new Error('WorkerInitializationMessage: type must be initialize');
+  }
+  if (typeof r.kind !== 'string' || !JOB_KINDS.has(r.kind)) {
+    throw new Error(`WorkerInitializationMessage: kind must be one of ${[...JOB_KINDS].join(', ')}`);
+  }
+  if (r.payload === undefined) {
+    throw new Error('WorkerInitializationMessage: payload is required');
+  }
+  return {
+    protocolVersion: WORKER_PROTOCOL_VERSION,
+    type: 'initialize',
+    kind: r.kind as WorkerJobKind,
+    payload: r.payload,
+  };
+}
+
 /** Advisory cancel message (main -> worker). Workers may ignore it; staleness is enforced on return. */
 export interface WorkerCancelMessage {
   protocolVersion: 2;
@@ -202,11 +236,23 @@ export interface WorkerMessageScope {
 export function serveWorkerRequests(
   handlers: Partial<Record<WorkerJobKind, (payload: unknown) => { payload: unknown; transfer?: ArrayBuffer[] }>>,
   scope: WorkerMessageScope = self as unknown as WorkerMessageScope,
+  options: {
+    onInitialize?: (kind: WorkerJobKind, payload: unknown) => void;
+  } = {},
 ): void {
   scope.onmessage = (event: { data: unknown }) => {
+    if (isWorkerCancelMessage(event.data)) return; // advisory only
+    if (typeof event.data === 'object' && event.data !== null && (event.data as Record<string, unknown>).type === 'initialize') {
+      try {
+        const initialization = validateWorkerInitializationMessage(event.data);
+        options.onInitialize?.(initialization.kind, initialization.payload);
+      } catch {
+        // Malformed or unsupported initialization never mutates worker state.
+      }
+      return;
+    }
     let request: WorkerRequest;
     try {
-      if (isWorkerCancelMessage(event.data)) return; // advisory only
       request = validateWorkerRequest(event.data);
     } catch {
       return; // malformed envelope: drop silently, never crash the worker loop

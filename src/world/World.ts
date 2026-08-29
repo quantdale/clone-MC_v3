@@ -35,11 +35,17 @@ import {
   MeshWorkerClient,
   expandPackedMeshResult,
   packQuadsToTypedArrays,
-  type MeshSectionRequestPayload,
+  type MeshSectionRequestTransport,
   type MeshSectionResultPayload,
+  type MeshSectionHaloMap,
   type PackedMeshExpandInfo,
 } from '../rendering/WorkerMeshing';
 import { WorkerPool, computeWorkerPoolSize } from '../engine/WorkerPool';
+import { WORKER_PROTOCOL_VERSION } from '../rendering/WorkerJobProtocol';
+import {
+  createMeshWorkerRegistryTable,
+  type MeshWorkerRegistryTable,
+} from '../rendering/MeshWorkerRegistry';
 import {
   CHUNK_BLOCK_COUNT,
   CHUNK_DIMENSIONS,
@@ -60,6 +66,7 @@ import {
   findSectionVersionSnapshot,
   type SectionVersionSnapshot,
 } from './SectionVersionSnapshot';
+import { extractSectionSnapshot, type SectionSnapshot } from './SectionSnapshot';
 /** A queued meshing job; carries the meshVersion captured at queue time. */
 interface MeshJob {
   key: string;
@@ -277,6 +284,8 @@ export class World implements WorldAccess {
   private readonly useWorkers = false;
   private workerPool: WorkerPool | null = null;
   private workerClient: MeshWorkerClient | null = null;
+  /** Immutable registry-derived classification shared with every mesh worker. */
+  private readonly meshRegistryTable: MeshWorkerRegistryTable;
   private readonly workerMeshBatches = new Map<string, WorkerMeshBatch>();
   /** Optional atlas UV lookup for the worker path's packed-result expansion.
    *  Without it, worker results cannot be textured and are dropped. */
@@ -344,6 +353,10 @@ export class World implements WorldAccess {
     uvRectFor?: (blockId: number, faceIndex: number) => UvRect;
   }) {
     this.registry = opts.registry;
+    this.meshRegistryTable = createMeshWorkerRegistryTable(
+      this.registry.all(),
+      [BlockId.Water, BlockId.Lava],
+    );
     this.seed = opts.seed >>> 0;
     this.scene = opts.scene;
     this.mesher = opts.mesher;
@@ -2018,6 +2031,12 @@ export class World implements WorldAccess {
     this.workerPool = new WorkerPool({
       size,
       spawn: () => new Worker(new URL('../rendering/MeshWorkerEntry.ts', import.meta.url), { type: 'module' }),
+      initialize: () => ({
+        protocolVersion: WORKER_PROTOCOL_VERSION,
+        type: 'initialize',
+        kind: 'mesh-section',
+        payload: this.meshRegistryTable,
+      }),
     });
     this.workerClient = new MeshWorkerClient({ pool: this.workerPool });
     return true;
@@ -2127,51 +2146,67 @@ export class World implements WorldAccess {
   /** Build the structured-clone payload for one 16³ section, or null when empty. */
   private buildSectionPayload(
     chunk: Chunk,
-    sectionIndex: number,
+    sectionSlotIndex: number,
     versionSnapshot: SectionVersionSnapshot,
-  ): MeshSectionRequestPayload | null {
-    const baseX = chunk.cx * CHUNK_DIMENSIONS.width;
-    const baseY = chunk.cy * CHUNK_DIMENSIONS.height + sectionIndex * 16;
-    const baseZ = chunk.cz * CHUNK_DIMENSIONS.depth;
-    const cells: Array<number | null> = new Array(4096);
+  ): MeshSectionRequestTransport | null {
+    const sectionX = chunk.cx;
+    const sectionY = chunk.cy * this.sectionsPerChunk + sectionSlotIndex;
+    const sectionZ = chunk.cz;
+    const lookup = {
+      getBlock: (x: number, y: number, z: number): number => this.getBlock(x, y, z),
+      getSkyLight: (x: number, y: number, z: number): number => this.lightStorage.getSkyLight(x, y, z),
+      getBlockLight: (x: number, y: number, z: number): number => this.lightStorage.getBlockLight(x, y, z),
+      containsY: (y: number): boolean => this.dimension.containsY(y),
+      hasStorage: (x: number, y: number, z: number): boolean => {
+        if (!this.dimension.containsY(y)) return false;
+        const column = this.storage.getColumn(sectionIndex(x), sectionIndex(z));
+        if (!column) return false;
+        const inColumnSection = sectionIndex(y) - this.dimension.minSectionY;
+        return inColumnSection >= 0 && inColumnSection < column.sectionCount && column.hasSection(inColumnSection);
+      },
+    };
+    const snapshot = extractSectionSnapshot(
+      sectionX,
+      sectionY,
+      sectionZ,
+      this.dimension.minY,
+      this.dimension.maxY,
+      lookup,
+    );
     let nonAir = 0;
-    for (let y = 0; y < 16; y++) {
-      for (let z = 0; z < 16; z++) {
-        for (let x = 0; x < 16; x++) {
-          const id = this.getBlock(baseX + x, baseY + y, baseZ + z);
-          if (id !== BlockId.Air) nonAir++;
-          cells[x + y * 16 + z * 256] = id;
-        }
-      }
+    for (const id of snapshot.cells) {
+      if (id !== BlockId.Air) nonAir++;
     }
     if (nonAir === 0) return null;
-    const skyLight: number[] = new Array(4096);
-    const blockLight: number[] = new Array(4096);
-    for (let y = 0; y < 16; y++) {
-      for (let z = 0; z < 16; z++) {
-        for (let x = 0; x < 16; x++) {
-          const wx = baseX + x;
-          const wy = baseY + y;
-          const wz = baseZ + z;
-          const i = x + y * 16 + z * 256;
-          skyLight[i] = this.lightStorage.getSkyLight(wx, wy, wz);
-          blockLight[i] = this.lightStorage.getBlockLight(wx, wy, wz);
-        }
-      }
-    }
-    const opaqueIds: number[] = [];
-    for (const def of this.registry.all()) {
-      if (def.opaque) opaqueIds.push(def.id);
-    }
+
+    const halo = Object.fromEntries(
+      (Object.entries(snapshot.halos) as Array<[keyof SectionSnapshot['halos'], SectionSnapshot['halos'][keyof SectionSnapshot['halos']]]>)
+        .map(([face, data]) => [face, {
+          availability: Array.from(data.availability),
+          cells: Array.from(data.cells, (id) => id),
+          skyLight: Array.from(data.skyLight),
+          blockLight: Array.from(data.blockLight),
+          fluidLevels: Array.from(data.cells, (id) =>
+            id === BlockId.Water || id === BlockId.Lava ? 0 : -1,
+          ),
+        }]),
+    ) as MeshSectionHaloMap;
+    // Registry classification is initialized once per worker; section jobs carry only its identity.
+    // The cast preserves the legacy normalized payload type while this transport object is
+    // intentionally table-backed and omits repeated opaqueIds/layerById arrays.
     return {
-      sectionX: chunk.cx * (CHUNK_DIMENSIONS.width / 16),
-      sectionY: chunk.cy * this.sectionsPerChunk + sectionIndex,
-      sectionZ: chunk.cz * (CHUNK_DIMENSIONS.depth / 16),
+      sectionX,
+      sectionY,
+      sectionZ,
       versionSnapshot,
-      cells,
-      opaqueIds,
-      skyLight,
-      blockLight,
+      registryTableId: this.meshRegistryTable.tableId,
+      cells: Array.from(snapshot.cells, (id) => id),
+      fluidLevels: Array.from(snapshot.cells, (id) =>
+        id === BlockId.Water || id === BlockId.Lava ? 0 : -1,
+      ),
+      skyLight: Array.from(snapshot.skyLight),
+      blockLight: Array.from(snapshot.blockLight),
+      halo,
     };
   }
 

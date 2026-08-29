@@ -19,6 +19,7 @@
 import {
   WORKER_PROTOCOL_VERSION,
   validateWorkerResult,
+  type WorkerInitializationMessage,
   type WorkerJobKind,
   type WorkerRequest,
 } from "../rendering/WorkerJobProtocol";
@@ -199,6 +200,8 @@ export class WorkerPool {
       size?: number;
       maxPending?: number;
       maxInFlightPerWorker?: number;
+      /** Optional one-time initialization sent to every worker slot, including respawns. */
+      initialize?: WorkerInitializationMessage | (() => WorkerInitializationMessage);
     },
   ) {
     const size = opts.size ?? computeWorkerPoolSize();
@@ -217,7 +220,7 @@ export class WorkerPool {
     this.queue = new BoundedPriorityQueue(
       opts.maxPending ?? DEFAULT_MAX_PENDING,
     );
-    for (let i = 0; i < size; i++) this.slots.push(this.spawnSlot());
+    for (let i = 0; i < size; i++) this.slots.push(this.spawnSlot(i));
   }
 
   /**
@@ -361,10 +364,9 @@ export class WorkerPool {
 
   // --- internals -------------------------------------------------------------
 
-  private spawnSlot(): WorkerSlot {
+  private spawnSlot(slotIndex: number): WorkerSlot {
     const worker = this.opts.spawn();
     const slot: WorkerSlot = { worker, inFlight: new Set() };
-    const slotIndex = this.slots.length;
     worker.onmessage = (event: MessageEvent) =>
       this.handleMessage(event.data, slotIndex);
     worker.onerror = () => this.recoverSlot(slotIndex, "worker error");
@@ -373,6 +375,11 @@ export class WorkerPool {
     worker.addEventListener?.("close", () =>
       this.recoverSlot(slotIndex, "worker closed"),
     );
+    const initialization = this.opts.initialize;
+    if (initialization !== undefined) {
+      const message = typeof initialization === "function" ? initialization() : initialization;
+      worker.postMessage(message);
+    }
     return slot;
   }
 
@@ -481,7 +488,7 @@ export class WorkerPool {
     if (this.disposed) return;
     const slot = this.slots[slotIndex];
     if (!slot) return;
-    this.slots[slotIndex] = this.spawnSlot();
+    this.slots[slotIndex] = this.spawnSlot(slotIndex);
     this.statsInternal.respawns++;
 
     for (const jobId of slot.inFlight) {

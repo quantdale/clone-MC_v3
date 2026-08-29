@@ -1,0 +1,4 @@
+schema: 1
+change: 255-high-performance-voxel-engine
+status: ACTIVE
+summary: Production worker-driven voxel streaming, bounded uploads, deterministic LOD, and dynamic render resolution.

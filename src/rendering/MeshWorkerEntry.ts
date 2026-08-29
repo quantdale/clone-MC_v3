@@ -4,6 +4,7 @@
  * Float32Array. The worker never touches THREE; the packed result is expanded on the main thread.
  */
 import { serveWorkerRequests, collectTransferables } from './WorkerJobProtocol';
+import { validateMeshWorkerRegistryTable, type MeshWorkerRegistryTable } from './MeshWorkerRegistry';
 import {
   processMeshSectionRequest,
   validateMeshSectionRequest,
@@ -11,10 +12,12 @@ import {
   packQuadsToTypedArrays,
 } from './WorkerMeshing';
 
+let meshRegistryTable: MeshWorkerRegistryTable | undefined;
+
 serveWorkerRequests({
   'mesh-section': (payload) => {
     const result = validateMeshSectionResult(
-      processMeshSectionRequest(validateMeshSectionRequest(payload)),
+      processMeshSectionRequest(validateMeshSectionRequest(payload, meshRegistryTable)),
     );
     const packed = packQuadsToTypedArrays(result.quads);
     return {
@@ -26,8 +29,21 @@ serveWorkerRequests({
         data: packed.data,
         quadCount: packed.quadCount,
         stride: packed.stride,
+        streamNames: packed.streamNames,
       },
       transfer: collectTransferables([packed.data]),
     };
+  },
+}, undefined, {
+  onInitialize: (kind, payload) => {
+    if (kind !== 'mesh-section') return;
+    const nextTable = validateMeshWorkerRegistryTable(payload);
+    if (meshRegistryTable === undefined) {
+      meshRegistryTable = nextTable;
+      return;
+    }
+    if (meshRegistryTable.tableId !== nextTable.tableId) {
+      throw new Error('MeshWorkerEntry: registry table replacement is not allowed');
+    }
   },
 });

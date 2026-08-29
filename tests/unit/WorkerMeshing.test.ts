@@ -1,8 +1,13 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   MeshWorkerClient,
+  createEmptySectionHalo,
   processMeshSectionRequest,
   sectionLightSampler,
+  MESH_LAYER_OPAQUE,
+  MESH_LAYER_CUTOUT,
+  MESH_LAYER_TRANSLUCENT,
+  MESH_LAYER_FLUID,
   type MeshSectionRequestPayload,
 } from "../../src/rendering/WorkerMeshing";
 import {
@@ -34,6 +39,33 @@ function slabPayload(): MeshSectionRequestPayload {
   const payload = emptyPayload();
   payload.cells[0] = 1; // (0,0,0)
   payload.cells[1] = 1; // (1,0,0)
+  return payload;
+}
+
+function layeredPayload(): MeshSectionRequestPayload {
+  const payload = emptyPayload();
+  payload.opaqueIds = [1];
+  payload.layerById = [
+    MESH_LAYER_OPAQUE,
+    MESH_LAYER_OPAQUE,
+    MESH_LAYER_CUTOUT,
+    MESH_LAYER_TRANSLUCENT,
+    MESH_LAYER_FLUID,
+    MESH_LAYER_FLUID,
+    MESH_LAYER_TRANSLUCENT,
+  ];
+  payload.cells[0] = 1; // opaque at (0,0,0)
+  payload.cells[4] = 2; // cutout at (4,0,0)
+  payload.cells[8] = 3; // translucent near at (8,0,0)
+  payload.cells[10] = 6; // translucent far at (10,0,0)
+  payload.cells[18] = 5; // fluid at (2,1,0)
+  payload.fluidLevels = new Array(4096).fill(-1);
+  payload.fluidLevels[18] = 0;
+  payload.tintClasses = new Array(4096).fill(0);
+  payload.tintClasses[4] = 0x123456;
+  payload.tintClasses[18] = 0x345678;
+  payload.translucentSortOrigin = [0, 0, 0];
+  payload.skyLight.fill(15);
   return payload;
 }
 
@@ -71,6 +103,35 @@ describe("processMeshSectionRequest", () => {
     }
   });
 
+  it("preserves all worker render layers and deterministic ordering", () => {
+    const result = processMeshSectionRequest(layeredPayload());
+    const opaque = result.quads.filter((quad) => quad.renderStream === "opaque");
+    const cutout = result.quads.filter((quad) => quad.renderStream === "cutout");
+    const translucent = result.quads.filter((quad) => quad.renderStream === "translucent");
+    const fluid = result.quads.filter((quad) => quad.renderStream === "fluid");
+
+    expect(opaque.length).toBeGreaterThan(0);
+    expect(cutout.length).toBe(6);
+    expect(translucent.length).toBe(12);
+    expect(fluid.length).toBe(5);
+    expect(result.quads.map((quad) => quad.renderStream)).toEqual([
+      ...opaque.map(() => "opaque"),
+      ...cutout.map(() => "cutout"),
+      ...translucent.map(() => "translucent"),
+      ...fluid.map(() => "fluid"),
+    ]);
+    expect(translucent.map((quad) => quad.blockId)).toEqual([
+      ...translucent.map((quad) => quad.blockId).sort((a, b) => b - a),
+    ]);
+    expect(new Set(fluid.map((quad) => quad.blockId))).toEqual(new Set([5]));
+    expect(fluid.find((quad) => quad.face === "up")?.y).toBe(2);
+    expect(cutout.every((quad) => quad.tintClass === 0x123456)).toBe(true);
+    expect(fluid.every((quad) => quad.tintClass === 0x345678)).toBe(true);
+    expect(cutout.every((quad) => quad.vertexLights.every((light) => light.sky >= 0 && light.sky <= 15))).toBe(true);
+    expect(cutout.some((quad) => quad.vertexLights.some((light) => light.sky === 15))).toBe(true);
+    expect(cutout.every((quad) => quad.vertexAO.every((ao) => ao >= 0 && ao <= 3))).toBe(true);
+  });
+
   it("rejects malformed cells arrays", () => {
     expect(() =>
       processMeshSectionRequest({
@@ -101,6 +162,22 @@ describe("processMeshSectionRequest", () => {
     const fractional = emptyPayload();
     fractional.blockLight[3] = 7.5;
     expect(() => processMeshSectionRequest(fractional)).toThrow();
+  });
+
+  it("uses a present neighbor halo to cull a shared boundary face", () => {
+    const payload = emptyPayload();
+    payload.cells[15] = 1; // target boundary cell (15,0,0)
+    payload.halo = createEmptySectionHalo();
+    payload.halo.east.availability[0] = 0;
+    payload.halo.east.cells[0] = 1; // adjacent section cell (16,0,0)
+
+    const withNeighbor = processMeshSectionRequest(payload);
+    expect(withNeighbor.quads.some((quad) => quad.face === "east")).toBe(false);
+
+    payload.halo.east.availability[0] = 2;
+    payload.halo.east.cells[0] = null;
+    const atBoundary = processMeshSectionRequest(payload);
+    expect(atBoundary.quads.some((quad) => quad.face === "east")).toBe(true);
   });
 
   it("lights quads from the payload light arrays", () => {
@@ -389,6 +466,16 @@ describe("MeshSection request validation", () => {
         makeRequest({ blockLight: new Array(4096).fill(99) }),
       ),
     ).toThrow(/blockLight values must be integers in \[0, 15\]/);
+    const malformedHalo = createEmptySectionHalo();
+    delete (malformedHalo as Partial<typeof malformedHalo>).east;
+    expect(() => validateMeshSectionRequest(makeRequest({ halo: malformedHalo }))).toThrow(
+      /halo\.east must be an object/,
+    );
+    const wrongHaloLength = createEmptySectionHalo();
+    wrongHaloLength.west.cells = [1];
+    expect(() => validateMeshSectionRequest(makeRequest({ halo: wrongHaloLength }))).toThrow(
+      /halo\.west\.cells must be 256 entries/,
+    );
   });
 });
 
@@ -559,25 +646,69 @@ describe("MeshWorkerClient — pooled mode", () => {
     );
   });
 
-  it("cancelByToken drops superseded pending jobs so their results cannot resolve", () => {
-    const pool = new FakePool();
-    const client = new MeshWorkerClient({
-      pool: pool.asPool(),
-      generationToken: 4,
-    });
-    let called = 0;
-    client.requestSection(sectionPayload(), () => called++);
+  it("rejects timed-out jobs exactly once, cancels the pool job, and ignores late results", () => {
+    vi.useFakeTimers();
+    try {
+      const pool = new FakePool();
+      const client = new MeshWorkerClient({ pool: pool.asPool(), timeoutMs: 25 });
+      let rejected = 0;
+      let resolved = 0;
+      const jobId = client.requestSection(
+        sectionPayload(),
+        () => resolved++,
+        () => rejected++,
+      );
 
-    expect(client.cancelByToken(4)).toBe(1);
-    expect(client.cancelByToken(4)).toBe(0); // already gone
+      expect(client.pendingCount).toBe(1);
+      vi.advanceTimersByTime(25);
+      expect(rejected).toBe(1);
+      expect(resolved).toBe(0);
+      expect(client.pendingCount).toBe(0);
+      expect(pool.cancelled).toEqual(["fake-1"]);
 
-    // The superseded worker result arrives late: no callback fires.
-    pool.submitted[0]!.onResult({
-      sectionX: 1,
-      sectionY: 0,
-      sectionZ: -1,
-      quads: [],
-    });
-    expect(called).toBe(0);
+      pool.submitted[0]!.onResult({
+        sectionX: 1,
+        sectionY: 0,
+        sectionZ: -1,
+        quads: [],
+      });
+      vi.advanceTimersByTime(100);
+      expect(rejected).toBe(1);
+      expect(resolved).toBe(0);
+      expect(client.handleMessage(MeshWorkerClient.resultMessage(jobId, {
+        sectionX: 1,
+        sectionY: 0,
+        sectionZ: -1,
+        quads: [],
+      }))).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("clears the timeout after successful completion and validates timeout configuration", () => {
+    vi.useFakeTimers();
+    try {
+      expect(() => new MeshWorkerClient({ timeoutMs: -1 })).toThrow(/timeoutMs/);
+      expect(() => new MeshWorkerClient({ timeoutMs: Number.NaN })).toThrow(/timeoutMs/);
+
+      const client = new MeshWorkerClient({ timeoutMs: 25 });
+      let resolved = 0;
+      let rejected = 0;
+      const jobId = client.requestSection(sectionPayload(), () => resolved++, () => rejected++);
+      expect(client.handleMessage(MeshWorkerClient.resultMessage(jobId, {
+        sectionX: 1,
+        sectionY: 0,
+        sectionZ: -1,
+        quads: [],
+      }))).not.toBeNull();
+      vi.advanceTimersByTime(25);
+      expect(resolved).toBe(1);
+      expect(rejected).toBe(0);
+      expect(client.pendingCount).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
+

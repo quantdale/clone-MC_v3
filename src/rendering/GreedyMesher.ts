@@ -26,6 +26,7 @@
  * optional caller callbacks and default to the single class `0`.
  */
 import type { ModelFace } from '../data/BlockModel';
+import type { MeshStreamName } from '../world/MeshingTypes';
 import { quadVertexAO } from './AmbientOcclusion';
 import { quadVertexLights, type FaceLightContext } from './VertexLighting';
 
@@ -90,6 +91,8 @@ export interface OpaqueFaceQuad {
   transparencyClass?: number;
   /** Version token of the build that produced this quad. */
   inputVersion?: number;
+  /** Canonical worker render stream; omitted by legacy quad producers. */
+  renderStream?: MeshStreamName;
 }
 
 /** Samples the block id at a world cell; `null` = not opaque/absent. */
@@ -170,7 +173,6 @@ function planeCell(getCell: FaceCellSampler, plane: FacePlane, slice: number, u:
 /** The cell outside the face (across the plane) at (slice, u, v). */
 function planeNeighbor(getCell: FaceCellSampler, plane: FacePlane, slice: number, u: number, v: number): number | null {
   const s = plane.offset === 1 ? slice + 1 : slice - 1;
-  if (s < 0 || s >= SECTION) return null; // out of section → exposed
   if (plane.axis === 1) {
     return getCell(u, s, v);
   }

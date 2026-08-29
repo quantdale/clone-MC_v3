@@ -18,6 +18,7 @@ import {
   type ResolvedOutcome,
   type WorkerResult,
 } from './WorkerJobProtocol';
+import type { MeshWorkerRegistryTable } from './MeshWorkerRegistry';
 import type { WorkerPool } from '../engine/WorkerPool';
 import {
   greedyMergeOpaqueFaces,
@@ -28,13 +29,59 @@ import {
 import type { ModelFace } from '../data/BlockModel';
 import type * as THREE from 'three';
 import type { MeshStreamData, MeshStreamName, UvRect } from '../world/MeshingTypes';
+import { meshFluidSurfaceInto } from './FluidSurfaceMesher';
+import { createFluidState } from '../world/FluidState';
+import { sortTranslucentBackToFront } from './TranslucentGeometry';
+import { quadVertexAO } from './AmbientOcclusion';
+import { quadVertexLights, inPlaneAxes, type FaceLightContext } from './VertexLighting';
 import {
   validateSectionVersionSnapshot,
   sectionVersionSnapshotsEqual,
   type SectionVersionSnapshot,
 } from '../world/SectionVersionSnapshot';
+import {
+  SAMPLE_ABSENT,
+  SAMPLE_OUT_OF_BOUNDS,
+  SAMPLE_PRESENT,
+  type SectionHaloFace,
+} from '../world/SectionSnapshot';
 
-/** A section-meshing job request (plain data; structured-clone-safe). */
+const SECTION = 16;
+const HALO_FACE_AREA = SECTION * SECTION;
+const HALO_FACES: readonly SectionHaloFace[] = ['west', 'east', 'down', 'up', 'north', 'south'];
+
+/** One explicit 16×16 face-neighbor halo in worker-safe structured-clone form. */
+export interface MeshSectionHaloPayload {
+  availability: number[];
+  cells: Array<number | null>;
+  skyLight: number[];
+  blockLight: number[];
+  /** Fluid level per halo cell; -1 means no fluid state. */
+  fluidLevels?: number[];
+}
+
+/** Numeric layer table values used in structured-clone payloads. */
+export const MESH_LAYER_OPAQUE = 0;
+export const MESH_LAYER_CUTOUT = 1;
+export const MESH_LAYER_TRANSLUCENT = 2;
+export const MESH_LAYER_FLUID = 3;
+
+
+/** The six face-neighbor halos required by a section mesh request. */
+export type MeshSectionHaloMap = Record<SectionHaloFace, MeshSectionHaloPayload>;
+
+/** Create a compatibility halo whose every face is explicitly exposed. */
+export function createEmptySectionHalo(): MeshSectionHaloMap {
+  return Object.fromEntries(HALO_FACES.map((face) => [face, {
+    availability: new Array(HALO_FACE_AREA).fill(SAMPLE_OUT_OF_BOUNDS),
+    cells: new Array<number | null>(HALO_FACE_AREA).fill(null),
+    skyLight: new Array(HALO_FACE_AREA).fill(0),
+    blockLight: new Array(HALO_FACE_AREA).fill(0),
+    fluidLevels: new Array(HALO_FACE_AREA).fill(-1),
+  }])) as MeshSectionHaloMap;
+}
+
+/** A section-meshing job request after boundary validation. */
 export interface MeshSectionRequestPayload {
   sectionX: number;
   sectionY: number;
@@ -43,13 +90,31 @@ export interface MeshSectionRequestPayload {
   versionSnapshot?: SectionVersionSnapshot;
   /** 4096 world-cell block ids; `null` = air. Index = x + 16*(y + 16*z). */
   cells: Array<number | null>;
-  /** Block ids treated as opaque. */
+  /** Immutable registry classification table identity installed once in each worker. */
+  registryTableId?: string;
+  /** Block ids treated as opaque by the normalized meshing path. */
   opaqueIds: number[];
+  /** Optional numeric layer table indexed by block id. */
+  layerById?: number[];
+  /** 4096 per-cell fluid levels; -1 means no fluid state. */
+  fluidLevels?: number[];
+  /** Optional resolved tint class per target cell. */
+  tintClasses?: number[];
+  /** Optional camera/world origin used for deterministic translucent ordering. */
+  translucentSortOrigin?: [number, number, number];
   /** 4096 per-cell sky light values in [0, 15] (070). */
   skyLight: number[];
   /** 4096 per-cell block light values in [0, 15] (070). */
   blockLight: number[];
+  /** Six explicit one-voxel face halos; optional only for legacy pre-255 callers. */
+  halo?: MeshSectionHaloMap;
 }
+
+/** Transport shape for a request whose registry classification is installed in the worker. */
+export type MeshSectionRequestTransport = Omit<MeshSectionRequestPayload, 'opaqueIds' | 'layerById'> & {
+  opaqueIds?: number[];
+  layerById?: number[];
+};
 
 /** A section-meshing job result (quad form, as produced by `processMeshSectionRequest`). */
 export interface MeshSectionResultPayload {
@@ -98,6 +163,18 @@ export function validateMeshSectionResult(input: unknown): MeshSectionResultPayl
   };
 }
 
+function isMeshStreamName(value: unknown): value is MeshStreamName {
+  return value === 'opaque' || value === 'cutout' || value === 'translucent' || value === 'fluid';
+}
+
+function validatePackedStreamNames(value: unknown, quadCount: number): MeshStreamName[] | undefined {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value) || value.length !== quadCount || !value.every(isMeshStreamName)) {
+    throw new Error('MeshSectionResult: streamNames must contain one valid stream per packed quad');
+  }
+  return value as MeshStreamName[];
+}
+
 /**
  * Validate the body of a mesh result after envelope identity checks: either the quad form
  * (`quads`) or the packed typed-array form (`data`/`quadCount`/`stride`, produced by the
@@ -119,9 +196,15 @@ function validateResultBody(
     if ((r.data as Float32Array).length !== (r.quadCount as number) * PACKED_QUAD_STRIDE) {
       throw new Error('MeshSectionResult: packed data length must equal quadCount * stride');
     }
+    const streamNames = validatePackedStreamNames(r.streamNames, r.quadCount as number);
     return {
       quads: [],
-      packed: { data: r.data as Float32Array, quadCount: r.quadCount as number, stride: PACKED_QUAD_STRIDE },
+      packed: {
+        data: r.data as Float32Array,
+        quadCount: r.quadCount as number,
+        stride: PACKED_QUAD_STRIDE,
+        streamNames,
+      },
     };
   }
   return { quads: validateQuads(r.quads) };
@@ -166,13 +249,80 @@ function validateQuads(rawQuads: unknown): OpaqueFaceQuad[] {
       !(quad.vertexAO as unknown[]).every((a) => typeof a === 'number' && Number.isInteger(a) && a >= 0 && a <= 3)) {
       throw new Error('MeshSectionResult: quad.vertexAO must hold 4 integers in [0, 3]');
     }
+    if (quad.renderStream !== undefined && !isMeshStreamName(quad.renderStream)) {
+      throw new Error('MeshSectionResult: quad.renderStream must be a known mesh stream');
+    }
     quads.push(raw as OpaqueFaceQuad);
   }
   return quads;
 }
 
 /** Validate an untyped worker request payload as a {@link MeshSectionRequestPayload}. */
-export function validateMeshSectionRequest(input: unknown): MeshSectionRequestPayload {
+function validateHaloFace(name: string, value: unknown): MeshSectionHaloPayload {
+  if (typeof value !== 'object' || value === null) {
+    throw new Error(`MeshSectionRequest: halo.${name} must be an object`);
+  }
+  const face = value as Record<string, unknown>;
+  if (!Array.isArray(face.availability) || face.availability.length !== HALO_FACE_AREA ||
+    !face.availability.every((entry) => entry === SAMPLE_PRESENT || entry === SAMPLE_ABSENT || entry === SAMPLE_OUT_OF_BOUNDS)) {
+    throw new Error(`MeshSectionRequest: halo.${name}.availability must be 256 entries of the documented states`);
+  }
+  if (!Array.isArray(face.cells) || face.cells.length !== HALO_FACE_AREA ||
+    !face.cells.every((entry) => entry === null || (typeof entry === 'number' && Number.isInteger(entry) && entry >= 0))) {
+    throw new Error(`MeshSectionRequest: halo.${name}.cells must be 256 entries of null or non-negative integers`);
+  }
+  assertLightArrayLength(`halo.${name}.skyLight`, face.skyLight, HALO_FACE_AREA);
+  assertLightArrayLength(`halo.${name}.blockLight`, face.blockLight, HALO_FACE_AREA);
+  if (face.fluidLevels !== undefined) {
+    assertFluidLevelArray(`halo.${name}.fluidLevels`, face.fluidLevels, HALO_FACE_AREA);
+  }
+  return {
+    availability: face.availability as number[],
+    cells: face.cells as Array<number | null>,
+    skyLight: face.skyLight as number[],
+    blockLight: face.blockLight as number[],
+    fluidLevels: face.fluidLevels as number[] | undefined,
+  };
+}
+
+function assertFluidLevelArray(name: string, values: unknown, length: number): asserts values is number[] {
+  if (!Array.isArray(values) || values.length !== length) {
+    throw new Error(`MeshSectionRequest: ${name} must be an array of ${length} entries`);
+  }
+  for (let i = 0; i < values.length; i++) {
+    const value = values[i]!;
+    if (!Number.isInteger(value) || value < -1 || value > 15) {
+      throw new RangeError(`MeshSectionRequest: ${name} values must be integers in [-1, 15], got ${value} at index ${i}`);
+    }
+  }
+}
+
+function assertLayerTable(values: unknown): asserts values is number[] {
+  if (!Array.isArray(values) || !values.every((value) => Number.isInteger(value) && value >= 0 && value <= MESH_LAYER_FLUID)) {
+    throw new Error('MeshSectionRequest: layerById must be an array of layer integers in [0, 3]');
+  }
+}
+
+function assertTintClasses(values: unknown, length: number): asserts values is number[] {
+  if (!Array.isArray(values) || values.length !== length ||
+    !values.every((value) => Number.isInteger(value) && value >= 0)) {
+    throw new Error(`MeshSectionRequest: tintClasses must be an array of ${length} non-negative integers`);
+  }
+}
+
+function validateHalo(input: unknown): MeshSectionHaloMap {
+  if (input === undefined) return createEmptySectionHalo();
+  if (typeof input !== 'object' || input === null) {
+    throw new Error('MeshSectionRequest: halo must be an object');
+  }
+  const raw = input as Record<string, unknown>;
+  return Object.fromEntries(HALO_FACES.map((face) => [face, validateHaloFace(face, raw[face])])) as MeshSectionHaloMap;
+}
+
+export function validateMeshSectionRequest(
+  input: unknown,
+  initializedTable?: MeshWorkerRegistryTable,
+): MeshSectionRequestPayload {
   if (typeof input !== 'object' || input === null) {
     throw new Error('MeshSectionRequest: expected an object');
   }
@@ -181,32 +331,65 @@ export function validateMeshSectionRequest(input: unknown): MeshSectionRequestPa
     throw new Error('MeshSectionRequest: section coordinates must be integers');
   }
   if (
-    !Array.isArray(r.cells) || (r.cells as unknown[]).length !== SECTION * SECTION * SECTION ||
-    !(r.cells as unknown[]).every((c) => c === null || (typeof c === 'number' && Number.isInteger(c) && c >= 0))
+    !Array.isArray(r.cells) || r.cells.length !== SECTION * SECTION * SECTION ||
+    !r.cells.every((c) => c === null || (typeof c === 'number' && Number.isInteger(c) && c >= 0))
   ) {
     throw new Error('MeshSectionRequest: cells must be 4096 entries of null or non-negative integers');
   }
-  if (!Array.isArray(r.opaqueIds) ||
-    !(r.opaqueIds as unknown[]).every((id) => typeof id === 'number' && Number.isInteger(id))) {
-    throw new Error('MeshSectionRequest: opaqueIds must be an array of integers');
+
+  let opaqueIds: number[];
+  let layerById: number[] | undefined;
+  if (r.registryTableId !== undefined) {
+    if (typeof r.registryTableId !== 'string' || r.registryTableId.length === 0) {
+      throw new Error('MeshSectionRequest: registryTableId must be a non-empty string');
+    }
+    if (initializedTable === undefined || initializedTable.tableId !== r.registryTableId) {
+      throw new Error('MeshSectionRequest: registry table is not initialized or does not match registryTableId');
+    }
+    if (r.opaqueIds !== undefined || r.layerById !== undefined) {
+      throw new Error('MeshSectionRequest: registry-backed requests must not repeat registry tables');
+    }
+    opaqueIds = initializedTable.opaqueIds as number[];
+    layerById = initializedTable.layerById as number[];
+  } else {
+    if (!Array.isArray(r.opaqueIds) ||
+      !r.opaqueIds.every((id) => typeof id === 'number' && Number.isInteger(id))) {
+      throw new Error('MeshSectionRequest: opaqueIds must be an array of integers');
+    }
+    opaqueIds = r.opaqueIds as number[];
+    if (r.layerById !== undefined) {
+      assertLayerTable(r.layerById);
+      layerById = r.layerById as number[];
+    }
   }
   assertLightArray('skyLight', r.skyLight);
   assertLightArray('blockLight', r.blockLight);
+  if (r.fluidLevels !== undefined) assertFluidLevelArray('fluidLevels', r.fluidLevels, SECTION * SECTION * SECTION);
+  if (r.tintClasses !== undefined) assertTintClasses(r.tintClasses, SECTION * SECTION * SECTION);
+  if (r.translucentSortOrigin !== undefined &&
+    (!Array.isArray(r.translucentSortOrigin) || r.translucentSortOrigin.length !== 3 ||
+      !r.translucentSortOrigin.every((value) => typeof value === 'number' && Number.isFinite(value)))) {
+    throw new Error('MeshSectionRequest: translucentSortOrigin must hold 3 finite numbers');
+  }
   return {
     sectionX: r.sectionX as number,
     sectionY: r.sectionY as number,
     sectionZ: r.sectionZ as number,
+    registryTableId: r.registryTableId as string | undefined,
     versionSnapshot: r.versionSnapshot === undefined
       ? undefined
       : validateSectionVersionSnapshot(r.versionSnapshot),
     cells: r.cells as Array<number | null>,
-    opaqueIds: r.opaqueIds as number[],
+    opaqueIds,
+    layerById,
+    fluidLevels: r.fluidLevels as number[] | undefined,
+    tintClasses: r.tintClasses as number[] | undefined,
+    translucentSortOrigin: r.translucentSortOrigin as [number, number, number] | undefined,
     skyLight: r.skyLight as number[],
     blockLight: r.blockLight as number[],
+    halo: validateHalo(r.halo),
   };
 }
-
-const SECTION = 16;
 
 /** Canonical face index encoding used by `packQuadsToTypedArrays`. */
 const FACE_INDEX: Readonly<Record<ModelFace, number>> = {
@@ -227,6 +410,8 @@ export interface PackedMeshResult {
   data: Float32Array;
   quadCount: number;
   readonly stride: number;
+  /** Parallel stream identity table; absent for legacy packed payloads. */
+  streamNames?: MeshStreamName[];
 }
 
 /** Float32 stride of one packed quad. */
@@ -256,12 +441,15 @@ export function packQuadsToTypedArrays(quads: readonly OpaqueFaceQuad[]): Packed
       data[base + 2] = quad.vertexAO[c]!;
     }
   }
-  return { data, quadCount: quads.length, stride: PACKED_QUAD_STRIDE };
+  const streamNames = quads.some((quad) => quad.renderStream !== undefined)
+    ? quads.map((quad) => quad.renderStream ?? 'opaque')
+    : undefined;
+  return { data, quadCount: quads.length, stride: PACKED_QUAD_STRIDE, streamNames };
 }
 
-function assertLightArray(name: string, values: unknown): asserts values is number[] {
-  if (!Array.isArray(values) || values.length !== SECTION * SECTION * SECTION) {
-    throw new Error(`MeshSectionRequest: ${name} must be an array of 4096 entries`);
+function assertLightArrayLength(name: string, values: unknown, length: number): asserts values is number[] {
+  if (!Array.isArray(values) || values.length !== length) {
+    throw new Error(`MeshSectionRequest: ${name} must be an array of ${length} entries`);
   }
   for (let i = 0; i < values.length; i++) {
     const value = values[i]!;
@@ -271,28 +459,208 @@ function assertLightArray(name: string, values: unknown): asserts values is numb
   }
 }
 
-/** Build a section-local light sampler over a validated payload (070). */
+function assertLightArray(name: string, values: unknown): asserts values is number[] {
+  assertLightArrayLength(name, values, SECTION * SECTION * SECTION);
+}
+
+
+function haloCoordinate(
+  halo: MeshSectionHaloMap,
+  x: number,
+  y: number,
+  z: number,
+): { face: MeshSectionHaloPayload; index: number } | null {
+  if (x === -1 && y >= 0 && y < SECTION && z >= 0 && z < SECTION) {
+    return { face: halo.west, index: y * SECTION + z };
+  }
+  if (x === SECTION && y >= 0 && y < SECTION && z >= 0 && z < SECTION) {
+    return { face: halo.east, index: y * SECTION + z };
+  }
+  if (y === -1 && x >= 0 && x < SECTION && z >= 0 && z < SECTION) {
+    return { face: halo.down, index: z * SECTION + x };
+  }
+  if (y === SECTION && x >= 0 && x < SECTION && z >= 0 && z < SECTION) {
+    return { face: halo.up, index: z * SECTION + x };
+  }
+  if (z === -1 && x >= 0 && x < SECTION && y >= 0 && y < SECTION) {
+    return { face: halo.north, index: y * SECTION + x };
+  }
+  if (z === SECTION && x >= 0 && x < SECTION && y >= 0 && y < SECTION) {
+    return { face: halo.south, index: y * SECTION + x };
+  }
+  return null;
+}
+
+function sectionCoordinate(
+  payload: MeshSectionRequestPayload,
+  x: number,
+  y: number,
+  z: number,
+): { cell: number | null; sky: number; block: number; fluidLevel: number; inBounds: boolean } | null {
+  if (x >= 0 && x < SECTION && y >= 0 && y < SECTION && z >= 0 && z < SECTION) {
+    const index = x + y * SECTION + z * SECTION * SECTION;
+    return {
+      cell: payload.cells[index] ?? null,
+      sky: payload.skyLight[index] ?? 0,
+      block: payload.blockLight[index] ?? 0,
+      fluidLevel: payload.fluidLevels?.[index] ?? -1,
+      inBounds: true,
+    };
+  }
+  const mapped = haloCoordinate(payload.halo ?? createEmptySectionHalo(), x, y, z);
+  if (mapped === null) return null;
+  const { face, index } = mapped;
+  return {
+    cell: face.cells[index] ?? null,
+    sky: face.skyLight[index] ?? 0,
+    block: face.blockLight[index] ?? 0,
+    fluidLevel: face.fluidLevels?.[index] ?? -1,
+    inBounds: face.availability[index] !== SAMPLE_OUT_OF_BOUNDS,
+  };
+}
+
+/** Build a section-local light sampler over a validated payload (070/255). */
 export function sectionLightSampler(payload: MeshSectionRequestPayload): LightSampler {
   const opaque = new Set(payload.opaqueIds);
-
-  // The greedy mesher samples with section-LOCAL coordinates (0..15); the payload's
-  // sectionX/Y/Z are identity metadata echoed on results, not sampling offsets.
-  const localIndex = (x: number, y: number, z: number): number | null => {
-    if (x < 0 || x >= SECTION || y < 0 || y >= SECTION || z < 0 || z >= SECTION) return null;
-    return x + y * SECTION + z * SECTION * SECTION;
-  };
-
+  const layerOf = (id: number): number => payload.layerById?.[id] ?? (opaque.has(id) ? MESH_LAYER_OPAQUE : MESH_LAYER_TRANSLUCENT);
   return {
-    inBounds: (x, y, z) => localIndex(x, y, z) !== null,
+    inBounds: (x, y, z) => sectionCoordinate(payload, x, y, z)?.inBounds ?? false,
     isOpaque: (x, y, z) => {
-      const index = localIndex(x, y, z);
-      if (index === null) return false;
-      const id = payload.cells[index];
-      return id !== null && id !== undefined && opaque.has(id);
+      const value = sectionCoordinate(payload, x, y, z);
+      return value?.cell !== null && value?.cell !== undefined && layerOf(value.cell) === MESH_LAYER_OPAQUE;
     },
-    getSkyLight: (x, y, z) => payload.skyLight[localIndex(x, y, z)!]!,
-    getBlockLight: (x, y, z) => payload.blockLight[localIndex(x, y, z)!]!,
+    getSkyLight: (x, y, z) => sectionCoordinate(payload, x, y, z)?.sky ?? 0,
+    getBlockLight: (x, y, z) => sectionCoordinate(payload, x, y, z)?.block ?? 0,
   };
+}
+
+const CUBE_FACES: ReadonlyArray<{
+  face: ModelFace;
+  dx: number;
+  dy: number;
+  dz: number;
+  axis: 0 | 1 | 2;
+  isMax: boolean;
+  xOffset: number;
+  yOffset: number;
+  zOffset: number;
+  widthAxis: 0 | 1 | 2;
+  heightAxis: 0 | 1 | 2;
+}> = [
+  { face: 'east', dx: 1, dy: 0, dz: 0, axis: 0, isMax: true, xOffset: 1, yOffset: 0, zOffset: 0, widthAxis: 2, heightAxis: 1 },
+  { face: 'west', dx: -1, dy: 0, dz: 0, axis: 0, isMax: false, xOffset: 0, yOffset: 0, zOffset: 0, widthAxis: 2, heightAxis: 1 },
+  { face: 'up', dx: 0, dy: 1, dz: 0, axis: 1, isMax: true, xOffset: 0, yOffset: 1, zOffset: 0, widthAxis: 0, heightAxis: 2 },
+  { face: 'down', dx: 0, dy: -1, dz: 0, axis: 1, isMax: false, xOffset: 0, yOffset: 0, zOffset: 0, widthAxis: 0, heightAxis: 2 },
+  { face: 'south', dx: 0, dy: 0, dz: 1, axis: 2, isMax: true, xOffset: 0, yOffset: 0, zOffset: 1, widthAxis: 0, heightAxis: 1 },
+  { face: 'north', dx: 0, dy: 0, dz: -1, axis: 2, isMax: false, xOffset: 0, yOffset: 0, zOffset: 0, widthAxis: 0, heightAxis: 1 },
+];
+
+function layerForId(payload: MeshSectionRequestPayload, id: number | null): number {
+  if (id === null || id === 0) return -1;
+  if (payload.layerById !== undefined) return payload.layerById[id] ?? MESH_LAYER_OPAQUE;
+  return payload.opaqueIds.includes(id) ? MESH_LAYER_OPAQUE : MESH_LAYER_TRANSLUCENT;
+}
+
+function cubeQuad(
+  light: LightSampler,
+  face: (typeof CUBE_FACES)[number],
+  x: number,
+  y: number,
+  z: number,
+  blockId: number,
+  tintClass: number,
+): OpaqueFaceQuad {
+  const [uAxis, vAxis] = inPlaneAxes(face.axis);
+  const cellAxis = face.axis === 0 ? x : face.axis === 1 ? y : z;
+  const planeCoord = cellAxis + (face.isMax ? 1 : 0);
+  const minU = uAxis === 0 ? x : uAxis === 1 ? y : z;
+  const minV = vAxis === 0 ? x : vAxis === 1 ? y : z;
+  const ctx: FaceLightContext = {
+    axis: face.axis,
+    isMax: face.isMax,
+    planeCoord,
+    cellX: x,
+    cellY: y,
+    cellZ: z,
+  };
+  const width = 1;
+  const height = 1;
+  return {
+    face: face.face,
+    x: x + face.xOffset,
+    y: y + face.yOffset,
+    z: z + face.zOffset,
+    width,
+    height,
+    blockId,
+    vertexLights: quadVertexLights(light, ctx, minU, minV, width, height),
+    vertexAO: quadVertexAO(light, ctx, minU, minV, width, height),
+    tintClass,
+  };
+}
+
+function fluidWorld(payload: MeshSectionRequestPayload): { getFluidState(x: number, y: number, z: number): ReturnType<typeof createFluidState> | null } {
+  return {
+    getFluidState: (x, y, z) => {
+      const value = sectionCoordinate(payload, x, y, z);
+      if (value?.cell === null || value?.cell === undefined || value.fluidLevel < 0) return null;
+      return createFluidState(value.cell, value.fluidLevel);
+    },
+  };
+}
+
+function layerAwareQuads(payload: MeshSectionRequestPayload, light: LightSampler): OpaqueFaceQuad[] {
+  const out: OpaqueFaceQuad[] = [];
+  const cutout: OpaqueFaceQuad[] = [];
+  const translucent: OpaqueFaceQuad[] = [];
+  const fluid: OpaqueFaceQuad[] = [];
+  const getCell: FaceCellSampler = (x, y, z) => sectionCoordinate(payload, x, y, z)?.cell ?? null;
+  const tintAt = (x: number, y: number, z: number): number => payload.tintClasses?.[x + y * SECTION + z * SECTION * SECTION] ?? 0;
+
+  // Opaque remains greedy and is emitted first.
+  out.push(...greedyMergeOpaqueFaces(
+    getCell,
+    (id) => layerForId(payload, id) === MESH_LAYER_OPAQUE,
+    (id) => String(id),
+    light,
+  ));
+  for (const quad of out) quad.renderStream = 'opaque';
+
+  for (let y = 0; y < SECTION; y++) {
+    for (let z = 0; z < SECTION; z++) {
+      for (let x = 0; x < SECTION; x++) {
+        const current = sectionCoordinate(payload, x, y, z)?.cell ?? null;
+        const layer = layerForId(payload, current);
+        if (current === null || current === undefined || layer < MESH_LAYER_CUTOUT) continue;
+        if (layer === MESH_LAYER_FLUID) {
+          if (payload.fluidLevels === undefined) continue;
+          const start = fluid.length;
+          meshFluidSurfaceInto(fluidWorld(payload), current, light, x, y, z, fluid);
+          for (let i = start; i < fluid.length; i++) {
+            fluid[i]!.tintClass = tintAt(x, y, z);
+            fluid[i]!.renderStream = 'fluid';
+          }
+          continue;
+        }
+        for (const face of CUBE_FACES) {
+          const neighbor = sectionCoordinate(payload, x + face.dx, y + face.dy, z + face.dz)?.cell ?? null;
+          const neighborLayer = layerForId(payload, neighbor);
+          const visible = layer === MESH_LAYER_TRANSLUCENT
+            ? neighborLayer !== MESH_LAYER_OPAQUE && neighborLayer !== MESH_LAYER_TRANSLUCENT && neighborLayer !== MESH_LAYER_FLUID
+            : neighborLayer !== MESH_LAYER_OPAQUE;
+          if (!visible) continue;
+          const quad = cubeQuad(light, face, x, y, z, current, tintAt(x, y, z));
+          quad.renderStream = layer === MESH_LAYER_CUTOUT ? 'cutout' : 'translucent';
+          (layer === MESH_LAYER_CUTOUT ? cutout : translucent).push(quad);
+        }
+      }
+    }
+  }
+  if (payload.translucentSortOrigin !== undefined) {
+    const [cx, cy, cz] = payload.translucentSortOrigin;
+    translucent.splice(0, translucent.length, ...sortTranslucentBackToFront(translucent, cx, cy, cz));
+  }
+  return [...out, ...cutout, ...translucent, ...fluid];
 }
 
 /**
@@ -309,19 +677,15 @@ export function processMeshSectionRequest(
   }
   assertLightArray('skyLight', payload.skyLight);
   assertLightArray('blockLight', payload.blockLight);
-  const opaque = new Set(payload.opaqueIds);
-
-  // Greedy mesher samples in section-LOCAL coordinates; sectionX/Y/Z are identity only.
-  const getCell: FaceCellSampler = (x, y, z) => {
-    if (x < 0 || x >= SECTION || y < 0 || y >= SECTION || z < 0 || z >= SECTION) {
-      return null;
-    }
-    return payload.cells[x + y * SECTION + z * SECTION * SECTION] ?? null;
-  };
-  const isOpaque = (id: number): boolean => opaque.has(id);
-  const faceKey = (id: number): string => String(id);
-
-  const quads = greedyMergeOpaqueFaces(getCell, isOpaque, faceKey, sectionLightSampler(payload));
+  const light = sectionLightSampler(payload);
+  const quads = payload.layerById === undefined
+    ? greedyMergeOpaqueFaces(
+      (x, y, z) => sectionCoordinate(payload, x, y, z)?.cell ?? null,
+      (id) => payload.opaqueIds.includes(id),
+      (id) => String(id),
+      light,
+    )
+    : layerAwareQuads(payload, light);
   const result: MeshSectionResultPayload = {
     sectionX: payload.sectionX,
     sectionY: payload.sectionY,
@@ -339,6 +703,8 @@ export function processMeshSectionRequest(
  * `handleMessage` themselves. Pool mode posts real worker requests and routes results back through
  * the same exactly-once resolution path.
  */
+export const DEFAULT_MESH_WORKER_TIMEOUT_MS = 10_000;
+
 export class MeshWorkerClient {
   private readonly jobs = new WorkerJobClient();
   private readonly callbacks = new Map<string, (result: MeshSectionResultPayload) => void>();
@@ -346,15 +712,27 @@ export class MeshWorkerClient {
   /** Submission-time token per pending job (mirrors `WorkerJobClient` state for cancellation sweeps). */
   private readonly tokens = new Map<string, number>();
   /** Submission payload per pending job (identity matching against result coordinates). */
-  private readonly requests = new Map<string, MeshSectionRequestPayload>();
+  private readonly requests = new Map<string, MeshSectionRequestTransport>();
   /** Underlying pool correlation ids, used to cancel real worker work with the local job. */
   private readonly poolJobs = new Map<string, string>();
+  /** One wall-clock timeout per pending job; cleared by every terminal path. */
+  private readonly timeoutHandles = new Map<string, ReturnType<typeof setTimeout>>();
+  private readonly timeoutMs: number;
   private pool: WorkerPool | null = null;
   private generationToken = 0;
 
-  constructor(opts: { pool?: WorkerPool; generationToken?: number } = {}) {
+  constructor(opts: {
+    pool?: WorkerPool;
+    generationToken?: number;
+    /** Maximum time a mesh job may remain unresolved; set to 0 only for a fully synchronous harness. */
+    timeoutMs?: number;
+  } = {}) {
     if (opts.pool) this.pool = opts.pool;
     if (opts.generationToken !== undefined) this.generationToken = opts.generationToken;
+    this.timeoutMs = opts.timeoutMs ?? DEFAULT_MESH_WORKER_TIMEOUT_MS;
+    if (!Number.isFinite(this.timeoutMs) || this.timeoutMs < 0) {
+      throw new RangeError('MeshWorkerClient: timeoutMs must be a finite non-negative number');
+    }
   }
 
   /** Attach a shared worker pool; subsequent requests are dispatched to real workers. */
@@ -372,7 +750,7 @@ export class MeshWorkerClient {
 
   /** Submit a section meshing job; callbacks fire at most once. */
   requestSection(
-    payload: MeshSectionRequestPayload,
+    payload: MeshSectionRequestTransport,
     onResult: (result: MeshSectionResultPayload) => void,
     onRejected?: () => void,
   ): string {
@@ -416,6 +794,9 @@ export class MeshWorkerClient {
         throw err;
       }
     }
+    if (this.timeoutMs > 0 && this.callbacks.has(jobId)) {
+      this.timeoutHandles.set(jobId, setTimeout(() => this.timeoutJob(jobId), this.timeoutMs));
+    }
     return jobId;
   }
 
@@ -456,6 +837,14 @@ export class MeshWorkerClient {
       return null;
     }
     return this.complete(outcome.jobId, payload, outcome.generationToken);
+  }
+
+  /** Reject an unresolved job after its bounded wall-clock deadline. */
+  private timeoutJob(jobId: string): void {
+    if (!this.callbacks.has(jobId)) return;
+    const poolJobId = this.poolJobs.get(jobId);
+    if (poolJobId !== undefined) this.pool?.cancel(poolJobId);
+    this.reject(jobId);
   }
 
   /** Cancel a pending job (its late result becomes stale). */
@@ -548,6 +937,11 @@ export class MeshWorkerClient {
 
   /** Drop all per-job bookkeeping without invoking callbacks. */
   private abandon(jobId: string): void {
+    const timeoutHandle = this.timeoutHandles.get(jobId);
+    if (timeoutHandle !== undefined) {
+      clearTimeout(timeoutHandle);
+      this.timeoutHandles.delete(jobId);
+    }
     this.jobs.cancel(jobId);
     this.callbacks.delete(jobId);
     this.rejectionCallbacks.delete(jobId);
@@ -565,11 +959,7 @@ export class MeshWorkerClient {
 interface PackedFaceLayout {
   /** Outward normal. */
   normal: [number, number, number];
-  /**
-   * Min-corner vertex offset (block units) plus unit U/V edge directions.
-   * Corners are emitted in the canonical `(minU,minV), (maxU,minV), (minU,maxV),
-   * (maxU,maxV)` order; winding is CCW from outside, matching `ChunkMesher`.
-   */
+  /** Min-corner vertex offset plus canonical face-winding U/V directions. */
   origin: [number, number, number];
   uDir: [number, number, number];
   vDir: [number, number, number];
@@ -577,11 +967,11 @@ interface PackedFaceLayout {
 
 /** Expansion layouts indexed by `FACE_INDEX` (up, down, north, south, east, west). */
 const PACKED_FACE_LAYOUTS: readonly PackedFaceLayout[] = [
-  { normal: [0, 1, 0], origin: [0, 1, 0], uDir: [1, 0, 0], vDir: [0, 0, 1] }, // up    (+Y)
+  { normal: [0, 1, 0], origin: [0, 0, 0], uDir: [0, 0, 1], vDir: [1, 0, 0] }, // up    (+Y)
   { normal: [0, -1, 0], origin: [0, 0, 0], uDir: [1, 0, 0], vDir: [0, 0, 1] }, // down  (-Y)
-  { normal: [0, 0, -1], origin: [0, 0, 0], uDir: [1, 0, 0], vDir: [0, 1, 0] }, // north (-Z)
-  { normal: [0, 0, 1], origin: [0, 0, 1], uDir: [1, 0, 0], vDir: [0, 1, 0] }, // south (+Z)
-  { normal: [1, 0, 0], origin: [1, 0, 0], uDir: [0, 0, 1], vDir: [0, 1, 0] }, // east  (+X)
+  { normal: [0, 0, -1], origin: [0, 0, 0], uDir: [0, 1, 0], vDir: [1, 0, 0] }, // north (-Z)
+  { normal: [0, 0, 1], origin: [0, 0, 0], uDir: [1, 0, 0], vDir: [0, 1, 0] }, // south (+Z)
+  { normal: [1, 0, 0], origin: [0, 0, 0], uDir: [0, 1, 0], vDir: [0, 0, 1] }, // east  (+X)
   { normal: [-1, 0, 0], origin: [0, 0, 0], uDir: [0, 0, 1], vDir: [0, 1, 0] }, // west  (-X)
 ];
 
@@ -624,7 +1014,7 @@ export function packedQuadGeometryInputs(
   const layout = PACKED_FACE_LAYOUTS[faceIndex]!;
   const corners: [number, number, number][] = [];
   for (let c = 0; c < 4; c++) {
-    const cu = c === 1 || c === 3 ? quad.width : 0;
+    const cu = c === 1 || c === 2 ? quad.width : 0;
     const cv = c >= 2 ? quad.height : 0;
     corners.push([
       quad.x + layout.origin[0] + layout.uDir[0] * cu + layout.vDir[0] * cv,
@@ -677,7 +1067,7 @@ class TypedExpandStream {
     const nz = layout.normal[2];
 
     for (let c = 0; c < 4; c++) {
-      const cu = c === 1 || c === 3 ? width : 0;
+      const cu = c === 1 || c === 2 ? width : 0;
       const cv = c >= 2 ? height : 0;
 
       const pIdx = this.vIdx;
@@ -694,7 +1084,7 @@ class TypedExpandStream {
       this.tint[pIdx + 2] = tb;
 
       const uvIdx = (base + c) * 2;
-      this.uvs[uvIdx] = c === 1 || c === 3 ? uv.u1 : uv.u0;
+      this.uvs[uvIdx] = c === 1 || c === 2 ? uv.u1 : uv.u0;
       this.uvs[uvIdx + 1] = c >= 2 ? uv.v1 : uv.v0;
 
       const lightBase = offset + 10 + c * 3;
@@ -749,7 +1139,7 @@ export function expandPackedMeshResult(packed: PackedMeshResult, info: PackedMes
   for (let q = 0; q < packed.quadCount; q++) {
     const o = q * packed.stride;
     const blockId = packed.data[o + 5]!;
-    const name = info.renderLayerOf(blockId);
+    const name = packed.streamNames?.[q] ?? info.renderLayerOf(blockId);
     streamNames[q] = name;
     quadCounts[name]++;
   }

@@ -1,23 +1,23 @@
 {
   "schemaVersion": 1,
   "program": "minecraft-parity",
-  "status": "COMPLETE",
-  "currentChange": "253-live-world-architecture-convergence",
-  "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "253-live-world-architecture-convergence",
+  "status": "ACTIVE",
+  "currentChange": "255-high-performance-voxel-engine",
+  "currentChangeStatus": "ACTIVE",
+  "lastCompletedChange": "254-whole-codebase-performance-optimization",
   "nextChange": null,
-  "completedTasks": 138,
-  "totalTasks": 138,
-  "completionPercentage": 100,
+  "completedTasks": 5,
+  "totalTasks": 37,
+  "completionPercentage": 13.51,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
-  "mandatoryRequirementsPass": true,
-  "requiredTestsPass": true,
-  "advancementAllowed": true,
+  "mandatoryRequirementsPass": false,
+  "requiredTestsPass": false,
+  "advancementAllowed": false,
   "exceptionUsed": false,
-  "sessionStartHead": "368bb85df191815f90739fa8ea18c9bf85dfb790",
-  "lastCompletedTask": "Completed and archived Change 253 with 138/138 tasks: hosted canonical Linux resource evidence, exact-SHA canonical gate/e2e success, synced live-world capability spec, and terminal handoff.",
-  "nextExactAction": "No further Change-253 action is required; the archived verification and terminal state are the authoritative release handoff.",
+  "sessionStartHead": "93dbb09292c7d8a5830acd0cdd6aad22ff009a93",
+  "lastCompletedTask": "255 task 5 complete: immutable content-derived worker registry tables, initialization/version validation, table-backed requests without per-request registry reconstruction, and respawn initialization coverage; focused worker suites pass.",
+  "nextExactAction": "Begin task 6: replace hot-path nested JS arrays with validated typed buffers and transferable ownership; test detached/duplicate ownership behavior.",
   "blockers": [],
   "validationResults": [
     {
@@ -2426,11 +2426,11 @@
       "e2eTests": 40
     },
     {
-      "change": "hardening/2026-08-23-exhaustive-repository-certification",
-      "status": "VERIFIED",
-      "unitTests": 4206,
-      "e2eTests": 46,
-      "note": "Closed 2026-08-23: candidate e56b83a canonical CI run 32620103123 SUCCESS — gate job 97148797875 (validate-state/typecheck/lint/build/bundle/unit 325 files 4186 passed +1 skipped on CI/coverage/audits x2) and e2e job 97148797928 both green. Local re-gate matched (unit 326 files 4206 +1 skipped incl. validators). Verdict READY WITH EXPLICIT NON-BLOCKING DEBT now unconditional; risk register R-1..R-9 stands."
+      "change": "255-high-performance-voxel-engine",
+      "status": "ACTIVE",
+      "unitTests": 4453,
+      "e2eTests": 51,
+      "note": "Tasks 1-5 complete (5/37, 13.51%). Task 5 adds immutable content-derived registry tables, versioned worker initialization, zero-copy table-backed request validation, immutable replay/replacement protection, and respawn initialization coverage. Focused worker suites pass 85/85; full unit gate passes 4453 + 1 skipped; typecheck, lint, build, and full E2E pass (51/51). Next exact action is task 6 typed transferable buffers and ownership validation."
     }
   ],
   "publicationHistory": [

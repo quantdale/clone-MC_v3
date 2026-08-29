@@ -11,7 +11,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2568,
+  "total": 2582,
   "pending": 0,
   "unclassified": 0,
   "rows": [
@@ -42221,6 +42221,232 @@
       "findingIds": [],
       "disposition": "TEST_ONLY",
       "reviewNotes": "Synced from the archived Change-253 normative spec after verification; reviewed against the archived verification and exact canonical CI authority.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/255-high-performance-voxel-engine/.openspec.yaml",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "evidence",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/255-high-performance-voxel-engine/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "evidence",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/255-high-performance-voxel-engine/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "evidence",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/255-high-performance-voxel-engine/specs/high-performance-voxel-engine/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "evidence",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/255-high-performance-voxel-engine/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "evidence",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/255-high-performance-voxel-engine/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "evidence",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
+      "status": "audited"
+    },
+    {
+      "path": "src/rendering/MeshWorkerRegistry.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Immutable worker registry classification table; validates protocol, content-derived table identity, layers, and opaque IDs.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "task-5 focused worker/registry suite"
+      ],
+      "riskAreas": [
+        "protocol",
+        "determinism",
+        "ownership"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
+      "status": "audited"
+    },
+    {
+      "path": "src/world/SectionSnapshot.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Canonical 16^3 section and six-face halo snapshot extraction with explicit availability states.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "task-5 focused worker/registry suite"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/bench/support/performanceBaseline.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "task-5 focused worker/registry suite"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/e2e/performance-baseline.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "task-5 focused worker/registry suite"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/PerformanceBaseline.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "task-5 focused worker/registry suite"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/SectionSnapshot.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "task-5 focused worker/registry suite"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/WorkerRegistryInitialization.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Task-5 tests for deterministic/frozen registry tables, initialization validation, zero-copy table-backed requests, and respawn initialization.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "task-5 focused worker/registry suite"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
       "status": "audited"
     }
   ]

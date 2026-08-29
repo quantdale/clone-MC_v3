@@ -882,6 +882,11 @@ export class Game {
     );
   }
 
+  /** Test-only read-only performance snapshot for release baseline characterization. */
+  getPerformanceSnapshot(): string {
+    return this.perfMonitor.exportJSON();
+  }
+
   /** Test-only hook (239): force the next update to throw and enter the error state. */
   failSimulation(): void {
     this.failNextUpdate = true;
