@@ -1,7 +1,7 @@
 # Verification: 253-live-world-architecture-convergence
 
 Status: ACTIVE — NOT VERIFIED
-Completion: 93.48% (129/138 tasks)
+Completion: 94.93% (131/138 tasks)
 Advancement allowed: false
 Exception used: false
 
@@ -294,8 +294,8 @@ Run from the exact intended candidate unless the row explicitly says baseline.
 | publish candidate to `origin/main` | PASS | Implementation candidate `721fdfc40d11037a62c3c027169c3d7e3d8df323` pushed normally; remote refetch matched exactly. |
 | canonical GitHub Actions `gate` exact candidate | PASS | Run `33248984417`, gate job `99091261952`, exact head `721fdfc40d11037a62c3c027169c3d7e3d8df323`; validate-state/typecheck/lint/build/bundle/unit/coverage/dependency audits all passed. |
 | canonical GitHub Actions `e2e` exact candidate | FAIL / BLOCKER | Run `33248984417`, E2E job `99091261913`, exact head `721fdfc40d11037a62c3c027169c3d7e3d8df323`; 49 tests passed, and only `tests/e2e/visual-regression.spec.ts` failed because the 245-cell committed `linux-ci` visual matrix exceeded thresholds. |
-| lineage-valid evidence/state follow-up commit | PENDING | This metadata follow-up is being prepared after implementation publication; its SHA will be recorded only after commit. |
-| final remote-head refetch | PASS | `git ls-remote origin refs/heads/main` returned `721fdfc40d11037a62c3c027169c3d7e3d8df323`. |
+| lineage-valid evidence/state follow-up commit | PASS | Evidence/state commit `40fa5335a1df8b21c2b37c31fe136adb096387d0` was committed after implementation checkpoint `721fdfc40d11037a62c3c027169c3d7e3d8df323` and published normally. |
+| final remote-head refetch | PASS | `git ls-remote origin refs/heads/main` returned `40fa5335a1df8b21c2b37c31fe136adb096387d0`. |
 ## Exhaustive inventory evidence
 
 ### Pre-migration
@@ -530,9 +530,9 @@ If used, it MUST prove every incomplete task is non-blocking and implements/veri
 `session_start_head`: `368bb85df191815f90739fa8ea18c9bf85dfb790`
 Implementation candidate: `721fdfc40d11037a62c3c027169c3d7e3d8df323` (published implementation checkpoint).
 Canonical CI run: `33248984417` on exact head `721fdfc40d11037a62c3c027169c3d7e3d8df323`; gate job `99091261952` PASS; E2E job `99091261913` FAIL after 49 passed tests because the 245-cell `linux-ci` visual matrix exceeded thresholds.
-Evidence/state commit: PENDING — this lineage-valid follow-up is being committed after the implementation checkpoint.
-`published_head`: PENDING — will be recorded after this evidence/state follow-up is pushed.
-Remote-head verification: PASS for implementation checkpoint — `git ls-remote origin refs/heads/main` matched `721fdfc40d11037a62c3c027169c3d7e3d8df323`.
+Evidence/state commit: `40fa5335a1df8b21c2b37c31fe136adb096387d0` (lineage-valid follow-up after implementation checkpoint).
+`published_head`: `40fa5335a1df8b21c2b37c31fe136adb096387d0` (final handoff metadata boundary).
+Remote-head verification: PASS — `git ls-remote origin refs/heads/main` matched `40fa5335a1df8b21c2b37c31fe136adb096387d0` before this final metadata follow-up.
 
 ## Final decision
 

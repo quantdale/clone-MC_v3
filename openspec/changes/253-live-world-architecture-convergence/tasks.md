@@ -1,6 +1,6 @@
 # Tasks: 253-live-world-architecture-convergence
 
-Status: ACTIVE — 129/138 tasks have implementation/evidence; task 23 remains blocked by the documented browser canvas limitation, the exact-SHA canonical E2E visual matrix remains red on `linux-ci` thresholds, and lineage/archival/final-handoff tasks remain unchecked.
+Status: ACTIVE — 131/138 tasks have implementation/evidence; task 23 remains blocked by the documented browser canvas limitation, the exact-SHA canonical E2E visual matrix remains red on `linux-ci` thresholds, and remediation/archival/final-report tasks remain unchecked.
 
 Rules:
 
@@ -177,10 +177,10 @@ Rules:
 - [x] Push normally to `origin/main`, fetch/refetch, and verify exact remote head.
 - [x] Obtain canonical GitHub Actions `gate` and `e2e` results for that exact candidate.
 - [ ] If canonical jobs fail, diagnose/fix/re-publish; do not record conditional SUCCESS as VERIFIED.
-- [ ] Record lineage-valid release authority in a later evidence/state commit so a commit does not claim its own SHA.
+- [x] Record lineage-valid release authority in a later evidence/state commit so a commit does not claim its own SHA.
 - [x] Re-run state validation after evidence recording.
 - [ ] Mark 253 VERIFIED only when mandatory requirements/tests and completion gate are satisfied.
 - [ ] Archive the completed OpenSpec package under repository convention and sync canonical capability specs if required by the project.
 - [ ] Mark `.agent/EXECUTION_PROMPT.md` COMPLETED and set the next exact action truthfully.
-- [ ] Push final coherent evidence/handoff commit, refetch `origin/main`, and record `published_head`.
+- [x] Push final coherent evidence/handoff commit, refetch `origin/main`, and record `published_head`.
 - [ ] Final executor report MUST include `session_start_head`, `published_head`, active/final status, completed/total tasks and %, every mandatory command result, benchmark/stress summary, CI run evidence, blockers/residual debt, post-audit result, and next exact action.
