@@ -5,6 +5,8 @@ import { createDefaultBlockRegistry, BlockId } from '../../src/world/BlockRegist
 import { Chunk, ChunkState } from '../../src/world/Chunk';
 import { CONFIG } from '../../src/config';
 import { OVERWORLD_DIMENSION_TYPE } from '../../src/data/DimensionTypes';
+import { createDefaultBlockStateRegistry } from '../../src/world/BlockStateRegistry';
+import { emptyMeshBuildResult, type ChunkMeshResult } from '../../src/world/MeshingTypes';
 import type { DimensionType } from '../../src/data/DimensionType';
 
 /**
@@ -81,6 +83,50 @@ function makeRecordingWorld(seed = 1): { world: World; meshedKeys: string[] } {
   return { world, meshedKeys };
 }
 
+function makeCanonicalSectionWorld(): World {
+  const registry = createDefaultBlockRegistry();
+  const stateRegistry = createDefaultBlockStateRegistry();
+  const scene = new THREE.Scene();
+  const materials = {
+    opaque: new THREE.MeshLambertMaterial(),
+    transparent: new THREE.MeshLambertMaterial(),
+  };
+  const generator = {
+    generateColumn(): void {
+      // Keep the canonical column air-filled; tests write target sections explicitly.
+    },
+    getHeightAt(): number {
+      return 0;
+    },
+  };
+  const mesher = {
+    mesh(): { opaque: null; transparent: null } {
+      return { opaque: null, transparent: null };
+    },
+    meshSection(): ChunkMeshResult {
+      return {
+        opaque: null,
+        transparent: null,
+        cutout: null,
+        translucent: null,
+        fluid: null,
+        streams: emptyMeshBuildResult(),
+      };
+    },
+  };
+  return new World({
+    registry,
+    stateRegistry,
+    seed: 1,
+    scene,
+    mesher: mesher as never,
+    generator: generator as never,
+    materials,
+    renderDistance: 0,
+    dimension: OVERWORLD_DIMENSION_TYPE,
+  });
+}
+
 describe('world dirty propagation and edits', () => {
   /** Stream around the player chunk long enough for the target chunk to be
    *  generated and meshed. */
@@ -95,6 +141,47 @@ describe('world dirty propagation and edits', () => {
     }
   }
 
+  it('uses canonical sections as live mesh invalidation units and preserves sibling ownership', () => {
+    const world = makeCanonicalSectionWorld();
+    const stateRegistry = createDefaultBlockStateRegistry();
+    const column = world.storage.ensureColumn(0, 0);
+    const neighbor = world.storage.ensureColumn(-1, 0);
+    const stone = stateRegistry.getDefaultState(BlockId.Stone);
+    const sectionMeshes = (world as unknown as { sectionMeshGroups: Map<string, unknown> }).sectionMeshGroups;
+
+    world.setBlock(8, 8, 8, BlockId.Stone);
+    world.setBlock(8, 24, 8, BlockId.Stone);
+    world.setBlock(-8, 8, 8, BlockId.Stone);
+    for (let frame = 0; frame < 200; frame++) {
+      world.update(1 / 60, 0, 0);
+      const stats = world.getStats();
+      if (stats.pendingGeneration === 0 && stats.pendingMesh === 0) break;
+    }
+
+    expect(sectionMeshes.has('0,0,0')).toBe(true);
+    expect(sectionMeshes.has('0,1,0')).toBe(true);
+    const siblingMeshes = sectionMeshes.get('0,1,0');
+    column.clearMeshDirty(4);
+    column.clearMeshDirty(5);
+    neighbor.clearMeshDirty(4);
+
+    world.setBlock(8, 8, 8, BlockId.Glass);
+    expect(column.meshDirtySectionIndices()).toEqual([4]);
+    expect(neighbor.meshDirtySectionIndices()).toEqual([]);
+
+    world.update(1 / 60, 0, 0);
+    expect(column.meshDirtySectionIndices()).not.toContain(5);
+    expect(sectionMeshes.get('0,1,0')).toBe(siblingMeshes);
+
+    column.clearMeshDirty(4);
+    neighbor.clearMeshDirty(4);
+    world.storage.setCanonicalState(0, 8, 8, stone);
+    world.setBlock(0, 8, 8, BlockId.Glass);
+    expect(column.meshDirtySectionIndices()).toContain(4);
+    expect(neighbor.meshDirtySectionIndices()).toContain(4);
+
+    world.dispose();
+  });
   it('iterates materialized canonical sections with dimension-aware negative and top Y', () => {
     const world = makeWorld(1, OVERWORLD_DIMENSION_TYPE);
     world.setBlock(-17, -64, -1, BlockId.Stone);

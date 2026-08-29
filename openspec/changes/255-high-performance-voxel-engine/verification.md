@@ -1,7 +1,7 @@
 # Verification: 255-high-performance-voxel-engine
 
-Status: ACTIVE — task 8 complete
-Completion: 8/37 tasks (21.62%)
+Status: ACTIVE — task 9 complete
+Completion: 9/37 tasks (24.32%)
 Advancement allowed: false
 
 ## Requirement evidence
@@ -14,7 +14,7 @@ Advancement allowed: false
 | Worker initialization tables and version validation | `MeshWorkerRegistry.ts` builds deterministic frozen content-derived tables; `validateMeshWorkerRegistryTable` rejects protocol/version, layer, opaque classification, and forged `tableId` values. `WorkerJobProtocol` validates initialization envelopes; `MeshWorkerEntry` accepts the first valid table, allows an identical replay, and rejects replacement. `World` initializes every pool worker, including respawns, and table-backed requests carry only `registryTableId`; validation reuses the initialized frozen arrays by reference rather than reconstructing registry arrays per request. | PASS — task 5 |
 | Typed transferable worker data is bounded and ownership-safe | `src/rendering/MeshSectionTransfer.ts` normalizes legacy arrays into typed section/halo views, enforces exact constructors and lengths, rejects detached/non-owned and duplicate buffers, enforces the default 1 MiB aggregate byte cap, and returns unique transferables. `MeshWorkerClient` validates and transfers the envelope; `World.buildSectionPayload` supplies canonical typed snapshot buffers without `Array.from`; `WorkerPool` fails transferred in-flight jobs instead of requeueing detached ownership. `tests/unit/MeshSectionTransfer.test.ts` covers typed-only validation, cap rejection, duplicate/detached rejection, transfer propagation, and worker-loss behavior. | PASS — task 6 |
 | Typed GPU-ready worker layer streams and result caps | `src/rendering/TypedMeshStreams.ts` validates opaque/cutout/translucent/fluid typed streams, complete-quad counts, attribute constructors and lengths, index bounds, byte accounting, aggregate byte/quad/vertex caps, duplicate ownership, and deduplicated transferables. `WorkerMeshing` uses shared `MeshBuildResultBuilder`/`emitQuad` conventions plus registry tile metadata; `MeshWorkerEntry` transfers direct stream buffers; `World` consumes streams directly with packed legacy fallback. Focused stream and registry-backed production-path regressions pass. | PASS — task 7 |
-| Worker-vs-reference geometry, lighting, AO, fluid, and visual parity | `tests/unit/WorkerMeshParity.test.ts` now compares direct typed worker streams against an independent `ChunkMesher` + `FluidSurfaceMesher` reference fixture containing Stone, Leaves, Glass, and Water. Sorted canonical quad signatures cover positions, normals, UVs, sky/block light, AO, tint, normalized triangle indices, per-layer counts, and all four streams. The existing packed-path parity and full visual regression suite remain green; no golden update was required. | PASS — task 8 |
+| Live canonical section invalidation and ownership | `World` marks the target and every face-dependent canonical 16³ section dirty on edits, invalidates materialized sections when light propagation changes, and uses the legacy chunk only as a bounded scheduling bridge. `processCanonicalSectionMeshing` attaches/replaces geometry by canonical `(sectionX, sectionY, sectionZ)` key without touching sibling sections. `World.test.ts` covers live target/sibling isolation and horizontal dependency invalidation; saturation, resource plateau, dense edit locality, light, ownership, and geometry-disposal suites remain green. | PASS — task 9 |
 | Deterministic world generation is workerized with atomic canonical commit | Not implemented; tasks 12–14 remain incomplete. | NOT RUN |
 | Mesh-ready and GPU upload stages are independently bounded | Not implemented; tasks 15–18 remain incomplete. | NOT RUN |
 | Streaming priority/hysteresis prevents interactive starvation | Not implemented; tasks 19–21 remain incomplete. | NOT RUN |
@@ -25,33 +25,32 @@ Advancement allowed: false
 ## Commands
 | Command | Result | Evidence/notes |
 |---|---|---|
-| `node scripts/validate-file-audit.mjs openspec/hardening/2026-08-23-exhaustive-repository-certification/file-audit-manifest.json` | PASS | Reviewed manifest validated with 2586 rows; task-8 parity test and typed-stream production files are represented. |
-| `npm run validate-state` | PASS | State validator passed before the task-8 checkpoint update; it will be rerun after state synchronization. |
-| `npm run typecheck` | PASS | Direct typed-stream parity oracle and worker/reference fixture compile cleanly. |
+| `npm run validate-state` | PASS | State validator passed before and after the task-9 checkpoint synchronization. |
+| `npm run typecheck` | PASS | Canonical section invalidation changes and live World regression compile cleanly. |
 | `npm run lint` | PASS | ESLint passed. |
-| `npm test` | PASS | 367 test files; 4464 passed, 1 skipped (4465 total). Expected invalid-state/file-audit subprocess diagnostics are covered by negative-case tests; the reviewed manifest validation passes. |
+| `npm test` | PASS | 367 test files; 4465 passed, 1 skipped (4466 total). Expected negative-case state/file-audit diagnostics are subprocess test output; the full suite remains green. |
 | `npm run build` | PASS | `tsc --noEmit && vite build`; 188 modules transformed and production bundle built successfully. |
-| `npm run test:e2e` | PASS | 51/51 passed, including gameplay, persistence, vertical-world, resource/memory, performance baseline, and visual regression coverage. |
-| Focused task-8 parity suite | PASS | `npx vitest run tests/unit/WorkerMeshParity.test.ts tests/unit/TypedMeshStreams.test.ts`: 2 files, 11 tests passed; direct typed streams and packed worker output both match the independent reference contracts. |
-| Focused task-7 stream/registry suite | PASS | Typed stream validation, registry initialization, worker meshing, worker entry, and production-shaped transport coverage remains green in the full unit gate. |
+| `npm run test:e2e` | PASS | Clean rerun on a fresh preview server: 51/51 passed in 23.1 minutes, including visual regression, gameplay, persistence, vertical-world, resource/memory, and performance-baseline coverage. |
+| Focused task-9 live-section suites | PASS | `npx vitest run tests/unit/World.test.ts tests/unit/VerticalNeighborDirtying.test.ts tests/unit/WorldGeometryDisposal.test.ts tests/unit/WorldOwnershipReclamation.test.ts tests/unit/WorldStreamingSaturation.test.ts tests/unit/WorldRealResourcePlateau.test.ts tests/unit/WorldDenseEditLocality.test.ts tests/unit/WorldLightStorage.test.ts tests/unit/SeedChunkLightEquivalence.test.ts`: 9 files, 51 tests passed. |
+| Focused task-8 parity suite | PASS | `WorkerMeshParity`/`TypedMeshStreams` remain green in the full unit gate; direct typed streams and packed worker output still match independent references. |
 
 ## Edge/adversarial validation
-Task 8's independent parity oracle rejects any direct typed-stream geometry or shading drift across opaque, cutout, translucent, and fluid layers. It covers greedy-versus-cube ordering by comparing sorted canonical quad signatures while retaining exact positions, normals, UVs, sky/block light, AO, tint, normalized triangle indices, and per-layer counts. Existing task-7 validation rejects unexpected typed-array constructors, malformed array/count relationships, incomplete quad counts, out-of-range indices, forged byte lengths, aggregate byte/quad/vertex cap violations, duplicate buffer ownership, and mixed packed/layer result forms before geometry attachment. Existing task-4/task-6 suites cover malformed/foreign/duplicate/stale/cancelled/timed-out results, detached buffers, and worker loss.
+Task 9 covers canonical target/sibling isolation, horizontal face-dependency invalidation, vertical section ownership, light-driven canonical invalidation, stale dirty-section retry behavior, rapid queue saturation, geometry replacement/disposal, and resource plateau under teleport churn. The legacy chunk remains only a bounded scheduling projection; canonical `ChunkColumn`/`ChunkSection` dirty and mesh-version state is the render invalidation authority. Existing task-8 typed-stream, task-6 ownership, and task-4 stale/cancel/timeout suites remain green.
 
 ## Migration/compatibility validation
-No persisted schema migration is intended. Legacy quad and packed worker results remain accepted with their existing caps and expansion fallback; registry-backed production requests use direct typed layer streams. The packed worker/reference parity path remains covered, and no canonical storage, save format, or visual golden is changed.
+No persisted schema migration is intended. Legacy chunk mesh callers remain supported, while explicit-dimension live rendering uses canonical section geometry groups keyed by section coordinates. Compatibility slabs are synchronized projections and scheduling bridges only; canonical block/light storage, save formats, render-layer semantics, and visual goldens are unchanged.
 
 ## Performance/resource validation
-Task 8 adds no runtime allocation path beyond the existing direct typed streams and adds no visual-quality reduction. The task-1 browser baseline remains explicit: `lod-horizon` is unavailable until the later LOD tasks and is not fabricated. Full unit/build/E2E gates remain green; the production worker fast path remains disabled by the existing `useWorkers` switch and is intentionally deferred to task 10.
+Task 9 adds bounded section-scoped invalidation without changing render distance or disabling visual systems. Saturated streaming terminates and progresses; dense edit locality remeshes only touched sections and dependencies; real resource plateau and ownership reclamation suites pass. The production worker fast path remains disabled by the existing `useWorkers` switch and is intentionally deferred to task 10.
 
 ## Regressions
-No code, typecheck, lint, unit, build, E2E, or manifest regression remains. The full visual regression suite passed 51/51 E2E tests without updating goldens. `git diff --check` reports CRLF lines as trailing whitespace in the existing CRLF-formatted production modules (`WorkerMeshing.ts`, `MeshWorkerEntry.ts`); this is a repository line-ending/tooling formatting limitation, not an ESLint/compiler failure. The original line-ending convention is preserved to avoid a full-file newline-only diff.
+No code, typecheck, lint, unit, build, E2E, or visual regression remains. Full unit validation passed 4465 tests plus 1 skipped; clean E2E rerun passed 51/51 in 23.1 minutes with visual goldens unchanged. An earlier E2E attempt timed out because a stale `vite preview` process occupied port 4173; after terminating that process, the targeted pointer-lock test passed 1/1 and the clean full rerun passed 51/51. `git diff --check` reports CRLF lines as trailing whitespace in the touched test file; the repository line-ending convention is preserved to avoid a newline-only diff.
 
 ## Incomplete tasks
-Tasks 1–8 are complete. Tasks 9–37 remain incomplete; no advancement exception applies. Task 9 is intentionally next: make canonical 16³ sections the live mesh invalidation/ownership unit while retaining compatibility projections only as bounded scheduling bridges.
+Tasks 1–9 are complete. Tasks 10–37 remain incomplete; no advancement exception applies. Task 10 is intentionally next: integrate validated worker section meshing into live `World` with safe synchronous fallback and a runtime diagnostic switch.
 
 ## Advancement Exception
 Not applicable.
 
 ## Final decision
-ACTIVE, not verified. Tasks 1–8 are complete with focused and full local evidence. Continue with task 9 live canonical-section mesh invalidation/ownership; the full Change 255 advancement gate remains unmet.
+ACTIVE, not verified. Tasks 1–9 are complete with focused and full local evidence. Continue with task 10 worker section integration; the full Change 255 advancement gate remains unmet.

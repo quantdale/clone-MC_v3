@@ -13,7 +13,7 @@
 - [x] 8. Add worker-vs-reference geometry/lighting/AO/fluid parity tests and update only intentionally equivalent visual evidence.
 
 ## Campaign C — live section rendering
-- [ ] 9. Make canonical 16³ sections the live mesh invalidation/ownership unit while retaining compatibility projections only as bounded scheduling bridges.
+- [x] 9. Make canonical 16³ sections the live mesh invalidation/ownership unit while retaining compatibility projections only as bounded scheduling bridges.
 - [ ] 10. Integrate validated worker section meshing into live `World` with safe synchronous fallback and a runtime diagnostic switch.
 - [ ] 11. Verify section edits, vertical/horizontal borders, lighting invalidation, rapid replacement/unload, and queue saturation without starvation or main-thread spin.
 

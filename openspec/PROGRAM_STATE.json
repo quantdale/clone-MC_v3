@@ -6,9 +6,9 @@
   "currentChangeStatus": "ACTIVE",
   "lastCompletedChange": "254-whole-codebase-performance-optimization",
   "nextChange": null,
-  "completedTasks": 8,
+  "completedTasks": 9,
   "totalTasks": 37,
-  "completionPercentage": 21.62,
+  "completionPercentage": 24.32,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": false,
@@ -16,8 +16,8 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "93dbb09292c7d8a5830acd0cdd6aad22ff009a93",
-  "lastCompletedTask": "255 task 8 complete: direct typed worker streams are compared against an independent ChunkMesher/FluidSurfaceMesher reference across opaque, cutout, translucent, and fluid layers, including positions, normals, UVs, sky/block light, AO, tint, normalized indices, and counts; focused parity passes 11/11, full unit/build/E2E/file-audit gates pass, and visual goldens remain unchanged.",
-  "nextExactAction": "Begin task 9: make canonical 16³ sections the live mesh invalidation/ownership unit while retaining compatibility projections only as bounded scheduling bridges.",
+  "lastCompletedTask": "255 task 9 complete: canonical 16³ section target and face-dependency invalidation is live, light propagation invalidates materialized canonical sections, compatibility chunks remain bounded scheduling projections, and focused live-section/resource/streaming suites plus full local gates pass.",
+  "nextExactAction": "Begin task 10: integrate validated worker section meshing into live World with safe synchronous fallback and a runtime diagnostic switch.",
   "blockers": [],
   "validationResults": [
     {
@@ -2428,9 +2428,9 @@
     {
       "change": "255-high-performance-voxel-engine",
       "status": "ACTIVE",
-      "unitTests": 4464,
+      "unitTests": 4465,
       "e2eTests": 51,
-      "note": "Tasks 1-8 complete (8/37, 21.62%). Task 7 adds validated typed GPU-ready opaque/cutout/translucent/fluid streams, registry-derived tile metadata, aggregate byte/quad/vertex caps, and direct worker transfer. Task 8 adds independent worker-vs-reference parity for positions, normals, UVs, sky/block light, AO, tint, normalized indices, counts, and all four layers. Focused parity passes 11/11; full typecheck/lint/unit/build/E2E/file-audit gates pass (4464 + 1 skipped, 51/51); visual goldens remain unchanged. Next exact action is task 9 canonical 16³ live mesh invalidation/ownership."
+      "note": "Tasks 1-9 complete (9/37, 24.32%). Task 9 makes canonical 16³ section target and face-dependency invalidation live, invalidates materialized canonical sections after light propagation, and retains compatibility chunks only as bounded scheduling bridges. Focused live-section/resource/streaming suites pass (9 files, 51 tests); full typecheck/lint/unit/build gates pass (4465 + 1 skipped, 51 E2E); clean E2E rerun passes 51/51 and visual goldens remain unchanged. Next exact action is task 10 validated worker section integration with synchronous fallback and diagnostic switch."
     }
   ],
   "publicationHistory": [

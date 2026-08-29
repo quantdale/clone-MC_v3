@@ -540,33 +540,33 @@ export class World implements WorldAccess {
     const lzSec = localCoord(z);
     const lySec = localCoord(y);
     if (this.usesExplicitDimension) {
-      this.enqueueCanonicalSectionDependency(cx, sectionIndex(y), cz, false);
+      this.enqueueCanonicalSectionDependency(cx, sectionIndex(y), cz);
     }
     if (lxSec === 0) {
-      if (this.usesExplicitDimension) this.enqueueCanonicalSectionDependency(sectionIndex(x) - 1, sectionIndex(y), sectionIndex(z), false);
+      if (this.usesExplicitDimension) this.enqueueCanonicalSectionDependency(sectionIndex(x) - 1, sectionIndex(y), sectionIndex(z));
       else this.markNeighborDirty(cx - 1, cy, cz);
     }
     if (lxSec === 15) {
-      if (this.usesExplicitDimension) this.enqueueCanonicalSectionDependency(sectionIndex(x) + 1, sectionIndex(y), sectionIndex(z), false);
+      if (this.usesExplicitDimension) this.enqueueCanonicalSectionDependency(sectionIndex(x) + 1, sectionIndex(y), sectionIndex(z));
       else this.markNeighborDirty(cx + 1, cy, cz);
     }
     if (lzSec === 0) {
-      if (this.usesExplicitDimension) this.enqueueCanonicalSectionDependency(sectionIndex(x), sectionIndex(y), sectionIndex(z) - 1, false);
+      if (this.usesExplicitDimension) this.enqueueCanonicalSectionDependency(sectionIndex(x), sectionIndex(y), sectionIndex(z) - 1);
       else this.markNeighborDirty(cx, cy, cz - 1);
     }
     if (lzSec === 15) {
-      if (this.usesExplicitDimension) this.enqueueCanonicalSectionDependency(sectionIndex(x), sectionIndex(y), sectionIndex(z) + 1, false);
+      if (this.usesExplicitDimension) this.enqueueCanonicalSectionDependency(sectionIndex(x), sectionIndex(y), sectionIndex(z) + 1);
       else this.markNeighborDirty(cx, cy, cz + 1);
     }
     if (lySec === 0) {
-      if (this.usesExplicitDimension) this.enqueueCanonicalSectionDependency(sectionIndex(x), sectionIndex(y) - 1, sectionIndex(z), false);
+      if (this.usesExplicitDimension) this.enqueueCanonicalSectionDependency(sectionIndex(x), sectionIndex(y) - 1, sectionIndex(z));
       else {
         const ncy = sectionIndex(y - 1) !== sectionIndex(y) ? floorDiv(y - 1, CHUNK_DIMENSIONS.height) : cy;
         if (ncy !== cy) this.markNeighborDirty(cx, ncy, cz);
       }
     }
     if (lySec === 15) {
-      if (this.usesExplicitDimension) this.enqueueCanonicalSectionDependency(sectionIndex(x), sectionIndex(y) + 1, sectionIndex(z), false);
+      if (this.usesExplicitDimension) this.enqueueCanonicalSectionDependency(sectionIndex(x), sectionIndex(y) + 1, sectionIndex(z));
       else {
         const ncy = sectionIndex(y + 1) !== sectionIndex(y) ? floorDiv(y + 1, CHUNK_DIMENSIONS.height) : cy;
         if (ncy !== cy) this.markNeighborDirty(cx, ncy, cz);
@@ -1293,13 +1293,14 @@ export class World implements WorldAccess {
     const result = this.lightEngine.drain({ budgetMs: CONFIG.budgets.lightDrainMs });
     this.budgets.recordActual('light', performance.now() - t0);
     if (result.opsUsed > 0) {
-      // Light values changed: every chunk whose cells were invalidated (plus
-      // the border neighbours registered alongside them) must re-mesh so the
-      // new vertex shading reaches the GPU.
+      // Light values changed: invalidate canonical sections in every affected
+      // resident slab. The legacy chunk dirty bit is only a scheduling bridge;
+      // canonical section mesh ownership must be invalidated explicitly.
       for (const key of this.lightDirtyChunks) {
         const [cx, cy, cz] = keyToChunk(key);
         const chunk = this.chunkManager.getChunk(cx, cy, cz);
         if (chunk?.generated) {
+          this.markCanonicalSectionsMeshDirtyForChunk(cx, cy, cz);
           chunk.markDirty();
           this.enqueueMeshWithRetry(chunk);
         }
@@ -2430,6 +2431,20 @@ export class World implements WorldAccess {
     }
     const position = geometry.attributes.position;
     return position ? position.count / 3 : 0;
+  }
+
+  /** Invalidate every materialized canonical section projected by one resident chunk slab. */
+  private markCanonicalSectionsMeshDirtyForChunk(cx: number, cy: number, cz: number): void {
+    if (!this.usesExplicitDimension) return;
+    const column = this.storage.getColumn(cx, cz);
+    if (!column) return;
+    const firstSectionY = cy * this.sectionsPerChunk;
+    const lastSectionY = firstSectionY + this.sectionsPerChunk;
+    for (let sectionY = firstSectionY; sectionY < lastSectionY; sectionY++) {
+      const inColumnSy = sectionY - this.dimension.minSectionY;
+      if (inColumnSy < 0 || inColumnSy >= column.sectionCount) continue;
+      column.markSectionMeshDirty(inColumnSy);
+    }
   }
 
   /**
