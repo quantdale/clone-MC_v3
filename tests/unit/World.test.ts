@@ -21,6 +21,9 @@ class DeferredMeshWorker {
   onerror: (() => void) | null = null;
   onmessageerror: (() => void) | null = null;
   private table: MeshWorkerRegistryTable | undefined;
+  private readonly pending: WorkerRequest[] = [];
+
+  constructor(private readonly delayed = false) {}
 
   postMessage(data: unknown): void {
     if (typeof data === 'object' && data !== null && (data as { type?: unknown }).type === 'initialize') {
@@ -28,7 +31,7 @@ class DeferredMeshWorker {
       return;
     }
     const request = validateWorkerRequest(data) as WorkerRequest;
-    queueMicrotask(() => {
+    const run = (): void => {
       try {
         const payload = validateMeshSectionRequest(request.payload, this.table);
         const result = processMeshSectionRequest(payload, request.generationToken);
@@ -51,7 +54,43 @@ class DeferredMeshWorker {
       } catch {
         this.onerror?.();
       }
-    });
+    };
+    if (this.delayed) this.pending.push(request);
+    else queueMicrotask(run);
+  }
+
+  private emit(request: WorkerRequest): void {
+    const payload = validateMeshSectionRequest(request.payload, this.table);
+    const result = processMeshSectionRequest(payload, request.generationToken);
+    this.onmessage?.({
+      data: {
+        protocolVersion: WORKER_PROTOCOL_VERSION,
+        jobId: request.jobId,
+        kind: request.kind,
+        ok: true,
+        generationToken: request.generationToken,
+        payload: {
+          sectionX: result.sectionX,
+          sectionY: result.sectionY,
+          sectionZ: result.sectionZ,
+          versionSnapshot: result.versionSnapshot,
+          layerStreams: result.layerStreams,
+        },
+      },
+    } as MessageEvent);
+  }
+
+  flushOne(): void {
+    const request = this.pending.shift();
+    if (request) this.emit(request);
+  }
+
+  flush(): void {
+    while (this.pending.length > 0) this.flushOne();
+  }
+
+  pendingCount(): number {
+    return this.pending.length;
   }
 
   terminate(): void {}
@@ -258,6 +297,51 @@ describe('world dirty propagation and edits', () => {
     expect(world.getStats().pendingMesh).toBe(0);
     expect((world as unknown as { sectionMeshGroups: Map<string, unknown> }).sectionMeshGroups.has('0,0,0')).toBe(true);
     world.dispose();
+  });
+
+  it('rejects delayed worker results after canonical replacement and unload without leaking jobs', async () => {
+    const workers: DeferredMeshWorker[] = [];
+    const world = makeCanonicalSectionWorld(
+      true,
+      () => {
+        const worker = new DeferredMeshWorker(true);
+        workers.push(worker);
+        return worker as unknown as Worker;
+      },
+    );
+    try {
+      world.setBlock(8, 8, 8, BlockId.Stone);
+      for (let frame = 0; frame < 120; frame++) {
+        world.update(1 / 60, 0, 0);
+        if (world.getStats().workerMeshing!.pendingJobs > 0) break;
+      }
+      expect(workers.length).toBeGreaterThan(0);
+      expect(world.getStats().workerMeshing!.activeBatches).toBeGreaterThan(0);
+      expect(world.getStats().workerMeshing!.pendingJobs).toBeGreaterThan(0);
+
+      const beforeReplacement = world.getStats().workerMeshing!;
+      const completedBeforeReplacement = beforeReplacement.completed;
+      world.setBlock(8, 8, 8, BlockId.Glass);
+      expect(world.getStats().workerMeshing!.activeBatches).toBe(0);
+      expect(world.getStats().workerMeshing!.pendingJobs).toBe(0);
+
+      for (const worker of workers) worker.flush();
+      expect(world.getStats().workerMeshing!.completed).toBe(completedBeforeReplacement);
+      expect(world.getStats().workerMeshing!.activeBatches).toBe(0);
+      expect(world.getStats().workerMeshing!.pendingJobs).toBe(0);
+      expect(beforeReplacement.activeBatches).toBeGreaterThan(0);
+
+      for (let frame = 0; frame < 120; frame++) {
+        world.update(1 / 60, 100, 100);
+        if (world.getStats().pendingUnload > 0) break;
+      }
+      for (const worker of workers) worker.flush();
+      expect(world.getStats().workerMeshing!.activeBatches).toBe(0);
+      expect(world.getStats().workerMeshing!.pendingJobs).toBe(0);
+      expect((world as unknown as { sectionMeshGroups: Map<string, unknown> }).sectionMeshGroups.has('0,0,0')).toBe(false);
+    } finally {
+      world.dispose();
+    }
   });
 
   it('uses canonical sections as live mesh invalidation units and preserves sibling ownership', () => {

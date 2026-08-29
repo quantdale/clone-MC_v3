@@ -6,18 +6,18 @@
   "currentChangeStatus": "ACTIVE",
   "lastCompletedChange": "254-whole-codebase-performance-optimization",
   "nextChange": null,
-  "completedTasks": 10,
+  "completedTasks": 11,
   "totalTasks": 37,
-  "completionPercentage": 27.03,
+  "completionPercentage": 29.73,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": false,
   "requiredTestsPass": false,
   "advancementAllowed": false,
   "exceptionUsed": false,
-  "sessionStartHead": "93dbb09292c7d8a5830acd0cdd6aad22ff009a93",
-  "lastCompletedTask": "255 task 10 complete: live World worker section meshing is opt-in, uses validated WorkerPool/typed transfer and canonical section attachment, exposes runtime diagnostics, and safely disables/requeues to synchronous meshing on worker construction or transport failure; full local gates and E2E pass.",
-  "nextExactAction": "Begin task 11: verify section edits, vertical/horizontal borders, lighting invalidation, rapid replacement/unload, and queue saturation without starvation or main-thread spin.",
+  "sessionStartHead": "5ac28eb91f074608dd22d32513c60e43a6145e64",
+  "lastCompletedTask": "255 task 11 complete: canonical section edits, vertical and horizontal border dependencies, light invalidation, rapid worker replacement/unload late-result rejection, and saturated streaming progress are covered without starvation or main-thread retry spin; focused and full unit validation pass.",
+  "nextExactAction": "Begin task 12: wire deterministic column generation through a production worker client/entry with bounded priority and cancellation.",
   "blockers": [],
   "validationResults": [
     {
@@ -2428,9 +2428,9 @@
     {
       "change": "255-high-performance-voxel-engine",
       "status": "ACTIVE",
-      "unitTests": 4469,
+      "unitTests": 4470,
       "e2eTests": 51,
-      "note": "Tasks 1-10 complete (10/37, 27.03%). Task 10 integrates opt-in validated worker section meshing into live World, canonical section attachment, runtime diagnostics, and safe synchronous requeue fallback on worker construction/transport failure; task 9 canonical invalidation/resource evidence remains green. Focused World/composition worker suite passes 22/22; full typecheck/lint/unit/build gates pass (4469 + 1 skipped, 51 E2E); clean E2E remains 51/51 and visual goldens unchanged. Next exact action is task 11: verify section edits, vertical/horizontal borders, lighting invalidation, rapid replacement/unload, and queue saturation without starvation or main-thread spin."
+      "note": "Tasks 1-11 complete (11/37, 29.73%). Task 11 verifies canonical section edits, vertical/horizontal border dependencies, light invalidation, delayed worker replacement/unload late-result rejection, bounded queue saturation, and spawn-ring progress without retry spin. Focused task-11 suites pass 10 files/61 tests; full unit gate passes 4470 + 1 skipped; typecheck/lint pass; prior clean E2E remains 51/51 and task-11 changes are unit-test-only with the synchronous production default. Next exact action is task 12 deterministic workerized column generation with bounded priority and cancellation."
     }
   ],
   "publicationHistory": [

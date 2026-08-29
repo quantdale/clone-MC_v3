@@ -15,7 +15,7 @@
 ## Campaign C — live section rendering
 - [x] 9. Make canonical 16³ sections the live mesh invalidation/ownership unit while retaining compatibility projections only as bounded scheduling bridges.
 - [x] 10. Integrate validated worker section meshing into live `World` with safe synchronous fallback and a runtime diagnostic switch.
-- [ ] 11. Verify section edits, vertical/horizontal borders, lighting invalidation, rapid replacement/unload, and queue saturation without starvation or main-thread spin.
+- [x] 11. Verify section edits, vertical/horizontal borders, lighting invalidation, rapid replacement/unload, and queue saturation without starvation or main-thread spin.
 
 ## Campaign D — workerized deterministic generation
 - [ ] 12. Wire deterministic column generation through a production worker client/entry with bounded priority and cancellation.
