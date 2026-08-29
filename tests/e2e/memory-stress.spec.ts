@@ -20,15 +20,13 @@ const HEADLESS_BUDGET = deriveMemoryResourceBudget(2); // headless render distan
 const HEAP_CEILING_BYTES = 8 * 1024 * 1024; // 8 MiB
 const GEOMETRY_DRIFT = 4; // plateau drift allowance (geometries)
 const GEOMETRY_PER_CHUNK = 8; // per-chunk geometry allowance for footprint growth. Raised from 6 during the 239 validation campaign: with four mesh streams per chunk (opaque/cutout/translucent/fluid) plus mob constant-shape geometries, a measured local run showed 37 geometries over +5 chunks (7.4/chunk) with flat heap/textures — no leak; smallest covering allowance is 8/chunk.
-// Residency ceiling for headless R=2: the boot preload radius (3) exceeds the
-// streaming ring (2), so the engine can hold up to the radius-3 ring (49).
-const MAX_LOADED = HEADLESS_BUDGET.maxLoadedChunks;
+const MAX_RESIDENT_COLUMNS = HEADLESS_BUDGET.maxResidentColumns;
 const SAMPLE_INTERVAL_MS = 8_000;
 
 interface RawSample {
-  loadedChunks: number;
+  residentColumns: number;
   pendingJobs: number;
-  meshGeometries: number;
+  sectionGeometries: number;
   editOverlayChunks: number;
   blockEntities: number;
   activeEntities: number;
@@ -49,9 +47,9 @@ function median(values: number[]): number {
 
 function budgetReport(raw: RawSample): MemoryResourceReport {
   return evaluateResourceBudget(HEADLESS_BUDGET, {
-    loadedChunks: raw.loadedChunks,
+    residentColumns: raw.residentColumns,
     pendingJobs: raw.pendingJobs,
-    meshGeometries: raw.meshGeometries,
+    sectionGeometries: raw.sectionGeometries,
     editOverlayChunks: raw.editOverlayChunks,
     blockEntities: raw.blockEntities,
     activeEntities: raw.activeEntities,
@@ -59,20 +57,29 @@ function budgetReport(raw: RawSample): MemoryResourceReport {
   });
 }
 
-/** Read the documented counter set from the live game, forcing GC first. */
+/** Read the canonical resource contract plus renderer diagnostics, forcing GC first. */
 async function sample(page: Page): Promise<RawSample> {
   return page.evaluate(() => {
     const g = (window as unknown as {
       __voxelGame?: {
-        world?: {
-          getStats?(): { loadedChunks: number; pendingGeneration: number; pendingMesh: number };
-          getEditOverlayChunkCount?(): number;
+        getCanonicalResourceMetrics?(): {
+          residentColumns: number;
+          pendingGenerationJobs: number;
+          pendingMeshJobs: number;
+          pendingLightJobs: number;
+          pendingSaveJobs: number;
+          pendingUnloadJobs: number;
+          sectionGeometries: number;
+          dirtyColumns: number;
+          blockEntities: number;
+          activeEntities: number;
+          itemEntities: number;
         };
-        getLiveResourceCounts?(): { blockEntities: number; activeEntities: number; itemEntities: number };
+        world?: { getEditOverlayChunkCount?(): number };
         renderer?: {
           renderer?: {
             info?: {
-              memory?: { geometries: number; textures: number };
+              memory?: { textures: number };
               programs?: { length?: number } | number;
               render?: { calls: number };
             };
@@ -89,18 +96,23 @@ async function sample(page: Page): Promise<RawSample> {
     if (mem === undefined) {
       throw new Error('heap measurement unavailable (non-Chromium)');
     }
-    const stats = g.world?.getStats?.();
-    const counts = g.getLiveResourceCounts?.() ?? { blockEntities: 0, activeEntities: 0, itemEntities: 0 };
+    const metrics = g.getCanonicalResourceMetrics?.();
+    if (!metrics) throw new Error('canonical resource metrics unavailable');
     const info = g.renderer?.renderer?.info;
     const programs = typeof info?.programs === 'number' ? info.programs : info?.programs?.length ?? -1;
     return {
-      loadedChunks: stats?.loadedChunks ?? 0,
-      pendingJobs: (stats?.pendingGeneration ?? 0) + (stats?.pendingMesh ?? 0),
-      meshGeometries: info?.memory?.geometries ?? -1,
+      residentColumns: metrics.residentColumns,
+      pendingJobs:
+        metrics.pendingGenerationJobs +
+        metrics.pendingMeshJobs +
+        metrics.pendingLightJobs +
+        metrics.pendingSaveJobs +
+        metrics.pendingUnloadJobs,
+      sectionGeometries: metrics.sectionGeometries,
       editOverlayChunks: g.world?.getEditOverlayChunkCount?.() ?? -1,
-      blockEntities: counts.blockEntities,
-      activeEntities: counts.activeEntities,
-      itemEntities: counts.itemEntities,
+      blockEntities: metrics.blockEntities,
+      activeEntities: metrics.activeEntities,
+      itemEntities: metrics.itemEntities,
       heapBytes: mem.usedJSHeapSize,
       textures: info?.memory?.textures ?? -1,
       programs,
@@ -147,8 +159,8 @@ async function waitSettled(page: Page, timeoutMs = 60_000): Promise<RawSample> {
   let last: RawSample | null = null;
   while (Date.now() < deadline) {
     const raw = await sample(page);
-    if (raw.pendingJobs === 0 && raw.loadedChunks <= MAX_LOADED) {
-      if (last !== null && raw.loadedChunks === last.loadedChunks && last.pendingJobs === 0) {
+    if (raw.pendingJobs === 0 && raw.residentColumns <= MAX_RESIDENT_COLUMNS) {
+      if (last !== null && raw.residentColumns === last.residentColumns && last.pendingJobs === 0) {
         stableCount++;
         // 3 consecutive equal reads (2 increments) => genuinely settled, not a
         // transient plateau mid-generation/unload.
@@ -170,8 +182,8 @@ function formatSeries(series: Array<RawSample & { t: number }>): string {
   return series
     .map(
       (s) =>
-        `t=${Math.round(s.t / 1000)}s heap=${s.heapBytes} chunks=${s.loadedChunks} pending=${s.pendingJobs} ` +
-        `geo=${s.meshGeometries} tex=${s.textures} progs=${s.programs} edit=${s.editOverlayChunks} ` +
+        `t=${Math.round(s.t / 1000)}s heap=${s.heapBytes} columns=${s.residentColumns} pending=${s.pendingJobs} ` +
+        `geo=${s.sectionGeometries} tex=${s.textures} progs=${s.programs} edit=${s.editOverlayChunks} ` +
         `be=${s.blockEntities} ae=${s.activeEntities} ie=${s.itemEntities} gc=${s.gcAvailable}`,
     )
     .join('\n');
@@ -187,19 +199,19 @@ test.describe('long-session memory / GPU-resource leak validation (239)', () => 
     const report = budgetReport(s0);
     expect(report.withinBudget).toBe(true);
     expect(report.entries.map((e) => e.dimension)).toEqual([
-      'loadedChunks',
+      'residentColumns',
       'pendingJobs',
-      'meshGeometries',
+      'sectionGeometries',
       'editOverlayChunks',
       'blockEntities',
       'activeEntities',
       'itemEntities',
     ]);
-    // Every counter is sampled and reported.
+    // Every canonical counter is sampled and reported.
     for (const key of [
-      'loadedChunks',
+      'residentColumns',
       'pendingJobs',
-      'meshGeometries',
+      'sectionGeometries',
       'editOverlayChunks',
       'blockEntities',
       'activeEntities',
@@ -252,12 +264,12 @@ test.describe('long-session memory / GPU-resource leak validation (239)', () => 
     // constant chunk count; if the footprint legitimately grows (pre < post),
     // allow GEOMETRY_PER_CHUNK (~2 meshes/chunk + headroom) per additional
     // chunk. A leak grows geometry at constant chunk count and still fails.
-    const chunkDelta = Math.max(0, settle2.loadedChunks - settlePre.loadedChunks);
-    const geometryAllowance = GEOMETRY_DRIFT + chunkDelta * GEOMETRY_PER_CHUNK;
+    const columnDelta = Math.max(0, settle2.residentColumns - settlePre.residentColumns);
+    const geometryAllowance = GEOMETRY_DRIFT + columnDelta * GEOMETRY_PER_CHUNK;
     expect(
-      settle2.meshGeometries - settlePre.meshGeometries,
-      `geometry drift ${settle2.meshGeometries - settlePre.meshGeometries} > allowance ${geometryAllowance} ` +
-        `(chunks ${settlePre.loadedChunks} -> ${settle2.loadedChunks}; pre geo=${settlePre.meshGeometries})\n` +
+      settle2.sectionGeometries - settlePre.sectionGeometries,
+      `geometry drift ${settle2.sectionGeometries - settlePre.sectionGeometries} > allowance ${geometryAllowance} ` +
+        `(columns ${settlePre.residentColumns} -> ${settle2.residentColumns}; pre geo=${settlePre.sectionGeometries})\n` +
         formatSeries(series),
     ).toBeLessThanOrEqual(geometryAllowance);
     // Textures must not grow beyond their first-settled value. Programs are
@@ -306,9 +318,9 @@ test.describe('long-session memory / GPU-resource leak validation (239)', () => 
     const settle = await waitSettled(page, 30_000);
     const rep = budgetReport(settle);
     expect(rep.withinBudget).toBe(true);
-    expect(settle.meshGeometries).toBeLessThanOrEqual(HEADLESS_BUDGET.maxMeshGeometries);
+    expect(settle.sectionGeometries).toBeLessThanOrEqual(HEADLESS_BUDGET.maxSectionGeometries);
     expect(
-      settle.meshGeometries - series[0]!.meshGeometries,
+      settle.sectionGeometries - series[0]!.sectionGeometries,
       `geometry grew beyond drift under churn\n${formatSeries(series)}`,
     ).toBeLessThanOrEqual(GEOMETRY_DRIFT + 40);
   });
@@ -345,7 +357,7 @@ test.describe('long-session memory / GPU-resource leak validation (239)', () => 
       [128, 0],
       [-128, 0],
     ];
-    const settledChunks: number[] = [];
+    const settledColumns: number[] = [];
     for (const [tx, tz] of targets) {
       await page.evaluate((p) => {
         const g = (window as unknown as { __voxelGame?: { player?: { position: { set(x: number, y: number, z: number): void } } } }).__voxelGame;
@@ -353,8 +365,8 @@ test.describe('long-session memory / GPU-resource leak validation (239)', () => 
         g.player.position.set(p.x, 48, p.z);
       }, { x: tx, z: tz });
       const raw = await waitSettled(page, 60_000);
-      settledChunks.push(raw.loadedChunks);
-      expect(raw.loadedChunks).toBeLessThanOrEqual(MAX_LOADED);
+      settledColumns.push(raw.residentColumns);
+      expect(raw.residentColumns).toBeLessThanOrEqual(MAX_RESIDENT_COLUMNS);
       expect(budgetReport(raw).withinBudget).toBe(true);
       // Give the tick loop a moment before the next teleport.
       await page.waitForTimeout(2000);
@@ -362,14 +374,14 @@ test.describe('long-session memory / GPU-resource leak validation (239)', () => 
     // Plateau stability: no cycle may grow the loaded-chunk plateau beyond a
     // small window over the previous cycle (a leak would monotonically increase
     // the count; warm-up cycles may only decrease or hold).
-    for (let i = 1; i < settledChunks.length; i++) {
-      const growth = settledChunks[i]! - settledChunks[i - 1]!;
+    for (let i = 1; i < settledColumns.length; i++) {
+      const growth = settledColumns[i]! - settledColumns[i - 1]!;
       expect(
         growth,
-        `loadedChunks grew by ${growth} between teleport cycles ${i - 1}->${i} (${settledChunks.join(',')})`,
+        `residentColumns grew by ${growth} between teleport cycles ${i - 1}->${i} (${settledColumns.join(',')})`,
       ).toBeLessThanOrEqual(4);
     }
-    // Geometry is asserted to stay within the `maxMeshGeometries` budget every
+    // Section geometries are asserted to stay within the canonical budget every
     // cycle above (budgetReport). The tight single-session geometry plateau (<=4)
     // is asserted in the exploration scenario; cross-teleport geometry jitters
     // with mesh create/dispose churn and is not a leak signal on its own.
@@ -388,14 +400,14 @@ test.describe('long-session memory / GPU-resource leak validation (239)', () => 
       }
       const raw = await waitSettled(page, 60_000);
       reloadHeap.push(raw.heapBytes);
-      reloadInfo.push({ geo: raw.meshGeometries, tex: raw.textures, progs: raw.programs });
+      reloadInfo.push({ geo: raw.sectionGeometries, tex: raw.textures, progs: raw.programs });
       expect(budgetReport(raw).withinBudget).toBe(true);
     }
     const first3 = median(reloadHeap.slice(0, 3));
     const last3 = median(reloadHeap.slice(-3));
     expect(last3 - first3).toBeLessThanOrEqual(HEAP_CEILING_BYTES);
     // Fresh renderer resource counters are recorded and bounded.
-    expect(Math.max(...reloadInfo.map((i) => i.geo))).toBeLessThanOrEqual(HEADLESS_BUDGET.maxMeshGeometries);
+    expect(Math.max(...reloadInfo.map((i) => i.geo))).toBeLessThanOrEqual(HEADLESS_BUDGET.maxSectionGeometries);
   });
 
   test('block-entity live count stays at baseline across away-and-back teleport cycles', async ({ page }) => {
@@ -420,7 +432,7 @@ test.describe('long-session memory / GPU-resource leak validation (239)', () => 
       }, { x: tx, z: tz });
       const raw = await waitSettled(page, 60_000);
       expect(raw.blockEntities).toBe(0);
-      expect(raw.loadedChunks).toBeLessThanOrEqual(MAX_LOADED);
+      expect(raw.residentColumns).toBeLessThanOrEqual(MAX_RESIDENT_COLUMNS);
       expect(budgetReport(raw).withinBudget).toBe(true);
     }
     // Returning to the spawn region also returns to baseline.
@@ -456,7 +468,7 @@ test.describe('long-session memory / GPU-resource leak validation (239)', () => 
     const afterReport = budgetReport(after);
     expect(afterReport.withinBudget).toBe(true);
     // Plateau must not drift beyond the allowances (4 geo / 1 tex / 1 program).
-    expect(Math.abs(after.meshGeometries - before.meshGeometries)).toBeLessThanOrEqual(GEOMETRY_DRIFT);
+    expect(Math.abs(after.sectionGeometries - before.sectionGeometries)).toBeLessThanOrEqual(GEOMETRY_DRIFT);
     expect(Math.abs(after.textures - before.textures)).toBeLessThanOrEqual(1);
     expect(Math.abs(after.programs - before.programs)).toBeLessThanOrEqual(1);
     // Game is still rendering (no fatal error state).
@@ -483,8 +495,8 @@ test.describe('long-session memory / GPU-resource leak validation (239)', () => 
     const errSample2 = await sample(page);
     for (const raw of [errSample1, errSample2]) {
       expect(budgetReport(raw).withinBudget).toBe(true);
-      expect(raw.loadedChunks).toBeLessThanOrEqual(MAX_LOADED);
+      expect(raw.residentColumns).toBeLessThanOrEqual(MAX_RESIDENT_COLUMNS);
     }
-    expect(errSample2.loadedChunks).toBe(errSample1.loadedChunks);
+    expect(errSample2.residentColumns).toBe(errSample1.residentColumns);
   });
 });

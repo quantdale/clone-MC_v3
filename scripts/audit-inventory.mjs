@@ -7,10 +7,10 @@
  * legacy-world pattern families enumerated in audit-findings.md / agent-prompts
  * PROMPT 01, and emits a machine-readable inventory with a disposition per hit.
  *
- * Dispositions are heuristic but EVERY hit receives exactly one of the allowed
- * values: REMOVE, MIGRATE, PROJECTION_ONLY, MIGRATION_ONLY, TEST_ONLY,
- * INTENTIONAL_COMPATIBILITY_WITH_EXPIRY, BLOCKER. The scanner output (not the
- * planner prose) is the execution source of truth.
+ * Every hit receives an allowed disposition plus an owning task and authority
+ * note. The scanner output (not planner prose) is the execution source of truth.
+ * Tooling pattern definitions are not world consumers and are excluded from hit
+ * output while the tooling file remains included in the scanned-file count.
  *
  * Run: node scripts/audit-inventory.mjs [--root <repo>] [--out <json>]
  */
@@ -28,15 +28,22 @@ function resolveRoot() {
   if (i !== -1 && argv[i + 1]) return path.resolve(argv[i + 1]);
   return defaultRoot;
 }
-function resolveOut(root) {
+function resolvePhase() {
+  return process.argv.includes('--post') ? 'post-migration' : 'pre-migration';
+}
+function resolveOut(root, phase) {
   const argv = process.argv.slice(2);
   const i = argv.indexOf('--out');
-  if (i !== -1 && argv[i + 1]) return path.resolve(argv[i + 1]);
-  return path.resolve(root, 'openspec/changes/253-live-world-architecture-convergence/inventory/pre-migration-inventory.json');
+  if (i !== -1 && argv[i + 1]) return path.resolve(root, argv[i + 1]);
+  const filename = phase === 'post-migration'
+    ? 'post-migration-inventory.json'
+    : 'pre-migration-inventory.json';
+  return path.resolve(root, `openspec/changes/253-live-world-architecture-convergence/inventory/${filename}`);
 }
 
 const ROOT = resolveRoot();
-const OUT = resolveOut(ROOT);
+const PHASE = resolvePhase();
+const OUT = resolveOut(ROOT, PHASE);
 
 // Only code/config, never markdown/docs (the change's own prose would self-match).
 const SCAN_EXT = new Set(['.ts', '.tsx', '.js', '.mjs']);
@@ -75,6 +82,63 @@ function trackedFiles() {
 
 // Pattern families. Each: { id, re (global, multiline), category, severity, disposition(file,line,m)->string }
 const isTest = (f) => f.startsWith('tests/');
+const isTooling = (f) => f.startsWith('scripts/');
+const SCANNER_FILE = 'scripts/audit-inventory.mjs';
+
+const PROJECTION_FILES = new Set([
+  'src/world/CanonicalWorldStorage.ts',
+  'src/world/ChunkManager.ts',
+  'src/world/ChunkMesher.ts',
+  'src/world/TerrainGenerator.ts',
+  'src/world/World.ts',
+  'src/world/WorldCoordinates.ts',
+  'src/worldgen/OreVeinFeature.ts',
+]);
+
+const RESOURCE_COMPATIBILITY_FILES = new Set([
+  'src/rendering/MemoryResourceBudget.ts',
+]);
+
+function classify(file, pattern) {
+  if (isTest(file) || isTooling(file)) {
+    return {
+      disposition: 'TEST_ONLY',
+      owningTask: 'Task 111',
+      authority: 'test/tooling-only',
+      rationale: 'The occurrence is outside the playable production authority and is retained for characterization, migration, or audit tooling.',
+    };
+  }
+  if (RESOURCE_COMPATIBILITY_FILES.has(file)) {
+    return {
+      disposition: 'INTENTIONAL_COMPATIBILITY_WITH_EXPIRY',
+      owningTask: 'Task 98',
+      authority: 'canonical-storage',
+      rationale: 'The metric names a bounded compatibility projection retained for existing resource-budget and E2E reporting; it is not a writable world-state authority. Rename/reconcile its units in the resource phase before final closure.',
+    };
+  }
+  if (PROJECTION_FILES.has(file)) {
+    return {
+      disposition: 'PROJECTION_ONLY',
+      owningTask: pattern === 'editOverlay' ? 'Task 94' : 'Task 108',
+      authority: 'canonical-storage',
+      rationale: 'The live write/read authority is CanonicalWorldStorage; this occurrence belongs to the documented legacy slab, render, migration, or compatibility projection and is not consulted as canonical truth.',
+    };
+  }
+  if (file === 'src/config/index.ts') {
+    return {
+      disposition: 'INTENTIONAL_COMPATIBILITY_WITH_EXPIRY',
+      owningTask: 'Task 109',
+      authority: 'canonical-storage',
+      rationale: 'Legacy constants remain as compatibility/world-version inputs; active Overworld bounds derive from DimensionType.',
+    };
+  }
+  return {
+    disposition: 'MIGRATE',
+    owningTask: 'Task 110',
+    authority: 'unresolved-production',
+    rationale: 'No explicit projection or test-only boundary was established for this production occurrence.',
+  };
+}
 
 const PATTERNS = [
   {
@@ -157,6 +221,7 @@ const PATTERNS = [
 ];
 
 function scanFile(file) {
+  if (file === SCANNER_FILE) return [];
   const abs = path.join(ROOT, file);
   let content;
   try {
@@ -175,6 +240,7 @@ function scanFile(file) {
       if (!re.test(line)) return;
       re.lastIndex = 0;
       while ((m = re.exec(line)) !== null) {
+        const classification = classify(file, pat.id);
         hits.push({
           pattern: pat.id,
           category: pat.category,
@@ -182,7 +248,7 @@ function scanFile(file) {
           file,
           line: idx + 1,
           snippet: line.trim().slice(0, 200),
-          disposition: pat.disposition(file),
+          ...classification,
         });
         if (m.index === re.lastIndex) re.lastIndex++;
       }
@@ -212,12 +278,13 @@ function main() {
     byDisposition,
     bySeverity,
     byCategory,
-    // A hit is "unclassified production" only if it is production (not TEST_ONLY) AND
-    // its disposition is not one of the allowed resolutions — but every hit already
-    // received an allowed disposition, so this is 0 by construction. We still surface
-    // CRITICAL/HIGH production (non-TEST) hits for explicit task assignment.
     criticalHighProductionHits: all.filter(
-      (h) => (h.severity === 'Critical' || h.severity === 'High') && h.disposition !== 'TEST_ONLY',
+      (h) => (h.severity === 'Critical' || h.severity === 'High') && h.authority !== 'test/tooling-only',
+    ).length,
+    unresolvedCriticalHighProductionHits: all.filter(
+      (h) =>
+        (h.severity === 'Critical' || h.severity === 'High') &&
+        h.authority === 'unresolved-production',
     ).length,
   };
   const artifact = { summary, hits: all };

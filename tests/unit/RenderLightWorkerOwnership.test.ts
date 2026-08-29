@@ -100,6 +100,42 @@ describe('Change 253 render/light/worker ownership characterization', () => {
     })).toBe(false);
   });
 
+  it('rejects a late result after replacement advances both mesh and light versions', () => {
+    const stateRegistry = createDefaultBlockStateRegistry();
+    const column = new ChunkColumn({
+      chunkX: -2,
+      chunkZ: -1,
+      minSectionY: OVERWORLD_DIMENSION_TYPE.minSectionY,
+      sectionCount: OVERWORLD_DIMENSION_TYPE.sectionCount,
+      registry: stateRegistry,
+    });
+    const light = new WorldLightStorage();
+    const request = emptySectionPayload(-2, -4, -1);
+    const snapshot = captureSectionVersionSnapshot(-2, -4, -1, 1, {
+      meshVersionAt: (x, y, z) => x === -2 && z === -1 ? column.sectionMeshVersion(y - OVERWORLD_DIMENSION_TYPE.minSectionY) : 0,
+      lightVersionAt: (x, y, z) => light.getSectionVersion(x, y, z),
+    });
+    request.versionSnapshot = snapshot;
+    const client = new MeshWorkerClient({ generationToken: 12 });
+    let rejected = 0;
+    let resolved = 0;
+    const jobId = client.requestSection(request, () => resolved++, () => rejected++);
+
+    column.setBlockState(0, -64, 0, stateRegistry.getDefaultState(BlockId.Stone));
+    light.setSkyLight(-32, -64, -16, 9);
+    const current = captureSectionVersionSnapshot(-2, -4, -1, 1, {
+      meshVersionAt: (x, y, z) => x === -2 && z === -1 ? column.sectionMeshVersion(y - OVERWORLD_DIMENSION_TYPE.minSectionY) : 0,
+      lightVersionAt: (x, y, z) => light.getSectionVersion(x, y, z),
+    });
+    const payload = processMeshSectionRequest(request, 12);
+    const late = { ...payload, versionSnapshot: current };
+
+    expect(client.handleMessage(MeshWorkerClient.resultMessage(jobId, late))).toBeNull();
+    expect(client.handleMessage(MeshWorkerClient.resultMessage(jobId, late))).toBeNull();
+    expect(client.pendingCount).toBe(0);
+    expect(rejected).toBe(1);
+    expect(resolved).toBe(0);
+  });
   it('settles owned stale-token and snapshot-mismatch results exactly once', () => {
     const client = new MeshWorkerClient({ generationToken: 9 });
     const request = emptySectionPayload(-2, -5, -1);

@@ -53,6 +53,48 @@ function referenceSeed(
 }
 
 describe('section-bulk skylight seeding matches the per-cell reference exactly', () => {
+  it('keeps canonical skylight continuous across the legacy slab boundary and dimension top', () => {
+    const registry = createDefaultBlockRegistry();
+    const stateRegistry = createDefaultBlockStateRegistry();
+    const scene = new THREE.Scene();
+    const materials = {
+      opaque: new THREE.MeshLambertMaterial(),
+      transparent: new THREE.MeshLambertMaterial(),
+    };
+    const stone = stateRegistry.getDefaultState(BlockId.Stone);
+    const generator = {
+      generateColumn(column: { setBlockState: (x: number, y: number, z: number, state: unknown) => void }): void {
+        column.setBlockState(0, 0, 0, stone);
+      },
+      getHeightAt(): number {
+        return 1;
+      },
+    };
+    const world = new World({
+      registry,
+      seed: 20260828,
+      scene,
+      mesher: { mesh: () => ({ opaque: null, transparent: null }) } as never,
+      generator: generator as never,
+      materials,
+      renderDistance: 0,
+      dimension: OVERWORLD_DIMENSION_TYPE,
+      stateRegistry,
+    });
+
+    for (let i = 0; i < 100 && world.getBlock(0, 0, 0) !== BlockId.Stone; i++) {
+      world.update(0.016, 0, 0);
+    }
+    expect(world.getBlock(0, 0, 0)).toBe(BlockId.Stone);
+    const light = (world as unknown as { lightStorage: WorldLightStorage }).lightStorage;
+    expect(light.getSkyLight(0, 1, 0)).toBe(15);
+    expect(light.getSkyLight(0, 0, 0)).toBe(0);
+    expect(light.getSkyLight(0, -1, 0)).toBe(0);
+    expect(light.getSkyLight(0, 319, 0)).toBe(15);
+    expect(light.getSkyLight(0, 320, 0)).toBe(0);
+    world.dispose();
+  });
+
   it('produces identical sky and block light for every streamed chunk', () => {
     const registry = createDefaultBlockRegistry();
     const stateRegistry = createDefaultBlockStateRegistry();

@@ -3,6 +3,10 @@ export interface DebugStats {
   position: number[];
   chunk: string;
   loaded: number;
+  /** Canonical horizontal column residency, shown as additive diagnostics. */
+  columns?: number;
+  /** Canonical materialized section count, shown as additive diagnostics. */
+  sections?: number;
   pendingGen: number;
   pendingMesh: number;
   triangles: number;
@@ -88,10 +92,14 @@ export class DebugOverlay {
       this.statsEl.textContent = this.fixedText;
     } else {
       const [x, y, z] = data.position;
+      const canonicalLines = [];
+      if (data.columns !== undefined) canonicalLines.push(`columns: ${data.columns}`);
+      if (data.sections !== undefined) canonicalLines.push(`sections: ${data.sections}`);
       this.statsEl.textContent = [
         `pos: ${formatNum(x)} ${formatNum(y)} ${formatNum(z)}`,
         `chunk: ${data.chunk}`,
         `loaded: ${data.loaded}`,
+        ...canonicalLines,
         `pendingGen: ${data.pendingGen}`,
         `pendingMesh: ${data.pendingMesh}`,
         `triangles: ${data.triangles}`,

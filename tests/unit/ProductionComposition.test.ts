@@ -19,6 +19,10 @@ import { createIdbFactoryMock } from './IdbFactoryMock';
 import { World } from '../../src/world/World';
 import { BlockId, createDefaultBlockRegistry } from '../../src/world/BlockRegistry';
 import { Chunk } from '../../src/world/Chunk';
+import { ChunkColumn } from '../../src/world/ChunkColumn';
+import { createDefaultBlockStateRegistry } from '../../src/world/BlockStateRegistry';
+import { EntityRepository } from '../../src/storage/EntityRepository';
+import { BlockEntityRepository } from '../../src/storage/BlockEntityRepository';
 import { CONFIG } from '../../src/config';
 
 // -----------------------------------------------------------------------------------------
@@ -266,6 +270,101 @@ describe('production composition (facade + real World)', () => {
     await p2.dispose();
   }, 20000);
 
+  it('converts the complete legacy payload into canonical negative/high sections exactly once', async () => {
+    const factory = createIdbFactoryMock();
+    const legacyStorage = makeLegacyStorage({
+      [`${LEGACY_EDIT_STORAGE_PREFIX}${SEED}`]: JSON.stringify({
+        version: 1,
+        seed: SEED,
+        edits: [
+          // One legacy column with edits in chunkY -1, 0, and +1. These cells
+          // exercise canonical world Y -64, -1, 0, and 64 after conversion.
+          { chunk: [-2, -1, -3], changes: [[0, BlockId.Stone], [16241, BlockId.Sand]] },
+          { chunk: [-2, 0, -3], changes: [[0, BlockId.Bricks]] },
+          { chunk: [-2, 1, -3], changes: [[0, BlockId.Glass]] },
+        ],
+      }),
+      [`${LEGACY_STATE_STORAGE_PREFIX}${SEED}`]: JSON.stringify({
+        version: 1,
+        seed: SEED,
+        player: { position: [-31.5, -1.25, -46.5], yaw: 135, pitch: -12 },
+        inventory: { slots: [{ id: BlockId.Stone, count: 3 }] },
+        survival: { hunger: 17 },
+      }),
+    });
+
+    const entities = new EntityRepository({ factory });
+    await entities.open();
+    const itemEntity = {
+      schemaVersion: 1,
+      typeKey: 'minecraft:item',
+      x: -31,
+      y: -1,
+      z: -47,
+      data: { stack: { item: 'minecraft:stone', count: 3 }, pickupDelay: 7 },
+    };
+    await entities.putChunkEntities('world-424242', -2, -3, [itemEntity]);
+    const blockEntities = new BlockEntityRepository({ factory });
+    await blockEntities.open();
+    const chestEntity = {
+      schemaVersion: 1,
+      typeKey: 'minecraft:chest',
+      x: -32,
+      y: -64,
+      z: -48,
+      data: { inventory: [{ slot: 0, item: 'minecraft:stone', count: 3 }] },
+    };
+    await blockEntities.putChunkEntities('world-424242', -2, -3, [chestEntity]);
+
+    const p1 = makeFacade(factory, legacyStorage);
+    const first = await p1.open();
+    expect(first.status).toBe('ok');
+    expect(first.errors).toEqual([]);
+    expect(first.migrationReport?.importedColumns).toBe(1);
+    expect(first.migrationReport?.importedEditRecords).toBe(3);
+    expect(first.initialEdits?.edits).toEqual([
+      { chunk: [-2, -1, -3], changes: [[0, BlockId.Stone], [16241, BlockId.Sand]] },
+      { chunk: [-2, 0, -3], changes: [[0, BlockId.Bricks]] },
+      { chunk: [-2, 1, -3], changes: [[0, BlockId.Glass]] },
+    ]);
+    expect(first.initialPlayerState?.player.position).toEqual([-31.5, -1.25, -46.5]);
+    expect(await entities.listChunks('world-424242')).toEqual([
+      expect.objectContaining({ worldId: 'world-424242', chunkX: -2, chunkZ: -3, entities: [itemEntity] }),
+    ]);
+    expect(await blockEntities.listChunks('world-424242')).toEqual([
+      expect.objectContaining({ worldId: 'world-424242', chunkX: -2, chunkZ: -3, entities: [chestEntity] }),
+    ]);
+
+    const column = await p1.loadChunkColumn(-2, -3);
+    expect(column).not.toBeNull();
+    expect(column?.minSectionY).toBe(-4);
+    expect(column?.sectionCount).toBe(24);
+    const restored = ChunkColumn.deserialize(column!, createDefaultBlockStateRegistry());
+    expect(restored.getBlockState(0, -64, 0).blockId).toBe(BlockId.Stone);
+    expect(restored.getBlockState(1, -1, 7).blockId).toBe(BlockId.Sand);
+    expect(restored.getBlockState(0, 0, 0).blockId).toBe(BlockId.Bricks);
+    expect(restored.getBlockState(0, 64, 0).blockId).toBe(BlockId.Glass);
+    expect(legacyStorage.getItem(`${LEGACY_EDIT_STORAGE_PREFIX}${SEED}`)).not.toBeNull();
+    expect(legacyStorage.getItem(`${LEGACY_STATE_STORAGE_PREFIX}${SEED}`)).not.toBeNull();
+
+    const secondFacade = makeFacade(factory, legacyStorage);
+    const second = await secondFacade.open();
+    expect(second.status).toBe('ok');
+    expect(second.migrationReport).toBeNull();
+    expect(second.initialEdits).toEqual(first.initialEdits);
+    expect(second.initialPlayerState).toEqual(first.initialPlayerState);
+    expect(second.initialColumns).toEqual(first.initialColumns);
+    expect(await secondFacade.loadChunkColumn(-2, -3)).toEqual(column);
+    expect(await entities.listChunks('world-424242')).toHaveLength(1);
+    expect(await entities.getChunkEntities('world-424242', -2, -3)).toEqual([itemEntity]);
+    expect(await blockEntities.listChunks('world-424242')).toHaveLength(1);
+    expect(await blockEntities.getChunkEntities('world-424242', -2, -3)).toEqual([chestEntity]);
+
+    await p1.dispose();
+    await secondFacade.dispose();
+    entities.close();
+    blockEntities.close();
+  }, 20_000);
   it('quota faults retain dirty edits, surface degraded/failed health, and recover verifiably', async () => {
     const factory = new FaultIdbFactory();
     const p = makeFacade(factory, null);

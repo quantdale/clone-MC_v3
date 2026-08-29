@@ -24,9 +24,9 @@ function config(overrides: Partial<MemoryResourceConfig> = {}): MemoryResourceCo
 
 function snapshot(overrides: Partial<LiveResourceSnapshot> = {}): LiveResourceSnapshot {
   return {
-    loadedChunks: 10,
+    residentColumns: 10,
     pendingJobs: 0,
-    meshGeometries: 30,
+    sectionGeometries: 30,
     editOverlayChunks: 0,
     blockEntities: 0,
     activeEntities: 0,
@@ -48,9 +48,9 @@ describe('computeRingCardinality / deriveMemoryResourceBudget', () => {
 
   it('derives the documented desktop (R=6) ceilings from the runtime caps', () => {
     const d = deriveMemoryResourceBudget(6);
-    expect(d.maxLoadedChunks).toBe(169); // max(6, preloadRadius 3)=6
+    expect(d.maxResidentColumns).toBe(169); // max(6, preloadRadius 3)=6
     expect(d.maxPendingJobs).toBe(MAX_QUEUE_SIZE + 169); // 512 + 169
-    expect(d.maxMeshGeometries).toBe(2 * 169 + GEOMETRY_FIXED_ALLOWANCE); // 378
+    expect(d.maxSectionGeometries).toBe(2 * 169 + GEOMETRY_FIXED_ALLOWANCE); // 378
     expect(d.maxEditOverlayChunks).toBe(EDIT_OVERLAY_MAX_CHUNKS); // 10_000
     expect(d.maxBlockEntities).toBe(4_096);
     expect(d.maxActiveEntities).toBe(12 + 256); // SPAWN_CAP + 256
@@ -59,22 +59,22 @@ describe('computeRingCardinality / deriveMemoryResourceBudget', () => {
 
   it('derives the documented headless (R=2) ceilings from the runtime caps', () => {
     // The boot preload radius (3) exceeds the headless streaming ring (2), and
-    // preloaded chunks are retained up to the unload limit (R+1=3), so the
-    // residency ceiling is the radius-3 ring (49), not the R=2 ring (25).
+    // preloaded columns are retained up to the unload limit, so the canonical
+    // horizontal residency ceiling is the radius-3 ring (49).
     const h = deriveMemoryResourceBudget(2);
-    expect(h.maxLoadedChunks).toBe(49);
+    expect(h.maxResidentColumns).toBe(49);
     expect(h.maxPendingJobs).toBe(MAX_QUEUE_SIZE + 49); // 561
-    expect(h.maxMeshGeometries).toBe(2 * 49 + GEOMETRY_FIXED_ALLOWANCE); // 138
+    expect(h.maxSectionGeometries).toBe(2 * 49 + GEOMETRY_FIXED_ALLOWANCE); // 138
   });
 
-  it('honors explicit derivation overrides', () => {
+  it('keeps horizontal residency canonical when a compatibility layer count is supplied', () => {
     const d = deriveMemoryResourceBudget(2, { spawnCap: 8, maxQueueSize: 64, layerCount: 2 });
-    expect(d.maxLoadedChunks).toBe(49 * 2); // preload radius 3 ring, 2 layers
-    expect(d.maxPendingJobs).toBe(64 + 49 * 2);
+    expect(d.maxResidentColumns).toBe(49); // vertical slabs no longer multiply columns
+    expect(d.maxPendingJobs).toBe(64 + 49);
     expect(d.maxActiveEntities).toBe(8 + 256);
     // A preload radius below the render distance yields the R ring.
     const desktop = deriveMemoryResourceBudget(6, { preloadRadius: 0 });
-    expect(desktop.maxLoadedChunks).toBe(169);
+    expect(desktop.maxResidentColumns).toBe(169);
   });
 
   it('DEFAULT_MEMORY_RESOURCE_BUDGET matches the desktop derivation', () => {
@@ -94,14 +94,14 @@ describe('validateMemoryResourceConfig', () => {
     }
     // An array is a JS object with no config fields, so it fails field validation
     // naming the first expected field rather than the "must be an object" check.
-    expect(() => validateMemoryResourceConfig([])).toThrow(/maxLoadedChunks/);
+    expect(() => validateMemoryResourceConfig([])).toThrow(/maxResidentColumns/);
   });
 
   it('rejects invalid field values naming the field', () => {
     const fields = [
-      'maxLoadedChunks',
+      'maxResidentColumns',
       'maxPendingJobs',
-      'maxMeshGeometries',
+      'maxSectionGeometries',
       'maxEditOverlayChunks',
       'maxBlockEntities',
       'maxActiveEntities',
@@ -132,19 +132,19 @@ describe('evaluateResourceBudget', () => {
   });
 
   it('flags a single dimension violation and fails the overall verdict', () => {
-    const report = evaluateResourceBudget(config(), snapshot({ loadedChunks: 500 }));
+    const report = evaluateResourceBudget(config(), snapshot({ residentColumns: 500 }));
     expect(report.withinBudget).toBe(false);
-    const entry = report.entries.find((e) => e.dimension === 'loadedChunks')!;
+    const entry = report.entries.find((e) => e.dimension === 'residentColumns')!;
     expect(entry.withinBudget).toBe(false);
-    expect(entry.budget).toBe(DEFAULT_MEMORY_RESOURCE_BUDGET.maxLoadedChunks);
+    expect(entry.budget).toBe(DEFAULT_MEMORY_RESOURCE_BUDGET.maxResidentColumns);
     expect(entry.actual).toBe(500);
-    expect(report.entries.filter((e) => e.dimension !== 'loadedChunks').every((e) => e.withinBudget)).toBe(true);
+    expect(report.entries.filter((e) => e.dimension !== 'residentColumns').every((e) => e.withinBudget)).toBe(true);
   });
 
   it('treats boundary equality (actual === budget) as within budget', () => {
-    const report = evaluateResourceBudget(config(), snapshot({ loadedChunks: DEFAULT_MEMORY_RESOURCE_BUDGET.maxLoadedChunks }));
+    const report = evaluateResourceBudget(config(), snapshot({ residentColumns: DEFAULT_MEMORY_RESOURCE_BUDGET.maxResidentColumns }));
     expect(report.withinBudget).toBe(true);
-    expect(report.entries.find((e) => e.dimension === 'loadedChunks')!.withinBudget).toBe(true);
+    expect(report.entries.find((e) => e.dimension === 'residentColumns')!.withinBudget).toBe(true);
   });
 
   it('treats malformed actuals (negative/NaN/Infinity/missing/non-numeric) as violations without throwing', () => {
@@ -170,9 +170,9 @@ describe('evaluateResourceBudget', () => {
   it('emits entries in the fixed normative order', () => {
     const report = evaluateResourceBudget(config(), snapshot());
     expect(report.entries.map((e) => e.dimension)).toEqual([
-      'loadedChunks',
+      'residentColumns',
       'pendingJobs',
-      'meshGeometries',
+      'sectionGeometries',
       'editOverlayChunks',
       'blockEntities',
       'activeEntities',
@@ -182,7 +182,7 @@ describe('evaluateResourceBudget', () => {
 
   it('is deterministic: identical config + snapshot produce deeply equal reports', () => {
     const c = config();
-    const s = snapshot({ loadedChunks: 40, meshGeometries: 75 });
+    const s = snapshot({ residentColumns: 40, sectionGeometries: 75 });
     expect(evaluateResourceBudget(c, s)).toEqual(evaluateResourceBudget(c, s));
   });
 });

@@ -274,6 +274,21 @@ export class PlayerInteraction {
     };
   }
 
+  /** The current target block plus the face normal used for adjacent placement. */
+  getTargetFace(): { blockX: number; blockY: number; blockZ: number; nx: number; ny: number; nz: number } | null {
+    if (!this.target) {
+      return null;
+    }
+    return {
+      blockX: this.target.blockX,
+      blockY: this.target.blockY,
+      blockZ: this.target.blockZ,
+      nx: this.target.nx,
+      ny: this.target.ny,
+      nz: this.target.nz,
+    };
+  }
+
   /** Clear a stale selection while the world is streaming or the game is paused. */
   clearTarget(): void {
     this.target = null;

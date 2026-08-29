@@ -95,9 +95,25 @@ describe('world dirty propagation and edits', () => {
     }
   }
 
-  it('getBlock returns air for unloaded chunks', () => {
-    const world = makeWorld();
-    expect(world.getBlock(0, 0, 0)).toBe(BlockId.Air);
+  it('iterates materialized canonical sections with dimension-aware negative and top Y', () => {
+    const world = makeWorld(1, OVERWORLD_DIMENSION_TYPE);
+    world.setBlock(-17, -64, -1, BlockId.Stone);
+    world.setBlock(-17, 0, -1, BlockId.Stone);
+    world.setBlock(-17, 319, -1, BlockId.Stone);
+
+    const sections: Array<[number, number, number]> = [];
+    world.forEachLoadedSection((sectionX, sectionY, sectionZ) => {
+      sections.push([sectionX, sectionY, sectionZ]);
+    });
+
+    expect(sections).toEqual([
+      [-2, -4, -1],
+      [-2, 0, -1],
+      [-2, 19, -1],
+    ]);
+    expect(world.getStats().residentColumns).toBe(0);
+    expect(world.getStats().allocatedSections).toBe(3);
+    world.dispose();
   });
 
   it('uses a non-allocating generator fallback for absent surface columns', () => {

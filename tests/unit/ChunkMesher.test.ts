@@ -168,6 +168,51 @@ describe('ChunkMesher', () => {
   describe('meshSection', () => {
     const stateRegistry = createDefaultBlockStateRegistry();
 
+    it('samples dimension-aware world Y at the negative and top sections without legacy clamps', () => {
+      const section = new ChunkSection(0, stateRegistry);
+      section.setAt(8, 0, 8, stateRegistry.getDefaultState(BlockId.Stone));
+      const mesher = new ChunkMesher({ registry, atlas: fakeAtlas });
+      const sampledY = new Set<number>();
+      const result = mesher.meshSection(0, -4, 0, section, () => stateRegistry.getDefaultState(BlockId.Air), {
+        lightSampler: {
+          inBounds: (_x, y) => y >= -64 && y <= 319,
+          isOpaque: () => false,
+          getSkyLight: (_x, y) => {
+            sampledY.add(y);
+            return y === -64 ? 3 : 0;
+          },
+          getBlockLight: (_x, y) => {
+            sampledY.add(y);
+            return y === -64 ? 7 : 0;
+          },
+        },
+      });
+
+      expect(result.opaque).not.toBeNull();
+      expect(sampledY.has(-64)).toBe(true);
+      expect([...sampledY].every((y) => y >= -64 && y <= -49)).toBe(true);
+
+      sampledY.clear();
+      const top = new ChunkSection(23, stateRegistry);
+      top.setAt(8, 15, 8, stateRegistry.getDefaultState(BlockId.Stone));
+      const topResult = mesher.meshSection(0, 19, 0, top, () => stateRegistry.getDefaultState(BlockId.Air), {
+        lightSampler: {
+          inBounds: (_x, y) => y >= -64 && y <= 319,
+          isOpaque: () => false,
+          getSkyLight: (_x, y) => {
+            sampledY.add(y);
+            return y === 319 ? 11 : 0;
+          },
+          getBlockLight: (_x, y) => {
+            sampledY.add(y);
+            return y === 319 ? 5 : 0;
+          },
+        },
+      });
+      expect(topResult.opaque).not.toBeNull();
+      expect(sampledY.has(319)).toBe(true);
+      expect([...sampledY].every((y) => y >= 304 && y <= 319)).toBe(true);
+    });
     it('returns empty result for an all-air section without scanning', () => {
       const section = new ChunkSection(0, stateRegistry);
       const mesher = new ChunkMesher({ registry, atlas: fakeAtlas });

@@ -26,6 +26,11 @@ function dirtySet(w: VerticalWorldAccess, cx: number, cz: number): Set<number> {
   return new Set(col ? col.dirtySectionIndices() : []);
 }
 
+function meshDirtySet(w: VerticalWorldAccess, cx: number, cz: number): Set<number> {
+  const col = w.getColumn(cx, cz);
+  return new Set(col ? col.meshDirtySectionIndices() : []);
+}
+
 describe('VerticalNeighborDirtying', () => {
   it('ChunkColumn.markSectionDirty flags an in-range section without allocating', () => {
     const col = new ChunkColumn({ chunkX: 0, chunkZ: 0, sectionCount: 4, registry });
@@ -48,9 +53,11 @@ describe('VerticalNeighborDirtying', () => {
     w.ensureColumn(-1, 0);
     w.ensureColumn(1, 0);
     w.setBlockState(0, 0, 8, stone); // localX 0, localY 0 -> sy 4
-    expect(dirtySet(w, 0, 0)).toEqual(new Set([3, 4])); // written + vertical-down
-    expect(dirtySet(w, -1, 0)).toEqual(new Set([4])); // left neighbor
-    expect(dirtySet(w, 1, 0)).toEqual(new Set()); // right must stay clean
+    expect(dirtySet(w, 0, 0)).toEqual(new Set([4])); // persistence owns the written section only
+    expect(meshDirtySet(w, 0, 0)).toEqual(new Set([3, 4])); // render target + vertical-down
+    expect(meshDirtySet(w, -1, 0)).toEqual(new Set([4])); // left render neighbor
+    expect(dirtySet(w, -1, 0)).toEqual(new Set()); // render-only neighbor is not persisted
+    expect(meshDirtySet(w, 1, 0)).toEqual(new Set()); // right must stay clean
   });
 
   it('propagates to the right horizontal neighbor on a localX == 15 boundary', () => {
@@ -58,22 +65,26 @@ describe('VerticalNeighborDirtying', () => {
     w.ensureColumn(0, 0);
     w.ensureColumn(1, 0);
     w.setBlockState(15, 0, 8, stone); // localX 15
-    expect(dirtySet(w, 1, 0)).toEqual(new Set([4]));
-    expect(dirtySet(w, 0, 0).has(3)).toBe(true); // vertical-down of written
+    expect(dirtySet(w, 1, 0)).toEqual(new Set());
+    expect(meshDirtySet(w, 1, 0)).toEqual(new Set([4])); // right render neighbor only
+    expect(dirtySet(w, 0, 0)).toEqual(new Set([4]));
+    expect(meshDirtySet(w, 0, 0)).toEqual(new Set([3, 4])); // target + vertical-down
   });
 
   it('propagates to the vertical-up neighbor on a localY == 15 boundary', () => {
     const w = makeWorld();
     w.ensureColumn(0, 0);
     w.setBlockState(8, 15, 8, stone); // localY 15 -> sy 4, neighbor sy 5
-    expect(dirtySet(w, 0, 0)).toEqual(new Set([4, 5]));
+    expect(dirtySet(w, 0, 0)).toEqual(new Set([4]));
+    expect(meshDirtySet(w, 0, 0)).toEqual(new Set([4, 5])); // target + vertical-up render dependency
   });
 
   it('propagates to the vertical-down neighbor on a localY == 0 boundary', () => {
     const w = makeWorld();
     w.ensureColumn(0, 0);
     w.setBlockState(8, 0, 8, stone); // localY 0 -> sy 4, neighbor sy 3
-    expect(dirtySet(w, 0, 0)).toEqual(new Set([3, 4]));
+    expect(dirtySet(w, 0, 0)).toEqual(new Set([4]));
+    expect(meshDirtySet(w, 0, 0)).toEqual(new Set([3, 4])); // target + vertical-down render dependency
   });
 
   it('leaves all neighbors clean on an interior write', () => {

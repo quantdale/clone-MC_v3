@@ -895,6 +895,47 @@ describe("GamePersistence — composition convenience", () => {
     await p.dispose();
   });
 
+  it("canonical column save failure retains the dirty snapshot and retries after recovery", async () => {
+    const factory = new FaultIdbFactory();
+    const p = new GamePersistence({
+      seed: SEED,
+      factory,
+      flushTarget: null,
+    });
+    await p.open();
+
+    const stateRegistry = createDefaultBlockStateRegistry();
+    const column = new ChunkColumn({
+      chunkX: -3,
+      chunkZ: 4,
+      sectionCount: 24,
+      minSectionY: -4,
+      registry: stateRegistry,
+    });
+    column.setBlockState(1, -1, 7, stateRegistry.lookup(BlockId.Wheat, { age: 7 }));
+
+    factory.arm("chunk-sections", "QuotaExceededError");
+    p.saveChunkColumn(column);
+    const failed = await p.flush();
+    expect(failed.committed).toBe(0);
+    expect(failed.failed).toBe(1);
+    expect(p.pendingCount).toBe(1);
+    expect(p.lastFailureKind).toBe("quota");
+
+    factory.disarm();
+    const recovered = await p.flush();
+    expect(recovered.committed).toBe(1);
+    expect(recovered.failed).toBe(0);
+    expect(p.pendingCount).toBe(0);
+
+    const loaded = await p.loadChunkColumn(-3, 4);
+    expect(loaded).not.toBeNull();
+    const restored = ChunkColumn.deserialize(loaded!, stateRegistry);
+    expect(restored.getBlockState(1, -1, 7).getProperty("age")).toBe("7");
+
+    await p.dispose();
+  });
+
   it("saveChunkColumn persists a canonical column and loadChunkColumn retrieves it", async () => {
     const factory = new FaultIdbFactory();
     const p = new GamePersistence({

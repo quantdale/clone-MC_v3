@@ -22,6 +22,7 @@ interface FurnaceStateView {
 }
 
 type Pos = { x: number; y: number; z: number };
+type TargetFace = Pos & { nx: number; ny: number; nz: number };
 
 async function waitForGame(page: Page): Promise<void> {
   await page.goto('/');
@@ -49,24 +50,89 @@ function rightClick(page: Page): void {
 }
 
 /** Aim down-forward and wait until an interaction target exists. */
-async function acquireTarget(page: Page, pitch = -0.5): Promise<Pos> {
-  await page.evaluate((p) => {
-    const g = (window as unknown as { __voxelGame?: { player?: { pitch: number } } }).__voxelGame;
-    if (g?.player) g.player.pitch = p;
-  }, pitch);
-  for (let i = 0; i < 30; i++) {
-    await page.waitForTimeout(100);
-    const t = await page.evaluate(() => {
-      const g = (window as unknown as { __voxelGame?: { interaction?: { getTarget(): { blockX: number; blockY: number; blockZ: number } | null } } }).__voxelGame;
-      const target = g?.interaction?.getTarget();
-      return target ? { x: target.blockX, y: target.blockY, z: target.blockZ } : null;
-    });
-    if (t) return t;
+async function acquireTarget(page: Page, pitch = -0.5): Promise<TargetFace> {
+  const poses = [
+    { yaw: 0, pitch },
+    { yaw: 0.35, pitch },
+    { yaw: -0.35, pitch },
+    { yaw: 0, pitch: pitch + 0.2 },
+    { yaw: 0, pitch: pitch - 0.2 },
+    { yaw: 0.7, pitch: pitch + 0.2 },
+    { yaw: -0.7, pitch: pitch + 0.2 },
+  ];
+  for (const pose of poses) {
+    await page.evaluate((p) => {
+      const g = (window as unknown as { __voxelGame?: { player?: { yaw: number; pitch: number } } }).__voxelGame;
+      if (g?.player) {
+        g.player.yaw = p.yaw;
+        g.player.pitch = p.pitch;
+      }
+    }, pose);
+    for (let i = 0; i < 10; i++) {
+      await page.waitForTimeout(100);
+      const t = await page.evaluate(() => {
+        const g = (window as unknown as {
+          __voxelGame?: {
+            interaction?: {
+              getTargetFace(): {
+                blockX: number;
+                blockY: number;
+                blockZ: number;
+                nx: number;
+                ny: number;
+                nz: number;
+              } | null;
+            };
+            world?: { getBlock(x: number, y: number, z: number): number };
+          };
+        }).__voxelGame;
+        const target = g?.interaction?.getTargetFace();
+        if (!g || !target || !g.world) return null;
+        const cell = {
+          x: Math.floor(target.blockX + target.nx),
+          y: Math.floor(target.blockY + target.ny),
+          z: Math.floor(target.blockZ + target.nz),
+        };
+        if (g.world.getBlock(cell.x, cell.y, cell.z) !== 0) return null;
+        return {
+          x: target.blockX,
+          y: target.blockY,
+          z: target.blockZ,
+          nx: target.nx,
+          ny: target.ny,
+          nz: target.nz,
+        };
+      });
+      if (t) return t;
+    }
   }
   throw new Error('no interaction target acquired');
 }
 
+async function aimAt(page: Page, pos: Pos): Promise<void> {
+  await page.evaluate((p) => {
+    const g = (window as unknown as {
+      __voxelGame?: {
+        player?: {
+          position: { x: number; y: number; z: number };
+          eyePosition: { x: number; y: number; z: number };
+          yaw: number;
+          pitch: number;
+        };
+      };
+    }).__voxelGame;
+    const player = g?.player;
+    if (!player) return;
+    const dx = p.x + 0.5 - player.eyePosition.x;
+    const dy = p.y + 0.5 - player.eyePosition.y;
+    const dz = p.z + 0.5 - player.eyePosition.z;
+    player.yaw = Math.atan2(-dx, -dz);
+    player.pitch = Math.atan2(dy, Math.hypot(dx, dz));
+  }, pos);
+}
+
 async function waitForTargetAt(page: Page, pos: Pos, timeout = 10_000): Promise<void> {
+  await aimAt(page, pos);
   await page.waitForFunction(
     (p) => {
       const g = (window as unknown as { __voxelGame?: { interaction?: { getTarget(): { blockX: number; blockY: number; blockZ: number } | null } } }).__voxelGame;
@@ -128,7 +194,11 @@ async function placeFurnace(page: Page): Promise<Pos> {
   await page.keyboard.press(`Digit${furnaceSlot + 1}`);
 
   const ground = await acquireTarget(page);
-  const cell = { x: ground.x, y: ground.y + 1, z: ground.z };
+  const cell = {
+    x: Math.floor(ground.x + ground.nx),
+    y: Math.floor(ground.y + ground.ny),
+    z: Math.floor(ground.z + ground.nz),
+  };
   expect(await blockAt(page, cell)).toBe(0);
   rightClick(page);
   await waitForBlockAt(page, cell, 20);

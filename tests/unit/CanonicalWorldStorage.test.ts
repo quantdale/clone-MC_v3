@@ -124,7 +124,10 @@ describe('CanonicalWorldStorage (253 single authority facade)', () => {
     expect(column).toBeDefined();
     expect(column!.sectionCount).toBe(24);
     expect(column!.allocatedSectionCount()).toBe(0);
-    expect(restored.getBlock(4 * 16 + 7, 319, -3 * 16 + 7)).toBe(BlockId.Air);
+    const firstAir = restored.getBlockState(4 * 16 + 7, 319, -3 * 16 + 7);
+    const secondAir = restored.getBlockState(4 * 16 + 7, 319, -3 * 16 + 7);
+    expect(firstAir).toBe(secondAir);
+    expect(firstAir.blockId).toBe(BlockId.Air);
     expect(column!.allocatedSectionCount()).toBe(0);
   });
 

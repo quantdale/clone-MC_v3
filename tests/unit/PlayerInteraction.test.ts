@@ -108,6 +108,14 @@ describe('player interaction selection', () => {
     expect(outline).not.toBeNull();
     expect(outline!.visible).toBe(true);
     expect(interaction.getTarget()).toEqual({ blockX: 2, blockY: 1, blockZ: 0 });
+    expect(interaction.getTargetFace()).toEqual({
+      blockX: 2,
+      blockY: 1,
+      blockZ: 0,
+      nx: -1,
+      ny: 0,
+      nz: 0,
+    });
 
     outline!.geometry.computeBoundingBox();
     const localBounds = outline!.geometry.boundingBox!;

@@ -50,9 +50,12 @@ export class ChunkColumn {
   readonly minSectionY: number;
   private readonly registry: BlockStateRegistry;
   private readonly airId: BlockStateId;
+  private readonly airState: BlockState;
   private readonly blockRegistry?: BlockTypeRegistry;
   private readonly sections = new Map<number, ChunkSection>();
   private readonly dirtySections = new Set<number>();
+  /** Render invalidations are separate from persistence dirty ownership. */
+  private readonly meshDirtySections = new Set<number>();
   /** Lowest world Y covered by this column (`minSectionY * SECTION_SIZE`). */
   readonly minY: number;
   /** Highest world Y covered by this column (`(minSectionY + sectionCount) * SECTION_SIZE - 1`). */
@@ -73,6 +76,7 @@ export class ChunkColumn {
     this.minSectionY = options.minSectionY ?? 0;
     this.registry = options.registry;
     this.airId = options.airId ?? options.registry.getDefaultState(0).id;
+    this.airState = this.registry.getState(this.airId);
     this.blockRegistry = options.blockRegistry;
     this.minY = this.minSectionY * SECTION_SIZE;
     this.maxY = (this.minSectionY + this.sectionCount) * SECTION_SIZE - 1;
@@ -136,7 +140,7 @@ export class ChunkColumn {
     const sy = this.sectionIndexForY(worldY);
     this.checkSection(sy);
     const section = this.sections.get(sy);
-    if (section === undefined) return this.registry.getState(this.airId);
+    if (section === undefined) return this.airState;
     return section.getStateAt(localX, localCoord(worldY), localZ);
   }
 
@@ -147,6 +151,7 @@ export class ChunkColumn {
     const section = this.ensureSection(sy);
     section.setAt(localX, localCoord(worldY), localZ, state);
     this.dirtySections.add(sy);
+    this.meshDirtySections.add(sy);
     this.updateHeightmaps(localX, worldY, localZ, state);
   }
 
@@ -160,17 +165,37 @@ export class ChunkColumn {
     return [...this.dirtySections];
   }
 
+  /** In-column indices whose canonical contents or face dependency require a remesh. */
+  meshDirtySectionIndices(): readonly number[] {
+    return [...this.meshDirtySections];
+  }
+
+  clearMeshDirty(sy: number): void {
+    this.meshDirtySections.delete(sy);
+  }
+
+  /** Mark every materialized section for its first canonical render build. */
+  markMaterializedSectionsMeshDirty(): void {
+    for (const sy of this.sections.keys()) this.meshDirtySections.add(sy);
+  }
+
   clearDirty(): void {
     this.dirtySections.clear();
   }
 
-  /**
-   * Flag an in-range section as dirty without materializing it. Out-of-range indices are ignored so
-   * callers can propagate from a boundary without range-checking the neighbor.
-   */
+  /** Set the persistence and render dirty state for a locally changed section. */
   markSectionDirty(sy: number): void {
     if (sy >= 0 && sy < this.sectionCount) {
       this.dirtySections.add(sy);
+      this.meshDirtySections.add(sy);
+    }
+  }
+
+  /** Mark a section as needing a canonical render rebuild without changing persistence dirty state. */
+  markSectionMeshDirty(sy: number): void {
+    if (sy >= 0 && sy < this.sectionCount) {
+      this.meshDirtySections.add(sy);
+      this.sections.get(sy)?.invalidateMesh();
     }
   }
 

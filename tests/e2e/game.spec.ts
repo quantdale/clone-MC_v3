@@ -569,22 +569,56 @@ test.describe('voxel game', () => {
       const g = (window as unknown as { __voxelGame?: { player: { pitch: number } } }).__voxelGame;
       if (g) g.player.pitch = -0.5;
     });
-    // Wait for a target.
-    let target: { x: number; y: number; z: number } | null = null;
-    for (let i = 0; i < 20; i++) {
-      await page.waitForTimeout(100);
-      target = await page.evaluate(() => {
-        const g = (window as unknown as { __voxelGame?: { interaction?: { getTarget(): { blockX: number; blockY: number; blockZ: number } | null } } }).__voxelGame;
-        const t = g?.interaction?.getTarget();
-        return t ? { x: t.blockX, y: t.blockY, z: t.blockZ } : null;
-      });
+    // Scan a small deterministic pose set until the visible face has an empty
+    // adjacent placement cell; the production path rejects occupied cells.
+    const poses = [
+      { yaw: 0, pitch: -0.5 },
+      { yaw: 0.35, pitch: -0.5 },
+      { yaw: -0.35, pitch: -0.5 },
+      { yaw: 0, pitch: -0.3 },
+      { yaw: 0, pitch: -0.7 },
+      { yaw: 0.7, pitch: -0.3 },
+      { yaw: -0.7, pitch: -0.3 },
+    ];
+    let target: { x: number; y: number; z: number; nx: number; ny: number; nz: number } | null = null;
+    for (const pose of poses) {
+      await page.evaluate((p) => {
+        const g = (window as unknown as { __voxelGame?: { player: { yaw: number; pitch: number } } }).__voxelGame;
+        if (g) {
+          g.player.yaw = p.yaw;
+          g.player.pitch = p.pitch;
+        }
+      }, pose);
+      for (let i = 0; i < 10; i++) {
+        await page.waitForTimeout(100);
+        target = await page.evaluate(() => {
+          const g = (window as unknown as {
+            __voxelGame?: {
+              interaction?: {
+                getTargetFace(): { blockX: number; blockY: number; blockZ: number; nx: number; ny: number; nz: number } | null;
+              };
+              world?: { getBlock(x: number, y: number, z: number): number };
+            };
+          }).__voxelGame;
+          const t = g?.interaction?.getTargetFace();
+          if (!g || !t || !g.world) return null;
+          const cell = {
+            x: Math.floor(t.blockX + t.nx),
+            y: Math.floor(t.blockY + t.ny),
+            z: Math.floor(t.blockZ + t.nz),
+          };
+          if (g.world.getBlock(cell.x, cell.y, cell.z) !== 0) return null;
+          return { x: t.blockX, y: t.blockY, z: t.blockZ, nx: t.nx, ny: t.ny, nz: t.nz };
+        });
+        if (target) break;
+      }
       if (target) break;
     }
     expect(target).not.toBeNull();
-    // The placement cell is adjacent to the top face (aiming down).
-    const px = target!.x;
-    const py = target!.y + 1;
-    const pz = target!.z;
+    // The placement cell is the face-adjacent cell selected by the ray.
+    const px = Math.floor(target!.x + target!.nx);
+    const py = Math.floor(target!.y + target!.ny);
+    const pz = Math.floor(target!.z + target!.nz);
     const before = await page.evaluate((p) => {
       const g = (window as unknown as { __voxelGame?: { world?: { getBlock(x: number, y: number, z: number): number } } }).__voxelGame;
       return g?.world?.getBlock(p.x, p.y, p.z) ?? -1;
@@ -748,20 +782,53 @@ test.describe('survival-progression foundation (242 e2e seam)', () => {
       const g = (window as unknown as { __voxelGame?: { player: { pitch: number } } }).__voxelGame;
       if (g) g.player.pitch = -0.5;
     });
-    let target: { x: number; y: number; z: number } | null = null;
-    for (let i = 0; i < 20; i++) {
-      await page.waitForTimeout(100);
-      target = await page.evaluate(() => {
-        const g = (window as unknown as { __voxelGame?: { interaction?: { getTarget(): { blockX: number; blockY: number; blockZ: number } | null } } }).__voxelGame;
-        const t = g?.interaction?.getTarget();
-        return t ? { x: t.blockX, y: t.blockY, z: t.blockZ } : null;
-      });
+    const poses = [
+      { yaw: 0, pitch: -0.5 },
+      { yaw: 0.35, pitch: -0.5 },
+      { yaw: -0.35, pitch: -0.5 },
+      { yaw: 0, pitch: -0.3 },
+      { yaw: 0, pitch: -0.7 },
+      { yaw: 0.7, pitch: -0.3 },
+      { yaw: -0.7, pitch: -0.3 },
+    ];
+    let target: { x: number; y: number; z: number; nx: number; ny: number; nz: number } | null = null;
+    for (const pose of poses) {
+      await page.evaluate((p) => {
+        const g = (window as unknown as { __voxelGame?: { player: { yaw: number; pitch: number } } }).__voxelGame;
+        if (g) {
+          g.player.yaw = p.yaw;
+          g.player.pitch = p.pitch;
+        }
+      }, pose);
+      for (let i = 0; i < 10; i++) {
+        await page.waitForTimeout(100);
+        target = await page.evaluate(() => {
+          const g = (window as unknown as {
+            __voxelGame?: {
+              interaction?: {
+                getTargetFace(): { blockX: number; blockY: number; blockZ: number; nx: number; ny: number; nz: number } | null;
+              };
+              world?: { getBlock(x: number, y: number, z: number): number };
+            };
+          }).__voxelGame;
+          const t = g?.interaction?.getTargetFace();
+          if (!g || !t || !g.world) return null;
+          const cell = {
+            x: Math.floor(t.blockX + t.nx),
+            y: Math.floor(t.blockY + t.ny),
+            z: Math.floor(t.blockZ + t.nz),
+          };
+          if (g.world.getBlock(cell.x, cell.y, cell.z) !== 0) return null;
+          return { x: t.blockX, y: t.blockY, z: t.blockZ, nx: t.nx, ny: t.ny, nz: t.nz };
+        });
+        if (target) break;
+      }
       if (target) break;
     }
     expect(target).not.toBeNull();
-    const px = target!.x;
-    const py = target!.y + 1;
-    const pz = target!.z;
+    const px = Math.floor(target!.x + target!.nx);
+    const py = Math.floor(target!.y + target!.ny);
+    const pz = Math.floor(target!.z + target!.nz);
     await page.evaluate(() => {
       document.dispatchEvent(new MouseEvent('mousedown', { button: 2, bubbles: true }));
       document.dispatchEvent(new MouseEvent('mouseup', { button: 2, bubbles: true }));

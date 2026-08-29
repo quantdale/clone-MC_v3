@@ -20,21 +20,23 @@
  * leak detection.
  */
 
-/** The seven live-resource dimensions measured over a session. */
+/** The seven live-resource dimensions measured over an extended session. */
 export type MemoryResourceDimension =
-  | 'loadedChunks'
+  | 'residentColumns'
   | 'pendingJobs'
-  | 'meshGeometries'
+  | 'sectionGeometries'
   | 'editOverlayChunks'
   | 'blockEntities'
   | 'activeEntities'
   | 'itemEntities';
 
-/** A snapshot of plain non-negative live-resource counts. */
+/** A snapshot of plain non-negative live-resource counts in canonical units. */
 export interface LiveResourceSnapshot {
-  loadedChunks: number;
+  /** Horizontal canonical residency; legacy vertical slab projections are excluded. */
+  residentColumns: number;
   pendingJobs: number;
-  meshGeometries: number;
+  /** Live geometry objects owned by canonical section rendering. */
+  sectionGeometries: number;
   editOverlayChunks: number;
   blockEntities: number;
   activeEntities: number;
@@ -43,9 +45,9 @@ export interface LiveResourceSnapshot {
 
 /** Positive-integer ceilings for the seven dimensions. */
 export interface MemoryResourceConfig {
-  maxLoadedChunks: number;
+  maxResidentColumns: number;
   maxPendingJobs: number;
-  maxMeshGeometries: number;
+  maxSectionGeometries: number;
   maxEditOverlayChunks: number;
   maxBlockEntities: number;
   maxActiveEntities: number;
@@ -86,9 +88,9 @@ export const PRELOAD_RADIUS = 3;
 
 /** Fixed evaluation order (normative — must not change). */
 export const DIMENSIONS: readonly MemoryResourceDimension[] = [
-  'loadedChunks',
+  'residentColumns',
   'pendingJobs',
-  'meshGeometries',
+  'sectionGeometries',
   'editOverlayChunks',
   'blockEntities',
   'activeEntities',
@@ -97,9 +99,9 @@ export const DIMENSIONS: readonly MemoryResourceDimension[] = [
 
 /** Budget field per dimension. */
 const DIMENSION_TO_BUDGET: Record<MemoryResourceDimension, keyof MemoryResourceConfig> = {
-  loadedChunks: 'maxLoadedChunks',
+  residentColumns: 'maxResidentColumns',
   pendingJobs: 'maxPendingJobs',
-  meshGeometries: 'maxMeshGeometries',
+  sectionGeometries: 'maxSectionGeometries',
   editOverlayChunks: 'maxEditOverlayChunks',
   blockEntities: 'maxBlockEntities',
   activeEntities: 'maxActiveEntities',
@@ -107,16 +109,16 @@ const DIMENSION_TO_BUDGET: Record<MemoryResourceDimension, keyof MemoryResourceC
 };
 
 const CONFIG_FIELDS: readonly (keyof MemoryResourceConfig)[] = [
-  'maxLoadedChunks',
+  'maxResidentColumns',
   'maxPendingJobs',
-  'maxMeshGeometries',
+  'maxSectionGeometries',
   'maxEditOverlayChunks',
   'maxBlockEntities',
   'maxActiveEntities',
   'maxItemEntities',
 ];
 
-/** Number of loaded chunks in the interest ring `(2R+1)^2 × layerCount`. */
+/** Number of resident horizontal columns in the interest ring `(2R+1)^2`. */
 export function computeRingCardinality(renderDistance: number, layerCount = 1): number {
   if (!Number.isInteger(renderDistance) || renderDistance < 0) {
     throw new Error('computeRingCardinality: renderDistance must be a non-negative integer');
@@ -143,26 +145,26 @@ export interface DeriveMemoryResourceBudgetOptions {
 }
 
 /**
- * Derive a `MemoryResourceConfig` from the documented runtime caps for a given
- * render distance. `maxLoadedChunks` follows the engine's actual residency
- * ceiling: the larger of the streaming ring `(2·R+1)²` and the boot-preload ring
- * `(2·preloadRadius+1)²` (preloaded chunks are kept up to the unload limit
- * `R+1`, and preloadRadius ≤ R+1 always holds, so preloaded chunks are never
- * immediately evicted). `maxPendingJobs = maxQueueSize + maxLoadedChunks` (the
- * generation/mesh queues are bounded by `CONFIG.maxQueueSize`, the retry mesh
- * queue is loaded-chunk-bounded); `maxMeshGeometries = 2·maxLoadedChunks +
- * allowance` (opaque + transparent mesh per chunk plus constant-shape geometry).
+ * Derive a `MemoryResourceConfig` from documented runtime caps for canonical units.
+ * `maxResidentColumns` follows the horizontal residency ceiling: the larger of
+ * the streaming ring `(2·R+1)²` and the boot-preload ring
+ * `(2·preloadRadius+1)²`. Vertical section layers do not multiply this value;
+ * they are represented by `allocatedSections`/`sectionGeometries` metrics.
+ * `maxPendingJobs = maxQueueSize + maxResidentColumns` because the retry mesh
+ * queue is bounded by resident columns. `maxSectionGeometries` preserves the
+ * existing measured two-stream-per-resident-unit formula plus fixed geometry
+ * allowance; changing that ceiling requires a separate before/after measure.
  */
 export function deriveMemoryResourceBudget(
   renderDistance: number,
   opts: DeriveMemoryResourceBudgetOptions = {},
 ): MemoryResourceConfig {
   const effectiveRadius = Math.max(renderDistance, opts.preloadRadius ?? PRELOAD_RADIUS);
-  const maxLoadedChunks = computeRingCardinality(effectiveRadius, opts.layerCount ?? 1);
+  const maxResidentColumns = computeRingCardinality(effectiveRadius);
   return {
-    maxLoadedChunks,
-    maxPendingJobs: (opts.maxQueueSize ?? MAX_QUEUE_SIZE) + maxLoadedChunks,
-    maxMeshGeometries: 2 * maxLoadedChunks + GEOMETRY_FIXED_ALLOWANCE,
+    maxResidentColumns,
+    maxPendingJobs: (opts.maxQueueSize ?? MAX_QUEUE_SIZE) + maxResidentColumns,
+    maxSectionGeometries: 2 * maxResidentColumns + GEOMETRY_FIXED_ALLOWANCE,
     maxEditOverlayChunks: opts.editOverlayMaxChunks ?? EDIT_OVERLAY_MAX_CHUNKS,
     maxBlockEntities: opts.maxBlockEntities ?? BLOCK_ENTITY_CAP,
     maxActiveEntities: (opts.spawnCap ?? PASSIVE_SPAWN_CAP) + (opts.activeEntityAllowance ?? ACTIVE_ENTITY_ALLOWANCE),

@@ -310,4 +310,29 @@ describe("LightUpdateEngine — invalidateCell / clearPending / skylight channel
     expect(deep).toBeLessThan(15);
     void fullRecompute;
   });
+
+  it("propagates block light from both dimension boundaries", () => {
+    const field = new Field();
+    const engine = new LightUpdateEngine(field.storage, field, {
+      minY: -64,
+      maxY: 320,
+    });
+
+    field.setLuminance(8, -64, 8, 15);
+    engine.onBlockChanged(8, -64, 8);
+    drainFully(engine);
+    expect(field.storage.getBlockLight(8, -64, 8)).toBe(15);
+    expect(field.storage.getBlockLight(8, -63, 8)).toBe(14);
+    expect(field.storage.getBlockLight(8, -65, 8)).toBe(0);
+
+    field.setLuminance(8, -64, 8, 0);
+    field.setLuminance(8, 319, 8, 15);
+    engine.onBlockChanged(8, -64, 8);
+    engine.onBlockChanged(8, 319, 8);
+    drainFully(engine);
+    expect(field.storage.getBlockLight(8, 319, 8)).toBe(15);
+    expect(field.storage.getBlockLight(8, 318, 8)).toBe(14);
+    expect(field.storage.getBlockLight(8, 320, 8)).toBe(0);
+  });
 });
+

@@ -199,9 +199,9 @@ describe('LegacyLocalStorageMigrator (in-memory storage + mocks)', () => {
     const column = await chunkRepo.getColumn('world-7', 1, 2);
     expect(column).not.toBeNull();
     // Entry (1,0,2) decodes to section 0; entry (1,1,2) index 4095 -> local y=15, sectionY=0,
-    // placed at column section 1*4+0=4. minSectionY=0, sectionCount=5.
-    expect(column!.minSectionY).toBe(0);
-    expect(column!.sectionCount).toBe(5);
+    // placed at column section 1*4+0=4. Compatibility columns use the active Overworld layout.
+    expect(column!.minSectionY).toBe(-4);
+    expect(column!.sectionCount).toBe(24);
 
     // Faithful records: exact source pairs per distinct (cx,cy,cz).
     expect(await editRepo.getChunkEdits('world-7', 1, 0, 2)).toEqual([[0, 1], [100, 2]]);
@@ -302,11 +302,10 @@ describe('LegacyLocalStorageMigrator (in-memory storage + mocks)', () => {
     expect(report.errors).toEqual([]);
     const column = await chunkRepo.getColumn('world-7', 3, 4);
     expect(column).not.toBeNull();
-    expect(column!.minSectionY).toBe(0);
-    expect(column!.sectionCount).toBeGreaterThanOrEqual(2);
-    expect(column!.sectionCount).toBe(4); // sections 0 and 3 present
-    expect(column!.sections[0]).toBeDefined();
-    expect(column!.sections[3]).toBeDefined();
+    expect(column!.minSectionY).toBe(-4);
+    expect(column!.sectionCount).toBe(24); // active Overworld layout; sections 0 and 3 are populated
+    expect(column!.sections[4]).toBeDefined();
+    expect(column!.sections[7]).toBeDefined();
   });
 
   it('deduplicates duplicate indices with last-wins and persists a single pair', async () => {

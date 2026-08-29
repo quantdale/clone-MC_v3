@@ -17,7 +17,6 @@ import {
   validateItemBlockCrossReferences,
 } from '../inventory/ItemRegistry';
 import { HarvestRules } from '../world/HarvestRules';
-import { TerrainGenerator } from '../world/TerrainGenerator';
 import { ChunkMesher } from '../world/ChunkMesher';
 import { World, type WorldEditSnapshot, type WorldGenerationBaseline } from '../world/World';
 import type { SerializedChunkColumn } from '../world/ChunkColumn';
@@ -62,7 +61,7 @@ import { StatusEffectManager } from '../data/StatusEffectManager';
 import { createDefaultStatusEffectRegistry } from '../data/StatusEffect';
 import { createDefaultAttributeRegistry } from '../data/AttributeRegistry';
 import { ExperienceSystem } from '../player/ExperienceSystem';
-import { worldToChunk, CHUNK_DIMENSIONS } from '../world/WorldCoordinates';
+import { worldToChunk } from '../world/WorldCoordinates';
 import { GameAudio } from '../audio/GameAudio';
 import {
   GamePersistence,
@@ -113,6 +112,11 @@ import {
   type AccessibilityStore,
 } from '../simulation/AccessibilityFramework';
 import { resolveTouches, type TouchPoint } from '../simulation/TouchFramework';
+import { createOverworldComposition } from './WorldComposition';
+import {
+  snapshotCanonicalResourceMetrics,
+  type CanonicalResourceMetrics,
+} from './CanonicalResourceMetrics';
 import { FixedTickDriver } from './FixedTickDriver';
 import { TICK_RATE } from './SimulationClock';
 import { RenderInterpolator } from './RenderInterpolator';
@@ -500,38 +504,29 @@ export class Game {
     this.resources.track(this.audio);
 
     const mesher = new ChunkMesher({ registry: this.blockRegistry, atlas: this.atlas });
-    const generator = new TerrainGenerator(this.blockRegistry, this.seed);
-    this.worldLife = new WorldLife(this.renderer.scene, generator, this.seed);
-    this.resources.track(this.worldLife);
-    this.world = new World({
-      registry: this.blockRegistry,
-      seed: this.seed,
+    const composition = createOverworldComposition({
       scene: this.renderer.scene,
+      registry: this.blockRegistry,
+      stateRegistry: this.stateRegistry,
+      atlas: this.atlas,
       mesher,
-      generator,
       materials: {
         opaque: this.materials.opaque,
         transparent: this.materials.transparent,
         cutout: this.materials.cutout,
         fluid: this.materials.fluid,
       },
+      seed: this.seed,
       renderDistance,
       simulationDistance: this.runtimeSimulationDistance(),
-      dimension: OVERWORLD_DIMENSION_TYPE,
-      stateRegistry: this.stateRegistry,
       editDurability: this.persistenceImpl ?? undefined,
       monitor: this.worldMonitor,
-      // Atlas UV seam for the (currently disabled) worker-meshing path; the
-      // sync mesher ignores it. Face index is WorkerMeshing's canonical
-      // encoding: 0=up, 1=down, 2-5 sides.
-      uvRectFor: (blockId, faceIndex) => {
-        const def = this.blockRegistry.get(blockId);
-        const tile =
-          faceIndex === 0 ? def.topTile : faceIndex === 1 ? def.bottomTile : def.sideTile;
-        return this.atlas.uv(tile);
-      },
     });
-    this.worldBlockAccess = new WorldBlockAccess(this.world);
+    this.worldLife = composition.worldLife;
+    this.resources.track(this.worldLife);
+    this.world = composition.world;
+    this.worldBlockAccess = composition.worldBlockAccess;
+
     // Injected persistence is already open: restore the canonical baseline before
     // applying sparse edits. The self-composed path does this when open settles.
     if (this.selfOpenPromise === null) {
@@ -567,7 +562,7 @@ export class Game {
     this.overworldDimension = createResourceId('minecraft', 'overworld');
     this.passiveMobWorld = new PassiveMobWorldAdapter({
       world: this.world,
-      generator,
+      generator: composition.generator,
       biomeRegistry: createDefaultBiomeRegistry(),
     });
     const entityRegistry = createDefaultEntityRegistry();
@@ -875,6 +870,16 @@ export class Game {
         this.passiveMobs.getActivePigs().length + this.hostileMobs.getActiveZombies().length,
       itemEntities: this.itemEntities.size,
     };
+  }
+
+  /** Read-only canonical world/resource metrics sampled from subsystem owners. */
+  getCanonicalResourceMetrics(): CanonicalResourceMetrics {
+    return snapshotCanonicalResourceMetrics(
+      this.world.dimension,
+      this.world.getStats(),
+      this.persistenceImpl,
+      this.getLiveResourceCounts(),
+    );
   }
 
   /** Test-only hook (239): force the next update to throw and enter the error state. */
@@ -1188,30 +1193,26 @@ export class Game {
    */
   private tickRandomBlocks(): void {
     this.simTick++;
-    // Slab-height → section count: one 64-block slab contains exactly 4 × 16³ sections.
-    // This is the per-chunk slice count, NOT a world-height constant (world height is
-    // `dimension.height` / `SECTION_SIZE` via `DimensionType`).
-    const sectionsPerChunk = CHUNK_DIMENSIONS.height / 16;
-    this.world.forEachLoadedChunk((cx, cy, cz) => {
-      if (!this.world.isChunkSimulating(cx, cz)) {
+    // Random ticks are dispatched over materialized canonical 16³ sections.
+    // This keeps negative/high dimension Y authoritative and avoids rebuilding
+    // section coordinates from the legacy 64-high slab projection.
+    this.world.forEachLoadedSection((sectionX, sectionY, sectionZ) => {
+      if (!this.world.isChunkSimulating(sectionX, sectionZ)) {
         return;
       }
-      const sectionY0 = cy * sectionsPerChunk;
-      for (let s = 0; s < sectionsPerChunk; s++) {
-        const positions = this.randomTickSelector.selectEligible(
-          cx,
-          sectionY0 + s,
-          cz,
-          this.simTick,
-          this.seed,
-          (x, y, z) => this.isRandomTickEligible(x, y, z),
-        );
-        for (const [x, y, z] of positions) {
-          const blockKey = this.blockRegistry.get(this.world.getBlock(x, y, z)).key;
-          this.behaviorRegistry
-            .getBehavior(blockKey)
-            .onRandomTick?.({ x, y, z, tick: this.simTick, world: this.worldBlockAccess, seed: this.seed });
-        }
+      const positions = this.randomTickSelector.selectEligible(
+        sectionX,
+        sectionY,
+        sectionZ,
+        this.simTick,
+        this.seed,
+        (x, y, z) => this.isRandomTickEligible(x, y, z),
+      );
+      for (const [x, y, z] of positions) {
+        const blockKey = this.blockRegistry.get(this.world.getBlock(x, y, z)).key;
+        this.behaviorRegistry
+          .getBehavior(blockKey)
+          .onRandomTick?.({ x, y, z, tick: this.simTick, world: this.worldBlockAccess, seed: this.seed });
       }
     });
   }
@@ -1364,6 +1365,8 @@ export class Game {
       position: [this.player.position.x, this.player.position.y, this.player.position.z],
       chunk: `${pcx},${pcz}`,
       loaded: stats.loadedChunks,
+      columns: stats.residentColumns,
+      sections: stats.allocatedSections,
       pendingGen: stats.pendingGeneration,
       pendingMesh: stats.pendingMesh,
       triangles: stats.triangles,
@@ -2373,6 +2376,7 @@ export class Game {
     if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) return;
     if (!this.world.dimension.containsY(y)) return;
     this.player.position.set(x, y, z);
+    this.player.yaw = state.player.yaw;
     this.player.pitch = state.player.pitch;
     this.inventory.restore(
       state.inventory,

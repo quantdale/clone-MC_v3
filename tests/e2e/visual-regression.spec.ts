@@ -41,6 +41,8 @@ const SCREEN_FILTER = process.env.SCREEN_FILTER;
 
 /** Fixed settle delay after state assembly so meshing/textures settle. */
 const SETTLE_MS = 750;
+/** Software-WebGL production boot can take up to the same 60s budget as the game suite. */
+const BOOT_TIMEOUT_MS = 60_000;
 
 /** Comparison thresholds per capture mode (fixed constants, see design). */
 // maxChangedFraction 0.02: headless software-WebGL sky noise on the largest render cell
@@ -195,7 +197,7 @@ test.describe('visual regression matrix (245)', () => {
       const row: ReportRow = { ...cell, status: 'error' };
       try {
         await page.goto('/?seed=1337');
-        await page.waitForSelector('#loading', { state: 'hidden', timeout: 30_000 });
+        await page.waitForSelector('#loading', { state: 'hidden', timeout: BOOT_TIMEOUT_MS });
         await assembleState(page, cell.screen);
         await page.waitForTimeout(SETTLE_MS);
 

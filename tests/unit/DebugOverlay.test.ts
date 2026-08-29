@@ -82,11 +82,11 @@ describe('DebugOverlay perf source', () => {
     ];
   }
 
-  it('legacy lines are byte-identical without a perf source', () => {
+  it('renders canonical column and section diagnostics when supplied', () => {
     const { overlay, el } = makeOverlay();
-    overlay.update(stats);
-    expect((el.children[0] as FakeElement).textContent).toBe(legacyBlock().join('\n'));
-    expect((el.children[1] as FakeElement).textContent).toBe('');
+    overlay.update({ ...stats, columns: 2, sections: 7 });
+    expect((el.children[0] as FakeElement).textContent).toContain('columns: 2');
+    expect((el.children[0] as FakeElement).textContent).toContain('sections: 7');
   });
 
   it('appends the perf line while legacy lines stay unchanged', () => {

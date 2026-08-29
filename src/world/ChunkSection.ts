@@ -54,6 +54,11 @@ export class ChunkSection {
     this.meshVersionInternal++;
   }
 
+  /** Mark this section's mesh as stale without changing block contents. */
+  invalidateMesh(): void {
+    this.meshVersionInternal++;
+  }
+
   /** Monotonic version; increments on every mutation so stale mesh jobs can be discarded. */
   get meshVersion(): number {
     return this.meshVersionInternal;

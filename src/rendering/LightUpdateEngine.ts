@@ -18,7 +18,16 @@ export interface LightUpdateWorld {
   setSkyLight(x: number, y: number, z: number, value: number): void;
   getBlockLight(x: number, y: number, z: number): number;
   setBlockLight(x: number, y: number, z: number, value: number): void;
+  /** Inclusive horizontal origin of the volume; defaults to the historical 16×16 fixture. */
+  minX?: number;
+  /** Exclusive horizontal maximum of the volume; defaults to 16. */
+  maxX?: number;
+  /** Inclusive horizontal origin of the volume; defaults to 0. */
+  minZ?: number;
+  /** Exclusive horizontal maximum of the volume; defaults to 16. */
+  maxZ?: number;
   minY: number;
+  /** Exclusive upper Y bound. */
   maxY: number;
 }
 
@@ -41,7 +50,12 @@ function inBounds(
   z: number,
 ): boolean {
   return (
-    x >= 0 && x < 16 && z >= 0 && z < 16 && y >= world.minY && y < world.maxY
+    x >= (world.minX ?? 0) &&
+    x < (world.maxX ?? 16) &&
+    z >= (world.minZ ?? 0) &&
+    z < (world.maxZ ?? 16) &&
+    y >= world.minY &&
+    y < world.maxY
   );
 }
 
@@ -107,8 +121,8 @@ function removeLightType(
  */
 function propagateType(world: LightUpdateWorld, type: LightType): void {
   const queue: Array<[number, number, number]> = [];
-  for (let x = 0; x < 16; x++) {
-    for (let z = 0; z < 16; z++) {
+  for (let x = world.minX ?? 0; x < (world.maxX ?? 16); x++) {
+    for (let z = world.minZ ?? 0; z < (world.maxZ ?? 16); z++) {
       for (let y = world.minY; y < world.maxY; y++) {
         let value = getLight(world, type, x, y, z);
         if (type === "block") {
@@ -608,17 +622,21 @@ export class LightUpdateEngine {
     this.blockQueue.clear();
   }
 
-  /** Discard queued light work for cells inside a slab chunk (unload/version advance). */
-  pruneChunk(cx: number, cy: number, cz: number): void {
+  /** Discard queued work for a horizontal column; vertical residency is canonical-section based. */
+  pruneColumn(cx: number, cz: number): void {
     const minX = cx * 16;
     const maxX = minX + 15;
-    const minY = cy * 64;
-    const maxY = minY + 63;
     const minZ = cz * 16;
     const maxZ = minZ + 15;
-    const pred = (x: number, y: number, z: number): boolean => x >= minX && x <= maxX && y >= minY && y <= maxY && z >= minZ && z <= maxZ;
+    const pred = (x: number, _y: number, z: number): boolean =>
+      x >= minX && x <= maxX && z >= minZ && z <= maxZ;
     this.skyQueue.prune(pred);
     this.blockQueue.prune(pred);
+  }
+
+  /** @deprecated Use {@link pruneColumn}; retained as a compatibility entry point. */
+  pruneChunk(cx: number, _cy: number, cz: number): void {
+    this.pruneColumn(cx, cz);
   }
 
   /** Discard queued work for one 16³ section (section-aware unload). */
@@ -629,7 +647,8 @@ export class LightUpdateEngine {
     const maxY = minY + 15;
     const minZ = sz * 16;
     const maxZ = minZ + 15;
-    const pred = (x: number, y: number, z: number): boolean => x >= minX && x <= maxX && y >= minY && y <= maxY && z >= minZ && z <= maxZ;
+    const pred = (x: number, y: number, z: number): boolean =>
+      x >= minX && x <= maxX && y >= minY && y <= maxY && z >= minZ && z <= maxZ;
     this.skyQueue.prune(pred);
     this.blockQueue.prune(pred);
   }

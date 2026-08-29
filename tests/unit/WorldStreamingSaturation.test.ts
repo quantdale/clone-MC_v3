@@ -126,6 +126,61 @@ describe('World streaming under queue saturation', () => {
     world.dispose();
   });
 
+  it('keeps queues bounded and progresses through rapid teleport/edit/unload churn', () => {
+    const world = makeWorld(2);
+    const centers: ReadonlyArray<readonly [number, number]> = [
+      [0, 0],
+      [24, -24],
+      [-24, 24],
+      [-24, -24],
+      [0, 0],
+    ];
+    const editY = [-64, -1, 0, 15, 16, 63, 64, 319] as const;
+    let peakResidentColumns = 0;
+    let peakPendingGeneration = 0;
+    let peakPendingMesh = 0;
+
+    for (const [cx, cz] of centers) {
+      for (let frame = 0; frame < 36; frame++) {
+        world.update(1 / 60, cx, cz);
+        if (frame === 12) {
+          for (const [index, y] of editY.entries()) {
+            world.setBlock(cx * 16 + 8 + (index & 1), y, cz * 16 + 8, BlockId.Glass);
+          }
+        }
+        const stats = world.getStats();
+        peakResidentColumns = Math.max(peakResidentColumns, stats.residentColumns);
+        peakPendingGeneration = Math.max(peakPendingGeneration, stats.pendingGeneration);
+        peakPendingMesh = Math.max(peakPendingMesh, stats.pendingMesh);
+        expect(stats.pendingGeneration).toBeLessThanOrEqual(CHUNK_PIPELINE_QUEUE_CAPS.generate);
+        expect(stats.pendingMesh).toBeLessThanOrEqual(
+          CHUNK_PIPELINE_QUEUE_CAPS.mesh + CHUNK_PIPELINE_QUEUE_CAPS.upload + stats.loadedChunks,
+        );
+        expect(stats.pendingUnload).toBeLessThanOrEqual(stats.loadedChunks);
+      }
+    }
+
+    for (let frame = 0; frame < 240; frame++) {
+      world.update(1 / 60, 0, 0);
+      const stats = world.getStats();
+      expect(stats.pendingGeneration).toBeLessThanOrEqual(CHUNK_PIPELINE_QUEUE_CAPS.generate);
+      expect(stats.pendingMesh).toBeLessThanOrEqual(
+        CHUNK_PIPELINE_QUEUE_CAPS.mesh + CHUNK_PIPELINE_QUEUE_CAPS.upload + stats.loadedChunks,
+      );
+      if (stats.pendingGeneration === 0 && stats.pendingMesh === 0 && stats.pendingUnload === 0) break;
+    }
+
+    expect(peakResidentColumns).toBeLessThanOrEqual(49);
+    expect(peakPendingGeneration).toBeLessThanOrEqual(CHUNK_PIPELINE_QUEUE_CAPS.generate);
+    expect(peakPendingMesh).toBeLessThanOrEqual(
+      CHUNK_PIPELINE_QUEUE_CAPS.mesh + CHUNK_PIPELINE_QUEUE_CAPS.upload + peakResidentColumns * 6,
+    );
+    const settled = world.getStats();
+    expect(settled.pendingGeneration).toBe(0);
+    expect(settled.pendingMesh).toBe(0);
+    expect(settled.pendingUnload).toBe(0);
+    world.dispose();
+  }, 30_000);
   it('checks readiness in the dimension-derived surface slab', () => {
     const world = makeWorld(0, elevatedSurface, 129);
     world.preloadChunks(0, 0, 0);

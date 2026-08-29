@@ -163,7 +163,7 @@ export class VerticalWorldAccess {
     if (neighbor === undefined) {
       return; // Absent column has no mesh to update; do not materialize it.
     }
-    neighbor.markSectionDirty(nsy);
+    neighbor.markSectionMeshDirty(nsy);
   }
 
   /** True when any column has unsaved changes. */

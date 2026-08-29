@@ -88,6 +88,10 @@ interface WorkerMeshBatch {
   completed: boolean;
 }
 
+function canonicalSectionKey(sectionX: number, sectionY: number, sectionZ: number): string {
+  return `${sectionX},${sectionY},${sectionZ}`;
+}
+
 /**
  * Material set World renders chunk meshes with. `opaque`/`transparent` are
  * required (legacy contract); `cutout`/`fluid` are additive opt-ins — when a
@@ -248,6 +252,8 @@ export class World implements WorldAccess {
   /** Chunk keys whose light was invalidated since the last productive drain;
    *  promoted to remesh jobs when propagation actually changes values. */
   private readonly lightDirtyChunks = new Set<string>();
+  /** Canonical columns whose initial light field was seeded for the current residency. */
+  private readonly seededLightColumns = new Set<string>();
   /** World-coordinate light sampler handed to the mesher (070 shading). */
   private readonly mesherLightSampler = {
     inBounds: (x: number, y: number, z: number): boolean =>
@@ -299,6 +305,12 @@ export class World implements WorldAccess {
 
   /** Live scene meshes per chunk key (for disposal on unload / re-mesh). */
   private readonly meshGroups = new Map<string, THREE.Mesh[]>();
+  /** Canonical explicit-dimension section meshes, keyed by section coordinates. */
+  private readonly sectionMeshGroups = new Map<string, THREE.Mesh[]>();
+  /** Geometry identities already released by this World; prevents duplicate disposal across stale paths. */
+  private readonly disposedGeometries = new WeakSet<THREE.BufferGeometry>();
+  /** Triangles per canonical section mesh group. */
+  private readonly sectionTriangles = new Map<string, number>();
   /** Triangles per chunk key, for incremental stats. */
   private readonly chunkTriangles = new Map<string, number>();
   /** Non-air voxel count per chunk key, for incremental stats and unload. */
@@ -501,7 +513,9 @@ export class World implements WorldAccess {
     // it coherent for the current slab mesher, but never consult it for world
     // truth and never let it become an independent edit authority.
     chunk.setProjectionLocal(lx, ly, lz, state.blockId);
-    chunk.markDirty();
+    if (!this.usesExplicitDimension) {
+      chunk.markDirty();
+    }
     if (chunk.generated && oldId !== state.blockId) {
       const delta = (state.blockId !== BlockId.Air ? 1 : 0) - (oldId !== BlockId.Air ? 1 : 0);
       if (delta !== 0) {
@@ -512,17 +526,38 @@ export class World implements WorldAccess {
     const lxSec = localCoord(x);
     const lzSec = localCoord(z);
     const lySec = localCoord(y);
-    if (lxSec === 0) this.markNeighborDirty(cx - 1, cy, cz);
-    if (lxSec === 15) this.markNeighborDirty(cx + 1, cy, cz);
-    if (lzSec === 0) this.markNeighborDirty(cx, cy, cz - 1);
-    if (lzSec === 15) this.markNeighborDirty(cx, cy, cz + 1);
+    if (this.usesExplicitDimension) {
+      this.enqueueCanonicalSectionDependency(cx, sectionIndex(y), cz, false);
+    }
+    if (lxSec === 0) {
+      if (this.usesExplicitDimension) this.enqueueCanonicalSectionDependency(sectionIndex(x) - 1, sectionIndex(y), sectionIndex(z), false);
+      else this.markNeighborDirty(cx - 1, cy, cz);
+    }
+    if (lxSec === 15) {
+      if (this.usesExplicitDimension) this.enqueueCanonicalSectionDependency(sectionIndex(x) + 1, sectionIndex(y), sectionIndex(z), false);
+      else this.markNeighborDirty(cx + 1, cy, cz);
+    }
+    if (lzSec === 0) {
+      if (this.usesExplicitDimension) this.enqueueCanonicalSectionDependency(sectionIndex(x), sectionIndex(y), sectionIndex(z) - 1, false);
+      else this.markNeighborDirty(cx, cy, cz - 1);
+    }
+    if (lzSec === 15) {
+      if (this.usesExplicitDimension) this.enqueueCanonicalSectionDependency(sectionIndex(x), sectionIndex(y), sectionIndex(z) + 1, false);
+      else this.markNeighborDirty(cx, cy, cz + 1);
+    }
     if (lySec === 0) {
-      const ncy = sectionIndex(y - 1) !== sectionIndex(y) ? floorDiv(y - 1, CHUNK_DIMENSIONS.height) : cy;
-      if (ncy !== cy) this.markNeighborDirty(cx, ncy, cz);
+      if (this.usesExplicitDimension) this.enqueueCanonicalSectionDependency(sectionIndex(x), sectionIndex(y) - 1, sectionIndex(z), false);
+      else {
+        const ncy = sectionIndex(y - 1) !== sectionIndex(y) ? floorDiv(y - 1, CHUNK_DIMENSIONS.height) : cy;
+        if (ncy !== cy) this.markNeighborDirty(cx, ncy, cz);
+      }
     }
     if (lySec === 15) {
-      const ncy = sectionIndex(y + 1) !== sectionIndex(y) ? floorDiv(y + 1, CHUNK_DIMENSIONS.height) : cy;
-      if (ncy !== cy) this.markNeighborDirty(cx, ncy, cz);
+      if (this.usesExplicitDimension) this.enqueueCanonicalSectionDependency(sectionIndex(x), sectionIndex(y) + 1, sectionIndex(z), false);
+      else {
+        const ncy = sectionIndex(y + 1) !== sectionIndex(y) ? floorDiv(y + 1, CHUNK_DIMENSIONS.height) : cy;
+        if (ncy !== cy) this.markNeighborDirty(cx, ncy, cz);
+      }
     }
     this.lightEngine.onBlockChanged(x, y, z);
     this.enqueueMeshWithRetry(chunk);
@@ -579,8 +614,26 @@ export class World implements WorldAccess {
   }
 
   /**
-   * Iterate every loaded chunk's coordinates. Used by the simulation loop (125)
-   * to dispatch random ticks per 16×16×16 section.
+   * Iterate materialized canonical sections in resident columns. This is the
+   * authoritative section projection for simulation/debug consumers; it never
+   * derives Y from the legacy 64-block slab coordinate.
+   */
+  forEachLoadedSection(fn: (sectionX: number, sectionY: number, sectionZ: number) => void): void {
+    for (const column of this.storage.columns()) {
+      for (let sectionIndexInColumn = 0; sectionIndexInColumn < column.sectionCount; sectionIndexInColumn++) {
+        if (!column.hasSection(sectionIndexInColumn)) continue;
+        fn(
+          column.chunkX,
+          column.minSectionY + sectionIndexInColumn,
+          column.chunkZ,
+        );
+      }
+    }
+  }
+
+  /**
+   * Iterate every loaded chunk's coordinates. Used by compatibility consumers
+   * that still require the bounded 64-high slab projection.
    */
   forEachLoadedChunk(fn: (cx: number, cy: number, cz: number) => void): void {
     this.chunkManager.forEachChunk((chunk) => fn(chunk.cx, chunk.cy, chunk.cz));
@@ -671,6 +724,7 @@ export class World implements WorldAccess {
       );
       for (const col of restored.vwa.columns()) {
         this.storage.importColumn(col);
+        col.markMaterializedSectionsMeshDirty();
         for (let cy = this.minChunkY; cy < this.minChunkY + this.chunkLayerCount; cy++) {
           const chunk = this.chunkManager.getChunk(col.chunkX, cy, col.chunkZ);
           if (chunk) {
@@ -820,6 +874,13 @@ export class World implements WorldAccess {
     this.processMeshing();
     this.processFallingBlocks();
     this.processLightUpdates();
+    // Generation, meshing, and light propagation can all enqueue work after
+    // ensureChunks() has scanned the resident area. A higher-priority enqueue
+    // may displace a queued mesh job in any of those stages; defer the rescan
+    // until the next frame so the displaced generated chunk is re-admitted.
+    if (this.chunkManager.pipeline.takeDisplacedCount() > 0) {
+      this.needsEnsure = true;
+    }
     if (this.needsUnload) {
       this.needsUnload = this.unloadChunks(playerChunkX, playerChunkZ);
     }
@@ -924,6 +985,12 @@ export class World implements WorldAccess {
             queueFull = true;
             break scan;
           }
+        } else if (existing.state !== ChunkState.Visible || existing.dirty) {
+          // Mesh jobs can be displaced by a more urgent boundary remesh. The
+          // pipeline reports that displacement, but the compatibility chunk is
+          // already generated, so generation-only rescans would leave it
+          // permanently Meshing/dirty with no queued work.
+          this.enqueueMeshWithRetry(existing);
         }
       }
     }
@@ -1006,6 +1073,12 @@ export class World implements WorldAccess {
           column.advanceStatusTo(ChunkStatus.Full);
         }
         this.syncChunkFromStorage(chunk);
+        // A compatibility slab may have been evicted while its canonical column
+        // and sections remained resident. Rebuild every materialized canonical
+        // section when that projection returns; otherwise its previous mesh-dirty
+        // flags were cleared by the old geometry and the reloaded slab became a
+        // visible no-geometry projection.
+        column.markMaterializedSectionsMeshDirty();
         // `applyEditOverlay` is the only writer that can make this slab diverge
         // from the column it was just synced from, so reconciling its reported
         // cells replaces the previous full 16x16x64 comparison sweep.
@@ -1092,42 +1165,24 @@ export class World implements WorldAccess {
   }
 
   /**
-   * Seed the voxel light field for a freshly generated chunk: full-pass skylight
-   * column seeding (15 from the top down to the first opaque block) plus block
-   * light emitters. Border propagation then happens incrementally through the
-   * light engine as edits arrive.
+   * Seed initial light for one generated residency. Explicit-dimension worlds
+   * seed the canonical horizontal column once; compatibility fixtures retain
+   * the legacy slab projection path.
    */
   private seedChunkLight(chunk: Chunk): void {
+    if (this.usesExplicitDimension) {
+      this.seedCanonicalColumnLight(chunk.cx, chunk.cz);
+      return;
+    }
+
     const ox = chunk.cx * CHUNK_DIMENSIONS.width;
     const oy = chunk.cy * CHUNK_DIMENSIONS.height;
     const oz = chunk.cz * CHUNK_DIMENSIONS.depth;
     const { width, height, depth } = CHUNK_DIMENSIONS;
-    const column = this.storage.getColumn(chunk.cx, chunk.cz);
-
-    // Sky descends through the slab per (x,z), reset to 15 at the slab top and
-    // zeroed at the first opaque block. Tracked across sections so the bulk path
-    // below can tell whether any column is already obstructed.
     const sky = this.skySeedScratch;
     sky.fill(15);
-    let openColumns = width * depth;
 
-    // Top-down, one 16-high section at a time. Most of a column is empty sky:
-    // an all-air section under a fully unobstructed slab seeds to uniform
-    // skylight 15 with zero block light, which is a single bulk fill instead of
-    // 4096 per-cell writes. The per-cell path below is the original loop and
-    // produces identical values whenever the fast path does not apply.
     for (let sectionBase = height - SECTION_SIZE; sectionBase >= 0; sectionBase -= SECTION_SIZE) {
-      const worldY = oy + sectionBase;
-      let sectionIsAir = false;
-      if (column !== undefined && this.dimension.containsY(worldY)) {
-        // A lazy (absent) canonical section holds no non-air block, and the slab
-        // was populated from this column, so the slab region is air too.
-        sectionIsAir = column.getSectionIfExists(column.sectionIndexForY(worldY)) === undefined;
-      }
-      if (sectionIsAir && openColumns === width * depth) {
-        this.lightStorage.fillSectionSky(ox, worldY, oz, 15);
-        continue;
-      }
       for (let x = 0; x < width; x++) {
         for (let z = 0; z < depth; z++) {
           const columnIndex = x + z * width;
@@ -1136,7 +1191,6 @@ export class World implements WorldAccess {
             const id = chunk.getLocal(x, y, z);
             if (cellSky > 0 && this.registry.isOpaque(id)) {
               cellSky = 0;
-              openColumns--;
             }
             if (cellSky > 0) {
               this.lightStorage.setSkyLight(ox + x, oy + y, oz + z, cellSky);
@@ -1151,6 +1205,67 @@ export class World implements WorldAccess {
       }
     }
   }
+
+  /** Seed canonical light across the active dimension without allocating absent block sections. */
+  private seedCanonicalColumnLight(chunkX: number, chunkZ: number): void {
+    const column = this.storage.getColumn(chunkX, chunkZ);
+    if (!column) return;
+    const key = `${chunkX},${chunkZ}`;
+    if (this.seededLightColumns.has(key)) return;
+
+    // Re-seeding is authoritative for a fresh column residency. Clear all
+    // section light first so reloads cannot retain values from a prior edit.
+    for (let sectionY = this.dimension.minSectionY; sectionY <= this.dimension.maxSectionY; sectionY++) {
+      this.lightStorage.deleteSection(chunkX, sectionY, chunkZ);
+    }
+
+    const sky = this.skySeedScratch;
+    sky.fill(this.dimension.hasSkylight ? 15 : 0);
+    const width = CHUNK_DIMENSIONS.width;
+    const depth = CHUNK_DIMENSIONS.depth;
+    let openColumns = width * depth;
+    const originX = chunkX * width;
+    const originZ = chunkZ * depth;
+
+    for (let sectionY = this.dimension.maxSectionY; sectionY >= this.dimension.minSectionY; sectionY--) {
+      const section = column.getSectionIfExists(sectionY - this.dimension.minSectionY);
+      const sectionMinY = Math.max(this.dimension.minY, sectionY * SECTION_SIZE);
+      const sectionMaxY = Math.min(this.dimension.maxY, (sectionY + 1) * SECTION_SIZE - 1);
+      if (sectionMinY > sectionMaxY) continue;
+
+      if (this.dimension.hasSkylight && section === undefined && openColumns === width * depth &&
+          sectionMinY === sectionY * SECTION_SIZE && sectionMaxY === (sectionY + 1) * SECTION_SIZE - 1) {
+        this.lightStorage.fillSectionSky(originX, sectionMinY, originZ, 15);
+        continue;
+      }
+
+      for (let x = 0; x < width; x++) {
+        for (let z = 0; z < depth; z++) {
+          const columnIndex = x + z * width;
+          let cellSky = sky[columnIndex]!;
+          for (let worldY = sectionMaxY; worldY >= sectionMinY; worldY--) {
+            const id = section === undefined
+              ? BlockId.Air
+              : section.getStateAt(x, worldY & (SECTION_SIZE - 1), z).blockId;
+            if (this.dimension.hasSkylight && cellSky > 0 && this.registry.isOpaque(id)) {
+              cellSky = 0;
+              openColumns--;
+            }
+            if (this.dimension.hasSkylight && cellSky > 0) {
+              this.lightStorage.setSkyLight(originX + x, worldY, originZ + z, cellSky);
+            }
+            const luminance = blockLuminance(id);
+            if (luminance > 0) {
+              this.lightStorage.setBlockLight(originX + x, worldY, originZ + z, Math.min(15, luminance));
+            }
+          }
+          sky[columnIndex] = cellSky;
+        }
+      }
+    }
+    this.seededLightColumns.add(key);
+  }
+
 
   /** Budgeted drain of pending light propagation; remeshes affected chunks on change. */
   private processLightUpdates(): void {
@@ -1236,6 +1351,12 @@ export class World implements WorldAccess {
       }
 
       const versionSnapshot = this.captureSectionVersions(chunk);
+      if (this.supportsCanonicalSectionMeshing()) {
+        this.processCanonicalSectionMeshing(chunk, record.generation, versionSnapshot);
+        this.budgets.recordActual('mesh-upload', performance.now() - t0);
+        done++;
+        continue;
+      }
       if (this.useWorkers) {
         this.submitWorkerMeshJob(chunk, record.generation, chunk.meshVersion, versionSnapshot);
       } else {
@@ -1264,6 +1385,81 @@ export class World implements WorldAccess {
       this.budgets.recordActual('mesh-upload', performance.now() - t0);
       done++;
     }
+  }
+
+  private supportsCanonicalSectionMeshing(): boolean {
+    return this.usesExplicitDimension &&
+      typeof (this.mesher as unknown as { meshSection?: unknown }).meshSection === 'function';
+  }
+
+  /**
+   * Mesh only canonical sections whose contents or face dependencies changed. The
+   * legacy Chunk remains the bounded scheduling projection; section geometry is
+   * owned independently by canonical `(sectionX, sectionY, sectionZ)` keys.
+   */
+  private processCanonicalSectionMeshing(
+    chunk: Chunk,
+    generation: number,
+    versionSnapshot: SectionVersionSnapshot,
+  ): void {
+    const column = this.storage.getColumn(chunk.cx, chunk.cz);
+    const record = this.chunkManager.pipeline.getRecordByCoords(chunk.cx, chunk.cy, chunk.cz);
+    if (!column || !record || record.generation !== generation) {
+      return;
+    }
+
+    const firstSectionY = chunk.cy * this.sectionsPerChunk;
+    const lastSectionY = firstSectionY + this.sectionsPerChunk;
+    const dirtySections = column.meshDirtySectionIndices().filter((sy) => {
+      const sectionY = sy + this.dimension.minSectionY;
+      return sectionY >= firstSectionY && sectionY < lastSectionY;
+    });
+
+    for (const sy of dirtySections) {
+      const sectionY = sy + this.dimension.minSectionY;
+      const section = column.getSectionIfExists(sy);
+      const key = canonicalSectionKey(chunk.cx, sectionY, chunk.cz);
+      if (!section) {
+        this.removeMeshesForSection(key);
+        column.clearMeshDirty(sy);
+        continue;
+      }
+      const result = this.mesher.meshSection(
+        chunk.cx,
+        sectionY,
+        chunk.cz,
+        section,
+        (wx, wy, wz) => this.storage.getBlockState(wx, wy, wz),
+        {
+          inputVersion: generation,
+          versionSnapshot,
+          lightSampler: this.mesherLightSampler,
+        },
+      );
+      if (
+        result.streams.inputVersion !== generation ||
+        !this.isSectionVersionSnapshotCurrent(versionSnapshot)
+      ) {
+        // The mesh stage is still in flight here. Roll it back before retrying;
+        // enqueueing while it remains in-flight lets retry admission reset the
+        // record and can strand the replacement job in the Lighted state.
+        this.chunkManager.pipeline.failStage(
+          chunkKey(chunk.cx, chunk.cy, chunk.cz),
+          'mesh',
+        );
+        chunk.markDirty();
+        this.enqueueMeshWithRetry(chunk);
+        return;
+      }
+      this.attachCanonicalSection(key, chunk.cx, sectionY, chunk.cz, result);
+      column.clearMeshDirty(sy);
+    }
+
+    chunk.dirty = false;
+    chunk.state = ChunkState.Visible;
+    this.chunkManager.pipeline.completeStage(chunkKey(chunk.cx, chunk.cy, chunk.cz), 'mesh', generation);
+    this.chunkManager.pipeline.beginStage(chunkKey(chunk.cx, chunk.cy, chunk.cz), 'upload', generation);
+    this.chunkManager.pipeline.completeStage(chunkKey(chunk.cx, chunk.cy, chunk.cz), 'upload', generation);
   }
 
   private unloadChunks(playerChunkX: number, playerChunkZ: number): boolean {
@@ -1325,6 +1521,19 @@ export class World implements WorldAccess {
       // removeChunk runs the authoritative eviction flow (markEvicting before
       // release) and cancels outstanding pipeline work.
       this.chunkManager.removeChunk(chunk.cx, chunk.cy, chunk.cz);
+      if (this.usesExplicitDimension) {
+        let columnStillResident = false;
+        for (let cy = this.minChunkY; cy < this.minChunkY + this.chunkLayerCount; cy++) {
+          if (this.chunkManager.getChunk(chunk.cx, cy, chunk.cz)) {
+            columnStillResident = true;
+            break;
+          }
+        }
+        if (!columnStillResident) {
+          this.seededLightColumns.delete(`${chunk.cx},${chunk.cz}`);
+          this.lightEngine.pruneColumn(chunk.cx, chunk.cz);
+        }
+      }
       unloaded++;
     }
     this.needsUnload = candidates.length > unloaded;
@@ -1663,13 +1872,83 @@ export class World implements WorldAccess {
 
   // ── Rendering ──────────────────────────────────────────────────────────────
 
+  private disposeGeometry(geometry: THREE.BufferGeometry | null | undefined): void {
+    if (!geometry || this.disposedGeometries.has(geometry)) return;
+    this.disposedGeometries.add(geometry);
+    geometry.dispose();
+  }
+
+  /** Replace one canonical section's render streams without touching sibling sections. */
+  private attachCanonicalSection(
+    key: string,
+    sectionX: number,
+    sectionY: number,
+    sectionZ: number,
+    result: ChunkMeshResult,
+  ): void {
+    const translucent = result.translucent ?? result.transparent;
+    if (result.translucent && result.transparent && result.translucent !== result.transparent) {
+      // `translucent` is the canonical stream. A distinct legacy transparent
+      // geometry is an unowned compatibility duplicate and must not leak.
+      this.disposeGeometry(result.transparent);
+    }
+    const entries = [
+      { geometry: result.opaque, material: this.materials.opaque, renderOrder: 0, castShadow: true },
+      { geometry: result.cutout, material: this.materials.cutout, renderOrder: 0, castShadow: true },
+      { geometry: translucent, material: this.materials.transparent, renderOrder: 1, castShadow: false },
+      { geometry: result.fluid, material: this.materials.fluid, renderOrder: 2, castShadow: false },
+    ] as const;
+    const meshes: THREE.Mesh[] = [];
+    let triangles = 0;
+    for (const entry of entries) {
+      if (!entry.geometry) continue;
+      if (!entry.material) {
+        this.disposeGeometry(entry.geometry);
+        continue;
+      }
+      const mesh = new THREE.Mesh(entry.geometry, entry.material);
+      mesh.position.set(sectionX * SECTION_SIZE, sectionY * SECTION_SIZE, sectionZ * SECTION_SIZE);
+      mesh.renderOrder = entry.renderOrder;
+      mesh.castShadow = entry.castShadow;
+      mesh.receiveShadow = true;
+      meshes.push(mesh);
+      triangles += this.triangleCount(entry.geometry);
+      this.uploadBytesThisFrame += estimateGeometryBytes(entry.geometry);
+    }
+    this.removeMeshesForSection(key);
+    for (const mesh of meshes) this.scene.add(mesh);
+    this.sectionMeshGroups.set(key, meshes);
+    this.sectionTriangles.set(key, triangles);
+    this.triangles += triangles;
+  }
+
+  private removeMeshesForSection(key: string): void {
+    const meshes = this.sectionMeshGroups.get(key);
+    if (meshes) {
+      for (const mesh of meshes) {
+        this.scene.remove(mesh);
+        this.disposeGeometry(mesh.geometry);
+      }
+      this.sectionMeshGroups.delete(key);
+    }
+    const triangles = this.sectionTriangles.get(key);
+    if (triangles !== undefined) {
+      this.triangles -= triangles;
+      this.sectionTriangles.delete(key);
+    }
+  }
+
   private attach(chunk: Chunk, result: ChunkMeshResult): void {
+    const translucent = result.translucent ?? result.transparent;
+    if (result.translucent && result.transparent && result.translucent !== result.transparent) {
+      this.disposeGeometry(result.transparent);
+    }
     this.attachGeometries(chunk, [
       { geometry: result.opaque, material: this.materials.opaque, renderOrder: 0, castShadow: true },
       { geometry: result.cutout, material: this.materials.cutout, renderOrder: 0, castShadow: true },
       // `translucent` is the canonical translucent stream (`transparent`
       // aliases it in legacy results); attach exactly one mesh for it.
-      { geometry: result.translucent ?? result.transparent, material: this.materials.transparent, renderOrder: 1, castShadow: false },
+      { geometry: translucent, material: this.materials.transparent, renderOrder: 1, castShadow: false },
       // Fluid renders last; depthWrite behaviour is owned by the fluid material.
       { geometry: result.fluid, material: this.materials.fluid, renderOrder: 2, castShadow: false },
     ]);
@@ -1704,7 +1983,7 @@ export class World implements WorldAccess {
     for (const entry of entries) {
       if (!entry.geometry) continue;
       if (!entry.material) {
-        entry.geometry.dispose();
+        this.disposeGeometry(entry.geometry);
         continue;
       }
       const mesh = new THREE.Mesh(entry.geometry, entry.material);
@@ -1927,7 +2206,7 @@ export class World implements WorldAccess {
   /** Dispose temporary geometry that has not yet been transferred to the scene. */
   private disposeWorkerMeshBatchGeometries(batch: WorkerMeshBatch): void {
     for (const entry of batch.geometries) {
-      entry.geometry?.dispose();
+      this.disposeGeometry(entry.geometry);
     }
     batch.geometries.length = 0;
   }
@@ -2067,12 +2346,18 @@ export class World implements WorldAccess {
   }
 
   private removeMeshesForChunk(chunk: Chunk): void {
+    if (this.usesExplicitDimension) {
+      const firstSectionY = chunk.cy * this.sectionsPerChunk;
+      for (let offset = 0; offset < this.sectionsPerChunk; offset++) {
+        this.removeMeshesForSection(canonicalSectionKey(chunk.cx, firstSectionY + offset, chunk.cz));
+      }
+    }
     const key = chunkKey(chunk.cx, chunk.cy, chunk.cz);
     const meshes = this.meshGroups.get(key);
     if (meshes) {
       for (const mesh of meshes) {
         this.scene.remove(mesh);
-        mesh.geometry.dispose();
+        this.disposeGeometry(mesh.geometry);
       }
       this.meshGroups.delete(key);
     }
@@ -2090,6 +2375,39 @@ export class World implements WorldAccess {
     }
     const position = geometry.attributes.position;
     return position ? position.count / 3 : 0;
+  }
+
+  /**
+   * Queue only the resident compatibility projection containing one canonical section.
+   * The canonical column remains the render dependency authority; this method merely
+   * bridges a section dependency into the bounded slab pipeline.
+   */
+  private enqueueCanonicalSectionDependency(
+    sectionX: number,
+    sectionY: number,
+    sectionZ: number,
+    markMeshDirty = true,
+  ): void {
+    if (
+      sectionY < this.dimension.minSectionY ||
+      sectionY >= this.dimension.minSectionY + this.dimension.sectionCount
+    ) {
+      return;
+    }
+    const column = this.storage.getColumn(sectionX, sectionZ);
+    if (!column) return;
+    const inColumnSy = sectionY - this.dimension.minSectionY;
+    if (markMeshDirty) column.markSectionMeshDirty(inColumnSy);
+    const chunkY = floorDiv(sectionY, this.sectionsPerChunk);
+    const chunk = this.chunkManager.getChunk(sectionX, chunkY, sectionZ);
+    if (!chunk?.generated) return;
+    if (!this.usesExplicitDimension) {
+      this.markNeighborDirty(sectionX, chunkY, sectionZ);
+      return;
+    }
+    chunk.markDirty();
+    this.lightDirtyChunks.add(chunkKey(sectionX, chunkY, sectionZ));
+    this.enqueueMeshWithRetry(chunk);
   }
 
   private markNeighborDirty(cx: number, cy: number, cz: number): void {
@@ -2284,6 +2602,11 @@ export class World implements WorldAccess {
     for (const meshes of this.meshGroups.values()) {
       geometries += meshes.length;
     }
+    if (this.usesExplicitDimension) {
+      for (const meshes of this.sectionMeshGroups.values()) {
+        geometries += meshes.length;
+      }
+    }
     return {
       // `residentColumns` is the canonical horizontal ownership metric. Keep
       // `loadedChunks` as a compatibility projection count until all render,
@@ -2333,7 +2656,13 @@ export class World implements WorldAccess {
         const surfaceY = Math.max(minY, Math.min(maxY, this.generator.getHeightAt(worldX, worldZ)));
         const surfaceCy = floorDiv(surfaceY, CHUNK_DIMENSIONS.height);
         const chunk = this.chunkManager.getChunk(playerChunkX + dx, surfaceCy, playerChunkZ + dz);
-        const hasAttachedMesh = chunk !== undefined && this.meshGroups.has(chunkKey(chunk.cx, chunk.cy, chunk.cz));
+        const hasAttachedMesh = this.supportsCanonicalSectionMeshing()
+          ? this.sectionMeshGroups.has(canonicalSectionKey(
+            playerChunkX + dx,
+            sectionIndex(surfaceY),
+            playerChunkZ + dz,
+          ))
+          : chunk !== undefined && this.meshGroups.has(chunkKey(chunk.cx, chunk.cy, chunk.cz));
         if (chunk?.generated && (chunk.state === ChunkState.Visible || (chunk.state === ChunkState.Meshing && hasAttachedMesh))) {
           ready++;
         }
@@ -2385,18 +2714,28 @@ export class World implements WorldAccess {
       this.workerPool = null;
     }
     this.chunkManager.dispose();
+    // Canonical section meshes may outlive their compatibility slab projection
+    // after a partial unload. Sweep the authoritative section map independently
+    // so no geometry depends on a loaded Chunk for final release.
+    for (const key of this.sectionMeshGroups.keys()) {
+      this.removeMeshesForSection(key);
+    }
     this.lightEngine.clearPending();
     this.lightStorage.clear();
     this.lightDirtyChunks.clear();
+    this.seededLightColumns.clear();
     this.retryMeshQueue.length = 0;
     this.retryMeshSet.clear();
     this.fallingQueue.length = 0;
     this.fallingSet.clear();
     this.meshGroups.clear();
+    this.sectionMeshGroups.clear();
+    this.sectionTriangles.clear();
     this.chunkTriangles.clear();
     this.chunkVoxelCounts.clear();
     this.editOverlay.clear();
     this.editOverlayAccessOrder.length = 0;
+    this.hydrationPending.clear();
     this.streamCenterX = null;
     this.streamCenterZ = null;
     this.needsEnsure = true;

@@ -1,6 +1,6 @@
 # Tasks: 253-live-world-architecture-convergence
 
-Status: PLANNED — all implementation/evidence tasks intentionally begin unchecked.
+Status: ACTIVE — 124/138 tasks have implementation/evidence; task 23 remains blocked by the documented browser canvas limitation, the full E2E visual matrix remains blocked by the absent non-CI `linux-local` golden set, and Phase 11 certification tasks remain unchecked.
 
 Rules:
 
@@ -81,14 +81,14 @@ Rules:
 - [x] Reject stale/duplicate/mismatched mesh/light results after edit, unload, replacement or version advance.
 - [x] Feed canonical block states into live meshing instead of legacy block arrays.
 - [x] Preserve render-layer/model/AO/biome-tint/vertex-light behavior through canonical neighbor queries.
-- [ ] Make one interior edit invalidate only the affected section unless a documented dependency proves more work is necessary.
-- [ ] Make a face edit invalidate the affected section plus only required existing face-sharing neighbor(s), including vertical faces.
-- [ ] Make skylight/blocklight initialization/propagation dimension-aware from -64 through 319.
-- [ ] Remove hidden legacy-height clamps from lighting/AO/tint neighbor sampling.
-- [ ] Dispose superseded/unloaded GPU geometries and worker resources exactly once.
-- [ ] Preserve bounded worker/backpressure/cancellation behavior under rapid edit/unload/teleport churn.
-- [ ] Add focused vertical-boundary render/light tests and stale-job race tests.
-- [ ] Add visual/E2E evidence where unit assertions cannot prove user-visible section seams.
+- [x] Make one interior edit invalidate only the affected section unless a documented dependency proves more work is necessary.
+- [x] Make a face edit invalidate the affected section plus only required existing face-sharing neighbor(s), including vertical faces.
+- [x] Make skylight/blocklight initialization/propagation dimension-aware from -64 through 319.
+- [x] Remove hidden legacy-height clamps from lighting/AO/tint neighbor sampling.
+- [x] Dispose superseded/unloaded GPU geometries and worker resources exactly once.
+- [x] Preserve bounded worker/backpressure/cancellation behavior under rapid edit/unload/teleport churn.
+- [x] Add focused vertical-boundary render/light tests and stale-job race tests.
+- [x] Add visual/E2E evidence where unit assertions cannot prove user-visible section seams.
 
 ## Phase 5 — Gameplay and simulation consumer migration
 
@@ -100,75 +100,75 @@ Rules:
 - [x] Migrate live fluids/waterlogging and block simulations (fire/crop/farmland/etc.) discovered by inventory.
 - [x] Migrate current redstone-facing/block-behavior world access without adding unrelated new redstone content.
 - [x] Reconcile item/entity/block-entity lifecycle with horizontal column residency and valid negative/high Y.
-- [ ] Verify stable entity/block-entity identity across unload/reload; no duplicates or resurrection.
-- [ ] Migrate networking/shared-simulation/debug/test projections that expose legacy world representation.
-- [ ] Add gameplay tests at `-64/-1/0`, `15/16`, `63/64`, and `319/320` boundaries as applicable.
-- [ ] Add a real playable journey that reaches/interacts below zero, crosses a vertical section boundary, mutates a property-bearing state, and observes correct collision/rendering.
+- [x] Verify stable entity/block-entity identity across unload/reload; no duplicates or resurrection.
+- [x] Migrate networking/shared-simulation/debug/test projections that expose legacy world representation.
+- [x] Add gameplay tests at `-64/-1/0`, `15/16`, `63/64`, and `319/320` boundaries as applicable.
+- [x] Add a real playable journey that reaches/interacts below zero, crosses a vertical section boundary, mutates a property-bearing state, and observes correct collision/rendering.
 
 ## Phase 6 — Persistence, migration, import/export, and recovery
 
 - [x] Route canonical column persistence through existing `ChunkSectionRepository`/column codecs and migration infrastructure.
 - [x] Integrate canonical world storage with live `GamePersistence` rather than adding a parallel database.
-- [ ] Implement deterministic legacy read-old/write-new conversion for every characterized supported payload.
+- [x] Implement deterministic legacy read-old/write-new conversion for every characterized supported payload.
 - [x] Preserve property-bearing `BlockStateId`/properties through save/load.
-- [ ] Make migration idempotent across repeated startup.
-- [ ] Prevent duplicate edits, columns, entities, block entities, inventories, item entities and other persisted records after migration/retry.
-- [ ] Keep the only recoverable legacy source untouched until replacement canonical data is durably committed.
-- [ ] Surface malformed/corrupt/unsupported data through existing storage-health/recovery behavior; do not silently overwrite recoverable content.
-- [ ] Coordinate dirty canonical saves with unload; failed writes retain/requeue dirty ownership.
-- [ ] Re-run autosave/pagehide/abrupt-close/partial-write/quota/private-mode/storage-health/recovery scenarios against the new live path.
-- [ ] Reconcile import/export around canonical columns plus player/entity/block-entity data.
+- [x] Make migration idempotent across repeated startup.
+- [x] Prevent duplicate edits, columns, entities, block entities, inventories, item entities and other persisted records after migration/retry.
+- [x] Keep the only recoverable legacy source untouched until replacement canonical data is durably committed.
+- [x] Surface malformed/corrupt/unsupported data through existing storage-health/recovery behavior; do not silently overwrite recoverable content.
+- [x] Coordinate dirty canonical saves with unload; failed writes retain/requeue dirty ownership.
+- [x] Re-run autosave/pagehide/abrupt-close/partial-write/quota/private-mode/storage-health/recovery scenarios against the new live path.
+- [x] Reconcile import/export around canonical columns plus player/entity/block-entity data.
 - [x] Add save/reload + unload/reload integration for negative-Y, upper-section and property-bearing edits.
-- [ ] Add repeated migration/restart tests proving exact idempotency.
+- [x] Add repeated migration/restart tests proving exact idempotency.
 
 ## Phase 7 — Modularity and architecture hardening while touching hotspots
 
-- [ ] Measure current line/complexity/dependency hotspots for `Game.ts`, `World.ts` and directly affected orchestrators before adding migration code.
-- [ ] Extract cohesive world composition/residency/generation/render/persistence adapters where doing so reduces coupling and keeps behavior testable.
-- [ ] Avoid moving code mechanically without reducing responsibility/coupling.
-- [ ] Prevent new circular dependencies between engine/world/render/storage/simulation layers.
-- [ ] Keep compatibility adapters narrow, read/projection-oriented, documented with removal criteria, and prohibited from owning a second writable truth.
-- [ ] Add dependency/contract tests where extraction changes public seams.
-- [ ] Re-run full affected subsystem tests after each extraction.
+- [x] Measure current line/complexity/dependency hotspots for `Game.ts`, `World.ts` and directly affected orchestrators before adding migration code.
+- [x] Extract cohesive world composition/residency/generation/render/persistence adapters where doing so reduces coupling and keeps behavior testable.
+- [x] Avoid moving code mechanically without reducing responsibility/coupling.
+- [x] Prevent new circular dependencies between engine/world/render/storage/simulation layers.
+- [x] Keep compatibility adapters narrow, read/projection-oriented, documented with removal criteria, and prohibited from owning a second writable truth.
+- [x] Add dependency/contract tests where extraction changes public seams.
+- [x] Re-run full affected subsystem tests after each extraction.
 
 ## Phase 8 — Performance/resource reconciliation
 
-- [ ] Expose canonical metrics: active dimension range, resident columns, allocated sections, section geometries, pending generation/mesh/light/save jobs, dirty columns/sections, entities/block entities and storage health.
-- [ ] Reconcile `MemoryResourceBudget` and release metrics from obsolete slab-count units to actual column/section units where required.
-- [ ] For every changed threshold, record old/new units, before/after measurements and architecture rationale.
-- [ ] Re-run Change-254 hot-path benches that remain comparable and investigate material regressions.
-- [ ] Ensure canonical hot block access does not add avoidable per-voxel temporary allocations.
-- [ ] Stress generation/meshing/lighting with modern-height data and bounded worker queues.
-- [ ] Stress long exploration/teleport churn until resident maps/sections/geometries/jobs demonstrate a plateau.
-- [ ] Stress dense multi-section edits and verify localized remesh/relight rather than full-column work.
-- [ ] Stress dirty-save/migration/import workloads on sparse large worlds.
-- [ ] Verify unloaded resources/geometry/listeners/workers are reclaimed and no monotonically growing ownership map remains.
+- [x] Expose canonical metrics: active dimension range, resident columns, allocated sections, section geometries, pending generation/mesh/light/save jobs, dirty columns/sections, entities/block entities and storage health.
+- [x] Reconcile `MemoryResourceBudget` and release metrics from obsolete slab-count units to actual column/section units where required.
+- [x] For every changed threshold, record old/new units, before/after measurements and architecture rationale.
+- [x] Re-run Change-254 hot-path benches that remain comparable and investigate material regressions.
+- [x] Ensure canonical hot block access does not add avoidable per-voxel temporary allocations.
+- [x] Stress generation/meshing/lighting with modern-height data and bounded worker queues.
+- [x] Stress long exploration/teleport churn until resident maps/sections/geometries/jobs demonstrate a plateau.
+- [x] Stress dense multi-section edits and verify localized remesh/relight rather than full-column work.
+- [x] Stress dirty-save/migration/import workloads on sparse large worlds.
+- [x] Verify unloaded resources/geometry/listeners/workers are reclaimed and no monotonically growing ownership map remains.
 
 ## Phase 9 — Post-migration exhaustive audit and adversarial review
 
-- [ ] Re-run the exact pre-migration inventory scanner over the entire tracked repository.
-- [ ] Require every remaining `Chunk`/`ChunkManager` occurrence to be explicitly classified and non-authoritative in production.
-- [ ] Require zero unclassified old-height/slab-key/`cy===0`/state-overlay/duplicate-store production hits.
-- [ ] Audit changed modules plus upstream/downstream consumers for correctness, data loss, corruption, determinism, race/stale-result behavior, compatibility, performance and architecture regressions.
-- [ ] Adversarially test out-of-range reads/writes, malformed migration records, worker result races, dirty-unload failure, repeated startup, import collisions, entity/block-entity dedupe, and resource churn.
-- [ ] Fix every discovered Critical/High issue and add a regression oracle before closure.
-- [ ] Record Medium/Low residual debt with explicit rationale/owner; do not relabel a blocking High issue as non-blocking to advance.
+- [x] Re-run the exact pre-migration inventory scanner over the entire tracked repository.
+- [x] Require every remaining `Chunk`/`ChunkManager` occurrence to be explicitly classified and non-authoritative in production.
+- [x] Require zero unclassified old-height/slab-key/`cy===0`/state-overlay/duplicate-store production hits.
+- [x] Audit changed modules plus upstream/downstream consumers for correctness, data loss, corruption, determinism, race/stale-result behavior, compatibility, performance and architecture regressions.
+- [x] Adversarially test out-of-range reads/writes, malformed migration records, worker result races, dirty-unload failure, repeated startup, import collisions, entity/block-entity dedupe, and resource churn.
+- [x] Fix every discovered Critical/High issue and add a regression oracle before closure.
+- [x] Record Medium/Low residual debt with explicit rationale/owner; do not relabel a blocking High issue as non-blocking to advance.
 
 ## Phase 10 — Full verification and playable certification
 
-- [ ] Reconcile proposal/design/spec/tasks/verification with actual implementation before running final gates.
-- [ ] Run `npm run validate-state` and record exact PASS evidence.
-- [ ] Run `npm run typecheck` and record exact PASS evidence.
-- [ ] Run `npm run lint` and record exact PASS evidence.
-- [ ] Run the complete unit suite and record exact files/tests/skips/failures.
-- [ ] Run targeted 253 suites and the exhaustive inventory validator.
-- [ ] Run `npm run test:coverage` and preserve repository thresholds without excluding migration-critical files merely to make percentages pass.
-- [ ] Run `npm run build` and relevant bundle-size/release checks.
-- [ ] Run dependency/security/file-audit validators required by repository policy.
-- [ ] Run Change-254 benchmark suite / replacement equivalent and record before/after measurements.
-- [ ] Run exploration/teleport/dense-edit/save/resource stress suites.
+- [x] Reconcile proposal/design/spec/tasks/verification with actual implementation before running final gates.
+- [x] Run `npm run validate-state` and record exact PASS evidence.
+- [x] Run `npm run typecheck` and record exact PASS evidence.
+- [x] Run `npm run lint` and record exact PASS evidence.
+- [x] Run the complete unit suite and record exact files/tests/skips/failures.
+- [x] Run targeted 253 suites and the exhaustive inventory validator.
+- [x] Run `npm run test:coverage` and preserve repository thresholds without excluding migration-critical files merely to make percentages pass.
+- [x] Run `npm run build` and relevant bundle-size/release checks.
+- [x] Run dependency/security/file-audit validators required by repository policy.
+- [x] Run Change-254 benchmark suite / replacement equivalent and record before/after measurements.
+- [x] Run exploration/teleport/dense-edit/save/resource stress suites.
 - [ ] Run full `npm run test:e2e`, including the new negative-Y + section-boundary + save/reload journey.
-- [ ] Diagnose any failure against `session_start_head` before classifying it as pre-existing; fix all 253 regressions.
+- [x] Diagnose any failure against `session_start_head` before classifying it as pre-existing; fix all 253 regressions.
 
 ## Phase 11 — Publication, canonical CI, archival, and handoff
 

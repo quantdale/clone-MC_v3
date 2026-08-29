@@ -36,6 +36,8 @@ import {
 } from '../data/PalettedContainer';
 import { SECTION_SIZE, SECTION_VOLUME } from '../math/SectionCoordinate';
 import { CHUNK_BLOCK_COUNT } from '../world/WorldCoordinates';
+import { OVERWORLD_DIMENSION_TYPE } from '../data/DimensionTypes';
+import { createDefaultBlockStateRegistry } from '../world/BlockStateRegistry';
 import { ChunkSectionRepository } from './ChunkSectionRepository';
 import { ChunkEditRepository } from './ChunkEditRepository';
 import { PlayerStateRepository } from './PlayerStateRepository';
@@ -157,12 +159,13 @@ export function isLegacyPlayerSnapshot(value: unknown): value is LegacyPlayerSna
 export function buildSectionContainer(
   changes: ReadonlyArray<[number, number]>,
   capacity: number = SECTION_VOLUME,
+  stateIdForBlockId: (blockId: number) => number = (blockId) => blockId,
 ): SerializedPalettedContainer {
   // Accept only cells with an in-range index and a non-negative integer id.
   const accepted: Array<[number, number]> = [];
   for (const [index, id] of changes) {
     if (isInteger(index) && index >= 0 && index < capacity && isInteger(id) && id >= 0) {
-      accepted.push([index, id]);
+      accepted.push([index, stateIdForBlockId(id)]);
     }
   }
 
@@ -200,16 +203,25 @@ export function editsToSerializedChunkColumn(
   sections: ReadonlyArray<EditSectionGroup>,
   chunkX: number,
   chunkZ: number,
+  stateIdForBlockId: (blockId: number) => number = (blockId) => blockId,
+  layout?: { minSectionY: number; sectionCount: number },
 ): SerializedChunkColumn {
   const valid = sections.filter((s) => isInteger(s.cy)).sort((a, b) => a.cy - b.cy);
   if (valid.length === 0) {
     throw new Error('editsToSerializedChunkColumn: no sections to convert');
   }
-  const minSectionY = valid[0]!.cy;
-  const sectionCount = valid[valid.length - 1]!.cy - minSectionY + 1;
+  const minSectionY = layout?.minSectionY ?? valid[0]!.cy;
+  const sectionCount = layout?.sectionCount ?? valid[valid.length - 1]!.cy - minSectionY + 1;
+  if (!isInteger(minSectionY) || !isInteger(sectionCount) || sectionCount < 1) {
+    throw new Error('editsToSerializedChunkColumn: invalid layout');
+  }
+  const maxSectionY = minSectionY + sectionCount;
+  if (valid.some((s) => s.cy < minSectionY || s.cy >= maxSectionY)) {
+    throw new Error('editsToSerializedChunkColumn: section outside layout');
+  }
   const out: Record<number, SerializedPalettedContainer> = {};
   for (const s of valid) {
-    out[s.cy - minSectionY] = buildSectionContainer(s.changes);
+    out[s.cy - minSectionY] = buildSectionContainer(s.changes, SECTION_VOLUME, stateIdForBlockId);
   }
   return {
     version: CHUNK_COLUMN_VERSION,
@@ -241,7 +253,8 @@ export function normalizeLegacyChanges(
 
 /**
  * Decode a full-chunk edit index (`lx + lz*16 + ly*256`, `ly` over the full chunk height) into its
- * containing section Y within the chunk (0..SECTIONS_PER_CHUNK-1) and the section-local index.
+ * containing section Y within the chunk (0..SECTIONS_PER_CHUNK-1) and the canonical section-local
+ * index (`localX + localY*16 + localZ*256`).
  */
 export function decodeFullChunkIndex(index: number): { sectionY: number; localIndex: number } {
   const lx = index % SECTION_SIZE;
@@ -249,7 +262,7 @@ export function decodeFullChunkIndex(index: number): { sectionY: number; localIn
   const ly = Math.floor(index / SECTION_AREA);
   return {
     sectionY: Math.floor(ly / SECTION_SIZE),
-    localIndex: lx + lz * SECTION_SIZE + (ly % SECTION_SIZE) * SECTION_AREA,
+    localIndex: lx + (ly % SECTION_SIZE) * SECTION_SIZE + lz * SECTION_AREA,
   };
 }
 
@@ -308,6 +321,7 @@ export class LegacyLocalStorageMigrator {
   private readonly chunkSections: ChunkSectionRepository;
   private readonly chunkEdits: ChunkEditRepository;
   private readonly playerStates: PlayerStateRepository;
+  private readonly stateIdForBlockId: (blockId: number) => number;
   private readonly worldIdForSeed: (seed: number) => string;
 
   constructor(opts: {
@@ -323,6 +337,8 @@ export class LegacyLocalStorageMigrator {
     this.chunkSections = opts.chunkSections;
     this.chunkEdits = opts.chunkEdits;
     this.playerStates = opts.playerStates;
+    const stateRegistry = createDefaultBlockStateRegistry();
+    this.stateIdForBlockId = (blockId) => stateRegistry.getDefaultState(blockId).id;
     this.worldIdForSeed = opts.worldIdForSeed ?? ((seed: number) => `world-${seed}`);
   }
 
@@ -420,7 +436,16 @@ export class LegacyLocalStorageMigrator {
           const sections = [...column.sections.entries()].map(
             ([columnSectionY, changes]): EditSectionGroup => ({ cy: columnSectionY, changes }),
           );
-          const serialized = editsToSerializedChunkColumn(sections, column.cx, column.cz);
+          const serialized = editsToSerializedChunkColumn(
+            sections,
+            column.cx,
+            column.cz,
+            this.stateIdForBlockId,
+            {
+              minSectionY: OVERWORLD_DIMENSION_TYPE.minSectionY,
+              sectionCount: OVERWORLD_DIMENSION_TYPE.sectionCount,
+            },
+          );
           await this.chunkSections.putColumn(worldId, serialized);
           report.importedColumns++;
           report.importedEdits += countAcceptedEdits(sections);
