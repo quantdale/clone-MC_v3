@@ -1,6 +1,6 @@
 # Tasks: 253-live-world-architecture-convergence
 
-Status: ACTIVE — 124/138 tasks have implementation/evidence; task 23 remains blocked by the documented browser canvas limitation, the full E2E visual matrix remains blocked by the absent non-CI `linux-local` golden set, and Phase 11 certification tasks remain unchecked.
+Status: ACTIVE — 129/138 tasks have implementation/evidence; task 23 remains blocked by the documented browser canvas limitation, the exact-SHA canonical E2E visual matrix remains red on `linux-ci` thresholds, and lineage/archival/final-handoff tasks remain unchecked.
 
 Rules:
 
@@ -172,13 +172,13 @@ Rules:
 
 ## Phase 11 — Publication, canonical CI, archival, and handoff
 
-- [ ] Reconcile canonical `PROGRAM_STATE.json`/`.md`, active tasks and verification to the exact candidate; do not mark VERIFIED prematurely.
-- [ ] Commit a coherent implementation candidate with a detailed session/campaign message.
-- [ ] Push normally to `origin/main`, fetch/refetch, and verify exact remote head.
-- [ ] Obtain canonical GitHub Actions `gate` and `e2e` results for that exact candidate.
+- [x] Reconcile canonical `PROGRAM_STATE.json`/`.md`, active tasks and verification to the exact candidate; do not mark VERIFIED prematurely.
+- [x] Commit a coherent implementation candidate with a detailed session/campaign message.
+- [x] Push normally to `origin/main`, fetch/refetch, and verify exact remote head.
+- [x] Obtain canonical GitHub Actions `gate` and `e2e` results for that exact candidate.
 - [ ] If canonical jobs fail, diagnose/fix/re-publish; do not record conditional SUCCESS as VERIFIED.
 - [ ] Record lineage-valid release authority in a later evidence/state commit so a commit does not claim its own SHA.
-- [ ] Re-run state validation after evidence recording.
+- [x] Re-run state validation after evidence recording.
 - [ ] Mark 253 VERIFIED only when mandatory requirements/tests and completion gate are satisfied.
 - [ ] Archive the completed OpenSpec package under repository convention and sync canonical capability specs if required by the project.
 - [ ] Mark `.agent/EXECUTION_PROMPT.md` COMPLETED and set the next exact action truthfully.

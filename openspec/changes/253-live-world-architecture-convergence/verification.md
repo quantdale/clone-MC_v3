@@ -1,11 +1,11 @@
 # Verification: 253-live-world-architecture-convergence
 
 Status: ACTIVE — NOT VERIFIED
-Completion: 89.86% (124/138 tasks)
+Completion: 93.48% (129/138 tasks)
 Advancement allowed: false
 Exception used: false
 
-This checkpoint records the current working-tree candidate based on session-start head `368bb85df191815f90739fa8ea18c9bf85dfb790`. Local Phase 10 evidence is complete except the visual portion of the mandated full E2E gate: from a clean port, `npm run test:e2e` ran 49 tests with one reproducible visual-matrix failure because this non-CI Linux environment resolves the absent `linux-local` golden set; the committed `linux-ci` set is reserved for canonical CI. The new vertical-world journey passes 2/2. Canonical CI and publication evidence remain open. No unresolved production Critical/High post-audit hit remains.
+This checkpoint records the published candidate `721fdfc40d11037a62c3c027169c3d7e3d8df323`, based on session-start head `368bb85df191815f90739fa8ea18c9bf85dfb790`. Local Phase 10 evidence is complete except the visual portion of the mandated full E2E gate. Canonical run `33248984417` is exact-SHA: gate job `99091261952` passed, while E2E job `99091261913` ran 49 tests and failed only the 245-cell visual matrix because committed `linux-ci` goldens exceeded thresholds. The targeted vertical-world journey passes 2/2. Task 23 browser resource sampling remains blocked by the standalone headless-Chrome canvas limitation. No unresolved production Critical/High post-audit hit remains.
 
 ## Current session checkpoint — targeted repair and certification evidence
 
@@ -290,12 +290,12 @@ Run from the exact intended candidate unless the row explicitly says baseline.
 | `node scripts/check-release-bundle.mjs` | PASS | Plain production rebuild checked 4 assets; no E2E hook found. |
 | required dependency/security/file-audit checks | PASS | `validate-file-audit` PASS (2,568 reviewed rows); `npm audit --audit-level=high` reports 0 vulnerabilities; MCP preflight PASS. |
 | `npx vitest bench --run tests/bench/hot-paths.bench.ts` | PASS | Comparable five-bench suite passes in isolation with current measurements above the recorded baseline. |
-| `npm run test:e2e` final candidate | PARTIAL | Clean-port run: 49 tests passed; the single visual-matrix assertion failed only because non-CI Linux resolves absent `tests/visual-golden/linux-local/**`. The vertical-world journey passes 2/2. |
-| publish candidate to `origin/main` | PENDING | This evidence/state follow-up has not yet been committed or pushed. |
-| canonical GitHub Actions `gate` exact candidate | PENDING | No canonical CI run has been obtained for this exact candidate. |
-| canonical GitHub Actions `e2e` exact candidate | PENDING | No canonical CI run has been obtained for this exact candidate. |
-| lineage-valid evidence/state follow-up commit | PENDING | Will be recorded after the checkpoint commit and remote publication. |
-| final remote-head refetch | PENDING | Will be recorded after publication. |
+| `npm run test:e2e` final candidate | PARTIAL | Local clean-port run: 49 tests passed and the visual matrix failed because non-CI Linux resolves absent `linux-local` goldens. The targeted vertical-world journey passes 2/2. Canonical exact-SHA E2E also ran 49 tests and failed only the 245-cell `linux-ci` visual matrix because committed goldens exceeded thresholds. |
+| publish candidate to `origin/main` | PASS | Implementation candidate `721fdfc40d11037a62c3c027169c3d7e3d8df323` pushed normally; remote refetch matched exactly. |
+| canonical GitHub Actions `gate` exact candidate | PASS | Run `33248984417`, gate job `99091261952`, exact head `721fdfc40d11037a62c3c027169c3d7e3d8df323`; validate-state/typecheck/lint/build/bundle/unit/coverage/dependency audits all passed. |
+| canonical GitHub Actions `e2e` exact candidate | FAIL / BLOCKER | Run `33248984417`, E2E job `99091261913`, exact head `721fdfc40d11037a62c3c027169c3d7e3d8df323`; 49 tests passed, and only `tests/e2e/visual-regression.spec.ts` failed because the 245-cell committed `linux-ci` visual matrix exceeded thresholds. |
+| lineage-valid evidence/state follow-up commit | PENDING | This metadata follow-up is being prepared after implementation publication; its SHA will be recorded only after commit. |
+| final remote-head refetch | PASS | `git ls-remote origin refs/heads/main` returned `721fdfc40d11037a62c3c027169c3d7e3d8df323`. |
 ## Exhaustive inventory evidence
 
 ### Pre-migration
@@ -521,18 +521,18 @@ Unexplained failures block verification.
 
 ## Advancement Exception
 
-Not applicable. Change 253 is 38% complete and cannot advance on an exception. The default and expected outcome for this campaign is 100% completion.
+Not applicable. Change 253 is 93.48% complete and cannot advance on an exception. The default and expected outcome for this campaign is 100% completion.
 
 If used, it MUST prove every incomplete task is non-blocking and implements/verifies no mandatory requirement. Critical/High data-loss/corruption/determinism/compatibility/security/architecture defects can never be waived through this section.
 
 ## Publication / CI evidence
 
 `session_start_head`: `368bb85df191815f90739fa8ea18c9bf85dfb790`
-Implementation candidate: current working tree, pending coherent checkpoint commit.
-Canonical CI run(s): PENDING — no canonical `gate`/`e2e` run is claimed for this ACTIVE checkpoint.
-Evidence/state commit: PENDING — will be recorded in a lineage-valid follow-up after the implementation checkpoint.
-`published_head`: PENDING — publication follows final local validation.
-Remote-head verification: PASS at session start — `git ls-remote origin refs/heads/main` matched `368bb85df191815f90739fa8ea18c9bf85dfb790`.
+Implementation candidate: `721fdfc40d11037a62c3c027169c3d7e3d8df323` (published implementation checkpoint).
+Canonical CI run: `33248984417` on exact head `721fdfc40d11037a62c3c027169c3d7e3d8df323`; gate job `99091261952` PASS; E2E job `99091261913` FAIL after 49 passed tests because the 245-cell `linux-ci` visual matrix exceeded thresholds.
+Evidence/state commit: PENDING — this lineage-valid follow-up is being committed after the implementation checkpoint.
+`published_head`: PENDING — will be recorded after this evidence/state follow-up is pushed.
+Remote-head verification: PASS for implementation checkpoint — `git ls-remote origin refs/heads/main` matched `721fdfc40d11037a62c3c027169c3d7e3d8df323`.
 
 ## Final decision
 
