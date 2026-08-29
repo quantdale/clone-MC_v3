@@ -2448,6 +2448,11 @@
       "head": "f811ec71f3a956f4b2790aa6eee1b1806c799e80",
       "at": "2026-08-29T20:03:59Z",
       "note": "Change 255 task-6 implementation and durable checkpoint published candidate: typed mesh section/halo transfers, ownership/cap validation, zero-copy World payloads, worker-loss safeguards, focused regressions, and full local typecheck/lint/unit/build/E2E evidence."
+    },
+    {
+      "head": "64bc943d085399e21d52bea6567f24bff382957f",
+      "at": "2026-08-29T21:16:49Z",
+      "note": "Change 255 tasks 7-8 implementation published normally to origin/main: typed GPU-ready worker streams with bounded ownership/caps, independent four-layer worker-vs-reference parity, full local validation, and unchanged visual goldens."
     }
   ],
   "releaseAuthority": {
