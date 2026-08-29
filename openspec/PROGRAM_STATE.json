@@ -6,7 +6,7 @@
   "currentChangeStatus": "ACTIVE",
   "lastCompletedChange": "254-whole-codebase-performance-optimization",
   "nextChange": null,
-  "completedTasks": 56,
+  "completedTasks": 57,
   "totalTasks": 138,
   "completionPercentage": 41,
   "targetCompletionPercentage": 100,
@@ -16,8 +16,8 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "556f1e67ebebf2e7717b29020c04d524787fc431",
-  "lastCompletedTask": "Task 66 — eliminated permanent authoritative 64-high slab generation. The live Game -> World path uses generateColumn once per horizontal canonical column; generateChunk remains a compatibility/test fallback with canonical copy-through, and a real TerrainGenerator-backed regression oracle asserts zero live generateChunk calls. Typecheck/lint and 4 focused files/19 tests pass.",
-  "nextExactAction": "Continue Change 253 with task 67: preserve deterministic seed/world-version semantics for fresh worlds. Audit the live Game/World/TerrainGenerator seed path and world-version policy, then add or validate deterministic fresh-world evidence without changing the canonical adapter boundary. Task 41 browser resource sampling remains blocked by the reproduced headless-Chrome canvas fillRect limitation.",
+  "lastCompletedTask": "Task 67 — preserved deterministic fresh-world seed/world-version semantics. The live Game seed path and TerrainGenerator/StructureGenerator normalization are consistent; TERRAIN_GENERATION_VERSION is pinned to worldgen matrix v2; canonical full-height hashes match across fresh same-seed generators and normalized aliases while differing for a distinct seed. Typecheck/lint and 4 focused files/32 tests pass.",
+  "nextExactAction": "Continue Change 253 with task 68: preserve existing-world baseline semantics when persistence stores seed/version plus sparse edits. Audit metadata and migration records for a persisted generation version, prevent silent regeneration under a materially different baseline, and add compatibility evidence before changing production behavior. Task 41 browser resource sampling remains blocked by the reproduced headless-Chrome canvas fillRect limitation.",
   "blockers": ["Task 23 browser resource sampling is blocked by an objectively reproduced environment limitation: standalone headless Chrome 2D canvas fillRect does not return within 35 seconds in both available Chromium executables (/usr/bin/google-chrome and Playwright chromium-1234/chrome-linux64/chrome), including --disable-gpu; see openspec/changes/253-live-world-architecture-convergence/verification.md."],
   "validationResults": [
     {

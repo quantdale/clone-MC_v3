@@ -64,7 +64,7 @@ Rules:
 - [x] Audit the current `src/worldgen/**` stage graph and document the exact live adapter/composition chosen.
 - [x] Make missing-column generation populate canonical `BlockState`s across the active Overworld range.
 - [x] Eliminate permanent generation of independently authoritative 64-high slabs.
-- [ ] Preserve deterministic seed/world-version semantics for fresh worlds.
+- [x] Preserve deterministic seed/world-version semantics for fresh worlds.
 - [ ] Preserve existing-world baseline semantics when persistence stores seed/version + sparse edits; do not silently regenerate old worlds under a materially different algorithm.
 - [ ] Apply durable/user edits after generated baseline so regeneration cannot overwrite them.
 - [ ] Reconcile generation status, preload, readiness progress, render distance, simulation distance and unload around horizontal columns + section work.

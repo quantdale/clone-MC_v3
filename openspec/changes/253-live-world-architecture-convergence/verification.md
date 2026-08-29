@@ -51,7 +51,19 @@ Exact validation on the task-57 candidate:
 - Post-change source scan — PASS for no direct `Chunk.blocks` assignment/fill in `World`; remaining reads are compatibility-only and generator writes are isolated to `TerrainGenerator`/fixtures.
 - `git diff --check` — repository line-ending caveat: CRLF carriage returns are reported on newly added lines in the pre-existing CRLF `ChunkManager.ts` and `WorldBlockState.test.ts`; no trailing-space defect exists in LF files or semantic source content.
 
-## Task 66 evidence — no authoritative 64-high slab generation
+## Task 67 evidence — deterministic fresh-world seed/version semantics
+
+Status: PASS for task 67 scope. The live seed path is consistent: `resolveGameSeed()` normalizes URL seeds with `>>> 0`, `Game` passes the resolved value unchanged to `GamePersistence`, `TerrainGenerator`, `World`, environment, and simulation systems, and both `TerrainGenerator` and its default `StructureGenerator` normalize constructor seeds with `>>> 0`. `TERRAIN_GENERATION_VERSION` is now the live adapter contract, sourced from the pinned `WORLDGEN_MATRIX_VERSION` (`v2`); deliberate generation changes must bump and re-pin the regression matrix before changing the contract.
+
+The fresh-world oracle in `tests/unit/WorldgenDeterminism.test.ts` hashes canonical `BlockStateId`s over the complete active Overworld range `-64..319` for origin, negative, and upper/negative coordinates. Fresh generator instances produce identical hashes for the same seed, the `>>> 0`-equivalent seed alias produces identical hashes, and a distinct seed changes the result. Existing pinned `WorldgenRegressionMatrix` fixtures additionally cover six seeds, negative/far coordinates, all biomes, structures, ores, caves, and the current `v2` catalog hash/fingerprint.
+
+Exact validation on the task-67 candidate:
+
+- `npm run typecheck` — PASS (`tsc --noEmit`).
+- `npm run lint` — PASS (`eslint .`).
+- `git diff --check` — PASS.
+- Focused worldgen/canonical-generation suite — PASS: 4 files, 32 tests (`WorldgenDeterminism`, `WorldgenRegressionMatrix`, `TerrainColumnGenerationEquivalence`, `WorldColumnGenerationIdempotency`).
+
 
 Status: PASS for task 66 scope. The production `Game` composition constructs a `TerrainGenerator` exposing `generateColumn`; `World.processGeneration` selects that path, generates once per horizontal `ChunkColumn`, writes canonical sections, and synchronizes each resident `Chunk` only as a bounded compatibility/meshing projection. The remaining `TerrainGenerator.generateChunk(Chunk)` and `World` fallback branch are retained for legacy generators and test fixtures only. The fallback copies IDs into canonical storage when used and does not make slabs persistence or live world authority; no production `Game` path can select it.
 

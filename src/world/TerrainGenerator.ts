@@ -8,6 +8,7 @@ import { ClimateSampler } from '../worldgen/ClimateSampler';
 import { ValueNoise3D } from '../worldgen/DensityNoise';
 import { applySurfaceRules, validateSurfaceRules, type SurfaceRule } from '../worldgen/SurfaceRuleEngine';
 import { createDefaultOreVeinDefinitions, stampChunkOreVeins, type OreVeinDefinition } from '../worldgen/OreVeinFeature';
+import { WORLDGEN_MATRIX_VERSION } from '../worldgen/WorldgenRegressionMatrix';
 import { Chunk } from './Chunk';
 import { CHUNK_DIMENSIONS } from './WorldCoordinates';
 import type { ChunkColumn } from './ChunkColumn';
@@ -30,6 +31,13 @@ const SEA_FLOOR_SEED_XOR = 0x27d4eb2f;
 const MAX_SURFACE_DEPTH = 4;
 
 export type Biome = 'plains' | 'forest' | 'desert' | 'taiga';
+
+/**
+ * Generation contract persisted by the worldgen regression matrix. A deliberate
+ * worldgen change must bump the matrix version and re-pin its fixtures before
+ * changing this live adapter contract.
+ */
+export const TERRAIN_GENERATION_VERSION = WORLDGEN_MATRIX_VERSION;
 
 /** Dense biome indices for the per-column cache (mirrors `BIOME_KEYS`). */
 const BIOME_PLAINS = 0;
