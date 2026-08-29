@@ -4,6 +4,7 @@
  * Float32Array. The worker never touches THREE; the packed result is expanded on the main thread.
  */
 import { serveWorkerRequests, collectTransferables } from './WorkerJobProtocol';
+import { collectTypedMeshLayerTransferables } from './TypedMeshStreams';
 import { validateMeshWorkerRegistryTable, type MeshWorkerRegistryTable } from './MeshWorkerRegistry';
 import {
   processMeshSectionRequest,
@@ -19,6 +20,18 @@ serveWorkerRequests({
     const result = validateMeshSectionResult(
       processMeshSectionRequest(validateMeshSectionRequest(payload, meshRegistryTable)),
     );
+    if (result.layerStreams !== undefined) {
+      return {
+        payload: {
+          sectionX: result.sectionX,
+          sectionY: result.sectionY,
+          sectionZ: result.sectionZ,
+          versionSnapshot: result.versionSnapshot,
+          layerStreams: result.layerStreams,
+        },
+        transfer: collectTypedMeshLayerTransferables(result.layerStreams),
+      };
+    }
     const packed = packQuadsToTypedArrays(result.quads);
     return {
       payload: {

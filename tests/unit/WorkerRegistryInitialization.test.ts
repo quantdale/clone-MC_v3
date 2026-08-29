@@ -9,13 +9,16 @@ import {
   validateWorkerInitializationMessage,
   serveWorkerRequests,
 } from '../../src/rendering/WorkerJobProtocol';
-import { validateMeshSectionRequest } from '../../src/rendering/WorkerMeshing';
+import {
+  processMeshSectionRequest,
+  validateMeshSectionRequest,
+} from '../../src/rendering/WorkerMeshing';
 import { WorkerPool } from '../../src/engine/WorkerPool';
 
 const definitions = [
-  { id: 3, opaque: false, renderCategory: 1 },
-  { id: 1, opaque: true, renderCategory: 0 },
-  { id: 2, opaque: true, renderCategory: 0 },
+  { id: 3, opaque: false, renderCategory: 1, topTile: 7, bottomTile: 8, sideTile: 9 },
+  { id: 1, opaque: true, renderCategory: 0, topTile: 4, bottomTile: 5, sideTile: 6 },
+  { id: 2, opaque: true, renderCategory: 0, topTile: 10, bottomTile: 11, sideTile: 12 },
 ] as const;
 
 function sectionPayload(tableId: string): Record<string, unknown> {
@@ -64,6 +67,27 @@ describe('mesh worker registry initialization', () => {
     expect(validateMeshSectionRequest(sectionPayload(table.tableId), table).opaqueIds).toEqual([1, 2]);
     expect(() => validateMeshSectionRequest(sectionPayload('other'), table)).toThrow(/not initialized/);
     expect(() => validateMeshSectionRequest({ ...sectionPayload(table.tableId), opaqueIds: [1] }, table)).toThrow(/must not repeat/);
+  });
+
+  it('produces validated GPU-ready streams from the registry-backed request path', () => {
+    const table = createMeshWorkerRegistryTable(definitions, [3]);
+    const request = sectionPayload(table.tableId);
+    (request.cells as number[])[0] = 1;
+    const validated = validateMeshSectionRequest(request, table);
+    const result = processMeshSectionRequest(validated);
+
+    expect(validated.textureTiles?.topTileById[1]).toBe(4);
+    expect(result.layerStreams).toBeDefined();
+    expect(result.layerStreams?.opaque.quadCount).toBeGreaterThan(0);
+    expect(result.layerStreams?.opaque.vertexCount).toBe(result.layerStreams!.opaque.quadCount * 4);
+    const opaqueUvs = Array.from(result.layerStreams!.opaque.uvs);
+    const hasTopTileUv = opaqueUvs.some((value, index) =>
+      index % 2 === 0 && value === 4 / 16 && opaqueUvs[index + 1] === 1 - (Math.floor(4 / 16) + 1) / 4,
+    );
+    expect(hasTopTileUv).toBe(true);
+    expect(result.layerStreams?.cutout.quadCount).toBe(0);
+    expect(result.layerStreams?.translucent.quadCount).toBe(0);
+    expect(result.layerStreams?.fluid.quadCount).toBe(0);
   });
 
   it('validates initialization envelopes and dispatches them without treating them as jobs', () => {

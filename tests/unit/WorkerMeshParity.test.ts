@@ -154,6 +154,36 @@ function streamsFromQuads(
   return builder.build(quads.length).streams;
 }
 
+function workerTextureTiles(): NonNullable<MeshSectionRequestPayload['textureTiles']> {
+  const topTileById = new Array<number>(64).fill(0);
+  const bottomTileById = new Array<number>(64).fill(0);
+  const sideTileById = new Array<number>(64).fill(0);
+  for (const definition of REFERENCE_REGISTRY.all()) {
+    topTileById[definition.id] = definition.topTile ?? 0;
+    bottomTileById[definition.id] = definition.bottomTile ?? 0;
+    sideTileById[definition.id] = definition.sideTile ?? 0;
+  }
+  return { topTileById, bottomTileById, sideTileById };
+}
+
+function typedQuadSignatures(stream: MeshStreamData): string[] {
+  const signatures: string[] = [];
+  for (let vertex = 0; vertex < stream.vertexCount; vertex += 4) {
+    signatures.push(JSON.stringify({
+      positions: Array.from(stream.positions.slice(vertex * 3, (vertex + 4) * 3)),
+      normals: Array.from(stream.normals.slice(vertex * 3, (vertex + 4) * 3)),
+      uvs: Array.from(stream.uvs.slice(vertex * 2, (vertex + 4) * 2)),
+      skyLight: Array.from(stream.skyLight.slice(vertex, vertex + 4)),
+      blockLight: Array.from(stream.blockLight.slice(vertex, vertex + 4)),
+      ao: Array.from(stream.ao.slice(vertex, vertex + 4)),
+      tint: Array.from(stream.tint.slice(vertex * 3, (vertex + 4) * 3)),
+      indices: Array.from(stream.indices.slice((vertex / 4) * 6, (vertex / 4 + 1) * 6),
+      ).map((index) => index - vertex),
+    }));
+  }
+  return signatures.sort();
+}
+
 function realRegistryPayload(): MeshSectionRequestPayload {
   const fluidLevels = new Array<number>(4096).fill(-1);
   const tintClasses = new Array<number>(4096).fill(0);
@@ -177,6 +207,7 @@ function realRegistryPayload(): MeshSectionRequestPayload {
   tintClasses[4] = 0x5aa85a;
   tintClasses[18] = 0x3f76e4;
   payload.translucentSortOrigin = [0, 0, 0];
+  payload.textureTiles = workerTextureTiles();
   return payload;
 }
 
@@ -274,6 +305,7 @@ function quadSignatures(stream: MeshStreamData): string[] {
       blockLight: Array.from(stream.blockLight.slice(vertex, vertex + 4)),
       ao: Array.from(stream.ao.slice(vertex, vertex + 4)),
       tint: Array.from(stream.tint.slice(vertex * 3, (vertex + 4) * 3)),
+      indices: [0, 1, 2, 0, 2, 3],
     }));
   }
   return signatures.sort();
@@ -310,6 +342,25 @@ describe('worker packed-mesh path parity (P10)', () => {
       ...workerQuads.filter((quad) => quad.renderStream === 'translucent').map(() => 'translucent'),
       ...workerQuads.filter((quad) => quad.renderStream === 'fluid').map(() => 'fluid'),
     ]);
+  });
+
+  it('direct typed worker streams match the independent reference attributes', () => {
+    const payload = realRegistryPayload();
+    const workerResult = processMeshSectionRequest(payload);
+    expect(workerResult.layerStreams).toBeDefined();
+    const workerStreams = workerResult.layerStreams!;
+    const reference = referenceStreams(payload);
+
+    for (const name of MESH_STREAM_NAMES) {
+      const worker = workerStreams[name];
+      const expected = reference[name]!;
+      expect(worker.quadCount, `${name} quadCount`).toBe(expected.vertexCount / 4);
+      expect(worker.vertexCount, `${name} vertexCount`).toBe(expected.vertexCount);
+      expect(worker.indexCount, `${name} indexCount`).toBe(expected.indexCount);
+      expect(typedQuadSignatures(worker), `${name} canonical typed quads`).toEqual(
+        quadSignatures(expected),
+      );
+    }
   });
 
   it('packed expansion equals direct shared-emitter output per stream', () => {

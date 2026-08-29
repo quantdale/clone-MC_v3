@@ -2350,21 +2350,30 @@ export class World implements WorldAccess {
       this.rejectWorkerMeshBatch(batch);
       return;
     }
-    if (!this.uvRectFor) {
-      this.rejectWorkerMeshBatch(batch);
-      return;
-    }
-
-    const info: PackedMeshExpandInfo = {
-      uvFor: (blockId, faceIndex) => this.uvRectFor!(blockId, faceIndex),
-      renderLayerOf: (blockId) =>
-        this.registry.get(blockId).renderCategory === RenderCategory.Transparent
-          ? ('translucent' as MeshStreamName)
-          : ('opaque' as MeshStreamName),
-      buildGeometry: geometryFromMeshStream,
-    };
-    const packed = result.packed ?? packQuadsToTypedArrays(result.quads);
-    const geometries = expandPackedMeshResult(packed, info);
+    const geometries = result.layerStreams !== undefined
+      ? {
+          opaque: geometryFromMeshStream(result.layerStreams.opaque),
+          cutout: geometryFromMeshStream(result.layerStreams.cutout),
+          translucent: geometryFromMeshStream(result.layerStreams.translucent),
+          fluid: geometryFromMeshStream(result.layerStreams.fluid),
+        }
+      : (() => {
+          if (!this.uvRectFor) {
+            this.rejectWorkerMeshBatch(batch);
+            return null;
+          }
+          const info: PackedMeshExpandInfo = {
+            uvFor: (blockId, faceIndex) => this.uvRectFor!(blockId, faceIndex),
+            renderLayerOf: (blockId) =>
+              this.registry.get(blockId).renderCategory === RenderCategory.Transparent
+                ? ('translucent' as MeshStreamName)
+                : ('opaque' as MeshStreamName),
+            buildGeometry: geometryFromMeshStream,
+          };
+          const packed = result.packed ?? packQuadsToTypedArrays(result.quads);
+          return expandPackedMeshResult(packed, info);
+        })();
+    if (geometries === null) return;
     const offsetY = (sectionY - batch.chunkY * this.sectionsPerChunk) * 16;
     batch.geometries.push(
       { geometry: geometries.opaque, material: this.materials.opaque, renderOrder: 0, castShadow: true, offsetY },

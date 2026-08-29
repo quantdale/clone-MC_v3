@@ -6,9 +6,9 @@
   "currentChangeStatus": "ACTIVE",
   "lastCompletedChange": "254-whole-codebase-performance-optimization",
   "nextChange": null,
-  "completedTasks": 6,
+  "completedTasks": 8,
   "totalTasks": 37,
-  "completionPercentage": 16.22,
+  "completionPercentage": 21.62,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": false,
@@ -16,8 +16,8 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "93dbb09292c7d8a5830acd0cdd6aad22ff009a93",
-  "lastCompletedTask": "255 task 6 complete: validated typed section/halo buffers, aggregate byte caps, unique transferable ownership, zero-copy canonical snapshot transport, detached/duplicate rejection, and safe worker-loss handling; focused ownership/worker suites pass.",
-  "nextExactAction": "Begin task 7: produce typed GPU-ready layer streams in workers and validate byte/count caps before accepting results.",
+  "lastCompletedTask": "255 task 8 complete: direct typed worker streams are compared against an independent ChunkMesher/FluidSurfaceMesher reference across opaque, cutout, translucent, and fluid layers, including positions, normals, UVs, sky/block light, AO, tint, normalized indices, and counts; focused parity passes 11/11, full unit/build/E2E/file-audit gates pass, and visual goldens remain unchanged.",
+  "nextExactAction": "Begin task 9: make canonical 16³ sections the live mesh invalidation/ownership unit while retaining compatibility projections only as bounded scheduling bridges.",
   "blockers": [],
   "validationResults": [
     {
@@ -2428,9 +2428,9 @@
     {
       "change": "255-high-performance-voxel-engine",
       "status": "ACTIVE",
-      "unitTests": 4459,
+      "unitTests": 4464,
       "e2eTests": 51,
-      "note": "Tasks 1-6 complete (6/37, 16.22%). Task 6 adds validated typed section/halo transfers, aggregate byte caps, unique transferable ownership, zero-copy canonical snapshot transport, detached/duplicate rejection, and safe worker-loss handling. Focused ownership/worker suites pass 81/81; full unit gate passes 4459 + 1 skipped; typecheck, lint, build, and full E2E pass (51/51). Next exact action is task 7 typed GPU-ready layer streams and result byte/count caps."
+      "note": "Tasks 1-8 complete (8/37, 21.62%). Task 7 adds validated typed GPU-ready opaque/cutout/translucent/fluid streams, registry-derived tile metadata, aggregate byte/quad/vertex caps, and direct worker transfer. Task 8 adds independent worker-vs-reference parity for positions, normals, UVs, sky/block light, AO, tint, normalized indices, counts, and all four layers. Focused parity passes 11/11; full typecheck/lint/unit/build/E2E/file-audit gates pass (4464 + 1 skipped, 51/51); visual goldens remain unchanged. Next exact action is task 9 canonical 16³ live mesh invalidation/ownership."
     }
   ],
   "publicationHistory": [

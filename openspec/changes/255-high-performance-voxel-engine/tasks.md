@@ -9,8 +9,8 @@
 ## Campaign B — typed transfers and GPU-ready output
 - [x] 5. Add worker initialization tables and version validation; remove per-request registry reconstruction.
 - [x] 6. Replace hot-path nested JS arrays with validated typed buffers and transferable ownership; test detached/duplicate ownership behavior.
-- [ ] 7. Produce typed GPU-ready layer streams in workers and validate byte/count caps before accepting results.
-- [ ] 8. Add worker-vs-reference geometry/lighting/AO/fluid parity tests and update only intentionally equivalent visual evidence.
+- [x] 7. Produce typed GPU-ready layer streams in workers and validate byte/count caps before accepting results.
+- [x] 8. Add worker-vs-reference geometry/lighting/AO/fluid parity tests and update only intentionally equivalent visual evidence.
 
 ## Campaign C — live section rendering
 - [ ] 9. Make canonical 16³ sections the live mesh invalidation/ownership unit while retaining compatibility projections only as bounded scheduling bridges.

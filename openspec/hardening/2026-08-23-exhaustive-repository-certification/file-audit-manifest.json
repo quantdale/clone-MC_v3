@@ -42503,6 +42503,65 @@
       "disposition": "",
       "reviewNotes": "Covers legacy normalization, typed-only validation, unique transfer lists, detached-buffer rejection, duplicate-buffer rejection, pool transfer propagation, and transferred-job failure after worker loss.",
       "status": "audited"
+    },
+    {
+      "path": "src/rendering/TypedMeshStreams.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Validated worker-produced GPU-ready mesh layer streams and aggregate resource caps",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "live through WorkerMeshing result validation and MeshWorkerEntry transfer",
+      "imports": [
+        "src/world/MeshingTypes.ts"
+      ],
+      "importedBy": [
+        "src/rendering/WorkerMeshing.ts",
+        "src/rendering/MeshWorkerEntry.ts"
+      ],
+      "testEvidence": [
+        "tests/unit/TypedMeshStreams.test.ts",
+        "npm run typecheck",
+        "npm run lint",
+        "npm test",
+        "npm run build"
+      ],
+      "riskAreas": [
+        "typed-array length/count validation",
+        "aggregate byte and vertex caps",
+        "duplicate transferable ownership",
+        "index bounds"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Task-7 semantic review: validates four independent GPU-ready streams before geometry allocation, enforces complete-quad counts and aggregate byte/quad/vertex caps, rejects duplicate buffers, and emits a deduplicated transfer list.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/TypedMeshStreams.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Task-7 GPU-ready stream shape, parity, caps, ownership, and result-envelope regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [
+        "src/rendering/TypedMeshStreams.ts",
+        "src/rendering/WorkerMeshing.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "3 tests passed in focused task-7 suite",
+        "npm test"
+      ],
+      "riskAreas": [
+        "stream attribute shape",
+        "duplicate ownership",
+        "forged byte lengths",
+        "mixed packed/layer transport"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Covers all four streams, GPU attribute constructors/counts, unique transfer buffers, forged byte-length rejection, cap rejection, result validation, and mutually exclusive transport forms.",
+      "status": "audited"
     }
   ]
 }

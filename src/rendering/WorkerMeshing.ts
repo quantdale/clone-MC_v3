@@ -25,6 +25,19 @@ import {
   validateMeshSectionTransferOwnership,
   collectMeshSectionTransferables,
 } from './MeshSectionTransfer';
+import {
+  DEFAULT_MAX_MESH_RESULT_BYTES,
+  DEFAULT_MAX_MESH_RESULT_QUADS,
+  DEFAULT_MAX_MESH_RESULT_VERTICES,
+  typedMeshStreamByteLength,
+  validateTypedMeshLayerStreams,
+  type TypedMeshLayerStreams,
+} from './TypedMeshStreams';
+import {
+  MESH_STREAM_NAMES,
+  MeshBuildResultBuilder,
+  emitQuad,
+} from '../world/MeshingTypes';
 import type { WorkerPool } from '../engine/WorkerPool';
 import {
   greedyMergeOpaqueFaces,
@@ -108,6 +121,12 @@ export interface MeshSectionRequestPayload {
   opaqueIds: NumericArray;
   /** Optional numeric layer table indexed by block id. */
   layerById?: NumericArray;
+  /** Worker-safe texture tile metadata installed with the immutable registry table. */
+  textureTiles?: {
+    topTileById: readonly number[];
+    bottomTileById: readonly number[];
+    sideTileById: readonly number[];
+  };
   /** 4096 per-cell fluid levels; -1 means no fluid state. */
   fluidLevels?: NumericArray;
   /** Optional resolved tint class per target cell. */
@@ -152,7 +171,13 @@ export interface MeshSectionResultPayload {
    * Packed typed-array form of `quads` (worker-entry transport). When present the
    * main thread expands it directly and `quads` is empty.
    */
+  /**
+   * Packed typed-array form of `quads` (legacy worker transport). When present the
+   * main thread expands it directly and `quads` is empty.
+   */
   packed?: PackedMeshResult;
+  /** Worker-produced GPU-ready typed streams; present for the task-7 transport path. */
+  layerStreams?: TypedMeshLayerStreams;
 }
 
 const MODEL_FACE_KEYS: ReadonlySet<string> = new Set(['up', 'down', 'north', 'south', 'east', 'west']);
@@ -204,7 +229,20 @@ function validatePackedStreamNames(value: unknown, quadCount: number): MeshStrea
  */
 function validateResultBody(
   r: Record<string, unknown>,
-): { quads: OpaqueFaceQuad[] } | { quads: OpaqueFaceQuad[]; packed: PackedMeshResult } {
+): { quads: OpaqueFaceQuad[] } | { quads: OpaqueFaceQuad[]; packed: PackedMeshResult } | { quads: OpaqueFaceQuad[]; layerStreams: TypedMeshLayerStreams } {
+  if (r.layerStreams !== undefined) {
+    if (r.data !== undefined || r.quadCount !== undefined || r.stride !== undefined) {
+      throw new Error('MeshSectionResult: packed and layerStreams payloads are mutually exclusive');
+    }
+    return {
+      quads: [],
+      layerStreams: validateTypedMeshLayerStreams(r.layerStreams, {
+        maxBytes: DEFAULT_MAX_MESH_RESULT_BYTES,
+        maxQuads: DEFAULT_MAX_MESH_RESULT_QUADS,
+        maxVertices: DEFAULT_MAX_MESH_RESULT_VERTICES,
+      }),
+    };
+  }
   if (r.data !== undefined || r.quadCount !== undefined || r.stride !== undefined) {
     if (!(r.data instanceof Float32Array)) {
       throw new Error('MeshSectionResult: packed data must be a Float32Array');
@@ -212,11 +250,17 @@ function validateResultBody(
     if (!Number.isInteger(r.quadCount) || (r.quadCount as number) < 0) {
       throw new Error('MeshSectionResult: quadCount must be a non-negative integer');
     }
+    if ((r.quadCount as number) > DEFAULT_MAX_MESH_RESULT_QUADS) {
+      throw new Error('MeshSectionResult: quadCount exceeds the configured cap');
+    }
     if (r.stride !== PACKED_QUAD_STRIDE) {
       throw new Error(`MeshSectionResult: stride must be ${PACKED_QUAD_STRIDE}`);
     }
     if ((r.data as Float32Array).length !== (r.quadCount as number) * PACKED_QUAD_STRIDE) {
       throw new Error('MeshSectionResult: packed data length must equal quadCount * stride');
+    }
+    if (r.data.byteLength > DEFAULT_MAX_MESH_RESULT_BYTES) {
+      throw new Error('MeshSectionResult: packed data exceeds the configured byte cap');
     }
     const streamNames = validatePackedStreamNames(r.streamNames, r.quadCount as number);
     return {
@@ -372,6 +416,7 @@ export function validateMeshSectionRequest(
 
   let opaqueIds: NumericArray;
   let layerById: NumericArray | undefined;
+  let textureTiles: MeshSectionRequestPayload['textureTiles'];
   if (r.registryTableId !== undefined) {
     if (typeof r.registryTableId !== 'string' || r.registryTableId.length === 0) {
       throw new Error('MeshSectionRequest: registryTableId must be a non-empty string');
@@ -379,11 +424,16 @@ export function validateMeshSectionRequest(
     if (initializedTable === undefined || initializedTable.tableId !== r.registryTableId) {
       throw new Error('MeshSectionRequest: registry table is not initialized or does not match registryTableId');
     }
-    if (r.opaqueIds !== undefined || r.layerById !== undefined) {
+    if (r.opaqueIds !== undefined || r.layerById !== undefined || r.textureTiles !== undefined) {
       throw new Error('MeshSectionRequest: registry-backed requests must not repeat registry tables');
     }
     opaqueIds = initializedTable.opaqueIds as number[];
     layerById = initializedTable.layerById as number[];
+    textureTiles = {
+      topTileById: initializedTable.topTileById,
+      bottomTileById: initializedTable.bottomTileById,
+      sideTileById: initializedTable.sideTileById,
+    };
   } else if (transferData !== undefined) {
     if (transferData.opaqueIds === undefined) {
       throw new Error('MeshSectionRequest: transferData.opaqueIds is required without registryTableId');
@@ -440,6 +490,7 @@ export function validateMeshSectionRequest(
     cells: cells as CellArray,
     opaqueIds,
     layerById,
+    textureTiles,
     fluidLevels: fluidLevels as NumericArray | undefined,
     tintClasses: tintClasses as NumericArray | undefined,
     translucentSortOrigin: r.translucentSortOrigin as [number, number, number] | undefined,
@@ -504,6 +555,62 @@ export function packQuadsToTypedArrays(quads: readonly OpaqueFaceQuad[]): Packed
     ? quads.map((quad) => quad.renderStream ?? 'opaque')
     : undefined;
   return { data, quadCount: quads.length, stride: PACKED_QUAD_STRIDE, streamNames };
+}
+
+function workerTileUv(tile: number): UvRect {
+  const col = tile % 16;
+  const row = Math.floor(tile / 16);
+  return {
+    u0: col / 16,
+    v0: 1 - (row + 1) / 4,
+    u1: (col + 1) / 16,
+    v1: 1 - row / 4,
+  };
+}
+
+function workerTileForFace(
+  tiles: NonNullable<MeshSectionRequestPayload['textureTiles']>,
+  blockId: number,
+  faceIndex: number,
+): number {
+  if (faceIndex === 0) return tiles.topTileById[blockId] ?? 0;
+  if (faceIndex === 1) return tiles.bottomTileById[blockId] ?? 0;
+  return tiles.sideTileById[blockId] ?? 0;
+}
+
+/**
+ * Convert worker quads into four independent GPU-ready typed streams. The same quad corner,
+ * lighting, AO, tint, and UV conventions as the synchronous mesher are used; no THREE objects
+ * or registry definitions cross the worker boundary.
+ */
+export function packQuadsToTypedLayerStreams(
+  quads: readonly OpaqueFaceQuad[],
+  textureTiles: NonNullable<MeshSectionRequestPayload['textureTiles']>,
+): TypedMeshLayerStreams {
+  const builder = new MeshBuildResultBuilder();
+  for (const quad of quads) {
+    const streamName = quad.renderStream ?? 'opaque';
+    const { corners, normal, faceIndex } = packedQuadGeometryInputs(quad);
+    const uv = workerTileUv(workerTileForFace(textureTiles, quad.blockId, faceIndex));
+    const tint = packedTintRgb(quad.tintClass ?? 0);
+    emitQuad(builder.builder(streamName), corners, normal[0], normal[1], normal[2], uv,
+      quad.vertexLights, quad.vertexAO, tint[0], tint[1], tint[2]);
+  }
+  const built = builder.build(0);
+  const streams = {} as Record<MeshStreamName, TypedMeshLayerStreams[MeshStreamName]>;
+  for (const name of MESH_STREAM_NAMES) {
+    const stream = built.streams[name];
+    streams[name] = {
+      ...stream,
+      quadCount: built.metadata[name].quadCount,
+      byteLength: typedMeshStreamByteLength(stream),
+    };
+  }
+  return validateTypedMeshLayerStreams(streams, {
+    maxBytes: DEFAULT_MAX_MESH_RESULT_BYTES,
+    maxQuads: DEFAULT_MAX_MESH_RESULT_QUADS,
+    maxVertices: DEFAULT_MAX_MESH_RESULT_VERTICES,
+  });
 }
 
 function assertLightArrayLength(name: string, values: unknown, length: number): asserts values is NumericArray {
@@ -752,6 +859,9 @@ export function processMeshSectionRequest(
     versionSnapshot: payload.versionSnapshot,
     quads,
   };
+  if (payload.textureTiles !== undefined) {
+    result.layerStreams = packQuadsToTypedLayerStreams(quads, payload.textureTiles);
+  }
   if (generationToken !== undefined) result.generationToken = generationToken;
   return result;
 }
