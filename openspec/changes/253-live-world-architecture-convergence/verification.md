@@ -37,6 +37,20 @@ This file begins intentionally unverified. Do not pre-fill PASS evidence. Replac
 | REQ-14 playable vertical-world journey | PENDING | NOT VERIFIED |
 | REQ-15 regression/publication gate | PENDING | NOT VERIFIED |
 
+## Task 57 evidence — legacy `Chunk` demotion
+
+Status: PASS for task 57 scope. `Chunk.blocks` is documented and retained only as a legacy slab projection for compatibility generators/tests and the current slab mesher. `World` canonical reads use `CanonicalWorldStorage`; canonical mutation, edit hydration, and storage synchronization no longer assign directly to `Chunk.blocks` and instead use explicit projection-only methods. `ChunkManager` now documents its slab map as residency/lifecycle projection rather than block-data authority. The regression `World block-state access > keeps canonical reads authoritative when the legacy projection is stale` mutates the compatibility projection to air and verifies canonical `getBlock`/`getBlockState` still return stone.
+
+Retained compatibility writes are classified: `TerrainGenerator.generateChunk` and direct fixture generators write the read-old projection; `World` reads it only for compatibility generation fallback, voxel metrics, and projection-diff checks; `ChunkMesher` reads it only on the legacy slab meshing path. Live production generation uses `generateColumn` and canonical sections. No production `World`/`ChunkManager`/`ChunkMesher` path uses `Chunk.blocks` as writable world truth.
+
+Exact validation on the task-57 candidate:
+
+- `npm run typecheck` — PASS (`tsc --noEmit`).
+- `npm run lint` — PASS (`eslint .`).
+- Focused world/residency suite — PASS: 7 files, 40 tests (`WorldBlockState`, `World`, `WorldChunkMemo`, `WorldEditDurability`, `ChunkManagerResidency`, `VerticalStreaming`, `StateOverlayBoundedness`).
+- Post-change source scan — PASS for no direct `Chunk.blocks` assignment/fill in `World`; remaining reads are compatibility-only and generator writes are isolated to `TerrainGenerator`/fixtures.
+- `git diff --check` — repository line-ending caveat: CRLF carriage returns are reported on newly added lines in the pre-existing CRLF `ChunkManager.ts` and `WorldBlockState.test.ts`; no trailing-space defect exists in LF files or semantic source content.
+
 ## Mandatory command matrix
 
 Run from the exact intended candidate unless the row explicitly says baseline.

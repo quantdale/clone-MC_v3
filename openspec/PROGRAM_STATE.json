@@ -6,7 +6,7 @@
   "currentChangeStatus": "ACTIVE",
   "lastCompletedChange": "254-whole-codebase-performance-optimization",
   "nextChange": null,
-  "completedTasks": 52,
+  "completedTasks": 53,
   "totalTasks": 138,
   "completionPercentage": 38,
   "targetCompletionPercentage": 100,
@@ -16,8 +16,8 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "556f1e67ebebf2e7717b29020c04d524787fc431",
-  "lastCompletedTask": "Change 253 baseline and canonical residency checkpoint: recorded historical pre-edit typecheck/lint/unit/build/Change-254 benchmark evidence; current candidate passes typecheck, lint, build, full unit suite (353/353 files; 4400 passed, 1 skipped) and the repaired reviewed file-audit validator (2550 rows). Marked the horizontal ChunkManager column-residency and canonical slab-assumption tasks complete after focused validation; isolated legacy v1 index decoding behind decodeLegacySlabIndex for read-old compatibility paths. Task 23 resource evidence is partial: deterministic ownership/startup/churn/dense-edit/queue and production-mesher probes pass, while browser sampling is blocked by a cross-executable headless-Chrome canvas fillRect hang.",
-  "nextExactAction": "Continue Change 253 task 23 by rerunning the browser resource profile in an environment where 2D canvas operations complete; the deterministic ownership/startup/churn/dense-edit/queue baseline and production ChunkMesher timing probe are recorded, but browser heap/renderer/entity sampling is still invalid because standalone headless Chrome hangs on the first 2D canvas fillRect in both available Chromium executables. Keep task 23 unchecked, preserve the Chunk compatibility boundary, and do not weaken readiness or budgets to hide the environment limitation. After valid browser samples exist, reconcile verification.md and then continue the next unchecked task.",
+  "lastCompletedTask": "Task 57 — demoted legacy Chunk from production authority. Chunk.blocks is documented as a compatibility projection; World canonical reads/writes remain on CanonicalWorldStorage, direct World projection assignments were replaced with explicit projection-only APIs, ChunkManager documentation now distinguishes residency from block authority, and a stale-projection regression test passes. Task 23 resource evidence remains partial because browser sampling is blocked by the reproduced cross-executable headless-Chrome canvas fillRect hang.",
+  "nextExactAction": "Continue Change 253 with task 64: audit src/worldgen/** stage graph and document the exact live adapter/composition chosen. Task 41 remains unchecked and blocked only for browser heap/renderer/entity sampling; preserve the Chunk compatibility boundary and do not weaken readiness or budgets to hide that environment limitation. After task 64 evidence is recorded, continue the next unchecked task.",
   "blockers": ["Task 23 browser resource sampling is blocked by an objectively reproduced environment limitation: standalone headless Chrome 2D canvas fillRect does not return within 35 seconds in both available Chromium executables (/usr/bin/google-chrome and Playwright chromium-1234/chrome-linux64/chrome), including --disable-gpu; see openspec/changes/253-live-world-architecture-convergence/verification.md."],
   "validationResults": [
     {

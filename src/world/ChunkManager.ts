@@ -9,7 +9,7 @@ import {
 import { ChunkLifecycleStage, isChunkLifecycleAtLeast } from './ChunkStatus';
 import { ChunkTicket } from './ChunkTicket';
 
-/** Read-only horizontal residency projection over the legacy slab projections. */
+/** Read-only horizontal residency projection over canonical columns' legacy slab views. */
 export interface ChunkColumnResidency {
   readonly chunkX: number;
   readonly chunkZ: number;
@@ -28,8 +28,9 @@ export interface ChunkColumnResidency {
  *
  * Storage delegates lifecycle bookkeeping to the {@link ChunkPipeline}: every chunk created here
  * gets an authoritative lifecycle record (status, tickets, generation token), and removals go
- * through the eviction flow (`Evicting` before release). The string-keyed chunk map remains the
- * source of truth for block data so existing callers (World.ts) compile unchanged.
+ * through the eviction flow (`Evicting` before release). The string-keyed map owns only the
+ * resident compatibility projections and lifecycle records; canonical block data lives in
+ * `CanonicalWorldStorage` and is never read from this map as world truth.
  */
 export class ChunkManager {
   /** Column residency: outer key `${cx},${cz}` → inner map `cy → Chunk` (lazy vertical). */

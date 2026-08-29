@@ -452,8 +452,11 @@ export class World implements WorldAccess {
       return;
     }
 
-    const oldId = chunk.getLocal(lx, ly, lz);
-    chunk.setLocal(lx, ly, lz, state.blockId);
+    const oldId = oldState.blockId;
+    // The legacy slab is a bounded render/compatibility projection only. Keep
+    // it coherent for the current slab mesher, but never consult it for world
+    // truth and never let it become an independent edit authority.
+    chunk.setProjectionLocal(lx, ly, lz, state.blockId);
     chunk.markDirty();
     if (chunk.generated && oldId !== state.blockId) {
       const delta = (state.blockId !== BlockId.Air ? 1 : 0) - (oldId !== BlockId.Air ? 1 : 0);
@@ -462,9 +465,6 @@ export class World implements WorldAccess {
         this.chunkVoxelCounts.set(key, (this.chunkVoxelCounts.get(key) ?? 0) + delta);
       }
     }
-
-    // Invalidate face-sharing slab projections and lighting after the canonical
-    // mutation. Section-local Y uses the canonical 16-block coordinate helper.
     const lxSec = localCoord(x);
     const lzSec = localCoord(z);
     const lySec = localCoord(y);
@@ -1464,7 +1464,7 @@ export class World implements WorldAccess {
                     this.editOverlay.set(key, overlay);
                   }
                   overlay.set(idx, id);
-                  chunk.blocks[idx] = id;
+                  chunk.setProjectionLocal(lx, ly, lz, id);
                   found = true;
                 }
               }
@@ -1487,7 +1487,10 @@ export class World implements WorldAccess {
     }
     this.touchEditOverlay(key);
     for (const [index, id] of overlay) {
-      chunk.blocks[index] = id;
+      const local = decodeLegacySlabIndex(index);
+      if (local) {
+        chunk.setProjectionLocal(local.lx, local.ly, local.lz, id);
+      }
     }
     // Reported so generation can reconcile exactly these cells back into the
     // canonical column instead of re-comparing all 16x16x64 slab cells.
@@ -1548,7 +1551,10 @@ export class World implements WorldAccess {
         const chunk = this.chunkManager.getChunk(cx, cy, cz);
         if (chunk?.generated) {
           for (const [index, id] of overlay) {
-            chunk.blocks[index] = id;
+            const local = decodeLegacySlabIndex(index);
+            if (local) {
+              chunk.setProjectionLocal(local.lx, local.ly, local.lz, id);
+            }
           }
           this.refreshChunkVoxelCount(chunk);
           chunk.markDirty();
@@ -1931,16 +1937,14 @@ export class World implements WorldAccess {
       if (!this.dimension.containsY(worldY)) continue;
       const section = column.getSectionIfExists(column.sectionIndexForY(worldY));
       if (section === undefined) {
-        chunk.blocks.fill(BlockId.Air, from, to);
+        chunk.clearProjectionRange(from, to);
         continue;
       }
       for (let ly = sectionBase; ly < sectionBase + SECTION_SIZE; ly++) {
         const sectionLocalY = ly & (SECTION_SIZE - 1);
-        const rowBase = ly * layer;
         for (let lz = 0; lz < depth; lz++) {
-          const colBase = rowBase + lz * width;
           for (let lx = 0; lx < width; lx++) {
-            chunk.blocks[colBase + lx] = section.getStateAt(lx, sectionLocalY, lz).blockId;
+            chunk.setProjectionLocal(lx, ly, lz, section.getStateAt(lx, sectionLocalY, lz).blockId);
           }
         }
       }

@@ -54,7 +54,7 @@ Rules:
 - [x] Make canonical mutation update heightmaps, dirty sections, dirty columns, mesh versions and face-neighbor invalidation through one mutation path.
 - [x] Ensure absent-air reads do not call APIs that eagerly materialize sections (e.g. distinguish read-only lookup from `getSection()` if needed).
 - [x] Define dirty unload semantics: removal cannot silently discard unsaved canonical state.
-- [ ] Demote/delete legacy `Chunk` from production authority after its consumers migrate; retained uses must be classified and non-writable relative to live truth.
+- [x] Demote/delete legacy `Chunk` from production authority after its consumers migrate; retained uses must be classified and non-writable relative to live truth.
 - [x] Add focused tests for ID projection, property-bearing state writes, negative coordinates, bounds, lazy allocation, dirty tracking and overlay elimination.
 
 ## Phase 3 — Live Overworld composition, generation, and streaming

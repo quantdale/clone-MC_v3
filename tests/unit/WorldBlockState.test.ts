@@ -126,4 +126,18 @@ describe('World block-state access (125)', () => {
     expect(world.getBlock(8, -1, 8)).toBe(BlockId.Air);
     expect(world.getBlockState(8, 8, 8).getProperty('age')).toBeUndefined();
   });
+
+  it('keeps canonical reads authoritative when the legacy projection is stale', () => {
+    const world = makeWorld();
+    streamUntilGenerated(world, 0, 0);
+    const chunk = (world as unknown as {
+      chunkManager: { getChunk: (cx: number, cy: number, cz: number) => Chunk | undefined };
+    }).chunkManager.getChunk(0, 0, 0);
+    expect(chunk).toBeDefined();
+
+    // Simulate a stale compatibility view. This must not alter canonical truth.
+    chunk!.setLocal(8, 8, 8, BlockId.Air);
+    expect(world.getBlock(8, 8, 8)).toBe(BlockId.Stone);
+    expect(world.getBlockState(8, 8, 8).blockId).toBe(BlockId.Stone);
+  });
 });
