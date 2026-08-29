@@ -2458,6 +2458,11 @@
       "head": "786919b3055dd8a264ba8c08c666f93ccf15e6b7",
       "at": "2026-08-29T22:18:24Z",
       "note": "Change 255 task 9 implementation published normally to origin/main: canonical 16³ target/face-dependency and light invalidation, sibling-safe section ownership, bounded compatibility scheduling bridges, focused live-section/resource/streaming evidence, and clean full local gates."
+    },
+    {
+      "head": "d2c16d478e2c78ad9c1c0d9593cec9fb86f5b7c1",
+      "at": "2026-08-29T23:08:00Z",
+      "note": "Change 255 task 11 checkpoint published normally to origin/main: delayed validated worker replacement/unload late-result regression, canonical border/light/edit coverage, bounded saturation/spawn progress evidence, task state synchronized at 11/37, and validate-state/typecheck/lint/unit/build passing; prior E2E remains 51/51."
     }
   ],
   "releaseAuthority": {
