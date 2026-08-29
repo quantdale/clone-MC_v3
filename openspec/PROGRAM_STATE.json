@@ -2453,6 +2453,11 @@
       "head": "64bc943d085399e21d52bea6567f24bff382957f",
       "at": "2026-08-29T21:16:49Z",
       "note": "Change 255 tasks 7-8 implementation published normally to origin/main: typed GPU-ready worker streams with bounded ownership/caps, independent four-layer worker-vs-reference parity, full local validation, and unchanged visual goldens."
+    },
+    {
+      "head": "786919b3055dd8a264ba8c08c666f93ccf15e6b7",
+      "at": "2026-08-29T22:18:24Z",
+      "note": "Change 255 task 9 implementation published normally to origin/main: canonical 16³ target/face-dependency and light invalidation, sibling-safe section ownership, bounded compatibility scheduling bridges, focused live-section/resource/streaming evidence, and clean full local gates."
     }
   ],
   "releaseAuthority": {

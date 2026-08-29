@@ -84,9 +84,9 @@
 - Next change: **null (255 is the sole active post-terminal change; no later change may begin)**
 - 240 advancement allowed: **no (active change not yet verified)**
 
-- Program: **ACTIVE — Change 255 is in progress; Changes 253 and 254 remain VERIFIED and 255 has 8/37 tasks complete (21.62%)**
+- Program: **ACTIVE — Change 255 is in progress; Changes 253 and 254 remain VERIFIED and 255 has 9/37 tasks complete (24.32%)**
 - Last completed change: **254-whole-codebase-performance-optimization — VERIFIED**
-- All changes 001–254: **VERIFIED** — Change 255 is ACTIVE with its complete OpenSpec package and tasks 1–8 complete.
+- All changes 001–254: **VERIFIED** — Change 255 is ACTIVE with its complete OpenSpec package and tasks 1–9 complete.
 - Historical Change 250-era bullets (preserved; superseded **for current release authority** by `openspec/evidence/release-readiness-post-hardening.md`): 250 required-test gate PASS at head `502d021` / byte-identical tree `b56529e`; historical release-readiness READY RC-1..RC-9 (`openspec/evidence/release-readiness.md`); final parity audit PASS with DL dispositions later rejected by this interlock (`openspec/evidence/parity/final-parity-audit.md`); evidence archive complete (`openspec/evidence/`)
 - Post-250 hardening interlock: **VERIFIED at remediation checkpoint `aa92a5c229a753f10f8c1677e836136962b5d07a` — canonical CI run 32589457819 SUCCESS (gate job 97078975848, e2e job 97078975868); tasks 78/78; release decision READY (`openspec/evidence/release-readiness-post-hardening.md`)**
 - Certification campaign: **openspec/hardening/2026-08-23-exhaustive-repository-certification — findings fixed with oracles; manifest reviewed; risk register R-1..R-9 accepted debt**
