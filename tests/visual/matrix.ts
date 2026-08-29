@@ -120,17 +120,24 @@ function defaultGoldenEnvironmentSource(): GoldenEnvironmentSource {
 /**
  * Resolves the committed golden set the current run compares against.
  *
- * A non-empty `VISUAL_GOLDEN_ENV` wins verbatim (validated); otherwise the key
- * is `<platform>-ci` under CI and `<platform>-local` elsewhere. Pure over its
- * input; only the optional default source reads process state. Throws naming
- * the value when any resolved key is not a legal path segment — a bad key must
- * never silently redirect captures to an unintended baseline directory.
+ * A non-empty `VISUAL_GOLDEN_ENV` wins verbatim (validated). Linux has one
+ * committed baseline (`linux-ci`), so both hosted and local Linux runs use it;
+ * other platforms resolve to `<platform>-ci` under CI and `<platform>-local`
+ * otherwise. Pure over its input; only the optional default source reads
+ * process state. Throws naming the value when any resolved key is not a legal
+ * path segment — a bad key must never silently redirect captures to an
+ * unintended baseline directory.
  */
 export function resolveGoldenEnvironment(
   source: GoldenEnvironmentSource = defaultGoldenEnvironmentSource(),
 ): string {
   const raw = source.VISUAL_GOLDEN_ENV;
-  const key = raw !== undefined && raw !== '' ? raw : `${source.platform ?? 'unknown'}-${source.CI ? 'ci' : 'local'}`;
+  const platform = source.platform ?? 'unknown';
+  const key = raw !== undefined && raw !== ''
+    ? raw
+    : platform === 'linux'
+      ? 'linux-ci'
+      : `${platform}-${source.CI ? 'ci' : 'local'}`;
   if (!GOLDEN_ENV_PATTERN.test(key)) {
     throw new Error(`VisualMatrix: invalid golden environment key '${key}'`);
   }

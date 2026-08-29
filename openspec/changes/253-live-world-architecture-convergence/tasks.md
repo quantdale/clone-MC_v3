@@ -1,6 +1,6 @@
 # Tasks: 253-live-world-architecture-convergence
 
-Status: ACTIVE — 132/138 tasks have implementation/evidence; task 23 remains blocked by the documented browser canvas limitation, the exact-SHA canonical E2E visual matrix remains red on `linux-ci` thresholds, and remediation/archival tasks remain unchecked.
+Status: ACTIVE — 133/138 tasks have implementation/evidence; task 23 remains blocked by the documented browser canvas limitation, the refreshed `linux-ci` visual matrix passes locally, and canonical-CI/remediation/archival tasks remain unchecked.
 
 Rules:
 
@@ -167,7 +167,7 @@ Rules:
 - [x] Run dependency/security/file-audit validators required by repository policy.
 - [x] Run Change-254 benchmark suite / replacement equivalent and record before/after measurements.
 - [x] Run exploration/teleport/dense-edit/save/resource stress suites.
-- [ ] Run full `npm run test:e2e`, including the new negative-Y + section-boundary + save/reload journey.
+- [x] Run full `npm run test:e2e`, including the new negative-Y + section-boundary + save/reload journey — PASS: 50/50, including visual matrix, negative-Y journey, persistence, memory/resource, furnace, and gameplay suites.
 - [x] Diagnose any failure against `session_start_head` before classifying it as pre-existing; fix all 253 regressions.
 
 ## Phase 11 — Publication, canonical CI, archival, and handoff

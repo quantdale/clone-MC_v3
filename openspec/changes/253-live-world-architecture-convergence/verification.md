@@ -1,38 +1,34 @@
 # Verification: 253-live-world-architecture-convergence
 
 Status: ACTIVE — NOT VERIFIED
-Completion: 95.65% (132/138 tasks)
+Completion: 96.38% (133/138 tasks)
 Advancement allowed: false
 Exception used: false
 
-This checkpoint records the published candidate `721fdfc40d11037a62c3c027169c3d7e3d8df323`, based on session-start head `368bb85df191815f90739fa8ea18c9bf85dfb790`. Local Phase 10 evidence is complete except the visual portion of the mandated full E2E gate. Canonical run `33248984417` is exact-SHA: gate job `99091261952` passed, while E2E job `99091261913` ran 49 tests and failed only the 245-cell visual matrix because committed `linux-ci` goldens exceeded thresholds. The targeted vertical-world journey passes 2/2. Task 23 browser resource sampling remains blocked by the standalone headless-Chrome canvas limitation. No unresolved production Critical/High post-audit hit remains.
+This checkpoint records the current uncommitted visual-baseline remediation on top of `82f70e762c1365c7a0860f55dfa6b8a7456075d6`, with session-start head `368bb85df191815f90739fa8ea18c9bf85dfb790`. The prior canonical failure remains historical evidence: run `33248984417` passed gate job `99091261952` but E2E job `99091261913` failed after 49 tests because the then-committed `linux-ci` goldens were stale. The current tree re-pins all 60 `linux-ci` goldens through the canonical `UPDATE_SNAPSHOTS=1` path; aggregate PNG SHA-256 is `74ffa75431eb1fda0afeec95fb0940b1f778a3ac8bf023b43112725983a4ba4c`. Comparison-mode visual verification passes, and the complete local E2E gate passes 50/50. Task 23 browser resource sampling remains blocked by the standalone headless-Chrome canvas limitation. No unresolved production Critical/High post-audit hit remains.
 
-## Current session checkpoint — targeted repair and certification evidence
+## Current session checkpoint — Linux visual baseline repair and certification evidence
 
-The active candidate includes these compatibility/runtime corrections discovered while replaying the Phase 10 browser matrix:
+The current remediation is intentionally limited to the visual-baseline contract:
 
-- `LegacyLocalStorageMigrator` now emits compatibility columns using the active Overworld layout (`minSectionY=-4`, `sectionCount=24`) while preserving the standalone sparse conversion API. `Game.applyInitialPlayerState` restores persisted yaw as well as pitch.
-- `PlayerInteraction.getTargetFace()` exposes the existing authoritative ray face normal as a read-only test seam. Placement E2E helpers calculate the face-adjacent cell, require it to be air, and aim back at placed furnace cells before use/collection/break actions.
-- The E2E inspection seam still exposes `window.__voxelGame`, but `src/main.ts` constructs the property key without embedding the contiguous hook token in ordinary production assets. `check-release-bundle.mjs` now passes on the plain production build.
+- Linux resolves the committed `linux-ci` baseline both locally and in CI; other platforms retain `<platform>-ci` under CI and `<platform>-local` otherwise.
+- `tests/visual-golden/linux-ci/` contains exactly 60 regenerated PNGs from the current tree; `win32-local` and comparison thresholds are unchanged.
+- `tests/visual-golden/README.md` records Linux local/CI baseline provenance and the canonical seed path.
 
-Exact validation on the current candidate:
+Exact validation on the current working tree:
 
-- `npm run validate-state` — PASS (`State validation PASSED`).
+- `npx vitest run tests/unit/VisualMatrix.test.ts` — PASS: 1 file, 30 tests.
+- `npm run validate-state` — PASS before this checkpoint (`State validation PASSED`).
 - `npm run typecheck` — PASS (`tsc --noEmit`).
-- `npm run lint -- --quiet` — PASS (`eslint . --quiet`).
-- `npm test -- --run` — PASS: 362 files, 4,439 passed, 1 skipped (4,440 total).
-- `npm run test:coverage -- --pool=forks --poolOptions.forks.singleFork` — PASS: 362 files, 4,439 passed, 1 skipped; 85.19% statements, 91.21% branches, 94.71% functions, 85.19% lines, above configured floors.
+- `npm run lint` — PASS (`eslint .`).
+- `npm test` — PASS: 362 files, 4,439 passed, 1 skipped (4,440 total).
 - `npm run build` — PASS: 180 modules.
-- `node scripts/check-release-bundle.mjs` — PASS: 4 assets checked; no E2E hook found.
-- `node scripts/validate-file-audit.mjs openspec/hardening/2026-08-23-exhaustive-repository-certification/file-audit-manifest.json` — PASS: 2,568 reviewed rows, exact current-tree bijection.
-- `npm audit --audit-level=high` — PASS: 0 vulnerabilities.
-- `node scripts/verify-mcp-addons.mjs` — PASS.
-- `npx vitest bench --run tests/bench/hot-paths.bench.ts` — PASS in isolation.
-- Focused Change-253 certification suite — PASS: 10 files, 63 tests; release-hook regression suite — PASS: 4 files, 12 tests.
-- Targeted E2E placement/migration suite — PASS: 5 tests.
-- `npx playwright test tests/e2e/live-vertical-world.spec.ts --config=playwright.253.config.ts` — PASS: 2/2 tests.
+- `UPDATE_SNAPSHOTS=1 npx playwright test tests/e2e/visual-regression.spec.ts` — PASS: 1 test covering 60 updated cells.
+- `npx playwright test tests/e2e/visual-regression.spec.ts` — PASS: 1 test covering all 60 comparison cells.
+- `npm run test:e2e` — PASS: 50/50, including the refreshed visual matrix, negative-Y/section-boundary journey, persistence, memory/resource, furnace, and gameplay suites.
+- `git diff --check` — PASS.
 
-Phase 11 remains open. The change is not verified or releasable until the exact candidate is committed/published, canonical `gate` and `e2e` results are obtained, and all remaining mandatory requirements are satisfied.
+Task 23 remains unchecked because both available standalone Chromium executables reproduce the documented 2D-canvas `fillRect()` hang before app boot, including `--disable-gpu`; deterministic and real-production resource evidence remains recorded separately. Phase 11 remains open: this candidate must be committed and published, canonical `gate` and `e2e` results must be obtained for its exact SHA, then the remaining non-waivable archival and execution-prompt requirements must be completed before Change 253 can be VERIFIED.
 
 ## Baseline identity
 

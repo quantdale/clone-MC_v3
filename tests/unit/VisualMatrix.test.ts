@@ -167,7 +167,8 @@ describe('cells and golden paths', () => {
 });
 
 describe('golden environments', () => {
-  it('derives <platform>-ci under CI and <platform>-local otherwise', () => {
+  it('uses the committed Linux baseline locally and in CI', () => {
+    expect(resolveGoldenEnvironment({ platform: 'linux' })).toBe('linux-ci');
     expect(resolveGoldenEnvironment({ CI: 'true', platform: 'linux' })).toBe('linux-ci');
     expect(resolveGoldenEnvironment({ CI: '1', platform: 'darwin' })).toBe('darwin-ci');
     expect(resolveGoldenEnvironment({ platform: 'win32' })).toBe('win32-local');

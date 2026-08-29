@@ -16,12 +16,13 @@ Layout and resolution order:
 
 | Directory | Baseline set | Resolved key |
 |---|---|---|
-| `win32-local/` | Windows authoring workstation (local dev / local gates) | `<platform>-local` |
-| `linux-ci/` | ubuntu-latest runner under xvfb-run (canonical CI) | `<platform>-ci` |
+| `win32-local/` | Windows authoring workstation (local dev / local gates) | `win32-local` |
+| `linux-ci/` | Linux software-rendering baseline (canonical CI and local Linux gates) | `linux-ci` |
 
 The active set is resolved by `resolveGoldenEnvironment()` (`tests/visual/matrix.ts`): a non-empty
-`VISUAL_GOLDEN_ENV` wins verbatim; otherwise `<platform>-ci` when `CI` is set, `<platform>-local`
-otherwise. Seeding follows the suite's canonical `UPDATE_SNAPSHOTS=1` path; CI seeding is
+`VISUAL_GOLDEN_ENV` wins verbatim; otherwise Linux always uses the committed `linux-ci` set,
+while other platforms use `<platform>-ci` under `CI` and `<platform>-local` otherwise. Seeding follows
+the suite's canonical `UPDATE_SNAPSHOTS=1` path; CI seeding is
 automated by `.github/workflows/seed-visual-goldens.yml` (gated on the `[seed-visual]` commit
 message marker or manual dispatch), which uploads the fresh `linux-ci/` tree as an artifact for
 review before it is committed.
