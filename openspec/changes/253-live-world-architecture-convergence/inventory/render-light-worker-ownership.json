@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "task": 75,
+  "scope": "live render/light ownership keys and worker protocols",
+  "status": "characterized",
+  "canonicalIdentity": {
+    "blockStorage": "ChunkColumn(chunkX,chunkZ) -> lazy ChunkSection(inColumnSectionIndex), with global sectionY = minSectionY + inColumnSectionIndex",
+    "lightStorage": "WorldLightStorage section key (sectionX,sectionY,sectionZ), derived from floor world coordinates / 16",
+    "sectionMesh": "ChunkColumn sectionMeshVersion(inColumnSectionIndex) and ChunkSection.meshVersion",
+    "legacyProjection": "ChunkManager column map (chunkX,chunkZ) -> Chunk(cx,cy,cz) compatibility slabs; cy is a 64-block slab coordinate",
+    "legacyProjectionDisposition": "PROJECTION_ONLY"
+  },
+  "owners": [
+    {
+      "owner": "src/world/ChunkColumn.ts",
+      "resource": "canonical block-state sections",
+      "key": "horizontal chunkX,chunkZ plus in-column section index",
+      "version": "ChunkSection.meshVersion; absent sections read as air/version 0",
+      "lifecycle": "VerticalWorldAccess/CanonicalWorldStorage own column residency and serialization",
+      "disposition": "CANONICAL"
+    },
+    {
+      "owner": "src/world/ChunkPipeline.ts",
+      "resource": "generation/features/light/mesh/upload lifecycle records and queues",
+      "key": "string `${cx},${cy},${cz}` plus packed numeric key",
+      "version": "ChunkLifecycleRecord.generation and queued job.version",
+      "lifecycle": "markEvicting cancels work; finalizeEviction removes record; resetForRegeneration increments generation",
+      "disposition": "MIGRATE"
+    },
+    {
+      "owner": "src/world/World.ts",
+      "resource": "live compatibility meshes, retry queue, voxel/triangle counters",
+      "key": "chunkKey(cx,cy,cz) for meshGroups, chunkTriangles, chunkVoxelCounts, retryMeshQueue and lightDirtyChunks",
+      "version": "pipeline generation plus legacy Chunk.meshVersion; synchronous mesher inputVersion is pipeline generation",
+      "lifecycle": "removeMeshesForChunk disposes geometry; unload removes slab projection and prunes light sections",
+      "disposition": "MIGRATE"
+    },
+    {
+      "owner": "src/rendering/LightStorage.ts",
+      "resource": "authoritative sky/block light sections",
+      "key": "`${sectionX},${sectionY},${sectionZ}`",
+      "version": "sectionVersions, incremented by writes/fill/slice writes",
+      "lifecycle": "deleteSection on unload; clear/restore for world reset/snapshot",
+      "disposition": "CANONICAL"
+    },
+    {
+      "owner": "src/rendering/LightUpdateEngine.ts",
+      "resource": "bounded sky/block propagation queues",
+      "key": "world-cell coordinates in queue entries; pruneSection uses section coordinates",
+      "version": "per-channel queue versions and combined LightUpdateEngine.version",
+      "lifecycle": "bounded drain; clearPending/pruneSection discard queued work without silently changing stored light",
+      "disposition": "CANONICAL"
+    },
+    {
+      "owner": "src/rendering/WorkerJobProtocol.ts",
+      "resource": "all worker request/result correlation",
+      "key": "jobId plus worker kind",
+      "version": "protocolVersion 2 and generationToken",
+      "lifecycle": "pending map resolves exactly once; cancel/cancelByToken makes late results stale",
+      "disposition": "CANONICAL"
+    },
+    {
+      "owner": "src/rendering/WorkerMeshing.ts",
+      "resource": "section mesh worker requests/results",
+      "key": "request/result sectionX,sectionY,sectionZ; matched against stored request",
+      "version": "WorkerJobProtocol generationToken; MeshWorkerClient token map",
+      "lifecycle": "malformed/foreign/stale/duplicate results are rejected; callback completion is exactly once",
+      "disposition": "CANONICAL"
+    },
+    {
+      "owner": "src/world/ChunkMesher.ts",
+      "resource": "synchronous compatibility slab mesh build",
+      "key": "Chunk cx,cy,cz and 64-block slab origin; typed result carries inputVersion",
+      "version": "MeshBuildResult.inputVersion, supplied by World pipeline generation",
+      "lifecycle": "World.attach replaces/disposes geometry by slab key",
+      "disposition": "PROJECTION_ONLY"
+    }
+  ],
+  "protocols": {
+    "synchronousMesh": {
+      "request": "World.processMeshing -> ChunkMesher.mesh(Chunk, neighborLookup, {inputVersion, lightSampler})",
+      "result": "ChunkMeshResult with typed streams.inputVersion",
+      "staleCheck": "World compares streams.inputVersion to pipeline record.generation; legacy un-stamped results remain compatibility behavior",
+      "nextTask": 76
+    },
+    "workerMesh": {
+      "request": "MeshWorkerClient.requestSection(MeshSectionRequestPayload)",
+      "result": "WorkerResult envelope -> MeshSectionResultPayload",
+      "staleCheck": "jobId/kind/generationToken plus section coordinate equality, then World pipeline generation and Chunk.meshVersion",
+      "enabledInLiveWorld": false,
+      "nextTask": 76
+    },
+    "light": {
+      "request": "World.lightEngine.onBlockChanged/invalidateCell",
+      "result": "bounded LightUpdateEngine.drain; no worker transport",
+      "staleCheck": "sectionVersions and queue versions are available; World remeshes generated slab projections tracked in lightDirtyChunks",
+      "nextTask": 76
+    }
+  },
+  "knownMigrationGaps": [
+    "World render ownership maps and lightDirtyChunks remain keyed by legacy 64-high slab identity.",
+    "World worker payload construction iterates six 64-high slab sections and derives sectionY from cy * sectionsPerChunk + local index.",
+    "Live synchronous/worker mesh attachment is still slab-owned even though worker payloads carry canonical section coordinates.",
+    "WorldLightStorage section versions are not yet joined to live mesh submission/application at canonical section granularity."
+  ],
+  "dispositions": {
+    "canonicalSectionStorageAndLight": "PROJECTION_ONLY consumers may read it, but no second writable truth may be introduced",
+    "legacyChunkAndChunkManager": "PROJECTION_ONLY until section-scoped live rendering/lighting migration completes",
+    "pipelineAndWorkerTokens": "MIGRATE carefully; preserve exact stale/cancel/duplicate rejection",
+    "futureProductionChanges": "Do not enable worker meshing or remove compatibility projections until task-specific parity and stale-resource tests pass"
+  }
+}
