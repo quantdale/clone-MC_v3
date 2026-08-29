@@ -51,7 +51,19 @@ Exact validation on the task-57 candidate:
 - Post-change source scan — PASS for no direct `Chunk.blocks` assignment/fill in `World`; remaining reads are compatibility-only and generator writes are isolated to `TerrainGenerator`/fixtures.
 - `git diff --check` — repository line-ending caveat: CRLF carriage returns are reported on newly added lines in the pre-existing CRLF `ChunkManager.ts` and `WorldBlockState.test.ts`; no trailing-space defect exists in LF files or semantic source content.
 
-## Task 65 evidence — missing-column canonical generation
+## Task 66 evidence — no authoritative 64-high slab generation
+
+Status: PASS for task 66 scope. The production `Game` composition constructs a `TerrainGenerator` exposing `generateColumn`; `World.processGeneration` selects that path, generates once per horizontal `ChunkColumn`, writes canonical sections, and synchronizes each resident `Chunk` only as a bounded compatibility/meshing projection. The remaining `TerrainGenerator.generateChunk(Chunk)` and `World` fallback branch are retained for legacy generators and test fixtures only. The fallback copies IDs into canonical storage when used and does not make slabs persistence or live world authority; no production `Game` path can select it.
+
+The regression oracle in `tests/unit/WorldColumnGenerationIdempotency.test.ts` wraps both generator entry points around a real `TerrainGenerator`-backed `World`, streams the Overworld, asserts one `generateColumn` call per resident horizontal column, and asserts `generateChunk` is called zero times. This prevents future changes from silently making the six resident 64-high projections authoritative again.
+
+Exact validation on the task-66 candidate:
+
+- `npm run typecheck` — PASS (`tsc --noEmit`).
+- `npm run lint` — PASS (`eslint .`).
+- Focused canonical generation suite — PASS: 4 files, 19 tests (`WorldColumnGenerationIdempotency`, `TerrainColumnGenerationEquivalence`, `CanonicalWorldStorage`, `VerticalStreaming`).
+- Production call-site audit — PASS: only `Game -> World` supplies the live `TerrainGenerator`; `rg` found no other production `generateChunk` caller beyond the guarded compatibility branch.
+
 
 Status: PASS for task 65 scope. `Game` composes `TerrainGenerator` into `World`; `World.processGeneration` creates/gets the canonical `ChunkColumn`, invokes `generateColumn` only while the column is below `ChunkStatus.Full`, and then synchronizes the bounded compatibility projection. `TerrainGenerator.generateColumn` writes registered default `BlockState`s through `ChunkColumn.setBlockState` for `column.minY..column.maxY`; for `OVERWORLD_DIMENSION_TYPE` this is `-64..319`. Air is omitted, so untouched sections remain lazy. Imported/restored columns are marked `Full`, preventing regeneration from overwriting durable edits.
 

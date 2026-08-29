@@ -23,6 +23,7 @@ import { OVERWORLD_DIMENSION_TYPE } from '../../src/data/DimensionTypes';
 function makeWorld(seed = 1337): {
   world: World;
   generateColumnCalls: () => number;
+  generateChunkCalls: () => number;
 } {
   const registry = createDefaultBlockRegistry();
   const stateRegistry = createDefaultBlockStateRegistry();
@@ -32,12 +33,18 @@ function makeWorld(seed = 1337): {
     transparent: new THREE.MeshLambertMaterial(),
   };
   const generator = new TerrainGenerator(registry, seed);
-  let calls = 0;
-  const original = generator.generateColumn.bind(generator);
+  let columnCalls = 0;
+  const originalColumn = generator.generateColumn.bind(generator);
   generator.generateColumn = ((column, reg) => {
-    calls++;
-    original(column, reg);
+    columnCalls++;
+    originalColumn(column, reg);
   }) as typeof generator.generateColumn;
+  let slabCalls = 0;
+  const originalSlab = generator.generateChunk.bind(generator);
+  generator.generateChunk = ((chunk) => {
+    slabCalls++;
+    originalSlab(chunk);
+  }) as typeof generator.generateChunk;
   const mesher = { mesh: () => ({ opaque: null, transparent: null }) };
   const world = new World({
     registry,
@@ -50,7 +57,11 @@ function makeWorld(seed = 1337): {
     dimension: OVERWORLD_DIMENSION_TYPE,
     stateRegistry,
   });
-  return { world, generateColumnCalls: () => calls };
+  return {
+    world,
+    generateColumnCalls: () => columnCalls,
+    generateChunkCalls: () => slabCalls,
+  };
 }
 
 function streamToQuiescence(world: World, frames = 2000): void {
@@ -59,7 +70,7 @@ function streamToQuiescence(world: World, frames = 2000): void {
 
 describe('live column generation is performed exactly once per column', () => {
   it('generates each resident column once, not once per vertical chunk layer', () => {
-    const { world, generateColumnCalls } = makeWorld();
+    const { world, generateColumnCalls, generateChunkCalls } = makeWorld();
     streamToQuiescence(world);
 
     let distinctColumns = 0;
@@ -72,6 +83,9 @@ describe('live column generation is performed exactly once per column', () => {
     // One generation pass per column. The Overworld streams 6 vertical layers,
     // so the pre-fix path ran this 5x per column.
     expect(generateColumnCalls()).toBe(distinctColumns);
+    // The six 64-high resident projections are compatibility views only; the
+    // production TerrainGenerator-backed path must never generate through them.
+    expect(generateChunkCalls()).toBe(0);
   });
 
   it('does not re-generate terrain over a column restored from persistence', () => {
