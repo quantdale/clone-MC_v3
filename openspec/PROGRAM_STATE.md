@@ -26,10 +26,12 @@
 > **255-high-performance-voxel-engine — ACTIVE (2026-08-29, session start `93dbb092`).**
 > Owner-authorized post-253 scalability campaign activated only after Changes 253 and 254 were
 > VERIFIED. The complete OpenSpec package is present at
-> `openspec/changes/255-high-performance-voxel-engine/`; tasks 1-5 are complete (5/37,
-> 13.51%). Task 5 adds immutable content-derived worker registry tables, versioned initialization
-> validation, table-backed requests without per-request registry reconstruction, and respawn coverage.
-> Next exact action: task 6 typed transferable buffers and ownership validation; no advancement exception applies.
+> `openspec/changes/255-high-performance-voxel-engine/`; tasks 1-6 are complete (6/37,
+> 16.22%). Task 6 adds validated typed section/halo transfers, aggregate byte caps, unique
+> transferable ownership, zero-copy canonical snapshot transport, detached/duplicate rejection,
+> and safe worker-loss handling. Focused ownership/worker suites pass 81/81; full unit gate,
+> typecheck, lint, build, and E2E pass. Next exact action: task 7 typed GPU-ready layer streams
+> and result byte/count caps; no advancement exception applies.
 
 > **254-whole-codebase-performance-optimization — VERIFIED (2026-08-26, session start `d258414`).**
 > Owner-authorized repository-wide performance campaign completed with behavior-preserving
@@ -77,9 +79,9 @@
 - Next change: **null (255 is the sole active post-terminal change; no later change may begin)**
 - 240 advancement allowed: **no (active change not yet verified)**
 
-- Program: **ACTIVE — Change 255 is in progress; Changes 253 and 254 remain VERIFIED and 255 has 5/37 tasks complete (13.51%)**
+- Program: **ACTIVE — Change 255 is in progress; Changes 253 and 254 remain VERIFIED and 255 has 6/37 tasks complete (16.22%)**
 - Last completed change: **254-whole-codebase-performance-optimization — VERIFIED**
-- All changes 001–254: **VERIFIED** — Change 255 is ACTIVE with its complete OpenSpec package and tasks 1–5 complete.
+- All changes 001–254: **VERIFIED** — Change 255 is ACTIVE with its complete OpenSpec package and tasks 1–6 complete.
 - Historical Change 250-era bullets (preserved; superseded **for current release authority** by `openspec/evidence/release-readiness-post-hardening.md`): 250 required-test gate PASS at head `502d021` / byte-identical tree `b56529e`; historical release-readiness READY RC-1..RC-9 (`openspec/evidence/release-readiness.md`); final parity audit PASS with DL dispositions later rejected by this interlock (`openspec/evidence/parity/final-parity-audit.md`); evidence archive complete (`openspec/evidence/`)
 - Post-250 hardening interlock: **VERIFIED at remediation checkpoint `aa92a5c229a753f10f8c1677e836136962b5d07a` — canonical CI run 32589457819 SUCCESS (gate job 97078975848, e2e job 97078975868); tasks 78/78; release decision READY (`openspec/evidence/release-readiness-post-hardening.md`)**
 - Certification campaign: **openspec/hardening/2026-08-23-exhaustive-repository-certification — findings fixed with oracles; manifest reviewed; risk register R-1..R-9 accepted debt**
@@ -87,7 +89,7 @@
 - Publication history: **current terminal publication and exact candidate/archive handoff are recorded in `PROGRAM_STATE.json` `publicationHistory`.**
 - Section milestone: **PROGRAM COMPLETE — every numbered change 001–253 and owner-authorized 254 is VERIFIED; Change 253 converged live world architecture onto canonical dimension-aware storage and is archived with its capability spec synced.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ring with no queued generation job; scan order is now cached nearest-first by Chebyshev distance. Boot in software-WebGL Chromium at `renderDistance` 6: never clears -> ~28s, spawn-ring progress monotonic. D1 is also the mechanism behind the canonical CI `e2e` run recorded CANCELLED (hung >60m) in `3cc55a5` — `tests/e2e/visual-regression.spec.ts` injects `renderDistance` 2/4 through the `__voxelQualityProfile` seam, bypassing the headless override, and was the one spec that saturated. Regression gate `tests/unit/WorldStreamingSaturation.test.ts` (3 PASS, teeth verified by reverting each fix in isolation); 346/346 unit files / 4379 tests PASS; typecheck/lint/build/validate-state/validate-file-audit PASS. Details in `openspec/changes/253-live-world-architecture-convergence/design.md` and `verification.md`.
-- Next exact action: **Begin Change-255 task 6: replace hot-path nested JS arrays with validated typed buffers and transferable ownership; test detached/duplicate ownership behavior.**
+- Next exact action: **Begin Change-255 task 7: produce typed GPU-ready layer streams in workers and validate byte/count caps before accepting results.**
 
 ## What 250 implemented
 

@@ -495,7 +495,13 @@ export class WorkerPool {
       const record = this.inFlight.get(jobId);
       if (record === undefined) continue;
       this.inFlight.delete(jobId);
-      if (this.queue.push(record.entry)) {
+      if (record.entry.transfer !== undefined && record.entry.transfer.length > 0) {
+        // Transfer ownership has already moved to the failed worker. Those buffers are detached
+        // on this side and cannot be safely requeued; fail once so the caller can rebuild them.
+        this.statsInternal.failed++;
+        record.entry.onFailure(`${reason}; transferred job cannot be requeued`, jobId);
+        this.recycle(record.entry);
+      } else if (this.queue.push(record.entry)) {
         // requeued; keep its callbacks intact
       } else {
         this.statsInternal.failed++;

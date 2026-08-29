@@ -37,9 +37,9 @@ import {
   packQuadsToTypedArrays,
   type MeshSectionRequestTransport,
   type MeshSectionResultPayload,
-  type MeshSectionHaloMap,
   type PackedMeshExpandInfo,
 } from '../rendering/WorkerMeshing';
+import type { MeshSectionTransferPayload } from '../rendering/MeshSectionTransfer';
 import { WorkerPool, computeWorkerPoolSize } from '../engine/WorkerPool';
 import { WORKER_PROTOCOL_VERSION } from '../rendering/WorkerJobProtocol';
 import {
@@ -66,7 +66,7 @@ import {
   findSectionVersionSnapshot,
   type SectionVersionSnapshot,
 } from './SectionVersionSnapshot';
-import { extractSectionSnapshot, type SectionSnapshot } from './SectionSnapshot';
+import { extractSectionSnapshot } from './SectionSnapshot';
 /** A queued meshing job; carries the meshVersion captured at queue time. */
 interface MeshJob {
   key: string;
@@ -2179,34 +2179,45 @@ export class World implements WorldAccess {
     }
     if (nonAir === 0) return null;
 
-    const halo = Object.fromEntries(
-      (Object.entries(snapshot.halos) as Array<[keyof SectionSnapshot['halos'], SectionSnapshot['halos'][keyof SectionSnapshot['halos']]]>)
-        .map(([face, data]) => [face, {
-          availability: Array.from(data.availability),
-          cells: Array.from(data.cells, (id) => id),
-          skyLight: Array.from(data.skyLight),
-          blockLight: Array.from(data.blockLight),
-          fluidLevels: Array.from(data.cells, (id) =>
-            id === BlockId.Water || id === BlockId.Lava ? 0 : -1,
-          ),
-        }]),
-    ) as MeshSectionHaloMap;
+    const fluidLevels = new Int8Array(snapshot.cells.length);
+    fluidLevels.fill(-1);
+    for (let i = 0; i < snapshot.cells.length; i++) {
+      const id = snapshot.cells[i]!;
+      if (id === BlockId.Water || id === BlockId.Lava) fluidLevels[i] = 0;
+    }
+    const halo = {} as MeshSectionTransferPayload['halo'];
+    for (const face of ['west', 'east', 'down', 'up', 'north', 'south'] as const) {
+      const data = snapshot.halos[face];
+      const haloFluidLevels = new Int8Array(data.cells.length);
+      haloFluidLevels.fill(-1);
+      for (let i = 0; i < data.cells.length; i++) {
+        const id = data.cells[i]!;
+        if (id === BlockId.Water || id === BlockId.Lava) haloFluidLevels[i] = 0;
+      }
+      halo[face] = {
+        availability: data.availability,
+        cells: data.cells,
+        skyLight: data.skyLight,
+        blockLight: data.blockLight,
+        fluidLevels: haloFluidLevels,
+      };
+    }
+    const transferData: MeshSectionTransferPayload = {
+      cells: snapshot.cells,
+      skyLight: snapshot.skyLight,
+      blockLight: snapshot.blockLight,
+      fluidLevels,
+      halo,
+    };
     // Registry classification is initialized once per worker; section jobs carry only its identity.
-    // The cast preserves the legacy normalized payload type while this transport object is
-    // intentionally table-backed and omits repeated opaqueIds/layerById arrays.
+    // All section/halo bulk data is typed and transferred without structured-clone array copies.
     return {
       sectionX,
       sectionY,
       sectionZ,
       versionSnapshot,
       registryTableId: this.meshRegistryTable.tableId,
-      cells: Array.from(snapshot.cells, (id) => id),
-      fluidLevels: Array.from(snapshot.cells, (id) =>
-        id === BlockId.Water || id === BlockId.Lava ? 0 : -1,
-      ),
-      skyLight: Array.from(snapshot.skyLight),
-      blockLight: Array.from(snapshot.blockLight),
-      halo,
+      transferData,
     };
   }
 

@@ -11,7 +11,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2582,
+  "total": 2584,
   "pending": 0,
   "unclassified": 0,
   "rows": [
@@ -42447,6 +42447,61 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
+      "status": "audited"
+    },
+    {
+      "path": "src/rendering/MeshSectionTransfer.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Typed section/halo worker-transfer normalization and ownership validation",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "live through MeshWorkerClient and MeshWorkerEntry request validation",
+      "imports": [],
+      "importedBy": [
+        "src/rendering/WorkerMeshing.ts",
+        "src/world/World.ts"
+      ],
+      "testEvidence": [
+        "tests/unit/MeshSectionTransfer.test.ts",
+        "tests/unit/WorkerMeshing.test.ts",
+        "npm run typecheck"
+      ],
+      "riskAreas": [
+        "worker buffer ownership",
+        "detached buffers",
+        "duplicate transferable buffers"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Task-6 semantic review: fixed-size Uint16/Uint8/Int8/Uint32 buffers are normalized, exact lengths and constructors are validated, detached and duplicate ownership is rejected, and transfer lists are unique.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/MeshSectionTransfer.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Task-6 typed-transfer ownership and worker-loss regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [
+        "src/rendering/MeshSectionTransfer.ts",
+        "src/rendering/WorkerMeshing.ts",
+        "src/engine/WorkerPool.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "5 tests passed in focused ownership suite",
+        "npm test"
+      ],
+      "riskAreas": [
+        "detached buffers",
+        "duplicate ownership",
+        "transfer propagation",
+        "non-requeue after worker loss"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Covers legacy normalization, typed-only validation, unique transfer lists, detached-buffer rejection, duplicate-buffer rejection, pool transfer propagation, and transferred-job failure after worker loss.",
       "status": "audited"
     }
   ]

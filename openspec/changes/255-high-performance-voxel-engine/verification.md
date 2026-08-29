@@ -1,7 +1,7 @@
 # Verification: 255-high-performance-voxel-engine
 
-Status: ACTIVE — task 5 complete  
-Completion: 5/37 tasks (13.51%)  
+Status: ACTIVE — task 6 complete
+Completion: 6/37 tasks (16.22%)
 Advancement allowed: false
 
 ## Requirement evidence
@@ -12,24 +12,24 @@ Advancement allowed: false
 | Worker render-layer parity preserves all four streams and shading contracts | `tests/unit/WorkerMeshParity.test.ts` compares packed worker output against the independent synchronous `ChunkMesher`/`FluidSurfaceMesher` reference for real Stone/Leaves/Glass/Water fixtures. Opaque, cutout, translucent, and fluid signatures match for positions, normals, UVs, vertex sky/block light, AO, and tint; stream ordering is asserted. | PASS — task 3 |
 | Worker failure/timeout/identity/cancellation and exact-once lifecycle | `MeshWorkerClient` has a validated bounded timeout with injectable `timeoutMs`; expiry cancels the pooled job, rejects exactly once, clears ownership/timer state, and ignores late results. Existing and new tests cover malformed/foreign payloads, duplicate echoes, stale generation tokens, pool failure, synchronous queue rejection, explicit cancellation, timeout, timer cleanup after success, and exact-once geometry disposal on replacement/unload/double-dispose. | PASS — task 4 |
 | Worker initialization tables and version validation | `MeshWorkerRegistry.ts` builds deterministic frozen content-derived tables; `validateMeshWorkerRegistryTable` rejects protocol/version, layer, opaque classification, and forged `tableId` values. `WorkerJobProtocol` validates initialization envelopes; `MeshWorkerEntry` accepts the first valid table, allows an identical replay, and rejects replacement. `World` initializes every pool worker, including respawns, and table-backed requests carry only `registryTableId`; validation reuses the initialized frozen arrays by reference rather than reconstructing registry arrays per request. | PASS — task 5 |
-| Typed transferable worker data is bounded and ownership-safe | Not implemented; task 6 remains incomplete. | NOT RUN |
+| Typed transferable worker data is bounded and ownership-safe | `src/rendering/MeshSectionTransfer.ts` normalizes legacy arrays into typed section/halo views, enforces exact constructors and lengths, rejects detached/non-owned and duplicate buffers, enforces the default 1 MiB aggregate byte cap, and returns unique transferables. `MeshWorkerClient` validates and transfers the envelope; `World.buildSectionPayload` supplies canonical typed snapshot buffers without `Array.from`; `WorkerPool` fails transferred in-flight jobs instead of requeueing detached ownership. `tests/unit/MeshSectionTransfer.test.ts` covers typed-only validation, cap rejection, duplicate/detached rejection, transfer propagation, and worker-loss behavior. | PASS — task 6 |
 | Deterministic world generation is workerized with atomic canonical commit | Not implemented; tasks 12–14 remain incomplete. | NOT RUN |
 | Mesh-ready and GPU upload stages are independently bounded | Not implemented; tasks 15–18 remain incomplete. | NOT RUN |
 | Streaming priority/hysteresis prevents interactive starvation | Not implemented; tasks 19–21 remain incomplete. | NOT RUN |
 | Hierarchical deterministic far-terrain LOD is presentation-only and seam-safe | Not implemented; tasks 22–25 remain incomplete. | NOT RUN |
 | Dynamic resolution and performance observability are bounded and deterministic | Observability fields are recorded by task 1; dynamic resolution remains unimplemented. | PARTIAL |
-| Full regression and performance certification passes | Full 255 gate not run. | NOT RUN |
+| Full regression and performance certification passes | Full 255 gate remains pending build/E2E and later campaign tasks. | NOT RUN |
 
 ## Commands
 | Command | Result | Evidence/notes |
 |---|---|---|
-| `npm run validate-state` | PASS | State validator passed after the task-5 checkpoint update. |
-| `npm run typecheck` | PASS | Passed after registry transport boundary, immutable table validation, and canonical `World` payload integration. |
-| `npm run lint` | PASS | Passed after registry transport boundary and worker initialization lifecycle changes. |
-| `npm test` | PASS | 365 test files; 4453 passed, 1 skipped. The file-audit negative-case diagnostics are expected subprocess output; the real reviewed manifest validation passes. |
-| `npm run build` | PASS | `tsc --noEmit && vite build`; production bundle built successfully. |
-| `npm run test:e2e` | PASS | 51/51 in 24.1 minutes with the required extended harness timeout; performance baseline, memory/resource, persistence, furnace, vertical-world, gameplay, and visual-regression coverage passed. |
-| Focused task 5 worker/registry suites | PASS | 7 files, 85 tests passed: `WorkerRegistryInitialization`, `WorkerJobProtocol`, `WorkerPool`, `WorkerMeshing`, `MeshWorkerEntry`, `WorkerMeshParity`, and `WorkerSaturationHarness`. |
+| `npm run validate-state` | PASS | State validator passed after the task-6 checkpoint update. |
+| `npm run typecheck` | PASS | Passed after typed section-transfer validation, aggregate byte caps, zero-copy `World` payload integration, and worker-loss ownership handling. |
+| `npm run lint` | PASS | Passed after typed transfer ownership validation and cap-aware APIs. |
+| `npm test` | PASS | 366 test files; 4459 passed, 1 skipped. File-audit negative-case diagnostics are expected subprocess output; the reviewed manifest validator passes. |
+| `npm run build` | PASS | `tsc --noEmit && vite build`; 187 modules transformed and production bundle built successfully. |
+| `npm run test:e2e` | PASS | 51/51 in 24.0 minutes; performance baseline, memory/resource, persistence, furnace, vertical-world, gameplay, and visual-regression coverage passed. |
+| Focused task 6 ownership/worker suites | PASS | 7 files, 81 tests passed: `MeshSectionTransfer`, `WorkerMeshing`, `WorkerPool`, `MeshWorkerEntry`, `WorkerRegistryInitialization`, `RenderLightWorkerOwnership`, and `WorkerSaturationHarness`. |
 | Focused task 1 baseline | PASS | Release baseline test passed 1/1; 8 measured scenes and 1 explicit unavailable LOD scene. |
 | Focused task 2 suites | PASS | `SectionSnapshot`, worker meshing/entry, parity, and World boundary coverage passed. |
 | Focused task 3 parity suites | PASS | Mixed-layer worker/reference comparisons passed for opaque, cutout, translucent, and fluid output. |
@@ -48,10 +48,10 @@ Task 1 baseline evidence includes main-thread frame p50/p95/p99/worst, heap delt
 Focused task 2 suites, typecheck, and lint pass. `git diff --check` reports trailing whitespace on newly added CRLF-formatted lines in the repository; this is a formatting-check limitation and not a compiler/linter failure.
 
 ## Incomplete tasks
-Tasks 1–5 are complete. Tasks 6–37 remain incomplete; no advancement exception applies. The production worker fast path remains disabled by the existing `useWorkers` switch and is intentionally deferred to task 10; task 5 only establishes the initialization/table contract.
+Tasks 1–6 are complete. Tasks 7–37 remain incomplete; no advancement exception applies. The production worker fast path remains disabled by the existing `useWorkers` switch and is intentionally deferred to task 10; task 6 establishes the typed transfer and ownership contract.
 
 ## Advancement Exception
 Not applicable.
 
 ## Final decision
-ACTIVE, not verified. Tasks 1–5 are complete with focused evidence; continue with task 6 typed transferable buffers and ownership validation. The full Change 255 advancement gate remains unmet.
+ACTIVE, not verified. Tasks 1–6 are complete with focused evidence; continue with task 7 typed GPU-ready layer streams and result byte/count caps. The full Change 255 advancement gate remains unmet.

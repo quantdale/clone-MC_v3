@@ -6,9 +6,9 @@
   "currentChangeStatus": "ACTIVE",
   "lastCompletedChange": "254-whole-codebase-performance-optimization",
   "nextChange": null,
-  "completedTasks": 5,
+  "completedTasks": 6,
   "totalTasks": 37,
-  "completionPercentage": 13.51,
+  "completionPercentage": 16.22,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": false,
@@ -16,8 +16,8 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "93dbb09292c7d8a5830acd0cdd6aad22ff009a93",
-  "lastCompletedTask": "255 task 5 complete: immutable content-derived worker registry tables, initialization/version validation, table-backed requests without per-request registry reconstruction, and respawn initialization coverage; focused worker suites pass.",
-  "nextExactAction": "Begin task 6: replace hot-path nested JS arrays with validated typed buffers and transferable ownership; test detached/duplicate ownership behavior.",
+  "lastCompletedTask": "255 task 6 complete: validated typed section/halo buffers, aggregate byte caps, unique transferable ownership, zero-copy canonical snapshot transport, detached/duplicate rejection, and safe worker-loss handling; focused ownership/worker suites pass.",
+  "nextExactAction": "Begin task 7: produce typed GPU-ready layer streams in workers and validate byte/count caps before accepting results.",
   "blockers": [],
   "validationResults": [
     {
@@ -2430,7 +2430,7 @@
       "status": "ACTIVE",
       "unitTests": 4453,
       "e2eTests": 51,
-      "note": "Tasks 1-5 complete (5/37, 13.51%). Task 5 adds immutable content-derived registry tables, versioned worker initialization, zero-copy table-backed request validation, immutable replay/replacement protection, and respawn initialization coverage. Focused worker suites pass 85/85; full unit gate passes 4453 + 1 skipped; typecheck, lint, build, and full E2E pass (51/51). Next exact action is task 6 typed transferable buffers and ownership validation."
+      "note": "Tasks 1-6 complete (6/37, 16.22%). Task 6 adds validated typed section/halo transfers, aggregate byte caps, unique transferable ownership, zero-copy canonical snapshot transport, detached/duplicate rejection, and safe worker-loss handling. Focused ownership/worker suites pass 81/81; full unit gate passes 4459 + 1 skipped; typecheck, lint, build, and full E2E pass (51/51). Next exact action is task 7 typed GPU-ready layer streams and result byte/count caps."
     }
   ],
   "publicationHistory": [

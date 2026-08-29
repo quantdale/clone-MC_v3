@@ -19,6 +19,12 @@ import {
   type WorkerResult,
 } from './WorkerJobProtocol';
 import type { MeshWorkerRegistryTable } from './MeshWorkerRegistry';
+import {
+  type MeshSectionTransferPayload,
+  normalizeMeshSectionTransfer,
+  validateMeshSectionTransferOwnership,
+  collectMeshSectionTransferables,
+} from './MeshSectionTransfer';
 import type { WorkerPool } from '../engine/WorkerPool';
 import {
   greedyMergeOpaqueFaces,
@@ -49,15 +55,21 @@ import {
 const SECTION = 16;
 const HALO_FACE_AREA = SECTION * SECTION;
 const HALO_FACES: readonly SectionHaloFace[] = ['west', 'east', 'down', 'up', 'north', 'south'];
+type NumericArray = number[] | Uint8Array | Uint16Array | Uint32Array | Int8Array;
+type CellArray = Array<number | null> | Uint16Array;
 
-/** One explicit 16×16 face-neighbor halo in worker-safe structured-clone form. */
+function isArrayLike(value: unknown): value is { length: number; [index: number]: number | null } {
+  return Array.isArray(value) || ArrayBuffer.isView(value);
+}
+
+/** One explicit 16×16 face-neighbor halo in worker-safe structured-clone or typed form. */
 export interface MeshSectionHaloPayload {
-  availability: number[];
-  cells: Array<number | null>;
-  skyLight: number[];
-  blockLight: number[];
+  availability: NumericArray;
+  cells: Array<number | null> | Uint16Array;
+  skyLight: NumericArray;
+  blockLight: NumericArray;
   /** Fluid level per halo cell; -1 means no fluid state. */
-  fluidLevels?: number[];
+  fluidLevels?: NumericArray;
 }
 
 /** Numeric layer table values used in structured-clone payloads. */
@@ -88,32 +100,42 @@ export interface MeshSectionRequestPayload {
   sectionZ: number;
   /** Canonical mesh/light versions captured at submission, including face neighbors. */
   versionSnapshot?: SectionVersionSnapshot;
-  /** 4096 world-cell block ids; `null` = air. Index = x + 16*(y + 16*z). */
-  cells: Array<number | null>;
+  /** 4096 world-cell block ids; 0 = air. Index = x + 16*(y + 16*z). */
+  cells: CellArray;
   /** Immutable registry classification table identity installed once in each worker. */
   registryTableId?: string;
   /** Block ids treated as opaque by the normalized meshing path. */
-  opaqueIds: number[];
+  opaqueIds: NumericArray;
   /** Optional numeric layer table indexed by block id. */
-  layerById?: number[];
+  layerById?: NumericArray;
   /** 4096 per-cell fluid levels; -1 means no fluid state. */
-  fluidLevels?: number[];
+  fluidLevels?: NumericArray;
   /** Optional resolved tint class per target cell. */
-  tintClasses?: number[];
+  tintClasses?: NumericArray;
   /** Optional camera/world origin used for deterministic translucent ordering. */
   translucentSortOrigin?: [number, number, number];
   /** 4096 per-cell sky light values in [0, 15] (070). */
-  skyLight: number[];
+  skyLight: NumericArray;
   /** 4096 per-cell block light values in [0, 15] (070). */
-  blockLight: number[];
+  blockLight: NumericArray;
   /** Six explicit one-voxel face halos; optional only for legacy pre-255 callers. */
   halo?: MeshSectionHaloMap;
+  /** Typed section/halo buffers used by production worker transport. */
+  transferData?: MeshSectionTransferPayload;
 }
 
-/** Transport shape for a request whose registry classification is installed in the worker. */
-export type MeshSectionRequestTransport = Omit<MeshSectionRequestPayload, 'opaqueIds' | 'layerById'> & {
-  opaqueIds?: number[];
-  layerById?: number[];
+/** Transport shape: legacy arrays remain accepted for synchronous compatibility; production uses transferData. */
+export type MeshSectionRequestTransport = Omit<MeshSectionRequestPayload,
+  'cells' | 'opaqueIds' | 'layerById' | 'fluidLevels' | 'tintClasses' | 'skyLight' | 'blockLight' | 'halo' | 'transferData'> & {
+  cells?: CellArray;
+  opaqueIds?: NumericArray;
+  layerById?: NumericArray;
+  fluidLevels?: NumericArray;
+  tintClasses?: NumericArray;
+  skyLight?: NumericArray;
+  blockLight?: NumericArray;
+  halo?: MeshSectionHaloMap;
+  transferData?: MeshSectionTransferPayload;
 };
 
 /** A section-meshing job result (quad form, as produced by `processMeshSectionRequest`). */
@@ -285,8 +307,8 @@ function validateHaloFace(name: string, value: unknown): MeshSectionHaloPayload 
   };
 }
 
-function assertFluidLevelArray(name: string, values: unknown, length: number): asserts values is number[] {
-  if (!Array.isArray(values) || values.length !== length) {
+function assertFluidLevelArray(name: string, values: unknown, length: number): asserts values is NumericArray {
+  if (!isArrayLike(values) || values.length !== length) {
     throw new Error(`MeshSectionRequest: ${name} must be an array of ${length} entries`);
   }
   for (let i = 0; i < values.length; i++) {
@@ -297,16 +319,25 @@ function assertFluidLevelArray(name: string, values: unknown, length: number): a
   }
 }
 
-function assertLayerTable(values: unknown): asserts values is number[] {
-  if (!Array.isArray(values) || !values.every((value) => Number.isInteger(value) && value >= 0 && value <= MESH_LAYER_FLUID)) {
+function assertLayerTable(values: unknown): asserts values is NumericArray {
+  if (!isArrayLike(values)) {
     throw new Error('MeshSectionRequest: layerById must be an array of layer integers in [0, 3]');
+  }
+  for (let i = 0; i < values.length; i++) {
+    if (!Number.isInteger(values[i]) || values[i]! < 0 || values[i]! > MESH_LAYER_FLUID) {
+      throw new Error('MeshSectionRequest: layerById must be an array of layer integers in [0, 3]');
+    }
   }
 }
 
-function assertTintClasses(values: unknown, length: number): asserts values is number[] {
-  if (!Array.isArray(values) || values.length !== length ||
-    !values.every((value) => Number.isInteger(value) && value >= 0)) {
-    throw new Error(`MeshSectionRequest: tintClasses must be an array of ${length} non-negative integers`);
+function assertTintClasses(name: string, values: unknown, length: number): asserts values is NumericArray {
+  if (!isArrayLike(values) || values.length !== length) {
+    throw new Error(`MeshSectionRequest: ${name} must be an array of ${length} non-negative integers`);
+  }
+  for (let i = 0; i < values.length; i++) {
+    if (!Number.isInteger(values[i]) || values[i]! < 0) {
+      throw new Error(`MeshSectionRequest: ${name} must be an array of ${length} non-negative integers`);
+    }
   }
 }
 
@@ -330,15 +361,17 @@ export function validateMeshSectionRequest(
   if (!Number.isInteger(r.sectionX) || !Number.isInteger(r.sectionY) || !Number.isInteger(r.sectionZ)) {
     throw new Error('MeshSectionRequest: section coordinates must be integers');
   }
-  if (
-    !Array.isArray(r.cells) || r.cells.length !== SECTION * SECTION * SECTION ||
-    !r.cells.every((c) => c === null || (typeof c === 'number' && Number.isInteger(c) && c >= 0))
-  ) {
-    throw new Error('MeshSectionRequest: cells must be 4096 entries of null or non-negative integers');
-  }
 
-  let opaqueIds: number[];
-  let layerById: number[] | undefined;
+  const transferData = r.transferData === undefined
+    ? undefined
+    : normalizeMeshSectionTransfer(r.transferData as {
+      cells: unknown; skyLight: unknown; blockLight: unknown; fluidLevels?: unknown;
+      tintClasses?: unknown; opaqueIds?: unknown; layerById?: unknown; halo?: unknown;
+    });
+  if (transferData !== undefined) validateMeshSectionTransferOwnership(transferData);
+
+  let opaqueIds: NumericArray;
+  let layerById: NumericArray | undefined;
   if (r.registryTableId !== undefined) {
     if (typeof r.registryTableId !== 'string' || r.registryTableId.length === 0) {
       throw new Error('MeshSectionRequest: registryTableId must be a non-empty string');
@@ -351,6 +384,12 @@ export function validateMeshSectionRequest(
     }
     opaqueIds = initializedTable.opaqueIds as number[];
     layerById = initializedTable.layerById as number[];
+  } else if (transferData !== undefined) {
+    if (transferData.opaqueIds === undefined) {
+      throw new Error('MeshSectionRequest: transferData.opaqueIds is required without registryTableId');
+    }
+    opaqueIds = transferData.opaqueIds;
+    layerById = transferData.layerById;
   } else {
     if (!Array.isArray(r.opaqueIds) ||
       !r.opaqueIds.every((id) => typeof id === 'number' && Number.isInteger(id))) {
@@ -362,10 +401,29 @@ export function validateMeshSectionRequest(
       layerById = r.layerById as number[];
     }
   }
-  assertLightArray('skyLight', r.skyLight);
-  assertLightArray('blockLight', r.blockLight);
-  if (r.fluidLevels !== undefined) assertFluidLevelArray('fluidLevels', r.fluidLevels, SECTION * SECTION * SECTION);
-  if (r.tintClasses !== undefined) assertTintClasses(r.tintClasses, SECTION * SECTION * SECTION);
+
+  const cells = transferData?.cells ?? r.cells;
+  const skyLight = transferData?.skyLight ?? r.skyLight;
+  const blockLight = transferData?.blockLight ?? r.blockLight;
+  const fluidLevels = transferData?.fluidLevels ?? r.fluidLevels;
+  const tintClasses = transferData?.tintClasses ?? r.tintClasses;
+  const halo = transferData?.halo ?? validateHalo(r.halo);
+  if (transferData === undefined) {
+    if (!Array.isArray(r.cells) || r.cells.length !== SECTION * SECTION * SECTION ||
+      !r.cells.every((c) => c === null || (typeof c === 'number' && Number.isInteger(c) && c >= 0))) {
+      throw new Error('MeshSectionRequest: cells must be 4096 entries of null or non-negative integers');
+    }
+    assertLightArray('skyLight', r.skyLight);
+    assertLightArray('blockLight', r.blockLight);
+    if (r.fluidLevels !== undefined) assertFluidLevelArray('fluidLevels', r.fluidLevels, SECTION * SECTION * SECTION);
+    if (r.tintClasses !== undefined) assertTintClasses('tintClasses', r.tintClasses, SECTION * SECTION * SECTION);
+  } else {
+    if (!isArrayLike(cells) || cells.length !== SECTION * SECTION * SECTION) {
+      throw new Error('MeshSectionRequest: typed cells must be 4096 entries');
+    }
+    assertLightArray('skyLight', skyLight);
+    assertLightArray('blockLight', blockLight);
+  }
   if (r.translucentSortOrigin !== undefined &&
     (!Array.isArray(r.translucentSortOrigin) || r.translucentSortOrigin.length !== 3 ||
       !r.translucentSortOrigin.every((value) => typeof value === 'number' && Number.isFinite(value)))) {
@@ -379,15 +437,16 @@ export function validateMeshSectionRequest(
     versionSnapshot: r.versionSnapshot === undefined
       ? undefined
       : validateSectionVersionSnapshot(r.versionSnapshot),
-    cells: r.cells as Array<number | null>,
+    cells: cells as CellArray,
     opaqueIds,
     layerById,
-    fluidLevels: r.fluidLevels as number[] | undefined,
-    tintClasses: r.tintClasses as number[] | undefined,
+    fluidLevels: fluidLevels as NumericArray | undefined,
+    tintClasses: tintClasses as NumericArray | undefined,
     translucentSortOrigin: r.translucentSortOrigin as [number, number, number] | undefined,
-    skyLight: r.skyLight as number[],
-    blockLight: r.blockLight as number[],
-    halo: validateHalo(r.halo),
+    skyLight: skyLight as NumericArray,
+    blockLight: blockLight as NumericArray,
+    halo: halo as MeshSectionHaloMap,
+    transferData,
   };
 }
 
@@ -447,8 +506,8 @@ export function packQuadsToTypedArrays(quads: readonly OpaqueFaceQuad[]): Packed
   return { data, quadCount: quads.length, stride: PACKED_QUAD_STRIDE, streamNames };
 }
 
-function assertLightArrayLength(name: string, values: unknown, length: number): asserts values is number[] {
-  if (!Array.isArray(values) || values.length !== length) {
+function assertLightArrayLength(name: string, values: unknown, length: number): asserts values is NumericArray {
+  if (!isArrayLike(values) || values.length !== length) {
     throw new Error(`MeshSectionRequest: ${name} must be an array of ${length} entries`);
   }
   for (let i = 0; i < values.length; i++) {
@@ -459,7 +518,7 @@ function assertLightArrayLength(name: string, values: unknown, length: number): 
   }
 }
 
-function assertLightArray(name: string, values: unknown): asserts values is number[] {
+function assertLightArray(name: string, values: unknown): asserts values is NumericArray {
   assertLightArrayLength(name, values, SECTION * SECTION * SECTION);
 }
 
@@ -672,7 +731,7 @@ export function processMeshSectionRequest(
   payload: MeshSectionRequestPayload,
   generationToken?: number,
 ): MeshSectionResultPayload {
-  if (!Array.isArray(payload.cells) || payload.cells.length !== SECTION * SECTION * SECTION) {
+  if (!isArrayLike(payload.cells) || payload.cells.length !== SECTION * SECTION * SECTION) {
     throw new Error('MeshSectionRequest: cells must be an array of 4096 entries');
   }
   assertLightArray('skyLight', payload.skyLight);
@@ -755,17 +814,35 @@ export class MeshWorkerClient {
     onRejected?: () => void,
   ): string {
     const token = this.generationToken;
+    const normalizedTransfer = payload.transferData === undefined
+      ? normalizeMeshSectionTransfer(payload)
+      : payload.transferData;
+    validateMeshSectionTransferOwnership(normalizedTransfer);
+    const transportPayload: MeshSectionRequestTransport = {
+      ...payload,
+      transferData: normalizedTransfer,
+      cells: undefined,
+      skyLight: undefined,
+      blockLight: undefined,
+      fluidLevels: undefined,
+      tintClasses: undefined,
+      halo: undefined,
+      opaqueIds: undefined,
+      layerById: undefined,
+    };
+    const transfer = collectMeshSectionTransferables(normalizedTransfer);
     const jobId = this.jobs.submit('mesh-section', token);
     this.callbacks.set(jobId, onResult);
     if (onRejected) this.rejectionCallbacks.set(jobId, onRejected);
     this.tokens.set(jobId, token);
-    this.requests.set(jobId, payload);
+    this.requests.set(jobId, transportPayload);
     if (this.pool) {
       try {
         const poolJobId = this.pool.submit({
           kind: 'mesh-section',
           generationToken: token,
-          payload,
+          payload: transportPayload,
+          transfer,
           onResult: (result) => {
             // Pool payloads are untyped transport: validate structure and require section-coordinate
             // identity before anything can resolve the job.
