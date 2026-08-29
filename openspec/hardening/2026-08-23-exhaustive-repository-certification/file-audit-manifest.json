@@ -33974,6 +33974,34 @@
       "status": "audited"
     },
     {
+      "path": "src/worldgen/WorldgenWorkerEntry.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Vite module-worker entry for deterministic column generation",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "production-entry",
+      "imports": [
+        "src/rendering/WorkerJobProtocol.ts",
+        "src/worldgen/WorkerWorldgen.ts"
+      ],
+      "importedBy": [
+        "src/worldgen/WorkerWorldgen.ts"
+      ],
+      "testEvidence": [
+        "tests/unit/WorkerWorldgen.test.ts",
+        "npm run typecheck",
+        "npm run build"
+      ],
+      "riskAreas": [
+        "worker lifecycle",
+        "deterministic generation"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Added in Change 255 task 12; validates the unified worker envelope and delegates only to the pure serialized-column generation job. No canonical storage is reachable from the worker entry.",
+      "status": "audited"
+    },
+    {
       "path": "src/worldgen/WorldgenRegressionMatrix.ts",
       "gitBlob": null,
       "category": "production",

@@ -6,9 +6,9 @@
   "currentChangeStatus": "ACTIVE",
   "lastCompletedChange": "254-whole-codebase-performance-optimization",
   "nextChange": null,
-  "completedTasks": 11,
+  "completedTasks": 12,
   "totalTasks": 37,
-  "completionPercentage": 29.73,
+  "completionPercentage": 32.43,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": false,
@@ -16,8 +16,8 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "5ac28eb91f074608dd22d32513c60e43a6145e64",
-  "lastCompletedTask": "255 task 11 complete: canonical section edits, vertical and horizontal border dependencies, light invalidation, rapid worker replacement/unload late-result rejection, and saturated streaming progress are covered without starvation or main-thread retry spin; focused and full unit validation pass.",
-  "nextExactAction": "Begin task 12: wire deterministic column generation through a production worker client/entry with bounded priority and cancellation.",
+  "lastCompletedTask": "255 task 12 complete: deterministic serialized column generation is available through the production Vite worker entry and dedicated bounded priority pool; generation-token cancellation, pool rejection/failure, idempotent disposal, worker termination, negative-coordinate determinism, and post-dispose rejection are covered.",
+  "nextExactAction": "Begin task 13: validate worker output identity, generation version, column status, edit durability, and atomic canonical commit so stale output cannot overwrite edits.",
   "blockers": [],
   "validationResults": [
     {
@@ -2428,9 +2428,9 @@
     {
       "change": "255-high-performance-voxel-engine",
       "status": "ACTIVE",
-      "unitTests": 4470,
+      "unitTests": 4474,
       "e2eTests": 51,
-      "note": "Tasks 1-11 complete (11/37, 29.73%). Task 11 verifies canonical section edits, vertical/horizontal border dependencies, light invalidation, delayed worker replacement/unload late-result rejection, bounded queue saturation, and spawn-ring progress without retry spin. Focused task-11 suites pass 10 files/61 tests; full unit gate passes 4470 + 1 skipped; typecheck/lint pass; prior clean E2E remains 51/51 and task-11 changes are unit-test-only with the synchronous production default. Next exact action is task 12 deterministic workerized column generation with bounded priority and cancellation."
+      "note": "Tasks 1-12 complete (12/37, 32.43%). Task 12 adds deterministic serialized-column generation through WorldgenWorkerEntry.ts and a dedicated bounded priority WorkerPool with configurable worker/in-flight/pending caps, generation-token cancellation, idempotent disposal, worker termination, and post-dispose rejection. WorkerWorldgen focused tests pass 19/19; focused worker protocol/pool/worldgen tests pass 48/48; full unit gate passes 4474 + 1 skipped; typecheck/lint/build and validate-state pass. Prior clean E2E remains 51/51 because production default remains synchronous. Next exact action is task 13 output identity, edit durability, and atomic canonical commit validation."
     }
   ],
   "publicationHistory": [

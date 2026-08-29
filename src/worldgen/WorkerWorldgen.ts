@@ -14,8 +14,17 @@ import {
   type ResolvedOutcome,
   type WorkerResult,
 } from '../rendering/WorkerJobProtocol';
-import type { WorkerPool } from '../engine/WorkerPool';
+import {
+  DEFAULT_MAX_PENDING,
+  WorkerPool,
+  computeWorkerPoolSize,
+} from '../engine/WorkerPool';
+import { ChunkColumn, type SerializedChunkColumn } from '../world/ChunkColumn';
+import { validateSerializedChunkColumn } from '../storage/ChunkSectionRepository';
+import { createDefaultBlockRegistry } from '../world/BlockRegistry';
+import { createDefaultBlockStateRegistry } from '../world/BlockStateRegistry';
 import { validateGenerationStage } from './GenerationPipeline';
+import { TERRAIN_GENERATION_VERSION, TerrainGenerator } from '../world/TerrainGenerator';
 
 /** Version of the worldgen result envelope. */
 export const WORLDGEN_PROTOCOL_VERSION = 1;
@@ -28,6 +37,12 @@ export interface WorldgenRequestPayload {
   seed: number;
   /** 085 generation stage. */
   stage: string;
+  /** Production column layout; omitted by the legacy identity-only harness. */
+  sectionCount?: number;
+  /** Production column layout; omitted by the legacy identity-only harness. */
+  minSectionY?: number;
+  /** Stable worldgen implementation version used by production column jobs. */
+  worldgenVersion?: string;
 }
 
 /** The versioned result envelope echoing the request identity. */
@@ -37,10 +52,25 @@ export interface WorldgenResultPayload {
   seed: number;
   stage: string;
   generationVersion: number;
+  /** Serialized canonical column returned by production worker generation. */
+  serializedColumn?: SerializedChunkColumn;
+  /** Stable worldgen implementation version returned by production jobs. */
+  worldgenVersion?: string;
 }
 
 function isInteger(v: unknown): v is number {
   return typeof v === 'number' && Number.isInteger(v);
+}
+
+function validateOptionalLayout(input: Record<string, unknown>): { sectionCount?: number; minSectionY?: number } {
+  if (input.sectionCount === undefined && input.minSectionY === undefined) return {};
+  if (!isInteger(input.sectionCount) || (input.sectionCount as number) < 1) {
+    throw new Error('WorldgenRequest: sectionCount must be a positive integer');
+  }
+  if (!isInteger(input.minSectionY)) {
+    throw new Error('WorldgenRequest: minSectionY must be an integer');
+  }
+  return { sectionCount: input.sectionCount, minSectionY: input.minSectionY };
 }
 
 /** Validate an unknown value as a worldgen request; throws a descriptive error otherwise. */
@@ -56,7 +86,18 @@ export function validateWorldgenRequest(input: unknown): WorldgenRequestPayload 
     throw new Error(`WorldgenRequest: seed must be an integer, got ${String(r.seed)}`);
   }
   const stage = validateGenerationStage(r.stage);
-  return { columnX: r.columnX, columnZ: r.columnZ, seed: r.seed, stage };
+  const layout = validateOptionalLayout(r);
+  if (r.worldgenVersion !== undefined && typeof r.worldgenVersion !== 'string') {
+    throw new Error('WorldgenRequest: worldgenVersion must be a string');
+  }
+  return {
+    columnX: r.columnX,
+    columnZ: r.columnZ,
+    seed: r.seed,
+    stage,
+    ...layout,
+    ...(r.worldgenVersion === undefined ? {} : { worldgenVersion: r.worldgenVersion as string }),
+  };
 }
 
 /** Validate an unknown value as a worldgen result; throws a descriptive error otherwise. */
@@ -74,12 +115,29 @@ export function validateWorldgenResult(input: unknown): WorldgenResultPayload {
     throw new Error('WorldgenResult: columnX/columnZ/seed must be integers');
   }
   const stage = validateGenerationStage(r.stage);
+  let serializedColumn: SerializedChunkColumn | undefined;
+  if (r.serializedColumn !== undefined) {
+    serializedColumn = validateSerializedChunkColumn(r.serializedColumn);
+    if (serializedColumn.chunkX !== r.columnX || serializedColumn.chunkZ !== r.columnZ) {
+      throw new Error('WorldgenResult: serialized column identity does not match result');
+    }
+  }
+  if (r.worldgenVersion !== undefined && typeof r.worldgenVersion !== 'string') {
+    throw new Error('WorldgenResult: worldgenVersion must be a string');
+  }
+  if (serializedColumn !== undefined && r.worldgenVersion !== TERRAIN_GENERATION_VERSION) {
+    throw new Error(
+      `WorldgenResult: serialized columns require worldgenVersion ${TERRAIN_GENERATION_VERSION}`,
+    );
+  }
   return {
     columnX: r.columnX,
     columnZ: r.columnZ,
     seed: r.seed,
     stage,
     generationVersion: WORLDGEN_PROTOCOL_VERSION,
+    ...(serializedColumn === undefined ? {} : { serializedColumn }),
+    ...(r.worldgenVersion === undefined ? {} : { worldgenVersion: r.worldgenVersion as string }),
   };
 }
 
@@ -95,6 +153,87 @@ export function processWorldgenRequest(payload: WorldgenRequestPayload): Worldge
     seed: request.seed,
     stage: request.stage,
     generationVersion: WORLDGEN_PROTOCOL_VERSION,
+    ...(request.worldgenVersion === undefined ? {} : { worldgenVersion: request.worldgenVersion }),
+  };
+}
+
+/**
+ * Production worker job for a complete canonical column. The worker owns only a temporary
+ * column and returns plain serialized data; it never receives or mutates live storage.
+ */
+export function processWorldgenColumnRequest(payload: WorldgenRequestPayload): WorldgenResultPayload {
+  const request = validateWorldgenRequest(payload);
+  if (
+    request.sectionCount === undefined ||
+    request.minSectionY === undefined ||
+    request.worldgenVersion !== TERRAIN_GENERATION_VERSION
+  ) {
+    throw new Error('WorldgenColumnRequest: production layout and current worldgenVersion are required');
+  }
+  const registry = createDefaultBlockRegistry();
+  const stateRegistry = createDefaultBlockStateRegistry();
+  const column = new ChunkColumn({
+    chunkX: request.columnX,
+    chunkZ: request.columnZ,
+    sectionCount: request.sectionCount,
+    minSectionY: request.minSectionY,
+    registry: stateRegistry,
+    blockRegistry: registry,
+  });
+  new TerrainGenerator(registry, request.seed).generateColumn(column, stateRegistry);
+  return {
+    columnX: request.columnX,
+    columnZ: request.columnZ,
+    seed: request.seed,
+    stage: request.stage,
+    generationVersion: WORLDGEN_PROTOCOL_VERSION,
+    worldgenVersion: TERRAIN_GENERATION_VERSION,
+    serializedColumn: column.serialize(),
+  };
+}
+
+/** Options for the dedicated production worldgen pool. */
+export interface WorldgenWorkerRuntimeOptions {
+  /** Worker slots; defaults to the shared hardware-concurrency sizing policy. */
+  size?: number;
+  /** Hard cap for queued worldgen jobs; defaults to the generic pool cap. */
+  maxPending?: number;
+  /** Per-worker in-flight cap; defaults to the generic worker cap. */
+  maxInFlightPerWorker?: number;
+  /** Test/integration seam; production uses the Vite module worker entry below. */
+  workerFactory?: () => Worker;
+}
+
+/** A dedicated worldgen client and pool with one lifecycle owner. */
+export interface WorldgenWorkerRuntime {
+  readonly pool: WorkerPool;
+  readonly client: WorldgenWorkerClient;
+  dispose(): void;
+}
+
+/**
+ * Construct the production worldgen runtime. It deliberately owns a separate pool from section
+ * meshing so a saturated render workload cannot starve interactive column generation. The pool
+ * remains bounded and the client preserves identity/token validation and cancellation semantics.
+ */
+export function createWorldgenWorkerRuntime(
+  options: WorldgenWorkerRuntimeOptions = {},
+): WorldgenWorkerRuntime {
+  const pool = new WorkerPool({
+    size: options.size ?? computeWorkerPoolSize(),
+    maxPending: options.maxPending ?? DEFAULT_MAX_PENDING,
+    maxInFlightPerWorker: options.maxInFlightPerWorker,
+    spawn: options.workerFactory ?? (() =>
+      new Worker(new URL('./WorldgenWorkerEntry.ts', import.meta.url), { type: 'module' })),
+  });
+  const client = new WorldgenWorkerClient({ pool });
+  return {
+    pool,
+    client,
+    dispose: () => {
+      client.dispose();
+      pool.dispose();
+    },
   };
 }
 
@@ -109,8 +248,11 @@ export class WorldgenWorkerClient {
   private readonly requests = new Map<string, WorldgenRequestPayload>();
   /** Submission-time token per pending job (mirrors `WorkerJobClient` state for cancellation sweeps). */
   private readonly tokens = new Map<string, number>();
+  /** Pool job ids are distinct from protocol ids and must be cancelled explicitly. */
+  private readonly poolJobIds = new Map<string, string>();
   private pool: WorkerPool | null = null;
   private generationToken = 0;
+  private disposed = false;
 
   constructor(opts: { pool?: WorkerPool; generationToken?: number } = {}) {
     if (opts.pool) this.pool = opts.pool;
@@ -131,41 +273,50 @@ export class WorldgenWorkerClient {
   }
 
   /** Submit a worldgen job; `onResult` fires exactly once on a valid, identity-matching result. */
-  submit(payload: WorldgenRequestPayload, onResult: (result: WorldgenResultPayload) => void): string {
+  submit(
+    payload: WorldgenRequestPayload,
+    onResult: (result: WorldgenResultPayload) => void,
+    options: { priority?: number; onFailure?: (error: string) => void } = {},
+  ): string {
+    if (this.disposed) throw new Error('WorldgenWorkerClient.submit: client is disposed');
+    const request = validateWorldgenRequest(payload);
     const token = this.generationToken;
     const jobId = this.jobs.submit('worldgen', token);
     this.callbacks.set(jobId, onResult);
-    this.requests.set(jobId, payload);
+    this.requests.set(jobId, request);
     this.tokens.set(jobId, token);
     if (this.pool) {
       try {
-        this.pool.submit({
+        const poolJobId = this.pool.submit({
           kind: 'worldgen',
           generationToken: token,
-          payload,
+          payload: request,
+          priority: options.priority,
           onResult: (payload) => {
-            // Pool payloads are untyped transport: apply the same validation and
-            // identity-match discipline as `handleMessage` before completion.
+            this.poolJobIds.delete(jobId);
             let result: WorldgenResultPayload;
             try {
               result = validateWorldgenResult(payload);
             } catch {
-              this.abandon(jobId); // invalid payload can never satisfy the job
+              this.abandon(jobId);
+              options.onFailure?.('invalid worldgen result');
               return;
             }
             if (!this.matches(jobId, result)) {
-              this.abandon(jobId); // foreign/stale identity must not resolve the job
+              this.abandon(jobId);
+              options.onFailure?.('foreign or stale worldgen result');
               return;
             }
             this.complete(jobId, result);
           },
-          onFailure: () => {
-            // Abandon the job (worker loss/dispose): no result is delivered; late results become stale.
+          onFailure: (error) => {
+            this.poolJobIds.delete(jobId);
             this.abandon(jobId);
+            options.onFailure?.(error);
           },
         });
+        this.poolJobIds.set(jobId, poolJobId);
       } catch (err) {
-        // Synchronous pool rejection (bounded queue full): keep bookkeeping truthful.
         this.abandon(jobId);
         throw err;
       }
@@ -181,7 +332,12 @@ export class WorldgenWorkerClient {
       request.columnX === result.columnX &&
       request.columnZ === result.columnZ &&
       request.seed === result.seed &&
-      request.stage === result.stage
+      request.stage === result.stage &&
+      request.worldgenVersion === result.worldgenVersion &&
+      (request.sectionCount === undefined ||
+        result.serializedColumn?.sectionCount === request.sectionCount) &&
+      (request.minSectionY === undefined ||
+        result.serializedColumn?.minSectionY === request.minSectionY)
     );
   }
 
@@ -198,14 +354,21 @@ export class WorldgenWorkerClient {
     try {
       result = validateWorldgenResult(outcome.payload);
     } catch {
+      this.abandon(outcome.jobId);
       return null;
     }
-    if (!this.matches(outcome.jobId, result)) return null;
+    if (!this.matches(outcome.jobId, result)) {
+      this.abandon(outcome.jobId);
+      return null;
+    }
     return this.complete(outcome.jobId, result);
   }
 
   /** Cancel a pending job (its late result becomes stale). */
   cancel(jobId: string): boolean {
+    const poolJobId = this.poolJobIds.get(jobId);
+    const poolCancel = this.pool && (this.pool as WorkerPool & { cancel?: (id: string) => boolean }).cancel;
+    if (poolJobId !== undefined) poolCancel?.call(this.pool, poolJobId);
     const removed = this.jobs.cancel(jobId);
     this.abandon(jobId);
     return removed;
@@ -218,15 +381,26 @@ export class WorldgenWorkerClient {
    */
   cancelByToken(generationToken: number): number {
     let cancelled = 0;
-    for (const [jobId, token] of this.tokens) {
-      if (token === generationToken && this.jobs.cancel(jobId)) {
-        this.callbacks.delete(jobId);
-        this.requests.delete(jobId);
-        this.tokens.delete(jobId);
-        cancelled++;
+    for (const [jobId, token] of [...this.tokens]) {
+      if (token === generationToken) {
+        if (this.cancel(jobId)) cancelled++;
       }
     }
     return cancelled;
+  }
+
+  /**
+   * Dispose the client and cancel every owned pool job before the pool is terminated. Idempotent so
+   * callers may safely dispose the runtime from both world unload and application shutdown paths.
+   */
+  dispose(): void {
+    if (this.disposed) return;
+    this.disposed = true;
+    for (const jobId of [...this.tokens.keys()]) this.cancel(jobId);
+    this.poolJobIds.clear();
+    this.callbacks.clear();
+    this.requests.clear();
+    this.tokens.clear();
   }
 
   /** Number of pending (unresolved) jobs. */
@@ -264,6 +438,7 @@ export class WorldgenWorkerClient {
 
   /** Drop all per-job bookkeeping without invoking the callback (failure/stale/invalid paths). */
   private abandon(jobId: string): void {
+    this.poolJobIds.delete(jobId);
     this.jobs.cancel(jobId);
     this.callbacks.delete(jobId);
     this.requests.delete(jobId);

@@ -1,7 +1,7 @@
 # Verification: 255-high-performance-voxel-engine
 
-Status: ACTIVE — task 11 complete
-Completion: 11/37 tasks (29.73%)
+Status: ACTIVE — task 12 complete
+Completion: 12/37 tasks (32.43%)
 Advancement allowed: false
 
 ## Requirement evidence
@@ -17,7 +17,8 @@ Advancement allowed: false
 | Live canonical section invalidation and ownership | `World` marks the target and every face-dependent canonical 16³ section dirty on edits, invalidates materialized sections when light propagation changes, and uses the legacy chunk only as a bounded scheduling bridge. `processCanonicalSectionMeshing` attaches/replaces geometry by canonical `(sectionX, sectionY, sectionZ)` key without touching sibling sections. `World.test.ts` covers live target/sibling isolation and horizontal dependency invalidation; saturation, resource plateau, dense edit locality, light, ownership, and geometry-disposal suites remain green. | PASS — task 9 |
 | Live worker section integration with safe fallback and diagnostics | `World` accepts explicit `workerMeshing` opt-in, submits canonical section snapshots through the validated `MeshWorkerClient`/`WorkerPool` path, attaches typed worker layer streams by canonical section key, exposes `setWorkerMeshingEnabled`/`isWorkerMeshingEnabled` plus worker counters in `WorldStats`, and disables/requeues worker batches into synchronous canonical meshing on construction, transport, timeout, or result failure. `World.test.ts` covers default-off/runtime toggle, unsupported-worker synchronous fallback, and a deferred fake-worker success path using the real registry/request/result validation and canonical attachment; `WorldComposition.test.ts` covers composition pass-through. | PASS — task 10 |
 | Section edit/border/light/replacement/unload/saturation safety | Canonical edit locality and vertical/horizontal dependency suites cover target/sibling isolation, negative and top-Y sections, border dirtying, light propagation invalidation, and geometry ownership. `World.test.ts` now adds a delayed validated fake-worker scenario that holds real section requests, replaces a section, releases stale results, teleports through unload, releases late responses, and asserts no completion/batch/job/section-map resurrection. `WorldStreamingSaturation.test.ts` proves bounded queue admission, rapid teleport/edit/unload progress, spawn readiness, and no main-thread retry spin. Focused task-11 suite passes 10 files/61 tests; full unit gate passes. | PASS — task 11 |
-| Deterministic world generation is workerized with atomic canonical commit | Not implemented; tasks 12–14 remain incomplete. | NOT RUN |
+| Deterministic workerized column generation with bounded priority/cancellation | `WorldgenWorkerEntry.ts` serves the unified protocol and delegates to pure serialized-column generation. `createWorldgenWorkerRuntime` owns a separate bounded `WorkerPool` with configurable size, pending/in-flight caps, priority forwarding, generation-token cancellation, and idempotent disposal. `WorkerWorldgen.test.ts` covers serialized output validation, negative-coordinate determinism, pool priority/failure/rejection, cancellation, bounded runtime construction, worker termination, and post-dispose rejection. | PASS — task 12 |
+| Deterministic worker output identity, edit durability, and atomic canonical commit | Output-to-canonical commit and stale-result edit protection remain task 13 scope. | NOT RUN |
 | Mesh-ready and GPU upload stages are independently bounded | Not implemented; tasks 15–18 remain incomplete. | NOT RUN |
 | Streaming priority/hysteresis prevents interactive starvation | Not implemented; tasks 19–21 remain incomplete. | NOT RUN |
 | Hierarchical deterministic far-terrain LOD is presentation-only and seam-safe | Not implemented; tasks 22–25 remain incomplete. | NOT RUN |
@@ -27,32 +28,32 @@ Advancement allowed: false
 ## Commands
 | Command | Result | Evidence/notes |
 |---|---|---|
-| `npm run validate-state` | PASS | State validator passed after synchronizing the task-11 checkpoint metadata. |
-| `npm run typecheck` | PASS | Delayed-worker lifecycle regression, canonical section churn, diagnostics, and existing World paths compile cleanly. |
-| `npm run lint` | PASS | ESLint passed after the task-11 test addition. |
-| `npm test` | PASS | 367 test files; 4470 passed, 1 skipped (4471 total). Expected negative-case state/file-audit diagnostics are subprocess test output from validation tests; the full suite remains green. |
-| `npm run build` | PASS | `tsc --noEmit && vite build`; 188 modules transformed and production bundle built successfully after the task-11 checkpoint. |
+| `npm run validate-state` | PASS | State validator passed before this checkpoint update. |
+| `npm run typecheck` | PASS | `tsc --noEmit` passes with the production worker entry/runtime factory. |
+| `npm run lint` | PASS | ESLint passes for implementation, tests, and manifest update. |
+| `npm test` | PASS | 367 test files; 4474 passed, 1 skipped (4475 total). Expected negative-case state/file-audit diagnostics are subprocess output from validation tests; the full suite is green. |
+| `npm run build` | PASS | `tsc --noEmit && vite build`; 188 modules transformed. |
 | `npm run test:e2e` | PASS — prior gate | Clean rerun on the prior published implementation: 51/51 passed; task-11 changes are unit-test-only and preserve the synchronous production default. |
 | Focused task-11 section/worker suites | PASS | `npx vitest run tests/unit/World.test.ts tests/unit/WorldComposition.test.ts tests/unit/WorldGeometryDisposal.test.ts tests/unit/WorldOwnershipReclamation.test.ts tests/unit/WorldStreamingSaturation.test.ts tests/unit/WorldDenseEditLocality.test.ts tests/unit/VerticalNeighborDirtying.test.ts tests/unit/RenderLightWorkerOwnership.test.ts tests/unit/WorldLightStorage.test.ts tests/unit/SeedChunkLightEquivalence.test.ts`: 10 files, 61 tests passed. Includes delayed validated fake-worker replacement/unload late-result rejection. |
 | Focused task-8 parity suite | PASS | `WorkerMeshParity`/`TypedMeshStreams` remain green in the full unit gate; direct typed streams and packed worker output still match independent references. |
 
 ## Edge/adversarial validation
-Task 11 covers canonical target/sibling isolation, negative/top-Y and horizontal/vertical face dependencies, light-driven invalidation, geometry replacement/disposal, rapid edit/replacement/unload churn, bounded saturated queues, and spawn-ring progress without retry spin. The delayed fake-worker test holds real validated section requests, replaces a section, releases stale results, teleports through unload, releases late responses, and verifies that completion counters, active batches, pending jobs, and canonical section ownership do not resurrect. Existing task-10 construction-failure fallback and task-4 stale/cancel/timeout suites remain green.
+Task 12 covers malformed request/result validation, serialized-column identity/version validation, negative coordinates, deterministic repeated generation, pool priority forwarding, bounded pending admission, pool failure/rejection, generation-token cancellation, idempotent client/runtime disposal, worker termination, and post-dispose submission rejection. Task 11 covers canonical target/sibling isolation, negative/top-Y and horizontal/vertical face dependencies, light-driven invalidation, geometry replacement/disposal, rapid edit/replacement/unload churn, bounded saturated queues, and spawn-ring progress without retry spin. The delayed fake-worker test holds real validated section requests, replaces a section, releases stale results, teleports through unload, releases late responses, and verifies that completion counters, active batches, pending jobs, and canonical section ownership do not resurrect. Existing task-10 construction-failure fallback and task-4 stale/cancel/timeout suites remain green.
 
 ## Migration/compatibility validation
 No persisted schema migration is intended. Worker meshing remains explicit opt-in and production defaults remain synchronous. Canonical storage, save formats, render-layer semantics, and visual goldens are unchanged. Replacement and unload cancel only the affected worker batch; late results are rejected without recreating scene objects or ownership-map entries. Queue saturation parks bounded work and continues progress rather than lowering render distance or disabling visual systems.
 
 ## Performance/resource validation
-Task 11 confirms bounded section edit/remesh work and bounded worker lifecycle state under delayed completion and rapid unload. The saturated streaming suite confirms generate/mesh/retry/unload caps, monotonic readiness, and no main-thread retry spin. The full unit gate remains green at 4470 passed plus 1 skipped. Task-11 changes are unit-test-only after task 10, so the prior clean browser E2E 51/51 remains the applicable production-default visual evidence; the build is rerun for this checkpoint.
+Task 12 uses the shared conservative worker sizing policy, a hard queued-job cap (default 64), configurable per-worker in-flight cap, priority-aware dispatch, and explicit cancellation/disposal. Runtime tests prove bounded admission and worker termination without callback resurrection. Task 11 confirms bounded section edit/remesh work under delayed completion and rapid unload. The full unit gate is green at 4474 passed plus 1 skipped. Task-11 changes are unit-test-only after task 10, so the prior clean browser E2E 51/51 remains the applicable production-default visual evidence; the build is rerun for this checkpoint.
 
 ## Regressions
 Typecheck, lint, focused task-11 suites, and the full unit gate pass. Expected negative-case state/file-audit diagnostics are subprocess output from validation tests and do not fail the full suite. No known implementation or visual regression remains.
 
 ## Incomplete tasks
-Tasks 1–11 are complete. Tasks 12–37 remain incomplete; no advancement exception applies. Task 12 is next: wire deterministic column generation through a production worker client/entry with bounded priority and cancellation.
+Tasks 1–12 are complete. Tasks 13–37 remain incomplete; no advancement exception applies. Task 13 is next: validate worker output identity, generation version, column status, edit durability, and atomic canonical commit so stale output cannot overwrite edits.
 
 ## Advancement Exception
 Not applicable.
 
 ## Final decision
-ACTIVE, not verified. Tasks 1–11 are complete with focused and full local evidence. Continue with task 12; the full Change 255 advancement gate remains unmet.
+ACTIVE, not verified. Task 12 is complete with focused and full local evidence. Continue with task 13; the full Change 255 advancement gate remains unmet.

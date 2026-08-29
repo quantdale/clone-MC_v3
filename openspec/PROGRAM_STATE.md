@@ -26,8 +26,8 @@
 > **255-high-performance-voxel-engine — ACTIVE (2026-08-29, session start `93dbb092`).**
 > Owner-authorized post-253 scalability campaign activated only after Changes 253 and 254 were
 > VERIFIED. The complete OpenSpec package is present at
-> `openspec/changes/255-high-performance-voxel-engine/`; tasks 1-11 are complete (11/37,
-> 29.73%). Tasks 7-8 add validated typed GPU-ready opaque/cutout/translucent/fluid streams,
+> `openspec/changes/255-high-performance-voxel-engine/`; tasks 1-12 are complete (12/37,
+> 32.43%). Tasks 7-8 add validated typed GPU-ready opaque/cutout/translucent/fluid streams,
 > registry-derived tile metadata, aggregate byte/quad/vertex caps, direct worker transfer, and
 > independent worker-vs-reference parity for geometry, UVs, lighting, AO, tint, normalized
 > indices, counts, and all four layers. Task 9 makes canonical 16³ target/face-dependency
@@ -37,10 +37,12 @@
 > and synchronous fallback/requeue on worker construction or transport failure. Task 11 verifies
 > section edits, vertical/horizontal borders, lighting invalidation, delayed worker replacement/
 > unload late-result rejection, bounded queue saturation, and spawn-ring progress without retry
-> spin. Focused task-11 suites pass 10 files/61 tests; full unit gate passes 4470 + 1 skipped,
-> typecheck/lint pass, and the prior clean E2E remains 51/51. Next exact action: task 12
-> deterministic workerized column generation with bounded priority and cancellation; no
-> advancement exception applies.
+> spin. Task 12 adds deterministic serialized-column generation through a production module-worker
+> entry and dedicated bounded priority/cancellation runtime. Focused task-12 tests pass 19/19,
+> focused worker protocol/pool/worldgen tests pass 48/48, full unit gate passes 4474 + 1 skipped,
+> and typecheck/lint/build/state validation pass. Prior clean E2E remains 51/51 because production
+> default remains synchronous. Next exact action: task 13 output identity, edit durability, and
+> atomic canonical commit validation; no advancement exception applies.
 
 > **254-whole-codebase-performance-optimization — VERIFIED (2026-08-26, session start `d258414`).**
 > Owner-authorized repository-wide performance campaign completed with behavior-preserving

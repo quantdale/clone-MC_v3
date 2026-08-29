@@ -1,12 +1,15 @@
 import { describe, it, expect } from "vitest";
 import {
   processWorldgenRequest,
+  processWorldgenColumnRequest,
   validateWorldgenRequest,
   validateWorldgenResult,
   WorldgenWorkerClient,
   WORLDGEN_PROTOCOL_VERSION,
+  createWorldgenWorkerRuntime,
   type WorldgenRequestPayload,
 } from "../../src/worldgen/WorkerWorldgen";
+import { TERRAIN_GENERATION_VERSION } from "../../src/world/TerrainGenerator";
 
 const REQUEST: WorldgenRequestPayload = {
   columnX: 3,
@@ -52,6 +55,54 @@ describe("processWorldgenRequest", () => {
     expect(processWorldgenRequest(REQUEST)).toEqual(
       processWorldgenRequest(REQUEST),
     );
+  });
+});
+
+describe("processWorldgenColumnRequest", () => {
+  const COLUMN_REQUEST: WorldgenRequestPayload = {
+    columnX: -7,
+    columnZ: 11,
+    seed: 42,
+    stage: "TERRAIN",
+    sectionCount: 24,
+    minSectionY: -4,
+    worldgenVersion: TERRAIN_GENERATION_VERSION,
+  };
+
+  it("generates a validated serialized canonical column", () => {
+    const result = processWorldgenColumnRequest(COLUMN_REQUEST);
+    expect(result).toMatchObject({
+      columnX: -7,
+      columnZ: 11,
+      seed: 42,
+      stage: "TERRAIN",
+      generationVersion: WORLDGEN_PROTOCOL_VERSION,
+      worldgenVersion: TERRAIN_GENERATION_VERSION,
+    });
+    expect(result.serializedColumn).toMatchObject({
+      version: 1,
+      chunkX: -7,
+      chunkZ: 11,
+      sectionCount: 24,
+      minSectionY: -4,
+    });
+    expect(validateWorldgenResult(result)).toEqual(result);
+  });
+
+  it("is bit-deterministic for negative column coordinates", () => {
+    expect(processWorldgenColumnRequest(COLUMN_REQUEST)).toEqual(
+      processWorldgenColumnRequest(COLUMN_REQUEST),
+    );
+  });
+
+  it("requires the current layout and worldgen version", () => {
+    expect(() => processWorldgenColumnRequest(REQUEST)).toThrow(/layout/i);
+    expect(() =>
+      processWorldgenColumnRequest({
+        ...COLUMN_REQUEST,
+        worldgenVersion: "old-version",
+      }),
+    ).toThrow(/worldgenVersion/i);
   });
 });
 
@@ -173,21 +224,29 @@ class FakePool {
     kind: string;
     generationToken: number;
     payload: unknown;
+    priority?: number;
     onResult: (payload: unknown) => void;
-    onFailure: () => void;
+    onFailure: (error?: string) => void;
   }> = [];
+  readonly cancelled: string[] = [];
   throwOnSubmit = false;
 
   submit(opts: {
     kind: string;
     generationToken: number;
     payload: unknown;
+    priority?: number;
     onResult: (payload: unknown) => void;
-    onFailure: () => void;
+    onFailure: (error?: string) => void;
   }): string {
     if (this.throwOnSubmit) throw new RangeError("pending queue is full");
     this.submitted.push(opts);
     return `fake-${this.submitted.length}`;
+  }
+
+  cancel(jobId: string): boolean {
+    this.cancelled.push(jobId);
+    return true;
   }
 
   /** Satisfy a fake-pool contract subset without touching the real WorkerPool type. */
@@ -212,11 +271,12 @@ describe("WorldgenWorkerClient — pooled mode", () => {
     const pool = new FakePool();
     const client = new WorldgenWorkerClient({ pool: pool.asPool() });
     let results = 0;
-    const jobId = client.submit(REQUEST, () => results++);
+    const jobId = client.submit(REQUEST, () => results++, { priority: 17 });
 
     expect(pool.submitted.length).toBe(1);
     expect(pool.submitted[0]!.kind).toBe("worldgen");
     expect(pool.submitted[0]!.payload).toEqual(REQUEST);
+    expect(pool.submitted[0]!.priority).toBe(17);
 
     pool.submitted[0]!.onResult(resultFor(REQUEST));
     expect(results).toBe(1);
@@ -276,8 +336,64 @@ describe("WorldgenWorkerClient — pooled mode", () => {
     client.setGenerationToken(2);
     const cancelled = client.cancelByToken(1);
     expect(cancelled).toBeGreaterThanOrEqual(1);
+    expect(pool.cancelled).toEqual(["fake-1"]);
     // The superseded result can no longer resolve anything.
     pool.submitted[0]!.onResult(resultFor(REQUEST));
     expect(results).toBe(0);
+  });
+});
+
+describe("createWorldgenWorkerRuntime", () => {
+  class RuntimeWorker {
+    posted: unknown[] = [];
+    terminated = false;
+    onmessage: ((event: { data: unknown }) => void) | null = null;
+    onerror: (() => void) | null = null;
+    onmessageerror: (() => void) | null = null;
+
+    postMessage(message: unknown): void {
+      this.posted.push(message);
+    }
+
+    terminate(): void {
+      this.terminated = true;
+    }
+
+    addEventListener(): void {
+      // WorkerPool only needs this optional hook for real worker close events.
+    }
+  }
+
+  it("uses a bounded pool and disposes pending jobs before worker termination", () => {
+    const workers: RuntimeWorker[] = [];
+    const runtime = createWorldgenWorkerRuntime({
+      size: 1,
+      maxPending: 1,
+      maxInFlightPerWorker: 1,
+      workerFactory: () => {
+        const worker = new RuntimeWorker();
+        workers.push(worker);
+        return worker as unknown as Worker;
+      },
+    });
+    const request: WorldgenRequestPayload = {
+      ...REQUEST,
+      sectionCount: 24,
+      minSectionY: -4,
+      worldgenVersion: TERRAIN_GENERATION_VERSION,
+    };
+    let results = 0;
+    runtime.client.submit(request, () => results++);
+    expect(runtime.pool.stats().inFlight).toBe(1);
+    runtime.client.submit(request, () => {});
+    expect(() => runtime.client.submit(request, () => {})).toThrow(RangeError);
+
+    runtime.dispose();
+    runtime.dispose();
+    expect(runtime.client.pendingCount).toBe(0);
+    expect(runtime.pool.stats().workerCount).toBe(0);
+    expect(workers[0]!.terminated).toBe(true);
+    expect(results).toBe(0);
+    expect(() => runtime.client.submit(request, () => {})).toThrow(/disposed/i);
   });
 });
