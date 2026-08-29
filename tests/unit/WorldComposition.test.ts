@@ -5,7 +5,7 @@ import { createDefaultBlockRegistry } from '../../src/world/BlockRegistry';
 import { createDefaultBlockStateRegistry } from '../../src/world/BlockStateRegistry';
 import { createOverworldComposition, worldCompositionBounds } from '../../src/engine/WorldComposition';
 
-function composition() {
+function composition(workerMeshing = false) {
   const registry = createDefaultBlockRegistry();
   const materials = {
     opaque: new THREE.MeshLambertMaterial(),
@@ -23,6 +23,7 @@ function composition() {
     seed: 1337,
     renderDistance: 1,
     simulationDistance: 1,
+    workerMeshing,
   });
   return { result, materials };
 }
@@ -41,6 +42,15 @@ describe('WorldComposition contract', () => {
     expect(result.world.getBlockState(0, -65, 0).blockId).toBe(0);
     expect(result.world.getBlockState(0, 320, 0).blockId).toBe(0);
     expect(result.worldBlockAccess.getBlockId(0, -65, 0)).toBe(0);
+    result.world.dispose();
+    result.worldLife.dispose();
+    for (const material of Object.values(materials)) material.dispose();
+  });
+
+  it('passes the explicit worker-meshing opt-in through the composition boundary', () => {
+    const { result, materials } = composition(true);
+    expect(result.world.isWorkerMeshingEnabled()).toBe(true);
+    expect(result.world.getStats().workerMeshing?.enabled).toBe(true);
     result.world.dispose();
     result.worldLife.dispose();
     for (const material of Object.values(materials)) material.dispose();

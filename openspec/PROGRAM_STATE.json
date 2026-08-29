@@ -6,9 +6,9 @@
   "currentChangeStatus": "ACTIVE",
   "lastCompletedChange": "254-whole-codebase-performance-optimization",
   "nextChange": null,
-  "completedTasks": 9,
+  "completedTasks": 10,
   "totalTasks": 37,
-  "completionPercentage": 24.32,
+  "completionPercentage": 27.03,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": false,
@@ -16,8 +16,8 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "93dbb09292c7d8a5830acd0cdd6aad22ff009a93",
-  "lastCompletedTask": "255 task 9 complete: canonical 16³ section target and face-dependency invalidation is live, light propagation invalidates materialized canonical sections, compatibility chunks remain bounded scheduling projections, and focused live-section/resource/streaming suites plus full local gates pass.",
-  "nextExactAction": "Begin task 10: integrate validated worker section meshing into live World with safe synchronous fallback and a runtime diagnostic switch.",
+  "lastCompletedTask": "255 task 10 complete: live World worker section meshing is opt-in, uses validated WorkerPool/typed transfer and canonical section attachment, exposes runtime diagnostics, and safely disables/requeues to synchronous meshing on worker construction or transport failure; full local gates and E2E pass.",
+  "nextExactAction": "Begin task 11: verify section edits, vertical/horizontal borders, lighting invalidation, rapid replacement/unload, and queue saturation without starvation or main-thread spin.",
   "blockers": [],
   "validationResults": [
     {
@@ -2428,9 +2428,9 @@
     {
       "change": "255-high-performance-voxel-engine",
       "status": "ACTIVE",
-      "unitTests": 4465,
+      "unitTests": 4469,
       "e2eTests": 51,
-      "note": "Tasks 1-9 complete (9/37, 24.32%). Task 9 makes canonical 16³ section target and face-dependency invalidation live, invalidates materialized canonical sections after light propagation, and retains compatibility chunks only as bounded scheduling bridges. Focused live-section/resource/streaming suites pass (9 files, 51 tests); full typecheck/lint/unit/build gates pass (4465 + 1 skipped, 51 E2E); clean E2E rerun passes 51/51 and visual goldens remain unchanged. Next exact action is task 10 validated worker section integration with synchronous fallback and diagnostic switch."
+      "note": "Tasks 1-10 complete (10/37, 27.03%). Task 10 integrates opt-in validated worker section meshing into live World, canonical section attachment, runtime diagnostics, and safe synchronous requeue fallback on worker construction/transport failure; task 9 canonical invalidation/resource evidence remains green. Focused World/composition worker suite passes 22/22; full typecheck/lint/unit/build gates pass (4469 + 1 skipped, 51 E2E); clean E2E remains 51/51 and visual goldens unchanged. Next exact action is task 11: verify section edits, vertical/horizontal borders, lighting invalidation, rapid replacement/unload, and queue saturation without starvation or main-thread spin."
     }
   ],
   "publicationHistory": [

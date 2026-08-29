@@ -7,7 +7,58 @@ import { CONFIG } from '../../src/config';
 import { OVERWORLD_DIMENSION_TYPE } from '../../src/data/DimensionTypes';
 import { createDefaultBlockStateRegistry } from '../../src/world/BlockStateRegistry';
 import { emptyMeshBuildResult, type ChunkMeshResult } from '../../src/world/MeshingTypes';
+import {
+  processMeshSectionRequest,
+  validateMeshSectionRequest,
+} from '../../src/rendering/WorkerMeshing';
+import type { MeshWorkerRegistryTable } from '../../src/rendering/MeshWorkerRegistry';
+import { validateMeshWorkerRegistryTable } from '../../src/rendering/MeshWorkerRegistry';
+import { WORKER_PROTOCOL_VERSION, type WorkerRequest, validateWorkerRequest } from '../../src/rendering/WorkerJobProtocol';
 import type { DimensionType } from '../../src/data/DimensionType';
+
+class DeferredMeshWorker {
+  onmessage: ((event: MessageEvent) => void) | null = null;
+  onerror: (() => void) | null = null;
+  onmessageerror: (() => void) | null = null;
+  private table: MeshWorkerRegistryTable | undefined;
+
+  postMessage(data: unknown): void {
+    if (typeof data === 'object' && data !== null && (data as { type?: unknown }).type === 'initialize') {
+      this.table = validateMeshWorkerRegistryTable((data as { payload: unknown }).payload);
+      return;
+    }
+    const request = validateWorkerRequest(data) as WorkerRequest;
+    queueMicrotask(() => {
+      try {
+        const payload = validateMeshSectionRequest(request.payload, this.table);
+        const result = processMeshSectionRequest(payload, request.generationToken);
+        this.onmessage?.({
+          data: {
+            protocolVersion: WORKER_PROTOCOL_VERSION,
+            jobId: request.jobId,
+            kind: request.kind,
+            ok: true,
+            generationToken: request.generationToken,
+            payload: {
+              sectionX: result.sectionX,
+              sectionY: result.sectionY,
+              sectionZ: result.sectionZ,
+              versionSnapshot: result.versionSnapshot,
+              layerStreams: result.layerStreams,
+            },
+          },
+        } as MessageEvent);
+      } catch {
+        this.onerror?.();
+      }
+    });
+  }
+
+  terminate(): void {}
+
+  addEventListener(): void {}
+}
+
 
 /**
  * Build a World with a stub mesher/generator so we can exercise its dirty-state
@@ -83,7 +134,10 @@ function makeRecordingWorld(seed = 1): { world: World; meshedKeys: string[] } {
   return { world, meshedKeys };
 }
 
-function makeCanonicalSectionWorld(): World {
+function makeCanonicalSectionWorld(
+  workerMeshing = false,
+  workerFactory?: () => Worker,
+): World {
   const registry = createDefaultBlockRegistry();
   const stateRegistry = createDefaultBlockStateRegistry();
   const scene = new THREE.Scene();
@@ -124,6 +178,8 @@ function makeCanonicalSectionWorld(): World {
     materials,
     renderDistance: 0,
     dimension: OVERWORLD_DIMENSION_TYPE,
+    workerMeshing,
+    workerFactory,
   });
 }
 
@@ -140,6 +196,69 @@ describe('world dirty propagation and edits', () => {
       }
     }
   }
+
+  it('keeps worker meshing opt-in and exposes runtime diagnostics', () => {
+    const world = makeCanonicalSectionWorld();
+    expect(world.isWorkerMeshingEnabled()).toBe(false);
+    expect(world.getStats().workerMeshing).toEqual({
+      enabled: false,
+      pendingJobs: 0,
+      activeBatches: 0,
+      completed: 0,
+      failures: 0,
+      fallbacks: 0,
+    });
+
+    world.setWorkerMeshingEnabled(true);
+    expect(world.isWorkerMeshingEnabled()).toBe(true);
+    expect(world.getStats().workerMeshing?.enabled).toBe(true);
+    world.setWorkerMeshingEnabled(false);
+    expect(world.isWorkerMeshingEnabled()).toBe(false);
+    world.dispose();
+  });
+
+  it('falls back to synchronous canonical meshing when worker construction is unavailable', () => {
+    const world = makeCanonicalSectionWorld(true);
+    world.setBlock(8, 8, 8, BlockId.Stone);
+    for (let frame = 0; frame < 200; frame++) {
+      world.update(1 / 60, 0, 0);
+      if (world.getStats().pendingGeneration === 0 && world.getStats().pendingMesh === 0) break;
+    }
+
+    const diagnostics = world.getStats().workerMeshing!;
+    expect(diagnostics.enabled).toBe(false);
+    expect(diagnostics.failures).toBe(1);
+    expect(diagnostics.fallbacks).toBeGreaterThanOrEqual(1);
+    expect(diagnostics.activeBatches).toBe(0);
+    expect(world.getStats().pendingMesh).toBe(0);
+    expect((world as unknown as { sectionMeshGroups: Map<string, unknown> }).sectionMeshGroups.has('0,0,0')).toBe(true);
+    world.dispose();
+  });
+
+  it('completes a validated worker section batch and attaches canonical geometry', async () => {
+    const world = makeCanonicalSectionWorld(
+      true,
+      () => new DeferredMeshWorker() as unknown as Worker,
+    );
+    world.setBlock(8, 8, 8, BlockId.Stone);
+    for (let frame = 0; frame < 200; frame++) {
+      world.update(1 / 60, 0, 0);
+      await Promise.resolve();
+      const diagnostics = world.getStats().workerMeshing!;
+      if (diagnostics.completed > 0 && world.getStats().pendingMesh === 0) break;
+    }
+
+    const diagnostics = world.getStats().workerMeshing!;
+    expect(diagnostics.enabled).toBe(true);
+    expect(diagnostics.completed).toBeGreaterThan(0);
+    expect(diagnostics.failures).toBe(0);
+    expect(diagnostics.fallbacks).toBe(0);
+    expect(diagnostics.pendingJobs).toBe(0);
+    expect(diagnostics.activeBatches).toBe(0);
+    expect(world.getStats().pendingMesh).toBe(0);
+    expect((world as unknown as { sectionMeshGroups: Map<string, unknown> }).sectionMeshGroups.has('0,0,0')).toBe(true);
+    world.dispose();
+  });
 
   it('uses canonical sections as live mesh invalidation units and preserves sibling ownership', () => {
     const world = makeCanonicalSectionWorld();

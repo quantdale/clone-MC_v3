@@ -465,6 +465,15 @@ export interface WorldStats {
   pendingMesh: number;
   /** Resident slab projections still awaiting budgeted out-of-radius unload. */
   pendingUnload: number;
+  /** Worker meshing diagnostics; present even when the feature is disabled for explicit runtime inspection. */
+  workerMeshing?: {
+    enabled: boolean;
+    pendingJobs: number;
+    activeBatches: number;
+    completed: number;
+    failures: number;
+    fallbacks: number;
+  };
   triangles: number;
   voxels: number;
 }

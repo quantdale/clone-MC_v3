@@ -30,6 +30,8 @@ export interface WorldCompositionOptions {
   simulationDistance: number;
   editDurability?: WorldEditDurability;
   monitor?: WorldMonitorHandle;
+  /** Explicit opt-in for validated worker section meshing; defaults to synchronous fallback. */
+  workerMeshing?: boolean;
 }
 
 export interface WorldComposition {
@@ -56,6 +58,7 @@ export function createOverworldComposition(opts: WorldCompositionOptions): World
     stateRegistry: opts.stateRegistry,
     editDurability: opts.editDurability,
     monitor: opts.monitor,
+    workerMeshing: opts.workerMeshing,
     // Face index is WorkerMeshing's canonical encoding: 0=up, 1=down,
     // 2-5=sides. The sync mesher ignores this seam.
     uvRectFor: (blockId, faceIndex) => {

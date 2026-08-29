@@ -26,17 +26,19 @@
 > **255-high-performance-voxel-engine — ACTIVE (2026-08-29, session start `93dbb092`).**
 > Owner-authorized post-253 scalability campaign activated only after Changes 253 and 254 were
 > VERIFIED. The complete OpenSpec package is present at
-> `openspec/changes/255-high-performance-voxel-engine/`; tasks 1-9 are complete (9/37,
-> 24.32%). Tasks 7-8 add validated typed GPU-ready opaque/cutout/translucent/fluid streams,
+> `openspec/changes/255-high-performance-voxel-engine/`; tasks 1-10 are complete (10/37,
+> 27.03%). Tasks 7-8 add validated typed GPU-ready opaque/cutout/translucent/fluid streams,
 > registry-derived tile metadata, aggregate byte/quad/vertex caps, direct worker transfer, and
 > independent worker-vs-reference parity for geometry, UVs, lighting, AO, tint, normalized
 > indices, counts, and all four layers. Task 9 makes canonical 16³ target/face-dependency
 > invalidation live, propagates light invalidation to materialized canonical sections, and keeps
-> compatibility chunks as bounded scheduling bridges. Focused live-section/resource/streaming
-> suites pass (9 files, 51 tests); full unit gate passes 4465 + 1 skipped, typecheck/lint/build
-> pass, and clean E2E passes 51/51 with visual goldens unchanged. Next exact action: task 10
-> validated worker section integration with synchronous fallback and a runtime diagnostic switch;
-> no advancement exception applies.
+> compatibility chunks as bounded scheduling bridges. Task 10 integrates opt-in validated
+> worker section meshing into live `World`, canonical section attachment, runtime diagnostics,
+> and synchronous fallback/requeue on worker construction or transport failure. Focused worker
+> integration tests pass 22/22; full unit gate passes 4469 + 1 skipped, typecheck/lint/build
+> pass, and clean E2E passes 51/51 with visual goldens unchanged. Next exact action: task 11
+> section-border/edit/light/replacement/unload/queue-saturation verification; no advancement
+> exception applies.
 
 > **254-whole-codebase-performance-optimization — VERIFIED (2026-08-26, session start `d258414`).**
 > Owner-authorized repository-wide performance campaign completed with behavior-preserving
