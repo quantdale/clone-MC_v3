@@ -1,7 +1,7 @@
 # Verification: 253-live-world-architecture-convergence
 
 Status: ACTIVE — NOT VERIFIED
-Completion: 94.93% (131/138 tasks)
+Completion: 95.65% (132/138 tasks)
 Advancement allowed: false
 Exception used: false
 
@@ -295,7 +295,7 @@ Run from the exact intended candidate unless the row explicitly says baseline.
 | canonical GitHub Actions `gate` exact candidate | PASS | Run `33248984417`, gate job `99091261952`, exact head `721fdfc40d11037a62c3c027169c3d7e3d8df323`; validate-state/typecheck/lint/build/bundle/unit/coverage/dependency audits all passed. |
 | canonical GitHub Actions `e2e` exact candidate | FAIL / BLOCKER | Run `33248984417`, E2E job `99091261913`, exact head `721fdfc40d11037a62c3c027169c3d7e3d8df323`; 49 tests passed, and only `tests/e2e/visual-regression.spec.ts` failed because the 245-cell committed `linux-ci` visual matrix exceeded thresholds. |
 | lineage-valid evidence/state follow-up commit | PASS | Evidence/state commit `40fa5335a1df8b21c2b37c31fe136adb096387d0` was committed after implementation checkpoint `721fdfc40d11037a62c3c027169c3d7e3d8df323` and published normally. |
-| final remote-head refetch | PASS | `git ls-remote origin refs/heads/main` returned `40fa5335a1df8b21c2b37c31fe136adb096387d0`. |
+| final remote-head refetch | PASS | `git ls-remote origin refs/heads/main` returned `35170982dfeb8a9ffe85989faca57581f3529012`. |
 ## Exhaustive inventory evidence
 
 ### Pre-migration
@@ -531,8 +531,8 @@ If used, it MUST prove every incomplete task is non-blocking and implements/veri
 Implementation candidate: `721fdfc40d11037a62c3c027169c3d7e3d8df323` (published implementation checkpoint).
 Canonical CI run: `33248984417` on exact head `721fdfc40d11037a62c3c027169c3d7e3d8df323`; gate job `99091261952` PASS; E2E job `99091261913` FAIL after 49 passed tests because the 245-cell `linux-ci` visual matrix exceeded thresholds.
 Evidence/state commit: `40fa5335a1df8b21c2b37c31fe136adb096387d0` (lineage-valid follow-up after implementation checkpoint).
-`published_head`: `40fa5335a1df8b21c2b37c31fe136adb096387d0` (final handoff metadata boundary).
-Remote-head verification: PASS — `git ls-remote origin refs/heads/main` matched `40fa5335a1df8b21c2b37c31fe136adb096387d0` before this final metadata follow-up.
+`published_head`: `35170982dfeb8a9ffe85989faca57581f3529012` (final coherent handoff commit; subsequent metadata corrections are descendants).
+Remote-head verification: PASS for final coherent handoff — `git ls-remote origin refs/heads/main` matched `35170982dfeb8a9ffe85989faca57581f3529012` before this metadata correction.
 
 ## Final decision
 
