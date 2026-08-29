@@ -1,25 +1,33 @@
 {
   "schemaVersion": 1,
   "program": "minecraft-parity",
-  "status": "ACTIVE",
+  "status": "COMPLETE",
   "currentChange": "253-live-world-architecture-convergence",
-  "currentChangeStatus": "ACTIVE",
-  "lastCompletedChange": "254-whole-codebase-performance-optimization",
+  "currentChangeStatus": "VERIFIED",
+  "lastCompletedChange": "253-live-world-architecture-convergence",
   "nextChange": null,
-  "completedTasks": 133,
+  "completedTasks": 138,
   "totalTasks": 138,
-  "completionPercentage": 96.38,
+  "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
-  "mandatoryRequirementsPass": false,
-  "requiredTestsPass": false,
-  "advancementAllowed": false,
+  "mandatoryRequirementsPass": true,
+  "requiredTestsPass": true,
+  "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "368bb85df191815f90739fa8ea18c9bf85dfb790",
-  "lastCompletedTask": "Re-pinned the 60-cell linux-ci visual baseline through the canonical UPDATE_SNAPSHOTS=1 path and completed the full local E2E gate at 50/50. Change 253 remains ACTIVE/NOT VERIFIED pending exact-SHA canonical CI, task 23's browser limitation, and archival requirements.",
-  "nextExactAction": "Commit and publish the coherent visual-baseline remediation, obtain exact-SHA canonical gate and e2e SUCCESS, then complete the remaining task-23 disposition, archival, and execution-prompt requirements before deciding Change 253 VERIFIED.",
-  "blockers": ["Task 23 browser resource sampling is blocked by an objectively reproduced environment limitation: standalone headless Chrome 2D canvas fillRect does not return within 35 seconds in both available Chromium executables (/usr/bin/google-chrome and Playwright chromium-1234/chrome-linux64/chrome), including --disable-gpu; see openspec/changes/253-live-world-architecture-convergence/verification.md.", "The refreshed visual baseline and full local E2E gate are green, but exact-SHA canonical gate/e2e results for the new candidate are still pending; Change 253 must remain ACTIVE/NOT VERIFIED until those results and the remaining archival requirements are complete."],
+  "lastCompletedTask": "Completed and archived Change 253 with 138/138 tasks: hosted canonical Linux resource evidence, exact-SHA canonical gate/e2e success, synced live-world capability spec, and terminal handoff.",
+  "nextExactAction": "No further Change-253 action is required; the archived verification and terminal state are the authoritative release handoff.",
+  "blockers": [],
   "validationResults": [
+    {
+      "change": "253-live-world-architecture-convergence",
+      "status": "VERIFIED",
+      "unitTests": 4439,
+      "e2eTests": 50,
+      "head": "bbffe560706841d5ef44ebfe7f74f6b2dda6279d",
+      "note": "138/138 tasks complete. Local typecheck/lint/unit/build and full E2E 50/50 pass; hosted canonical Linux memory/resource sampler passes; canonical run 33256432099 succeeds on exact candidate with gate job 99111927428 and e2e job 99111927536. Archived as 2026-08-29-253-live-world-architecture-convergence; capability spec synced."
+    },
     {
       "change": "254-whole-codebase-performance-optimization",
       "status": "VERIFIED",
@@ -2430,14 +2438,26 @@
       "head": "d2d153b04e8ecfb83301103b30905095c7dc7db3",
       "at": "2026-08-28T23:18:22Z",
       "note": "Change 253 publication-metadata checkpoint published normally to origin/main. It records the Windows Rollup native optional-dependency fix, preserves task 23 as unchecked because browser heap/renderer/entity sampling is blocked by the reproduced six-mode Chromium fillRect hang, and makes no canonical gate/e2e claim."
+    },
+    {
+      "head": "bbffe560706841d5ef44ebfe7f74f6b2dda6279d",
+      "at": "2026-08-29T15:00:00Z",
+      "note": "Change 253 terminal archive/state handoff prepared from the exact published candidate. Canonical run 33256432099 gate 99111927428 and e2e 99111927536 both SUCCESS; archived package and synced capability spec are included."
     }
   ],
   "releaseAuthority": {
     "schemaVersion": 1,
-    "authorityPackage": null,
-    "candidateSha": null,
-    "canonicalCi": null,
-    "note": "Not yet established: Change 253 is ACTIVE (non-terminal post-terminal epoch). Terminal release authority will be recorded only when an exact lineage-valid candidate achieves canonical gate+e2e SUCCESS."
+    "authorityPackage": "openspec/changes/archive/2026-08-29-253-live-world-architecture-convergence",
+    "candidateSha": "bbffe560706841d5ef44ebfe7f74f6b2dda6279d",
+    "canonicalCi": {
+      "runId": 33256432099,
+      "gateJobId": 99111927428,
+      "gateConclusion": "success",
+      "e2eJobId": 99111927536,
+      "e2eConclusion": "success",
+      "recordedAt": "2026-08-29T15:00:00Z"
+    },
+    "note": "Current terminal release authority for Change 253. The exact published candidate passed canonical gate and e2e; the archived verification is the authority package and hosted Linux resource evidence closes task 23."
   },
   "hardeningInterlock": {
     "role": "historical interlock record (pre-241 era); NOT the current release authority - see releaseAuthority above",
@@ -2500,5 +2520,5 @@
       }
     ]
   },
-  "criticalRiskOpen": true
+  "criticalRiskOpen": false
 }

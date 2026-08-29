@@ -1,12 +1,13 @@
 # Execution Campaign: Change 253 — Live World Architecture Convergence
 
-Status: ACTIVE
+Status: COMPLETED — Change 253 VERIFIED and archived as `2026-08-29-253-live-world-architecture-convergence`; canonical spec synced to `openspec/specs/live-world-architecture/spec.md`.
 Planned-From: `a8021f55ef233fb8aa0f983905a22a3859add88a`
 Planned-At: `2026-08-26T23:52:00+08:00`
 Target-Branch: `main`
 Requested-Active-Execution-Window: `12 hours`
-OpenSpec: `openspec/changes/253-live-world-architecture-convergence/`
-Prompt-Queue: `openspec/changes/253-live-world-architecture-convergence/agent-prompts.md`
+OpenSpec archive: `openspec/changes/archive/2026-08-29-253-live-world-architecture-convergence/`
+Canonical spec: `openspec/specs/live-world-architecture/spec.md`
+Prompt queue archive: `openspec/changes/archive/2026-08-29-253-live-world-architecture-convergence/agent-prompts.md`
 
 ## Mission
 
@@ -251,7 +252,7 @@ Do not fabricate evidence. A failed/unverified mandatory requirement blocks VERI
 - Publish to `origin/main` normally as repository policy requires.
 - Refetch remote and verify exact head after publication.
 - Never force-push or rewrite published history.
-- Mark `Status: COMPLETED` here only after 253 is truthfully VERIFIED/archived and the final published state is self-consistent.
+- Mark `Status: COMPLETED` here only after 253 is truthfully VERIFIED/archived and the final published state is self-consistent. This condition is satisfied by canonical run `33256432099` on candidate `bbffe560706841d5ef44ebfe7f74f6b2dda6279d`.
 
 ## Definition of Done
 
@@ -296,4 +297,4 @@ Report exactly:
 
 After the executor pulls the repository, the only instruction needed is:
 
-> **Read `.agent/EXECUTION_PROMPT.md` and execute Change 253 autonomously from PROMPT 00 through PROMPT 11. Continue active engineering for the full 12-hour campaign contract, obey OpenSpec/state/Git gates, fix all Critical/High findings, publish coherent checkpoints to `origin/main`, and stop early only for a genuine durable blocker with no safe independent 253 work remaining.**
+> Change 253 is complete. Its 138/138 task ledger, hosted resource evidence, exact-SHA canonical gate/E2E evidence, archived OpenSpec package, synced capability spec, and terminal program state are authoritative. No further 253 execution is required.

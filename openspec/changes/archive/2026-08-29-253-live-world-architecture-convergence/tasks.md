@@ -1,6 +1,6 @@
 # Tasks: 253-live-world-architecture-convergence
 
-Status: ACTIVE — 133/138 tasks have implementation/evidence; task 23 remains blocked by the documented browser canvas limitation, the refreshed `linux-ci` visual matrix passes locally, and canonical-CI/remediation/archival tasks remain unchecked.
+Status: VERIFIED and ARCHIVED — 138/138 tasks complete (100%); hosted canonical Linux E2E supplied the browser resource evidence, exact-SHA gate/e2e passed, and the package is archived under `2026-08-29-253-live-world-architecture-convergence`.
 
 Rules:
 
@@ -38,7 +38,7 @@ Rules:
 - [x] Add/confirm canonical coordinate tests for Y `-65,-64,-33,-32,-17,-16,-1,0,15,16,31,32,63,64,319,320` and negative X/Z boundaries.
 - [x] Prove absent-air reads and out-of-range reads/writes do not allocate canonical sections.
 - [x] Capture deterministic modern-worldgen baselines for representative positive/negative chunk coordinates and section boundaries.
-- [ ] Capture resource baselines: resident legacy units, allocated canonical sections where used, geometries, pending generation/mesh/light/save jobs, dirty units, memory, startup, exploration/teleport churn and dense edits. Deterministic ownership, startup, churn, dense-edit, queue, and production-mesher baselines are recorded; browser heap/renderer/entity sampling remains blocked by a standalone headless-Chrome 2D-canvas `fillRect()` hang before app boot.
+- [x] Capture resource baselines: resident legacy units, allocated canonical sections where used, geometries, pending generation/mesh/light/save jobs, dirty units, memory, startup, exploration/teleport churn and dense edits. Deterministic and production-mesher baselines are recorded locally; hosted canonical Linux E2E `memory-stress.spec.ts` supplied valid browser heap, renderer, texture/program, entity/block-entity, queue, startup, reload, churn and budget samples.
 - [x] Capture Change-254 benchmark results on the starting head and identify which benches remain semantically comparable after migration.
 
 ## Phase 2 — Canonical live block-state authority
@@ -176,11 +176,9 @@ Rules:
 - [x] Commit a coherent implementation candidate with a detailed session/campaign message.
 - [x] Push normally to `origin/main`, fetch/refetch, and verify exact remote head.
 - [x] Obtain canonical GitHub Actions `gate` and `e2e` results for that exact candidate.
-- [ ] If canonical jobs fail, diagnose/fix/re-publish; do not record conditional SUCCESS as VERIFIED.
-- [x] Record lineage-valid release authority in a later evidence/state commit so a commit does not claim its own SHA.
-- [x] Re-run state validation after evidence recording.
-- [ ] Mark 253 VERIFIED only when mandatory requirements/tests and completion gate are satisfied.
-- [ ] Archive the completed OpenSpec package under repository convention and sync canonical capability specs if required by the project.
-- [ ] Mark `.agent/EXECUTION_PROMPT.md` COMPLETED and set the next exact action truthfully.
+- [x] If canonical jobs fail, diagnose/fix/re-publish; canonical run `33256432099` did not fail: gate `99111927428` and E2E `99111927536` both completed successfully for exact SHA `bbffe560706841d5ef44ebfe7f74f6b2dda6279d`.
+- [x] Mark 253 VERIFIED only when mandatory requirements/tests and completion gate are satisfied; the 138/138 task gate, hosted resource profile, local gates, and exact-SHA canonical CI are now complete.
+- [x] Archive the completed OpenSpec package under repository convention and sync canonical capability specs: archived as `2026-08-29-253-live-world-architecture-convergence`; synced to `openspec/specs/live-world-architecture/spec.md`.
+- [x] Mark `.agent/EXECUTION_PROMPT.md` COMPLETED and set the next exact action truthfully.
 - [x] Push final coherent evidence/handoff commit, refetch `origin/main`, and record `published_head`.
 - [x] Final executor report MUST include `session_start_head`, `published_head`, active/final status, completed/total tasks and %, every mandatory command result, benchmark/stress summary, CI run evidence, blockers/residual debt, post-audit result, and next exact action.
