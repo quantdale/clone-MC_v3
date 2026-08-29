@@ -51,7 +51,18 @@ Exact validation on the task-57 candidate:
 - Post-change source scan — PASS for no direct `Chunk.blocks` assignment/fill in `World`; remaining reads are compatibility-only and generator writes are isolated to `TerrainGenerator`/fixtures.
 - `git diff --check` — repository line-ending caveat: CRLF carriage returns are reported on newly added lines in the pre-existing CRLF `ChunkManager.ts` and `WorldBlockState.test.ts`; no trailing-space defect exists in LF files or semantic source content.
 
-## Mandatory command matrix
+## Task 64 evidence — live worldgen stage graph and composition
+
+Status: PASS for task 64 scope. Audited all 23 `src/worldgen/**` modules plus `TerrainGenerator`, `World`, and `Game` consumers. The pure `GenerationPipeline` vocabulary is `TERRAIN -> CLIMATE -> BIOMES -> SURFACE -> CAVES -> FLUIDS -> FEATURES -> FINAL` with monotonic transitions, but it is not imported by the live generator. The live composition is `Game -> TerrainGenerator -> World.processGeneration -> TerrainGenerator.generateColumn -> ChunkColumn/ChunkSection`; `World` uses `ChunkPipeline` queue tokens and `ChunkStatus` lifecycle (`generate -> features -> light`) around that adapter call. `generateColumn` composes climate/biome classification, terrain/caves/surface, owner-chunk ores, vegetation, and structures, writing canonical `BlockState`s across `column.minY..maxY`; `generateChunk(Chunk)` remains compatibility-only.
+
+Exact validation:
+
+- Focused worldgen/generation suite — PASS: 9 files, 78 tests (`GenerationPipeline`, `TerrainColumnGenerationEquivalence`, `WorldColumnGenerationIdempotency`, `WorldgenDeterminism`, `WorldgenRegressionMatrix`, `OverworldTerrain`, `CaveCarver`, `AquiferSystem`, `StructureGenerator`).
+- Audit checks — PASS: `Game` constructs `TerrainGenerator` and passes it to `World` with `OVERWORLD_DIMENSION_TYPE`; `World.processGeneration` calls `generateColumn` for incomplete canonical columns and advances `ChunkStatus`; `generateColumn` writes `ChunkColumn`/`ChunkSection` state and omits air writes for lazy sections; no live `World` path invokes `GenerationPipeline` or uses `generateChunk` for missing-column generation.
+- Determinism/equivalence evidence — PASS: repeated worldgen hashes, regression matrix, full-height column output, and legacy slab equivalence tests all pass.
+
+The design record was corrected to distinguish the reusable pure stage vocabulary from the actual live queue/lifecycle orchestration; no production code change was required for task 64.
+
 
 Run from the exact intended candidate unless the row explicitly says baseline.
 
