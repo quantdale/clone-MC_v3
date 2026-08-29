@@ -51,6 +51,19 @@ Exact validation on the task-57 candidate:
 - Post-change source scan — PASS for no direct `Chunk.blocks` assignment/fill in `World`; remaining reads are compatibility-only and generator writes are isolated to `TerrainGenerator`/fixtures.
 - `git diff --check` — repository line-ending caveat: CRLF carriage returns are reported on newly added lines in the pre-existing CRLF `ChunkManager.ts` and `WorldBlockState.test.ts`; no trailing-space defect exists in LF files or semantic source content.
 
+## Task 65 evidence — missing-column canonical generation
+
+Status: PASS for task 65 scope. `Game` composes `TerrainGenerator` into `World`; `World.processGeneration` creates/gets the canonical `ChunkColumn`, invokes `generateColumn` only while the column is below `ChunkStatus.Full`, and then synchronizes the bounded compatibility projection. `TerrainGenerator.generateColumn` writes registered default `BlockState`s through `ChunkColumn.setBlockState` for `column.minY..column.maxY`; for `OVERWORLD_DIMENSION_TYPE` this is `-64..319`. Air is omitted, so untouched sections remain lazy. Imported/restored columns are marked `Full`, preventing regeneration from overwriting durable edits.
+
+Exact validation:
+
+- Canonical/full-range suite — PASS: 5 files, 27 tests (`TerrainColumnGenerationEquivalence`, `WorldColumnGenerationIdempotency`, `CanonicalWorldStorage`, `VerticalStreaming`, `WorldBlockState`).
+- Full-range fidelity — PASS: generated column hash/non-air baseline and cell-for-cell comparison against the compatibility slab oracle.
+- Live integration — PASS: `WorldColumnGenerationIdempotency` proves one `generateColumn` call per resident horizontal column, not once per vertical slab, and preserves a mined negative-Y block after import/reload.
+- Canonical state/lazy storage — PASS: `CanonicalWorldStorage` and vertical streaming tests verify canonical `BlockState` reads/writes, dimension bounds, and lazy section behavior.
+
+No production change was required for task 65; the implementation was already present and validated against the audited composition.
+
 ## Task 64 evidence — live worldgen stage graph and composition
 
 Status: PASS for task 64 scope. Audited all 23 `src/worldgen/**` modules plus `TerrainGenerator`, `World`, and `Game` consumers. The pure `GenerationPipeline` vocabulary is `TERRAIN -> CLIMATE -> BIOMES -> SURFACE -> CAVES -> FLUIDS -> FEATURES -> FINAL` with monotonic transitions, but it is not imported by the live generator. The live composition is `Game -> TerrainGenerator -> World.processGeneration -> TerrainGenerator.generateColumn -> ChunkColumn/ChunkSection`; `World` uses `ChunkPipeline` queue tokens and `ChunkStatus` lifecycle (`generate -> features -> light`) around that adapter call. `generateColumn` composes climate/biome classification, terrain/caves/surface, owner-chunk ores, vegetation, and structures, writing canonical `BlockState`s across `column.minY..maxY`; `generateChunk(Chunk)` remains compatibility-only.
