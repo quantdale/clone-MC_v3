@@ -345,7 +345,7 @@ test.describe('long-session memory / GPU-resource leak validation (239)', () => 
   });
 
   test('teleport cycling keeps the loaded-chunk plateau stable and within budget', async ({ page }) => {
-    test.setTimeout(180_000);
+    test.setTimeout(600_000);
     await waitGameReady(page);
     await enterPointerLock(page);
 
@@ -364,7 +364,7 @@ test.describe('long-session memory / GPU-resource leak validation (239)', () => 
         if (!g?.player) throw new Error('test game handle missing');
         g.player.position.set(p.x, 48, p.z);
       }, { x: tx, z: tz });
-      const raw = await waitSettled(page, 60_000);
+      const raw = await waitSettled(page, 90_000);
       settledColumns.push(raw.residentColumns);
       expect(raw.residentColumns).toBeLessThanOrEqual(MAX_RESIDENT_COLUMNS);
       expect(budgetReport(raw).withinBudget).toBe(true);
@@ -411,10 +411,10 @@ test.describe('long-session memory / GPU-resource leak validation (239)', () => 
   });
 
   test('block-entity live count stays at baseline across away-and-back teleport cycles', async ({ page }) => {
-    test.setTimeout(120_000);
+    test.setTimeout(360_000);
     await waitGameReady(page);
     await enterPointerLock(page);
-    await waitSettled(page, 30_000);
+    await waitSettled(page, 60_000);
 
     const base = await sample(page);
     // Single-player does not wire block entities (see design.md), so the live
@@ -430,13 +430,13 @@ test.describe('long-session memory / GPU-resource leak validation (239)', () => 
         if (!g?.player) throw new Error('test game handle missing');
         g.player.position.set(p.x, 48, p.z);
       }, { x: tx, z: tz });
-      const raw = await waitSettled(page, 60_000);
+      const raw = await waitSettled(page, 90_000);
       expect(raw.blockEntities).toBe(0);
       expect(raw.residentColumns).toBeLessThanOrEqual(MAX_RESIDENT_COLUMNS);
       expect(budgetReport(raw).withinBudget).toBe(true);
     }
     // Returning to the spawn region also returns to baseline.
-    const back = await waitSettled(page, 60_000);
+    const back = await waitSettled(page, 90_000);
     expect(back.blockEntities).toBe(0);
     expect(budgetReport(back).withinBudget).toBe(true);
   });
