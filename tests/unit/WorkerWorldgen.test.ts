@@ -4,12 +4,18 @@ import {
   processWorldgenColumnRequest,
   validateWorldgenRequest,
   validateWorldgenResult,
+  commitWorldgenResult,
   WorldgenWorkerClient,
   WORLDGEN_PROTOCOL_VERSION,
   createWorldgenWorkerRuntime,
   type WorldgenRequestPayload,
 } from "../../src/worldgen/WorkerWorldgen";
 import { TERRAIN_GENERATION_VERSION } from "../../src/world/TerrainGenerator";
+import { CanonicalWorldStorage } from "../../src/world/CanonicalWorldStorage";
+import { createDefaultBlockRegistry, BlockId } from "../../src/world/BlockRegistry";
+import { createDefaultBlockStateRegistry } from "../../src/world/BlockStateRegistry";
+import { OVERWORLD_DIMENSION_TYPE } from "../../src/data/DimensionTypes";
+import { ChunkStatus } from "../../src/world/ChunkStatus";
 
 const REQUEST: WorldgenRequestPayload = {
   columnX: 3,
@@ -67,6 +73,8 @@ describe("processWorldgenColumnRequest", () => {
     sectionCount: 24,
     minSectionY: -4,
     worldgenVersion: TERRAIN_GENERATION_VERSION,
+    columnStatus: ChunkStatus.Empty,
+    columnRevision: 0,
   };
 
   it("generates a validated serialized canonical column", () => {
@@ -96,7 +104,7 @@ describe("processWorldgenColumnRequest", () => {
   });
 
   it("requires the current layout and worldgen version", () => {
-    expect(() => processWorldgenColumnRequest(REQUEST)).toThrow(/layout/i);
+    expect(() => processWorldgenColumnRequest(REQUEST)).toThrow(/worldgenVersion|layout/i);
     expect(() =>
       processWorldgenColumnRequest({
         ...COLUMN_REQUEST,
@@ -395,5 +403,93 @@ describe("createWorldgenWorkerRuntime", () => {
     expect(workers[0]!.terminated).toBe(true);
     expect(results).toBe(0);
     expect(() => runtime.client.submit(request, () => {})).toThrow(/disposed/i);
+  });
+});
+
+describe("atomic canonical worldgen commit", () => {
+  const request: WorldgenRequestPayload = {
+    columnX: -2,
+    columnZ: 3,
+    seed: 99,
+    stage: "TERRAIN",
+    sectionCount: OVERWORLD_DIMENSION_TYPE.sectionCount,
+    minSectionY: OVERWORLD_DIMENSION_TYPE.minSectionY,
+    worldgenVersion: TERRAIN_GENERATION_VERSION,
+    columnStatus: ChunkStatus.Empty,
+    columnRevision: 0,
+  };
+
+  function makeStorage(): CanonicalWorldStorage {
+    return new CanonicalWorldStorage({
+      dimension: OVERWORLD_DIMENSION_TYPE,
+      blockRegistry: createDefaultBlockRegistry(),
+      stateRegistry: createDefaultBlockStateRegistry(),
+    });
+  }
+
+  it("commits validated worker output atomically and marks the column full", () => {
+    const storage = makeStorage();
+    const before = storage.ensureColumn(request.columnX, request.columnZ);
+    const result = processWorldgenColumnRequest(request);
+
+    const committed = commitWorldgenResult(storage, result, { expectedSeed: request.seed });
+
+    expect(committed.committed).toBe(true);
+    expect(storage.getColumn(request.columnX, request.columnZ)).not.toBe(before);
+    expect(storage.getColumn(request.columnX, request.columnZ)?.getStatus()).toBe(ChunkStatus.Full);
+    expect(storage.getBlock(request.columnX * 16, 0, request.columnZ * 16)).not.toBe(BlockId.Air);
+  });
+
+  it("rejects a result captured before an edit without replacing the edited column", () => {
+    const storage = makeStorage();
+    const current = storage.ensureColumn(request.columnX, request.columnZ);
+    const result = processWorldgenColumnRequest(request);
+    storage.setBlock(request.columnX * 16, OVERWORLD_DIMENSION_TYPE.minY, request.columnZ * 16, BlockId.Glass);
+
+    const committed = commitWorldgenResult(storage, result, { expectedSeed: request.seed });
+
+    expect(committed).toEqual({ committed: false, reason: "stale-revision" });
+    expect(storage.getColumn(request.columnX, request.columnZ)).toBe(current);
+    expect(storage.getBlock(request.columnX * 16, OVERWORLD_DIMENSION_TYPE.minY, request.columnZ * 16)).toBe(BlockId.Glass);
+  });
+
+  it("rejects a result when the column status changes before completion", () => {
+    const storage = makeStorage();
+    const current = storage.ensureColumn(request.columnX, request.columnZ);
+    const result = processWorldgenColumnRequest(request);
+    current.setStatus(ChunkStatus.Noise);
+
+    const committed = commitWorldgenResult(storage, result, { expectedSeed: request.seed });
+
+    expect(committed).toEqual({ committed: false, reason: "stale-status" });
+    expect(storage.getColumn(request.columnX, request.columnZ)).toBe(current);
+  });
+
+  it("rejects foreign, malformed, wrong-seed, and wrong-layout results without mutation", () => {
+    const storage = makeStorage();
+    const current = storage.ensureColumn(request.columnX, request.columnZ);
+    const result = processWorldgenColumnRequest(request);
+
+    expect(commitWorldgenResult(storage, { ...result, columnX: 100 })).toEqual({
+      committed: false,
+      reason: "invalid-result",
+    });
+    expect(commitWorldgenResult(storage, { ...result, seed: 1 }, { expectedSeed: request.seed })).toEqual({
+      committed: false,
+      reason: "seed-mismatch",
+    });
+    expect(commitWorldgenResult(storage, {
+      ...result,
+      serializedColumn: { ...result.serializedColumn!, sectionCount: 1 },
+    })).toEqual({
+      committed: false,
+      reason: "invalid-layout",
+    });
+    expect(commitWorldgenResult(storage, { serializedColumn: result.serializedColumn })).toEqual({
+      committed: false,
+      reason: "invalid-result",
+    });
+    expect(storage.getColumn(request.columnX, request.columnZ)).toBe(current);
+    expect(storage.getColumn(request.columnX, request.columnZ)?.generationRevision).toBe(0);
   });
 });

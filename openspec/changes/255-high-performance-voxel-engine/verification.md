@@ -1,7 +1,7 @@
 # Verification: 255-high-performance-voxel-engine
 
-Status: ACTIVE — task 12 complete
-Completion: 12/37 tasks (32.43%)
+Status: ACTIVE — task 13 complete
+Completion: 13/37 tasks (35.14%)
 Advancement allowed: false
 
 ## Requirement evidence
@@ -18,7 +18,7 @@ Advancement allowed: false
 | Live worker section integration with safe fallback and diagnostics | `World` accepts explicit `workerMeshing` opt-in, submits canonical section snapshots through the validated `MeshWorkerClient`/`WorkerPool` path, attaches typed worker layer streams by canonical section key, exposes `setWorkerMeshingEnabled`/`isWorkerMeshingEnabled` plus worker counters in `WorldStats`, and disables/requeues worker batches into synchronous canonical meshing on construction, transport, timeout, or result failure. `World.test.ts` covers default-off/runtime toggle, unsupported-worker synchronous fallback, and a deferred fake-worker success path using the real registry/request/result validation and canonical attachment; `WorldComposition.test.ts` covers composition pass-through. | PASS — task 10 |
 | Section edit/border/light/replacement/unload/saturation safety | Canonical edit locality and vertical/horizontal dependency suites cover target/sibling isolation, negative and top-Y sections, border dirtying, light propagation invalidation, and geometry ownership. `World.test.ts` now adds a delayed validated fake-worker scenario that holds real section requests, replaces a section, releases stale results, teleports through unload, releases late responses, and asserts no completion/batch/job/section-map resurrection. `WorldStreamingSaturation.test.ts` proves bounded queue admission, rapid teleport/edit/unload progress, spawn readiness, and no main-thread retry spin. Focused task-11 suite passes 10 files/61 tests; full unit gate passes. | PASS — task 11 |
 | Deterministic workerized column generation with bounded priority/cancellation | `WorldgenWorkerEntry.ts` serves the unified protocol and delegates to pure serialized-column generation. `createWorldgenWorkerRuntime` owns a separate bounded `WorkerPool` with configurable size, pending/in-flight caps, priority forwarding, generation-token cancellation, and idempotent disposal. `WorkerWorldgen.test.ts` covers serialized output validation, negative-coordinate determinism, pool priority/failure/rejection, cancellation, bounded runtime construction, worker termination, and post-dispose rejection. | PASS — task 12 |
-| Deterministic worker output identity, edit durability, and atomic canonical commit | Output-to-canonical commit and stale-result edit protection remain task 13 scope. | NOT RUN |
+| Deterministic worker output identity, edit durability, and atomic canonical commit | `ChunkColumn.generationRevision` increments on canonical writes; production envelopes require matching `ChunkStatus.Empty`/revision 0 metadata and current worldgen version. `commitWorldgenResult` validates untrusted output and seed, then `CanonicalWorldStorage.commitGeneratedColumn` rechecks identity, layout, status, revision, and dirty state before deserializing and replacing the canonical column. `WorkerWorldgen.test.ts` covers successful atomic replacement, stale edit/status rejection, foreign/malformed/wrong-layout/wrong-seed no-op behavior, and 23 focused worker tests pass. | PASS — task 13 |
 | Mesh-ready and GPU upload stages are independently bounded | Not implemented; tasks 15–18 remain incomplete. | NOT RUN |
 | Streaming priority/hysteresis prevents interactive starvation | Not implemented; tasks 19–21 remain incomplete. | NOT RUN |
 | Hierarchical deterministic far-terrain LOD is presentation-only and seam-safe | Not implemented; tasks 22–25 remain incomplete. | NOT RUN |
@@ -33,7 +33,7 @@ Advancement allowed: false
 | `npm run lint` | PASS | ESLint passes for implementation, tests, and manifest update. |
 | `npm test` | PASS | 367 test files; 4474 passed, 1 skipped (4475 total). Expected negative-case state/file-audit diagnostics are subprocess output from validation tests; the full suite is green. |
 | `npm run build` | PASS | `tsc --noEmit && vite build`; 188 modules transformed. |
-| `npm run test:e2e` | PASS — prior gate | Clean rerun on the prior published implementation: 51/51 passed; task-11 changes are unit-test-only and preserve the synchronous production default. |
+| `npm run test:e2e` | BLOCKED — environment timeout | Current-tree run reached 50/51 tests with no assertion failure before the 1200-second command timeout; the remaining long visual/resource tail did not complete. Prior clean 51/51 evidence remains recorded, but this checkpoint makes no current-tree E2E pass claim. |
 | Focused task-11 section/worker suites | PASS | `npx vitest run tests/unit/World.test.ts tests/unit/WorldComposition.test.ts tests/unit/WorldGeometryDisposal.test.ts tests/unit/WorldOwnershipReclamation.test.ts tests/unit/WorldStreamingSaturation.test.ts tests/unit/WorldDenseEditLocality.test.ts tests/unit/VerticalNeighborDirtying.test.ts tests/unit/RenderLightWorkerOwnership.test.ts tests/unit/WorldLightStorage.test.ts tests/unit/SeedChunkLightEquivalence.test.ts`: 10 files, 61 tests passed. Includes delayed validated fake-worker replacement/unload late-result rejection. |
 | Focused task-8 parity suite | PASS | `WorkerMeshParity`/`TypedMeshStreams` remain green in the full unit gate; direct typed streams and packed worker output still match independent references. |
 
@@ -50,10 +50,10 @@ Task 12 uses the shared conservative worker sizing policy, a hard queued-job cap
 Typecheck, lint, focused task-11 suites, and the full unit gate pass. Expected negative-case state/file-audit diagnostics are subprocess output from validation tests and do not fail the full suite. No known implementation or visual regression remains.
 
 ## Incomplete tasks
-Tasks 1–12 are complete. Tasks 13–37 remain incomplete; no advancement exception applies. Task 13 is next: validate worker output identity, generation version, column status, edit durability, and atomic canonical commit so stale output cannot overwrite edits.
+Tasks 1–13 are complete. Tasks 14–37 remain incomplete; no advancement exception applies. Task 14 is next: prove bit-equivalent worldgen across seeds, negative coordinates, dimension bounds, structures, ores, caves, and reloads while retaining synchronous fallback.
 
 ## Advancement Exception
 Not applicable.
 
 ## Final decision
-ACTIVE, not verified. Task 12 is complete with focused and full local evidence. Continue with task 13; the full Change 255 advancement gate remains unmet.
+ACTIVE, not verified. Task 13 is complete with focused, full-unit, typecheck, lint, and build evidence. The current-tree E2E command timed out after 50/51 tests, so the full Change 255 advancement gate remains unmet. Continue with task 14.

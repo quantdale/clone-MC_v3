@@ -6,19 +6,21 @@
   "currentChangeStatus": "ACTIVE",
   "lastCompletedChange": "254-whole-codebase-performance-optimization",
   "nextChange": null,
-  "completedTasks": 12,
+  "completedTasks": 13,
   "totalTasks": 37,
-  "completionPercentage": 32.43,
+  "completionPercentage": 35.14,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": false,
   "requiredTestsPass": false,
   "advancementAllowed": false,
   "exceptionUsed": false,
-  "sessionStartHead": "5ac28eb91f074608dd22d32513c60e43a6145e64",
-  "lastCompletedTask": "255 task 12 complete: deterministic serialized column generation is available through the production Vite worker entry and dedicated bounded priority pool; generation-token cancellation, pool rejection/failure, idempotent disposal, worker termination, negative-coordinate determinism, and post-dispose rejection are covered.",
-  "nextExactAction": "Begin task 13: validate worker output identity, generation version, column status, edit durability, and atomic canonical commit so stale output cannot overwrite edits.",
-  "blockers": [],
+  "sessionStartHead": "ec072ab26b2729539d45f60c56e4644c898c0e7a",
+  "lastCompletedTask": "255 task 13 complete: worker generation envelopes now carry validated worldgen/status/revision identity; canonical commit rechecks identity, layout, status, edit revision, and dirty state atomically, with stale/edit/malformed/foreign protections covered by 23 focused WorkerWorldgen tests.",
+  "nextExactAction": "Begin task 14: prove bit-equivalent worldgen across seeds, negative coordinates, dimension bounds, structures, ores, caves, and reloads while retaining synchronous fallback.",
+  "blockers": [
+    "Current-tree npm run test:e2e timed out at 1200 seconds after 50/51 tests completed without an assertion failure; the remaining long visual/resource test did not finish."
+  ],
   "validationResults": [
     {
       "change": "253-live-world-architecture-convergence",
@@ -2428,9 +2430,9 @@
     {
       "change": "255-high-performance-voxel-engine",
       "status": "ACTIVE",
-      "unitTests": 4474,
+      "unitTests": 4478,
       "e2eTests": 51,
-      "note": "Tasks 1-12 complete (12/37, 32.43%). Task 12 adds deterministic serialized-column generation through WorldgenWorkerEntry.ts and a dedicated bounded priority WorkerPool with configurable worker/in-flight/pending caps, generation-token cancellation, idempotent disposal, worker termination, and post-dispose rejection. WorkerWorldgen focused tests pass 19/19; focused worker protocol/pool/worldgen tests pass 48/48; full unit gate passes 4474 + 1 skipped; typecheck/lint/build and validate-state pass. Prior clean E2E remains 51/51 because production default remains synchronous. Next exact action is task 13 output identity, edit durability, and atomic canonical commit validation."
+      "note": "Tasks 1-13 complete (13/37, 35.14%). Task 13 adds validated worker status/revision metadata, canonical mutation revisions, untrusted-result validation, and atomic canonical commit with stale edit/status/identity/layout protections. WorkerWorldgen focused tests pass 23/23; full unit gate passes 4478 + 1 skipped; typecheck/lint/build/validate-state pass. Current-tree E2E reached 50/51 before the 1200-second timeout without an assertion failure; prior clean 51/51 evidence remains historical only. Next exact action is task 14 bit-equivalent worldgen across seeds, dimensions, features, reloads, and synchronous fallback."
     }
   ],
   "publicationHistory": [

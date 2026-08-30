@@ -19,7 +19,7 @@
 
 ## Campaign D — workerized deterministic generation
 - [x] 12. Wire deterministic column generation through a production worker client/entry with bounded priority and cancellation.
-- [ ] 13. Validate worker output identity, generation version, column status, edit durability, and atomic canonical commit; stale output must never overwrite edits.
+- [x] 13. Validate worker output identity, generation version, column status, edit durability, and atomic canonical commit; stale output must never overwrite edits.
 - [ ] 14. Prove bit-equivalent worldgen across seeds, negative coordinates, dimension bounds, structures, ores, caves, and reloads; retain synchronous fallback.
 
 ## Campaign E — mesh-ready and upload scheduling

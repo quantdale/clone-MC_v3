@@ -7,10 +7,36 @@ import {
 } from './BlockStateRegistry';
 import { DimensionType } from '../data/DimensionType';
 import { VerticalWorldAccess, SerializedChunkColumns } from './VerticalWorldAccess';
-import { ChunkColumn } from './ChunkColumn';
+import { ChunkColumn, SerializedChunkColumn } from './ChunkColumn';
 import { ChunkStatus } from './ChunkStatus';
 import type { WorldAccess } from './WorldAccess';
 
+export interface GeneratedColumnCommitExpectation {
+  chunkX: number;
+  chunkZ: number;
+  generationRevision: number;
+  status: ChunkStatus;
+}
+
+export type GeneratedColumnCommitResult =
+  | { committed: true; column: ChunkColumn }
+  | {
+      committed: false;
+      reason:
+        | 'missing-column'
+        | 'identity-mismatch'
+        | 'stale-revision'
+        | 'stale-status'
+        | 'invalid-transition'
+        | 'invalid-layout';
+    };
+
+/**
+ * Atomically install a validated worker-generated baseline. The current column is checked again
+ * immediately before replacement; a player edit increments `generationRevision`, so a result
+ * captured before that edit cannot overwrite it. The candidate is fully deserialized before any
+ * canonical map mutation.
+ */
 export interface CanonicalWorldStorageOptions {
   dimension: DimensionType;
   /** Block-id registry used for id validity + solidity projection. */
@@ -109,6 +135,53 @@ export class CanonicalWorldStorage implements WorldAccess {
 
   removeColumn(chunkX: number, chunkZ: number): boolean {
     return this.vwa.removeColumn(chunkX, chunkZ);
+  }
+
+  /**
+   * Atomically commit a worker-generated baseline after rechecking the captured column state.
+   * Candidate deserialization happens before the canonical map is changed; a stale revision/status
+   * therefore leaves the existing column and all edits untouched.
+   */
+  commitGeneratedColumn(
+    data: SerializedChunkColumn,
+    expected: GeneratedColumnCommitExpectation,
+  ): GeneratedColumnCommitResult {
+    const current = this.getColumn(expected.chunkX, expected.chunkZ);
+    if (!current) return { committed: false, reason: 'missing-column' };
+    if (data.chunkX !== expected.chunkX || data.chunkZ !== expected.chunkZ) {
+      return { committed: false, reason: 'identity-mismatch' };
+    }
+    if (data.sectionCount !== this.dimension.sectionCount || data.minSectionY !== this.dimension.minSectionY) {
+      return { committed: false, reason: 'invalid-layout' };
+    }
+    if (current.generationRevision !== expected.generationRevision) {
+      return { committed: false, reason: 'stale-revision' };
+    }
+    if (current.getStatus() !== expected.status) {
+      return { committed: false, reason: 'stale-status' };
+    }
+    if (expected.status !== ChunkStatus.Empty || current.generationRevision !== 0 || current.isDirty) {
+      return { committed: false, reason: 'invalid-transition' };
+    }
+
+    let candidate: ChunkColumn;
+    try {
+      candidate = ChunkColumn.deserialize(
+        data,
+        this.stateRegistry,
+        undefined,
+        this.blockRegistry,
+      );
+    } catch {
+      return { committed: false, reason: 'invalid-layout' };
+    }
+    candidate.advanceStatusTo(ChunkStatus.Full);
+    this.vwa.removeColumn(expected.chunkX, expected.chunkZ);
+    (this.vwa as unknown as { columnMap: Map<string, ChunkColumn> }).columnMap.set(
+      `${expected.chunkX},${expected.chunkZ}`,
+      candidate,
+    );
+    return { committed: true, column: candidate };
   }
 
   /** Replace or insert a column directly (bulk import, idempotent by chunkX/chunkZ). */

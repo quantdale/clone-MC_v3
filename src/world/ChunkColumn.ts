@@ -68,6 +68,8 @@ export class ChunkColumn {
   private heightmapsValid: boolean;
   /** Generation lifecycle stage of this column, independent of mesh/dirty/heightmap state. Runtime-only. */
   private status: ChunkStatus = ChunkStatus.Empty;
+  /** Runtime mutation revision used to reject or merge stale asynchronous generation results. */
+  private generationRevisionInternal = 0;
 
   constructor(options: ChunkColumnOptions) {
     this.chunkX = options.chunkX;
@@ -84,6 +86,11 @@ export class ChunkColumn {
     this.surfaceHeight = new Int16Array(SECTION_SIZE * SECTION_SIZE).fill(emptyHeight);
     this.motionBlockingHeight = new Int16Array(SECTION_SIZE * SECTION_SIZE).fill(emptyHeight);
     this.heightmapsValid = true;
+  }
+
+  /** Monotonic runtime revision of canonical block mutations in this column. */
+  get generationRevision(): number {
+    return this.generationRevisionInternal;
   }
 
   /** In-column section index for a world Y (0..sectionCount-1). Public so World can map Y without duplicating dimension math. */
@@ -150,6 +157,7 @@ export class ChunkColumn {
     this.checkSection(sy);
     const section = this.ensureSection(sy);
     section.setAt(localX, localCoord(worldY), localZ, state);
+    this.generationRevisionInternal++;
     this.dirtySections.add(sy);
     this.meshDirtySections.add(sy);
     this.updateHeightmaps(localX, worldY, localZ, state);

@@ -21,9 +21,11 @@ import {
 } from '../engine/WorkerPool';
 import { ChunkColumn, type SerializedChunkColumn } from '../world/ChunkColumn';
 import { validateSerializedChunkColumn } from '../storage/ChunkSectionRepository';
+import { CanonicalWorldStorage, type GeneratedColumnCommitResult } from '../world/CanonicalWorldStorage';
 import { createDefaultBlockRegistry } from '../world/BlockRegistry';
 import { createDefaultBlockStateRegistry } from '../world/BlockStateRegistry';
 import { validateGenerationStage } from './GenerationPipeline';
+import { ChunkStatus, chunkStatusOrdinal } from '../world/ChunkStatus';
 import { TERRAIN_GENERATION_VERSION, TerrainGenerator } from '../world/TerrainGenerator';
 
 /** Version of the worldgen result envelope. */
@@ -43,6 +45,10 @@ export interface WorldgenRequestPayload {
   minSectionY?: number;
   /** Stable worldgen implementation version used by production column jobs. */
   worldgenVersion?: string;
+  /** Runtime canonical status captured when a production baseline job was admitted. */
+  columnStatus?: ChunkStatus;
+  /** Runtime canonical mutation revision captured when a production baseline job was admitted. */
+  columnRevision?: number;
 }
 
 /** The versioned result envelope echoing the request identity. */
@@ -56,10 +62,36 @@ export interface WorldgenResultPayload {
   serializedColumn?: SerializedChunkColumn;
   /** Stable worldgen implementation version returned by production jobs. */
   worldgenVersion?: string;
+  /** Runtime canonical status captured when this production result was generated. */
+  columnStatus?: ChunkStatus;
+  /** Runtime canonical mutation revision captured when this production result was generated. */
+  columnRevision?: number;
 }
 
 function isInteger(v: unknown): v is number {
   return typeof v === 'number' && Number.isInteger(v);
+}
+
+function validateOptionalCommitMetadata(
+  input: Record<string, unknown>,
+  name: 'WorldgenRequest' | 'WorldgenResult',
+): { columnStatus?: ChunkStatus; columnRevision?: number } {
+  const hasStatus = input.columnStatus !== undefined;
+  const hasRevision = input.columnRevision !== undefined;
+  if (!hasStatus && !hasRevision) return {};
+  if (!hasStatus || !hasRevision) {
+    throw new Error(`${name}: columnStatus and columnRevision must be supplied together`);
+  }
+  if (!isInteger(input.columnStatus) || chunkStatusOrdinal(input.columnStatus as ChunkStatus) < 0) {
+    throw new Error(`${name}: columnStatus must be a valid ChunkStatus`);
+  }
+  if (!isInteger(input.columnRevision) || (input.columnRevision as number) < 0) {
+    throw new Error(`${name}: columnRevision must be a non-negative integer`);
+  }
+  return {
+    columnStatus: input.columnStatus as ChunkStatus,
+    columnRevision: input.columnRevision as number,
+  };
 }
 
 function validateOptionalLayout(input: Record<string, unknown>): { sectionCount?: number; minSectionY?: number } {
@@ -87,6 +119,7 @@ export function validateWorldgenRequest(input: unknown): WorldgenRequestPayload 
   }
   const stage = validateGenerationStage(r.stage);
   const layout = validateOptionalLayout(r);
+  const commitMetadata = validateOptionalCommitMetadata(r, 'WorldgenRequest');
   if (r.worldgenVersion !== undefined && typeof r.worldgenVersion !== 'string') {
     throw new Error('WorldgenRequest: worldgenVersion must be a string');
   }
@@ -96,6 +129,7 @@ export function validateWorldgenRequest(input: unknown): WorldgenRequestPayload 
     seed: r.seed,
     stage,
     ...layout,
+    ...commitMetadata,
     ...(r.worldgenVersion === undefined ? {} : { worldgenVersion: r.worldgenVersion as string }),
   };
 }
@@ -122,13 +156,19 @@ export function validateWorldgenResult(input: unknown): WorldgenResultPayload {
       throw new Error('WorldgenResult: serialized column identity does not match result');
     }
   }
+  const commitMetadata = validateOptionalCommitMetadata(r, 'WorldgenResult');
   if (r.worldgenVersion !== undefined && typeof r.worldgenVersion !== 'string') {
     throw new Error('WorldgenResult: worldgenVersion must be a string');
   }
-  if (serializedColumn !== undefined && r.worldgenVersion !== TERRAIN_GENERATION_VERSION) {
-    throw new Error(
-      `WorldgenResult: serialized columns require worldgenVersion ${TERRAIN_GENERATION_VERSION}`,
-    );
+  if (serializedColumn !== undefined) {
+    if (commitMetadata.columnStatus !== ChunkStatus.Empty || commitMetadata.columnRevision !== 0) {
+      throw new Error('WorldgenResult: serialized columns require an empty column at revision 0');
+    }
+    if (r.worldgenVersion !== TERRAIN_GENERATION_VERSION) {
+      throw new Error(
+        `WorldgenResult: serialized columns require worldgenVersion ${TERRAIN_GENERATION_VERSION}`,
+      );
+    }
   }
   return {
     columnX: r.columnX,
@@ -138,7 +178,51 @@ export function validateWorldgenResult(input: unknown): WorldgenResultPayload {
     generationVersion: WORLDGEN_PROTOCOL_VERSION,
     ...(serializedColumn === undefined ? {} : { serializedColumn }),
     ...(r.worldgenVersion === undefined ? {} : { worldgenVersion: r.worldgenVersion as string }),
+    ...commitMetadata,
   };
+}
+
+export interface WorldgenCommitOptions {
+  /** Optional world seed expected by the live world owning the canonical storage. */
+  expectedSeed?: number;
+}
+
+export type WorldgenCommitResult =
+  | GeneratedColumnCommitResult
+  | { committed: false; reason: 'invalid-result' | 'seed-mismatch' };
+
+/**
+ * Validate and atomically commit a worker-generated canonical column. This is the only adapter
+ * that turns untrusted worker data into a canonical write; all identity, layout, status, and
+ * mutation-revision checks still happen inside `CanonicalWorldStorage` at replacement time.
+ */
+export function commitWorldgenResult(
+  storage: CanonicalWorldStorage,
+  input: unknown,
+  options: WorldgenCommitOptions = {},
+): WorldgenCommitResult {
+  let result: WorldgenResultPayload;
+  try {
+    result = validateWorldgenResult(input);
+  } catch {
+    return { committed: false, reason: 'invalid-result' };
+  }
+  if (options.expectedSeed !== undefined && result.seed !== options.expectedSeed) {
+    return { committed: false, reason: 'seed-mismatch' };
+  }
+  if (
+    result.serializedColumn === undefined ||
+    result.columnStatus === undefined ||
+    result.columnRevision === undefined
+  ) {
+    return { committed: false, reason: 'invalid-result' };
+  }
+  return storage.commitGeneratedColumn(result.serializedColumn, {
+    chunkX: result.columnX,
+    chunkZ: result.columnZ,
+    generationRevision: result.columnRevision,
+    status: result.columnStatus,
+  });
 }
 
 /**
@@ -163,12 +247,16 @@ export function processWorldgenRequest(payload: WorldgenRequestPayload): Worldge
  */
 export function processWorldgenColumnRequest(payload: WorldgenRequestPayload): WorldgenResultPayload {
   const request = validateWorldgenRequest(payload);
+  if (request.worldgenVersion !== TERRAIN_GENERATION_VERSION) {
+    throw new Error(`WorldgenColumnRequest: worldgenVersion must be ${TERRAIN_GENERATION_VERSION}`);
+  }
   if (
     request.sectionCount === undefined ||
     request.minSectionY === undefined ||
-    request.worldgenVersion !== TERRAIN_GENERATION_VERSION
+    request.columnStatus !== ChunkStatus.Empty ||
+    request.columnRevision !== 0
   ) {
-    throw new Error('WorldgenColumnRequest: production layout and current worldgenVersion are required');
+    throw new Error('WorldgenColumnRequest: current layout and empty revision-0 column are required');
   }
   const registry = createDefaultBlockRegistry();
   const stateRegistry = createDefaultBlockStateRegistry();
@@ -188,6 +276,8 @@ export function processWorldgenColumnRequest(payload: WorldgenRequestPayload): W
     stage: request.stage,
     generationVersion: WORLDGEN_PROTOCOL_VERSION,
     worldgenVersion: TERRAIN_GENERATION_VERSION,
+    columnStatus: request.columnStatus,
+    columnRevision: request.columnRevision,
     serializedColumn: column.serialize(),
   };
 }
@@ -334,6 +424,8 @@ export class WorldgenWorkerClient {
       request.seed === result.seed &&
       request.stage === result.stage &&
       request.worldgenVersion === result.worldgenVersion &&
+      request.columnStatus === result.columnStatus &&
+      request.columnRevision === result.columnRevision &&
       (request.sectionCount === undefined ||
         result.serializedColumn?.sectionCount === request.sectionCount) &&
       (request.minSectionY === undefined ||
