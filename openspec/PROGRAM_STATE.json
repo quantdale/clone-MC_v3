@@ -6,9 +6,9 @@
   "currentChangeStatus": "ACTIVE",
   "lastCompletedChange": "254-whole-codebase-performance-optimization",
   "nextChange": null,
-  "completedTasks": 17,
+  "completedTasks": 18,
   "totalTasks": 37,
-  "completionPercentage": 45.95,
+  "completionPercentage": 48.65,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": false,
@@ -16,8 +16,8 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "ec072ab26b2729539d45f60c56e4644c898c0e7a",
-  "lastCompletedTask": "255 task 17 complete: World and Game now use atomic section/chunk replacement with old-visible-group retention on partial construction failure, exact-once disposal for optional/stale/unload/context-loss resources, context-loss update gating, and resident remesh requeue after restore; focused ownership/streaming 41/41 and full unit 4494 + 1 skipped pass.",
-  "nextExactAction": "Begin task 18: prove upload p95 budget and no burst upload under worker completion storms.",
+  "lastCompletedTask": "255 task 18 complete: deterministic GpuUploadScheduler completion-storm evidence drains 128 mesh-ready records FIFO without loss, caps every frame at 4 uploads and the configured byte limit, and proves scheduler-level actual-upload p95 <= 1.5ms; focused scheduler 5/5 and full unit 4495 + 1 skipped pass.",
+  "nextExactAction": "Begin task 19: implement deterministic visibility-/movement-/simulation-aware priority ordering with canonical tie breaks.",
   "blockers": [
     "Current-tree npm run test:e2e timed out at 1200 seconds after 50/51 tests completed without an assertion failure; the remaining long visual/resource test did not finish."
   ],
@@ -2430,9 +2430,9 @@
     {
       "change": "255-high-performance-voxel-engine",
       "status": "ACTIVE",
-      "unitTests": 4494,
+      "unitTests": 4495,
       "e2eTests": 51,
-      "note": "Tasks 1-17 complete (17/37, 45.95%). Task 17 adds atomic section/chunk replacement with old-visible-group retention on partial construction failure, exact-once disposal for optional/stale/unload/context-loss resources, context-loss update gating, and resident remesh requeue after restore. Focused ownership/streaming suites pass 41/41; full unit gate passes 4494 + 1 skipped; typecheck/lint/build/validate-state/reviewed-file-audit pass. The performance baseline emitted an environment-sensitive withinBudget=false wall-clock diagnostic without test failure. Current-tree E2E reached 50/51 before the 1200-second timeout; prior clean 51/51 evidence remains historical only. Next exact action is task 18 upload p95 budget and worker-completion-storm certification."
+      "note": "Tasks 1-18 complete (18/37, 48.65%). Task 18 adds deterministic 128-record GpuUploadScheduler completion-storm evidence: FIFO drain without loss, per-frame byte/count caps, and scheduler-level actual-upload p95 <= 1.5ms; focused scheduler tests pass 5/5. Full unit gate passes 4495 + 1 skipped; typecheck/lint/build/validate-state/reviewed-file-audit pass. This is not a browser/GPU p95 claim. The performance baseline emitted an environment-sensitive withinBudget=false wall-clock diagnostic without test failure. Current-tree E2E reached 50/51 before the 1200-second timeout; prior clean 51/51 evidence remains historical only. Next exact action is task 19 deterministic visibility/movement/simulation-aware priority ordering."
     }
   ],
   "publicationHistory": [

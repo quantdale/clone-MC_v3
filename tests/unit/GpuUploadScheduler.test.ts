@@ -113,6 +113,54 @@ describe('GpuUploadScheduler', () => {
     expect(retried).toEqual(['first', 'second']);
   });
 
+  it('keeps p95 upload work within budget during a worker completion storm', () => {
+    const first = record('storm-0');
+    const queue = new MeshReadyQueue({ maxRecords: 256, maxBytes: first.byteLength * 256 });
+    const totalRecords = 128;
+    for (let i = 0; i < totalRecords; i++) {
+      expect(queue.enqueue(record(`storm-${i}`)).accepted).toBe(true);
+    }
+
+    let now = 0;
+    const maxBytes = first.byteLength * 4;
+    const maxMillis = 1.5;
+    const scheduler = new GpuUploadScheduler(queue, {
+      maxBytes,
+      maxMillis,
+      maxUploadsPerFrame: 8,
+      estimatedUploadMillis: 0.25,
+    }, () => now);
+    const uploaded: string[] = [];
+    const actualFrameMillis: number[] = [];
+    const frameBytes: number[] = [];
+    const frameCounts: number[] = [];
+
+    while (queue.size > 0) {
+      const frame = scheduler.runFrame((item) => {
+        uploaded.push(item.requestId);
+        now += 0.25;
+        return { uploadedBytes: item.byteLength };
+      });
+      actualFrameMillis.push(frame.actualMillis);
+      frameBytes.push(frame.uploadedBytes);
+      frameCounts.push(frame.uploadedCount);
+      expect(frame.uploadedBytes).toBeLessThanOrEqual(maxBytes);
+      expect(frame.uploadedCount).toBeLessThanOrEqual(4);
+      expect(frame.actualMillis).toBeLessThanOrEqual(maxMillis);
+    }
+
+    const sortedMillis = [...actualFrameMillis].sort((a, b) => a - b);
+    const p95 = sortedMillis[Math.min(sortedMillis.length - 1, Math.floor(sortedMillis.length * 0.95))] ?? 0;
+    expect(p95).toBeLessThanOrEqual(maxMillis);
+    expect(Math.max(...frameBytes)).toBeLessThanOrEqual(maxBytes);
+    expect(Math.max(...frameCounts)).toBeLessThanOrEqual(4);
+    expect(uploaded).toEqual(Array.from({ length: totalRecords }, (_, i) => `storm-${i}`));
+    expect(scheduler.metrics()).toMatchObject({
+      totalUploadedCount: totalRecords,
+      totalUploadedBytes: first.byteLength * totalRecords,
+    });
+  });
+
   it('rejects invalid budgets and executor byte reports', () => {
     const { queue } = queueWith('one');
     for (const config of [
