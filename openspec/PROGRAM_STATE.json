@@ -2470,6 +2470,11 @@
       "head": "d2c16d478e2c78ad9c1c0d9593cec9fb86f5b7c1",
       "at": "2026-08-29T23:08:00Z",
       "note": "Change 255 task 11 checkpoint published normally to origin/main: delayed validated worker replacement/unload late-result regression, canonical border/light/edit coverage, bounded saturation/spawn progress evidence, task state synchronized at 11/37, and validate-state/typecheck/lint/unit/build passing; prior E2E remains 51/51."
+    },
+    {
+      "head": "f1060ec",
+      "at": "2026-08-29T23:45:00Z",
+      "note": "Change 255 task 13 implementation checkpoint: validated worker status/revision identity, canonical mutation revision tracking, atomic stale-safe worldgen commit, focused WorkerWorldgen 23/23, full unit 4478 passed + 1 skipped, typecheck/lint/build/validate-state PASS. Current-tree E2E timed out after 50/51 tests at 1200 seconds; no E2E pass claim is made."
     }
   ],
   "releaseAuthority": {
