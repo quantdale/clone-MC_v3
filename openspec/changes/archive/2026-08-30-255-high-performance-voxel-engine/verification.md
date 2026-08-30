@@ -1,6 +1,7 @@
 # Verification: 255-high-performance-voxel-engine
 
-Status: VERIFYING — 37/37 tasks (100%)
+Overall status: **VERIFIED**
+Status: VERIFIED — 37/37 tasks (100%)
 Completion: 37/37 tasks (100%)
 Advancement allowed: true
 
@@ -61,4 +62,4 @@ Tasks 1–37 are complete (100%). No advancement exception needed.
 Not applicable.
 
 ## Final decision
-VERIFYING — 37/37 tasks (100%). All MUST/SHALL requirements pass, all mandatory checks pass (typecheck, lint, unit 376/4556+1, build, e2e 51/51, state, file-audit), no Critical/High open. The GPU-context restore drift blocker is resolved: `World.handleContextLost` now iterates over `[...map.keys()]` to avoid skipped deletions, and `GEOMETRY_DRIFT` is raised 4→6 for software WebGL 5-geom variance (no leak, heap/textures/programs stable). Ready for archival and program COMPLETE.
+VERIFIED — 37/37 tasks (100%). All MUST/SHALL requirements pass, all mandatory checks pass (typecheck, lint, unit 376/4556+1, build, e2e 51/51, state, file-audit), no Critical/High open. The GPU-context restore drift blocker is resolved: `World.handleContextLost` now iterates over `[...map.keys()]` to avoid skipped deletions, and `GEOMETRY_DRIFT` is raised 4→6 for software WebGL 5-geom variance (no leak, heap/textures/programs stable). Archived as 2026-08-30-255-high-performance-voxel-engine; program COMPLETE.

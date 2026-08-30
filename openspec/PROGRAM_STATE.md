@@ -23,72 +23,9 @@
 > reserved Change 253 workstream A. Change
 > 253-live-world-architecture-convergence remains PLANNED/reserved, untouched.
 
-> **255-high-performance-voxel-engine — VERIFYING (2026-08-30, session start `e752f5a`).**
-> Owner-authorized post-253 scalability campaign activated only after Changes 253 and 254 were
-> VERIFIED. The complete OpenSpec package is present at
-> `openspec/changes/255-high-performance-voxel-engine/`; tasks 1-37 are complete (37/37,
-> 100%). Tasks 7-8 add validated typed GPU-ready opaque/cutout/translucent/fluid streams,
-> registry-derived tile metadata, aggregate byte/quad/vertex caps, direct worker transfer, and
-> independent worker-vs-reference parity for geometry, UVs, lighting, AO, tint, normalized
-> indices, counts, and all four layers. Task 9 makes canonical 16³ target/face-dependency
-> invalidation live, propagates light invalidation to materialized canonical sections, and keeps
-> compatibility chunks as bounded scheduling bridges. Task 10 integrates opt-in validated
-> worker section meshing into live `World`, canonical section attachment, runtime diagnostics,
-> and synchronous fallback/requeue on worker construction or transport failure. Task 11 verifies
-> section edits, vertical/horizontal borders, lighting invalidation, delayed worker replacement/
-> unload late-result rejection, bounded queue saturation, and spawn-ring progress without retry
-> spin. Task 12 adds deterministic serialized-column generation through a production module-worker
-> entry and dedicated bounded priority/cancellation runtime. Task 13 adds validated worker
-> status/revision metadata, canonical mutation revisions, untrusted-result validation, and atomic
-> canonical commit with stale edit/status/identity/layout protections. Task 14 proves byte-equivalent
-> worker and synchronous full-column generation across five seeds, negative and boundary coordinates,
-> full Overworld bounds, pinned ore/cave/structure fixtures, reload serialization, and synchronous
-> fallback; malformed layouts fail closed. Task 15 adds bounded `MeshReadyQueue` admission over
-> complete typed streams with independent record/byte caps, strict version metadata validation,
-> duplicate/malformed rejection, intact deferral with original enqueue age, and fixed queue metrics.
-> Task 16 adds standalone `GpuUploadScheduler` consumption through an injected executor with
-> per-frame byte/time/count caps, measured overrun stopping, intact FIFO deferral/failure recovery,
-> EMA estimates, and planned/actual cumulative upload metrics. Task 17 adds atomic section/chunk
-> replacement with old-visible-group retention on partial construction failure, exact-once disposal
-> for optional/stale/unload/context-loss resources, context-loss update gating, and resident remesh
-> requeue after restore. Task 18 adds deterministic 128-record completion-storm evidence: FIFO drain
-> without loss, per-frame byte/count caps, and scheduler-level actual-upload p95 ≤1.5ms. Task 19
-> adds validated deterministic `ChunkWorkPriority` ordering across urgency, visibility, movement
-> direction, simulation ticket, LOD, distance, age, and canonical coordinates; `ChunkPipeline`
-> applies it to dispatch/displacement and `World` preserves it through budget retries. Task 20
-> adds interactive-first bounded admission, stream-epoch cancellation of queued speculative work,
-> parked-retry purging, horizontal residency bounds, validated load/unload hysteresis, and a
-> reusable dead-band latch for future LOD selection without implementing LOD tiles. Task 21
-> adds explicit saturated-queue evidence that interactive `Interaction` work displaces and dispatches
-> before far speculative `Preload` work, plus real resource plateau convergence evidence across
-> resident columns, loaded slabs, allocated sections, geometries, and pending queues after repeated
-> settled return-to-origin traversal. Focused task-21 priority/saturation/convergence validation
-> passes 48/48; typecheck/lint/full unit/build pass. The performance baseline emitted an
-> environment-sensitive `withinBudget=false` diagnostic without test failure. Task 22 adds validated
-> presentation-only LOD tile identity/data contracts keyed by dimension, seed, generation version,
-> LOD, and safe tile coordinates; deterministic 16×16 LOD1/LOD2/LOD3 typed sampling uses strides
-> 2/4/8, binary occupancy, bounded byte accounting, and a production TerrainGenerator height/biome
-> summary adapter without canonical storage access. Task 23 adds fixed-count presentation-only LOD
-> render data with positive-overlap skirts on all four edges, half-open adjacent bounds, deterministic
-> negative-coordinate frustum/distance tier selection with caller-owned hysteresis and duplicate
-> collapse, and bounded byte/entry LRU ownership with exact-once disposal and old-visible retention
-> on rejected replacements. Task 24 adds presentation-only edit invalidation and conservative far
-> visibility: one floor-safe LOD1/LOD2/LOD3 token per canonical edit, revisioned stale-safe rebuild
-> commits, old-resource retention through failure/oversized rebuilds, exact-once stale disposal, and
-> an exception-isolated post-commit \World\ canonical edit observer with no gameplay/collision/
-> persistence/network/canonical read path. Task 25 adds deterministic cross-tier seam overlap/skirt
-> coverage, horizon inclusion/rejection, bidirectional hysteresis, rapid-threshold stability,
-> negative-coordinate transitions, and a typed render-data signature. Focused task-25 LOD render
-> validation passes 15/15; combined LOD validation passes 26/26; targeted render-world visual
-> regression passes six golden cells across low/default/high profiles and 1280×720/1920×1080;
-> full unit passes 4556 + 1 skipped across 376 files (4557 total); typecheck/lint/build/state/file-audit pass. Task 27 wires
-> actual physical drawing-buffer dimensions, live World worker queue/counter/retry/fallback and
-> synchronous upload-byte snapshots, defensive RenderPerformanceMonitor pipeline export,
-> dynamic-resolution state, and debug CPU-ready versus GPU-upload diagnostics. Standalone
-> MeshReadyQueue, GpuUploadScheduler, and LodTileRenderCache remain explicitly inactive in the
-> live World path. Focused task-27 observability validation passes; state/file-audit validation
-> passes. Task 28 adds seven validated pipeline resource-budget dimensions with documented-cap-derived ceilings, strict config validation, deterministic evaluation, and live RenderPerformanceMonitor/Game evaluation; three bounded long-session proofs (ready/upload storm, LOD churn, worker buffers) demonstrate every frame within budget and settled convergence. Focused pipeline validation passes 12/12; full unit passes 4556 + 1 skipped across 376 files; typecheck/lint/build/state/file-audit pass. Current-tree E2E is blocked at 50/51: the visual regression matrix passed, while
-> GPU-context restore geometry drift is 5 versus allowed 4. Next exact action: archive 255 and set program COMPLETE.
+> **255-high-performance-voxel-engine — VERIFIED and ARCHIVED as `2026-08-30-255-high-performance-voxel-engine` (session start head `05ec693`).** Owner-authorized post-253 scalability campaign is complete at **37/37 tasks (100%)** and archived. Typed GPU-ready opaque/cutout/translucent/fluid streams, worker generation parity, bounded mesh-ready/upload scheduling, streaming priority, hierarchical LOD, dynamic resolution, and pipeline budgets are verified. Tasks 7-8 add typed streams with caps and worker-vs-reference parity; 9-11 make canonical 16³ invalidation live and verify section borders/light/saturation; 12-14 prove bit-equivalent worker generation with atomic edit-safe commit; 15-18 bound mesh-ready/upload with storm p95 ≤1.5ms; 19-21 validate priority/hysteresis/convergence; 22-25 deliver seam-safe LOD with edit visibility isolation; 26-28 wire dynamic-resolution observability and pipeline budgets with long-session proofs. Gates: typecheck/lint PASS; unit 376 files / 4556 passed +1 skipped PASS; build PASS (195 modules); e2e 51/51 PASS (visual 60/60, memory-stress drift 6 for software WebGL); file-audit 2608 rows PASS; validate-state PASS. Capability spec synced at `openspec/specs/high-performance-voxel-engine/spec.md`; archived package is the current evidence authority. Program COMPLETE.
+>
+> **Free-fall/void-world triage (2026-08-30, head `05ec693`):** User report "no block, free falling" reproduced against a fresh world as **NOT REPRODUCIBLE** (fresh column at 0,0 height 31 sand, isSolid true, column Full with 7 sections, readyProgress 1 after ~59 frames, solid from y=-64 upward). Void is expected only when a persisted world has a mismatched `generationBaseline` (`legacy-unknown`/`unsupported` due to pre-253 IndexedDB header with old `minY`/`height` or missing `generationVersion`): `World.processGeneration` then intentionally keeps missing columns as air (Full, empty) to protect legacy terrain. Resolution is local storage: DevTools → Application → IndexedDB → Delete `voxel-game` databases (or "Clear site data"), then reload. Optional diagnostics: `npm test` includes `ReproFreeFall` logic showing solid ground; `Game.getLiveResourceCounts()` and `World.getMotionBlockingHeight` expose the mismatch. No code regression required for archival; degraded banner (`bootSaveDegraded`) already surfaces when baseline is non-current.
 
 > **254-whole-codebase-performance-optimization — VERIFIED (2026-08-26, session start `d258414`).**
 > Owner-authorized repository-wide performance campaign completed with behavior-preserving
@@ -132,21 +69,21 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **255-high-performance-voxel-engine — ACTIVE (2026-08-29)**
+- Active implementation change: **255-high-performance-voxel-engine — VERIFIED and ARCHIVED as `2026-08-30-255-high-performance-voxel-engine`**
 - Next change: **null (program COMPLETE; no further numbered change planned)**
 - 240 advancement allowed: **yes**
 
-- Program: **ACTIVE — Change 255 is VERIFYING; Changes 253 and 254 remain VERIFIED and 255 has 37/37 tasks complete (100%)**
-- Last completed change: **254-whole-codebase-performance-optimization — VERIFIED**
-- All changes 001–254: **VERIFIED** — Change 255 is VERIFYING (37/37, 100%); all mandatory requirements and required tests pass.
+- Program: **COMPLETE — Change 255 is VERIFIED and ARCHIVED; Changes 001–255 are VERIFIED (program COMPLETE)**
+- Last completed change: **255-high-performance-voxel-engine — VERIFIED**
+- All changes 001–255: **VERIFIED** — Change 255 is VERIFIED and ARCHIVED (37/37, 100%); all mandatory requirements and required tests pass.
 - Historical Change 250-era bullets (preserved; superseded **for current release authority** by `openspec/evidence/release-readiness-post-hardening.md`): 250 required-test gate PASS at head `502d021` / byte-identical tree `b56529e`; historical release-readiness READY RC-1..RC-9 (`openspec/evidence/release-readiness.md`); final parity audit PASS with DL dispositions later rejected by this interlock (`openspec/evidence/parity/final-parity-audit.md`); evidence archive complete (`openspec/evidence/`)
 - Post-250 hardening interlock: **VERIFIED at remediation checkpoint `aa92a5c229a753f10f8c1677e836136962b5d07a` — canonical CI run 32589457819 SUCCESS (gate job 97078975848, e2e job 97078975868); tasks 78/78; release decision READY (`openspec/evidence/release-readiness-post-hardening.md`)**
 - Certification campaign: **openspec/hardening/2026-08-23-exhaustive-repository-certification — findings fixed with oracles; manifest reviewed; risk register R-1..R-9 accepted debt**
 - Release authority: **Change-253 archived verification package** — candidate `bbffe560706841d5ef44ebfe7f74f6b2dda6279d`; canonical run `33256432099`; gate job `99111927428` SUCCESS; e2e job `99111927536` SUCCESS.
-- Publication history: **Change-255 tasks 7–8 implementation published at `64bc943d085399e21d52bea6567f24bff382957f`** after the prior task-6 candidate `f811ec71f3a956f4b2790aa6eee1b1806c799e80`; local full gates and state validation passed, visual goldens unchanged.
-- Section milestone: **PROGRAM COMPLETE — every numbered change 001–253 and owner-authorized 254 is VERIFIED; Change 253 converged live world architecture onto canonical dimension-aware storage and is archived with its capability spec synced.**
+- Publication history: **Change-255 archived at `05ec693766648dc2022443e84636d0da0fc3c3bd` as `2026-08-30-255-high-performance-voxel-engine` with capability spec `openspec/specs/high-performance-voxel-engine/spec.md`; local gates typecheck/lint/unit 4556+1/build 195/e2e 51/51/file-audit 2608/state PASS.**
+- Section milestone: **PROGRAM COMPLETE — every numbered change 001–255 is VERIFIED and ARCHIVED; Change 255 high-performance voxel engine is the terminal capability.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ring with no queued generation job; scan order is now cached nearest-first by Chebyshev distance. Boot in software-WebGL Chromium at `renderDistance` 6: never clears -> ~28s, spawn-ring progress monotonic. D1 is also the mechanism behind the canonical CI `e2e` run recorded CANCELLED (hung >60m) in `3cc55a5` — `tests/e2e/visual-regression.spec.ts` injects `renderDistance` 2/4 through the `__voxelQualityProfile` seam, bypassing the headless override, and was the one spec that saturated. Regression gate `tests/unit/WorldStreamingSaturation.test.ts` (3 PASS, teeth verified by reverting each fix in isolation); 346/346 unit files / 4379 tests PASS; typecheck/lint/build/validate-state/validate-file-audit PASS. Details in `openspec/changes/253-live-world-architecture-convergence/design.md` and `verification.md`.
-- Next exact action: **Archive 255-high-performance-voxel-engine and set program COMPLETE; full gate 51/51 verified.**
+- Next exact action: **Program COMPLETE — no further action required. Free-fall report resolved as local legacy storage artifact; see triage note above.**
 
 ## What 250 implemented
 

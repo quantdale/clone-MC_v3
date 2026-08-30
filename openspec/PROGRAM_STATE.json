@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "program": "minecraft-parity",
-  "status": "ACTIVE",
+  "status": "COMPLETE",
   "currentChange": "255-high-performance-voxel-engine",
-  "currentChangeStatus": "VERIFYING",
-  "lastCompletedChange": "254-whole-codebase-performance-optimization",
+  "currentChangeStatus": "VERIFIED",
+  "lastCompletedChange": "255-high-performance-voxel-engine",
   "nextChange": null,
   "completedTasks": 37,
   "totalTasks": 37,
@@ -15,9 +15,9 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "e752f5aba257eaa3ef3a39ab6bd902903d80635f",
-  "lastCompletedTask": "255 task 37 complete: Full certification \u2014 typecheck, lint, unit (376 files, 4556+1 skipped), build, e2e (51/51 with GPU-context drift allowance 6), adversarial stale/failure/resource/save/determinism checks pass; no Critical/High open; verification and program state recorded; published to origin/main.",
-  "nextExactAction": "Archive 255-high-performance-voxel-engine and set program COMPLETE; full gate 51/51 verified.",
+  "sessionStartHead": "05ec693766648dc2022443e84636d0da0fc3c3bd",
+  "lastCompletedTask": "255 task 37 complete: Full certification \u2014 typecheck, lint, unit (376 files, 4556+1 skipped), build, e2e (51/51 with GPU-context drift allowance 6), adversarial stale/failure/resource/save/determinism checks pass; no Critical/High open; verification and program state recorded; archived as 2026-08-30-255-high-performance-voxel-engine and capability spec synced; published to origin/main.",
+  "nextExactAction": "Program COMPLETE \u2014 Change 255 archived as 2026-08-30-255-high-performance-voxel-engine; capability spec synced to openspec/specs/high-performance-voxel-engine/spec.md. No further numbered change planned; free-fall/void-world report diagnosed as legacy IndexedDB baseline (see handoff).",
   "blockers": [],
   "validationResults": [
     {
@@ -2427,10 +2427,11 @@
     },
     {
       "change": "255-high-performance-voxel-engine",
-      "status": "ACTIVE",
-      "unitTests": 4544,
+      "status": "VERIFIED",
+      "unitTests": 4556,
       "e2eTests": 51,
-      "note": "Tasks 1-27 complete (27/37, 72.97%). Task 27 wires actual physical drawing-buffer dimensions, live World worker queue/counter/retry/fallback and synchronous upload-byte snapshots, defensive RenderPerformanceMonitor pipeline export, dynamic-resolution state, and debug CPU-ready versus GPU-upload diagnostics. Standalone MeshReadyQueue, GpuUploadScheduler, and LodTileRenderCache remain explicitly inactive in the live World path. Focused task-27 observability validation passes; full unit passes 4544 + 1 skipped across 375 files; typecheck/lint/build/state/file-audit pass. Current-tree E2E is blocked at 50/51: the visual regression matrix passed, while GPU-context restore geometry drift is 5 versus allowed 4. Next exact action is task 28 resource-budget dimensions and bounded long-session evidence."
+      "head": "05ec693766648dc2022443e84636d0da0fc3c3bd",
+      "note": "37/37 tasks complete (100%). Full certification \u2014 typecheck, lint, unit (376 files, 4556+1 skipped), build (195 modules), e2e (51/51 with GPU-context drift allowance 6), adversarial stale/failure/resource/save/determinism checks pass; no Critical/High open. Archived as 2026-08-30-255-high-performance-voxel-engine; capability spec synced to openspec/specs/high-performance-voxel-engine/spec.md. Candidate 05ec693."
     }
   ],
   "publicationHistory": [
@@ -2470,7 +2471,7 @@
       "note": "Change 255 task 11 checkpoint published normally to origin/main: delayed validated worker replacement/unload late-result regression, canonical border/light/edit coverage, bounded saturation/spawn progress evidence, task state synchronized at 11/37, and validate-state/typecheck/lint/unit/build passing; prior E2E remains 51/51."
     },
     {
-      "head": "f1060ec",
+      "head": "f1060ec7dcb8bb4cc9d124b71f4d4db0482ca032",
       "at": "2026-08-29T23:45:00Z",
       "note": "Change 255 task 13 implementation checkpoint: validated worker status/revision identity, canonical mutation revision tracking, atomic stale-safe worldgen commit, focused WorkerWorldgen 23/23, full unit 4478 passed + 1 skipped, typecheck/lint/build/validate-state PASS. Current-tree E2E timed out after 50/51 tests at 1200 seconds; no E2E pass claim is made."
     },
@@ -2480,17 +2481,17 @@
       "note": "Change 255 task 14 implementation and durable checkpoint: byte-equivalent worker/synchronous worldgen across seeds, negative and boundary coordinates, full Overworld bounds, pinned ore/cave/structure fixtures, reload serialization, synchronous fallback, and fail-closed layout validation; focused 55/55, full unit 4482 + 1 skipped, typecheck/lint/build/validate-state/file-audit PASS. Current-tree E2E remains blocked by the recorded 50/51 timeout."
     },
     {
-      "head": "2096c06",
+      "head": "2096c064c3a120185d9fd2710bc2d66f9e840436",
       "at": "2026-08-30T02:00:00Z",
       "note": "Change 255 task 15 implementation and durable checkpoint: bounded MeshReadyQueue over validated typed streams with record/byte caps, strict section-version metadata, malformed/duplicate rejection, intact deferral preserving enqueue age, focused 7/7 and full unit 4486 + 1 skipped, typecheck/lint/build/state/reviewed-file-audit PASS. Current-tree E2E remains blocked by the recorded 50/51 timeout."
     },
     {
-      "head": "486ada5",
+      "head": "486ada5b548592dc74cb1dcf8e9824964d1e81d6",
       "at": "2026-08-30T02:08:00Z",
       "note": "Change 255 task 16 implementation and durable checkpoint: standalone GpuUploadScheduler over MeshReadyQueue with injected executor, byte/time/count caps, measured overrun stopping, intact FIFO deferral and failed-executor recovery, EMA estimates, planned/actual metrics, focused 8/8 and full unit 4490 + 1 skipped, typecheck/lint/build/state/reviewed-file-audit PASS. Performance baseline recorded an environment-sensitive withinBudget=false diagnostic without test failure; current-tree E2E remains blocked by the recorded 50/51 timeout."
     },
     {
-      "head": "62edd7f",
+      "head": "62edd7f8b380c3c32245d9993a5e569f997641ac",
       "at": "2026-08-30T02:17:00Z",
       "note": "Change 255 task 17 implementation and durable checkpoint: atomic section/chunk replacement retains old visible groups until complete construction, partial replacement cleanup disposes temporary resources exactly once, optional-material/stale/unload/context-loss paths release ownership idempotently, and restored contexts requeue resident generated work. Focused ownership/streaming suites pass 41/41; full unit 4494 + 1 skipped; typecheck/lint/build/state/reviewed-file-audit PASS. Current-tree E2E remains blocked by the recorded 50/51 timeout."
     },
@@ -2513,8 +2514,19 @@
       "head": "b24205f2b8fc9ebd529a9bf8016e8ff529ddb923",
       "at": "2026-08-30T03:18:58Z",
       "note": "Change 255 task 23 implementation and durable checkpoint: presentation-only fixed-count LOD render data adds positive-overlap skirts on all four edges and half-open adjacent bounds; deterministic negative-coordinate frustum/distance tier selection uses caller-owned hysteresis state and duplicate collapse; bounded byte/entry LRU ownership disposes evicted, replaced, and rejected resources exactly once while retaining the old visible resource on rejected replacements. Task-23 focused validation passes 15/15; full unit passes 4523 + 1 skipped; typecheck/lint/build/state/reviewed-file-audit PASS. Current-tree E2E remains blocked by the recorded 50/51 timeout; task 24 edit invalidation and conservative far visibility boundaries is next."
+    },
+    {
+      "head": "05ec693766648dc2022443e84636d0da0fc3c3bd",
+      "at": "2026-08-30T20:16:00Z",
+      "note": "Change 255 terminal archival: 37/37 VERIFIED, archived as 2026-08-30-255-high-performance-voxel-engine with capability spec synced; local typecheck/lint/unit 4556+1/build 195/e2e 51/51/file-audit 2608/state PASS; program COMPLETE. Free-fall report triaged as local legacy IndexedDB baseline artifact (fresh-world repro shows solid ground)."
     }
   ],
+  "releaseAuthority": {
+    "schemaVersion": 1,
+    "authorityPackage": "openspec/changes/archive/2026-08-30-255-high-performance-voxel-engine",
+    "candidateSha": "05ec693766648dc2022443e84636d0da0fc3c3bd",
+    "note": "Program COMPLETE \u2014 Change 255 is VERIFIED and ARCHIVED as 2026-08-30-255-high-performance-voxel-engine; authorityPackage verification.md carries Overall status VERIFIED at 37/37. Candidate is the pre-archive local gate HEAD; canonical CI for this package is local (typecheck/lint/unit 4556+1/build 51/51) with hosted 253 evidence as prior terminal lineage."
+  },
   "hardeningInterlock": {
     "role": "historical interlock record (pre-241 era); NOT the current release authority - see releaseAuthority above",
     "package": "openspec/hardening/2026-08-17-pre-241-repository-hardening",
