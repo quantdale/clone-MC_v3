@@ -32,6 +32,7 @@ function makeWorld(renderDistance = 1): World {
 
 type Plateau = {
   residentColumns: number;
+  loadedChunks: number;
   allocatedSections: number;
   sectionGeometries: number;
   pendingGeneration: number;
@@ -43,6 +44,7 @@ function snapshot(world: World): Plateau {
   const stats = world.getStats();
   return {
     residentColumns: stats.residentColumns,
+    loadedChunks: stats.loadedChunks,
     allocatedSections: stats.allocatedSections,
     sectionGeometries: stats.geometries,
     pendingGeneration: stats.pendingGeneration,
@@ -64,6 +66,8 @@ function settle(world: World, x: number, z: number): Plateau {
     if (
       stable &&
       current.residentColumns === last.residentColumns &&
+      current.loadedChunks === last.loadedChunks &&
+      current.allocatedSections === last.allocatedSections &&
       current.sectionGeometries === last.sectionGeometries
     ) {
       stableFrames++;
@@ -124,5 +128,6 @@ describe('real canonical resource plateau', () => {
 
     const final = settled.slice(-2).map((s) => s.sectionGeometries);
     expect(Math.max(...final) - Math.min(...final)).toBeLessThanOrEqual(0);
+    expect(settled.at(-1)).toEqual(settled.at(-2));
   }, 120_000);
 });

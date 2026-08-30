@@ -34924,11 +34924,13 @@
       "runtimeReachability": "",
       "imports": [],
       "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
+      "testEvidence": [
+        "npx vitest run tests/unit/ChunkPipeline.test.ts tests/unit/WorldStreamingSaturation.test.ts tests/unit/WorldRealResourcePlateau.test.ts"
+      ],
+      "riskAreas": ["interactive-starvation", "determinism", "queue-boundedness"],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "reviewNotes": "Task 21 regression coverage adds saturated interactive-over-Preload displacement/dispatch proof and preserves in-flight semantics; focused priority/saturation/convergence suite passes 48/48.",
       "status": "audited"
     },
     {
@@ -42241,11 +42243,13 @@
       "runtimeReachability": "test-and-documentation",
       "imports": [],
       "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
+      "testEvidence": [
+        "npx vitest run tests/unit/ChunkPipeline.test.ts tests/unit/WorldStreamingSaturation.test.ts tests/unit/WorldRealResourcePlateau.test.ts"
+      ],
+      "riskAreas": ["resource-convergence", "bounded-residency", "geometry-lifecycle"],
       "findingIds": [],
       "disposition": "TEST_ONLY",
-      "reviewNotes": "Focused task-103 resource plateau regression over teleport churn.",
+      "reviewNotes": "Task 21 real-mesher plateau regression tracks resident columns, loaded slabs, allocated sections, geometries, and pending queues; repeated settled return-to-origin snapshots are equal. Focused priority/saturation/convergence suite passes 48/48.",
       "status": "audited"
     },
     {

@@ -31,7 +31,7 @@
 ## Campaign F — streaming intelligence
 - [x] 19. Implement deterministic visibility-/movement-/simulation-aware priority ordering with canonical tie breaks.
 - [x] 20. Add starvation prevention, load/unload hysteresis, LOD hysteresis, and bounded queue admission under high render distance/teleport churn.
-- [ ] 21. Verify near interactive work outranks speculative far generation and that resource counts converge after traversal.
+- [x] 21. Verify near interactive work outranks speculative far generation and that resource counts converge after traversal.
 
 ## Campaign G — hierarchical far-terrain LOD
 - [ ] 22. Define validated LOD tile identity/data contracts and deterministic LOD1/LOD2/LOD3 sampling from seed/version.

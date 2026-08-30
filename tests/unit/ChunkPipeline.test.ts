@@ -530,6 +530,22 @@ describe("ChunkPipeline — queue dispatch semantics", () => {
     expect(pipeline.dequeue("generate")?.key).toBe(`${cap},0,1`);
   });
 
+  it("dispatches interactive work before far speculative generation under saturation", () => {
+    const pipeline = new ChunkPipeline(() => 500);
+    const cap = CHUNK_PIPELINE_QUEUE_CAPS.generate;
+    for (let i = 0; i < cap; i++) {
+      pipeline.register(100 + i, 0, 100);
+      const far = createChunkWorkPriority(ChunkStreamPriority.Preload, 2, 2, 1, 0, 12);
+      expect(pipeline.enqueue("generate", 100 + i, 0, 100, ChunkStreamPriority.Preload, far)).toBe(true);
+    }
+
+    pipeline.register(0, 0, 0);
+    const interactive = createChunkWorkPriority(ChunkStreamPriority.Interaction, 0, 0, 0, 0, 2);
+    expect(pipeline.enqueue("generate", 0, 0, 0, ChunkStreamPriority.Interaction, interactive)).toBe(true);
+    expect(pipeline.takeDisplacedCount()).toBe(1);
+    expect(pipeline.dequeue("generate")?.key).toBe("0,0,0");
+  });
+
   it("preserves an explicit priority tuple when a dequeued job is requeued", () => {
     const pipeline = new ChunkPipeline(() => 100);
     pipeline.register(4, 0, 4);
