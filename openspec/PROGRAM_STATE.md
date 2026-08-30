@@ -26,8 +26,8 @@
 > **255-high-performance-voxel-engine — ACTIVE (2026-08-29, session start `93dbb092`).**
 > Owner-authorized post-253 scalability campaign activated only after Changes 253 and 254 were
 > VERIFIED. The complete OpenSpec package is present at
-> `openspec/changes/255-high-performance-voxel-engine/`; tasks 1-16 are complete (16/37,
-> 43.24%). Tasks 7-8 add validated typed GPU-ready opaque/cutout/translucent/fluid streams,
+> `openspec/changes/255-high-performance-voxel-engine/`; tasks 1-17 are complete (17/37,
+> 45.95%). Tasks 7-8 add validated typed GPU-ready opaque/cutout/translucent/fluid streams,
 > registry-derived tile metadata, aggregate byte/quad/vertex caps, direct worker transfer, and
 > independent worker-vs-reference parity for geometry, UVs, lighting, AO, tint, normalized
 > indices, counts, and all four layers. Task 9 makes canonical 16³ target/face-dependency
@@ -48,12 +48,15 @@
 > duplicate/malformed rejection, intact deferral with original enqueue age, and fixed queue metrics.
 > Task 16 adds standalone `GpuUploadScheduler` consumption through an injected executor with
 > per-frame byte/time/count caps, measured overrun stopping, intact FIFO deferral/failure recovery,
-> EMA estimates, and planned/actual cumulative upload metrics. Focused scheduler/queue tests pass
-> 8/8; full unit gate passes 4490 + 1 skipped; typecheck/lint/build/state/file-audit validation pass.
-> The performance baseline emitted an environment-sensitive `withinBudget=false` wall-clock
-> diagnostic without test failure. Current-tree E2E reached 50/51 before the 1200-second timeout;
-> prior clean 51/51 evidence remains historical only. Next exact action: task 17 atomic section
-> swaps and exact-once disposal/accounting; no advancement exception applies.
+> EMA estimates, and planned/actual cumulative upload metrics. Task 17 adds atomic section/chunk
+> replacement with old-visible-group retention on partial construction failure, exact-once disposal
+> for optional/stale/unload/context-loss resources, context-loss update gating, and resident remesh
+> requeue after restore. Focused ownership/streaming suites pass 41/41; full unit gate passes
+> 4494 + 1 skipped; typecheck/lint/build/state/file-audit validation pass. The performance baseline
+> emitted an environment-sensitive `withinBudget=false` wall-clock diagnostic without test failure.
+> Current-tree E2E reached 50/51 before the 1200-second timeout; prior clean 51/51 evidence remains
+> historical only. Next exact action: task 18 upload p95 budget and worker-completion-storm
+> certification; no advancement exception applies.
 
 > **254-whole-codebase-performance-optimization — VERIFIED (2026-08-26, session start `d258414`).**
 > Owner-authorized repository-wide performance campaign completed with behavior-preserving
@@ -101,7 +104,7 @@
 - Next change: **null (255 is the sole active post-terminal change; no later change may begin)**
 - 240 advancement allowed: **no (active change not yet verified)**
 
-- Program: **ACTIVE — Change 255 is in progress; Changes 253 and 254 remain VERIFIED and 255 has 16/37 tasks complete (43.24%)**
+- Program: **ACTIVE — Change 255 is in progress; Changes 253 and 254 remain VERIFIED and 255 has 17/37 tasks complete (45.95%)**
 - Last completed change: **254-whole-codebase-performance-optimization — VERIFIED**
 - All changes 001–254: **VERIFIED** — Change 255 is ACTIVE with its complete OpenSpec package and tasks 1–15 complete.
 - Historical Change 250-era bullets (preserved; superseded **for current release authority** by `openspec/evidence/release-readiness-post-hardening.md`): 250 required-test gate PASS at head `502d021` / byte-identical tree `b56529e`; historical release-readiness READY RC-1..RC-9 (`openspec/evidence/release-readiness.md`); final parity audit PASS with DL dispositions later rejected by this interlock (`openspec/evidence/parity/final-parity-audit.md`); evidence archive complete (`openspec/evidence/`)

@@ -303,6 +303,8 @@ export class World implements WorldAccess {
 
   /** GPU bytes attached this frame, fed to the monitor at end of update. */
   private uploadBytesThisFrame = 0;
+  /** Context-loss gate: no worker result or scene replacement may publish while lost. */
+  private contextLost = false;
   /** Optional observability feeder (audit 05); null keeps World headless. */
   private readonly monitor: WorldMonitorHandle | null;
 
@@ -896,6 +898,7 @@ export class World implements WorldAccess {
   // ── Streaming ──────────────────────────────────────────────────────────────
 
   update(_dt: number, playerChunkX: number, playerChunkZ: number): void {
+    if (this.contextLost) return;
     this.budgets.beginFrame();
     this.uploadBytesThisFrame = 0;
     this.ensureChunks(playerChunkX, playerChunkZ);
@@ -1927,26 +1930,33 @@ export class World implements WorldAccess {
   ): void {
     const meshes: THREE.Mesh[] = [];
     let triangles = 0;
-    for (const entry of entries) {
-      if (!entry.geometry) continue;
-      if (!entry.material) {
-        this.disposeGeometry(entry.geometry);
-        continue;
+    let uploadBytes = 0;
+    try {
+      for (const entry of entries) {
+        if (!entry.geometry) continue;
+        if (!entry.material) {
+          this.disposeGeometry(entry.geometry);
+          continue;
+        }
+        const mesh = new THREE.Mesh(entry.geometry, entry.material);
+        mesh.position.set(sectionX * SECTION_SIZE, sectionY * SECTION_SIZE, sectionZ * SECTION_SIZE);
+        mesh.renderOrder = entry.renderOrder;
+        mesh.castShadow = entry.castShadow;
+        mesh.receiveShadow = true;
+        meshes.push(mesh);
+        triangles += this.triangleCount(entry.geometry);
+        uploadBytes += estimateGeometryBytes(entry.geometry);
       }
-      const mesh = new THREE.Mesh(entry.geometry, entry.material);
-      mesh.position.set(sectionX * SECTION_SIZE, sectionY * SECTION_SIZE, sectionZ * SECTION_SIZE);
-      mesh.renderOrder = entry.renderOrder;
-      mesh.castShadow = entry.castShadow;
-      mesh.receiveShadow = true;
-      meshes.push(mesh);
-      triangles += this.triangleCount(entry.geometry);
-      this.uploadBytesThisFrame += estimateGeometryBytes(entry.geometry);
+    } catch {
+      for (const entry of entries) this.disposeGeometry(entry.geometry);
+      return;
     }
     this.removeMeshesForSection(key);
     for (const mesh of meshes) this.scene.add(mesh);
     this.sectionMeshGroups.set(key, meshes);
     this.sectionTriangles.set(key, triangles);
     this.triangles += triangles;
+    this.uploadBytesThisFrame += uploadBytes;
   }
   /** Replace one canonical section's render streams without touching sibling sections. */
   private attachCanonicalSection(
@@ -2028,6 +2038,7 @@ export class World implements WorldAccess {
     const key = chunkKey(chunk.cx, chunk.cy, chunk.cz);
     const meshes: THREE.Mesh[] = [];
     let tris = 0;
+    let uploadBytes = 0;
     const px = chunk.cx * CHUNK_DIMENSIONS.width;
     const py = chunk.cy * CHUNK_DIMENSIONS.height;
     const pz = chunk.cz * CHUNK_DIMENSIONS.depth;
@@ -2035,20 +2046,25 @@ export class World implements WorldAccess {
     // Build the replacement completely before removing the currently attached
     // group. Readiness can therefore remain true while a visible chunk is being
     // re-meshed; a failed/partial build never creates a visible gap.
-    for (const entry of entries) {
-      if (!entry.geometry) continue;
-      if (!entry.material) {
-        this.disposeGeometry(entry.geometry);
-        continue;
+    try {
+      for (const entry of entries) {
+        if (!entry.geometry) continue;
+        if (!entry.material) {
+          this.disposeGeometry(entry.geometry);
+          continue;
+        }
+        const mesh = new THREE.Mesh(entry.geometry, entry.material);
+        mesh.position.set(px, py + (entry.offsetY ?? 0), pz);
+        mesh.renderOrder = entry.renderOrder;
+        mesh.castShadow = entry.castShadow;
+        mesh.receiveShadow = true;
+        meshes.push(mesh);
+        tris += this.triangleCount(entry.geometry);
+        uploadBytes += estimateGeometryBytes(entry.geometry);
       }
-      const mesh = new THREE.Mesh(entry.geometry, entry.material);
-      mesh.position.set(px, py + (entry.offsetY ?? 0), pz);
-      mesh.renderOrder = entry.renderOrder;
-      mesh.castShadow = entry.castShadow;
-      mesh.receiveShadow = true;
-      meshes.push(mesh);
-      tris += this.triangleCount(entry.geometry);
-      this.uploadBytesThisFrame += estimateGeometryBytes(entry.geometry);
+    } catch {
+      for (const entry of entries) this.disposeGeometry(entry.geometry);
+      return;
     }
 
     this.removeMeshesForChunk(chunk);
@@ -2058,6 +2074,7 @@ export class World implements WorldAccess {
     this.meshGroups.set(key, meshes);
     this.chunkTriangles.set(key, tris);
     this.triangles += tris;
+    this.uploadBytesThisFrame += uploadBytes;
   }
 
   // ── Worker meshing path (inert while `useWorkers` is false) ────────────────
@@ -2464,6 +2481,10 @@ export class World implements WorldAccess {
     sectionZ: number,
     result: MeshSectionResultPayload,
   ): void {
+    if (this.contextLost) {
+      this.cancelWorkerMeshBatch(batch.key);
+      return;
+    }
     if (batch.failed || batch.completed) return;
     const entry = result.versionSnapshot && findSectionVersionSnapshot(
       result.versionSnapshot,
@@ -2487,32 +2508,50 @@ export class World implements WorldAccess {
       this.rejectWorkerMeshBatch(batch);
       return;
     }
-    const geometries = result.layerStreams !== undefined
-      ? {
-          opaque: geometryFromMeshStream(result.layerStreams.opaque),
-          cutout: geometryFromMeshStream(result.layerStreams.cutout),
-          translucent: geometryFromMeshStream(result.layerStreams.translucent),
-          fluid: geometryFromMeshStream(result.layerStreams.fluid),
-        }
-      : (() => {
-          if (!this.uvRectFor) {
-            this.failWorkerBatch(batch);
-            return null;
+    let geometries: {
+      opaque: THREE.BufferGeometry | null;
+      cutout: THREE.BufferGeometry | null;
+      translucent: THREE.BufferGeometry | null;
+      fluid: THREE.BufferGeometry | null;
+    } | null;
+    const allocated = new Set<THREE.BufferGeometry>();
+    const buildGeometry = (stream: Parameters<typeof geometryFromMeshStream>[0]): THREE.BufferGeometry | null => {
+      const geometry = geometryFromMeshStream(stream);
+      if (geometry) allocated.add(geometry);
+      return geometry;
+    };
+    try {
+      geometries = result.layerStreams !== undefined
+        ? {
+            opaque: buildGeometry(result.layerStreams.opaque),
+            cutout: buildGeometry(result.layerStreams.cutout),
+            translucent: buildGeometry(result.layerStreams.translucent),
+            fluid: buildGeometry(result.layerStreams.fluid),
           }
-          const info: PackedMeshExpandInfo = {
-            uvFor: (blockId, faceIndex) => this.uvRectFor!(blockId, faceIndex),
-            renderLayerOf: (blockId) =>
-              this.registry.get(blockId).renderCategory === RenderCategory.Transparent
-                ? ('translucent' as MeshStreamName)
-                : ('opaque' as MeshStreamName),
-            buildGeometry: geometryFromMeshStream,
-          };
-          const packed = result.packed ?? packQuadsToTypedArrays(result.quads);
-          return expandPackedMeshResult(packed, info);
-        })();
+        : (() => {
+            if (!this.uvRectFor) {
+              this.failWorkerBatch(batch);
+              return null;
+            }
+            const info: PackedMeshExpandInfo = {
+              uvFor: (blockId, faceIndex) => this.uvRectFor!(blockId, faceIndex),
+              renderLayerOf: (blockId) =>
+                this.registry.get(blockId).renderCategory === RenderCategory.Transparent
+                  ? ('translucent' as MeshStreamName)
+                  : ('opaque' as MeshStreamName),
+              buildGeometry,
+            };
+            const packed = result.packed ?? packQuadsToTypedArrays(result.quads);
+            return expandPackedMeshResult(packed, info);
+          })();
+    } catch {
+      for (const geometry of allocated) this.disposeGeometry(geometry);
+      this.failWorkerBatch(batch);
+      return;
+    }
     if (geometries === null) return;
     const offsetY = (sectionY - batch.chunkY * this.sectionsPerChunk) * 16;
-    batch.geometries.push(
+    const entries = [
       {
         geometry: geometries.opaque,
         material: this.materials.opaque,
@@ -2553,7 +2592,8 @@ export class World implements WorldAccess {
         sectionY,
         sectionZ,
       },
-    );
+    ];
+    batch.geometries.push(...entries);
     batch.jobIds.delete(jobId);
     batch.remaining--;
     this.completeWorkerMeshBatch(batch);
@@ -2967,6 +3007,39 @@ export class World implements WorldAccess {
         }
       }
     this.needsEnsure = true;
+  }
+
+  /** Release scene/worker GPU ownership after WebGL context loss without dropping canonical state. */
+  handleContextLost(): void {
+    if (this.contextLost) return;
+    this.contextLost = true;
+    for (const key of this.workerMeshBatches.keys()) this.cancelWorkerMeshBatch(key);
+    this.chunkManager.forEachChunk((chunk) => {
+      this.removeMeshesForChunk(chunk);
+      if (chunk.generated) {
+        this.markCanonicalSectionsMeshDirtyForChunk(chunk.cx, chunk.cy, chunk.cz);
+        chunk.markDirty();
+      }
+    });
+    for (const key of this.sectionMeshGroups.keys()) this.removeMeshesForSection(key);
+    this.uploadBytesThisFrame = 0;
+  }
+
+  /** Rebuild resident generated geometry after a successful WebGL context restore. */
+  handleContextRestored(): void {
+    if (!this.contextLost) return;
+    this.contextLost = false;
+    this.chunkManager.forEachChunk((chunk) => {
+      if (chunk.generated) {
+        chunk.markDirty();
+        this.enqueueMeshWithRetry(chunk);
+      }
+    });
+    this.needsEnsure = true;
+  }
+
+  get isContextLost(): boolean {
+    return this.contextLost;
   }
 
   dispose(): void {

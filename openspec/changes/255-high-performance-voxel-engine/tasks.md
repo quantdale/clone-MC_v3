@@ -25,7 +25,7 @@
 ## Campaign E — mesh-ready and upload scheduling
 - [x] 15. Implement bounded `MeshReadyQueue` with byte/count caps, age metrics, and intact deferral.
 - [x] 16. Implement time/byte-bounded `GpuUploadScheduler`; separate geometry creation/upload accounting from worker completion.
-- [ ] 17. Add atomic section swaps and exact-once disposal/accounting for success, stale, partial, optional-material, unload, and context-loss paths.
+- [x] 17. Add atomic section swaps and exact-once disposal/accounting for success, stale, partial, optional-material, unload, and context-loss paths.
 - [ ] 18. Prove upload p95 budget and no burst upload under worker completion storms.
 
 ## Campaign F — streaming intelligence

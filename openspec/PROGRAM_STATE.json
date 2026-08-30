@@ -6,9 +6,9 @@
   "currentChangeStatus": "ACTIVE",
   "lastCompletedChange": "254-whole-codebase-performance-optimization",
   "nextChange": null,
-  "completedTasks": 16,
+  "completedTasks": 17,
   "totalTasks": 37,
-  "completionPercentage": 43.24,
+  "completionPercentage": 45.95,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": false,
@@ -16,8 +16,8 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "ec072ab26b2729539d45f60c56e4644c898c0e7a",
-  "lastCompletedTask": "255 task 16 complete: standalone GpuUploadScheduler consumes validated mesh-ready records through an injected executor with byte/time/count caps, measured overrun stopping, intact FIFO deferral and failure recovery, EMA estimates, and planned/actual cumulative upload metrics; focused 8/8 and full unit 4490 + 1 skipped pass.",
-  "nextExactAction": "Begin task 17: add atomic section swaps and exact-once disposal/accounting for success, stale, partial, optional-material, unload, and context-loss paths.",
+  "lastCompletedTask": "255 task 17 complete: World and Game now use atomic section/chunk replacement with old-visible-group retention on partial construction failure, exact-once disposal for optional/stale/unload/context-loss resources, context-loss update gating, and resident remesh requeue after restore; focused ownership/streaming 41/41 and full unit 4494 + 1 skipped pass.",
+  "nextExactAction": "Begin task 18: prove upload p95 budget and no burst upload under worker completion storms.",
   "blockers": [
     "Current-tree npm run test:e2e timed out at 1200 seconds after 50/51 tests completed without an assertion failure; the remaining long visual/resource test did not finish."
   ],
@@ -2430,9 +2430,9 @@
     {
       "change": "255-high-performance-voxel-engine",
       "status": "ACTIVE",
-      "unitTests": 4490,
+      "unitTests": 4494,
       "e2eTests": 51,
-      "note": "Tasks 1-16 complete (16/37, 43.24%). Task 16 adds a standalone GpuUploadScheduler over the validated MeshReadyQueue: injected executor seam, per-frame byte/time/count caps, measured overrun stopping, intact FIFO deferral and failed-executor recovery, EMA estimates, and planned/actual cumulative upload metrics. Focused scheduler/queue tests pass 8/8; full unit gate passes 4490 + 1 skipped; typecheck/lint/build/validate-state/reviewed-file-audit pass. The performance baseline emitted an environment-sensitive withinBudget=false wall-clock diagnostic without test failure. Current-tree E2E reached 50/51 before the 1200-second timeout; prior clean 51/51 evidence remains historical only. Next exact action is task 17 atomic section swaps and exact-once disposal/accounting."
+      "note": "Tasks 1-17 complete (17/37, 45.95%). Task 17 adds atomic section/chunk replacement with old-visible-group retention on partial construction failure, exact-once disposal for optional/stale/unload/context-loss resources, context-loss update gating, and resident remesh requeue after restore. Focused ownership/streaming suites pass 41/41; full unit gate passes 4494 + 1 skipped; typecheck/lint/build/validate-state/reviewed-file-audit pass. The performance baseline emitted an environment-sensitive withinBudget=false wall-clock diagnostic without test failure. Current-tree E2E reached 50/51 before the 1200-second timeout; prior clean 51/51 evidence remains historical only. Next exact action is task 18 upload p95 budget and worker-completion-storm certification."
     }
   ],
   "publicationHistory": [

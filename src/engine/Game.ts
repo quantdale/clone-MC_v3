@@ -1418,6 +1418,7 @@ export class Game {
       return;
     }
     this.contextLost = true;
+    this.world.handleContextLost();
     this.loop.stop();
     this.input.releasePointerLock();
     this.showError('The graphics context was lost. Please reload the page to continue.');
@@ -1433,6 +1434,7 @@ export class Game {
       return;
     }
     this.contextLost = false;
+    this.world.handleContextRestored();
     // Clear the context-loss error and return to the pause overlay so the
     // player can click the canvas to re-lock the pointer and resume.
     this.errorEl.classList.add('hidden');

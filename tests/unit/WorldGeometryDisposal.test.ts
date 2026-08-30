@@ -38,6 +38,7 @@ function result(overrides: Partial<ChunkMeshResult>): ChunkMeshResult {
 }
 
 type RenderOwner = {
+  scene: THREE.Scene;
   attachCanonicalSection(
     key: string,
     sectionX: number,
@@ -45,6 +46,19 @@ type RenderOwner = {
     sectionZ: number,
     mesh: ChunkMeshResult,
   ): void;
+  attachCanonicalWorkerSection(
+    key: string,
+    sectionX: number,
+    sectionY: number,
+    sectionZ: number,
+    entries: ReadonlyArray<{
+      geometry: THREE.BufferGeometry | null;
+      material: THREE.MeshLambertMaterial | undefined;
+      renderOrder: number;
+      castShadow: boolean;
+    }>,
+  ): void;
+  disposeWorkerMeshBatchGeometries(batch: { geometries: Array<{ geometry: THREE.BufferGeometry | null }> }): void;
 };
 
 describe('World geometry ownership and exact-once disposal', () => {
@@ -101,5 +115,92 @@ describe('World geometry ownership and exact-once disposal', () => {
     world.dispose();
     expect(aliasDispose).toHaveBeenCalledTimes(1);
     expect(canonicalDispose).toHaveBeenCalledTimes(1);
+  });
+
+  it('disposes optional-material geometry instead of attaching an unowned resource', () => {
+    const world = makeWorld();
+    const owner = world as unknown as RenderOwner;
+    const cutout = new THREE.BufferGeometry();
+    const fluid = new THREE.BufferGeometry();
+    const cutoutDispose = vi.spyOn(cutout, 'dispose');
+    const fluidDispose = vi.spyOn(fluid, 'dispose');
+
+    owner.attachCanonicalWorkerSection('optional', 0, -4, 0, [
+      { geometry: cutout, material: undefined, renderOrder: 0, castShadow: true },
+      { geometry: fluid, material: undefined, renderOrder: 2, castShadow: false },
+    ]);
+
+    expect(cutoutDispose).toHaveBeenCalledTimes(1);
+    expect(fluidDispose).toHaveBeenCalledTimes(1);
+    expect(world.getStats().geometries).toBe(0);
+    world.dispose();
+  });
+
+  it('releases every temporary batch geometry exactly once across repeated cleanup', () => {
+    const world = makeWorld();
+    const owner = world as unknown as RenderOwner;
+    const first = new THREE.BufferGeometry();
+    const second = new THREE.BufferGeometry();
+    const firstDispose = vi.spyOn(first, 'dispose');
+    const secondDispose = vi.spyOn(second, 'dispose');
+    const batch = { geometries: [{ geometry: first }, { geometry: second }] };
+
+    owner.disposeWorkerMeshBatchGeometries(batch);
+    owner.disposeWorkerMeshBatchGeometries(batch);
+
+    expect(firstDispose).toHaveBeenCalledTimes(1);
+    expect(secondDispose).toHaveBeenCalledTimes(1);
+    expect(batch.geometries).toHaveLength(0);
+    world.dispose();
+  });
+
+  it('keeps the old visible group when replacement construction fails', () => {
+    const world = makeWorld();
+    const owner = world as unknown as RenderOwner;
+    const current = new THREE.BufferGeometry();
+    const replacement = new THREE.BufferGeometry();
+    const currentDispose = vi.spyOn(current, 'dispose');
+    const replacementDispose = vi.spyOn(replacement, 'dispose');
+    Object.defineProperty(replacement, 'index', {
+      configurable: true,
+      get: () => { throw new Error('synthetic triangle-count failure'); },
+    });
+
+    owner.attachCanonicalSection('0,-4,0', 0, -4, 0, result({ opaque: current }));
+    expect(() => owner.attachCanonicalWorkerSection('0,-4,0', 0, -4, 0, [
+      { geometry: replacement, material: (world as unknown as { materials: { opaque: THREE.MeshLambertMaterial } }).materials.opaque, renderOrder: 0, castShadow: true },
+    ])).not.toThrow();
+
+    expect(currentDispose).not.toHaveBeenCalled();
+    expect(replacementDispose).toHaveBeenCalledTimes(1);
+    expect(world.getStats().geometries).toBe(1);
+    expect((owner.scene as THREE.Scene).children).toHaveLength(1);
+    world.dispose();
+    expect(currentDispose).toHaveBeenCalledTimes(1);
+  });
+
+  it('cleans visible geometry exactly once on context loss and gates updates until restore', () => {
+    const world = makeWorld();
+    const owner = world as unknown as RenderOwner;
+    const geometry = new THREE.BufferGeometry();
+    const dispose = vi.spyOn(geometry, 'dispose');
+    owner.attachCanonicalSection('0,-4,0', 0, -4, 0, result({ opaque: geometry }));
+
+    expect(world.getStats().geometries).toBe(1);
+    expect(world.isContextLost).toBe(false);
+    world.handleContextLost();
+    world.handleContextLost();
+
+    expect(world.isContextLost).toBe(true);
+    expect(dispose).toHaveBeenCalledTimes(1);
+    expect(world.getStats().geometries).toBe(0);
+    expect((owner.scene as THREE.Scene).children).toHaveLength(0);
+
+    world.update(1 / 60, 0, 0);
+    expect(world.isContextLost).toBe(true);
+    world.handleContextRestored();
+    world.handleContextRestored();
+    expect(world.isContextLost).toBe(false);
+    world.dispose();
   });
 });
