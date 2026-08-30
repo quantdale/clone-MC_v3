@@ -29,7 +29,7 @@
 - [x] 18. Prove upload p95 budget and no burst upload under worker completion storms.
 
 ## Campaign F — streaming intelligence
-- [ ] 19. Implement deterministic visibility-/movement-/simulation-aware priority ordering with canonical tie breaks.
+- [x] 19. Implement deterministic visibility-/movement-/simulation-aware priority ordering with canonical tie breaks.
 - [ ] 20. Add starvation prevention, load/unload hysteresis, LOD hysteresis, and bounded queue admission under high render distance/teleport churn.
 - [ ] 21. Verify near interactive work outranks speculative far generation and that resource counts converge after traversal.
 

@@ -5,6 +5,7 @@ import {
   UNLOAD_HYSTERESIS_CHUNKS,
 } from "../../src/world/ChunkPipeline";
 import { ChunkStreamPriority } from "../../src/world/ChunkTicket";
+import { createChunkWorkPriority } from "../../src/world/ChunkWorkPriority";
 
 describe("ChunkPipeline — displaced-count accounting", () => {
   function pipelineWithFullQueue(): ChunkPipeline {
@@ -502,6 +503,43 @@ describe("ChunkPipeline — queue dispatch semantics", () => {
     expect(pipeline.dequeue("generate")).toBeUndefined();
   });
 
+  it("dispatches custom visibility and movement priority before age within one urgency tier", () => {
+    const pipeline = new ChunkPipeline(() => 100);
+    const far = pipeline.register(0, 0, 0);
+    const forward = pipeline.register(1, 0, 0);
+    const farPriority = createChunkWorkPriority(ChunkStreamPriority.Rings, 2, 2, 1, 0, 8);
+    const forwardPriority = createChunkWorkPriority(ChunkStreamPriority.Rings, 0, 0, 1, 0, 8);
+    expect(pipeline.enqueue("generate", far.cx, far.cy, far.cz, ChunkStreamPriority.Rings, farPriority)).toBe(true);
+    expect(pipeline.enqueue("generate", forward.cx, forward.cy, forward.cz, ChunkStreamPriority.Rings, forwardPriority)).toBe(true);
+    expect(pipeline.dequeue("generate")?.key).toBe("1,0,0");
+  });
+
+  it("displaces same-urgency speculative work when visibility is better", () => {
+    const pipeline = new ChunkPipeline(() => 500);
+    const cap = CHUNK_PIPELINE_QUEUE_CAPS.generate;
+    for (let i = 0; i < cap; i++) {
+      pipeline.register(i, 0, 1);
+      const details = createChunkWorkPriority(ChunkStreamPriority.Rings, 2, 2, 1, 0, 8);
+      expect(pipeline.enqueue("generate", i, 0, 1, ChunkStreamPriority.Rings, details)).toBe(true);
+    }
+
+    pipeline.register(cap, 0, 1);
+    const urgent = createChunkWorkPriority(ChunkStreamPriority.Rings, 0, 0, 0, 0, 1);
+    expect(pipeline.enqueue("generate", cap, 0, 1, ChunkStreamPriority.Rings, urgent)).toBe(true);
+    expect(pipeline.takeDisplacedCount()).toBe(1);
+    expect(pipeline.dequeue("generate")?.key).toBe(`${cap},0,1`);
+  });
+
+  it("preserves an explicit priority tuple when a dequeued job is requeued", () => {
+    const pipeline = new ChunkPipeline(() => 100);
+    pipeline.register(4, 0, 4);
+    const details = createChunkWorkPriority(ChunkStreamPriority.ForwardCorridor, 0, 0, 0, 0, 4);
+    expect(pipeline.enqueue("mesh", 4, 0, 4, ChunkStreamPriority.ForwardCorridor, details)).toBe(true);
+    const job = pipeline.dequeue("mesh");
+    expect(job?.priorityDetails).toEqual(details);
+    expect(pipeline.enqueue("mesh", job!.cx, job!.cy, job!.cz, job!.priority, job!.priorityDetails)).toBe(true);
+    expect(pipeline.dequeue("mesh")?.priorityDetails).toEqual(details);
+  });
   it("dequeue silently drops entries whose chunk vanished or whose token went stale", () => {
     const pipeline = new ChunkPipeline();
     pipeline.register(0, 0, 0);

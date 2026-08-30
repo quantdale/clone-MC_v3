@@ -9,6 +9,11 @@ import {
   isTicketStale,
   ticketPriority,
 } from './ChunkTicket';
+import {
+  compareChunkWork,
+  createChunkWorkPriority,
+  type ChunkWorkPriority,
+} from './ChunkWorkPriority';
 
 // ── Module-level tuning constants ────────────────────────────────────────────
 // Kept here rather than in config/index.ts so the pipeline is self-contained;
@@ -94,6 +99,8 @@ export interface QueuedJob {
   readonly stage: PipelineStage;
   /** Streaming priority at enqueue time; lower dispatches first. */
   priority: ChunkStreamPriority;
+  /** Full deterministic visibility/movement/simulation/LOD tuple captured at enqueue. */
+  readonly priorityDetails: ChunkWorkPriority;
   /** Lifecycle generation captured at enqueue; stale jobs are dropped at dispatch. */
   readonly version: number;
   /** `performance.now()`-style ms timestamp of enqueue, for age tracking. */
@@ -422,7 +429,17 @@ export class ChunkPipeline {
    * A displaced job's chunk would otherwise strand (its only queued copy was just deleted), so
    * every displacement is recorded; callers poll {@link takeDisplacedCount} to force a re-scan.
    */
-  enqueue(stage: PipelineStage, cx: number, cy: number, cz: number, priority: ChunkStreamPriority): boolean {
+  enqueue(
+    stage: PipelineStage,
+    cx: number,
+    cy: number,
+    cz: number,
+    priority: ChunkStreamPriority,
+    priorityDetails: ChunkWorkPriority = createChunkWorkPriority(priority, 0, 0, 0, 0, 0),
+  ): boolean {
+    if (priorityDetails.urgency !== priority) {
+      throw new RangeError('ChunkPipeline: priority and priorityDetails.urgency must match');
+    }
     const key = `${cx},${cy},${cz}`;
     const record = this.byKey.get(key);
     if (!record) return false;
@@ -436,13 +453,14 @@ export class ChunkPipeline {
       cz,
       stage,
       priority,
+      priorityDetails,
       version: record.generation,
       enqueuedAtMs: this.clock(),
     };
     if (queue.length >= cap) {
       const worstIndex = this.worstJobIndex(queue);
       const worst = queue[worstIndex]!;
-      if (priority >= worst.priority) return false;
+      if (compareChunkWork(job, worst) >= 0) return false;
       this.queuedKeys[stage].delete(worst.key);
       queue[worstIndex] = job;
       this.queuedKeys[stage].add(key);
@@ -471,8 +489,9 @@ export class ChunkPipeline {
   }
 
   /**
-   * Dequeue the most urgent job for `stage` (lowest priority value, then oldest). Drops stale
-   * entries (generation moved on, chunk gone, or already in flight) along the way. Returns
+   * Dequeue the most urgent job for `stage` using the full deterministic tuple, then age and
+   * canonical coordinates. Drops stale entries (generation moved on, chunk gone, or already in
+   * flight) along the way. Returns
    * undefined when nothing dispatchable remains.
    */
   dequeue(stage: PipelineStage): QueuedJob | undefined {
@@ -492,11 +511,7 @@ export class ChunkPipeline {
         continue;
       }
       const best = bestIndex >= 0 ? queue[bestIndex]! : undefined;
-      if (
-        best === undefined ||
-        job.priority < best.priority ||
-        (job.priority === best.priority && job.enqueuedAtMs < best.enqueuedAtMs)
-      ) {
+      if (best === undefined || compareChunkWork(job, best) < 0) {
         bestIndex = i;
       }
     }
@@ -685,7 +700,7 @@ export class ChunkPipeline {
     for (let i = 1; i < queue.length; i++) {
       const w = queue[worst]!;
       const c = queue[i]!;
-      if (c.priority > w.priority || (c.priority === w.priority && c.enqueuedAtMs < w.enqueuedAtMs)) {
+      if (compareChunkWork(c, w) > 0) {
         worst = i;
       }
     }

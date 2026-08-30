@@ -27,6 +27,7 @@ import {
   ChunkTicketType,
   createChunkTicket,
 } from './ChunkTicket';
+import { createChunkWorkPriority, type ChunkWorkPriority } from './ChunkWorkPriority';
 import { ChunkLifecycleStage, ChunkStatus, isChunkStatusAtLeast } from './ChunkStatus';
 import { SECTION_SIZE } from '../math/SectionCoordinate';
 import type { ChunkMeshResult } from './MeshingTypes';
@@ -317,6 +318,9 @@ export class World implements WorldAccess {
   /** Last chunk center that was scanned for streaming work. */
   private streamCenterX: number | null = null;
   private streamCenterZ: number | null = null;
+  /** Signed horizontal direction of the most recent stream-center movement. */
+  private streamDirectionX = 0;
+  private streamDirectionZ = 0;
   /** True while a bounded queue prevented the complete area scan. */
   private needsEnsure = true;
   /** True while budgeted unloading still has out-of-range chunks to remove. */
@@ -919,11 +923,7 @@ export class World implements WorldAccess {
     this.feedMonitor();
   }
 
-  /**
-   * Streaming priority for a chunk offset from the stream center (audit 04
-   * tiers). Approximated by Chebyshev distance — front-facing refinement needs
-   * a movement vector World does not track. Lower value dispatches first.
-   */
+  /** Streaming urgency tier for a chunk offset from the stream center. */
   private streamPriorityFor(dx: number, dz: number): ChunkStreamPriority {
     const r = Math.max(Math.abs(dx), Math.abs(dz));
     if (r <= 1) return ChunkStreamPriority.VisibleNear;
@@ -931,6 +931,27 @@ export class World implements WorldAccess {
     if (r <= 3) return ChunkStreamPriority.Interaction;
     if (r <= 5) return ChunkStreamPriority.ForwardCorridor;
     return ChunkStreamPriority.Rings;
+  }
+
+  /**
+   * Full deterministic priority context for streaming work. The live renderer does not expose
+   * a frustum to World, so visibility is represented by the movement-facing cone: forward cells
+   * are visible candidates, side cells are secondary, and cells behind the travel direction are
+   * speculative. The tuple remains stable for the lifetime of a queued job.
+   */
+  private streamPriorityDetailsFor(dx: number, dz: number): ChunkWorkPriority {
+    const distance = Math.max(Math.abs(dx), Math.abs(dz));
+    const urgency = this.streamPriorityFor(dx, dz);
+    const dot = dx * this.streamDirectionX + dz * this.streamDirectionZ;
+    const movement = distance === 0 ? 0 : Math.max(0, distance * 2 - dot);
+    const visibility = distance === 0 ? 0 : dot > 0 ? 0 : dot === 0 ? 1 : 2;
+    const simulation = this.rsd.isWithinSimulationDistance(
+      dx,
+      dz,
+      0,
+      0,
+    ) ? 0 : 1;
+    return createChunkWorkPriority(urgency, visibility, movement, simulation, 0, distance);
   }
 
   /** Render distance the cached scan offsets were built for, or -1 when unbuilt. */
@@ -975,6 +996,10 @@ export class World implements WorldAccess {
   private ensureChunks(playerChunkX: number, playerChunkZ: number): boolean {
     const centerChanged = this.streamCenterX !== playerChunkX || this.streamCenterZ !== playerChunkZ;
     if (centerChanged) {
+      if (this.streamCenterX !== null && this.streamCenterZ !== null) {
+        this.streamDirectionX = Math.sign(playerChunkX - this.streamCenterX);
+        this.streamDirectionZ = Math.sign(playerChunkZ - this.streamCenterZ);
+      }
       this.streamCenterX = playerChunkX;
       this.streamCenterZ = playerChunkZ;
       this.needsEnsure = true;
@@ -1006,14 +1031,14 @@ export class World implements WorldAccess {
           const chunk = this.chunkManager.createChunk(cx, cy, cz);
           // Player ticket: the reason this chunk is kept resident at all.
           this.chunkManager.acquireTicket(cx, cy, cz, createChunkTicket(ChunkTicketType.Player));
-          if (!this.enqueueGeneration(chunk, this.streamPriorityFor(dx, dz))) {
+          if (!this.enqueueGeneration(chunk, this.streamPriorityFor(dx, dz), this.streamPriorityDetailsFor(dx, dz))) {
             queueFull = true; // rejected at cap: retry on the next scan
             break scan;
           }
         } else if (!existing.generated) {
           // A chunk created earlier whose generation job was dropped or
           // displaced re-queues here; enqueue deduplicates per stage.
-          if (!this.enqueueGeneration(existing, this.streamPriorityFor(dx, dz))) {
+          if (!this.enqueueGeneration(existing, this.streamPriorityFor(dx, dz), this.streamPriorityDetailsFor(dx, dz))) {
             queueFull = true;
             break scan;
           }
@@ -1044,7 +1069,7 @@ export class World implements WorldAccess {
       if (!job) break;
       // Time budget: put the job back and stop when this frame's slice is spent.
       if (!this.budgets.tryAcquire('generate', World.TASK_ESTIMATE_MS.generate)) {
-        pipeline.enqueue('generate', job.cx, job.cy, job.cz, job.priority);
+        pipeline.enqueue('generate', job.cx, job.cy, job.cz, job.priority, job.priorityDetails);
         break;
       }
       const t0 = performance.now();
@@ -1363,7 +1388,7 @@ export class World implements WorldAccess {
       const job = pipeline.dequeue('mesh');
       if (!job) break;
       if (!this.budgets.tryAcquire('mesh-upload', World.TASK_ESTIMATE_MS['mesh-upload'])) {
-        pipeline.enqueue('mesh', job.cx, job.cy, job.cz, job.priority);
+        pipeline.enqueue('mesh', job.cx, job.cy, job.cz, job.priority, job.priorityDetails);
         break;
       }
       const t0 = performance.now();
@@ -1379,7 +1404,7 @@ export class World implements WorldAccess {
         // failing — a failed stage would bump the generation token and strand
         // the queued job as stale — and stop draining so a not-yet-generatable
         // entry cannot starve the frame's mesh budget.
-        pipeline.enqueue('mesh', job.cx, job.cy, job.cz, job.priority);
+        pipeline.enqueue('mesh', job.cx, job.cy, job.cz, job.priority, job.priorityDetails);
         break;
       }
 
@@ -1631,11 +1656,20 @@ export class World implements WorldAccess {
 
   // ── Queues ─────────────────────────────────────────────────────────────────
 
-  private enqueueGeneration(chunk: Chunk, priority: ChunkStreamPriority): boolean {
+  private enqueueGeneration(
+    chunk: Chunk,
+    priority: ChunkStreamPriority,
+    priorityDetails: ChunkWorkPriority = this.streamPriorityDetailsFor(
+      chunk.cx - (this.streamCenterX ?? chunk.cx),
+      chunk.cz - (this.streamCenterZ ?? chunk.cz),
+    ),
+  ): boolean {
     // Deduplicated per stage by the pipeline; displaced only by more urgent
     // work when the bounded queue is full. A `false` return leaves the chunk
     // ungenerated; ensureChunks flags a re-scan so it is retried next frame.
-    const ok = this.chunkManager.pipeline.enqueue('generate', chunk.cx, chunk.cy, chunk.cz, priority);
+    const ok = this.chunkManager.pipeline.enqueue(
+      'generate', chunk.cx, chunk.cy, chunk.cz, priority, priorityDetails,
+    );
     if (ok) chunk.state = ChunkState.Generating;
     return ok;
   }
@@ -1646,11 +1680,13 @@ export class World implements WorldAccess {
     if (!record) {
       return false;
     }
-    const priority = this.streamPriorityFor(
-      chunk.cx - (this.streamCenterX ?? chunk.cx),
-      chunk.cz - (this.streamCenterZ ?? chunk.cz),
+    const dx = chunk.cx - (this.streamCenterX ?? chunk.cx);
+    const dz = chunk.cz - (this.streamCenterZ ?? chunk.cz);
+    const priority = this.streamPriorityFor(dx, dz);
+    const priorityDetails = this.streamPriorityDetailsFor(dx, dz);
+    const ok = this.chunkManager.pipeline.enqueue(
+      'mesh', chunk.cx, chunk.cy, chunk.cz, priority, priorityDetails,
     );
-    const ok = this.chunkManager.pipeline.enqueue('mesh', chunk.cx, chunk.cy, chunk.cz, priority);
     if (ok) {
       chunk.state = ChunkState.Meshing;
     }
@@ -3000,7 +3036,11 @@ export class World implements WorldAccess {
             // Spawn-area preloads are the boot-critical set, so they take the
             // normal distance tiers (center = VisibleNear), not the speculative
             // Preload tier — otherwise the player's own chunk generates last.
-            this.enqueueGeneration(chunk, this.streamPriorityFor(dx, dz));
+            this.enqueueGeneration(
+              chunk,
+              this.streamPriorityFor(dx, dz),
+              this.streamPriorityDetailsFor(dx, dz),
+            );
           } else if (chunk.state !== ChunkState.Visible) {
             this.enqueueMeshWithRetry(chunk);
           }

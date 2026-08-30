@@ -6,9 +6,9 @@
   "currentChangeStatus": "ACTIVE",
   "lastCompletedChange": "254-whole-codebase-performance-optimization",
   "nextChange": null,
-  "completedTasks": 18,
+  "completedTasks": 19,
   "totalTasks": 37,
-  "completionPercentage": 48.65,
+  "completionPercentage": 51.35,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": false,
@@ -16,8 +16,8 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "ec072ab26b2729539d45f60c56e4644c898c0e7a",
-  "lastCompletedTask": "255 task 18 complete: deterministic GpuUploadScheduler completion-storm evidence drains 128 mesh-ready records FIFO without loss, caps every frame at 4 uploads and the configured byte limit, and proves scheduler-level actual-upload p95 <= 1.5ms; focused scheduler 5/5 and full unit 4495 + 1 skipped pass.",
-  "nextExactAction": "Begin task 19: implement deterministic visibility-/movement-/simulation-aware priority ordering with canonical tie breaks.",
+  "lastCompletedTask": "255 task 19 complete: deterministic ChunkWorkPriority tuple ordering now accounts for urgency, visibility, movement direction, simulation ticket, LOD, distance, age, and canonical coordinates; ChunkPipeline applies it to dispatch/displacement and World preserves it through retries. Focused task-19 validation passes 87/87; full unit gate passes 4501 + 1 skipped; typecheck/lint/build/state/file-audit pass.",
+  "nextExactAction": "Begin task 20: add starvation prevention, load/unload hysteresis, LOD hysteresis, and bounded queue admission under high render distance/teleport churn.",
   "blockers": [
     "Current-tree npm run test:e2e timed out at 1200 seconds after 50/51 tests completed without an assertion failure; the remaining long visual/resource test did not finish."
   ],
@@ -2430,9 +2430,9 @@
     {
       "change": "255-high-performance-voxel-engine",
       "status": "ACTIVE",
-      "unitTests": 4495,
+      "unitTests": 4501,
       "e2eTests": 51,
-      "note": "Tasks 1-18 complete (18/37, 48.65%). Task 18 adds deterministic 128-record GpuUploadScheduler completion-storm evidence: FIFO drain without loss, per-frame byte/count caps, and scheduler-level actual-upload p95 <= 1.5ms; focused scheduler tests pass 5/5. Full unit gate passes 4495 + 1 skipped; typecheck/lint/build/validate-state/reviewed-file-audit pass. This is not a browser/GPU p95 claim. The performance baseline emitted an environment-sensitive withinBudget=false wall-clock diagnostic without test failure. Current-tree E2E reached 50/51 before the 1200-second timeout; prior clean 51/51 evidence remains historical only. Next exact action is task 19 deterministic visibility/movement/simulation-aware priority ordering."
+      "note": "Tasks 1-19 complete (19/37, 51.35%). Task 19 adds a validated deterministic ChunkWorkPriority tuple ordered by urgency, visibility, movement direction, simulation ticket, LOD, distance, age, and canonical coordinates; ChunkPipeline applies it to dispatch and bounded displacement, and World preserves it through budget retries. Focused task-19 priority/streaming validation passes 87/87; full unit gate passes 4501 + 1 skipped; typecheck/lint/build/validate-state/reviewed-file-audit pass. The current-tree E2E attempt remains blocked after 50/51 at the 1200-second timeout; prior clean 51/51 evidence is historical only. Next exact action is task 20 starvation prevention and hysteresis."
     }
   ],
   "publicationHistory": [

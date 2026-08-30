@@ -33098,6 +33098,27 @@
       "status": "audited"
     },
     {
+      "path": "src/world/ChunkWorkPriority.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Deterministic visibility-, movement-, simulation-, LOD-, distance-, age-, and coordinate-aware streaming priority comparator.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "live",
+      "imports": [],
+      "importedBy": ["src/world/ChunkPipeline.ts", "src/world/World.ts"],
+      "testEvidence": [
+        "tests/unit/ChunkWorkPriority.test.ts",
+        "tests/unit/ChunkPipeline.test.ts",
+        "tests/unit/WorldStreamingSaturation.test.ts",
+        "tests/unit/WorldStreamingPerformanceBudget.test.ts"
+      ],
+      "riskAreas": ["determinism", "boundedness", "interactive-starvation"],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Task 19 semantic review: pure validated tuple comparator with canonical coordinate tie-break; focused priority/pipeline and streaming saturation suites pass.",
+      "status": "audited"
+    },
+    {
       "path": "src/world/ChunkSection.ts",
       "gitBlob": null,
       "category": "production",
@@ -34886,6 +34907,24 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/ChunkWorkPriority.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit regression coverage for deterministic streaming priority tuple ordering and validation.",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": ["src/world/ChunkWorkPriority.ts"],
+      "importedBy": [],
+      "testEvidence": [
+        "npx vitest run tests/unit/ChunkWorkPriority.test.ts tests/unit/ChunkPipeline.test.ts"
+      ],
+      "riskAreas": ["determinism"],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Task 19 regression suite covers lexicographic tuple dimensions, age-before-coordinate ordering, and invalid negative distance rejection.",
       "status": "audited"
     },
     {
