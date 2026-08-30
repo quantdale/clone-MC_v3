@@ -10,12 +10,14 @@ import {
   createWorldgenWorkerRuntime,
   type WorldgenRequestPayload,
 } from "../../src/worldgen/WorkerWorldgen";
-import { TERRAIN_GENERATION_VERSION } from "../../src/world/TerrainGenerator";
+import { TERRAIN_GENERATION_VERSION, TerrainGenerator } from "../../src/world/TerrainGenerator";
+import { ChunkColumn } from "../../src/world/ChunkColumn";
 import { CanonicalWorldStorage } from "../../src/world/CanonicalWorldStorage";
 import { createDefaultBlockRegistry, BlockId } from "../../src/world/BlockRegistry";
 import { createDefaultBlockStateRegistry } from "../../src/world/BlockStateRegistry";
 import { OVERWORLD_DIMENSION_TYPE } from "../../src/data/DimensionTypes";
 import { ChunkStatus } from "../../src/world/ChunkStatus";
+import { createDefaultWorldgenMatrix } from "../../src/worldgen/WorldgenRegressionMatrix";
 
 const REQUEST: WorldgenRequestPayload = {
   columnX: 3,
@@ -111,8 +113,158 @@ describe("processWorldgenColumnRequest", () => {
         worldgenVersion: "old-version",
       }),
     ).toThrow(/worldgenVersion/i);
+    expect(() =>
+      processWorldgenColumnRequest({
+        ...COLUMN_REQUEST,
+        sectionCount: 16,
+      }),
+    ).toThrow(/layout/i);
+    expect(() =>
+      processWorldgenColumnRequest({
+        ...COLUMN_REQUEST,
+        minSectionY: 0,
+      }),
+    ).toThrow(/layout/i);
+  });
+
+  it("retains the synchronous fallback contract", () => {
+    const result = processWorldgenColumnRequest(COLUMN_REQUEST);
+    const registry = createDefaultBlockRegistry();
+    const stateRegistry = createDefaultBlockStateRegistry();
+    const fallback = new ChunkColumn({
+      chunkX: COLUMN_REQUEST.columnX,
+      chunkZ: COLUMN_REQUEST.columnZ,
+      sectionCount: COLUMN_REQUEST.sectionCount!,
+      minSectionY: COLUMN_REQUEST.minSectionY!,
+      registry: stateRegistry,
+      blockRegistry: registry,
+    });
+    new TerrainGenerator(registry, COLUMN_REQUEST.seed).generateColumn(fallback, stateRegistry);
+
+    expect(fallback.serialize()).toEqual(result.serializedColumn);
   });
 });
+
+describe("workerized worldgen parity and reload", () => {
+  const seeds = [0, 1, 42, 1337, 9999];
+  const coordinates: Array<[number, number]> = [
+    [0, 0],
+    [-1, 0],
+    [0, -1],
+    [-2, 3],
+    [7, -9],
+    [31, -32],
+    [-16, -12],
+    [-16, 15],
+    [-40, -40],
+    [-35, 40],
+  ];
+
+  function request(seed: number, chunkX: number, chunkZ: number): WorldgenRequestPayload {
+    return {
+      columnX: chunkX,
+      columnZ: chunkZ,
+      seed,
+      stage: "TERRAIN",
+      sectionCount: OVERWORLD_DIMENSION_TYPE.sectionCount,
+      minSectionY: OVERWORLD_DIMENSION_TYPE.minSectionY,
+      worldgenVersion: TERRAIN_GENERATION_VERSION,
+      columnStatus: ChunkStatus.Empty,
+      columnRevision: 0,
+    };
+  }
+
+  function blockIds(column: ChunkColumn): number[] {
+    const ids: number[] = [];
+    for (let y = OVERWORLD_DIMENSION_TYPE.minY; y <= OVERWORLD_DIMENSION_TYPE.maxY; y++) {
+      for (let z = 0; z < 16; z++) {
+        for (let x = 0; x < 16; x++) ids.push(column.getBlockState(x, y, z).blockId);
+      }
+    }
+    return ids;
+  }
+
+  it("matches synchronous generation across seeds, negative coordinates, and feature bounds", () => {
+    for (const seed of seeds) {
+      for (const [chunkX, chunkZ] of coordinates) {
+        const result = processWorldgenColumnRequest(request(seed, chunkX, chunkZ));
+        const registry = createDefaultBlockRegistry();
+        const stateRegistry = createDefaultBlockStateRegistry();
+        const fallback = new ChunkColumn({
+          chunkX,
+          chunkZ,
+          sectionCount: OVERWORLD_DIMENSION_TYPE.sectionCount,
+          minSectionY: OVERWORLD_DIMENSION_TYPE.minSectionY,
+          registry: stateRegistry,
+          blockRegistry: registry,
+        });
+        new TerrainGenerator(registry, seed).generateColumn(fallback, stateRegistry);
+        expect(result.serializedColumn).toEqual(fallback.serialize());
+        expect(result.serializedColumn?.sections).not.toEqual({});
+
+        const serialized = result.serializedColumn!;
+        const restored = ChunkColumn.deserialize(
+          serialized,
+          stateRegistry,
+          undefined,
+          registry,
+        );
+        expect(blockIds(restored)).toEqual(blockIds(fallback));
+        expect(restored.getBlockState(0, OVERWORLD_DIMENSION_TYPE.minY, 0).blockId).toBe(
+          fallback.getBlockState(0, OVERWORLD_DIMENSION_TYPE.minY, 0).blockId,
+        );
+        expect(restored.getBlockState(15, OVERWORLD_DIMENSION_TYPE.maxY, 15).blockId).toBe(
+          fallback.getBlockState(15, OVERWORLD_DIMENSION_TYPE.maxY, 15).blockId,
+        );
+      }
+    }
+  });
+
+  it("preserves pinned ore, cave, and structure feature outcomes", () => {
+    const catalog = createDefaultWorldgenMatrix();
+    const featureFixtures = catalog.filter(
+      (fixture) => fixture.kind === "ore" || fixture.kind === "cave" || fixture.kind === "structure",
+    );
+    const registry = createDefaultBlockRegistry();
+    const stateRegistry = createDefaultBlockStateRegistry();
+
+    for (const fixture of featureFixtures) {
+      const chunkX = Math.floor(fixture.x / 16);
+      const chunkZ = Math.floor(fixture.z / 16);
+      const result = processWorldgenColumnRequest(request(fixture.seed, chunkX, chunkZ));
+      const restored = ChunkColumn.deserialize(result.serializedColumn!, stateRegistry, undefined, registry);
+      const localX = fixture.x - chunkX * 16;
+      const localZ = fixture.z - chunkZ * 16;
+
+      if (fixture.kind === "ore" || fixture.kind === "cave") {
+        expect(restored.getBlockState(localX, fixture.y, localZ).blockId).toBe(fixture.expected);
+      }
+
+      const fallback = new ChunkColumn({
+        chunkX,
+        chunkZ,
+        sectionCount: OVERWORLD_DIMENSION_TYPE.sectionCount,
+        minSectionY: OVERWORLD_DIMENSION_TYPE.minSectionY,
+        registry: stateRegistry,
+        blockRegistry: registry,
+      });
+      new TerrainGenerator(registry, fixture.seed).generateColumn(fallback, stateRegistry);
+      expect(result.serializedColumn).toEqual(fallback.serialize());
+    }
+  });
+
+  it("is byte-stable after worker serialization and reload", () => {
+    const first = processWorldgenColumnRequest(request(1337, -1, -1));
+    const second = processWorldgenColumnRequest(request(1337, -1, -1));
+    expect(JSON.stringify(first.serializedColumn)).toBe(JSON.stringify(second.serializedColumn));
+
+    const registry = createDefaultBlockRegistry();
+    const stateRegistry = createDefaultBlockStateRegistry();
+    const restored = ChunkColumn.deserialize(first.serializedColumn!, stateRegistry, undefined, registry);
+    expect(JSON.stringify(restored.serialize())).toBe(JSON.stringify(first.serializedColumn));
+  });
+});
+
 
 describe("validateWorldgenResult", () => {
   it("accepts a valid versioned result", () => {

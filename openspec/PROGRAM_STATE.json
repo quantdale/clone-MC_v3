@@ -6,9 +6,9 @@
   "currentChangeStatus": "ACTIVE",
   "lastCompletedChange": "254-whole-codebase-performance-optimization",
   "nextChange": null,
-  "completedTasks": 13,
+  "completedTasks": 14,
   "totalTasks": 37,
-  "completionPercentage": 35.14,
+  "completionPercentage": 37.84,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": false,
@@ -16,8 +16,8 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "ec072ab26b2729539d45f60c56e4644c898c0e7a",
-  "lastCompletedTask": "255 task 13 complete: worker generation envelopes now carry validated worldgen/status/revision identity; canonical commit rechecks identity, layout, status, edit revision, and dirty state atomically, with stale/edit/malformed/foreign protections covered by 23 focused WorkerWorldgen tests.",
-  "nextExactAction": "Begin task 14: prove bit-equivalent worldgen across seeds, negative coordinates, dimension bounds, structures, ores, caves, and reloads while retaining synchronous fallback.",
+  "lastCompletedTask": "255 task 14 complete: worker and synchronous full-column generation are byte-equivalent across five seeds, negative and boundary coordinates, full Overworld bounds, pinned ore/cave/structure fixtures, reload serialization, and synchronous fallback; malformed layouts fail closed.",
+  "nextExactAction": "Begin task 15: implement bounded MeshReadyQueue with byte/count caps, age metrics, and intact deferral.",
   "blockers": [
     "Current-tree npm run test:e2e timed out at 1200 seconds after 50/51 tests completed without an assertion failure; the remaining long visual/resource test did not finish."
   ],
@@ -2430,9 +2430,9 @@
     {
       "change": "255-high-performance-voxel-engine",
       "status": "ACTIVE",
-      "unitTests": 4478,
+      "unitTests": 4482,
       "e2eTests": 51,
-      "note": "Tasks 1-13 complete (13/37, 35.14%). Task 13 adds validated worker status/revision metadata, canonical mutation revisions, untrusted-result validation, and atomic canonical commit with stale edit/status/identity/layout protections. WorkerWorldgen focused tests pass 23/23; full unit gate passes 4478 + 1 skipped; typecheck/lint/build/validate-state pass. Current-tree E2E reached 50/51 before the 1200-second timeout without an assertion failure; prior clean 51/51 evidence remains historical only. Next exact action is task 14 bit-equivalent worldgen across seeds, dimensions, features, reloads, and synchronous fallback."
+      "note": "Tasks 1-14 complete (14/37, 37.84%). Task 14 proves byte-equivalent worker and synchronous full-column generation across five seeds, negative and boundary coordinates, full Overworld bounds, pinned ore/cave/structure fixtures, reload serialization, and synchronous fallback; malformed layouts fail closed. Focused WorkerWorldgen/WorldgenDeterminism/WorldgenRegressionMatrix suites pass 55/55; full unit gate passes 4482 + 1 skipped; typecheck/lint/build/validate-state pass. Current-tree E2E reached 50/51 before the 1200-second timeout without an assertion failure; prior clean 51/51 evidence remains historical only. Next exact action is task 15 bounded MeshReadyQueue with byte/count caps, age metrics, and intact deferral."
     }
   ],
   "publicationHistory": [

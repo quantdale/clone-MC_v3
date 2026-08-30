@@ -26,8 +26,8 @@
 > **255-high-performance-voxel-engine — ACTIVE (2026-08-29, session start `93dbb092`).**
 > Owner-authorized post-253 scalability campaign activated only after Changes 253 and 254 were
 > VERIFIED. The complete OpenSpec package is present at
-> `openspec/changes/255-high-performance-voxel-engine/`; tasks 1-13 are complete (13/37,
-> 35.14%). Tasks 7-8 add validated typed GPU-ready opaque/cutout/translucent/fluid streams,
+> `openspec/changes/255-high-performance-voxel-engine/`; tasks 1-14 are complete (14/37,
+> 37.84%). Tasks 7-8 add validated typed GPU-ready opaque/cutout/translucent/fluid streams,
 > registry-derived tile metadata, aggregate byte/quad/vertex caps, direct worker transfer, and
 > independent worker-vs-reference parity for geometry, UVs, lighting, AO, tint, normalized
 > indices, counts, and all four layers. Task 9 makes canonical 16³ target/face-dependency
@@ -40,11 +40,15 @@
 > spin. Task 12 adds deterministic serialized-column generation through a production module-worker
 > entry and dedicated bounded priority/cancellation runtime. Task 13 adds validated worker
 > status/revision metadata, canonical mutation revisions, untrusted-result validation, and atomic
-> canonical commit with stale edit/status/identity/layout protections. Focused WorkerWorldgen tests
-> pass 23/23; full unit gate passes 4478 + 1 skipped; typecheck/lint/build/state validation pass.
-> Current-tree E2E reached 50/51 before the 1200-second timeout without an assertion failure; prior
-> clean 51/51 evidence remains historical only. Next exact action: task 14 bit-equivalent worldgen
-> across seeds, dimensions, features, reloads, and synchronous fallback; no advancement exception applies.
+> canonical commit with stale edit/status/identity/layout protections. Task 14 proves byte-equivalent
+> worker and synchronous full-column generation across five seeds, negative and boundary coordinates,
+> full Overworld bounds, pinned ore/cave/structure fixtures, reload serialization, and synchronous
+> fallback; malformed layouts fail closed. Focused WorkerWorldgen/WorldgenDeterminism/
+> WorldgenRegressionMatrix suites pass 55/55; full unit gate passes 4482 + 1 skipped;
+> typecheck/lint/build/state validation pass. Current-tree E2E reached 50/51 before the 1200-second
+> timeout without an assertion failure; prior clean 51/51 evidence remains historical only. Next
+> exact action: task 15 bounded MeshReadyQueue with byte/count caps, age metrics, and intact deferral;
+> no advancement exception applies.
 
 > **254-whole-codebase-performance-optimization — VERIFIED (2026-08-26, session start `d258414`).**
 > Owner-authorized repository-wide performance campaign completed with behavior-preserving
@@ -92,9 +96,9 @@
 - Next change: **null (255 is the sole active post-terminal change; no later change may begin)**
 - 240 advancement allowed: **no (active change not yet verified)**
 
-- Program: **ACTIVE — Change 255 is in progress; Changes 253 and 254 remain VERIFIED and 255 has 13/37 tasks complete (35.14%)**
+- Program: **ACTIVE — Change 255 is in progress; Changes 253 and 254 remain VERIFIED and 255 has 14/37 tasks complete (37.84%)**
 - Last completed change: **254-whole-codebase-performance-optimization — VERIFIED**
-- All changes 001–254: **VERIFIED** — Change 255 is ACTIVE with its complete OpenSpec package and tasks 1–13 complete.
+- All changes 001–254: **VERIFIED** — Change 255 is ACTIVE with its complete OpenSpec package and tasks 1–14 complete.
 - Historical Change 250-era bullets (preserved; superseded **for current release authority** by `openspec/evidence/release-readiness-post-hardening.md`): 250 required-test gate PASS at head `502d021` / byte-identical tree `b56529e`; historical release-readiness READY RC-1..RC-9 (`openspec/evidence/release-readiness.md`); final parity audit PASS with DL dispositions later rejected by this interlock (`openspec/evidence/parity/final-parity-audit.md`); evidence archive complete (`openspec/evidence/`)
 - Post-250 hardening interlock: **VERIFIED at remediation checkpoint `aa92a5c229a753f10f8c1677e836136962b5d07a` — canonical CI run 32589457819 SUCCESS (gate job 97078975848, e2e job 97078975868); tasks 78/78; release decision READY (`openspec/evidence/release-readiness-post-hardening.md`)**
 - Certification campaign: **openspec/hardening/2026-08-23-exhaustive-repository-certification — findings fixed with oracles; manifest reviewed; risk register R-1..R-9 accepted debt**

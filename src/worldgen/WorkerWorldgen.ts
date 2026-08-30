@@ -26,6 +26,7 @@ import { createDefaultBlockRegistry } from '../world/BlockRegistry';
 import { createDefaultBlockStateRegistry } from '../world/BlockStateRegistry';
 import { validateGenerationStage } from './GenerationPipeline';
 import { ChunkStatus, chunkStatusOrdinal } from '../world/ChunkStatus';
+import { OVERWORLD_DIMENSION_TYPE } from '../data/DimensionTypes';
 import { TERRAIN_GENERATION_VERSION, TerrainGenerator } from '../world/TerrainGenerator';
 
 /** Version of the worldgen result envelope. */
@@ -251,12 +252,13 @@ export function processWorldgenColumnRequest(payload: WorldgenRequestPayload): W
     throw new Error(`WorldgenColumnRequest: worldgenVersion must be ${TERRAIN_GENERATION_VERSION}`);
   }
   if (
-    request.sectionCount === undefined ||
-    request.minSectionY === undefined ||
-    request.columnStatus !== ChunkStatus.Empty ||
-    request.columnRevision !== 0
+    request.sectionCount !== OVERWORLD_DIMENSION_TYPE.sectionCount ||
+    request.minSectionY !== OVERWORLD_DIMENSION_TYPE.minSectionY
   ) {
-    throw new Error('WorldgenColumnRequest: current layout and empty revision-0 column are required');
+    throw new Error('WorldgenColumnRequest: current Overworld layout is required');
+  }
+  if (request.columnStatus !== ChunkStatus.Empty || request.columnRevision !== 0) {
+    throw new Error('WorldgenColumnRequest: empty revision-0 column is required');
   }
   const registry = createDefaultBlockRegistry();
   const stateRegistry = createDefaultBlockStateRegistry();
