@@ -48,5 +48,5 @@ describe('255 performance baseline characterization', () => {
     expect(report.results.filter((result) => result.status === 'measured')).toHaveLength(8);
     expect(report.results.find((result) => result.scenario === 'lod-horizon')?.status).toBe('unavailable');
     expect(report.limitations).toHaveLength(3);
-  }, 30_000);
+  }, 120_000);
 });

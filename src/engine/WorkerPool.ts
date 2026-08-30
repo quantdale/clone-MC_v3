@@ -26,7 +26,8 @@ import {
 
 // Module-level sizing constants (audit 04 Phase B): keep cores for the UI thread and the browser.
 const MIN_POOL_SIZE = 1;
-const MAX_POOL_SIZE = 4;
+/** Hard upper bound on pool size (also the 255 pipeline budget derivation bound). */
+export const MAX_POOL_SIZE = 4;
 const FALLBACK_POOL_SIZE = 2;
 
 /** Default cap on queued-but-undispatched jobs across the whole pool. */

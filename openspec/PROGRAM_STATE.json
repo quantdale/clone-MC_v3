@@ -6,18 +6,18 @@
   "currentChangeStatus": "ACTIVE",
   "lastCompletedChange": "254-whole-codebase-performance-optimization",
   "nextChange": null,
-  "completedTasks": 27,
+  "completedTasks": 28,
   "totalTasks": 37,
-  "completionPercentage": 72.97,
+  "completionPercentage": 75.68,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": false,
   "requiredTestsPass": false,
   "advancementAllowed": false,
   "exceptionUsed": false,
-  "sessionStartHead": "ec072ab26b2729539d45f60c56e4644c898c0e7a",
-  "lastCompletedTask": "255 task 27 complete: Renderer samples actual physical drawing-buffer dimensions; World exposes bounded worker queue/counter/retry/fallback and synchronous upload-byte snapshots; RenderPerformanceMonitor validates and defensively exports worker, upload, dynamic-resolution, physical-buffer, and explicitly inactive ready/LOD fields; Game feeds live pipeline state each frame; DebugOverlay distinguishes CPU mesh-ready completion from GPU upload bytes/time. Standalone MeshReadyQueue, GpuUploadScheduler, and LodTileRenderCache remain inactive in the live World path rather than being reported as fabricated live metrics. Focused task-27 observability validation and full unit/build/typecheck/lint checks pass.",
-  "nextExactAction": "Begin task 28: add resource-budget dimensions for worker buffers, ready bytes, uploads, and LOD tiles, and prove bounded long-session behavior.",
+  "sessionStartHead": "cc468178fa356bff95e1da22a0677fdd14eddea3",
+  "lastCompletedTask": "255 task 28 complete: Pipeline resource-budget dimensions for worker buffers, ready bytes, uploads, and LOD tiles with deterministic ceiling evaluation and bounded long-session proofs. Seven dimensions (workerBuffers, readyRecords, readyBytes, uploadBytesPerFrame, uploadDeferred, lodTiles, lodBytes) have documented-cap-derived ceilings, strict config validation, fixed-order evaluation with boundary equality and malformed-actual violation handling, and live mapping via RenderPerformanceMonitor/Game. Three long-session proofs demonstrate every frame within budget and settled convergence: ready/upload storm (256 records, 64 caps, 4 uploads/frame), LOD churn (48 tiles, 8-entry LRU), and worker buffers (200 submissions, 64 pending + 4 in-flight). Focused pipeline validation and full unit/build/typecheck/lint/state/file-audit checks pass.",
+  "nextExactAction": "Begin task 29: run focused unit/integration/benchmark/visual suites for every campaign and reconcile all specs/tasks with actual behavior.",
   "blockers": [
     "Current-tree npm run test:e2e is blocked at 50/51: the visual regression matrix passed, while memory-stress GPU-context restore fails the geometry plateau allowance with observed drift 5 versus allowed 4."
   ],
@@ -2459,7 +2459,7 @@
     {
       "head": "786919b3055dd8a264ba8c08c666f93ccf15e6b7",
       "at": "2026-08-29T22:18:24Z",
-      "note": "Change 255 task 9 implementation published normally to origin/main: canonical 16³ target/face-dependency and light invalidation, sibling-safe section ownership, bounded compatibility scheduling bridges, focused live-section/resource/streaming evidence, and clean full local gates."
+      "note": "Change 255 task 9 implementation published normally to origin/main: canonical 16\u00b3 target/face-dependency and light invalidation, sibling-safe section ownership, bounded compatibility scheduling bridges, focused live-section/resource/streaming evidence, and clean full local gates."
     },
     {
       "head": "80db0ce72d88efd39a55b0e226bce9b983a10eb8",

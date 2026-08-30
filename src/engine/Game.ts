@@ -117,6 +117,7 @@ import {
   snapshotCanonicalResourceMetrics,
   type CanonicalResourceMetrics,
 } from './CanonicalResourceMetrics';
+import type { PipelineResourceReport } from '../rendering/PipelineResourceBudget';
 import { FixedTickDriver } from './FixedTickDriver';
 import { TICK_RATE } from './SimulationClock';
 import { RenderInterpolator } from './RenderInterpolator';
@@ -880,6 +881,14 @@ export class Game {
       this.persistenceImpl,
       this.getLiveResourceCounts(),
     );
+  }
+
+  /**
+   * Observability accessor (255 task 28): evaluates the live pipeline-resource
+   * snapshot against the default budget contract. Read-only; no behavior.
+   */
+  getPipelineResourceBudgetReport(): PipelineResourceReport {
+    return this.perfMonitor.evaluatePipelineBudget();
   }
 
   /** Test-only read-only performance snapshot for release baseline characterization. */

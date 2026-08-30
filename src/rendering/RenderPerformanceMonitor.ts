@@ -15,6 +15,13 @@ import {
   type RenderBudgetReport,
   type RenderMetrics,
 } from './RenderBudget';
+import {
+  DEFAULT_PIPELINE_RESOURCE_BUDGET,
+  evaluatePipelineResourceBudget,
+  fromRenderPipelineMetrics,
+  type PipelineResourceBudgetConfig,
+  type PipelineResourceReport,
+} from './PipelineResourceBudget';
 
 function assertNonNegativeInteger(value: number, name: string): void {
   if (!Number.isInteger(value) || value < 0) {
@@ -345,6 +352,20 @@ export class RenderPerformanceMonitor {
       dynamicResolution: { ...this.pipelineMetrics.dynamicResolution },
       diagnostics: { inactiveStages: [...this.pipelineMetrics.diagnostics.inactiveStages] },
     };
+  }
+
+  /**
+   * Evaluate the current pipeline-resource snapshot against the 255
+   * pipeline resource-budget contract (defaults derived from the documented
+   * runtime caps of the owning components).
+   */
+  evaluatePipelineBudget(
+    config: PipelineResourceBudgetConfig = DEFAULT_PIPELINE_RESOURCE_BUDGET,
+  ): PipelineResourceReport {
+    return evaluatePipelineResourceBudget(
+      config,
+      fromRenderPipelineMetrics(this.pipelineMetricsSnapshot()),
+    );
   }
 
   /** Set actual physical drawing-buffer dimensions reported by the renderer. */

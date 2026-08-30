@@ -86,7 +86,7 @@ describe('evaluateWorkerSaturation', () => {
 });
 
 describe('runMeshSaturation', () => {
-  it('resolves every accepted job exactly once and stays within a generous budget', { timeout: 30000 }, () => {
+  it('resolves every accepted job exactly once and stays within a generous budget', { timeout: 60000 }, () => {
     const dispatch = createMeshDispatch(new MeshWorkerClient(), 256);
     const report = runMeshSaturation(config({ burstCount: 256, maxPendingJobs: 256 }), dispatch, staticClock());
     expect(report.withinBudget).toBe(true);
@@ -96,7 +96,7 @@ describe('runMeshSaturation', () => {
     expect(dispatch.pendingCount()).toBe(0);
   });
 
-  it('rejects submissions beyond the pending cap without enqueueing them', { timeout: 30000 }, () => {
+  it('rejects submissions beyond the pending cap without enqueueing them', { timeout: 60000 }, () => {
     const dispatch = createMeshDispatch(new MeshWorkerClient(), 8);
     const report = runMeshSaturation(config({ burstCount: 12, maxPendingJobs: 8 }), dispatch, staticClock());
     expect(report.rejectedCount).toBe(4);
@@ -104,7 +104,7 @@ describe('runMeshSaturation', () => {
     expect(dispatch.pendingCount()).toBe(0);
   });
 
-  it('is deterministic for identical dispatches and scripted clocks', { timeout: 30000 }, () => {
+  it('is deterministic for identical dispatches and scripted clocks', { timeout: 60000 }, () => {
     const run = () => {
       const dispatch = createMeshDispatch(new MeshWorkerClient(), 64);
       return runMeshSaturation(config({ burstCount: 32, maxPendingJobs: 64 }), dispatch, staticClock());
@@ -114,7 +114,7 @@ describe('runMeshSaturation', () => {
 });
 
 describe('runWorldgenSaturation', () => {
-  it('resolves every accepted job exactly once (identity-matching) within budget', { timeout: 30000 }, () => {
+  it('resolves every accepted job exactly once (identity-matching) within budget', { timeout: 60000 }, () => {
     const dispatch = createWorldgenDispatch(new WorldgenWorkerClient(), 64);
     const report = runWorldgenSaturation(config({ burstCount: 64, maxPendingJobs: 64 }), dispatch, staticClock());
     expect(report.withinBudget).toBe(true);
@@ -123,7 +123,7 @@ describe('runWorldgenSaturation', () => {
     expect(dispatch.pendingCount()).toBe(0);
   });
 
-  it('is deterministic for identical dispatches and scripted clocks', { timeout: 30000 }, () => {
+  it('is deterministic for identical dispatches and scripted clocks', { timeout: 60000 }, () => {
     const run = () => {
       const dispatch = createWorldgenDispatch(new WorldgenWorkerClient(), 64);
       return runWorldgenSaturation(config({ burstCount: 16, maxPendingJobs: 64 }), dispatch, staticClock());

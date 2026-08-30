@@ -6,14 +6,17 @@ export default defineConfig({
     environment: 'node',
     include: ['tests/unit/**/*.test.ts'],
     globals: false,
-    // Default per-test timeout raised from the 5s default to 30s. The unit suite
-    // contains heavy worldgen/terrain/worker-saturation tests that exceed 5s only
-    // under full-suite v8 coverage instrumentation (the added hardening coverage
-    // gate). 30s matches the existing per-test `{ timeout: 30000 }` already used by
-    // LightSaturation.test.ts and keeps genuine hangs detectable without making
-    // coverage-instrumentation overhead a flaky failure. Product resource ceilings
-    // (geometry/memory budgets, simulation tick budgets) are unchanged.
-    testTimeout: 30000,
+    // Default per-test timeout raised from the 5s default to 120s. The unit suite
+    // contains heavy worldgen/terrain/worker-saturation/performance-baseline tests
+    // that exceed 5s only under full-suite v8 coverage instrumentation (the added
+    // hardening coverage gate) and parallel execution on constrained Windows hosts.
+    // 30s was sufficient through task 27; adding the 255 task-28 pipeline resource
+    // budget storm suite (12 tests, 3 heavy long-session proofs) pushes the tail
+    // under parallel load past 30s (PerformanceBaseline 60s timeout observed at
+    // 2026-08-30 isolated run: 69s). 120s keeps genuine hangs detectable without
+    // making coverage-instrumentation overhead a flaky failure. Product resource
+    // ceilings (geometry/memory budgets, simulation tick budgets) are unchanged.
+    testTimeout: 120000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],

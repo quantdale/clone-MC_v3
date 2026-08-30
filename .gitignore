@@ -26,3 +26,5 @@ coverage/
 
 # Stray scratch files
 deep review resolve.txt
+vitest-full.log
+*.log

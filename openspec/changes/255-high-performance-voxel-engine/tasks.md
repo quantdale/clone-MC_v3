@@ -42,7 +42,7 @@
 ## Campaign H — dynamic resolution and observability
 - [x] 26. Implement hysteretic, tier-bounded dynamic resolution with deterministic fake-clock tests and no simulation coupling.
 - [x] 27. Wire actual drawing-buffer dimensions, worker/ready/upload/LOD metrics, and debug diagnostics into renderer/performance monitoring.
-- [ ] 28. Add resource-budget dimensions for worker buffers, ready bytes, uploads, and LOD tiles; prove bounded long-session behavior.
+- [x] 28. Add resource-budget dimensions for worker buffers, ready bytes, uploads, and LOD tiles; prove bounded long-session behavior.
 
 ## Campaign I — certification
 - [ ] 29. Run focused unit/integration/benchmark/visual suites for every campaign and reconcile all specs/tasks with actual behavior.

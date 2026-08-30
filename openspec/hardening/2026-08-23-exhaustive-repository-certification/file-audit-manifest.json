@@ -11,7 +11,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2603,
+  "total": 2608,
   "pending": 0,
   "unclassified": 0,
   "rows": [
@@ -29,6 +29,26 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Handoff prompt reviewed: no secrets, references existing governance files, activation requires renumber per CHANGE_SEQUENCE_OVERRIDES dual-252 reconciliation.",
+      "status": "audited"
+    },
+    {
+      "path": ".agent/HIGH_PERFORMANCE_VOXEL_ENGINE_EXECUTION.md",
+      "gitBlob": null,
+      "category": "config",
+      "purpose": "Owner execution instructions for the future high-performance voxel engine campaign.",
+      "reviewLevel": "historical-evidence",
+      "runtimeReachability": "planning-only",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "Control-plane sequencing review"
+      ],
+      "riskAreas": [
+        "campaign sequencing and scope control"
+      ],
+      "findingIds": [],
+      "disposition": "TEST_ONLY",
+      "reviewNotes": "Review confirmed the document explicitly blocks performance production implementation while Change 253 is ACTIVE and therefore cannot alter runtime behavior; its sequencing instructions were followed for this session.",
       "status": "audited"
     },
     {
@@ -816,6 +836,22 @@
       "status": "audited"
     },
     {
+      "path": "ONBOARDING.md",
+      "gitBlob": null,
+      "category": "docs",
+      "purpose": "Fresh-machine onboarding guide for reproducible workstation setup",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Onboarding documentation landed by merge cc46817; documentation only, no runtime reachability, no secrets.",
+      "status": "audited"
+    },
+    {
       "path": "PARITY_MATRIX.md",
       "gitBlob": null,
       "category": "docs",
@@ -829,6 +865,22 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Docs reviewed for stale claims vs current implementation; historical audits annotated as evidence.",
+      "status": "audited"
+    },
+    {
+      "path": "PERFORMANCE_OPTIMIZATION_MASTER_PLAN.md",
+      "gitBlob": null,
+      "category": "docs",
+      "purpose": "Performance optimization master plan documenting hot-path analysis and benchmarks",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Performance plan documentation landed by merge 13a4668; documentation only, no runtime effect.",
       "status": "audited"
     },
     {
@@ -861,6 +913,22 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Implementation notes for the repository-local MCP add-ons landed by commit 42f3d19 without a manifest row; documentation only, no runtime reachability.",
+      "status": "audited"
+    },
+    {
+      "path": "docs/agent-integrations/REPOSITORY_LOCAL_ADDONS_MASTER_PLAN.md",
+      "gitBlob": null,
+      "category": "docs",
+      "purpose": "Repository-local add-ons master plan (planning only)",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Planning document for repository-local MCP add-ons; documentation only, no runtime reachability.",
       "status": "audited"
     },
     {
@@ -1021,6 +1089,26 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Docs reviewed for stale claims vs current implementation; historical audits annotated as evidence.",
+      "status": "audited"
+    },
+    {
+      "path": "docs/high-performance-voxel-engine/MASTER_PLAN.md",
+      "gitBlob": null,
+      "category": "docs",
+      "purpose": "Planning rationale and architecture target for the future high-performance voxel engine campaign.",
+      "reviewLevel": "historical-evidence",
+      "runtimeReachability": "planning-only",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "Control-plane sequencing review"
+      ],
+      "riskAreas": [
+        "future architecture scope"
+      ],
+      "findingIds": [],
+      "disposition": "TEST_ONLY",
+      "reviewNotes": "Review confirmed this is planning prose only, marked DO NOT ACTIVATE WHILE CHANGE 253 IS ACTIVE, and is not compiled, bundled, or read by production code.",
       "status": "audited"
     },
     {
@@ -22080,131 +22168,99 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/archive/2026-08-29-253-live-world-architecture-convergence/agent-prompts.md",
+      "path": "openspec/changes/255-high-performance-voxel-engine/.openspec.yaml",
       "gitBlob": null,
-      "category": "doc",
-      "purpose": "Change 253 planning documentation",
+      "category": "spec",
+      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
       "reviewLevel": "mechanical",
-      "runtimeReachability": "",
+      "runtimeReachability": "evidence",
       "imports": [],
       "importedBy": [],
       "testEvidence": [],
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "OpenSpec change 253 artifact reviewed for consistency with governance standards.",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
       "status": "audited"
     },
     {
-      "path": "openspec/changes/archive/2026-08-29-253-live-world-architecture-convergence/audit-findings.md",
+      "path": "openspec/changes/255-high-performance-voxel-engine/design.md",
       "gitBlob": null,
-      "category": "doc",
-      "purpose": "Change 253 planning documentation",
+      "category": "spec",
+      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
       "reviewLevel": "mechanical",
-      "runtimeReachability": "",
+      "runtimeReachability": "evidence",
       "imports": [],
       "importedBy": [],
       "testEvidence": [],
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "OpenSpec change 253 artifact reviewed for consistency with governance standards.",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
       "status": "audited"
     },
     {
-      "path": "openspec/changes/archive/2026-08-29-253-live-world-architecture-convergence/design.md",
+      "path": "openspec/changes/255-high-performance-voxel-engine/proposal.md",
       "gitBlob": null,
-      "category": "doc",
-      "purpose": "Change 253 planning documentation",
+      "category": "spec",
+      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
       "reviewLevel": "mechanical",
-      "runtimeReachability": "",
+      "runtimeReachability": "evidence",
       "imports": [],
       "importedBy": [],
       "testEvidence": [],
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "OpenSpec change 253 artifact reviewed for consistency with governance standards.",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
       "status": "audited"
     },
     {
-      "path": "openspec/changes/archive/2026-08-29-253-live-world-architecture-convergence/inventory/pre-migration-inventory.json",
+      "path": "openspec/changes/255-high-performance-voxel-engine/specs/high-performance-voxel-engine/spec.md",
       "gitBlob": null,
-      "category": "doc",
-      "purpose": "Change 253 planning documentation",
+      "category": "spec",
+      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
       "reviewLevel": "mechanical",
-      "runtimeReachability": "",
+      "runtimeReachability": "evidence",
       "imports": [],
       "importedBy": [],
       "testEvidence": [],
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "OpenSpec change 253 artifact reviewed for consistency with governance standards.",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
       "status": "audited"
     },
     {
-      "path": "openspec/changes/archive/2026-08-29-253-live-world-architecture-convergence/proposal.md",
+      "path": "openspec/changes/255-high-performance-voxel-engine/tasks.md",
       "gitBlob": null,
-      "category": "doc",
-      "purpose": "Change 253 planning documentation",
+      "category": "spec",
+      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
       "reviewLevel": "mechanical",
-      "runtimeReachability": "",
+      "runtimeReachability": "evidence",
       "imports": [],
       "importedBy": [],
       "testEvidence": [],
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "OpenSpec change 253 artifact reviewed for consistency with governance standards.",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
       "status": "audited"
     },
     {
-      "path": "openspec/changes/archive/2026-08-29-253-live-world-architecture-convergence/specs/live-world-architecture/spec.md",
+      "path": "openspec/changes/255-high-performance-voxel-engine/verification.md",
       "gitBlob": null,
-      "category": "doc",
-      "purpose": "Change 253 planning documentation",
+      "category": "spec",
+      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
       "reviewLevel": "mechanical",
-      "runtimeReachability": "",
+      "runtimeReachability": "evidence",
       "imports": [],
       "importedBy": [],
       "testEvidence": [],
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "OpenSpec change 253 artifact reviewed for consistency with governance standards.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/archive/2026-08-29-253-live-world-architecture-convergence/tasks.md",
-      "gitBlob": null,
-      "category": "doc",
-      "purpose": "Change 253 planning documentation",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "OpenSpec change 253 artifact reviewed for consistency with governance standards.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/archive/2026-08-29-253-live-world-architecture-convergence/verification.md",
-      "gitBlob": null,
-      "category": "doc",
-      "purpose": "Change 253 planning documentation",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "OpenSpec change 253 artifact reviewed for consistency with governance standards.",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
       "status": "audited"
     },
     {
@@ -22791,6 +22847,171 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Baseline recorded pre-change on 2026-08-26; after-numbers recorded post-implementation from the same machine/session class.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-29-253-live-world-architecture-convergence/agent-prompts.md",
+      "gitBlob": null,
+      "category": "doc",
+      "purpose": "Change 253 planning documentation",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "OpenSpec change 253 artifact reviewed for consistency with governance standards.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-29-253-live-world-architecture-convergence/audit-findings.md",
+      "gitBlob": null,
+      "category": "doc",
+      "purpose": "Change 253 planning documentation",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "OpenSpec change 253 artifact reviewed for consistency with governance standards.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-29-253-live-world-architecture-convergence/design.md",
+      "gitBlob": null,
+      "category": "doc",
+      "purpose": "Change 253 planning documentation",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "OpenSpec change 253 artifact reviewed for consistency with governance standards.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-29-253-live-world-architecture-convergence/inventory/post-migration-inventory.json",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Machine-readable post-migration legacy-world inventory artifact.",
+      "reviewLevel": "historical-evidence",
+      "runtimeReachability": "test-and-documentation",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "TEST_ONLY",
+      "reviewNotes": "Post-migration scanner output; reviewed as evidence only and not imported by runtime.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-29-253-live-world-architecture-convergence/inventory/pre-migration-inventory.json",
+      "gitBlob": null,
+      "category": "doc",
+      "purpose": "Change 253 planning documentation",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "OpenSpec change 253 artifact reviewed for consistency with governance standards.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-29-253-live-world-architecture-convergence/inventory/render-light-worker-ownership.json",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Machine-readable ownership inventory for canonical section render, light, and worker protocols.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "test-and-documentation",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "tests/unit/RenderLightWorkerOwnership.test.ts"
+      ],
+      "riskAreas": [
+        "stale-result ownership",
+        "section identity"
+      ],
+      "findingIds": [],
+      "disposition": "TEST_ONLY",
+      "reviewNotes": "Reviewed with Change 253 task 77; records ownership keys and lifecycle dispositions without production authority.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-29-253-live-world-architecture-convergence/proposal.md",
+      "gitBlob": null,
+      "category": "doc",
+      "purpose": "Change 253 planning documentation",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "OpenSpec change 253 artifact reviewed for consistency with governance standards.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-29-253-live-world-architecture-convergence/specs/live-world-architecture/spec.md",
+      "gitBlob": null,
+      "category": "doc",
+      "purpose": "Change 253 planning documentation",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "OpenSpec change 253 artifact reviewed for consistency with governance standards.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-29-253-live-world-architecture-convergence/tasks.md",
+      "gitBlob": null,
+      "category": "doc",
+      "purpose": "Change 253 planning documentation",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "OpenSpec change 253 artifact reviewed for consistency with governance standards.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-29-253-live-world-architecture-convergence/verification.md",
+      "gitBlob": null,
+      "category": "doc",
+      "purpose": "Change 253 planning documentation",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "OpenSpec change 253 artifact reviewed for consistency with governance standards.",
       "status": "audited"
     },
     {
@@ -27660,6 +27881,26 @@
       "status": "audited"
     },
     {
+      "path": "openspec/specs/live-world-architecture/spec.md",
+      "category": "spec",
+      "purpose": "Canonical synced capability specification for the verified live-world architecture.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "documentation-only",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npm run validate-state",
+        "canonical Change-253 gate and E2E"
+      ],
+      "riskAreas": [
+        "spec/implementation drift"
+      ],
+      "findingIds": [],
+      "disposition": "TEST_ONLY",
+      "reviewNotes": "Synced from the archived Change-253 normative spec after verification; reviewed against the archived verification and exact canonical CI authority.",
+      "status": "audited"
+    },
+    {
       "path": "package-lock.json",
       "gitBlob": null,
       "category": "config",
@@ -27689,6 +27930,28 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "CI/toolchain config reviewed: least-privilege permissions, no fork secret exposure, no auto golden re-pin, VITE_E2E build-time gating verified.",
+      "status": "audited"
+    },
+    {
+      "path": "playwright.253.config.ts",
+      "gitBlob": null,
+      "category": "config",
+      "purpose": "Isolated Change-253 Playwright configuration for alternate-port browser validation.",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "test-only",
+      "imports": [
+        "@playwright/test"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "Targeted Change-253 E2E and browser-environment probes"
+      ],
+      "riskAreas": [
+        "test-environment configuration"
+      ],
+      "findingIds": [],
+      "disposition": "TEST_ONLY",
+      "reviewNotes": "Review confirmed this file only selects the tests/e2e directory, an isolated preview port, headless execution, and optional SwiftShader; it does not enter the production bundle or alter gameplay authority.",
       "status": "audited"
     },
     {
@@ -28550,6 +28813,22 @@
       "status": "audited"
     },
     {
+      "path": "src/engine/CanonicalResourceMetrics.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Read-only canonical resource metrics projection for debug and release sampling.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "live-world",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "MIGRATE",
+      "reviewNotes": "Covered by CanonicalResourceMetrics and WorldComposition tests; exposes metrics without writable world state.",
+      "status": "audited"
+    },
+    {
       "path": "src/engine/FixedTickDriver.ts",
       "gitBlob": null,
       "category": "production",
@@ -28786,6 +29065,22 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Read end-to-end in the campaign composition/persistence/inventory passes; logic traced through callers.",
+      "status": "audited"
+    },
+    {
+      "path": "src/engine/WorldComposition.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Production composition adapter wiring canonical dimension, generator, persistence, and World dependencies.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "live-world",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "MIGRATE",
+      "reviewNotes": "Covered by WorldComposition and ProductionComposition tests; composition-only runtime seam.",
       "status": "audited"
     },
     {
@@ -29567,6 +29862,39 @@
       "status": "audited"
     },
     {
+      "path": "src/rendering/DynamicResolution.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Pure tier-bounded dynamic-resolution controller with hysteretic CPU/GPU frame-time sampling, invalid-metric retention, and deterministic drawing-buffer sizing.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "available through Renderer; owns presentation scale only and never reads simulation or camera state",
+      "imports": [
+        "src/config/index.ts"
+      ],
+      "importedBy": [
+        "src/engine/Renderer.ts"
+      ],
+      "testEvidence": [
+        "tests/unit/DynamicResolution.test.ts",
+        "npx vitest run tests/unit/DynamicResolution.test.ts",
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build",
+        "npm test"
+      ],
+      "riskAreas": [
+        "tier-boundary-clamping",
+        "overload-and-recovery-dwell",
+        "invalid-metric-retention",
+        "buffer-dimension-determinism",
+        "simulation-and-camera-isolation"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Task-26 semantic review: validates all tier bounds and threshold relationships; uses the slower valid CPU p95/GPU signal; changes scale by at most one configured step after continuous dwell; clears dwell in the dead band; retains scale on invalid or regressed timestamps; clamps on tier changes; and calculates physical buffer dimensions without owning camera projection or simulation timing.",
+      "status": "audited"
+    },
+    {
       "path": "src/rendering/Environment.ts",
       "gitBlob": null,
       "category": "production",
@@ -29602,6 +29930,34 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Semantic pass 2026-08-23 over the full scope directory (agent-audited): purpose, reachability, boundedness, determinism and defect sweep; no defect found in this file.",
+      "status": "audited"
+    },
+    {
+      "path": "src/rendering/GpuUploadScheduler.ts",
+      "category": "production",
+      "purpose": "Bounded time/byte scheduler for consuming validated mesh-ready records through an injected atomic GPU upload executor",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "available as the task-16 upload scheduling seam; World attachment integration and atomic swaps remain task 17",
+      "imports": [
+        "src/rendering/MeshReadyQueue.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "tests/unit/GpuUploadScheduler.test.ts",
+        "npm run typecheck",
+        "npm run lint",
+        "npm test",
+        "npm run build"
+      ],
+      "riskAreas": [
+        "per-frame byte and time budgets",
+        "actual upload overrun accounting",
+        "intact FIFO deferral and failure recovery",
+        "upload estimate EMA and physical byte reporting"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Task-16 semantic review: consumes only validated ready records, reserves byte/time/count budgets before executor dispatch, stops after measured overrun, requeues budget-deferred and failed records intact, and exposes planned/actual/cumulative upload metrics without creating or attaching Three.js resources.",
       "status": "audited"
     },
     {
@@ -29719,25 +30075,6 @@
       "status": "audited"
     },
     {
-      "path": "src/rendering/Materials.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "Shipped rendering module",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "live",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "vitest unit suite",
-        "playwright e2e"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Semantic pass 2026-08-23 over the full scope directory (agent-audited): purpose, reachability, boundedness, determinism and defect sweep; no defect found in this file.",
-      "status": "audited"
-    },
-    {
       "path": "src/rendering/LodTile.ts",
       "gitBlob": null,
       "category": "production",
@@ -29766,38 +30103,6 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Task 22 semantic review: identity is seed/version/dimension/LOD/tile-coordinate bound; LOD1/2/3 strides are 2/4/8; typed data and byte lengths are validated; production sampling uses TerrainGenerator height/biome summaries without canonical storage access; unsafe coordinates and forged occupancy fail closed.",
-      "status": "audited"
-    },
-    {
-      "path": "src/rendering/LodTileRender.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "Presentation-only LOD tile render construction, deterministic tier/frustum selection, seam skirts, and bounded disposable resource ownership.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "available to future renderer integration; no canonical or gameplay reads",
-      "imports": [
-        "src/rendering/LodTile.ts"
-      ],
-      "importedBy": [],
-      "testEvidence": [
-        "tests/unit/LodTileRender.test.ts",
-        "npx vitest run tests/unit/LodTileRender.test.ts tests/unit/LodTileInvalidation.test.ts tests/unit/LodTile.test.ts",
-        "SCREEN_FILTER=render-world npx playwright test tests/e2e/visual-regression.spec.ts",
-        "npm run typecheck",
-        "npm run lint",
-        "npm run build",
-        "npm test"
-      ],
-      "riskAreas": [
-        "seam-coverage",
-        "negative-coordinate-selection",
-        "frustum-and-distance-selection",
-        "bounded-cache-eviction",
-        "exact-once-disposal"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Task 23 semantic review: fixed-count top-grid plus positive-overlap skirts cover every edge; selection is deterministic, distance/frustum bounded, negative-coordinate safe, and hysteretic through caller-owned previous-tier state; cache admission is byte/entry bounded, retains visible resources on rejected replacements, and disposes evicted/rejected resources exactly once. Module is headless-safe and does not attach Three.js or answer canonical reads.",
       "status": "audited"
     },
     {
@@ -29833,6 +30138,57 @@
       "status": "audited"
     },
     {
+      "path": "src/rendering/LodTileRender.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Presentation-only LOD tile render construction, deterministic tier/frustum selection, seam skirts, and bounded disposable resource ownership.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "available to future renderer integration; no canonical or gameplay reads",
+      "imports": [
+        "src/rendering/LodTile.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "tests/unit/LodTileRender.test.ts",
+        "npx vitest run tests/unit/LodTileRender.test.ts tests/unit/LodTileInvalidation.test.ts tests/unit/LodTile.test.ts",
+        "SCREEN_FILTER=render-world npx playwright test tests/e2e/visual-regression.spec.ts",
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build",
+        "npm test"
+      ],
+      "riskAreas": [
+        "seam-coverage",
+        "negative-coordinate-selection",
+        "frustum-and-distance-selection",
+        "bounded-cache-eviction",
+        "exact-once-disposal"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Task 23 semantic review: fixed-count top-grid plus positive-overlap skirts cover every edge; selection is deterministic, distance/frustum bounded, negative-coordinate safe, and hysteretic through caller-owned previous-tier state; cache admission is byte/entry bounded, retains visible resources on rejected replacements, and disposes evicted/rejected resources exactly once. Module is headless-safe and does not attach Three.js or answer canonical reads.",
+      "status": "audited"
+    },
+    {
+      "path": "src/rendering/Materials.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Shipped rendering module",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "live",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "vitest unit suite",
+        "playwright e2e"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Semantic pass 2026-08-23 over the full scope directory (agent-audited): purpose, reachability, boundedness, determinism and defect sweep; no defect found in this file.",
+      "status": "audited"
+    },
+    {
       "path": "src/rendering/MemoryResourceBudget.ts",
       "gitBlob": null,
       "category": "production",
@@ -29849,6 +30205,62 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Semantic pass 2026-08-23 over the full scope directory (agent-audited): purpose, reachability, boundedness, determinism and defect sweep; no defect found in this file.",
+      "status": "audited"
+    },
+    {
+      "path": "src/rendering/MeshReadyQueue.ts",
+      "category": "production",
+      "purpose": "Bounded validated handoff for complete worker mesh results awaiting the separate GPU upload stage",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "available to the task-16 upload scheduler; no GPU attachment occurs in this module",
+      "imports": [
+        "src/rendering/TypedMeshStreams.ts",
+        "src/world/SectionVersionSnapshot.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "tests/unit/MeshReadyQueue.test.ts",
+        "npm run typecheck",
+        "npm run lint",
+        "npm test",
+        "npm run build"
+      ],
+      "riskAreas": [
+        "ready-record byte/count caps",
+        "typed stream validation",
+        "duplicate request identity",
+        "intact deferral and age accounting"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Task-15 semantic review: validates complete four-layer typed streams before admission, enforces independent record and aggregate byte caps without partial admission, rejects duplicate request identities, preserves complete records on dequeue/defer, and reports bounded oldest-age/deferred metrics.",
+      "status": "audited"
+    },
+    {
+      "path": "src/rendering/MeshSectionTransfer.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Typed section/halo worker-transfer normalization and ownership validation",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "live through MeshWorkerClient and MeshWorkerEntry request validation",
+      "imports": [],
+      "importedBy": [
+        "src/rendering/WorkerMeshing.ts",
+        "src/world/World.ts"
+      ],
+      "testEvidence": [
+        "tests/unit/MeshSectionTransfer.test.ts",
+        "tests/unit/WorkerMeshing.test.ts",
+        "npm run typecheck"
+      ],
+      "riskAreas": [
+        "worker buffer ownership",
+        "detached buffers",
+        "duplicate transferable buffers"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Task-6 semantic review: fixed-size Uint16/Uint8/Int8/Uint32 buffers are normalized, exact lengths and constructors are validated, detached and duplicate ownership is rejected, and transfer lists are unique.",
       "status": "audited"
     },
     {
@@ -29871,6 +30283,28 @@
       "status": "audited"
     },
     {
+      "path": "src/rendering/MeshWorkerRegistry.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Immutable worker registry classification table; validates protocol, content-derived table identity, layers, and opaque IDs.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "task-5 focused worker/registry suite"
+      ],
+      "riskAreas": [
+        "protocol",
+        "determinism",
+        "ownership"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
+      "status": "audited"
+    },
+    {
       "path": "src/rendering/PassiveMobRenderer.ts",
       "gitBlob": null,
       "category": "production",
@@ -29887,6 +30321,25 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Semantic pass 2026-08-23 over the full scope directory (agent-audited): purpose, reachability, boundedness, determinism and defect sweep; no defect found in this file.",
+      "status": "audited"
+    },
+    {
+      "path": "src/rendering/PipelineResourceBudget.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Shipped rendering module",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "live",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "vitest unit suite",
+        "playwright e2e"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Task 28 pipeline resource-budget dimensions: seven budgeted dimensions with strict config validation, deterministic ceiling evaluation, and live monitor mapping via RenderPerformanceMonitor; pure and deterministic, no DOM.",
       "status": "audited"
     },
     {
@@ -30020,6 +30473,38 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Semantic pass 2026-08-23 over the full scope directory (agent-audited): purpose, reachability, boundedness, determinism and defect sweep; no defect found in this file.",
+      "status": "audited"
+    },
+    {
+      "path": "src/rendering/TypedMeshStreams.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Validated worker-produced GPU-ready mesh layer streams and aggregate resource caps",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "live through WorkerMeshing result validation and MeshWorkerEntry transfer",
+      "imports": [
+        "src/world/MeshingTypes.ts"
+      ],
+      "importedBy": [
+        "src/rendering/WorkerMeshing.ts",
+        "src/rendering/MeshWorkerEntry.ts"
+      ],
+      "testEvidence": [
+        "tests/unit/TypedMeshStreams.test.ts",
+        "npm run typecheck",
+        "npm run lint",
+        "npm test",
+        "npm run build"
+      ],
+      "riskAreas": [
+        "typed-array length/count validation",
+        "aggregate byte and vertex caps",
+        "duplicate transferable ownership",
+        "index bounds"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Task-7 semantic review: validates four independent GPU-ready streams before geometry allocation, enforces complete-quad counts and aggregate byte/quad/vertex caps, rejects duplicate buffers, and emits a deduplicated transfer list.",
       "status": "audited"
     },
     {
@@ -33193,49 +33678,6 @@
       "status": "audited"
     },
     {
-      "path": "src/world/ChunkWorkPriority.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "Deterministic visibility-, movement-, simulation-, LOD-, distance-, age-, and coordinate-aware streaming priority comparator.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "live",
-      "imports": [],
-      "importedBy": ["src/world/ChunkPipeline.ts", "src/world/World.ts"],
-      "testEvidence": [
-        "tests/unit/ChunkWorkPriority.test.ts",
-        "tests/unit/ChunkPipeline.test.ts",
-        "tests/unit/WorldStreamingSaturation.test.ts",
-        "tests/unit/WorldStreamingPerformanceBudget.test.ts"
-      ],
-      "riskAreas": ["determinism", "boundedness", "interactive-starvation"],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Task 19 semantic review: pure validated tuple comparator with canonical coordinate tie-break; focused priority/pipeline and streaming saturation suites pass.",
-      "status": "audited"
-    },
-    {
-      "path": "src/world/StreamingHysteresis.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "Validated runtime hysteresis policy for bounded streaming thresholds and future LOD selection",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "live",
-      "imports": [],
-      "importedBy": ["src/world/ChunkPipeline.ts", "src/world/World.ts"],
-      "testEvidence": [
-        "tests/unit/StreamingHysteresis.test.ts",
-        "tests/unit/ChunkPipeline.test.ts",
-        "tests/unit/WorldStreamingSaturation.test.ts",
-        "npm run typecheck",
-        "npm run lint"
-      ],
-      "riskAreas": ["threshold chatter", "streaming boundedness", "determinism"],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Task 20 semantic review: validates finite thresholds and radius inputs, implements deterministic at-most/at-least dead bands, and remains runtime-only without canonical or gameplay authority.",
-      "status": "audited"
-    },
-    {
       "path": "src/world/ChunkSection.ts",
       "gitBlob": null,
       "category": "production",
@@ -33290,6 +33732,34 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Semantic pass 2026-08-23 over the full scope directory (agent-audited): purpose, reachability, boundedness, determinism and defect sweep; no defect found in this file.",
+      "status": "audited"
+    },
+    {
+      "path": "src/world/ChunkWorkPriority.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Deterministic visibility-, movement-, simulation-, LOD-, distance-, age-, and coordinate-aware streaming priority comparator.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "live",
+      "imports": [],
+      "importedBy": [
+        "src/world/ChunkPipeline.ts",
+        "src/world/World.ts"
+      ],
+      "testEvidence": [
+        "tests/unit/ChunkWorkPriority.test.ts",
+        "tests/unit/ChunkPipeline.test.ts",
+        "tests/unit/WorldStreamingSaturation.test.ts",
+        "tests/unit/WorldStreamingPerformanceBudget.test.ts"
+      ],
+      "riskAreas": [
+        "determinism",
+        "boundedness",
+        "interactive-starvation"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Task 19 semantic review: pure validated tuple comparator with canonical coordinate tie-break; focused priority/pipeline and streaming saturation suites pass.",
       "status": "audited"
     },
     {
@@ -33502,6 +33972,51 @@
       "status": "audited"
     },
     {
+      "path": "src/world/SectionSnapshot.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Canonical 16^3 section and six-face halo snapshot extraction with explicit availability states.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "task-5 focused worker/registry suite"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
+      "status": "audited"
+    },
+    {
+      "path": "src/world/SectionVersionSnapshot.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Captures and validates canonical mesh/light versions for target sections and face-sharing neighbors.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "live-world-meshing-and-worker-transport",
+      "imports": [],
+      "importedBy": [
+        "src/world/World.ts",
+        "src/world/ChunkMesher.ts",
+        "src/rendering/WorkerMeshing.ts"
+      ],
+      "testEvidence": [
+        "tests/unit/RenderLightWorkerOwnership.test.ts",
+        "tests/unit/WorkerMeshing.test.ts"
+      ],
+      "riskAreas": [
+        "stale-result rejection",
+        "negative section coordinates",
+        "light-version races"
+      ],
+      "findingIds": [],
+      "disposition": "MIGRATE",
+      "reviewNotes": "Reviewed for non-materializing lookup, structured-clone validation, equality, and currentness checks used by task 77.",
+      "status": "audited"
+    },
+    {
       "path": "src/world/ShapeRaycast.ts",
       "gitBlob": null,
       "category": "production",
@@ -33518,6 +34033,35 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Semantic pass 2026-08-23 over the full scope directory (agent-audited): purpose, reachability, boundedness, determinism and defect sweep; no defect found in this file.",
+      "status": "audited"
+    },
+    {
+      "path": "src/world/StreamingHysteresis.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Validated runtime hysteresis policy for bounded streaming thresholds and future LOD selection",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "live",
+      "imports": [],
+      "importedBy": [
+        "src/world/ChunkPipeline.ts",
+        "src/world/World.ts"
+      ],
+      "testEvidence": [
+        "tests/unit/StreamingHysteresis.test.ts",
+        "tests/unit/ChunkPipeline.test.ts",
+        "tests/unit/WorldStreamingSaturation.test.ts",
+        "npm run typecheck",
+        "npm run lint"
+      ],
+      "riskAreas": [
+        "threshold chatter",
+        "streaming boundedness",
+        "determinism"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Task 20 semantic review: validates finite thresholds and radius inputs, implements deterministic at-most/at-least dead bands, and remains runtime-only without canonical or gameplay authority.",
       "status": "audited"
     },
     {
@@ -34112,6 +34656,25 @@
       "status": "audited"
     },
     {
+      "path": "src/worldgen/WorldgenRegressionMatrix.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Shipped worldgen module",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "test-only",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "vitest unit suite",
+        "playwright e2e"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Semantic pass 2026-08-23 over the full scope directory (agent-audited): purpose, reachability, boundedness, determinism and defect sweep; no defect found in this file.",
+      "status": "audited"
+    },
+    {
       "path": "src/worldgen/WorldgenWorkerEntry.ts",
       "gitBlob": null,
       "category": "production",
@@ -34140,25 +34703,6 @@
       "status": "audited"
     },
     {
-      "path": "src/worldgen/WorldgenRegressionMatrix.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "Shipped worldgen module",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "test-only",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "vitest unit suite",
-        "playwright e2e"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Semantic pass 2026-08-23 over the full scope directory (agent-audited): purpose, reachability, boundedness, determinism and defect sweep; no defect found in this file.",
-      "status": "audited"
-    },
-    {
       "path": "tests/bench/hot-paths.bench.ts",
       "gitBlob": null,
       "category": "test",
@@ -34174,6 +34718,24 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Benchmark-only file; excluded from vitest test include pattern; run via npx vitest bench.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/bench/support/performanceBaseline.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "task-5 focused worker/registry suite"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
       "status": "audited"
     },
     {
@@ -34227,6 +34789,22 @@
       "status": "audited"
     },
     {
+      "path": "tests/e2e/live-vertical-world.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Playwright vertical-world journey covering negative-Y, boundaries, persistence, and residency.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "test-and-documentation",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "TEST_ONLY",
+      "reviewNotes": "E2E-only regression; the journey is additionally tracked as a known environment-sensitive final gate.",
+      "status": "audited"
+    },
+    {
       "path": "tests/e2e/memory-stress.spec.ts",
       "gitBlob": null,
       "category": "test",
@@ -34240,6 +34818,24 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Full adversarial test-quality read (assertions, mocks, races, environment assumptions) in the campaign test-quality pass.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/e2e/performance-baseline.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "task-5 focused worker/registry suite"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
       "status": "audited"
     },
     {
@@ -34883,6 +35479,22 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/CanonicalResourceMetrics.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit coverage for read-only canonical resource metrics.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "test-and-documentation",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "TEST_ONLY",
+      "reviewNotes": "Focused metrics regression; no production authority.",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/CanonicalWorldStorage.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -34995,6 +35607,28 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/ChunkManagerResidency.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit coverage for horizontal column residency and lazy vertical slab projections",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "test-only",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "ChunkManager horizontal column residency: 3 tests"
+      ],
+      "riskAreas": [
+        "residency",
+        "eviction",
+        "lifecycle"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Change 253 Phase 2 coverage. Verifies one horizontal column owns multiple lazy vertical projections, column enumeration snapshots, and pruning only after the final slab leaves.",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/ChunkMesher.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -35022,28 +35656,14 @@
       "testEvidence": [
         "npx vitest run tests/unit/ChunkPipeline.test.ts tests/unit/WorldStreamingSaturation.test.ts tests/unit/WorldRealResourcePlateau.test.ts"
       ],
-      "riskAreas": ["interactive-starvation", "determinism", "queue-boundedness"],
+      "riskAreas": [
+        "interactive-starvation",
+        "determinism",
+        "queue-boundedness"
+      ],
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Task 21 regression coverage adds saturated interactive-over-Preload displacement/dispatch proof and preserves in-flight semantics; focused priority/saturation/convergence suite passes 48/48.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/ChunkWorkPriority.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Unit regression coverage for deterministic streaming priority tuple ordering and validation.",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": ["src/world/ChunkWorkPriority.ts"],
-      "importedBy": [],
-      "testEvidence": [
-        "npx vitest run tests/unit/ChunkWorkPriority.test.ts tests/unit/ChunkPipeline.test.ts"
-      ],
-      "riskAreas": ["determinism"],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Task 19 regression suite covers lexicographic tuple dimensions, age-before-coordinate ordering, and invalid negative distance rejection.",
       "status": "audited"
     },
     {
@@ -35095,24 +35715,6 @@
       "status": "audited"
     },
     {
-      "path": "tests/unit/StreamingHysteresis.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Task-20 deterministic hysteresis, radius-validation, and dead-band regression coverage",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": ["src/world/StreamingHysteresis.ts"],
-      "importedBy": [],
-      "testEvidence": [
-        "npx vitest run tests/unit/StreamingHysteresis.test.ts tests/unit/ChunkPipeline.test.ts tests/unit/WorldStreamingSaturation.test.ts tests/unit/World.test.ts"
-      ],
-      "riskAreas": ["threshold chatter", "invalid configuration", "determinism"],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Covers both hysteresis directions, dead-band boundaries, reset/initial state, invalid thresholds and samples, and load/unload radius validation; focused task-20 suite passes 71/71.",
-      "status": "audited"
-    },
-    {
       "path": "tests/unit/ChunkStreaming.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -35145,6 +35747,28 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/ChunkWorkPriority.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit regression coverage for deterministic streaming priority tuple ordering and validation.",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [
+        "src/world/ChunkWorkPriority.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "npx vitest run tests/unit/ChunkWorkPriority.test.ts tests/unit/ChunkPipeline.test.ts"
+      ],
+      "riskAreas": [
+        "determinism"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Task 19 regression suite covers lexicographic tuple dimensions, age-before-coordinate ordering, and invalid negative distance rejection.",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/ClimateSampler.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -35174,6 +35798,22 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/ColumnEntityLifecycle.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit coverage for exactly-once column entity/block-entity lifecycle.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "test-and-documentation",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "TEST_ONLY",
+      "reviewNotes": "Focused entity lifecycle regression for canonical column residency.",
       "status": "audited"
     },
     {
@@ -35654,6 +36294,33 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/DynamicResolution.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Task-26 deterministic dynamic-resolution validation for tier bounds, hysteresis, dwell timing, invalid metrics, tier changes, and drawing-buffer dimensions.",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "test-only",
+      "imports": [
+        "src/rendering/DynamicResolution.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "npx vitest run tests/unit/DynamicResolution.test.ts",
+        "npm test"
+      ],
+      "riskAreas": [
+        "threshold-boundaries",
+        "dwell-timing",
+        "invalid-metric-fail-closed",
+        "tier-clamping",
+        "buffer-size-calculation"
+      ],
+      "findingIds": [],
+      "disposition": "TEST_ONLY",
+      "reviewNotes": "Task-26 focused coverage passes 7/7: configuration rejection, overload/recovery dwell boundaries, bounded single-step changes, GPU/CPU signal selection, invalid-metric retention, dead-band reset, tier clamping, and deterministic physical drawing-buffer dimensions.",
       "status": "audited"
     },
     {
@@ -36361,6 +37028,22 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/GameplayBoundaryMatrix.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit coverage for gameplay collision/raycast/mutation at dimension and section boundaries.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "test-and-documentation",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "TEST_ONLY",
+      "reviewNotes": "Focused task-86 boundary regression over negative and upper Y.",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/GenerationPipeline.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -36422,6 +37105,33 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/GpuUploadScheduler.test.ts",
+      "category": "test",
+      "purpose": "Task-16 bounded upload scheduling, overrun, EMA, FIFO deferral, failure, byte-report, and config regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [
+        "src/rendering/GpuUploadScheduler.ts",
+        "src/rendering/MeshReadyQueue.ts",
+        "src/rendering/WorkerMeshing.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "4 tests passed in focused GpuUploadScheduler suite",
+        "npm test"
+      ],
+      "riskAreas": [
+        "byte and upload-count caps",
+        "fake-clock actual overrun",
+        "failed executor retry ordering",
+        "invalid executor byte reports"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Covers byte/count admission, actual executor time versus estimate, EMA update, intact FIFO deferral, failure requeue, invalid budgets, and invalid executor byte accounting.",
       "status": "audited"
     },
     {
@@ -36959,46 +37669,30 @@
       "status": "audited"
     },
     {
-      "path": "tests/unit/LootTable.test.ts",
+      "path": "tests/unit/LodTile.test.ts",
       "gitBlob": null,
       "category": "test",
-      "purpose": "Unit/browser regression coverage",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/LodTileRender.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Regression coverage for seam-safe LOD geometry, deterministic frustum/distance tier selection, hysteresis, negative coordinates, and bounded render-resource eviction.",
+      "purpose": "Unit coverage for validated LOD tile identity, deterministic sampling, typed payloads, and failure boundaries.",
       "reviewLevel": "mechanical",
       "runtimeReachability": "test-only",
       "imports": [
-        "src/rendering/LodTileRender.ts",
-        "src/rendering/LodTile.ts"
+        "src/rendering/LodTile.ts",
+        "src/world/TerrainGenerator.ts"
       ],
       "importedBy": [],
       "testEvidence": [
-        "npx vitest run tests/unit/LodTileRender.test.ts tests/unit/LodTile.test.ts tests/unit/WorldgenDeterminism.test.ts tests/unit/WorldgenRegressionMatrix.test.ts",
+        "npx vitest run tests/unit/LodTile.test.ts tests/unit/WorldgenDeterminism.test.ts tests/unit/WorldgenRegressionMatrix.test.ts",
         "npm test"
       ],
       "riskAreas": [
-        "seam-geometry-counts",
-        "hysteresis-boundaries",
-        "frustum-and-distance-rejection",
-        "lru-resource-ownership"
+        "negative-coordinates",
+        "version-and-dimension-mismatch",
+        "typed-array-validation",
+        "determinism"
       ],
       "findingIds": [],
       "disposition": "TEST_ONLY",
-      "reviewNotes": "Task 23 focused coverage passes 15/15: fixed vertex/index counts and all four skirts, typed LOD1/LOD2 payload separation, negative/adjacent bounds, deterministic tier selection with hysteresis and duplicate collapse, frustum/distance/capacity rejection, invalid config handling, LRU eviction, replacement retention, oversized admission rejection, and exact-once disposal.",
+      "reviewNotes": "Task 22 focused suite covers canonical keys, 2/4/8 strides, negative tile origins, repeated byte-equivalent samples, production TerrainGenerator binding, floor occupancy, unsafe coordinates, forged occupancy, and malformed metadata; focused suite passes 34/34.",
       "status": "audited"
     },
     {
@@ -37030,7 +37724,34 @@
       "status": "audited"
     },
     {
-      "path": "tests/unit/Materials.test.ts",
+      "path": "tests/unit/LodTileRender.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Regression coverage for seam-safe LOD geometry, deterministic frustum/distance tier selection, hysteresis, negative coordinates, and bounded render-resource eviction.",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "test-only",
+      "imports": [
+        "src/rendering/LodTileRender.ts",
+        "src/rendering/LodTile.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "npx vitest run tests/unit/LodTileRender.test.ts tests/unit/LodTile.test.ts tests/unit/WorldgenDeterminism.test.ts tests/unit/WorldgenRegressionMatrix.test.ts",
+        "npm test"
+      ],
+      "riskAreas": [
+        "seam-geometry-counts",
+        "hysteresis-boundaries",
+        "frustum-and-distance-rejection",
+        "lru-resource-ownership"
+      ],
+      "findingIds": [],
+      "disposition": "TEST_ONLY",
+      "reviewNotes": "Task 23 focused coverage passes 15/15: fixed vertex/index counts and all four skirts, typed LOD1/LOD2 payload separation, negative/adjacent bounds, deterministic tier selection with hysteresis and duplicate collapse, frustum/distance/capacity rejection, invalid config handling, LRU eviction, replacement retention, oversized admission rejection, and exact-once disposal.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/LootTable.test.ts",
       "gitBlob": null,
       "category": "test",
       "purpose": "Unit/browser regression coverage",
@@ -37046,30 +37767,19 @@
       "status": "audited"
     },
     {
-      "path": "tests/unit/LodTile.test.ts",
+      "path": "tests/unit/Materials.test.ts",
       "gitBlob": null,
       "category": "test",
-      "purpose": "Unit coverage for validated LOD tile identity, deterministic sampling, typed payloads, and failure boundaries.",
+      "purpose": "Unit/browser regression coverage",
       "reviewLevel": "mechanical",
-      "runtimeReachability": "test-only",
-      "imports": [
-        "src/rendering/LodTile.ts",
-        "src/world/TerrainGenerator.ts"
-      ],
+      "runtimeReachability": "",
+      "imports": [],
       "importedBy": [],
-      "testEvidence": [
-        "npx vitest run tests/unit/LodTile.test.ts tests/unit/WorldgenDeterminism.test.ts tests/unit/WorldgenRegressionMatrix.test.ts",
-        "npm test"
-      ],
-      "riskAreas": [
-        "negative-coordinates",
-        "version-and-dimension-mismatch",
-        "typed-array-validation",
-        "determinism"
-      ],
+      "testEvidence": [],
+      "riskAreas": [],
       "findingIds": [],
-      "disposition": "TEST_ONLY",
-      "reviewNotes": "Task 22 focused suite covers canonical keys, 2/4/8 strides, negative tile origins, repeated byte-equivalent samples, production TerrainGenerator binding, floor occupancy, unsafe coordinates, forged occupancy, and malformed metadata; focused suite passes 34/34.",
+      "disposition": "",
+      "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
       "status": "audited"
     },
     {
@@ -37118,6 +37828,61 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/MeshReadyQueue.test.ts",
+      "category": "test",
+      "purpose": "Task-15 bounded mesh-ready admission, validation, deferral, age, and drain regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [
+        "src/rendering/MeshReadyQueue.ts",
+        "src/rendering/WorkerMeshing.ts",
+        "src/world/MeshingTypes.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "4 tests passed in focused MeshReadyQueue suite",
+        "npm test"
+      ],
+      "riskAreas": [
+        "record and byte cap rejection",
+        "malformed and duplicate records",
+        "intact deferral ordering",
+        "deterministic fake-clock age metrics"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Covers count/byte caps without partial admission, malformed/forged/duplicate rejection, oldest age, complete-record deferral at the front, drain behavior, and invalid configuration.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/MeshSectionTransfer.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Task-6 typed-transfer ownership and worker-loss regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [
+        "src/rendering/MeshSectionTransfer.ts",
+        "src/rendering/WorkerMeshing.ts",
+        "src/engine/WorkerPool.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "5 tests passed in focused ownership suite",
+        "npm test"
+      ],
+      "riskAreas": [
+        "detached buffers",
+        "duplicate ownership",
+        "transfer propagation",
+        "non-requeue after worker loss"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Covers legacy normalization, typed-only validation, unique transfer lists, detached-buffer rejection, duplicate-buffer rejection, pool transfer propagation, and transferred-job failure after worker loss.",
       "status": "audited"
     },
     {
@@ -37553,6 +38318,24 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/PerformanceBaseline.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "task-5 focused worker/registry suite"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/PersistenceCommitHook.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -37582,6 +38365,22 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/PipelineResourceBudget.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit/browser regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Task 28 validation: config validation, deterministic budget evaluation, monitor mapping, and bounded long-session storm/LOD/worker buffer proofs (12 tests).",
       "status": "audited"
     },
     {
@@ -38327,6 +39126,31 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/RenderLightWorkerOwnership.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Regression coverage for canonical render/light ownership and worker stale-result races.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unit-test-only",
+      "imports": [
+        "src/world/SectionVersionSnapshot.ts",
+        "src/rendering/WorkerMeshing.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "focused task 77 suite: 5 files, 70 tests"
+      ],
+      "riskAreas": [
+        "duplicate callbacks",
+        "snapshot mismatch",
+        "stale token disposal"
+      ],
+      "findingIds": [],
+      "disposition": "TEST_ONLY",
+      "reviewNotes": "Focused task 77 regression suite; verifies exact-once rejection, snapshot currentness, and detached compatibility behavior.",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/RenderPerformance.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -38596,6 +39420,24 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/SectionSnapshot.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "task-5 focused worker/registry suite"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
       "status": "audited"
     },
     {
@@ -38919,6 +39761,30 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/StreamingHysteresis.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Task-20 deterministic hysteresis, radius-validation, and dead-band regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [
+        "src/world/StreamingHysteresis.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "npx vitest run tests/unit/StreamingHysteresis.test.ts tests/unit/ChunkPipeline.test.ts tests/unit/WorldStreamingSaturation.test.ts tests/unit/World.test.ts"
+      ],
+      "riskAreas": [
+        "threshold chatter",
+        "invalid configuration",
+        "determinism"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Covers both hysteresis directions, dead-band boundaries, reset/initial state, invalid thresholds and samples, and load/unload radius validation; focused task-20 suite passes 71/71.",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/StructureExpansion.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -39047,72 +39913,6 @@
       "status": "audited"
     },
     {
-      "path": "tests/unit/ChunkManagerResidency.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Unit coverage for horizontal column residency and lazy vertical slab projections",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "test-only",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "ChunkManager horizontal column residency: 3 tests"
-      ],
-      "riskAreas": [
-        "residency",
-        "eviction",
-        "lifecycle"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Change 253 Phase 2 coverage. Verifies one horizontal column owns multiple lazy vertical projections, column enumeration snapshots, and pruning only after the final slab leaves.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/__measure.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Streaming benchmark measurement harness",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "test-only",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "measure: median of 3 streaming profiles"
-      ],
-      "riskAreas": [
-        "performance",
-        "streaming",
-        "resource-bounds"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Change 253 performance evidence harness. Runs three bounded streaming profiles and reports median generation, frame, and residency measurements; it is not production runtime code.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/__real-mesher-measure.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Production mesher resource measurement probe",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "test-only",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "real mesher resource probe: first 20 production-mesher frames"
-      ],
-      "riskAreas": [
-        "performance",
-        "meshing",
-        "resource-bounds"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Change 253 measurement-only probe. Instantiates the production ChunkMesher and TerrainGenerator in a headless Three.js scene, reports bounded frame cost/readiness/queue/geometry counters, and does not participate in shipped runtime behavior.",
-      "status": "audited"
-    },
-    {
       "path": "tests/unit/TerrainColumnGenerationEquivalence.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -39238,6 +40038,32 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/TypedMeshStreams.test.ts",
+      "category": "test",
+      "purpose": "Task-7 GPU-ready stream shape, parity, caps, ownership, and result-envelope regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [
+        "src/rendering/TypedMeshStreams.ts",
+        "src/rendering/WorkerMeshing.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "3 tests passed in focused task-7 suite",
+        "npm test"
+      ],
+      "riskAreas": [
+        "stream attribute shape",
+        "duplicate ownership",
+        "forged byte lengths",
+        "mixed packed/layer transport"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Covers all four streams, GPU attribute constructors/counts, unique transfer buffers, forged byte-length rejection, cap rejection, result validation, and mutually exclusive transport forms.",
       "status": "audited"
     },
     {
@@ -39681,6 +40507,24 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/WorkerRegistryInitialization.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Task-5 tests for deterministic/frozen registry tables, initialization validation, zero-copy table-backed requests, and respawn initialization.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "task-5 focused worker/registry suite"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/WorkerSaturationHarness.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -39795,6 +40639,22 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/WorldComposition.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit coverage for production world composition and canonical adapter wiring.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "test-and-documentation",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "TEST_ONLY",
+      "reviewNotes": "Focused composition contract regression; no production authority.",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/WorldCoordinates.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -39827,6 +40687,22 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/WorldDenseEditLocality.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit stress coverage for dense multi-section edit remesh/light locality.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "test-and-documentation",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "TEST_ONLY",
+      "reviewNotes": "Focused task-104 regression; asserts dependency closure rather than full-column work.",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/WorldDifficulty.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -39856,6 +40732,22 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/WorldGeometryDisposal.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit coverage for exact-once geometry replacement and disposal.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "test-and-documentation",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "TEST_ONLY",
+      "reviewNotes": "Focused resource ownership regression for canonical section meshes.",
       "status": "audited"
     },
     {
@@ -39904,6 +40796,44 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/WorldOwnershipReclamation.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit coverage for world teardown ownership reclamation after churn and deferred hydration.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "test-and-documentation",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "TEST_ONLY",
+      "reviewNotes": "Focused task-106 regression; verifies maps, sets, scene children, and geometry release.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/WorldRealResourcePlateau.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit stress coverage for real-mesher resident-column and geometry plateau.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "test-and-documentation",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npx vitest run tests/unit/ChunkPipeline.test.ts tests/unit/WorldStreamingSaturation.test.ts tests/unit/WorldRealResourcePlateau.test.ts"
+      ],
+      "riskAreas": [
+        "resource-convergence",
+        "bounded-residency",
+        "geometry-lifecycle"
+      ],
+      "findingIds": [],
+      "disposition": "TEST_ONLY",
+      "reviewNotes": "Task 21 real-mesher plateau regression tracks resident columns, loaded slabs, allocated sections, geometries, and pending queues; repeated settled return-to-origin snapshots are equal. Focused priority/saturation/convergence suite passes 48/48.",
       "status": "audited"
     },
     {
@@ -40000,6 +40930,50 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/__measure.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Streaming benchmark measurement harness",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "test-only",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "measure: median of 3 streaming profiles"
+      ],
+      "riskAreas": [
+        "performance",
+        "streaming",
+        "resource-bounds"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Change 253 performance evidence harness. Runs three bounded streaming profiles and reports median generation, frame, and residency measurements; it is not production runtime code.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/__real-mesher-measure.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Production mesher resource measurement probe",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "test-only",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "real mesher resource probe: first 20 production-mesher frames"
+      ],
+      "riskAreas": [
+        "performance",
+        "meshing",
+        "resource-bounds"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Change 253 measurement-only probe. Instantiates the production ChunkMesher and TerrainGenerator in a headless Three.js scene, reports bounded frame cost/readiness/queue/geometry counters, and does not participate in shipped runtime behavior.",
       "status": "audited"
     },
     {
@@ -42160,865 +43134,6 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Tracked auxiliary file; presence/format checked, no runtime role.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/archive/2026-08-29-253-live-world-architecture-convergence/inventory/render-light-worker-ownership.json",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "Machine-readable ownership inventory for canonical section render, light, and worker protocols.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "test-and-documentation",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "tests/unit/RenderLightWorkerOwnership.test.ts"
-      ],
-      "riskAreas": [
-        "stale-result ownership",
-        "section identity"
-      ],
-      "findingIds": [],
-      "disposition": "TEST_ONLY",
-      "reviewNotes": "Reviewed with Change 253 task 77; records ownership keys and lifecycle dispositions without production authority.",
-      "status": "audited"
-    },
-    {
-      "path": "src/world/SectionVersionSnapshot.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "Captures and validates canonical mesh/light versions for target sections and face-sharing neighbors.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "live-world-meshing-and-worker-transport",
-      "imports": [],
-      "importedBy": [
-        "src/world/World.ts",
-        "src/world/ChunkMesher.ts",
-        "src/rendering/WorkerMeshing.ts"
-      ],
-      "testEvidence": [
-        "tests/unit/RenderLightWorkerOwnership.test.ts",
-        "tests/unit/WorkerMeshing.test.ts"
-      ],
-      "riskAreas": [
-        "stale-result rejection",
-        "negative section coordinates",
-        "light-version races"
-      ],
-      "findingIds": [],
-      "disposition": "MIGRATE",
-      "reviewNotes": "Reviewed for non-materializing lookup, structured-clone validation, equality, and currentness checks used by task 77.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/RenderLightWorkerOwnership.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Regression coverage for canonical render/light ownership and worker stale-result races.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "unit-test-only",
-      "imports": [
-        "src/world/SectionVersionSnapshot.ts",
-        "src/rendering/WorkerMeshing.ts"
-      ],
-      "importedBy": [],
-      "testEvidence": [
-        "focused task 77 suite: 5 files, 70 tests"
-      ],
-      "riskAreas": [
-        "duplicate callbacks",
-        "snapshot mismatch",
-        "stale token disposal"
-      ],
-      "findingIds": [],
-      "disposition": "TEST_ONLY",
-      "reviewNotes": "Focused task 77 regression suite; verifies exact-once rejection, snapshot currentness, and detached compatibility behavior.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/archive/2026-08-29-253-live-world-architecture-convergence/inventory/post-migration-inventory.json",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "Machine-readable post-migration legacy-world inventory artifact.",
-      "reviewLevel": "historical-evidence",
-      "runtimeReachability": "test-and-documentation",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "TEST_ONLY",
-      "reviewNotes": "Post-migration scanner output; reviewed as evidence only and not imported by runtime.",
-      "status": "audited"
-    },
-    {
-      "path": "src/engine/CanonicalResourceMetrics.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "Read-only canonical resource metrics projection for debug and release sampling.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "live-world",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "MIGRATE",
-      "reviewNotes": "Covered by CanonicalResourceMetrics and WorldComposition tests; exposes metrics without writable world state.",
-      "status": "audited"
-    },
-    {
-      "path": "src/engine/WorldComposition.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "Production composition adapter wiring canonical dimension, generator, persistence, and World dependencies.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "live-world",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "MIGRATE",
-      "reviewNotes": "Covered by WorldComposition and ProductionComposition tests; composition-only runtime seam.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/e2e/live-vertical-world.spec.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Playwright vertical-world journey covering negative-Y, boundaries, persistence, and residency.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "test-and-documentation",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "TEST_ONLY",
-      "reviewNotes": "E2E-only regression; the journey is additionally tracked as a known environment-sensitive final gate.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/CanonicalResourceMetrics.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Unit coverage for read-only canonical resource metrics.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "test-and-documentation",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "TEST_ONLY",
-      "reviewNotes": "Focused metrics regression; no production authority.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/ColumnEntityLifecycle.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Unit coverage for exactly-once column entity/block-entity lifecycle.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "test-and-documentation",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "TEST_ONLY",
-      "reviewNotes": "Focused entity lifecycle regression for canonical column residency.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/GameplayBoundaryMatrix.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Unit coverage for gameplay collision/raycast/mutation at dimension and section boundaries.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "test-and-documentation",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "TEST_ONLY",
-      "reviewNotes": "Focused task-86 boundary regression over negative and upper Y.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/WorldComposition.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Unit coverage for production world composition and canonical adapter wiring.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "test-and-documentation",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "TEST_ONLY",
-      "reviewNotes": "Focused composition contract regression; no production authority.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/WorldDenseEditLocality.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Unit stress coverage for dense multi-section edit remesh/light locality.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "test-and-documentation",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "TEST_ONLY",
-      "reviewNotes": "Focused task-104 regression; asserts dependency closure rather than full-column work.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/WorldGeometryDisposal.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Unit coverage for exact-once geometry replacement and disposal.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "test-and-documentation",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "TEST_ONLY",
-      "reviewNotes": "Focused resource ownership regression for canonical section meshes.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/WorldOwnershipReclamation.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Unit coverage for world teardown ownership reclamation after churn and deferred hydration.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "test-and-documentation",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "TEST_ONLY",
-      "reviewNotes": "Focused task-106 regression; verifies maps, sets, scene children, and geometry release.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/WorldRealResourcePlateau.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Unit stress coverage for real-mesher resident-column and geometry plateau.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "test-and-documentation",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "npx vitest run tests/unit/ChunkPipeline.test.ts tests/unit/WorldStreamingSaturation.test.ts tests/unit/WorldRealResourcePlateau.test.ts"
-      ],
-      "riskAreas": ["resource-convergence", "bounded-residency", "geometry-lifecycle"],
-      "findingIds": [],
-      "disposition": "TEST_ONLY",
-      "reviewNotes": "Task 21 real-mesher plateau regression tracks resident columns, loaded slabs, allocated sections, geometries, and pending queues; repeated settled return-to-origin snapshots are equal. Focused priority/saturation/convergence suite passes 48/48.",
-      "status": "audited"
-    },
-    {
-      "path": "playwright.253.config.ts",
-      "gitBlob": null,
-      "category": "config",
-      "purpose": "Isolated Change-253 Playwright configuration for alternate-port browser validation.",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "test-only",
-      "imports": [
-        "@playwright/test"
-      ],
-      "importedBy": [],
-      "testEvidence": [
-        "Targeted Change-253 E2E and browser-environment probes"
-      ],
-      "riskAreas": [
-        "test-environment configuration"
-      ],
-      "findingIds": [],
-      "disposition": "TEST_ONLY",
-      "reviewNotes": "Review confirmed this file only selects the tests/e2e directory, an isolated preview port, headless execution, and optional SwiftShader; it does not enter the production bundle or alter gameplay authority.",
-      "status": "audited"
-    },
-    {
-      "path": ".agent/HIGH_PERFORMANCE_VOXEL_ENGINE_EXECUTION.md",
-      "gitBlob": null,
-      "category": "config",
-      "purpose": "Owner execution instructions for the future high-performance voxel engine campaign.",
-      "reviewLevel": "historical-evidence",
-      "runtimeReachability": "planning-only",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "Control-plane sequencing review"
-      ],
-      "riskAreas": [
-        "campaign sequencing and scope control"
-      ],
-      "findingIds": [],
-      "disposition": "TEST_ONLY",
-      "reviewNotes": "Review confirmed the document explicitly blocks performance production implementation while Change 253 is ACTIVE and therefore cannot alter runtime behavior; its sequencing instructions were followed for this session.",
-      "status": "audited"
-    },
-    {
-      "path": "docs/high-performance-voxel-engine/MASTER_PLAN.md",
-      "gitBlob": null,
-      "category": "docs",
-      "purpose": "Planning rationale and architecture target for the future high-performance voxel engine campaign.",
-      "reviewLevel": "historical-evidence",
-      "runtimeReachability": "planning-only",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "Control-plane sequencing review"
-      ],
-      "riskAreas": [
-        "future architecture scope"
-      ],
-      "findingIds": [],
-      "disposition": "TEST_ONLY",
-      "reviewNotes": "Review confirmed this is planning prose only, marked DO NOT ACTIVATE WHILE CHANGE 253 IS ACTIVE, and is not compiled, bundled, or read by production code.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/specs/live-world-architecture/spec.md",
-      "category": "spec",
-      "purpose": "Canonical synced capability specification for the verified live-world architecture.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "documentation-only",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "npm run validate-state",
-        "canonical Change-253 gate and E2E"
-      ],
-      "riskAreas": [
-        "spec/implementation drift"
-      ],
-      "findingIds": [],
-      "disposition": "TEST_ONLY",
-      "reviewNotes": "Synced from the archived Change-253 normative spec after verification; reviewed against the archived verification and exact canonical CI authority.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/255-high-performance-voxel-engine/.openspec.yaml",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "evidence",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/255-high-performance-voxel-engine/design.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "evidence",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/255-high-performance-voxel-engine/proposal.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "evidence",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/255-high-performance-voxel-engine/specs/high-performance-voxel-engine/spec.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "evidence",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/255-high-performance-voxel-engine/tasks.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "evidence",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/255-high-performance-voxel-engine/verification.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "evidence",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
-      "status": "audited"
-    },
-    {
-      "path": "src/rendering/MeshWorkerRegistry.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "Immutable worker registry classification table; validates protocol, content-derived table identity, layers, and opaque IDs.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "reachable",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "task-5 focused worker/registry suite"
-      ],
-      "riskAreas": [
-        "protocol",
-        "determinism",
-        "ownership"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
-      "status": "audited"
-    },
-    {
-      "path": "src/world/SectionSnapshot.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "Canonical 16^3 section and six-face halo snapshot extraction with explicit availability states.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "reachable",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "task-5 focused worker/registry suite"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/bench/support/performanceBaseline.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "reachable",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "task-5 focused worker/registry suite"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/e2e/performance-baseline.spec.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "reachable",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "task-5 focused worker/registry suite"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/PerformanceBaseline.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "reachable",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "task-5 focused worker/registry suite"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/SectionSnapshot.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Change 255 campaign artifact reviewed for task-5 integration and repository compatibility.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "reachable",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "task-5 focused worker/registry suite"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/WorkerRegistryInitialization.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Task-5 tests for deterministic/frozen registry tables, initialization validation, zero-copy table-backed requests, and respawn initialization.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "reachable",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "task-5 focused worker/registry suite"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file.",
-      "status": "audited"
-    },
-    {
-      "path": "src/rendering/MeshSectionTransfer.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "Typed section/halo worker-transfer normalization and ownership validation",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "live through MeshWorkerClient and MeshWorkerEntry request validation",
-      "imports": [],
-      "importedBy": [
-        "src/rendering/WorkerMeshing.ts",
-        "src/world/World.ts"
-      ],
-      "testEvidence": [
-        "tests/unit/MeshSectionTransfer.test.ts",
-        "tests/unit/WorkerMeshing.test.ts",
-        "npm run typecheck"
-      ],
-      "riskAreas": [
-        "worker buffer ownership",
-        "detached buffers",
-        "duplicate transferable buffers"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Task-6 semantic review: fixed-size Uint16/Uint8/Int8/Uint32 buffers are normalized, exact lengths and constructors are validated, detached and duplicate ownership is rejected, and transfer lists are unique.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/MeshSectionTransfer.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Task-6 typed-transfer ownership and worker-loss regression coverage",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [
-        "src/rendering/MeshSectionTransfer.ts",
-        "src/rendering/WorkerMeshing.ts",
-        "src/engine/WorkerPool.ts"
-      ],
-      "importedBy": [],
-      "testEvidence": [
-        "5 tests passed in focused ownership suite",
-        "npm test"
-      ],
-      "riskAreas": [
-        "detached buffers",
-        "duplicate ownership",
-        "transfer propagation",
-        "non-requeue after worker loss"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Covers legacy normalization, typed-only validation, unique transfer lists, detached-buffer rejection, duplicate-buffer rejection, pool transfer propagation, and transferred-job failure after worker loss.",
-      "status": "audited"
-    },
-    {
-      "path": "src/rendering/TypedMeshStreams.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "Validated worker-produced GPU-ready mesh layer streams and aggregate resource caps",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "live through WorkerMeshing result validation and MeshWorkerEntry transfer",
-      "imports": [
-        "src/world/MeshingTypes.ts"
-      ],
-      "importedBy": [
-        "src/rendering/WorkerMeshing.ts",
-        "src/rendering/MeshWorkerEntry.ts"
-      ],
-      "testEvidence": [
-        "tests/unit/TypedMeshStreams.test.ts",
-        "npm run typecheck",
-        "npm run lint",
-        "npm test",
-        "npm run build"
-      ],
-      "riskAreas": [
-        "typed-array length/count validation",
-        "aggregate byte and vertex caps",
-        "duplicate transferable ownership",
-        "index bounds"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Task-7 semantic review: validates four independent GPU-ready streams before geometry allocation, enforces complete-quad counts and aggregate byte/quad/vertex caps, rejects duplicate buffers, and emits a deduplicated transfer list.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/TypedMeshStreams.test.ts",
-      "category": "test",
-      "purpose": "Task-7 GPU-ready stream shape, parity, caps, ownership, and result-envelope regression coverage",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [
-        "src/rendering/TypedMeshStreams.ts",
-        "src/rendering/WorkerMeshing.ts"
-      ],
-      "importedBy": [],
-      "testEvidence": [
-        "3 tests passed in focused task-7 suite",
-        "npm test"
-      ],
-      "riskAreas": [
-        "stream attribute shape",
-        "duplicate ownership",
-        "forged byte lengths",
-        "mixed packed/layer transport"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Covers all four streams, GPU attribute constructors/counts, unique transfer buffers, forged byte-length rejection, cap rejection, result validation, and mutually exclusive transport forms.",
-      "status": "audited"
-    },
-    {
-      "path": "src/rendering/MeshReadyQueue.ts",
-      "category": "production",
-      "purpose": "Bounded validated handoff for complete worker mesh results awaiting the separate GPU upload stage",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "available to the task-16 upload scheduler; no GPU attachment occurs in this module",
-      "imports": [
-        "src/rendering/TypedMeshStreams.ts",
-        "src/world/SectionVersionSnapshot.ts"
-      ],
-      "importedBy": [],
-      "testEvidence": [
-        "tests/unit/MeshReadyQueue.test.ts",
-        "npm run typecheck",
-        "npm run lint",
-        "npm test",
-        "npm run build"
-      ],
-      "riskAreas": [
-        "ready-record byte/count caps",
-        "typed stream validation",
-        "duplicate request identity",
-        "intact deferral and age accounting"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Task-15 semantic review: validates complete four-layer typed streams before admission, enforces independent record and aggregate byte caps without partial admission, rejects duplicate request identities, preserves complete records on dequeue/defer, and reports bounded oldest-age/deferred metrics.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/MeshReadyQueue.test.ts",
-      "category": "test",
-      "purpose": "Task-15 bounded mesh-ready admission, validation, deferral, age, and drain regression coverage",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [
-        "src/rendering/MeshReadyQueue.ts",
-        "src/rendering/WorkerMeshing.ts",
-        "src/world/MeshingTypes.ts"
-      ],
-      "importedBy": [],
-      "testEvidence": [
-        "4 tests passed in focused MeshReadyQueue suite",
-        "npm test"
-      ],
-      "riskAreas": [
-        "record and byte cap rejection",
-        "malformed and duplicate records",
-        "intact deferral ordering",
-        "deterministic fake-clock age metrics"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Covers count/byte caps without partial admission, malformed/forged/duplicate rejection, oldest age, complete-record deferral at the front, drain behavior, and invalid configuration.",
-      "status": "audited"
-    },
-    {
-      "path": "src/rendering/GpuUploadScheduler.ts",
-      "category": "production",
-      "purpose": "Bounded time/byte scheduler for consuming validated mesh-ready records through an injected atomic GPU upload executor",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "available as the task-16 upload scheduling seam; World attachment integration and atomic swaps remain task 17",
-      "imports": [
-        "src/rendering/MeshReadyQueue.ts"
-      ],
-      "importedBy": [],
-      "testEvidence": [
-        "tests/unit/GpuUploadScheduler.test.ts",
-        "npm run typecheck",
-        "npm run lint",
-        "npm test",
-        "npm run build"
-      ],
-      "riskAreas": [
-        "per-frame byte and time budgets",
-        "actual upload overrun accounting",
-        "intact FIFO deferral and failure recovery",
-        "upload estimate EMA and physical byte reporting"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Task-16 semantic review: consumes only validated ready records, reserves byte/time/count budgets before executor dispatch, stops after measured overrun, requeues budget-deferred and failed records intact, and exposes planned/actual/cumulative upload metrics without creating or attaching Three.js resources.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/GpuUploadScheduler.test.ts",
-      "category": "test",
-      "purpose": "Task-16 bounded upload scheduling, overrun, EMA, FIFO deferral, failure, byte-report, and config regression coverage",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [
-        "src/rendering/GpuUploadScheduler.ts",
-        "src/rendering/MeshReadyQueue.ts",
-        "src/rendering/WorkerMeshing.ts"
-      ],
-      "importedBy": [],
-      "testEvidence": [
-        "4 tests passed in focused GpuUploadScheduler suite",
-        "npm test"
-      ],
-      "riskAreas": [
-        "byte and upload-count caps",
-        "fake-clock actual overrun",
-        "failed executor retry ordering",
-        "invalid executor byte reports"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Covers byte/count admission, actual executor time versus estimate, EMA update, intact FIFO deferral, failure requeue, invalid budgets, and invalid executor byte accounting.",
-      "status": "audited"
-    },
-    {
-      "path": "src/rendering/DynamicResolution.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "Pure tier-bounded dynamic-resolution controller with hysteretic CPU/GPU frame-time sampling, invalid-metric retention, and deterministic drawing-buffer sizing.",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "available through Renderer; owns presentation scale only and never reads simulation or camera state",
-      "imports": [
-        "src/config/index.ts"
-      ],
-      "importedBy": [
-        "src/engine/Renderer.ts"
-      ],
-      "testEvidence": [
-        "tests/unit/DynamicResolution.test.ts",
-        "npx vitest run tests/unit/DynamicResolution.test.ts",
-        "npm run typecheck",
-        "npm run lint",
-        "npm run build",
-        "npm test"
-      ],
-      "riskAreas": [
-        "tier-boundary-clamping",
-        "overload-and-recovery-dwell",
-        "invalid-metric-retention",
-        "buffer-dimension-determinism",
-        "simulation-and-camera-isolation"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Task-26 semantic review: validates all tier bounds and threshold relationships; uses the slower valid CPU p95/GPU signal; changes scale by at most one configured step after continuous dwell; clears dwell in the dead band; retains scale on invalid or regressed timestamps; clamps on tier changes; and calculates physical buffer dimensions without owning camera projection or simulation timing.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/DynamicResolution.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Task-26 deterministic dynamic-resolution validation for tier bounds, hysteresis, dwell timing, invalid metrics, tier changes, and drawing-buffer dimensions.",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "test-only",
-      "imports": [
-        "src/rendering/DynamicResolution.ts"
-      ],
-      "importedBy": [],
-      "testEvidence": [
-        "npx vitest run tests/unit/DynamicResolution.test.ts",
-        "npm test"
-      ],
-      "riskAreas": [
-        "threshold-boundaries",
-        "dwell-timing",
-        "invalid-metric-fail-closed",
-        "tier-clamping",
-        "buffer-size-calculation"
-      ],
-      "findingIds": [],
-      "disposition": "TEST_ONLY",
-      "reviewNotes": "Task-26 focused coverage passes 7/7: configuration rejection, overload/recovery dwell boundaries, bounded single-step changes, GPU/CPU signal selection, invalid-metric retention, dead-band reset, tier clamping, and deterministic physical drawing-buffer dimensions.",
       "status": "audited"
     }
   ]
