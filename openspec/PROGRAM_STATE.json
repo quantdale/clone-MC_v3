@@ -2480,6 +2480,11 @@
       "head": "b9d20d5f41bb2d7cf9688b7fcd74062ce442364e",
       "at": "2026-08-30T00:00:00Z",
       "note": "Change 255 task 14 implementation and durable checkpoint: byte-equivalent worker/synchronous worldgen across seeds, negative and boundary coordinates, full Overworld bounds, pinned ore/cave/structure fixtures, reload serialization, synchronous fallback, and fail-closed layout validation; focused 55/55, full unit 4482 + 1 skipped, typecheck/lint/build/validate-state/file-audit PASS. Current-tree E2E remains blocked by the recorded 50/51 timeout."
+    },
+    {
+      "head": "2096c06",
+      "at": "2026-08-30T02:00:00Z",
+      "note": "Change 255 task 15 implementation and durable checkpoint: bounded MeshReadyQueue over validated typed streams with record/byte caps, strict section-version metadata, malformed/duplicate rejection, intact deferral preserving enqueue age, focused 7/7 and full unit 4486 + 1 skipped, typecheck/lint/build/state/reviewed-file-audit PASS. Current-tree E2E remains blocked by the recorded 50/51 timeout."
     }
   ],
   "releaseAuthority": {
