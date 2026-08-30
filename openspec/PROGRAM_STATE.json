@@ -2505,6 +2505,11 @@
       "head": "6130aa1836e912e8da6832f1065ef1e44cdf4f5e",
       "at": "2026-08-30T02:54:49Z",
       "note": "Change 255 task 21 implementation and durable checkpoint: saturated generate-queue evidence proves interactive Interaction work displaces and dispatches before far speculative Preload work while preserving in-flight work; real resource plateau evidence tracks resident columns, loaded slabs, allocated sections, geometries, and pending queues and proves complete equality after repeated settled return-to-origin traversal. Focused task-21 validation passes 48/48; full unit passes 4508 + 1 skipped; typecheck/lint/build/state/reviewed-file-audit PASS. Current-tree E2E remains blocked by the recorded 50/51 timeout; task 22 deterministic LOD tile contracts and sampling is next."
+    },
+    {
+      "head": "178d6dab04c65d300a4e3463eab18c0480ec3ad0",
+      "at": "2026-08-30T03:07:57Z",
+      "note": "Change 255 task 22 implementation and durable checkpoint: validated presentation-only LOD tile identity/data contracts keyed by dimension, seed, generation version, LOD, and safe tile coordinates; deterministic 16x16 LOD1/LOD2/LOD3 typed sampling uses 2/4/8 strides with bounded byte accounting, binary occupancy, and a production TerrainGenerator height/biome summary adapter without canonical storage access. Focused LOD/worldgen validation passes 34/34; full unit passes 4514 + 1 skipped; typecheck/lint/build/state/reviewed-file-audit PASS. Current-tree E2E remains blocked by the recorded 50/51 timeout; task 23 seam-safe LOD tile construction/render ownership and bounded cache eviction is next."
     }
   ],
   "releaseAuthority": {
