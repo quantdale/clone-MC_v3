@@ -11,7 +11,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2591,
+  "total": 2593,
   "pending": 0,
   "unclassified": 0,
   "rows": [
@@ -29738,6 +29738,37 @@
       "status": "audited"
     },
     {
+      "path": "src/rendering/LodTile.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Validated presentation-only LOD1/LOD2/LOD3 tile identity, typed sample data, and deterministic terrain sampling contracts.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "available to future LOD tile ownership; no canonical or gameplay reads",
+      "imports": [
+        "src/data/DimensionType.ts",
+        "src/data/ResourceId.ts",
+        "src/world/TerrainGenerator.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "tests/unit/LodTile.test.ts",
+        "npx vitest run tests/unit/LodTile.test.ts tests/unit/WorldgenDeterminism.test.ts tests/unit/WorldgenRegressionMatrix.test.ts",
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build"
+      ],
+      "riskAreas": [
+        "identity-validation",
+        "deterministic-sampling",
+        "typed-array-bounds",
+        "presentation-only-boundary"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Task 22 semantic review: identity is seed/version/dimension/LOD/tile-coordinate bound; LOD1/2/3 strides are 2/4/8; typed data and byte lengths are validated; production sampling uses TerrainGenerator height/biome summaries without canonical storage access; unsafe coordinates and forged occupancy fail closed.",
+      "status": "audited"
+    },
+    {
       "path": "src/rendering/MemoryResourceBudget.ts",
       "gitBlob": null,
       "category": "production",
@@ -36893,6 +36924,33 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/LodTile.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit coverage for validated LOD tile identity, deterministic sampling, typed payloads, and failure boundaries.",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "test-only",
+      "imports": [
+        "src/rendering/LodTile.ts",
+        "src/world/TerrainGenerator.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "npx vitest run tests/unit/LodTile.test.ts tests/unit/WorldgenDeterminism.test.ts tests/unit/WorldgenRegressionMatrix.test.ts",
+        "npm test"
+      ],
+      "riskAreas": [
+        "negative-coordinates",
+        "version-and-dimension-mismatch",
+        "typed-array-validation",
+        "determinism"
+      ],
+      "findingIds": [],
+      "disposition": "TEST_ONLY",
+      "reviewNotes": "Task 22 focused suite covers canonical keys, 2/4/8 strides, negative tile origins, repeated byte-equivalent samples, production TerrainGenerator binding, floor occupancy, unsafe coordinates, forged occupancy, and malformed metadata; focused suite passes 34/34.",
       "status": "audited"
     },
     {
