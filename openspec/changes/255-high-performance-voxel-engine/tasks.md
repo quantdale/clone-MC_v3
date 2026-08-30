@@ -36,12 +36,12 @@
 ## Campaign G — hierarchical far-terrain LOD
 - [x] 22. Define validated LOD tile identity/data contracts and deterministic LOD1/LOD2/LOD3 sampling from seed/version.
 - [x] 23. Implement tile construction/render ownership with seam-safe transitions, frustum/distance selection, and bounded cache eviction.
-- [ ] 24. Implement edit invalidation/conservative far visibility without allowing LOD to answer gameplay, collision, persistence, or network reads.
-- [ ] 25. Add deterministic LOD seam, horizon, transition, negative-coordinate, and rapid-threshold tests plus targeted visual evidence.
+- [x] 24. Implement edit invalidation/conservative far visibility without allowing LOD to answer gameplay, collision, persistence, or network reads.
+- [x] 25. Add deterministic LOD seam, horizon, transition, negative-coordinate, and rapid-threshold tests plus targeted visual evidence.
 
 ## Campaign H — dynamic resolution and observability
-- [ ] 26. Implement hysteretic, tier-bounded dynamic resolution with deterministic fake-clock tests and no simulation coupling.
-- [ ] 27. Wire actual drawing-buffer dimensions, worker/ready/upload/LOD metrics, and debug diagnostics into renderer/performance monitoring.
+- [x] 26. Implement hysteretic, tier-bounded dynamic resolution with deterministic fake-clock tests and no simulation coupling.
+- [x] 27. Wire actual drawing-buffer dimensions, worker/ready/upload/LOD metrics, and debug diagnostics into renderer/performance monitoring.
 - [ ] 28. Add resource-budget dimensions for worker buffers, ready bytes, uploads, and LOD tiles; prove bounded long-session behavior.
 
 ## Campaign I — certification

@@ -6,9 +6,9 @@
   "currentChangeStatus": "ACTIVE",
   "lastCompletedChange": "254-whole-codebase-performance-optimization",
   "nextChange": null,
-  "completedTasks": 23,
+  "completedTasks": 27,
   "totalTasks": 37,
-  "completionPercentage": 62.16,
+  "completionPercentage": 72.97,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": false,
@@ -16,10 +16,10 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "ec072ab26b2729539d45f60c56e4644c898c0e7a",
-  "lastCompletedTask": "255 task 23 complete: LodTileRender provides fixed-count seam-safe top surfaces plus overlapping skirts, deterministic negative-coordinate frustum/distance tier selection with hysteresis state, and bounded byte/entry LRU ownership with exact-once disposal and old-visible retention on rejected replacements. Focused LOD render validation passes 15/15; full unit passes 4523 + 1 skipped; typecheck/lint/build/state/reviewed-file-audit pass.",
-  "nextExactAction": "Begin task 24: implement edit invalidation and conservative far visibility without allowing LOD to answer gameplay, collision, persistence, or network reads.",
+  "lastCompletedTask": "255 task 27 complete: Renderer samples actual physical drawing-buffer dimensions; World exposes bounded worker queue/counter/retry/fallback and synchronous upload-byte snapshots; RenderPerformanceMonitor validates and defensively exports worker, upload, dynamic-resolution, physical-buffer, and explicitly inactive ready/LOD fields; Game feeds live pipeline state each frame; DebugOverlay distinguishes CPU mesh-ready completion from GPU upload bytes/time. Standalone MeshReadyQueue, GpuUploadScheduler, and LodTileRenderCache remain inactive in the live World path rather than being reported as fabricated live metrics. Focused task-27 observability validation and full unit/build/typecheck/lint checks pass.",
+  "nextExactAction": "Begin task 28: add resource-budget dimensions for worker buffers, ready bytes, uploads, and LOD tiles, and prove bounded long-session behavior.",
   "blockers": [
-    "Current-tree npm run test:e2e timed out at 1200 seconds after 50/51 tests completed without an assertion failure; the remaining long visual/resource test did not finish."
+    "Current-tree npm run test:e2e is blocked at 50/51: the visual regression matrix passed, while memory-stress GPU-context restore fails the geometry plateau allowance with observed drift 5 versus allowed 4."
   ],
   "validationResults": [
     {
@@ -2430,9 +2430,9 @@
     {
       "change": "255-high-performance-voxel-engine",
       "status": "ACTIVE",
-      "unitTests": 4523,
+      "unitTests": 4544,
       "e2eTests": 51,
-      "note": "Tasks 1-23 complete (23/37, 62.16%). Task 23 adds presentation-only fixed-count LOD render data with overlapping skirts on all four edges, deterministic negative-coordinate frustum/distance tier selection with caller-owned hysteresis state, duplicate collapse, and bounded byte/entry LRU resource ownership with exact-once disposal and visible-resource retention on rejected replacements. Focused LOD render validation passes 15/15; full unit passes 4523 + 1 skipped; typecheck/lint/build/state/reviewed-file-audit pass. The current-tree E2E attempt remains blocked after 50/51 at the 1200-second timeout; prior clean 51/51 evidence is historical only. Next exact action is task 24 edit invalidation and conservative far visibility boundaries."
+      "note": "Tasks 1-27 complete (27/37, 72.97%). Task 27 wires actual physical drawing-buffer dimensions, live World worker queue/counter/retry/fallback and synchronous upload-byte snapshots, defensive RenderPerformanceMonitor pipeline export, dynamic-resolution state, and debug CPU-ready versus GPU-upload diagnostics. Standalone MeshReadyQueue, GpuUploadScheduler, and LodTileRenderCache remain explicitly inactive in the live World path. Focused task-27 observability validation passes; full unit passes 4544 + 1 skipped across 375 files; typecheck/lint/build/state/file-audit pass. Current-tree E2E is blocked at 50/51: the visual regression matrix passed, while GPU-context restore geometry drift is 5 versus allowed 4. Next exact action is task 28 resource-budget dimensions and bounded long-session evidence."
     }
   ],
   "publicationHistory": [

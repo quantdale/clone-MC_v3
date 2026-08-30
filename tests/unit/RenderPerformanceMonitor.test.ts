@@ -101,4 +101,50 @@ describe("RenderPerformanceMonitor exportJSON feeders", () => {
     expect(next.queues.depths.generate).toBe(2);
     expect(next.queues.oldestJobAgeMillis).toBeCloseTo(33.5, 3);
   });
+
+  it('exports validated pipeline metrics with physical buffer and inactive-stage diagnostics', () => {
+    const monitor = new RenderPerformanceMonitor(() => 0);
+    monitor.recordPipelineMetrics({
+      drawingBuffer: { width: 1920, height: 1080 },
+      worker: { active: true, pending: 3, inFlight: 2, completed: 11, failures: 1, retries: 4, fallbacks: 2 },
+      ready: { active: false, count: 0, bytes: 0, oldestAgeMillis: 0, deferredCount: 0, cpuCompletionMillis: null },
+      upload: { active: false, queueDepth: 0, bytesThisFrame: 0, bytesLastFrame: 0, plannedMillis: null, actualMillis: null, deferredCount: 0, failedCount: 0 },
+      lod: { active: false, entries: 0, bytes: 0, evictions: 0, disposals: 0 },
+      dynamicResolution: {
+        tier: 'medium',
+        scale: 0.8,
+        minScale: 0.625,
+        maxScale: 1,
+        invalidMetricCount: 2,
+        effectiveFrameTimeMillis: 21.25,
+      },
+      diagnostics: { inactiveStages: ['ready', 'upload', 'lod'] },
+    });
+
+    const snapshot = monitor.pipelineMetricsSnapshot();
+    snapshot.worker.pending = 99;
+    expect(monitor.pipelineMetricsSnapshot().worker.pending).toBe(3);
+
+    const dump = JSON.parse(monitor.exportJSON()) as {
+      pipeline: {
+        drawingBuffer: { width: number; height: number };
+        worker: { pending: number; inFlight: number; failures: number };
+        dynamicResolution: { scale: number; invalidMetricCount: number };
+        diagnostics: { inactiveStages: string[] };
+      };
+    };
+    expect(dump.pipeline.drawingBuffer).toEqual({ width: 1920, height: 1080 });
+    expect(dump.pipeline.worker).toMatchObject({ pending: 3, inFlight: 2, failures: 1 });
+    expect(dump.pipeline.dynamicResolution).toMatchObject({ scale: 0.8, invalidMetricCount: 2 });
+    expect(dump.pipeline.diagnostics.inactiveStages).toEqual(['ready', 'upload', 'lod']);
+
+    const current = monitor.pipelineMetricsSnapshot();
+    expect(() => monitor.recordPipelineMetrics({
+      ...current,
+      dynamicResolution: {
+        ...current.dynamicResolution,
+        scale: 2,
+      },
+    })).toThrow(/within its bounds/);
+  });
 });

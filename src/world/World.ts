@@ -13,6 +13,7 @@ import { Chunk, ChunkState } from './Chunk';
 import { ChunkManager } from './ChunkManager';
 import { ChunkMesher, geometryFromMeshStream } from './ChunkMesher';
 import type { TerrainGenerator } from './TerrainGenerator';
+import { TERRAIN_GENERATION_VERSION } from './TerrainGenerator';
 import type { WorldStats } from './MeshingTypes';
 import type { WorldAccess } from './WorldAccess';
 import { RenderSimulationDistance } from './RenderSimulationDistance';
@@ -125,6 +126,31 @@ export interface WorldMonitorHandle {
   recordUploadBytes(bytes: number): void;
 }
 
+/** Read-only live pipeline diagnostics consumed by renderer observability. */
+export interface WorldPerformanceSnapshot {
+  readonly queues: {
+    readonly generate: number;
+    readonly mesh: number;
+    readonly upload: number;
+    readonly unload: number;
+    readonly oldestJobAgeMillis: number;
+  };
+  readonly worker: {
+    readonly enabled: boolean;
+    readonly poolSize: number;
+    readonly pending: number;
+    readonly inFlight: number;
+    readonly completed: number;
+    readonly failures: number;
+    readonly retries: number;
+    readonly fallbacks: number;
+  };
+  /** Bytes attached by the synchronous live upload path during the latest world update. */
+  readonly uploadBytesThisFrame: number;
+  /** Bytes attached by the synchronous live upload path during the preceding world update. */
+  readonly uploadBytesLastFrame: number;
+}
+
 /** Luminance (emitted block light, 0-15) of emissive blocks. Registry entries carry no luminance field yet, so the emissive set is this explicit map. */
 const BLOCK_LUMINANCE: Readonly<Record<number, number>> = {
   [BlockId.Lava]: 15,
@@ -182,6 +208,20 @@ export interface WorldEditDurability {
 }
 
 /**
+ * Read-only notification emitted after a canonical mutation. This is a
+ * presentation invalidation seam; consumers must not use it as world truth.
+ */
+export interface WorldCanonicalEdit {
+  readonly dimensionId: DimensionType['id'];
+  readonly seed: number;
+  readonly generationVersion: string;
+  readonly worldX: number;
+  readonly worldY: number;
+  readonly worldZ: number;
+  readonly blockId: number;
+}
+
+/**
  * The chunked, streaming world. Owns chunk storage, the budgeted
  * generation/meshing pipeline, unloading, and the player-edit overlay that
  * survives chunk unload/reload.
@@ -231,6 +271,8 @@ export class World implements WorldAccess {
    *  behaviour where eviction would otherwise drop the projection entry
    *  (canonical storage still retains the edit via its dirty column). */
   private readonly editDurability: WorldEditDurability | null;
+  /** Presentation-only notification; never consulted for canonical reads. */
+  private readonly onCanonicalEdit: ((edit: WorldCanonicalEdit) => void) | null;
   /** Chunk keys with an in-flight `loadCommittedChunkEdits` hydration, so
    *  repeated generation cannot double-fire the async lookup (DIRTY-3). */
   private readonly hydrationPending = new Set<string>();
@@ -292,6 +334,7 @@ export class World implements WorldAccess {
   private readonly workerFactory: (() => Worker) | null;
   private workerCompletedCount = 0;
   private workerFailureCount = 0;
+  private workerRetryCount = 0;
   private workerFallbackCount = 0;
   /** Immutable registry-derived classification shared with every mesh worker. */
   private readonly meshRegistryTable: MeshWorkerRegistryTable;
@@ -302,6 +345,8 @@ export class World implements WorldAccess {
 
   /** GPU bytes attached this frame, fed to the monitor at end of update. */
   private uploadBytesThisFrame = 0;
+  /** GPU bytes attached during the previous world update. */
+  private lastUploadBytesThisFrame = 0;
   /** Context-loss gate: no worker result or scene replacement may publish while lost. */
   private contextLost = false;
   /** Optional observability feeder (audit 05); null keeps World headless. */
@@ -358,6 +403,8 @@ export class World implements WorldAccess {
     stateRegistry?: BlockStateRegistry;
     /** Durable owner of unsaved edits (DIRTY-1..5). Omit for cache-only behaviour. */
     editDurability?: WorldEditDurability;
+    /** Presentation-only observer for canonical edits; exceptions are isolated. */
+    onCanonicalEdit?: (edit: WorldCanonicalEdit) => void;
     /** Observability feeder (queue depths, job age, upload bytes). Omit for none. */
     monitor?: WorldMonitorHandle;
     /** Optional worker constructor seam for deterministic integration tests. */
@@ -388,6 +435,7 @@ export class World implements WorldAccess {
       stateRegistry: this.stateRegistry,
     });
     this.editDurability = opts.editDurability ?? null;
+    this.onCanonicalEdit = opts.onCanonicalEdit ?? null;
     this.renderDistance = opts.renderDistance ?? CONFIG.renderDistance;
     this.simulationDistance = opts.simulationDistance ?? CONFIG.simulationDistance;
     this.rsd = new RenderSimulationDistance(this.renderDistance, this.simulationDistance);
@@ -525,6 +573,21 @@ export class World implements WorldAccess {
     // Canonical write: this is the single writable mutation path. It updates
     // section version, dirty section/column state, and heightmaps once.
     this.storage.setCanonicalState(x, y, z, state);
+    if (this.onCanonicalEdit) {
+      try {
+        this.onCanonicalEdit(Object.freeze({
+          dimensionId: this.dimension.id,
+          seed: this.seed,
+          generationVersion: TERRAIN_GENERATION_VERSION,
+          worldX: x,
+          worldY: y,
+          worldZ: z,
+          blockId: state.blockId,
+        }));
+      } catch {
+        // Presentation invalidation must never roll back or block canonical state.
+      }
+    }
 
     // Projection-only overlay: mirrors the canonical edit for legacy
     // `exportEdits`/`applyEditOverlay`/`WorldEditDurability` consumers.
@@ -902,6 +965,7 @@ export class World implements WorldAccess {
   update(_dt: number, playerChunkX: number, playerChunkZ: number): void {
     if (this.contextLost) return;
     this.budgets.beginFrame();
+    this.lastUploadBytesThisFrame = this.uploadBytesThisFrame;
     this.uploadBytesThisFrame = 0;
     this.ensureChunks(playerChunkX, playerChunkZ);
     this.processGeneration();
@@ -2377,6 +2441,7 @@ export class World implements WorldAccess {
       const chunk = this.chunkManager.getChunk(record.cx, record.cy, record.cz);
       if (chunk?.generated) {
         chunk.markDirty();
+        this.workerRetryCount++;
         this.enqueueMeshWithRetry(chunk);
       }
     }
@@ -2429,6 +2494,7 @@ export class World implements WorldAccess {
       const chunk = this.chunkManager.getChunk(record.cx, record.cy, record.cz);
       if (chunk?.generated) {
         chunk.markDirty();
+        this.workerRetryCount++;
         this.enqueueMeshWithRetry(chunk);
       }
     }
@@ -2950,6 +3016,33 @@ export class World implements WorldAccess {
   /** Whether worker meshing is currently enabled for this world. */
   isWorkerMeshingEnabled(): boolean {
     return this.useWorkers;
+  }
+
+  /** Read-only live pipeline diagnostics for renderer/performance monitoring. */
+  performanceSnapshot(): WorldPerformanceSnapshot {
+    const pipeline = this.chunkManager.pipeline.stats();
+    const workerPool = this.workerPool?.stats();
+    return {
+      queues: {
+        generate: pipeline.depths.generate,
+        mesh: pipeline.depths.mesh + this.retryMeshQueue.length,
+        upload: pipeline.depths.upload,
+        unload: this.pendingUnloadValue,
+        oldestJobAgeMillis: pipeline.oldestJobAgeMs,
+      },
+      worker: {
+        enabled: this.useWorkers,
+        poolSize: workerPool?.workerCount ?? 0,
+        pending: workerPool?.pending ?? this.workerClient?.pendingCount ?? 0,
+        inFlight: workerPool?.inFlight ?? this.workerMeshBatches.size,
+        completed: this.workerCompletedCount,
+        failures: this.workerFailureCount,
+        retries: this.workerRetryCount,
+        fallbacks: this.workerFallbackCount,
+      },
+      uploadBytesThisFrame: this.uploadBytesThisFrame,
+      uploadBytesLastFrame: this.lastUploadBytesThisFrame,
+    };
   }
 
   getStats(): WorldStats {

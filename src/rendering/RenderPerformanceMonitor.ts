@@ -50,6 +50,56 @@ export interface FrameTimeStats {
   longFrames: number;
 }
 
+/** Fixed-shape pipeline/resource metrics exported with each performance snapshot. */
+export interface RenderPipelineMetrics {
+  drawingBuffer: { width: number; height: number };
+  worker: {
+    active: boolean;
+    pending: number;
+    inFlight: number;
+    completed: number;
+    failures: number;
+    retries: number;
+    fallbacks: number;
+  };
+  ready: {
+    active: boolean;
+    count: number;
+    bytes: number;
+    oldestAgeMillis: number;
+    deferredCount: number;
+    cpuCompletionMillis: number | null;
+  };
+  upload: {
+    active: boolean;
+    queueDepth: number;
+    bytesThisFrame: number;
+    bytesLastFrame: number;
+    plannedMillis: number | null;
+    actualMillis: number | null;
+    deferredCount: number;
+    failedCount: number;
+  };
+  lod: {
+    active: boolean;
+    entries: number;
+    bytes: number;
+    evictions: number;
+    disposals: number;
+  };
+  dynamicResolution: {
+    tier: string;
+    scale: number;
+    minScale: number;
+    maxScale: number;
+    invalidMetricCount: number;
+    effectiveFrameTimeMillis: number | null;
+  };
+  diagnostics: {
+    inactiveStages: readonly string[];
+  };
+}
+
 /** Aggregates render metrics per frame and evaluates them against the budget contract. */
 export class RenderPerformanceMonitor {
   private readonly now: () => number;
@@ -79,6 +129,15 @@ export class RenderPerformanceMonitor {
   private workerJobsCompleted = 0;
   private uploadBytesThisFrame = 0;
   private lastUploadBytesPerFrame = 0;
+  private pipelineMetrics: RenderPipelineMetrics = {
+    drawingBuffer: { width: 0, height: 0 },
+    worker: { active: false, pending: 0, inFlight: 0, completed: 0, failures: 0, retries: 0, fallbacks: 0 },
+    ready: { active: false, count: 0, bytes: 0, oldestAgeMillis: 0, deferredCount: 0, cpuCompletionMillis: null },
+    upload: { active: false, queueDepth: 0, bytesThisFrame: 0, bytesLastFrame: 0, plannedMillis: null, actualMillis: null, deferredCount: 0, failedCount: 0 },
+    lod: { active: false, entries: 0, bytes: 0, evictions: 0, disposals: 0 },
+    dynamicResolution: { tier: 'unknown', scale: 1, minScale: 1, maxScale: 1, invalidMetricCount: 0, effectiveFrameTimeMillis: null },
+    diagnostics: { inactiveStages: ['ready', 'upload', 'lod'] },
+  };
 
   /**
    * @param now injectable clock (milliseconds)
@@ -218,6 +277,86 @@ export class RenderPerformanceMonitor {
     this.renderDistanceChunks = chunks;
   }
 
+  /** Record the live pipeline/resource snapshot owned by renderer subsystems. */
+  recordPipelineMetrics(metrics: RenderPipelineMetrics): void {
+    const validateInteger = (value: number, name: string): void => assertNonNegativeInteger(value, name);
+    const validateNumber = (value: number, name: string): void => assertNonNegativeNumber(value, name);
+    validateInteger(metrics.drawingBuffer.width, 'drawing buffer width');
+    validateInteger(metrics.drawingBuffer.height, 'drawing buffer height');
+    validateInteger(metrics.worker.pending, 'worker pending jobs');
+    validateInteger(metrics.worker.inFlight, 'worker in-flight jobs');
+    validateInteger(metrics.worker.completed, 'worker completed jobs');
+    validateInteger(metrics.worker.failures, 'worker failures');
+    validateInteger(metrics.worker.retries, 'worker retries');
+    validateInteger(metrics.worker.fallbacks, 'worker fallbacks');
+    validateInteger(metrics.ready.count, 'ready queue count');
+    validateInteger(metrics.ready.bytes, 'ready queue bytes');
+    validateNumber(metrics.ready.oldestAgeMillis, 'ready queue oldest age');
+    validateInteger(metrics.ready.deferredCount, 'ready queue deferred count');
+    if (metrics.ready.cpuCompletionMillis !== null) {
+      validateNumber(metrics.ready.cpuCompletionMillis, 'CPU mesh-ready completion millis');
+    }
+    validateInteger(metrics.upload.queueDepth, 'upload queue depth');
+    validateInteger(metrics.upload.bytesThisFrame, 'upload bytes this frame');
+    validateInteger(metrics.upload.bytesLastFrame, 'upload bytes last frame');
+    if (metrics.upload.plannedMillis !== null) {
+      validateNumber(metrics.upload.plannedMillis, 'planned upload millis');
+    }
+    if (metrics.upload.actualMillis !== null) {
+      validateNumber(metrics.upload.actualMillis, 'actual upload millis');
+    }
+    validateInteger(metrics.upload.deferredCount, 'upload deferred count');
+    validateInteger(metrics.upload.failedCount, 'upload failed count');
+    validateInteger(metrics.lod.entries, 'LOD entries');
+    validateInteger(metrics.lod.bytes, 'LOD bytes');
+    validateInteger(metrics.lod.evictions, 'LOD evictions');
+    validateInteger(metrics.lod.disposals, 'LOD disposals');
+    validateNumber(metrics.dynamicResolution.scale, 'dynamic scale');
+    validateNumber(metrics.dynamicResolution.minScale, 'dynamic minimum scale');
+    validateNumber(metrics.dynamicResolution.maxScale, 'dynamic maximum scale');
+    validateInteger(metrics.dynamicResolution.invalidMetricCount, 'invalid dynamic metric count');
+    if (metrics.dynamicResolution.effectiveFrameTimeMillis !== null) {
+      validateNumber(metrics.dynamicResolution.effectiveFrameTimeMillis, 'effective dynamic frame time');
+    }
+    if (metrics.dynamicResolution.minScale > metrics.dynamicResolution.maxScale ||
+        metrics.dynamicResolution.scale < metrics.dynamicResolution.minScale ||
+        metrics.dynamicResolution.scale > metrics.dynamicResolution.maxScale) {
+      throw new RangeError('dynamic resolution scale must remain within its bounds');
+    }
+    this.pipelineMetrics = {
+      drawingBuffer: { ...metrics.drawingBuffer },
+      worker: { ...metrics.worker },
+      ready: { ...metrics.ready },
+      upload: { ...metrics.upload },
+      lod: { ...metrics.lod },
+      dynamicResolution: { ...metrics.dynamicResolution },
+      diagnostics: { inactiveStages: [...metrics.diagnostics.inactiveStages] },
+    };
+  }
+
+  /** Return a defensive pipeline snapshot for tests and debug integrations. */
+  pipelineMetricsSnapshot(): RenderPipelineMetrics {
+    return {
+      drawingBuffer: { ...this.pipelineMetrics.drawingBuffer },
+      worker: { ...this.pipelineMetrics.worker },
+      ready: { ...this.pipelineMetrics.ready },
+      upload: { ...this.pipelineMetrics.upload },
+      lod: { ...this.pipelineMetrics.lod },
+      dynamicResolution: { ...this.pipelineMetrics.dynamicResolution },
+      diagnostics: { inactiveStages: [...this.pipelineMetrics.diagnostics.inactiveStages] },
+    };
+  }
+
+  /** Set actual physical drawing-buffer dimensions reported by the renderer. */
+  setDrawingBufferSize(width: number, height: number): void {
+    assertNonNegativeInteger(width, 'drawing buffer width');
+    assertNonNegativeInteger(height, 'drawing buffer height');
+    this.pipelineMetrics = {
+      ...this.pipelineMetrics,
+      drawingBuffer: { width, height },
+    };
+  }
+
   /** FPS / frame-time percentiles over the ring buffer (linear-scan percentiles). */
   frameTimeStats(): FrameTimeStats {
     const n = this.frameRingCount;
@@ -299,6 +438,31 @@ export class RenderPerformanceMonitor {
         busyMillisLastFrame: round3(this.lastFrameWorkerBusyMillis),
         busyMillisTotal: round3(this.workerBusyMillisTotal),
         jobsCompletedTotal: this.workerJobsCompleted,
+      },
+      pipeline: {
+        drawingBuffer: { ...this.pipelineMetrics.drawingBuffer },
+        worker: { ...this.pipelineMetrics.worker },
+        ready: { ...this.pipelineMetrics.ready },
+        upload: {
+          ...this.pipelineMetrics.upload,
+          plannedMillis: this.pipelineMetrics.upload.plannedMillis === null
+            ? null
+            : round3(this.pipelineMetrics.upload.plannedMillis),
+          actualMillis: this.pipelineMetrics.upload.actualMillis === null
+            ? null
+            : round3(this.pipelineMetrics.upload.actualMillis),
+        },
+        lod: { ...this.pipelineMetrics.lod },
+        dynamicResolution: {
+          ...this.pipelineMetrics.dynamicResolution,
+          scale: round3(this.pipelineMetrics.dynamicResolution.scale),
+          minScale: round3(this.pipelineMetrics.dynamicResolution.minScale),
+          maxScale: round3(this.pipelineMetrics.dynamicResolution.maxScale),
+          effectiveFrameTimeMillis: this.pipelineMetrics.dynamicResolution.effectiveFrameTimeMillis === null
+            ? null
+            : round3(this.pipelineMetrics.dynamicResolution.effectiveFrameTimeMillis),
+        },
+        diagnostics: { inactiveStages: [...this.pipelineMetrics.diagnostics.inactiveStages] },
       },
     });
   }

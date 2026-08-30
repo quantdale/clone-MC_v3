@@ -149,6 +149,139 @@ describe('LodTileRender contracts', () => {
     );
   });
 
+  it('keeps every cross-tier seam covered by positive overlap and a skirt', () => {
+    const near = buildLodTileRenderData(tile(1, -1, 0));
+    const far = buildLodTileRenderData(tile(2, 0, 0));
+    expect(near.originX + near.worldSpan).toBe(0);
+    expect(far.originX).toBe(0);
+    expect(near.seamOverlap).toBeGreaterThan(0);
+    expect(far.seamOverlap).toBeGreaterThan(0);
+    expect(near.skirtDepth).toBeGreaterThan(0);
+    expect(far.skirtDepth).toBeGreaterThan(0);
+
+    const nearLowerXs: number[] = [];
+    for (let index = LOD_RENDER_TOP_VERTEX_COUNT; index < LOD_RENDER_VERTEX_COUNT; index++) {
+      nearLowerXs.push(near.positions[index * 3]!);
+    }
+    const farLowerXs: number[] = [];
+    for (let index = LOD_RENDER_TOP_VERTEX_COUNT; index < LOD_RENDER_VERTEX_COUNT; index++) {
+      farLowerXs.push(far.positions[index * 3]!);
+    }
+    expect(Math.min(...nearLowerXs)).toBeLessThan(near.originX);
+    expect(Math.max(...farLowerXs)).toBeGreaterThanOrEqual(far.originX + far.worldSpan);
+  });
+
+  it('selects a deterministic horizon and rejects only beyond the configured bound', () => {
+    const candidate = { identity: { ...tile(3, 0, 0).identity } };
+    const atHorizon = selectLodTiles(
+      [candidate],
+      { cameraX: 0, cameraZ: 0 },
+      { ...selectionConfig, maxDistance: 160 },
+    );
+    expect(atHorizon.selected).toHaveLength(1);
+    expect(atHorizon.rejected).toHaveLength(0);
+
+    const beyondHorizon = selectLodTiles(
+      [{ identity: { ...candidate.identity, tileX: 6, tileZ: 0 } }],
+      { cameraX: 0, cameraZ: 0 },
+      { ...selectionConfig, maxDistance: 160 },
+    );
+    expect(beyondHorizon.selected).toHaveLength(0);
+    expect(beyondHorizon.rejected).toEqual([
+      expect.objectContaining({ reason: 'distance' }),
+    ]);
+  });
+
+  it('transitions in both directions only at the declared hysteresis bands', () => {
+    const identity = { ...tile(1, 0, 0).identity };
+    const key = lodTileSelectionKey(identity);
+    const choose = (distance: number, previous?: 1 | 2 | 3) => {
+      const result = selectLodTiles(
+        [{ identity }],
+        { cameraX: 32 + distance, cameraZ: 0 },
+        selectionConfig,
+        previous === undefined ? undefined : new Map([[key, previous]]),
+      );
+      return result.selected[0]?.lod;
+    };
+
+    expect(choose(32)).toBe(1);
+    expect(choose(48, 1)).toBe(1);
+    expect(choose(48.01, 1)).toBe(2);
+    expect(choose(80, 2)).toBe(2);
+    expect(choose(80.01, 2)).toBe(3);
+    expect(choose(64, 3)).toBe(2);
+    expect(choose(48, 2)).toBe(2);
+    expect(choose(32, 2)).toBe(1);
+  });
+
+  it('does not thrash under rapid threshold oscillation and remains deterministic', () => {
+    const identity = { ...tile(1, 0, 0).identity };
+    const key = lodTileSelectionKey(identity);
+    const distances = [47.9, 48.1, 47.95, 48.05, 47.99, 48.01];
+    let previous: 1 | 2 | 3 = 1;
+    const selected: Array<1 | 2 | 3> = [];
+    for (const distance of distances) {
+      const result = selectLodTiles(
+        [{ identity }],
+        { cameraX: 32 + distance, cameraZ: 0 },
+        selectionConfig,
+        new Map([[key, previous]]),
+      );
+      previous = result.selected[0]!.lod;
+      selected.push(previous);
+    }
+    expect(selected).toEqual([1, 2, 2, 2, 2, 2]);
+
+    const repeat = selectLodTiles(
+      [{ identity }],
+      { cameraX: 32 + 48.01, cameraZ: 0 },
+      selectionConfig,
+      new Map([[key, 1]]),
+    );
+    expect(repeat.selectedKeys).toEqual([lodTileKey({ ...identity, lod: 2 })]);
+  });
+
+  it('keeps negative-coordinate horizon and transition decisions stable', () => {
+    const identity = { ...tile(1, -2, -2).identity };
+    const key = lodTileSelectionKey(identity);
+    const result = selectLodTiles(
+      [{ identity }],
+      { cameraX: -64, cameraZ: -64 },
+      selectionConfig,
+      new Map([[key, 2]]),
+    );
+    expect(result.selected).toHaveLength(1);
+    expect(result.selected[0]).toMatchObject({ tileX: -2, tileZ: -2, lod: 1 });
+    expect(result.distances.get(key)).toBe(0);
+    expect(lodTileBounds(result.selected[0]!)).toEqual({ minX: -64, minZ: -64, maxX: -32, maxZ: -32 });
+  });
+
+  it('pins a deterministic render signature for targeted visual evidence', () => {
+    const data = buildLodTileRenderData(tile(2, -1, 3));
+    let hash = 2166136261;
+    const add = (value: number): void => {
+      hash ^= value >>> 0;
+      hash = Math.imul(hash, 16777619) >>> 0;
+    };
+    for (const value of data.positions) add(Math.round(value * 1000));
+    for (const value of data.indices) add(value);
+    for (const value of data.materials) add(value);
+    expect({
+      key: data.key,
+      vertexCount: data.positions.length / 3,
+      indexCount: data.indices.length,
+      byteLength: data.byteLength,
+      signature: hash >>> 0,
+    }).toEqual({
+      key: data.key,
+      vertexCount: LOD_RENDER_VERTEX_COUNT,
+      indexCount: LOD_RENDER_INDEX_COUNT,
+      byteLength: data.byteLength,
+      signature: 704578647,
+    });
+  });
+
   it('rejects invalid selection/cache configuration and replaces same-key ownership exactly once', () => {
     expect(() => selectLodTiles([], { cameraX: 0, cameraZ: 0 }, { ...selectionConfig, maxTiles: 0 })).toThrow(
       /maxTiles/,

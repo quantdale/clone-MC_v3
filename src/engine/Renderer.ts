@@ -1,5 +1,11 @@
 import * as THREE from 'three';
-import { CONFIG } from '../config';
+import { CONFIG, type QualityTier } from '../config';
+import {
+  DynamicResolutionController,
+  type DynamicResolutionMetrics,
+  type DynamicResolutionState,
+  type DynamicResolutionUpdate,
+} from '../rendering/DynamicResolution';
 
 /**
  * Owns the Three.js scene, camera, and WebGL renderer.
@@ -22,15 +28,19 @@ export class Renderer {
   private readonly canvas: HTMLCanvasElement;
   private readonly onContextLostCallback?: () => void;
   private readonly onContextRestoredCallback?: () => void;
+  /** Dynamic pixel scale is presentation-only; callers feed completed-frame metrics. */
+  readonly dynamicResolution: DynamicResolutionController;
 
   constructor(
     canvas: HTMLCanvasElement,
     onContextLost?: () => void,
     onContextRestored?: () => void,
+    dynamicResolution: DynamicResolutionController = new DynamicResolutionController('medium'),
   ) {
     this.canvas = canvas;
     this.onContextLostCallback = onContextLost;
     this.onContextRestoredCallback = onContextRestored;
+    this.dynamicResolution = dynamicResolution;
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(CONFIG.fog.color);
@@ -64,16 +74,39 @@ export class Renderer {
     canvas.addEventListener('webglcontextrestored', this.handleContextRestored);
   }
 
-  /** Re-applies the pixel-ratio cap (e.g. after moving to a different-DPI monitor). */
+  /** Re-applies the pixel-ratio cap and active dynamic scale. */
   private applyPixelRatio(): void {
     if (this.renderer) {
       const headless = typeof navigator !== 'undefined' && navigator.webdriver;
-      this.renderer.setPixelRatio(
-        Math.min(
-          window.devicePixelRatio,
-          headless ? CONFIG.headless.maxPixelRatio : CONFIG.maxPixelRatio,
-        ),
-      );
+      const deviceCap = headless ? CONFIG.headless.maxPixelRatio : CONFIG.maxPixelRatio;
+      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, deviceCap) * this.dynamicResolution.getScale());
+    }
+  }
+
+  /** Change the render-quality tier without changing simulation or camera semantics. */
+  setDynamicResolutionTier(tier: QualityTier): void {
+    this.dynamicResolution.setTier(tier);
+    this.applyDynamicResolutionSize();
+  }
+
+  /** Feed a completed-frame timing sample and apply only accepted pixel-scale changes. */
+  updateDynamicResolution(nowMs: number, metrics: DynamicResolutionMetrics): DynamicResolutionUpdate {
+    const update = this.dynamicResolution.update(nowMs, metrics);
+    if (update.changed) {
+      this.applyDynamicResolutionSize();
+    }
+    return update;
+  }
+
+  /** Snapshot dynamic-resolution state for debug/observability callers. */
+  dynamicResolutionState(): DynamicResolutionState {
+    return this.dynamicResolution.state();
+  }
+
+  private applyDynamicResolutionSize(): void {
+    if (this.renderer) {
+      this.applyPixelRatio();
+      this.renderer.setSize(window.innerWidth, Math.max(1, window.innerHeight), false);
     }
   }
 
@@ -99,6 +132,14 @@ export class Renderer {
     }
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
+  }
+
+  /** Return the actual physical drawing-buffer dimensions, not CSS viewport dimensions. */
+  actualDrawingBufferSize(): { width: number; height: number } {
+    if (!this.renderer) return { width: 0, height: 0 };
+    const size = new THREE.Vector2();
+    this.renderer.getDrawingBufferSize(size);
+    return { width: Math.max(0, Math.floor(size.x)), height: Math.max(0, Math.floor(size.y)) };
   }
 
   /** Renders the scene with the camera. */

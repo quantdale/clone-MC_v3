@@ -32,6 +32,10 @@ export function formatPerfLine(json: string): string {
     frame?: { fpsAvg?: unknown; p95Millis?: unknown; p99Millis?: unknown };
     render?: { drawCalls?: unknown };
     queues?: { depths?: Record<string, unknown> };
+    pipeline?: {
+      ready?: { cpuCompletionMillis?: unknown };
+      upload?: { active?: unknown; bytesThisFrame?: unknown; actualMillis?: unknown };
+    };
   };
   const fpsAvg = Number(obj.frame?.fpsAvg);
   const p95 = Number(obj.frame?.p95Millis);
@@ -47,7 +51,22 @@ export function formatPerfLine(json: string): string {
   if (!Number.isFinite(fpsAvg) || !Number.isFinite(p95) || !Number.isFinite(p99) || !Number.isFinite(draws)) {
     return '';
   }
-  return `perf: fps=${fpsAvg.toFixed(1)} p95=${p95.toFixed(1)}ms p99=${p99.toFixed(1)}ms draws=${draws} queue=${queue}`;
+  const pipeline = obj.pipeline;
+  if (pipeline === undefined) {
+    return `perf: fps=${fpsAvg.toFixed(1)} p95=${p95.toFixed(1)}ms p99=${p99.toFixed(1)}ms draws=${draws} queue=${queue}`;
+  }
+  const cpuReady = pipeline.ready?.cpuCompletionMillis;
+  const upload = pipeline.upload;
+  const uploadBytes = Number(upload?.bytesThisFrame);
+  const uploadMillis = upload?.actualMillis;
+  const cpuReadyText = typeof cpuReady === 'number' && Number.isFinite(cpuReady)
+    ? `${cpuReady.toFixed(1)}ms`
+    : 'n/a';
+  const uploadBytesText = Number.isFinite(uploadBytes) ? String(uploadBytes) : 'n/a';
+  const uploadMillisText = typeof uploadMillis === 'number' && Number.isFinite(uploadMillis)
+    ? `${uploadMillis.toFixed(1)}ms`
+    : 'n/a';
+  return `perf: fps=${fpsAvg.toFixed(1)} p95=${p95.toFixed(1)}ms p99=${p99.toFixed(1)}ms draws=${draws} queue=${queue} cpu-ready=${cpuReadyText} gpu-upload=bytes:${uploadBytesText},time:${uploadMillisText}`;
 }
 
 /**

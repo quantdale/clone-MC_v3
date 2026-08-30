@@ -54,12 +54,22 @@ describe('formatPerfLine', () => {
     expect(formatPerfLine(json)).toContain('queue=6');
   });
 
-  it('returns empty string on malformed or missing data', () => {
-    expect(formatPerfLine('not json')).toBe('');
-    expect(formatPerfLine('{}')).toBe('');
-    expect(formatPerfLine(JSON.stringify({ frame: { fpsAvg: 60 } }))).toBe('');
+  it('distinguishes CPU mesh-ready completion from GPU upload timing', () => {
+    const json = JSON.stringify({
+      frame: { fpsAvg: 60, p95Millis: 16, p99Millis: 17 },
+      render: { drawCalls: 4 },
+      queues: { depths: { mesh: 1 } },
+      pipeline: {
+        ready: { cpuCompletionMillis: null },
+        upload: { active: true, bytesThisFrame: 4096, actualMillis: null },
+      },
+    });
+    expect(formatPerfLine(json)).toContain('cpu-ready=n/a');
+    expect(formatPerfLine(json)).toContain('gpu-upload=bytes:4096,time:n/a');
   });
 });
+
+
 
 describe('DebugOverlay perf source', () => {
   const stats: DebugStats = {

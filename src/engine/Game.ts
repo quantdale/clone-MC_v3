@@ -120,7 +120,7 @@ import {
 import { FixedTickDriver } from './FixedTickDriver';
 import { TICK_RATE } from './SimulationClock';
 import { RenderInterpolator } from './RenderInterpolator';
-import { RenderPerformanceMonitor } from '../rendering/RenderPerformanceMonitor';
+import { RenderPerformanceMonitor, type RenderPipelineMetrics } from '../rendering/RenderPerformanceMonitor';
 import { createDefaultBlockShapeTable } from '../world/VoxelShape';
 import type { SelectionShapeWorld } from '../world/ShapeRaycast';
 import { LiveBlockEntityHost } from './LiveBlockEntityHost';
@@ -1187,7 +1187,65 @@ export class Game {
         memory: { geometries: info.memory.geometries, textures: info.memory.textures },
       });
     }
+    const frameStats = this.perfMonitor.frameTimeStats();
+    const dynamicUpdate = this.renderer.updateDynamicResolution(performance.now(), {
+      p95FrameTimeMillis: frameStats.p95Millis,
+    });
+    const dynamicState = this.renderer.dynamicResolutionState();
+    const worldPipeline = this.world.performanceSnapshot();
+    const buffer = this.renderer.actualDrawingBufferSize();
+    const pipeline: RenderPipelineMetrics = {
+      drawingBuffer: buffer,
+      worker: {
+        active: worldPipeline.worker.enabled,
+        pending: worldPipeline.worker.pending,
+        inFlight: worldPipeline.worker.inFlight,
+        completed: worldPipeline.worker.completed,
+        failures: worldPipeline.worker.failures,
+        retries: worldPipeline.worker.retries,
+        fallbacks: worldPipeline.worker.fallbacks,
+      },
+      ready: {
+        active: false,
+        count: 0,
+        bytes: 0,
+        oldestAgeMillis: 0,
+        deferredCount: 0,
+        cpuCompletionMillis: null,
+      },
+      upload: {
+        active: true,
+        queueDepth: worldPipeline.queues.upload,
+        bytesThisFrame: worldPipeline.uploadBytesThisFrame,
+        bytesLastFrame: worldPipeline.uploadBytesLastFrame,
+        plannedMillis: null,
+        actualMillis: null,
+        deferredCount: 0,
+        failedCount: 0,
+      },
+      lod: {
+        active: false,
+        entries: 0,
+        bytes: 0,
+        evictions: 0,
+        disposals: 0,
+      },
+      dynamicResolution: {
+        tier: dynamicState.tier,
+        scale: dynamicState.scale,
+        minScale: dynamicState.minScale,
+        maxScale: dynamicState.maxScale,
+        invalidMetricCount: dynamicState.invalidMetricCount,
+        effectiveFrameTimeMillis: dynamicState.effectiveFrameTimeMillis,
+      },
+      diagnostics: {
+        inactiveStages: ['ready', 'lod'],
+      },
+    };
+    this.perfMonitor.recordPipelineMetrics(pipeline);
+    void dynamicUpdate;
     this.perfMonitor.endFrame();
+
   }
 
   /**

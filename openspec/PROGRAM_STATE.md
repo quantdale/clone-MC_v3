@@ -26,8 +26,8 @@
 > **255-high-performance-voxel-engine — ACTIVE (2026-08-29, session start `93dbb092`).**
 > Owner-authorized post-253 scalability campaign activated only after Changes 253 and 254 were
 > VERIFIED. The complete OpenSpec package is present at
-> `openspec/changes/255-high-performance-voxel-engine/`; tasks 1-23 are complete (23/37,
-> 62.16%). Tasks 7-8 add validated typed GPU-ready opaque/cutout/translucent/fluid streams,
+> `openspec/changes/255-high-performance-voxel-engine/`; tasks 1-27 are complete (27/37,
+> 72.97%). Tasks 7-8 add validated typed GPU-ready opaque/cutout/translucent/fluid streams,
 > registry-derived tile metadata, aggregate byte/quad/vertex caps, direct worker transfer, and
 > independent worker-vs-reference parity for geometry, UVs, lighting, AO, tint, normalized
 > indices, counts, and all four layers. Task 9 makes canonical 16³ target/face-dependency
@@ -64,20 +64,32 @@
 > resident columns, loaded slabs, allocated sections, geometries, and pending queues after repeated
 > settled return-to-origin traversal. Focused task-21 priority/saturation/convergence validation
 > passes 48/48; typecheck/lint/full unit/build pass. The performance baseline emitted an
-> environment-sensitive `withinBudget=false` diagnostic without test failure. Current-tree E2E
-> reached 50/51 before the 1200-second timeout; prior clean 51/51 evidence remains historical
-> Task 22 adds validated presentation-only LOD tile identity/data contracts keyed by dimension, seed,
-> generation version, LOD, and safe tile coordinates; deterministic 16×16 LOD1/LOD2/LOD3 typed sampling
-> uses strides 2/4/8, binary occupancy, bounded byte accounting, and a production TerrainGenerator
-> height/biome summary adapter without canonical storage access. Task 23 adds fixed-count presentation-only
-> LOD render data with positive-overlap skirts on all four edges, half-open adjacent bounds, deterministic
-> negative-coordinate frustum/distance tier selection with caller-owned hysteresis and duplicate collapse,
-> and bounded byte/entry LRU ownership with exact-once disposal and old-visible retention on rejected
-> replacements. Focused task-23 LOD render validation passes 15/15; full unit passes 4523 + 1 skipped;
-> typecheck/lint/build/state/reviewed-file-audit pass. The performance baseline emitted an environment-
-> sensitive `withinBudget=false` diagnostic without test failure. Current-tree E2E reached 50/51 before
-> the 1200-second timeout; prior clean 51/51 evidence remains historical only. Next exact action: task 24
-> edit invalidation and conservative far visibility boundaries; no advancement exception applies.
+> environment-sensitive `withinBudget=false` diagnostic without test failure. Task 22 adds validated
+> presentation-only LOD tile identity/data contracts keyed by dimension, seed, generation version,
+> LOD, and safe tile coordinates; deterministic 16×16 LOD1/LOD2/LOD3 typed sampling uses strides
+> 2/4/8, binary occupancy, bounded byte accounting, and a production TerrainGenerator height/biome
+> summary adapter without canonical storage access. Task 23 adds fixed-count presentation-only LOD
+> render data with positive-overlap skirts on all four edges, half-open adjacent bounds, deterministic
+> negative-coordinate frustum/distance tier selection with caller-owned hysteresis and duplicate
+> collapse, and bounded byte/entry LRU ownership with exact-once disposal and old-visible retention
+> on rejected replacements. Task 24 adds presentation-only edit invalidation and conservative far
+> visibility: one floor-safe LOD1/LOD2/LOD3 token per canonical edit, revisioned stale-safe rebuild
+> commits, old-resource retention through failure/oversized rebuilds, exact-once stale disposal, and
+> an exception-isolated post-commit `World` canonical edit observer with no gameplay/collision/
+> persistence/network/canonical read path. Task 25 adds deterministic cross-tier seam overlap/skirt
+> coverage, horizon inclusion/rejection, bidirectional hysteresis, rapid-threshold stability,
+> negative-coordinate transitions, and a typed render-data signature. Focused task-25 LOD render
+> validation passes 15/15; combined LOD validation passes 26/26; targeted render-world visual
+> regression passes six golden cells across low/default/high profiles and 1280×720/1920×1080;
+> full unit passes 4544 + 1 skipped across 375 files; typecheck/lint/build pass. Task 27 wires
+> actual physical drawing-buffer dimensions, live World worker queue/counter/retry/fallback and
+> synchronous upload-byte snapshots, defensive RenderPerformanceMonitor pipeline export,
+> dynamic-resolution state, and debug CPU-ready versus GPU-upload diagnostics. Standalone
+> MeshReadyQueue, GpuUploadScheduler, and LodTileRenderCache remain explicitly inactive in the
+> live World path. Focused task-27 observability validation passes; state/file-audit validation
+> passes. Current-tree E2E is blocked at 50/51: the visual regression matrix passed, while
+> GPU-context restore geometry drift is 5 versus allowed 4. Next exact action: task 28
+> resource-budget dimensions and bounded long-session evidence; no advancement exception applies.
 
 > **254-whole-codebase-performance-optimization — VERIFIED (2026-08-26, session start `d258414`).**
 > Owner-authorized repository-wide performance campaign completed with behavior-preserving
@@ -125,9 +137,9 @@
 - Next change: **null (255 is the sole active post-terminal change; no later change may begin)**
 - 240 advancement allowed: **no (active change not yet verified)**
 
-- Program: **ACTIVE — Change 255 is in progress; Changes 253 and 254 remain VERIFIED and 255 has 23/37 tasks complete (62.16%)**
+- Program: **ACTIVE — Change 255 is in progress; Changes 253 and 254 remain VERIFIED and 255 has 27/37 tasks complete (72.97%)**
 - Last completed change: **254-whole-codebase-performance-optimization — VERIFIED**
-- All changes 001–254: **VERIFIED** — Change 255 is ACTIVE with its complete OpenSpec package and tasks 1–23 complete.
+- All changes 001–254: **VERIFIED** — Change 255 is ACTIVE with its complete OpenSpec package and tasks 1–27 complete.
 - Historical Change 250-era bullets (preserved; superseded **for current release authority** by `openspec/evidence/release-readiness-post-hardening.md`): 250 required-test gate PASS at head `502d021` / byte-identical tree `b56529e`; historical release-readiness READY RC-1..RC-9 (`openspec/evidence/release-readiness.md`); final parity audit PASS with DL dispositions later rejected by this interlock (`openspec/evidence/parity/final-parity-audit.md`); evidence archive complete (`openspec/evidence/`)
 - Post-250 hardening interlock: **VERIFIED at remediation checkpoint `aa92a5c229a753f10f8c1677e836136962b5d07a` — canonical CI run 32589457819 SUCCESS (gate job 97078975848, e2e job 97078975868); tasks 78/78; release decision READY (`openspec/evidence/release-readiness-post-hardening.md`)**
 - Certification campaign: **openspec/hardening/2026-08-23-exhaustive-repository-certification — findings fixed with oracles; manifest reviewed; risk register R-1..R-9 accepted debt**
@@ -135,7 +147,7 @@
 - Publication history: **Change-255 tasks 7–8 implementation published at `64bc943d085399e21d52bea6567f24bff382957f`** after the prior task-6 candidate `f811ec71f3a956f4b2790aa6eee1b1806c799e80`; local full gates and state validation passed, visual goldens unchanged.
 - Section milestone: **PROGRAM COMPLETE — every numbered change 001–253 and owner-authorized 254 is VERIFIED; Change 253 converged live world architecture onto canonical dimension-aware storage and is archived with its capability spec synced.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ring with no queued generation job; scan order is now cached nearest-first by Chebyshev distance. Boot in software-WebGL Chromium at `renderDistance` 6: never clears -> ~28s, spawn-ring progress monotonic. D1 is also the mechanism behind the canonical CI `e2e` run recorded CANCELLED (hung >60m) in `3cc55a5` — `tests/e2e/visual-regression.spec.ts` injects `renderDistance` 2/4 through the `__voxelQualityProfile` seam, bypassing the headless override, and was the one spec that saturated. Regression gate `tests/unit/WorldStreamingSaturation.test.ts` (3 PASS, teeth verified by reverting each fix in isolation); 346/346 unit files / 4379 tests PASS; typecheck/lint/build/validate-state/validate-file-audit PASS. Details in `openspec/changes/253-live-world-architecture-convergence/design.md` and `verification.md`.
-- Next exact action: **Begin Change-255 task 24: implement edit invalidation and conservative far visibility without allowing LOD to answer gameplay, collision, persistence, or network reads.**
+- Next exact action: **Begin Change-255 task 28: add resource-budget dimensions for worker buffers, ready bytes, uploads, and LOD tiles, and prove bounded long-session behavior.**
 
 ## What 250 implemented
 

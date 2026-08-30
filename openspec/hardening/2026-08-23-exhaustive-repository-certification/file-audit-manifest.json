@@ -11,7 +11,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2595,
+  "total": 2603,
   "pending": 0,
   "unclassified": 0,
   "rows": [
@@ -29781,10 +29781,12 @@
       "importedBy": [],
       "testEvidence": [
         "tests/unit/LodTileRender.test.ts",
-        "npx vitest run tests/unit/LodTileRender.test.ts tests/unit/LodTile.test.ts tests/unit/WorldgenDeterminism.test.ts tests/unit/WorldgenRegressionMatrix.test.ts",
+        "npx vitest run tests/unit/LodTileRender.test.ts tests/unit/LodTileInvalidation.test.ts tests/unit/LodTile.test.ts",
+        "SCREEN_FILTER=render-world npx playwright test tests/e2e/visual-regression.spec.ts",
         "npm run typecheck",
         "npm run lint",
-        "npm run build"
+        "npm run build",
+        "npm test"
       ],
       "riskAreas": [
         "seam-coverage",
@@ -29796,6 +29798,38 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Task 23 semantic review: fixed-count top-grid plus positive-overlap skirts cover every edge; selection is deterministic, distance/frustum bounded, negative-coordinate safe, and hysteretic through caller-owned previous-tier state; cache admission is byte/entry bounded, retains visible resources on rejected replacements, and disposes evicted/rejected resources exactly once. Module is headless-safe and does not attach Three.js or answer canonical reads.",
+      "status": "audited"
+    },
+    {
+      "path": "src/rendering/LodTileInvalidation.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Presentation-only edit invalidation coordinator for bounded LOD1/LOD2/LOD3 ancestor invalidation, conservative visibility, revisioned rebuild tokens, and stale/failure-safe cache commits.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "available through the canonical World edit observer; no gameplay, collision, persistence, network, or canonical-storage reads",
+      "imports": [
+        "src/rendering/LodTile.ts",
+        "src/rendering/LodTileRender.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "tests/unit/LodTileInvalidation.test.ts",
+        "npx vitest run tests/unit/LodTileInvalidation.test.ts tests/unit/LodTileRender.test.ts tests/unit/LodTile.test.ts tests/unit/World.test.ts",
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build",
+        "npm test"
+      ],
+      "riskAreas": [
+        "negative-coordinate-invalidation",
+        "bounded-ancestor-invalidation",
+        "conservative-visible-retention",
+        "stale-rebuild-rejection",
+        "canonical-authority-boundary"
+      ],
+      "findingIds": [],
+      "disposition": "TEST_ONLY",
+      "reviewNotes": "Task 24 semantic review: each canonical edit maps with floor-safe arithmetic to exactly one bounded tile at LOD1/LOD2/LOD3; invalidated tiles remain conservative while pending, old resources remain visible, stale or mismatched resources are disposed without cache mutation, oversized replacements retain the prior resource, and the coordinator exposes no canonical/gameplay read path. World integration is a presentation-only post-commit observer seam with exception isolation.",
       "status": "audited"
     },
     {
@@ -36968,6 +37002,34 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/LodTileInvalidation.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Regression coverage for bounded far-tier edit invalidation, negative-coordinate mapping, conservative visible retention, stale token rejection, failed rebuild retention, and canonical-authority isolation.",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "test-only",
+      "imports": [
+        "src/rendering/LodTileInvalidation.ts",
+        "src/rendering/LodTileRender.ts",
+        "src/rendering/LodTile.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "npx vitest run tests/unit/LodTileInvalidation.test.ts tests/unit/LodTileRender.test.ts tests/unit/LodTile.test.ts tests/unit/World.test.ts",
+        "npm test"
+      ],
+      "riskAreas": [
+        "negative-coordinate-invalidation",
+        "conservative-visibility",
+        "stale-token-disposal",
+        "cache-retention"
+      ],
+      "findingIds": [],
+      "disposition": "TEST_ONLY",
+      "reviewNotes": "Task 24 focused coverage passes 5/5 coordinator tests: exact LOD1/LOD2/LOD3 invalidation for negative coordinates, conservative pending state with visible old-resource retention, exact-once stale disposal, oversized rebuild retention, and malformed-coordinate rejection.",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/Materials.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -42897,6 +42959,66 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Covers byte/count admission, actual executor time versus estimate, EMA update, intact FIFO deferral, failure requeue, invalid budgets, and invalid executor byte accounting.",
+      "status": "audited"
+    },
+    {
+      "path": "src/rendering/DynamicResolution.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Pure tier-bounded dynamic-resolution controller with hysteretic CPU/GPU frame-time sampling, invalid-metric retention, and deterministic drawing-buffer sizing.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "available through Renderer; owns presentation scale only and never reads simulation or camera state",
+      "imports": [
+        "src/config/index.ts"
+      ],
+      "importedBy": [
+        "src/engine/Renderer.ts"
+      ],
+      "testEvidence": [
+        "tests/unit/DynamicResolution.test.ts",
+        "npx vitest run tests/unit/DynamicResolution.test.ts",
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build",
+        "npm test"
+      ],
+      "riskAreas": [
+        "tier-boundary-clamping",
+        "overload-and-recovery-dwell",
+        "invalid-metric-retention",
+        "buffer-dimension-determinism",
+        "simulation-and-camera-isolation"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Task-26 semantic review: validates all tier bounds and threshold relationships; uses the slower valid CPU p95/GPU signal; changes scale by at most one configured step after continuous dwell; clears dwell in the dead band; retains scale on invalid or regressed timestamps; clamps on tier changes; and calculates physical buffer dimensions without owning camera projection or simulation timing.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/DynamicResolution.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Task-26 deterministic dynamic-resolution validation for tier bounds, hysteresis, dwell timing, invalid metrics, tier changes, and drawing-buffer dimensions.",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "test-only",
+      "imports": [
+        "src/rendering/DynamicResolution.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "npx vitest run tests/unit/DynamicResolution.test.ts",
+        "npm test"
+      ],
+      "riskAreas": [
+        "threshold-boundaries",
+        "dwell-timing",
+        "invalid-metric-fail-closed",
+        "tier-clamping",
+        "buffer-size-calculation"
+      ],
+      "findingIds": [],
+      "disposition": "TEST_ONLY",
+      "reviewNotes": "Task-26 focused coverage passes 7/7: configuration rejection, overload/recovery dwell boundaries, bounded single-step changes, GPU/CPU signal selection, invalid-metric retention, dead-band reset, tier clamping, and deterministic physical drawing-buffer dimensions.",
       "status": "audited"
     }
   ]

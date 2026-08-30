@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
-import { World } from '../../src/world/World';
+import { World, type WorldCanonicalEdit } from '../../src/world/World';
 import { createDefaultBlockRegistry, BlockId } from '../../src/world/BlockRegistry';
 import { Chunk, ChunkState } from '../../src/world/Chunk';
 import { CONFIG } from '../../src/config';
@@ -256,6 +256,39 @@ describe('world dirty propagation and edits', () => {
     world.dispose();
   });
 
+  it('exports bounded live pipeline diagnostics without sharing mutable snapshots', () => {
+    const world = makeCanonicalSectionWorld();
+    const snapshot = world.performanceSnapshot();
+    expect(snapshot.queues).toEqual({
+      generate: 0,
+      mesh: 0,
+      upload: 0,
+      unload: 0,
+      oldestJobAgeMillis: 0,
+    });
+    expect(snapshot.worker).toMatchObject({
+      enabled: false,
+      pending: 0,
+      inFlight: 0,
+      completed: 0,
+      failures: 0,
+      retries: 0,
+      fallbacks: 0,
+    });
+    expect(snapshot.uploadBytesThisFrame).toBe(0);
+    expect(snapshot.uploadBytesLastFrame).toBe(0);
+
+    const mutableSnapshot = snapshot as unknown as {
+      queues: { mesh: number };
+      worker: { failures: number };
+    };
+    mutableSnapshot.queues.mesh = 99;
+    mutableSnapshot.worker.failures = 99;
+    expect(world.performanceSnapshot().queues.mesh).toBe(0);
+    expect(world.performanceSnapshot().worker.failures).toBe(0);
+    world.dispose();
+  });
+
   it('falls back to synchronous canonical meshing when worker construction is unavailable', () => {
     const world = makeCanonicalSectionWorld(true);
     world.setBlock(8, 8, 8, BlockId.Stone);
@@ -457,6 +490,82 @@ describe('world dirty propagation and edits', () => {
     expect(world.getBlock(8, 9, 8)).toBe(BlockId.Sand);
   });
 
+  it('notifies presentation invalidation only after canonical edits and isolates observer failures', () => {
+    const edits: WorldCanonicalEdit[] = [];
+    const world = makeWorld(7, OVERWORLD_DIMENSION_TYPE);
+    const observed = new World({
+      registry: createDefaultBlockRegistry(),
+      seed: 7,
+      scene: new THREE.Scene(),
+      mesher: {
+        mesh(): { opaque: null; transparent: null } {
+          return { opaque: null, transparent: null };
+        },
+      } as never,
+      generator: {
+        generateChunk(chunk: Chunk): void {
+          chunk.fill(BlockId.Stone);
+        },
+        getHeightAt(): number {
+          return CONFIG.seaLevel + 1;
+        },
+      } as never,
+      materials: {
+        opaque: new THREE.MeshLambertMaterial(),
+        transparent: new THREE.MeshLambertMaterial(),
+      },
+      dimension: OVERWORLD_DIMENSION_TYPE,
+      onCanonicalEdit: (edit) => edits.push(edit),
+    });
+    observed.setBlock(-17, -64, -1, BlockId.Sand);
+    observed.setBlock(-17, -64, -1, BlockId.Sand);
+    observed.setBlock(-17, -64, -1, 255);
+    expect(edits).toHaveLength(1);
+    expect(edits[0]).toMatchObject({
+      dimensionId: OVERWORLD_DIMENSION_TYPE.id,
+      seed: 7,
+      generationVersion: 'v2',
+      worldX: -17,
+      worldY: -64,
+      worldZ: -1,
+      blockId: BlockId.Sand,
+    });
+    expect(observed.getBlock(-17, -64, -1)).toBe(BlockId.Sand);
+    observed.dispose();
+    world.dispose();
+
+    const throwing = makeWorld(8, OVERWORLD_DIMENSION_TYPE);
+    const resilient = new World({
+      registry: createDefaultBlockRegistry(),
+      seed: 8,
+      scene: new THREE.Scene(),
+      mesher: {
+        mesh(): { opaque: null; transparent: null } {
+          return { opaque: null, transparent: null };
+        },
+      } as never,
+      generator: {
+        generateChunk(chunk: Chunk): void {
+          chunk.fill(BlockId.Stone);
+        },
+        getHeightAt(): number {
+          return CONFIG.seaLevel + 1;
+        },
+      } as never,
+      materials: {
+        opaque: new THREE.MeshLambertMaterial(),
+        transparent: new THREE.MeshLambertMaterial(),
+      },
+      dimension: OVERWORLD_DIMENSION_TYPE,
+      onCanonicalEdit: () => {
+        throw new Error('presentation failure');
+      },
+    });
+    resilient.setBlock(1, 0, 1, BlockId.Glass);
+    expect(resilient.getBlock(1, 0, 1)).toBe(BlockId.Glass);
+    resilient.dispose();
+    throwing.dispose();
+  });
   it('setBlock records an edit that survives streaming away and reload', () => {
     const world = makeWorld();
     streamUntilGenerated(world, 0, 0);
