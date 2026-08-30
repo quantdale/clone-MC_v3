@@ -2490,6 +2490,11 @@
       "head": "486ada5",
       "at": "2026-08-30T02:08:00Z",
       "note": "Change 255 task 16 implementation and durable checkpoint: standalone GpuUploadScheduler over MeshReadyQueue with injected executor, byte/time/count caps, measured overrun stopping, intact FIFO deferral and failed-executor recovery, EMA estimates, planned/actual metrics, focused 8/8 and full unit 4490 + 1 skipped, typecheck/lint/build/state/reviewed-file-audit PASS. Performance baseline recorded an environment-sensitive withinBudget=false diagnostic without test failure; current-tree E2E remains blocked by the recorded 50/51 timeout."
+    },
+    {
+      "head": "62edd7f",
+      "at": "2026-08-30T02:17:00Z",
+      "note": "Change 255 task 17 implementation and durable checkpoint: atomic section/chunk replacement retains old visible groups until complete construction, partial replacement cleanup disposes temporary resources exactly once, optional-material/stale/unload/context-loss paths release ownership idempotently, and restored contexts requeue resident generated work. Focused ownership/streaming suites pass 41/41; full unit 4494 + 1 skipped; typecheck/lint/build/state/reviewed-file-audit PASS. Current-tree E2E remains blocked by the recorded 50/51 timeout."
     }
   ],
   "releaseAuthority": {
