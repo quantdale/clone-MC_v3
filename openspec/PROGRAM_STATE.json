@@ -2495,6 +2495,11 @@
       "head": "62edd7f",
       "at": "2026-08-30T02:17:00Z",
       "note": "Change 255 task 17 implementation and durable checkpoint: atomic section/chunk replacement retains old visible groups until complete construction, partial replacement cleanup disposes temporary resources exactly once, optional-material/stale/unload/context-loss paths release ownership idempotently, and restored contexts requeue resident generated work. Focused ownership/streaming suites pass 41/41; full unit 4494 + 1 skipped; typecheck/lint/build/state/reviewed-file-audit PASS. Current-tree E2E remains blocked by the recorded 50/51 timeout."
+    },
+    {
+      "head": "1141d9d7359a677152f49db963d04834bd57258e",
+      "at": "2026-08-30T02:20:00Z",
+      "note": "Change 255 task 18 implementation and durable checkpoint: deterministic 128-record GpuUploadScheduler completion-storm evidence drains FIFO without loss, enforces per-frame byte/count caps, and proves scheduler-level actual-upload p95 <= 1.5ms. Focused scheduler tests pass 5/5; full unit 4495 + 1 skipped; typecheck/lint/build/state/reviewed-file-audit PASS. This is not a browser/GPU p95 claim; current-tree E2E remains blocked by the recorded 50/51 timeout."
     }
   ],
   "releaseAuthority": {
