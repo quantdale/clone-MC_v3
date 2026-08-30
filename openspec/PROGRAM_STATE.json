@@ -2497,9 +2497,9 @@
       "note": "Change 255 task 17 implementation and durable checkpoint: atomic section/chunk replacement retains old visible groups until complete construction, partial replacement cleanup disposes temporary resources exactly once, optional-material/stale/unload/context-loss paths release ownership idempotently, and restored contexts requeue resident generated work. Focused ownership/streaming suites pass 41/41; full unit 4494 + 1 skipped; typecheck/lint/build/state/reviewed-file-audit PASS. Current-tree E2E remains blocked by the recorded 50/51 timeout."
     },
     {
-      "head": "076c8e09e682a9898729458bb328a3084f2767c2",
-      "at": "2026-08-30T02:33:00Z",
-      "note": "Change 255 task 19 implementation and durable checkpoint: deterministic ChunkWorkPriority ordering across urgency, visibility, movement direction, simulation ticket, LOD, distance, age, and canonical coordinates; ChunkPipeline dispatch/displacement and World retry wiring; focused priority/streaming 87/87, full unit 4501 + 1 skipped, typecheck/lint/build/state/reviewed-file-audit PASS. Current-tree E2E remains blocked after 50/51 timeout; next exact action is task 20 starvation prevention and hysteresis."
+      "head": "03b7def03b8a78d31500568f5420b4fce3285f5a",
+      "at": "2026-08-30T02:49:09Z",
+      "note": "Change 255 task 20 implementation and durable checkpoint: interactive-first bounded admission, stream-epoch cancellation of queued speculative work, parked mesh-retry purging, horizontal residency bounds, validated load/unload hysteresis, reusable dead-band threshold latch for future LOD selection, focused 71/71, full unit 4507 passed + 1 skipped, typecheck/lint/build/state/reviewed-file-audit PASS. Current-tree E2E remains blocked by the recorded 50/51 timeout; task 21 resource-convergence verification is next."
     }
   ],
   "releaseAuthority": {
