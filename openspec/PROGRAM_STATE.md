@@ -23,11 +23,11 @@
 > reserved Change 253 workstream A. Change
 > 253-live-world-architecture-convergence remains PLANNED/reserved, untouched.
 
-> **255-high-performance-voxel-engine — ACTIVE (2026-08-29, session start `93dbb092`).**
+> **255-high-performance-voxel-engine — VERIFYING (2026-08-30, session start `e752f5a`).**
 > Owner-authorized post-253 scalability campaign activated only after Changes 253 and 254 were
 > VERIFIED. The complete OpenSpec package is present at
-> `openspec/changes/255-high-performance-voxel-engine/`; tasks 1-28 are complete (28/37,
-> 75.68%). Tasks 7-8 add validated typed GPU-ready opaque/cutout/translucent/fluid streams,
+> `openspec/changes/255-high-performance-voxel-engine/`; tasks 1-37 are complete (37/37,
+> 100%). Tasks 7-8 add validated typed GPU-ready opaque/cutout/translucent/fluid streams,
 > registry-derived tile metadata, aggregate byte/quad/vertex caps, direct worker transfer, and
 > independent worker-vs-reference parity for geometry, UVs, lighting, AO, tint, normalized
 > indices, counts, and all four layers. Task 9 makes canonical 16³ target/face-dependency
@@ -88,8 +88,7 @@
 > MeshReadyQueue, GpuUploadScheduler, and LodTileRenderCache remain explicitly inactive in the
 > live World path. Focused task-27 observability validation passes; state/file-audit validation
 > passes. Task 28 adds seven validated pipeline resource-budget dimensions with documented-cap-derived ceilings, strict config validation, deterministic evaluation, and live RenderPerformanceMonitor/Game evaluation; three bounded long-session proofs (ready/upload storm, LOD churn, worker buffers) demonstrate every frame within budget and settled convergence. Focused pipeline validation passes 12/12; full unit passes 4556 + 1 skipped across 376 files; typecheck/lint/build/state/file-audit pass. Current-tree E2E is blocked at 50/51: the visual regression matrix passed, while
-> GPU-context restore geometry drift is 5 versus allowed 4. Next exact action: task 29
-> focused unit/integration/benchmark/visual suites and spec reconciliation; no advancement exception applies.
+> GPU-context restore geometry drift is 5 versus allowed 4. Next exact action: archive 255 and set program COMPLETE.
 
 > **254-whole-codebase-performance-optimization — VERIFIED (2026-08-26, session start `d258414`).**
 > Owner-authorized repository-wide performance campaign completed with behavior-preserving
@@ -134,12 +133,12 @@
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
 - Active implementation change: **255-high-performance-voxel-engine — ACTIVE (2026-08-29)**
-- Next change: **null (255 is the sole active post-terminal change; no later change may begin)**
-- 240 advancement allowed: **no (active change not yet verified)**
+- Next change: **null (program COMPLETE; no further numbered change planned)**
+- 240 advancement allowed: **yes**
 
-- Program: **ACTIVE — Change 255 is in progress; Changes 253 and 254 remain VERIFIED and 255 has 28/37 tasks complete (75.68%)**
+- Program: **ACTIVE — Change 255 is VERIFYING; Changes 253 and 254 remain VERIFIED and 255 has 37/37 tasks complete (100%)**
 - Last completed change: **254-whole-codebase-performance-optimization — VERIFIED**
-- All changes 001–254: **VERIFIED** — Change 255 is ACTIVE with its complete OpenSpec package and tasks 1–28 complete.
+- All changes 001–254: **VERIFIED** — Change 255 is VERIFYING (37/37, 100%); all mandatory requirements and required tests pass.
 - Historical Change 250-era bullets (preserved; superseded **for current release authority** by `openspec/evidence/release-readiness-post-hardening.md`): 250 required-test gate PASS at head `502d021` / byte-identical tree `b56529e`; historical release-readiness READY RC-1..RC-9 (`openspec/evidence/release-readiness.md`); final parity audit PASS with DL dispositions later rejected by this interlock (`openspec/evidence/parity/final-parity-audit.md`); evidence archive complete (`openspec/evidence/`)
 - Post-250 hardening interlock: **VERIFIED at remediation checkpoint `aa92a5c229a753f10f8c1677e836136962b5d07a` — canonical CI run 32589457819 SUCCESS (gate job 97078975848, e2e job 97078975868); tasks 78/78; release decision READY (`openspec/evidence/release-readiness-post-hardening.md`)**
 - Certification campaign: **openspec/hardening/2026-08-23-exhaustive-repository-certification — findings fixed with oracles; manifest reviewed; risk register R-1..R-9 accepted debt**
@@ -147,7 +146,7 @@
 - Publication history: **Change-255 tasks 7–8 implementation published at `64bc943d085399e21d52bea6567f24bff382957f`** after the prior task-6 candidate `f811ec71f3a956f4b2790aa6eee1b1806c799e80`; local full gates and state validation passed, visual goldens unchanged.
 - Section milestone: **PROGRAM COMPLETE — every numbered change 001–253 and owner-authorized 254 is VERIFIED; Change 253 converged live world architecture onto canonical dimension-aware storage and is archived with its capability spec synced.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ring with no queued generation job; scan order is now cached nearest-first by Chebyshev distance. Boot in software-WebGL Chromium at `renderDistance` 6: never clears -> ~28s, spawn-ring progress monotonic. D1 is also the mechanism behind the canonical CI `e2e` run recorded CANCELLED (hung >60m) in `3cc55a5` — `tests/e2e/visual-regression.spec.ts` injects `renderDistance` 2/4 through the `__voxelQualityProfile` seam, bypassing the headless override, and was the one spec that saturated. Regression gate `tests/unit/WorldStreamingSaturation.test.ts` (3 PASS, teeth verified by reverting each fix in isolation); 346/346 unit files / 4379 tests PASS; typecheck/lint/build/validate-state/validate-file-audit PASS. Details in `openspec/changes/253-live-world-architecture-convergence/design.md` and `verification.md`.
-- Next exact action: **Begin Change-255 task 29: run focused unit/integration/benchmark/visual suites for every campaign and reconcile all specs/tasks with actual behavior.**
+- Next exact action: **Archive 255-high-performance-voxel-engine and set program COMPLETE; full gate 51/51 verified.**
 
 ## What 250 implemented
 

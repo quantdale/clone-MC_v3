@@ -3176,7 +3176,7 @@ export class World implements WorldAccess {
   handleContextLost(): void {
     if (this.contextLost) return;
     this.contextLost = true;
-    for (const key of this.workerMeshBatches.keys()) this.cancelWorkerMeshBatch(key);
+    for (const key of [...this.workerMeshBatches.keys()]) this.cancelWorkerMeshBatch(key);
     this.chunkManager.forEachChunk((chunk) => {
       this.removeMeshesForChunk(chunk);
       if (chunk.generated) {
@@ -3184,7 +3184,7 @@ export class World implements WorldAccess {
         chunk.markDirty();
       }
     });
-    for (const key of this.sectionMeshGroups.keys()) this.removeMeshesForSection(key);
+    for (const key of [...this.sectionMeshGroups.keys()]) this.removeMeshesForSection(key);
     this.uploadBytesThisFrame = 0;
   }
 
@@ -3206,7 +3206,7 @@ export class World implements WorldAccess {
   }
 
   dispose(): void {
-    for (const key of this.workerMeshBatches.keys()) this.cancelWorkerMeshBatch(key);
+    for (const key of [...this.workerMeshBatches.keys()]) this.cancelWorkerMeshBatch(key);
     this.chunkManager.forEachChunk((chunk) => this.removeMeshesForChunk(chunk));
     // Outstanding jobs fail through pool.dispose → onFailure, which cancels
     // the client's pending entries; late results resolve as stale.
@@ -3219,7 +3219,7 @@ export class World implements WorldAccess {
     // Canonical section meshes may outlive their compatibility slab projection
     // after a partial unload. Sweep the authoritative section map independently
     // so no geometry depends on a loaded Chunk for final release.
-    for (const key of this.sectionMeshGroups.keys()) {
+    for (const key of [...this.sectionMeshGroups.keys()]) {
       this.removeMeshesForSection(key);
     }
     this.lightEngine.clearPending();

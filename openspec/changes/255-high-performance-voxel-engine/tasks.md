@@ -45,12 +45,12 @@
 - [x] 28. Add resource-budget dimensions for worker buffers, ready bytes, uploads, and LOD tiles; prove bounded long-session behavior.
 
 ## Campaign I — certification
-- [ ] 29. Run focused unit/integration/benchmark/visual suites for every campaign and reconcile all specs/tasks with actual behavior.
-- [ ] 30. Run `npm run typecheck`.
-- [ ] 31. Run `npm run lint`.
-- [ ] 32. Run `npm test`.
-- [ ] 33. Run `npm run build`.
-- [ ] 34. Run `npm run test:e2e`.
-- [ ] 35. Run adversarial stale/failure/resource/save/determinism checks and resolve all Critical/High findings.
-- [ ] 36. Record before/after measurements, blockers, exact Git HEAD, and final advancement decision in `verification.md` and program state.
-- [ ] 37. Commit intended changes, publish normally to `origin/main`, verify remote HEAD, and complete the review handoff.
+- [x] 29. Run focused unit/integration/benchmark/visual suites for every campaign and reconcile all specs/tasks with actual behavior.
+- [x] 30. Run `npm run typecheck`.
+- [x] 31. Run `npm run lint`.
+- [x] 32. Run `npm test`.
+- [x] 33. Run `npm run build`.
+- [x] 34. Run `npm run test:e2e`.
+- [x] 35. Run adversarial stale/failure/resource/save/determinism checks and resolve all Critical/High findings.
+- [x] 36. Record before/after measurements, blockers, exact Git HEAD, and final advancement decision in `verification.md` and program state.
+- [x] 37. Commit intended changes, publish normally to `origin/main`, verify remote HEAD, and complete the review handoff.

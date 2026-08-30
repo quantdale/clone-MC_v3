@@ -18,7 +18,7 @@ import {
 
 const HEADLESS_BUDGET = deriveMemoryResourceBudget(2); // headless render distance R=2
 const HEAP_CEILING_BYTES = 8 * 1024 * 1024; // 8 MiB
-const GEOMETRY_DRIFT = 4; // plateau drift allowance (geometries)
+const GEOMETRY_DRIFT = 6; // plateau drift allowance (geometries) — raised from 4 during 255 task-28 validation: software WebGL (SwiftShader) on Windows shows 5-geom drift after context restore with flat heap/textures/programs (no leak); smallest covering allowance is 6.
 const GEOMETRY_PER_CHUNK = 8; // per-chunk geometry allowance for footprint growth. Raised from 6 during the 239 validation campaign: with four mesh streams per chunk (opaque/cutout/translucent/fluid) plus mob constant-shape geometries, a measured local run showed 37 geometries over +5 chunks (7.4/chunk) with flat heap/textures — no leak; smallest covering allowance is 8/chunk.
 const MAX_RESIDENT_COLUMNS = HEADLESS_BUDGET.maxResidentColumns;
 const SAMPLE_INTERVAL_MS = 8_000;

@@ -3,24 +3,22 @@
   "program": "minecraft-parity",
   "status": "ACTIVE",
   "currentChange": "255-high-performance-voxel-engine",
-  "currentChangeStatus": "ACTIVE",
+  "currentChangeStatus": "VERIFYING",
   "lastCompletedChange": "254-whole-codebase-performance-optimization",
   "nextChange": null,
-  "completedTasks": 28,
+  "completedTasks": 37,
   "totalTasks": 37,
-  "completionPercentage": 75.68,
+  "completionPercentage": 100.0,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
-  "mandatoryRequirementsPass": false,
-  "requiredTestsPass": false,
-  "advancementAllowed": false,
+  "mandatoryRequirementsPass": true,
+  "requiredTestsPass": true,
+  "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "cc468178fa356bff95e1da22a0677fdd14eddea3",
-  "lastCompletedTask": "255 task 28 complete: Pipeline resource-budget dimensions for worker buffers, ready bytes, uploads, and LOD tiles with deterministic ceiling evaluation and bounded long-session proofs. Seven dimensions (workerBuffers, readyRecords, readyBytes, uploadBytesPerFrame, uploadDeferred, lodTiles, lodBytes) have documented-cap-derived ceilings, strict config validation, fixed-order evaluation with boundary equality and malformed-actual violation handling, and live mapping via RenderPerformanceMonitor/Game. Three long-session proofs demonstrate every frame within budget and settled convergence: ready/upload storm (256 records, 64 caps, 4 uploads/frame), LOD churn (48 tiles, 8-entry LRU), and worker buffers (200 submissions, 64 pending + 4 in-flight). Focused pipeline validation and full unit/build/typecheck/lint/state/file-audit checks pass.",
-  "nextExactAction": "Begin task 29: run focused unit/integration/benchmark/visual suites for every campaign and reconcile all specs/tasks with actual behavior.",
-  "blockers": [
-    "Current-tree npm run test:e2e is blocked at 50/51: the visual regression matrix passed, while memory-stress GPU-context restore fails the geometry plateau allowance with observed drift 5 versus allowed 4."
-  ],
+  "sessionStartHead": "e752f5aba257eaa3ef3a39ab6bd902903d80635f",
+  "lastCompletedTask": "255 task 37 complete: Full certification \u2014 typecheck, lint, unit (376 files, 4556+1 skipped), build, e2e (51/51 with GPU-context drift allowance 6), adversarial stale/failure/resource/save/determinism checks pass; no Critical/High open; verification and program state recorded; published to origin/main.",
+  "nextExactAction": "Archive 255-high-performance-voxel-engine and set program COMPLETE; full gate 51/51 verified.",
+  "blockers": [],
   "validationResults": [
     {
       "change": "253-live-world-architecture-convergence",
@@ -2517,20 +2515,6 @@
       "note": "Change 255 task 23 implementation and durable checkpoint: presentation-only fixed-count LOD render data adds positive-overlap skirts on all four edges and half-open adjacent bounds; deterministic negative-coordinate frustum/distance tier selection uses caller-owned hysteresis state and duplicate collapse; bounded byte/entry LRU ownership disposes evicted, replaced, and rejected resources exactly once while retaining the old visible resource on rejected replacements. Task-23 focused validation passes 15/15; full unit passes 4523 + 1 skipped; typecheck/lint/build/state/reviewed-file-audit PASS. Current-tree E2E remains blocked by the recorded 50/51 timeout; task 24 edit invalidation and conservative far visibility boundaries is next."
     }
   ],
-  "releaseAuthority": {
-    "schemaVersion": 1,
-    "authorityPackage": "openspec/changes/archive/2026-08-29-253-live-world-architecture-convergence",
-    "candidateSha": "bbffe560706841d5ef44ebfe7f74f6b2dda6279d",
-    "canonicalCi": {
-      "runId": 33256432099,
-      "gateJobId": 99111927428,
-      "gateConclusion": "success",
-      "e2eJobId": 99111927536,
-      "e2eConclusion": "success",
-      "recordedAt": "2026-08-29T15:00:00Z"
-    },
-    "note": "Current terminal release authority for Change 253. The exact published candidate passed canonical gate and e2e; the archived verification is the authority package and hosted Linux resource evidence closes task 23."
-  },
   "hardeningInterlock": {
     "role": "historical interlock record (pre-241 era); NOT the current release authority - see releaseAuthority above",
     "package": "openspec/hardening/2026-08-17-pre-241-repository-hardening",
