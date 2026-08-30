@@ -6,9 +6,9 @@
   "currentChangeStatus": "ACTIVE",
   "lastCompletedChange": "254-whole-codebase-performance-optimization",
   "nextChange": null,
-  "completedTasks": 15,
+  "completedTasks": 16,
   "totalTasks": 37,
-  "completionPercentage": 40.54,
+  "completionPercentage": 43.24,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": false,
@@ -16,8 +16,8 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "ec072ab26b2729539d45f60c56e4644c898c0e7a",
-  "lastCompletedTask": "255 task 15 complete: bounded MeshReadyQueue validates complete typed layer streams and section version metadata, enforces record/byte caps without partial admission, rejects malformed and duplicate records, preserves intact deferred records and enqueue age, and exposes queue metrics; focused 7/7 and full unit 4486 + 1 skipped pass.",
-  "nextExactAction": "Begin task 16: implement time/byte-bounded GpuUploadScheduler and separate geometry creation/upload accounting from worker completion.",
+  "lastCompletedTask": "255 task 16 complete: standalone GpuUploadScheduler consumes validated mesh-ready records through an injected executor with byte/time/count caps, measured overrun stopping, intact FIFO deferral and failure recovery, EMA estimates, and planned/actual cumulative upload metrics; focused 8/8 and full unit 4490 + 1 skipped pass.",
+  "nextExactAction": "Begin task 17: add atomic section swaps and exact-once disposal/accounting for success, stale, partial, optional-material, unload, and context-loss paths.",
   "blockers": [
     "Current-tree npm run test:e2e timed out at 1200 seconds after 50/51 tests completed without an assertion failure; the remaining long visual/resource test did not finish."
   ],
@@ -2430,9 +2430,9 @@
     {
       "change": "255-high-performance-voxel-engine",
       "status": "ACTIVE",
-      "unitTests": 4486,
+      "unitTests": 4490,
       "e2eTests": 51,
-      "note": "Tasks 1-15 complete (15/37, 40.54%). Task 15 adds bounded MeshReadyQueue admission over complete typed GPU-ready streams: independent record/byte caps, strict section-version metadata validation, duplicate/malformed rejection, intact dequeue-to-front deferral with original enqueue age, and fixed queue metrics. Focused queue/typed-stream tests pass 7/7; full unit gate passes 4486 + 1 skipped; typecheck/lint/build/validate-state/reviewed-file-audit pass. Current-tree E2E reached 50/51 before the 1200-second timeout without an assertion failure; prior clean 51/51 evidence remains historical only. Next exact action is task 16 time/byte-bounded GpuUploadScheduler and separate geometry creation/upload accounting."
+      "note": "Tasks 1-16 complete (16/37, 43.24%). Task 16 adds a standalone GpuUploadScheduler over the validated MeshReadyQueue: injected executor seam, per-frame byte/time/count caps, measured overrun stopping, intact FIFO deferral and failed-executor recovery, EMA estimates, and planned/actual cumulative upload metrics. Focused scheduler/queue tests pass 8/8; full unit gate passes 4490 + 1 skipped; typecheck/lint/build/validate-state/reviewed-file-audit pass. The performance baseline emitted an environment-sensitive withinBudget=false wall-clock diagnostic without test failure. Current-tree E2E reached 50/51 before the 1200-second timeout; prior clean 51/51 evidence remains historical only. Next exact action is task 17 atomic section swaps and exact-once disposal/accounting."
     }
   ],
   "publicationHistory": [

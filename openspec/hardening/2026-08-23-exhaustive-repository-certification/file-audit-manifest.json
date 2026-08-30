@@ -11,7 +11,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2586,
+  "total": 2591,
   "pending": 0,
   "unclassified": 0,
   "rows": [
@@ -42644,6 +42644,61 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Covers count/byte caps without partial admission, malformed/forged/duplicate rejection, oldest age, complete-record deferral at the front, drain behavior, and invalid configuration.",
+      "status": "audited"
+    },
+    {
+      "path": "src/rendering/GpuUploadScheduler.ts",
+      "category": "production",
+      "purpose": "Bounded time/byte scheduler for consuming validated mesh-ready records through an injected atomic GPU upload executor",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "available as the task-16 upload scheduling seam; World attachment integration and atomic swaps remain task 17",
+      "imports": [
+        "src/rendering/MeshReadyQueue.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "tests/unit/GpuUploadScheduler.test.ts",
+        "npm run typecheck",
+        "npm run lint",
+        "npm test",
+        "npm run build"
+      ],
+      "riskAreas": [
+        "per-frame byte and time budgets",
+        "actual upload overrun accounting",
+        "intact FIFO deferral and failure recovery",
+        "upload estimate EMA and physical byte reporting"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Task-16 semantic review: consumes only validated ready records, reserves byte/time/count budgets before executor dispatch, stops after measured overrun, requeues budget-deferred and failed records intact, and exposes planned/actual/cumulative upload metrics without creating or attaching Three.js resources.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/GpuUploadScheduler.test.ts",
+      "category": "test",
+      "purpose": "Task-16 bounded upload scheduling, overrun, EMA, FIFO deferral, failure, byte-report, and config regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [
+        "src/rendering/GpuUploadScheduler.ts",
+        "src/rendering/MeshReadyQueue.ts",
+        "src/rendering/WorkerMeshing.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "4 tests passed in focused GpuUploadScheduler suite",
+        "npm test"
+      ],
+      "riskAreas": [
+        "byte and upload-count caps",
+        "fake-clock actual overrun",
+        "failed executor retry ordering",
+        "invalid executor byte reports"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Covers byte/count admission, actual executor time versus estimate, EMA update, intact FIFO deferral, failure requeue, invalid budgets, and invalid executor byte accounting.",
       "status": "audited"
     }
   ]
