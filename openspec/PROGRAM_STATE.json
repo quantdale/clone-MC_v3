@@ -6,9 +6,9 @@
   "currentChangeStatus": "ACTIVE",
   "lastCompletedChange": "254-whole-codebase-performance-optimization",
   "nextChange": null,
-  "completedTasks": 14,
+  "completedTasks": 15,
   "totalTasks": 37,
-  "completionPercentage": 37.84,
+  "completionPercentage": 40.54,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": false,
@@ -16,8 +16,8 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "ec072ab26b2729539d45f60c56e4644c898c0e7a",
-  "lastCompletedTask": "255 task 14 complete: worker and synchronous full-column generation are byte-equivalent across five seeds, negative and boundary coordinates, full Overworld bounds, pinned ore/cave/structure fixtures, reload serialization, and synchronous fallback; malformed layouts fail closed.",
-  "nextExactAction": "Begin task 15: implement bounded MeshReadyQueue with byte/count caps, age metrics, and intact deferral.",
+  "lastCompletedTask": "255 task 15 complete: bounded MeshReadyQueue validates complete typed layer streams and section version metadata, enforces record/byte caps without partial admission, rejects malformed and duplicate records, preserves intact deferred records and enqueue age, and exposes queue metrics; focused 7/7 and full unit 4486 + 1 skipped pass.",
+  "nextExactAction": "Begin task 16: implement time/byte-bounded GpuUploadScheduler and separate geometry creation/upload accounting from worker completion.",
   "blockers": [
     "Current-tree npm run test:e2e timed out at 1200 seconds after 50/51 tests completed without an assertion failure; the remaining long visual/resource test did not finish."
   ],
@@ -2430,9 +2430,9 @@
     {
       "change": "255-high-performance-voxel-engine",
       "status": "ACTIVE",
-      "unitTests": 4482,
+      "unitTests": 4486,
       "e2eTests": 51,
-      "note": "Tasks 1-14 complete (14/37, 37.84%). Task 14 proves byte-equivalent worker and synchronous full-column generation across five seeds, negative and boundary coordinates, full Overworld bounds, pinned ore/cave/structure fixtures, reload serialization, and synchronous fallback; malformed layouts fail closed. Focused WorkerWorldgen/WorldgenDeterminism/WorldgenRegressionMatrix suites pass 55/55; full unit gate passes 4482 + 1 skipped; typecheck/lint/build/validate-state pass. Current-tree E2E reached 50/51 before the 1200-second timeout without an assertion failure; prior clean 51/51 evidence remains historical only. Next exact action is task 15 bounded MeshReadyQueue with byte/count caps, age metrics, and intact deferral."
+      "note": "Tasks 1-15 complete (15/37, 40.54%). Task 15 adds bounded MeshReadyQueue admission over complete typed GPU-ready streams: independent record/byte caps, strict section-version metadata validation, duplicate/malformed rejection, intact dequeue-to-front deferral with original enqueue age, and fixed queue metrics. Focused queue/typed-stream tests pass 7/7; full unit gate passes 4486 + 1 skipped; typecheck/lint/build/validate-state/reviewed-file-audit pass. Current-tree E2E reached 50/51 before the 1200-second timeout without an assertion failure; prior clean 51/51 evidence remains historical only. Next exact action is task 16 time/byte-bounded GpuUploadScheduler and separate geometry creation/upload accounting."
     }
   ],
   "publicationHistory": [

@@ -23,7 +23,7 @@
 - [x] 14. Prove bit-equivalent worldgen across seeds, negative coordinates, dimension bounds, structures, ores, caves, and reloads; retain synchronous fallback.
 
 ## Campaign E — mesh-ready and upload scheduling
-- [ ] 15. Implement bounded `MeshReadyQueue` with byte/count caps, age metrics, and intact deferral.
+- [x] 15. Implement bounded `MeshReadyQueue` with byte/count caps, age metrics, and intact deferral.
 - [ ] 16. Implement time/byte-bounded `GpuUploadScheduler`; separate geometry creation/upload accounting from worker completion.
 - [ ] 17. Add atomic section swaps and exact-once disposal/accounting for success, stale, partial, optional-material, unload, and context-loss paths.
 - [ ] 18. Prove upload p95 budget and no burst upload under worker completion storms.

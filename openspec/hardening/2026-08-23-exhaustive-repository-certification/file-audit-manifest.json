@@ -11,7 +11,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2584,
+  "total": 2586,
   "pending": 0,
   "unclassified": 0,
   "rows": [
@@ -42566,7 +42566,6 @@
     },
     {
       "path": "tests/unit/TypedMeshStreams.test.ts",
-      "gitBlob": null,
       "category": "test",
       "purpose": "Task-7 GPU-ready stream shape, parity, caps, ownership, and result-envelope regression coverage",
       "reviewLevel": "mechanical",
@@ -42589,6 +42588,62 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Covers all four streams, GPU attribute constructors/counts, unique transfer buffers, forged byte-length rejection, cap rejection, result validation, and mutually exclusive transport forms.",
+      "status": "audited"
+    },
+    {
+      "path": "src/rendering/MeshReadyQueue.ts",
+      "category": "production",
+      "purpose": "Bounded validated handoff for complete worker mesh results awaiting the separate GPU upload stage",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "available to the task-16 upload scheduler; no GPU attachment occurs in this module",
+      "imports": [
+        "src/rendering/TypedMeshStreams.ts",
+        "src/world/SectionVersionSnapshot.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "tests/unit/MeshReadyQueue.test.ts",
+        "npm run typecheck",
+        "npm run lint",
+        "npm test",
+        "npm run build"
+      ],
+      "riskAreas": [
+        "ready-record byte/count caps",
+        "typed stream validation",
+        "duplicate request identity",
+        "intact deferral and age accounting"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Task-15 semantic review: validates complete four-layer typed streams before admission, enforces independent record and aggregate byte caps without partial admission, rejects duplicate request identities, preserves complete records on dequeue/defer, and reports bounded oldest-age/deferred metrics.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/MeshReadyQueue.test.ts",
+      "category": "test",
+      "purpose": "Task-15 bounded mesh-ready admission, validation, deferral, age, and drain regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [
+        "src/rendering/MeshReadyQueue.ts",
+        "src/rendering/WorkerMeshing.ts",
+        "src/world/MeshingTypes.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "4 tests passed in focused MeshReadyQueue suite",
+        "npm test"
+      ],
+      "riskAreas": [
+        "record and byte cap rejection",
+        "malformed and duplicate records",
+        "intact deferral ordering",
+        "deterministic fake-clock age metrics"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Covers count/byte caps without partial admission, malformed/forged/duplicate rejection, oldest age, complete-record deferral at the front, drain behavior, and invalid configuration.",
       "status": "audited"
     }
   ]
