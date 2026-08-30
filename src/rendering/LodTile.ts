@@ -361,6 +361,8 @@ export function validateLodTileData(input: unknown): LodTileData {
         throw new LodTileValidationError('occupancy values must be binary');
       }
     }
+  } else {
+    assertTypedArray(record.biomes, Uint8Array, cellCount, 'biomes');
   }
   const byteLength =
     (record.heights as Int32Array).byteLength +

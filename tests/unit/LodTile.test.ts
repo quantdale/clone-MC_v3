@@ -159,5 +159,7 @@ describe('LodTile contracts and deterministic sampling', () => {
     expect(() => validateLodTileData(wrongBytes)).toThrow(/byteLength/);
     const wrongArray: unknown = { ...tile, heights: new Uint16Array(tile.heights.length) };
     expect(() => validateLodTileData(wrongArray)).toThrow(/heights/);
+    const macroTile = sampleLodTile(identity(2), OVERWORLD_DIMENSION_TYPE, source());
+    expect(() => validateLodTileData({ ...macroTile, biomes: undefined })).toThrow(/biomes/);
   });
 });

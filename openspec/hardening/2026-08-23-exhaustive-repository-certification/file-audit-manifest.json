@@ -11,7 +11,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2593,
+  "total": 2595,
   "pending": 0,
   "unclassified": 0,
   "rows": [
@@ -29769,6 +29769,36 @@
       "status": "audited"
     },
     {
+      "path": "src/rendering/LodTileRender.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Presentation-only LOD tile render construction, deterministic tier/frustum selection, seam skirts, and bounded disposable resource ownership.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "available to future renderer integration; no canonical or gameplay reads",
+      "imports": [
+        "src/rendering/LodTile.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "tests/unit/LodTileRender.test.ts",
+        "npx vitest run tests/unit/LodTileRender.test.ts tests/unit/LodTile.test.ts tests/unit/WorldgenDeterminism.test.ts tests/unit/WorldgenRegressionMatrix.test.ts",
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build"
+      ],
+      "riskAreas": [
+        "seam-coverage",
+        "negative-coordinate-selection",
+        "frustum-and-distance-selection",
+        "bounded-cache-eviction",
+        "exact-once-disposal"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Task 23 semantic review: fixed-count top-grid plus positive-overlap skirts cover every edge; selection is deterministic, distance/frustum bounded, negative-coordinate safe, and hysteretic through caller-owned previous-tier state; cache admission is byte/entry bounded, retains visible resources on rejected replacements, and disposes evicted/rejected resources exactly once. Module is headless-safe and does not attach Three.js or answer canonical reads.",
+      "status": "audited"
+    },
+    {
       "path": "src/rendering/MemoryResourceBudget.ts",
       "gitBlob": null,
       "category": "production",
@@ -36908,6 +36938,33 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/LodTileRender.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Regression coverage for seam-safe LOD geometry, deterministic frustum/distance tier selection, hysteresis, negative coordinates, and bounded render-resource eviction.",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "test-only",
+      "imports": [
+        "src/rendering/LodTileRender.ts",
+        "src/rendering/LodTile.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "npx vitest run tests/unit/LodTileRender.test.ts tests/unit/LodTile.test.ts tests/unit/WorldgenDeterminism.test.ts tests/unit/WorldgenRegressionMatrix.test.ts",
+        "npm test"
+      ],
+      "riskAreas": [
+        "seam-geometry-counts",
+        "hysteresis-boundaries",
+        "frustum-and-distance-rejection",
+        "lru-resource-ownership"
+      ],
+      "findingIds": [],
+      "disposition": "TEST_ONLY",
+      "reviewNotes": "Task 23 focused coverage passes 15/15: fixed vertex/index counts and all four skirts, typed LOD1/LOD2 payload separation, negative/adjacent bounds, deterministic tier selection with hysteresis and duplicate collapse, frustum/distance/capacity rejection, invalid config handling, LRU eviction, replacement retention, oversized admission rejection, and exact-once disposal.",
       "status": "audited"
     },
     {

@@ -6,9 +6,9 @@
   "currentChangeStatus": "ACTIVE",
   "lastCompletedChange": "254-whole-codebase-performance-optimization",
   "nextChange": null,
-  "completedTasks": 22,
+  "completedTasks": 23,
   "totalTasks": 37,
-  "completionPercentage": 59.46,
+  "completionPercentage": 62.16,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": false,
@@ -16,8 +16,8 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "ec072ab26b2729539d45f60c56e4644c898c0e7a",
-  "lastCompletedTask": "255 task 22 complete: LodTile defines validated presentation-only identity/data contracts keyed by dimension, seed, generation version, LOD, and safe tile coordinates; deterministic 16x16 LOD1/LOD2/LOD3 typed sampling uses strides 2/4/8 and a production TerrainGenerator summary adapter. Focused LOD/worldgen validation passes 34/34; full unit passes 4514 + 1 skipped; typecheck/lint/build/state/reviewed-file-audit pass.",
-  "nextExactAction": "Begin task 23: implement LOD tile construction/render ownership with seam-safe transitions, frustum/distance selection, and bounded cache eviction.",
+  "lastCompletedTask": "255 task 23 complete: LodTileRender provides fixed-count seam-safe top surfaces plus overlapping skirts, deterministic negative-coordinate frustum/distance tier selection with hysteresis state, and bounded byte/entry LRU ownership with exact-once disposal and old-visible retention on rejected replacements. Focused LOD render validation passes 15/15; full unit passes 4523 + 1 skipped; typecheck/lint/build/state/reviewed-file-audit pass.",
+  "nextExactAction": "Begin task 24: implement edit invalidation and conservative far visibility without allowing LOD to answer gameplay, collision, persistence, or network reads.",
   "blockers": [
     "Current-tree npm run test:e2e timed out at 1200 seconds after 50/51 tests completed without an assertion failure; the remaining long visual/resource test did not finish."
   ],
@@ -2430,9 +2430,9 @@
     {
       "change": "255-high-performance-voxel-engine",
       "status": "ACTIVE",
-      "unitTests": 4514,
+      "unitTests": 4523,
       "e2eTests": 51,
-      "note": "Tasks 1-22 complete (22/37, 59.46%). Task 22 adds validated presentation-only LOD tile identity/data contracts, safe dimension/seed/generation-version/LOD/tile-coordinate validation, deterministic 16x16 LOD1/LOD2/LOD3 sampling with 2/4/8 strides, typed-array/byte validation, and a production TerrainGenerator summary adapter. Focused LOD/worldgen validation passes 34/34; full unit passes 4514 + 1 skipped; typecheck/lint/build/state/reviewed-file-audit pass. The current-tree E2E attempt remains blocked after 50/51 at the 1200-second timeout; prior clean 51/51 evidence is historical only. Next exact action is task 23 seam-safe LOD tile ownership and bounded cache eviction."
+      "note": "Tasks 1-23 complete (23/37, 62.16%). Task 23 adds presentation-only fixed-count LOD render data with overlapping skirts on all four edges, deterministic negative-coordinate frustum/distance tier selection with caller-owned hysteresis state, duplicate collapse, and bounded byte/entry LRU resource ownership with exact-once disposal and visible-resource retention on rejected replacements. Focused LOD render validation passes 15/15; full unit passes 4523 + 1 skipped; typecheck/lint/build/state/reviewed-file-audit pass. The current-tree E2E attempt remains blocked after 50/51 at the 1200-second timeout; prior clean 51/51 evidence is historical only. Next exact action is task 24 edit invalidation and conservative far visibility boundaries."
     }
   ],
   "publicationHistory": [
