@@ -592,6 +592,20 @@ describe("ChunkPipeline — queue dispatch semantics", () => {
     expect(pipeline.queueDepth("mesh")).toBe(0);
   });
 
+  it("cancels queued speculative work without touching in-flight work", () => {
+    const pipeline = new ChunkPipeline();
+    pipeline.register(0, 0, 0);
+    pipeline.register(1, 0, 0);
+    expect(pipeline.enqueue("generate", 0, 0, 0, ChunkStreamPriority.Rings)).toBe(true);
+    expect(pipeline.enqueue("generate", 1, 0, 0, ChunkStreamPriority.Interaction)).toBe(true);
+    expect(pipeline.beginStage("0,0,0", "generate").ok).toBe(true);
+
+    expect(pipeline.cancelJobsBelowPriority(ChunkStreamPriority.Interaction)).toBe(1);
+    expect(pipeline.queueDepth("generate")).toBe(1);
+    expect(pipeline.dequeue("generate")?.key).toBe("1,0,0");
+    expect(pipeline.getRecord("0,0,0")?.inFlight.has("generate")).toBe(true);
+  });
+
   it("cancelForKey clears queues, in-flight markers and tickets, bumping the generation", () => {
     const pipeline = new ChunkPipeline();
     const record = pipeline.register(0, 3, 0);

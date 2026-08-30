@@ -6,9 +6,9 @@
   "currentChangeStatus": "ACTIVE",
   "lastCompletedChange": "254-whole-codebase-performance-optimization",
   "nextChange": null,
-  "completedTasks": 19,
+  "completedTasks": 20,
   "totalTasks": 37,
-  "completionPercentage": 51.35,
+  "completionPercentage": 54.05,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": false,
@@ -16,8 +16,8 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "ec072ab26b2729539d45f60c56e4644c898c0e7a",
-  "lastCompletedTask": "255 task 19 complete: deterministic ChunkWorkPriority tuple ordering now accounts for urgency, visibility, movement direction, simulation ticket, LOD, distance, age, and canonical coordinates; ChunkPipeline applies it to dispatch/displacement and World preserves it through retries. Focused task-19 validation passes 87/87; full unit gate passes 4501 + 1 skipped; typecheck/lint/build/state/file-audit pass.",
-  "nextExactAction": "Begin task 20: add starvation prevention, load/unload hysteresis, LOD hysteresis, and bounded queue admission under high render distance/teleport churn.",
+  "lastCompletedTask": "255 task 20 complete: World now admits the interactive ring before speculative far work, cancels obsolete queued speculative jobs on stream-center changes, purges obsolete parked mesh retries, enforces bounded horizontal residency during budgeted unload, and uses validated load/unload hysteresis. StreamingHysteresis provides deterministic dead-band threshold behavior for future LOD selection without implementing LOD tiles. Focused task-20 validation passes 71/71; typecheck and lint pass.",
+  "nextExactAction": "Begin task 21: verify near interactive work outranks speculative far generation and that resource counts converge after traversal.",
   "blockers": [
     "Current-tree npm run test:e2e timed out at 1200 seconds after 50/51 tests completed without an assertion failure; the remaining long visual/resource test did not finish."
   ],
@@ -2432,7 +2432,7 @@
       "status": "ACTIVE",
       "unitTests": 4501,
       "e2eTests": 51,
-      "note": "Tasks 1-19 complete (19/37, 51.35%). Task 19 adds a validated deterministic ChunkWorkPriority tuple ordered by urgency, visibility, movement direction, simulation ticket, LOD, distance, age, and canonical coordinates; ChunkPipeline applies it to dispatch and bounded displacement, and World preserves it through budget retries. Focused task-19 priority/streaming validation passes 87/87; full unit gate passes 4501 + 1 skipped; typecheck/lint/build/validate-state/reviewed-file-audit pass. The current-tree E2E attempt remains blocked after 50/51 at the 1200-second timeout; prior clean 51/51 evidence is historical only. Next exact action is task 20 starvation prevention and hysteresis."
+      "note": "Tasks 1-20 complete (20/37, 54.05%). Task 20 adds interactive-first bounded admission, stream-epoch cancellation of queued speculative work, parked-retry purging, horizontal residency bounds, validated load/unload hysteresis, and a reusable dead-band latch for future LOD selection without implementing LOD tiles. Focused task-20 streaming/hysteresis validation passes 71/71; typecheck and lint pass. The current-tree E2E attempt remains blocked after 50/51 at the 1200-second timeout; prior clean 51/51 evidence is historical only. Next exact action is task 21 resource-convergence verification."
     }
   ],
   "publicationHistory": [

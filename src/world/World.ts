@@ -20,15 +20,13 @@ import { FrameWorkBudgetScheduler, type FrameTaskClass } from '../rendering/Rend
 import { WorldLightStorage } from '../rendering/LightStorage';
 import { LightUpdateEngine } from '../rendering/LightUpdateEngine';
 import {
-  CHUNK_PIPELINE_QUEUE_CAPS,
-} from './ChunkPipeline';
-import {
   ChunkStreamPriority,
   ChunkTicketType,
   createChunkTicket,
 } from './ChunkTicket';
 import { createChunkWorkPriority, type ChunkWorkPriority } from './ChunkWorkPriority';
 import { ChunkLifecycleStage, ChunkStatus, isChunkStatusAtLeast } from './ChunkStatus';
+import { UNLOAD_HYSTERESIS_CHUNKS } from './ChunkPipeline';
 import { SECTION_SIZE } from '../math/SectionCoordinate';
 import type { ChunkMeshResult } from './MeshingTypes';
 import type { UvRect, MeshStreamName } from './MeshingTypes';
@@ -992,6 +990,22 @@ export class World implements WorldAccess {
     return this.streamScanOffsetsCache;
   }
 
+  /**
+   * Drop parked mesh retries that are no longer interactive for the current
+   * stream center. The bounded queue will re-admit current interactive work
+   * before speculative rings on the next scan.
+   */
+  private purgeSpeculativeMeshRetries(playerChunkX: number, playerChunkZ: number): void {
+    for (let i = this.retryMeshQueue.length - 1; i >= 0; i--) {
+      const job = this.retryMeshQueue[i]!;
+      const dx = job.cx - playerChunkX;
+      const dz = job.cz - playerChunkZ;
+      if (this.streamPriorityFor(dx, dz) <= ChunkStreamPriority.Interaction) continue;
+      this.retryMeshQueue.splice(i, 1);
+      this.retryMeshSet.delete(job.key);
+    }
+  }
+
   /** Create and queue generation for every missing chunk around the player. */
   private ensureChunks(playerChunkX: number, playerChunkZ: number): boolean {
     const centerChanged = this.streamCenterX !== playerChunkX || this.streamCenterZ !== playerChunkZ;
@@ -1002,6 +1016,10 @@ export class World implements WorldAccess {
       }
       this.streamCenterX = playerChunkX;
       this.streamCenterZ = playerChunkZ;
+      // A teleport creates a new stream epoch. Drop only queued speculative work;
+      // in-flight jobs remain owned by their existing stale/eviction guards.
+      this.chunkManager.pipeline.cancelJobsBelowPriority(ChunkStreamPriority.Interaction);
+      this.purgeSpeculativeMeshRetries(playerChunkX, playerChunkZ);
       this.needsEnsure = true;
       this.needsUnload = true;
     }
@@ -1012,44 +1030,56 @@ export class World implements WorldAccess {
     const rd = this.renderDistance;
     const pipeline = this.chunkManager.pipeline;
     let queueFull = false;
-    scan:
-    for (const [dx, dz] of this.streamScanOffsets(rd)) {
-      const cx = playerChunkX + dx;
-      const cz = playerChunkZ + dz;
-      for (let cy = this.minChunkY; cy < this.minChunkY + this.chunkLayerCount; cy++) {
-        const existing = this.chunkManager.getChunk(cx, cy, cz);
-        if (!existing) {
-          // Hard safety cap: don't create a chunk whose generation job cannot
-          // be queued — it would sit as an un-generated void. ensureChunks
-          // runs every frame, so the area is retried once the queue drains.
-          // The cap is the pipeline's own generate bound (the old
-          // CONFIG.maxQueueSize guard could never trip before it).
-          if (pipeline.queueDepth('generate') >= CHUNK_PIPELINE_QUEUE_CAPS.generate) {
-            queueFull = true;
-            break scan;
+    const offsets = this.streamScanOffsets(rd);
+    // The first pass is the bounded interactive ring. It must be admitted even
+    // when speculative far work previously filled a stage queue. The second
+    // pass is best-effort and can wait for later frames without starving spawn.
+    for (const interactivePass of [true, false]) {
+      if (!interactivePass && queueFull) break;
+      scan:
+      for (const [dx, dz] of offsets) {
+        const isInteractive = this.streamPriorityFor(dx, dz) <= ChunkStreamPriority.Interaction;
+        if (isInteractive !== interactivePass) continue;
+        const cx = playerChunkX + dx;
+        const cz = playerChunkZ + dz;
+        for (let cy = this.minChunkY; cy < this.minChunkY + this.chunkLayerCount; cy++) {
+          const existing = this.chunkManager.getChunk(cx, cy, cz);
+          if (!existing) {
+            // Keep horizontal residency within the load radius plus the
+            // hysteresis band while unload remains budgeted. Vertical slabs
+            // share this column cap and do not multiply it.
+            if (
+              !this.chunkManager.hasColumn(cx, cz) &&
+              this.chunkManager.columnCount >=
+                (2 * (rd + UNLOAD_HYSTERESIS_CHUNKS) + 1) ** 2
+            ) {
+              queueFull = true;
+              break scan;
+            }
+            const chunk = this.chunkManager.createChunk(cx, cy, cz);
+            // Player ticket: the reason this chunk is kept resident at all.
+            this.chunkManager.acquireTicket(cx, cy, cz, createChunkTicket(ChunkTicketType.Player));
+            if (!this.enqueueGeneration(chunk, this.streamPriorityFor(dx, dz), this.streamPriorityDetailsFor(dx, dz))) {
+              // Do not retain an ungenerated projection with no queued owner.
+              this.chunkManager.removeChunk(cx, cy, cz);
+              queueFull = true;
+              break scan;
+            }
+          } else if (!existing.generated) {
+            // A chunk created earlier whose generation job was dropped or
+            // displaced re-queues here; enqueue deduplicates per stage.
+            if (!this.enqueueGeneration(existing, this.streamPriorityFor(dx, dz), this.streamPriorityDetailsFor(dx, dz))) {
+              queueFull = true;
+              break scan;
+            }
+          } else if (existing.state !== ChunkState.Visible || existing.dirty) {
+            this.enqueueMeshWithRetry(existing);
           }
-          const chunk = this.chunkManager.createChunk(cx, cy, cz);
-          // Player ticket: the reason this chunk is kept resident at all.
-          this.chunkManager.acquireTicket(cx, cy, cz, createChunkTicket(ChunkTicketType.Player));
-          if (!this.enqueueGeneration(chunk, this.streamPriorityFor(dx, dz), this.streamPriorityDetailsFor(dx, dz))) {
-            queueFull = true; // rejected at cap: retry on the next scan
-            break scan;
-          }
-        } else if (!existing.generated) {
-          // A chunk created earlier whose generation job was dropped or
-          // displaced re-queues here; enqueue deduplicates per stage.
-          if (!this.enqueueGeneration(existing, this.streamPriorityFor(dx, dz), this.streamPriorityDetailsFor(dx, dz))) {
-            queueFull = true;
-            break scan;
-          }
-        } else if (existing.state !== ChunkState.Visible || existing.dirty) {
-          // Mesh jobs can be displaced by a more urgent boundary remesh. The
-          // pipeline reports that displacement, but the compatibility chunk is
-          // already generated, so generation-only rescans would leave it
-          // permanently Meshing/dirty with no queued work.
-          this.enqueueMeshWithRetry(existing);
         }
       }
+      // A saturated interactive pass must stop before speculative admission;
+      // a saturated far pass simply waits for the next bounded frame.
+      if (queueFull && interactivePass) break;
     }
     // Any displacement means some resident chunk lost its only queued copy —
     // force a re-scan so it is re-queued instead of stranding as a void.

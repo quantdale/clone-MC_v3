@@ -33119,6 +33119,28 @@
       "status": "audited"
     },
     {
+      "path": "src/world/StreamingHysteresis.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Validated runtime hysteresis policy for bounded streaming thresholds and future LOD selection",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "live",
+      "imports": [],
+      "importedBy": ["src/world/ChunkPipeline.ts", "src/world/World.ts"],
+      "testEvidence": [
+        "tests/unit/StreamingHysteresis.test.ts",
+        "tests/unit/ChunkPipeline.test.ts",
+        "tests/unit/WorldStreamingSaturation.test.ts",
+        "npm run typecheck",
+        "npm run lint"
+      ],
+      "riskAreas": ["threshold chatter", "streaming boundedness", "determinism"],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Task 20 semantic review: validates finite thresholds and radius inputs, implements deterministic at-most/at-least dead bands, and remains runtime-only without canonical or gameplay authority.",
+      "status": "audited"
+    },
+    {
       "path": "src/world/ChunkSection.ts",
       "gitBlob": null,
       "category": "production",
@@ -34973,6 +34995,24 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Executed in the vitest suite (4200 passing); sampled semantic reads across suites; suite-level quality matrix in findings.md.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/StreamingHysteresis.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Task-20 deterministic hysteresis, radius-validation, and dead-band regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": ["src/world/StreamingHysteresis.ts"],
+      "importedBy": [],
+      "testEvidence": [
+        "npx vitest run tests/unit/StreamingHysteresis.test.ts tests/unit/ChunkPipeline.test.ts tests/unit/WorldStreamingSaturation.test.ts tests/unit/World.test.ts"
+      ],
+      "riskAreas": ["threshold chatter", "invalid configuration", "determinism"],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Covers both hysteresis directions, dead-band boundaries, reset/initial state, invalid thresholds and samples, and load/unload radius validation; focused task-20 suite passes 71/71.",
       "status": "audited"
     },
     {

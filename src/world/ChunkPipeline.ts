@@ -14,6 +14,7 @@ import {
   createChunkWorkPriority,
   type ChunkWorkPriority,
 } from './ChunkWorkPriority';
+import { isOutsideHysteresisRadius } from './StreamingHysteresis';
 
 // ── Module-level tuning constants ────────────────────────────────────────────
 // Kept here rather than in config/index.ts so the pipeline is self-contained;
@@ -630,7 +631,11 @@ export class ChunkPipeline {
    * unloaded, which prevents boundary churn.
    */
   shouldUnload(dx: number, dz: number, loadRadius: number): boolean {
-    return ChunkPipeline.ringDistance(dx, dz) > loadRadius + UNLOAD_HYSTERESIS_CHUNKS;
+    return isOutsideHysteresisRadius(
+      ChunkPipeline.ringDistance(dx, dz),
+      loadRadius,
+      UNLOAD_HYSTERESIS_CHUNKS,
+    );
   }
 
   // ── Observability ──────────────────────────────────────────────────────────
