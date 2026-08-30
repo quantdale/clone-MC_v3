@@ -2510,6 +2510,11 @@
       "head": "178d6dab04c65d300a4e3463eab18c0480ec3ad0",
       "at": "2026-08-30T03:07:57Z",
       "note": "Change 255 task 22 implementation and durable checkpoint: validated presentation-only LOD tile identity/data contracts keyed by dimension, seed, generation version, LOD, and safe tile coordinates; deterministic 16x16 LOD1/LOD2/LOD3 typed sampling uses 2/4/8 strides with bounded byte accounting, binary occupancy, and a production TerrainGenerator height/biome summary adapter without canonical storage access. Focused LOD/worldgen validation passes 34/34; full unit passes 4514 + 1 skipped; typecheck/lint/build/state/reviewed-file-audit PASS. Current-tree E2E remains blocked by the recorded 50/51 timeout; task 23 seam-safe LOD tile construction/render ownership and bounded cache eviction is next."
+    },
+    {
+      "head": "b24205f2b8fc9ebd529a9bf8016e8ff529ddb923",
+      "at": "2026-08-30T03:18:58Z",
+      "note": "Change 255 task 23 implementation and durable checkpoint: presentation-only fixed-count LOD render data adds positive-overlap skirts on all four edges and half-open adjacent bounds; deterministic negative-coordinate frustum/distance tier selection uses caller-owned hysteresis state and duplicate collapse; bounded byte/entry LRU ownership disposes evicted, replaced, and rejected resources exactly once while retaining the old visible resource on rejected replacements. Task-23 focused validation passes 15/15; full unit passes 4523 + 1 skipped; typecheck/lint/build/state/reviewed-file-audit PASS. Current-tree E2E remains blocked by the recorded 50/51 timeout; task 24 edit invalidation and conservative far visibility boundaries is next."
     }
   ],
   "releaseAuthority": {
