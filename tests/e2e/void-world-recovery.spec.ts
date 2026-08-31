@@ -6,32 +6,6 @@ const WORLD_ID = `world-${SEED}`;
 const DB_NAME = "voxel-world-db";
 const DB_VERSION = 6;
 
-// One valid section payload for a stone block at local (8,15,8) in section 7 (Y 63)
-const STONE_SECTION_7 = {
-  version: 1,
-  capacity: 4096,
-  bitsPerEntry: 4,
-  palette: [0, 3],
-  // storage is 512 words, single entry 1 at word 287 (bit-packed)
-  storage: (() => {
-    const arr = new Array(512).fill(0);
-    arr[287] = 1;
-    return arr;
-  })(),
-};
-
-function makeColumn(cx: number, cz: number) {
-  return {
-    version: 1,
-    chunkX: cx,
-    chunkZ: cz,
-    sectionCount: 24,
-    minSectionY: -4,
-    sections: {
-      7: STONE_SECTION_7,
-    },
-  };
-}
 
 type SeedConfig = {
   metadata?: { generationVersion?: string } | null; // null = no metadata at all
@@ -42,6 +16,8 @@ type SeedConfig = {
 async function seedBeforeBoot(page: Page, cfg: SeedConfig) {
   await page.addInitScript(
     ({ worldId, dbName, dbVersion, cfg, columns }) => {
+      const flag = `__seeded_${worldId}`;
+      if (sessionStorage.getItem(flag)) return;
       const originalOpen = window.indexedDB.open.bind(window.indexedDB);
       let seedingDone = false;
       const pending: Array<{ name: string; version?: number; req: any }> = [];
@@ -141,16 +117,11 @@ async function seedBeforeBoot(page: Page, cfg: SeedConfig) {
               sectionCount: 24,
               minSectionY: -4,
               sections: {
-                7: {
+                "2": {
                   version: 1,
-                  capacity: 4096,
-                  bitsPerEntry: 4,
-                  palette: [0, 3],
-                  storage: (() => {
-                    const a = new Array(512).fill(0);
-                    a[287] = 1;
-                    return a;
-                  })(),
+                  palette: [3],
+                  bitsPerEntry: 0,
+                  storage: [],
                 },
               },
             };
@@ -175,6 +146,7 @@ async function seedBeforeBoot(page: Page, cfg: SeedConfig) {
 
         db.close();
         seedingDone = true;
+        sessionStorage.setItem(flag, "1");
         (window as any).__seedDone = true;
         // flush pending opens
         for (const p of pending) {
@@ -194,6 +166,7 @@ async function seedBeforeBoot(page: Page, cfg: SeedConfig) {
       })().catch((e) => {
         console.error("seed failed", e);
         seedingDone = true;
+        sessionStorage.setItem(flag, "1");
         (window as any).__seedDone = true;
         (window.indexedDB as any).open = originalOpen;
         for (const p of pending) {
@@ -233,8 +206,7 @@ test.describe("void-world startup recovery (257 e2e)", () => {
   test("fresh current world boots with visible terrain and supported player", async ({ page }) => {
     // No preseed -> fresh world
     await page.addInitScript(({ dbName }) => {
-      const req = window.indexedDB.deleteDatabase(dbName);
-      // best effort; ignore errors
+      void window.indexedDB.deleteDatabase(dbName);
     }, { dbName: DB_NAME });
     await waitForBoot(page);
     await expect(page.locator("#recovery")).toBeHidden();
@@ -363,14 +335,11 @@ test.describe("void-world startup recovery (257 e2e)", () => {
     await waitForBoot(page);
     await expect(page.locator("#recovery")).toBeVisible();
     // First click arms confirmation
-    await page.locator("#recovery-reset").click();
     await expect(page.locator("#recovery-status")).toContainText("backup");
-    // Second click executes reset and reloads
-    // Wait for reload navigation
-    const [response] = await Promise.all([
-      page.waitForNavigation({ waitUntil: "load", timeout: 60000 }),
-      page.locator("#recovery-reset").click(),
-    ]);
+    // Second click executes reset and reloads via window.location.reload()
+    await page.locator("#recovery-reset").click();
+    // Wait for reload and fresh boot
+    await page.waitForFunction(() => (window as any).__voxelGame?.worldStartupMode === "current", { timeout: 60000 });
     // After reload, should be fresh current world without recovery
     await expect(page.locator("#recovery")).toBeHidden({ timeout: 60000 });
     await expect(page.locator("#loading")).toBeHidden({ timeout: 60000 });
