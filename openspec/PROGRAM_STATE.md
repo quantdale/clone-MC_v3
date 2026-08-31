@@ -1,6 +1,6 @@
 # Minecraft-Parity Program State
 
-> **2026-08-31 13:32Z Publication checkpoint — BLOCKED.** Local HEAD `cdb63ef35f7d68049cb3106fffa6659ad3c547f4` (fix visual: deterministic visual regression via `worldReady` wait + frozen `dynamicResolution` at scale 1, unit 4559+1 PASS, 377 files) is **one commit ahead of `origin/main` `54d4ea08a00d8f535201295761f9f8baf3451e6b`**. Stored `session_start_head` `05ec693766648dc2022443e84636d0da0fc3c3bd` (pre-archive E2E timeout raise) is ancestor of both; `origin/main` includes `54d4ea0` archive (37/37 VERIFIED). **Publication to `origin/main` BLOCKED this session:** `git push origin main` failed — `could not read Username for https://github.com: terminal prompts disabled` (`GIT_TERMINAL_PROMPT=0`), credential helper `gh auth git-credential` returned invalid token for `quantdale` (`hosts.yml` invalid, `no oauth token found`, API rate-limited). Per `REVIEW_HANDOFF`/`AGENTS.md`, **`published_head` MUST NOT be claimed**; remote remains at `54d4ea0`. Local gates PASS: `typecheck` PASS, `lint` PASS, `unit` 4559 passed +1 skipped (377 files, 57.58s), `build` PASS (195 modules), `validate-state` PASS, `file-audit` PASS (2610 rows). **Next exact action:** restore GitHub credential (`gh auth login -h github.com`) and push `cdb63ef` to `origin/main`, then `git fetch` and verify `origin/main == cdb63ef` before marking `published_head`.
+> **2026-08-31 15:23Z Change 256 ACTIVE.** Program was COMPLETE through 255 (001–255 VERIFIED, 37/37 tasks 100%, gates green at `17a814a` 5 ahead of `origin/main` `54d4ea0`). Owner hardening goal "full codebase cleanup, refactoring, and hardening" is now hosted as **256-production-readiness-hardening** (0/23, ACTIVE). Publication to `origin/main` remains BLOCKED on credential (gh auth invalid, no GITHUB_TOKEN) — not a hardening blocker. Local gates PASS at `17a814a` (typecheck/lint/build 195/validate-state/file-audit PASS); `npm test` pending for 256 baseline. Next: run baseline audit (task 1) and hardening slices.
 
 ## Current checkpoint
 > **254-whole-codebase-performance-optimization — VERIFIED (2026-08-26, session start `d258414`).**
@@ -68,8 +68,8 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **255-high-performance-voxel-engine — VERIFIED and ARCHIVED as `2026-08-30-255-high-performance-voxel-engine`**
-- Next change: **null (program COMPLETE; no further numbered change planned)**
+- Active implementation change: **256-production-readiness-hardening — ACTIVE (0/23)**
+- Next change: **256-production-readiness-hardening — ACTIVE**
 - 240 advancement allowed: **yes**
 
 - Program: **COMPLETE — Change 255 is VERIFIED and ARCHIVED; Changes 001–255 are VERIFIED (program COMPLETE)**
@@ -79,10 +79,10 @@
 - Post-250 hardening interlock: **VERIFIED at remediation checkpoint `aa92a5c229a753f10f8c1677e836136962b5d07a` — canonical CI run 32589457819 SUCCESS (gate job 97078975848, e2e job 97078975868); tasks 78/78; release decision READY (`openspec/evidence/release-readiness-post-hardening.md`)**
 - Certification campaign: **openspec/hardening/2026-08-23-exhaustive-repository-certification — findings fixed with oracles; manifest reviewed; risk register R-1..R-9 accepted debt**
 - Release authority: **Change-253 archived verification package** — candidate `bbffe560706841d5ef44ebfe7f74f6b2dda6279d`; canonical run `33256432099`; gate job `99111927428` SUCCESS; e2e job `99111927536` SUCCESS.
-- Publication history: **Change-255 archived at `05ec693766648dc2022443e84636d0da0fc3c3bd` as `2026-08-30-255-high-performance-voxel-engine` with capability spec `openspec/specs/high-performance-voxel-engine/spec.md`; local gates typecheck/lint/unit 4556+1/build 195/e2e 51/51/file-audit 2608/state PASS; successor `54d4ea0` (archive) on `origin/main`; local fix `cdb63ef35f7d68049cb3106fffa6659ad3c547f4` (visual determinism, unit 4559+1) ahead of remote; publication BLOCKED (see checkpoint 2026-08-31 13:32Z).**
-- Section milestone: **PROGRAM COMPLETE — every numbered change 001–255 is VERIFIED and ARCHIVED; Change 255 high-performance voxel engine is the terminal capability; local gates PASS at `cdb63ef`, remote at `54d4ea0`, publish deferred per REVIEW_HANDOFF.**
+- Publication history: **Change-255 archived at `05ec693766648dc2022443e84636d0da0fc3c3bd` as `2026-08-30-255-high-performance-voxel-engine` with capability spec `openspec/specs/high-performance-voxel-engine/spec.md`; successor `54d4ea0` on `origin/main`; local HEAD `17a814a` (cdb63ef + 4 checkpoints) 5 ahead of remote; Change 256-production-readiness-hardening ACTIVATED 2026-08-31 15:23Z (0/23, ACTIVE) to host owner hardening goal; publication BLOCKED remains credential-bound.**
+- Section milestone: **256-production-readiness-hardening ACTIVE (0/23) — post-255 hardening to host owner-requested full cleanup/refactor/hardening; 001–255 remain VERIFIED and ARCHIVED.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ri…
-- Next exact action: **Publication BLOCKED — push `cdb63ef35f7d68049cb3106fffa6659ad3c547f4` to `origin/main` (`gh auth login` to restore token), then verify `origin/main == cdb63ef`; program remains COMPLETE locally (37/37, 100%).**
+- Next exact action: **Change 256 ACTIVE — run baseline audit (task 1): orphan-check, file-audit, validate-state, greps, and record triaged backlog in verification.md.**
 ## What 250 implemented
 
 Change 250 is documentation-only: it created the consolidated evidence archive and the terminal
