@@ -106,15 +106,18 @@ async function assembleState(page: Page, screenId: string): Promise<void> {
           __voxelGame?: {
             testSetCameraPose(yaw: number, pitch: number): void;
             testNormalizeHud(fps: string, time: string, debug?: string): void;
+            testFreezeDynamicResolution(): void;
           };
         }
       ).__voxelGame;
       if (!game) throw new Error('window.__voxelGame is not exposed');
+      game.testFreezeDynamicResolution();
       game.testSetCameraPose(yaw, pitch);
       game.testNormalizeHud(fps, time, debug);
     },
     { yaw: POSE_YAW, pitch: POSE_PITCH, fps: FIXED_FPS, time: FIXED_TIME, debug: FIXED_DEBUG },
   );
+
 
   // Per-screen UI reveal/hide. Pre-pointer-lock the game keeps the HUD family
   // hidden, so element-clipped screens force their element visible; the
@@ -199,6 +202,13 @@ test.describe('visual regression matrix (245)', () => {
         await page.goto('/?seed=1337');
         await page.waitForSelector('#loading', { state: 'hidden', timeout: BOOT_TIMEOUT_MS });
         await assembleState(page, cell.screen);
+        await page.waitForFunction(
+          () => {
+            const g = (window as unknown as { __voxelGame?: { testIsWorldReady(): boolean } }).__voxelGame;
+            return g ? g.testIsWorldReady() : false;
+          },
+          { timeout: 30_000 },
+        );
         await page.waitForTimeout(SETTLE_MS);
 
         const shot =

@@ -11,7 +11,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2609,
+  "total": 2610,
   "pending": 0,
   "unclassified": 0,
   "rows": [
@@ -43150,6 +43150,22 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Synced capability spec for terminal program state; content identical to archived spec.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/VisualRegressionDeterminism.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit/browser regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Fix (visual): deterministic visual regression freeze coverage for DynamicResolutionController setScaleForTest and dwell logic (3 tests).",
       "status": "audited"
     }
   ]

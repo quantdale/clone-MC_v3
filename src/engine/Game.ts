@@ -416,6 +416,20 @@ export class Game {
     }
   }
 
+  /* c8 ignore start - test-only visual determinism hooks, E2E-covered */
+  /** Test-only hook (245/255): whether the spawn-centered streaming plateau has reached ready (progress >= 1). */
+  testIsWorldReady(): boolean {
+    const [pcx, , pcz] = worldToChunk(this.player.position.x, this.player.position.y, this.player.position.z);
+    return this.world.getReadyProgress(pcx, pcz) >= 1;
+  }
+
+  /** Test-only hook (255): freeze dynamic-resolution at scale 1 for deterministic visual capture. */
+  testFreezeDynamicResolution(): void {
+    this.renderer.testFreezeAtMaxScale();
+  }
+  /* c8 ignore stop */
+
+
   /** The seed resolved from the URL ?seed= override, or the configured default. */
   readonly seed: number;
 

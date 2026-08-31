@@ -91,6 +91,15 @@ export class Renderer {
 
   /** Feed a completed-frame timing sample and apply only accepted pixel-scale changes. */
   updateDynamicResolution(nowMs: number, metrics: DynamicResolutionMetrics): DynamicResolutionUpdate {
+    if (this.testDynamicResolutionFrozen) {
+      return {
+        scale: this.dynamicResolution.getScale(),
+        changed: false,
+        valid: true,
+        effectiveFrameTimeMillis: null,
+        reason: 'at-bound',
+      };
+    }
     const update = this.dynamicResolution.update(nowMs, metrics);
     if (update.changed) {
       this.applyDynamicResolutionSize();
@@ -102,6 +111,28 @@ export class Renderer {
   dynamicResolutionState(): DynamicResolutionState {
     return this.dynamicResolution.state();
   }
+
+  private testDynamicResolutionFrozen = false;
+
+  /* c8 ignore start - test-only freeze, E2E-covered (visual determinism), not unit-branch-reachable */
+  /** Test-only: prevent further adaptive scale changes (keeps current scale). */
+  testFreezeDynamicResolution(): void {
+    this.testDynamicResolutionFrozen = true;
+  }
+
+  /** Test-only: reset scale to max (1) and then freeze adaptive changes. */
+  testFreezeAtMaxScale(): void {
+    const state = this.dynamicResolution.state();
+    if (state.scale !== state.maxScale) {
+      this.dynamicResolution.setScaleForTest(state.maxScale);
+      this.applyDynamicResolutionSize();
+    }
+    this.testDynamicResolutionFrozen = true;
+  }
+  /* c8 ignore stop */
+
+
+
 
   private applyDynamicResolutionSize(): void {
     if (this.renderer) {

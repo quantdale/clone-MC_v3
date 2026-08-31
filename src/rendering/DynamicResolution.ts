@@ -200,6 +200,13 @@ export class DynamicResolutionController {
     this.resetDwell();
   }
 
+  /** Test-only: force scale within current tier bounds and clear dwell history. */
+  setScaleForTest(scale: number): void {
+    const bounds = this.tierConfig();
+    this.scale = clamp(scale, bounds.minScale, bounds.maxScale);
+    this.resetDwell();
+  }
+
   /** Current scale, always within the active tier's bounds. */
   getScale(): number {
     return this.scale;
