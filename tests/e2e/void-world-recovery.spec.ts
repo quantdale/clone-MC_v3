@@ -13,11 +13,11 @@ type SeedConfig = {
   player?: { position: [number, number, number] } | null;
 };
 
-async function seedBeforeBoot(page: Page, cfg: SeedConfig) {
+async function seedBeforeBoot(page: Page, cfg: SeedConfig, once = false) {
   await page.addInitScript(
-    ({ worldId, dbName, dbVersion, cfg, columns }) => {
+    ({ worldId, dbName, dbVersion, cfg, columns, once }) => {
       const flag = `__seeded_${worldId}`;
-      if (sessionStorage.getItem(flag)) return;
+      if (once && sessionStorage.getItem(flag)) return;
       const originalOpen = window.indexedDB.open.bind(window.indexedDB);
       let seedingDone = false;
       const pending: Array<{ name: string; version?: number; req: any }> = [];
@@ -146,7 +146,7 @@ async function seedBeforeBoot(page: Page, cfg: SeedConfig) {
 
         db.close();
         seedingDone = true;
-        sessionStorage.setItem(flag, "1");
+        if (once) sessionStorage.setItem(flag, "1");
         (window as any).__seedDone = true;
         // flush pending opens
         for (const p of pending) {
@@ -166,7 +166,7 @@ async function seedBeforeBoot(page: Page, cfg: SeedConfig) {
       })().catch((e) => {
         console.error("seed failed", e);
         seedingDone = true;
-        sessionStorage.setItem(flag, "1");
+        if (once) sessionStorage.setItem(flag, "1");
         (window as any).__seedDone = true;
         (window.indexedDB as any).open = originalOpen;
         for (const p of pending) {
@@ -183,7 +183,7 @@ async function seedBeforeBoot(page: Page, cfg: SeedConfig) {
         }
       });
     },
-    { worldId: WORLD_ID, dbName: DB_NAME, dbVersion: DB_VERSION, cfg, columns: cfg.columns ?? [] }
+    { worldId: WORLD_ID, dbName: DB_NAME, dbVersion: DB_VERSION, cfg, columns: cfg.columns ?? [], once }
   );
 }
 
@@ -330,9 +330,9 @@ test.describe("void-world startup recovery (257 e2e)", () => {
     test.setTimeout(180_000);
     await seedBeforeBoot(page, {
       metadata: {}, // legacy partial -> recovery
-      columns: [{ cx: 0, cz: 0 }],
+      columns: [],
       player: null,
-    });
+    }, true);
     await waitForBoot(page);
     await expect(page.locator("#recovery")).toBeVisible();
     // First click arms confirmation
