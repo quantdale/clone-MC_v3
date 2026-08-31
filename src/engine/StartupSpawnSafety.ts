@@ -73,7 +73,7 @@ export function evaluateStartupPosition(
   if (!world.dimension.containsY(y) || y + STARTUP_BODY_HEIGHT > world.dimension.maxY + 1) {
     return 'out-of-dimension';
   }
-  const surface = world.getMotionBlockingHeight(x, z);
+  const surface = world.getMotionBlockingHeight(Math.floor(x), Math.floor(z));
   if (surface < world.dimension.minY) {
     return 'no-support';
   }
@@ -82,7 +82,7 @@ export function evaluateStartupPosition(
   if (drop < -0.001 || drop > STARTUP_MAX_SUPPORT_DROP) {
     return 'no-support';
   }
-  if (world.hasCanonicalColumn(x, z)) {
+  if (world.hasCanonicalColumn(Math.floor(x), Math.floor(z))) {
     const minX = Math.floor(x - STARTUP_BODY_HALF_WIDTH);
     const maxX = Math.floor(x + STARTUP_BODY_HALF_WIDTH);
     const minZ = Math.floor(z - STARTUP_BODY_HALF_WIDTH);
