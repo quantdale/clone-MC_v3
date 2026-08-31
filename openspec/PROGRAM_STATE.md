@@ -1,5 +1,8 @@
 # Minecraft-Parity Program State
 
+> **2026-08-31 Change 257 ACTIVE — void-world-startup-recovery (ACTIVE, 41/67, 61%).**
+> Core architecture fix complete and unit-validated: baseline-aware `World.getMotionBlockingHeight`/`getReadyProgress`, `StartupSpawnSafety` validator, `WorldStartupAssessment` (current/preserved/recovery-required), `Game` recovery-required state with overlay and world-scoped reset. Unit 381 files 4599 PASS, typecheck/lint/build/validate-state/file-audit PASS. Browser E2E `tests/e2e/void-world-recovery.spec.ts` added (8 cases, fresh world PASS, legacy-unknown partial flaky timeout 1.5m, preserved/reset pending). Next blocker is repairing legacy preseed via `page.addInitScript` interception. 256-era historical prose below is preserved.
+>
 > **2026-08-31 Change 257 ACTIVATED — void-world-startup-recovery (ACTIVE, 0/67).**
 > Owner-authorized live-playability repair after a user report: game starts with no visible
 > blocks and the player free-falls into the void. Root cause is confirmed in source: for

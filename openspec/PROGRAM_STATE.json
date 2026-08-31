@@ -5,9 +5,9 @@
   "currentChangeStatus": "ACTIVE",
   "lastCompletedChange": "256-production-readiness-hardening",
   "nextChange": null,
-  "completedTasks": 0,
+  "completedTasks": 41,
   "totalTasks": 67,
-  "completionPercentage": 0.0,
+  "completionPercentage": 61.19,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": false,
@@ -15,10 +15,12 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "3abcd87e84c95e99f810c9e74e2652a19fa5bb31",
-  "localHead": "3abcd87e84c95e99f810c9e74e2652a19fa5bb31",
-  "lastCompletedTask": "256 task 23 complete: Verification — typecheck/lint/test (4559+1)/build 195/validate-state/file-audit PASS, YAGNI 0, magic-number/headless/boss-bar/void/type-cast/main.ts hardened, bundle 195, verification recorded; archived as 2026-08-31-256-production-readiness-hardening.",
-  "nextExactAction": "Change 257 ACTIVE at 0/67: reconcile repository truth (done: fetched origin/main = session_start_head 3abcd87e84c95e99f810c9e74e2652a19fa5bb31, which already contains the 256 work the prior state claimed unpublished), then reproduce the void/free-fall defect with deterministic persisted-world fixtures (tasks 5-8) before implementing the startup-compatibility repair.",
-  "blockers": [],
+  "localHead": "534f0fd8b2237ac930a8d440f0f592bd61d33041",
+  "lastCompletedTask": "257 task 37 complete: Persistence and corruption matrix \u2014 unit/integration matrix for fresh/legacy/future/sparse/failure/world-scoped reset (GameStartupPersistence 14 tests, StartupSpawnSafety 9, WorldStartupBaseline 7, WorldStartupAssessment 10)",
+  "nextExactAction": "Blocker: tests/e2e/void-world-recovery.spec.ts legacy-unknown partial timeout (1.5m). Repair preseed via page.addInitScript interception (as in 771-seed draft) to make recovery reliably visible, then re-run full npm run test:e2e, capture visual screenshots, and complete audit tasks 49-55 before marking VERIFIED. Current ACTIVE 41/67 (61%), keep repairing rather than weakening gate.",
+  "blockers": [
+    "tests/e2e/void-world-recovery.spec.ts: legacy-unknown partial world timeout 1.5m (preseed via about:blank flaky) \u2014 needs addInitScript interception; full npm run test:e2e not yet green; visual screenshots pending; audit R1-R9 pending"
+  ],
   "validationResults": [
     {
       "change": "253-live-world-architecture-convergence",
