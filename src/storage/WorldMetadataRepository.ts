@@ -184,6 +184,16 @@ export class WorldMetadataRepository {
     await promisifyRequest(tx.objectStore(this.store).delete(worldId));
   }
 
+  /**
+   * Delete an arbitrary record by exact key in the world-metadata store (257).
+   * Used for the wither-data record (`__wither__:<worldId>`), which shares this
+   * store under a reserved key namespace rather than the metadata keyPath.
+   */
+  async deleteRaw(key: string): Promise<void> {
+    const tx = this.requireDb().transaction(this.store, 'readwrite');
+    await promisifyRequest(tx.objectStore(this.store).delete(key));
+  }
+
   /** Close the underlying database (clears the cached handle). */
   close(): void {
     if (this.db) {

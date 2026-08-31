@@ -1,15 +1,15 @@
 # Tasks: 257-void-world-startup-recovery
 
-Status at authoring: PLANNED
-Target: 100%
+Status at authoring: PLANNED; activated 2026-08-31 (session_start_head 3abcd87e84c95e99f810c9e74e2652a19fa5bb31 = origin/main)
+Tasks complete: 4/67. Target: 100%
 Advancement allowed: false
 
 ## A. Repository truth and activation
 
-- [ ] 1. Fetch current GitHub `main`; record exact `session_start_head`; compare it to `PROGRAM_STATE.json/.md` and reconcile stale publication/head fields before implementation.
-- [ ] 2. Activate `257-void-world-startup-recovery` in `PROGRAM_STATE.json/.md` with 0/N tasks, next exact action, and no false PASS claims.
-- [ ] 3. Run the OpenSpec pre-implementation quality checklist from `SPEC_AUTHORING_PROTOCOL.md`; fix any failed item before touching `src/`.
-- [ ] 4. Read/revalidate the 2026-08-30 free-fall triage entry and current risk-register R-1..R-9 against the present source so stale accepted-debt assumptions are not inherited blindly.
+- [x] 1. Fetch current GitHub `main`; record exact `session_start_head`; compare it to `PROGRAM_STATE.json/.md` and reconcile stale publication/head fields before implementation.
+- [x] 2. Activate `257-void-world-startup-recovery` in `PROGRAM_STATE.json/.md` with 0/N tasks, next exact action, and no false PASS claims.
+- [x] 3. Run the OpenSpec pre-implementation quality checklist from `SPEC_AUTHORING_PROTOCOL.md`; fix any failed item before touching `src/`.
+- [x] 4. Read/revalidate the 2026-08-30 free-fall triage entry and current risk-register R-1..R-9 against the present source so stale accepted-debt assumptions are not inherited blindly.
 
 ## B. Reproduce and characterize the reported defect
 

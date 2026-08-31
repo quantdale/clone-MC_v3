@@ -49,6 +49,11 @@ import {
 import type { ChunkColumn, SerializedChunkColumn } from '../world/ChunkColumn';
 import type { WorldEditDurability, WorldEditSnapshot, WorldGenerationBaseline } from '../world/World';
 import { WORLDGEN_MATRIX_VERSION } from '../worldgen/WorldgenRegressionMatrix';
+import {
+  assessWorldStartup,
+  type WorldStartupAssessment,
+} from './WorldStartupAssessment';
+import { WorldArchiver } from './WorldArchiver';
 
 /** The currently executable generated-world baseline. */
 export const CURRENT_WORLDGEN_VERSION = WORLDGEN_MATRIX_VERSION;
@@ -79,6 +84,11 @@ export interface GamePersistenceOpenResult {
   initialColumns: SerializedChunkColumn[];
   /** World generation baseline compatibility classification. */
   generationBaseline: 'current' | 'legacy-unknown' | 'unsupported';
+  /**
+   * The single authoritative startup compatibility decision (257): `current`,
+   * safe `preserved`, or `recovery-required` with a deterministic reason.
+   */
+  startupAssessment: WorldStartupAssessment;
   /** Migration audit trail; `null` when migration was skipped (marker present or no legacy source). */
   migrationReport: LegacyMigrationReport | null;
   /** Migration + load failures, user-observable; empty on a fully clean boot. */
@@ -258,6 +268,14 @@ export class GamePersistence implements WorldEditDurability {
   private initialColumnsValue: SerializedChunkColumn[] = [];
   /** World generation baseline compatibility classification. */
   private generationBaselineValue: WorldGenerationBaseline = 'current';
+  /** Authoritative startup compatibility decision (257); computed at the end of `open()`. */
+  private startupAssessmentValue: WorldStartupAssessment | null = null;
+  /**
+   * Set once the user confirms a successful world-scoped reset (257): every
+   * capture/save path becomes a no-op so no record for the reset world can be
+   * re-written between the reset and the page reload that boots the fresh world.
+   */
+  private resetCompleted = false;
 
   constructor(opts: GamePersistenceOptions) {
     this.seed = opts.seed;
@@ -574,6 +592,28 @@ export class GamePersistence implements WorldEditDurability {
       this.initialWithersValue = initialWithers;
     }
 
+    // 5.5 Authoritative startup compatibility decision (257). Computed after the
+    // bulk load so the persisted player snapshot can anchor the bounded coverage
+    // neighborhood. Read uncertainty on an existing (non-fatal) world is
+    // conservative: an empty partial read never classifies a world as current.
+    const readUncertain =
+      !fatal &&
+      (!metadataReadSucceeded || !columnsReadSucceeded || !durableEditsReadSucceeded);
+    const playerStateForAssessment = fatal ? null : initialPlayerState;
+    const playerChunk = playerStateForAssessment
+      ? {
+          chunkX: Math.floor(playerStateForAssessment.player.position[0] / 16),
+          chunkZ: Math.floor(playerStateForAssessment.player.position[2] / 16),
+        }
+      : null;
+    this.startupAssessmentValue = assessWorldStartup({
+      baseline: this.generationBaselineValue,
+      readUncertain,
+      canonicalColumns: fatal ? [] : initialColumns.map((c) => ({ chunkX: c.chunkX, chunkZ: c.chunkZ })),
+      playerStatePresent: playerStateForAssessment !== null,
+      playerChunk,
+    });
+
     // 6. Write/refresh the world's own metadata header (read-modify-write preserves createdAt).
     // Existing legacy/unsupported headers are deliberately preserved: writing the current
     // version here would falsely authorize a materially different baseline on the next boot.
@@ -634,10 +674,85 @@ export class GamePersistence implements WorldEditDurability {
       initialWithers: this.initialWithersValue,
       initialColumns: this.initialColumnsValue,
       generationBaseline: this.generationBaselineValue,
+      startupAssessment: this.startupAssessmentValue as WorldStartupAssessment,
       migrationReport,
       errors: [...this.errors],
     };
     return this.lastResult;
+  }
+
+  /**
+   * Reset ONLY the selected world's records across every world store (257).
+   * World-scoped by construction — no origin/site-wide storage clearing. Stops
+   * the autosave coordinator and drops pending dirty units first so no queued
+   * write can resurrect a record after deletion, and marks the facade inert
+   * (`resetCompleted`) so later capture/save calls cannot re-create records
+   * before the page reloads into the fresh world.
+   *
+   * Failure behavior: the first store failure aborts the sequence and is
+   * reported; the method NEVER reports success after a partial failure, and any
+   * already-deleted records stay deleted (the repository transaction model is
+   * per-record, so partial deletion is surfaced, not hidden).
+   */
+  async resetCurrentWorld(): Promise<{ ok: true } | { ok: false; error: string }> {
+    if (!this.opened || this.disposed) {
+      return { ok: false, error: 'reset failed: persistence is not open' };
+    }
+    // Stop scheduled autosave + recovery probes and drop every pending dirty
+    // unit so nothing can write between/after the deletions.
+    this.stopRecoveryTimer();
+    this.coordinator.stop();
+    this.queue.clear();
+    this.pendingEdits.clear();
+    const worldId = this.worldIdValue;
+    try {
+      await this.metadata.deleteMetadata(worldId);
+      await this.metadata.deleteRaw(`__wither__:${worldId}`);
+      const columns = await this.chunkSections.listColumns(worldId);
+      for (const column of columns) {
+        await this.chunkSections.deleteColumn(worldId, column.chunkX, column.chunkZ);
+      }
+      const editRecords = await this.chunkEdits.listChunkEdits(worldId);
+      for (const record of editRecords) {
+        await this.chunkEdits.deleteChunkEdits(worldId, record.chunkX, record.chunkY, record.chunkZ);
+      }
+      await this.playerStates.deletePlayerState(worldId);
+      const blockEntityChunks = await this.blockEntities.listChunks(worldId);
+      for (const record of blockEntityChunks) {
+        await this.blockEntities.deleteChunkEntities(worldId, record.chunkX, record.chunkZ);
+      }
+      const entityChunks = await this.entities.listChunks(worldId);
+      for (const record of entityChunks) {
+        await this.entities.deleteChunkEntities(worldId, record.chunkX, record.chunkZ);
+      }
+    } catch (e) {
+      return { ok: false, error: `reset failed: ${e instanceof Error ? e.message : String(e)}` };
+    }
+    this.resetCompleted = true;
+    return { ok: true };
+  }
+
+  /**
+   * Export the selected world's records as a validated JSON archive string (257
+   * backup action). Read-only: export NEVER mutates the persisted world.
+   */
+  async exportWorldBackup(): Promise<{ ok: true; json: string } | { ok: false; error: string }> {
+    if (!this.opened || this.disposed) {
+      return { ok: false, error: 'backup failed: persistence is not open' };
+    }
+    try {
+      const archiver = new WorldArchiver({
+        metadata: this.metadata,
+        chunkSections: this.chunkSections,
+        blockEntities: this.blockEntities,
+        entities: this.entities,
+        playerStates: this.playerStates,
+      });
+      const archive = await archiver.exportWorld(this.worldIdValue);
+      return { ok: true, json: JSON.stringify(archive) };
+    } catch (e) {
+      return { ok: false, error: `backup failed: ${e instanceof Error ? e.message : String(e)}` };
+    }
   }
 
   /**
@@ -677,7 +792,7 @@ export class GamePersistence implements WorldEditDurability {
 
   /** Capture a committed overlay mutation as a full-snapshot dirty unit (dedup by key, DIRTY-3). */
   captureChunkEdits(cx: number, cy: number, cz: number, changes: ReadonlyMap<number, number>): void {
-    if (this.disposed || changes.size === 0) return;
+    if (this.disposed || this.resetCompleted || changes.size === 0) return;
     const payload = [...changes.entries()].sort((a, b) => a[0] - b[0]);
     const unitKey = `chunk-edits|${this.worldIdValue}|${cx}|${cy}|${cz}`;
     this.coordinator.markDirty({
@@ -817,7 +932,7 @@ export class GamePersistence implements WorldEditDurability {
    * snapshot (programmer error; validated via `validatePlayerStateRecord`); no-op after dispose.
    */
   savePlayerState(snapshot: GamePlayerSnapshot): void {
-    if (this.disposed) return;
+    if (this.disposed || this.resetCompleted) return;
     const record = validatePlayerStateRecord({
       worldId: this.worldIdValue,
       seed: snapshot.seed,
@@ -914,9 +1029,23 @@ export class GamePersistence implements WorldEditDurability {
     return this.generationBaselineValue;
   }
 
+  /**
+   * The authoritative startup compatibility decision (257); `null` only before
+   * `open()` resolves. Game consumes this instead of scattering ad-hoc baseline
+   * checks across startup, spawn, readiness and UI.
+   */
+  get startupAssessment(): WorldStartupAssessment | null {
+    return this.startupAssessmentValue;
+  }
+
+  /** Whether a user-confirmed world-scoped reset completed (257 debug surface). */
+  get isResetCompleted(): boolean {
+    return this.resetCompleted;
+  }
+
   /** Persist wither list via raw wither data (252). */
   saveWithers(payload: unknown[]): void {
-    if (this.disposed) return;
+    if (this.disposed || this.resetCompleted) return;
     void this.metadata.putWitherData(this.worldIdValue, payload).catch((e) => this.recordError(`save withers: ${errorMessage(e)}`));
   }
 

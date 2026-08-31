@@ -149,6 +149,21 @@
             <button id="error-retry" class="overlay-btn" type="button">Refresh Page</button>
           </div>
         </div>
+        <div id="recovery" class="ui hidden" role="alertdialog" aria-modal="true" aria-labelledby="recovery-title" aria-describedby="recovery-message">
+          <div class="overlay-panel error-panel recovery-panel">
+            <h1 id="recovery-title" class="overlay-title">Saved world needs recovery</h1>
+            <p id="recovery-message" class="overlay-text">
+              This saved world was created by an incompatible or older version, and its saved
+              terrain cannot be safely loaded. Your saved data is being protected — nothing has
+              been deleted. Save a backup, or start a fresh world on the current version.
+            </p>
+            <p id="recovery-status" class="recovery-status" role="status" aria-live="polite"></p>
+            <div class="recovery-actions">
+              <button id="recovery-backup" class="overlay-btn" type="button">Save Backup</button>
+              <button id="recovery-reset" class="overlay-btn recovery-btn-danger" type="button">Start Fresh World</button>
+            </div>
+          </div>
+        </div>
         <div id="debug-overlay" class="ui debug hidden"></div>
       </div>
     </div>

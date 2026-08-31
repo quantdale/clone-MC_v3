@@ -473,6 +473,11 @@ export class World implements WorldAccess {
     this.generationBaseline = baseline;
   }
 
+  /** The classified persisted generation baseline protecting existing worlds (257). */
+  getGenerationBaseline(): WorldGenerationBaseline {
+    return this.generationBaseline;
+  }
+
   /** Whether this world may create a new generated baseline. */
   get canGenerateBaseline(): boolean {
     return this.generationBaseline === 'current';
@@ -2943,11 +2948,33 @@ export class World implements WorldAccess {
   }
 
   /**
+   * Return the canonical motion-blocking surface Y for a world column, reading
+   * ONLY persisted/generated canonical storage. `null` means the column is
+   * absent from canonical storage — no terrain can be claimed there. Callers
+   * must never substitute a current-generator prediction for this result in a
+   * non-current-baseline world (257 invariant 2).
+   */
+  getCanonicalMotionBlockingHeight(worldX: number, worldZ: number): number | null {
+    if (!Number.isInteger(worldX) || !Number.isInteger(worldZ)) {
+      return null;
+    }
+    const column = this.storage.getColumn(sectionIndex(worldX), sectionIndex(worldZ));
+    if (column === undefined) {
+      return null;
+    }
+    const height = column.getMotionBlockingHeight(localCoord(worldX), localCoord(worldZ));
+    return Math.max(this.dimension.minY - 1, Math.min(this.dimension.maxY, height));
+  }
+
+  /**
    * Return the canonical motion-blocking surface Y for a world column.
-   * Existing columns use their maintained heightmap; an absent column falls
-   * back to deterministic generation without allocating canonical storage.
-   * The result is bounded to the active dimension and may be `minY - 1` for
-   * an empty column.
+   * Existing columns use their maintained heightmap. For an absent column the
+   * answer is baseline-aware (257): a current-baseline world falls back to
+   * deterministic generation prediction without allocating canonical storage
+   * (the generator is authoritative for a not-yet-generated column), while a
+   * non-current (`legacy-unknown`/`unsupported`) world MUST NOT claim
+   * current-generator terrain exists and returns `minY - 1` (no provable
+   * surface) instead. The result is bounded to the active dimension.
    */
   getMotionBlockingHeight(worldX: number, worldZ: number): number {
     if (!Number.isInteger(worldX) || !Number.isInteger(worldZ)) {
@@ -2958,7 +2985,9 @@ export class World implements WorldAccess {
     const column = this.storage.getColumn(chunkX, chunkZ);
     const height =
       column === undefined
-        ? this.generator.getHeightAt(worldX, worldZ)
+        ? this.canGenerateBaseline
+          ? this.generator.getHeightAt(worldX, worldZ)
+          : this.dimension.minY - 1
         : column.getMotionBlockingHeight(localCoord(worldX), localCoord(worldZ));
     return Math.max(this.dimension.minY - 1, Math.min(this.dimension.maxY, height));
   }
@@ -3114,11 +3143,27 @@ export class World implements WorldAccess {
         // slab (including dimensions whose minY is positive or negative).
         const worldX = (playerChunkX + dx) * CHUNK_DIMENSIONS.width + Math.floor(CHUNK_DIMENSIONS.width / 2);
         const worldZ = (playerChunkZ + dz) * CHUNK_DIMENSIONS.depth + Math.floor(CHUNK_DIMENSIONS.depth / 2);
-        const legacyMinY = this.minChunkY * CHUNK_DIMENSIONS.height;
-        const legacyMaxY = (this.minChunkY + this.chunkLayerCount) * CHUNK_DIMENSIONS.height - 1;
-        const minY = this.usesExplicitDimension ? this.dimension.minY : legacyMinY;
-        const maxY = this.usesExplicitDimension ? this.dimension.maxY : legacyMaxY;
-        const surfaceY = Math.max(minY, Math.min(maxY, this.generator.getHeightAt(worldX, worldZ)));
+        // Baseline-aware surface resolution (257): a current-baseline world
+        // predicts the absent column's surface from the deterministic generator
+        // (authoritative — that terrain will be generated). A non-current
+        // (legacy-unknown/unsupported) world MUST NOT claim current-generator
+        // terrain exists: the surface comes from the canonical persisted column
+        // only, and an absent or empty column keeps that ring slot not-ready so
+        // missing required coverage can never read as a playable/ready void.
+        let surfaceY: number;
+        if (!this.canGenerateBaseline) {
+          const canonicalHeight = this.getCanonicalMotionBlockingHeight(worldX, worldZ);
+          if (canonicalHeight === null || canonicalHeight < this.dimension.minY) {
+            continue;
+          }
+          surfaceY = canonicalHeight;
+        } else {
+          const legacyMinY = this.minChunkY * CHUNK_DIMENSIONS.height;
+          const legacyMaxY = (this.minChunkY + this.chunkLayerCount) * CHUNK_DIMENSIONS.height - 1;
+          const minY = this.usesExplicitDimension ? this.dimension.minY : legacyMinY;
+          const maxY = this.usesExplicitDimension ? this.dimension.maxY : legacyMaxY;
+          surfaceY = Math.max(minY, Math.min(maxY, this.generator.getHeightAt(worldX, worldZ)));
+        }
         const surfaceCy = floorDiv(surfaceY, CHUNK_DIMENSIONS.height);
         const chunk = this.chunkManager.getChunk(playerChunkX + dx, surfaceCy, playerChunkZ + dz);
         const hasAttachedMesh = this.supportsCanonicalSectionMeshing()

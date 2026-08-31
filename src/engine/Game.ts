@@ -20,6 +20,16 @@ import { HarvestRules } from '../world/HarvestRules';
 import { ChunkMesher } from '../world/ChunkMesher';
 import { World, type WorldEditSnapshot, type WorldGenerationBaseline } from '../world/World';
 import type { SerializedChunkColumn } from '../world/ChunkColumn';
+import {
+  evaluateStartupPosition,
+  findSafeStartupPositionNear,
+  type StartupSolidity,
+  type StartupWorldView,
+} from './StartupSpawnSafety';
+import type {
+  WorldStartupMode,
+  WorldStartupRecoveryReason,
+} from '../storage/WorldStartupAssessment';
 import { BlockStateRegistry, createDefaultBlockStateRegistry } from '../world/BlockStateRegistry';
 import { OVERWORLD_DIMENSION_TYPE } from '../data/DimensionTypes';
 import { BlockBehaviorRegistry } from '../simulation/BlockBehavior';
@@ -343,6 +353,10 @@ export class Game {
   private readonly overlayMessageEl: HTMLElement;
   private readonly errorEl: HTMLElement;
   private readonly errorMessageEl: HTMLElement;
+  private readonly recoveryEl: HTMLElement;
+  private readonly recoveryStatusEl: HTMLElement;
+  private readonly recoveryBackupBtn: HTMLButtonElement;
+  private readonly recoveryResetBtn: HTMLButtonElement;
   private readonly spawnPosition: THREE.Vector3;
 
   // ── Durable persistence (249-DL-001 / 249-DL-005) ─────────────────────────
@@ -366,6 +380,18 @@ export class Game {
    * by a later verified durable commit (SAVE-FAIL-3).
    */
   private bootSaveDegraded = false;
+  // ── Startup compatibility state (257) ──────────────────────────────────────
+  /** Authoritative startup classification from the persistence assessment. */
+  private startupModeValue: WorldStartupMode = 'current';
+  /** Deterministic recovery reason when startup is recovery-required. */
+  private startupReasonValue: WorldStartupRecoveryReason | null = null;
+  /** How the active spawn position was resolved (observability/E2E surface). */
+  private spawnResolutionValue =
+    'predicted' as 'predicted' | 'canonical' | 'restored' | 'relocated' | 'none';
+  /** While true: fixed ticks, movement physics, damage, interactions and world mutations stay paused. */
+  private recoveryRequiredValue = false;
+  /** Whether the destructive Start-Fresh action has been confirmed once (two-step confirm). */
+  private recoveryResetConfirmed = false;
   /** Milliseconds since the last periodic durable player-state autosave. */
   private saveTimer = 0;
 
@@ -478,6 +504,17 @@ export class Game {
         .open()
         .then((result) => {
           this.applyInitialWorldData(result.initialColumns, result.generationBaseline, result.initialEdits);
+          // Startup compatibility decision (257) with canonical data now loaded:
+          // recovery-required worlds enter the paused recovery state; preserved
+          // worlds re-resolve their spawn from actual persisted terrain.
+          this.applyStartupSafety();
+          if (!this.recoveryRequiredValue && this.startupModeValue === 'preserved') {
+            if (!this.spawnPlayerSafely()) {
+              this.enterRecoveryRequired('no-safe-spawn-support');
+            } else {
+              this.spawnPosition.copy(this.player.position);
+            }
+          }
           this.applyInitialPlayerState(result.initialPlayerState);
           this.blockEntityHost.hydrate(result.initialBlockEntities);
           if (result.status !== 'ok') {
@@ -627,7 +664,16 @@ export class Game {
     }
 
     this.player = new Player();
-    this.spawnPlayerSafely();
+    // Startup compatibility decision (257): for an injected (already open)
+    // persistence the assessment and canonical columns are available now, so
+    // the startup mode is applied before spawn resolution and spawn resolution
+    // itself is baseline-aware (canonical-only for preserved worlds).
+    this.applyStartupSafety();
+    if (!this.recoveryRequiredValue && !this.spawnPlayerSafely()) {
+      // No provable safe surface exists (e.g. a preserved world whose canonical
+      // terrain cannot support any bounded candidate): recovery, never free-fall.
+      this.enterRecoveryRequired('no-safe-spawn-support');
+    }
     this.spawnPosition = this.player.position.clone();
     this.inventory = new Inventory();
     this.survival = new SurvivalSystem(undefined, (event, amount) => this.onSurvivalEvent(event, amount));
@@ -740,6 +786,13 @@ export class Game {
     this.overlayMessageEl = this.requireElement('overlay-message');
     this.errorEl = this.requireElement('error');
     this.errorMessageEl = this.requireElement('error-message');
+    // Recovery-required product flow (257): visible, non-destructive, explicit.
+    this.recoveryEl = this.requireElement('recovery');
+    this.recoveryStatusEl = this.requireElement('recovery-status');
+    this.recoveryBackupBtn = this.requireElement('recovery-backup') as HTMLButtonElement;
+    this.recoveryResetBtn = this.requireElement('recovery-reset') as HTMLButtonElement;
+    this.recoveryBackupBtn.addEventListener('click', () => { void this.onRecoveryBackup(); });
+    this.recoveryResetBtn.addEventListener('click', () => { void this.onRecoveryReset(); });
 
     const hotbarEl = document.getElementById('hotbar');
     if (!hotbarEl) {
@@ -965,11 +1018,14 @@ export class Game {
     // Periodic durable autosave (abrupt-close durability): chunk edits are
     // already captured continuously by the World durability bridge, so only
     // the player state needs re-enqueueing here; the facade's coordinator
-    // drains it on its own tick.
-    this.saveTimer += dt * 1000;
-    if (this.saveTimer >= 5000) {
-      this.saveTimer = 0;
-      this.persistenceImpl?.savePlayerState(this.buildPlayerSnapshot());
+    // drains it on its own tick. Paused entirely during recovery-required (257):
+    // world mutations are paused and the persisted snapshot must not be rewritten.
+    if (!this.recoveryRequiredValue) {
+      this.saveTimer += dt * 1000;
+      if (this.saveTimer >= 5000) {
+        this.saveTimer = 0;
+        this.persistenceImpl?.savePlayerState(this.buildPlayerSnapshot());
+      }
     }
 
     // Player chunk used for streaming + debug.
@@ -996,6 +1052,7 @@ export class Game {
     this.maybeDismissOverlayForControllerPlay(deviceFrame, worldReady);
     const simulationActive =
       worldReady &&
+      !this.recoveryRequiredValue &&
       !this.craftingOpen &&
       !this.overlayOpen &&
       !this.furnaceOpen &&
@@ -1386,10 +1443,13 @@ export class Game {
     return this.randomTickEligibility.has(id);
   }
 
-  private spawnPlayerSafely(): void {
+  private spawnPlayerSafely(): boolean {
     // Find a dimension-bounded canonical motion-blocking surface with flat
-    // terrain around it. Fresh columns use the world's non-allocating generator
-    // fallback; loaded columns use persisted/generated heightmaps.
+    // terrain around it. The surface lookup is baseline-aware (257): fresh
+    // current-baseline columns use the world's non-allocating generator
+    // fallback (the generator is authoritative for a not-yet-generated column),
+    // while preserved non-current worlds only ever see persisted canonical
+    // heightmaps — absent columns report "no surface" and are skipped.
     for (let attempt = 0; attempt < 128; attempt++) {
       const x = attempt * 7;
       const z = attempt * 11;
@@ -1412,22 +1472,197 @@ export class Game {
       if (!flat) {
         continue;
       }
-      this.player.position.set(
-        x + 0.5,
-        Math.min(height + 1, this.world.dimension.maxY + 1),
-        z + 0.5,
-      );
-      return;
+      const candidateY = Math.min(height + 1, this.world.dimension.maxY + 1);
+      if (
+        evaluateStartupPosition(
+          this.startupWorldView(),
+          this.startupSolidity(),
+          x + 0.5,
+          candidateY,
+          z + 0.5,
+        ) !== 'supported'
+      ) {
+        continue;
+      }
+      this.player.position.set(x + 0.5, candidateY, z + 0.5);
+      this.spawnResolutionValue =
+        this.world.getCanonicalMotionBlockingHeight(x, z) !== null ? 'canonical' : 'predicted';
+      return true;
     }
     // Fallback: spawn above the origin's canonical surface with a small
-    // clearance, clamped to the active dimension instead of sea level.
+    // clearance, clamped to the active dimension instead of sea level. Accepted
+    // only when it is provably supported (257): an unprovable fallback must
+    // leave the world in recovery instead of activating a void position.
     const height = this.world.getMotionBlockingHeight(0, 0);
+    if (height < this.world.dimension.minY) {
+      return false;
+    }
     const safeHeight = Math.max(this.world.dimension.minY, height);
-    this.player.position.set(
-      0.5,
-      Math.min(safeHeight + 1, this.world.dimension.maxY + 1),
-      0.5,
-    );
+    const candidateY = Math.min(safeHeight + 1, this.world.dimension.maxY + 1);
+    if (
+      evaluateStartupPosition(
+        this.startupWorldView(),
+        this.startupSolidity(),
+        0.5,
+        candidateY,
+        0.5,
+      ) !== 'supported'
+    ) {
+      return false;
+    }
+    this.player.position.set(0.5, candidateY, 0.5);
+    this.spawnResolutionValue =
+      this.world.getCanonicalMotionBlockingHeight(0, 0) !== null ? 'canonical' : 'predicted';
+    return true;
+  }
+
+  // ── Startup compatibility / recovery (257) ──────────────────────────────────
+
+  /** Minimal baseline-aware world view for the startup safety checks. */
+  private startupWorldView(): StartupWorldView {
+    return {
+      getBlock: (x, y, z) => this.world.getBlock(x, y, z),
+      getMotionBlockingHeight: (x, z) => this.world.getMotionBlockingHeight(x, z),
+      hasCanonicalColumn: (x, z) => this.world.getCanonicalMotionBlockingHeight(x, z) !== null,
+      dimension: this.world.dimension,
+    };
+  }
+
+  private startupSolidity(): StartupSolidity {
+    return { isSolid: (id) => this.blockRegistry.isSolid(id) };
+  }
+
+  /**
+   * Apply the authoritative persistence startup assessment. Consumed by both
+   * boot paths (injected persistence at construction; self-composed when open
+   * settles). Recovery-required worlds pause all gameplay simulation; preserved
+   * worlds remain playable from actual persisted terrain.
+   */
+  private applyStartupSafety(): void {
+    const assessment = this.persistenceImpl?.startupAssessment ?? null;
+    if (assessment) {
+      this.startupModeValue = assessment.mode;
+      this.startupReasonValue = assessment.reason;
+    }
+    if (this.startupModeValue === 'recovery-required') {
+      this.enterRecoveryRequired();
+    }
+  }
+
+  /**
+   * Enter the recovery-required product state: fixed ticks, movement physics,
+   * survival damage, interactions and world mutations stay paused, and the
+   * visible recovery overlay explains that old data is protected.
+   */
+  private enterRecoveryRequired(reason?: WorldStartupRecoveryReason): void {
+    if (reason !== undefined) {
+      this.startupReasonValue = reason;
+    }
+    this.startupModeValue = 'recovery-required';
+    this.recoveryRequiredValue = true;
+    this.spawnResolutionValue = 'none';
+    this.player.velocity.set(0, 0, 0);
+    this.showRecoveryOverlay();
+  }
+
+  /** Present the recovery overlay and hide every normal-play surface. */
+  private showRecoveryOverlay(): void {
+    this.loading.hide();
+    this.loadingShown = false;
+    this.crosshair.hide();
+    this.hud.hide();
+    this.hotbar.hide();
+    if (this.fullyConstructed) {
+      this.interaction.clearTarget();
+      this.setBreakProgress(0);
+      this.hideOverlay();
+    }
+    this.recoveryEl.classList.remove('hidden');
+    this.recoveryStatusEl.textContent = '';
+    this.recoveryResetBtn.textContent = 'Start Fresh World';
+    this.recoveryResetBtn.disabled = false;
+    this.recoveryBackupBtn.disabled = false;
+    this.recoveryResetConfirmed = false;
+    this.recoveryBackupBtn.focus();
+  }
+
+  /** Backup action: export the world archive as a downloadable JSON file. */
+  private async onRecoveryBackup(): Promise<void> {
+    const persistence = this.persistenceImpl;
+    if (!persistence || this.disposed) return;
+    this.recoveryStatusEl.textContent = 'Preparing backup…';
+    const result = await persistence.exportWorldBackup();
+    if (!result.ok) {
+      // Backup failures are visible and never reported as success.
+      this.recoveryStatusEl.textContent = `Backup failed: ${result.error}. Your saved world was not modified.`;
+      return;
+    }
+    try {
+      const blob = new Blob([result.json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `${persistence.worldId}-backup.json`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      this.recoveryStatusEl.textContent =
+        'Backup downloaded. Your saved world has not been modified.';
+    } catch (e) {
+      this.recoveryStatusEl.textContent = `Backup failed: ${
+        e instanceof Error ? e.message : String(e)
+      }. Your saved world was not modified.`;
+    }
+  }
+
+  /** Two-step-confirmed destructive reset scoped to the selected world only. */
+  private async onRecoveryReset(): Promise<void> {
+    const persistence = this.persistenceImpl;
+    if (!persistence || this.disposed) return;
+    if (!this.recoveryResetConfirmed) {
+      this.recoveryResetConfirmed = true;
+      this.recoveryResetBtn.textContent = 'Confirm: Delete Saved World';
+      this.recoveryStatusEl.textContent =
+        "Starting a fresh world permanently deletes this saved world's records (save a backup first if you want a copy).";
+      return;
+    }
+    this.recoveryResetBtn.disabled = true;
+    this.recoveryBackupBtn.disabled = true;
+    this.recoveryStatusEl.textContent = 'Resetting world…';
+    const result = await persistence.resetCurrentWorld();
+    if (!result.ok) {
+      // Failure-visible and failure-atomic: never claim success; keep controls usable.
+      this.recoveryStatusEl.textContent = `Reset failed: ${result.error}. Your saved world was kept.`;
+      this.recoveryResetBtn.disabled = false;
+      this.recoveryBackupBtn.disabled = false;
+      this.recoveryResetConfirmed = false;
+      this.recoveryResetBtn.textContent = 'Confirm: Delete Saved World';
+      return;
+    }
+    this.recoveryStatusEl.textContent = 'Reset complete. Starting your fresh world…';
+    // The facade is inert after reset (no write can re-create records); reload
+    // boots the fresh current-baseline world. The pagehide save is skipped.
+    window.location.reload();
+  }
+
+  /** Startup diagnostics (DEV/E2E observability surface; not shipped copy). */
+  get worldStartupMode(): WorldStartupMode {
+    return this.startupModeValue;
+  }
+
+  get worldStartupReason(): WorldStartupRecoveryReason | null {
+    return this.startupReasonValue;
+  }
+
+  get worldGenerationBaseline(): WorldGenerationBaseline {
+    return this.world.getGenerationBaseline();
+  }
+
+  get spawnResolution(): string {
+    return this.spawnResolutionValue;
+  }
+
+  get isRecoveryRequired(): boolean {
+    return this.recoveryRequiredValue;
   }
 
   private updateHotbar(): void {
@@ -1482,6 +1717,12 @@ export class Game {
 
   private onLockChange(locked: boolean): void {
     this.pointerLocked = locked;
+    // Recovery-required (257): gameplay is paused; pointer lock must never
+    // engage over the recovery state.
+    if (this.recoveryRequiredValue) {
+      if (locked) this.input.releasePointerLock();
+      return;
+    }
     if (this.contextLost || !this.errorEl.classList.contains('hidden')) {
       return;
     }
@@ -2452,6 +2693,10 @@ export class Game {
 
   /** Persist player state durably when the tab is backgrounded or disposed. */
   private readonly onPageHide = (): void => {
+    // Recovery-required (257): the persisted snapshot must not be overwritten
+    // with the paused session's (unrestored) player state, and after a reset
+    // the facade is inert anyway. Skipping keeps old data protected.
+    if (this.recoveryRequiredValue) return;
     this.savePlayerStateDurable();
     this.saveTimer = 0;
   };
@@ -2480,13 +2725,33 @@ export class Game {
    * Apply a bulk-loaded player snapshot. A foreign-seed or out-of-range state
    * falls back to the deterministic spawn state, mirroring the old localStorage
    * validation before the durable facade took over loading.
+   *
+   * Structural validity is NOT sufficient (257): the restored position must
+   * also prove world support and a non-colliding body volume. An unsupported
+   * saved position is relocated to a bounded proven-safe nearby position; if no
+   * safe position can be proved the game enters recovery-required instead of
+   * activating a free-fall void position.
    */
   private applyInitialPlayerState(state: GamePlayerSnapshot | null): void {
     if (!state || state.seed !== this.seed) return;
+    if (this.recoveryRequiredValue) return; // gameplay paused; do not overwrite/activate state
     const [x, y, z] = state.player.position;
     if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) return;
     if (!this.world.dimension.containsY(y)) return;
-    this.player.position.set(x, y, z);
+    const verdict = evaluateStartupPosition(this.startupWorldView(), this.startupSolidity(), x, y, z);
+    if (verdict === 'supported') {
+      this.player.position.set(x, y, z);
+      this.spawnResolutionValue = 'restored';
+    } else {
+      // Bounded nearby relocation over proven terrain before escalating.
+      const relocated = findSafeStartupPositionNear(this.startupWorldView(), this.startupSolidity(), x, z, 128);
+      if (relocated === null) {
+        this.enterRecoveryRequired('no-safe-spawn-support');
+        return;
+      }
+      this.player.position.set(relocated.x, relocated.y, relocated.z);
+      this.spawnResolutionValue = 'relocated';
+    }
     this.player.yaw = state.player.yaw;
     this.player.pitch = state.player.pitch;
     this.inventory.restore(
@@ -2531,6 +2796,9 @@ export class Game {
   private savePlayerStateDurable(): void {
     const p = this.persistenceImpl;
     if (!p) return;
+    // Recovery-required (257): never rewrite the persisted snapshot from the
+    // paused session; after a reset the facade itself is inert.
+    if (this.recoveryRequiredValue) return;
     p.savePlayerState(this.buildPlayerSnapshot());
     void p
       .flush()

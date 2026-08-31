@@ -1,6 +1,34 @@
 # Minecraft-Parity Program State
 
-> **2026-08-31 15:35Z Change 256 VERIFIED and ARCHIVED.** Program COMPLETE through 256 (001–256 VERIFIED, 23/23 tasks 100%, gates green at `309448a` 8 ahead of `origin/main` `54d4ea0`). Owner hardening goal hosted as **256-production-readiness-hardening** is VERIFIED and ARCHIVED as `2026-08-31-256-production-readiness-hardening` (23/23, 100%). Publication to `origin/main` remains BLOCKED on credential (gh auth invalid, no GITHUB_TOKEN) — not a hardening blocker. Local gates PASS at `b439044` (typecheck/lint/test 4559+1/build 195/validate-state/file-audit 2620 PASS). Next: push HEAD to origin/main via gh auth login.
+> **2026-08-31 Change 257 ACTIVATED — void-world-startup-recovery (ACTIVE, 0/67).**
+> Owner-authorized live-playability repair after a user report: game starts with no visible
+> blocks and the player free-falls into the void. Root cause is confirmed in source: for
+> `legacy-unknown`/`unsupported` persisted worlds, `World.processGeneration()` protects old
+> saves by NOT generating missing columns (correct invariant), but
+> `World.getMotionBlockingHeight()` and `getReadyProgress()` still answer from the current
+> generator for absent columns, `Game.spawnPlayerSafely()` trusts that prediction, and
+> `applyInitialPlayerState()` accepts a saved XYZ without support validation — so the player
+> is spawned/restored above terrain that will never exist. There is no in-product recovery
+> (historical workaround was DevTools → clear site data, which is not a product fix).
+> Repository truth reconciled at activation: fetched `origin/main` =
+> **`3abcd87e84c95e99f810c9e74e2652a19fa5bb31`** = `session_start_head` = local HEAD. The
+> 256-era prose below claiming publication BLOCKED at `54d4ea0` is stale historical record:
+> the 256 hardening + archive commits were subsequently published to `origin/main` (commits
+> `309448a`, `507ce66` are in the published history), and `main` now also carries the authored
+> 257 OpenSpec package. Historical evidence below is intentionally not rewritten.
+> Full gate including `npm run test:e2e` is MANDATORY for 257 verification (Change 256's
+> VERIFIED status did not include a full E2E rerun — that certification-integrity gap is
+> tracked as audit finding F257-07 and is repaired by this change's final gate).
+>
+> **2026-08-31 Change 256 VERIFIED and ARCHIVED (historical).** Program reached COMPLETE
+> through 256 (001–256 VERIFIED, 23/23 tasks 100%). Owner hardening goal hosted as
+> **256-production-readiness-hardening** VERIFIED and ARCHIVED as
+> `2026-08-31-256-production-readiness-hardening` (23/23, 100%). Local gates PASS at `b439044`
+> (typecheck/lint/test 4559+1/build 195/validate-state/file-audit 2620 PASS). The 256-era
+> "publication BLOCKED at `54d4ea0`" claim is superseded: those commits were published, and
+> `origin/main` is `3abcd87e…` at 257 activation. Note: 256's own verification states the full
+> E2E suite was not rerun — see F257-07.
+
 
 ## Current checkpoint
 > **254-whole-codebase-performance-optimization — VERIFIED (2026-08-26, session start `d258414`).**
@@ -68,11 +96,11 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **256-production-readiness-hardening — VERIFIED (23/23, 100%)**
-- Next change: **null (program COMPLETE through 256; no further numbered change planned)**
-- 240 advancement allowed: **yes**
+- Active implementation change: **257-void-world-startup-recovery — ACTIVE (0/67, owner-authorized live-playability repair)**
+- Next change: **null (Change 257 must reach VERIFIED before any later numbered change activates)**
+- 240 advancement allowed: **no (active change not yet verified)**
 
-- Program: **COMPLETE — Change 256 is VERIFIED (23/23, 100%); Changes 001–256 are VERIFIED (001–255 ARCHIVED, 256 VERIFIED locally, advancement allowed)**
+- Program: **ACTIVE — Changes 001–256 are VERIFIED (001–255 ARCHIVED, 256 VERIFIED); Change 257 is the sole ACTIVE implementation change (0/67)**
 - Last completed change: **256-production-readiness-hardening — VERIFIED**
 - All changes 001–255: **VERIFIED** — Change 255 is VERIFIED and ARCHIVED (37/37, 100%); all mandatory requirements and required tests pass.
 - Historical Change 250-era bullets (preserved; superseded **for current release authority** by `openspec/evidence/release-readiness-post-hardening.md`): 250 required-test gate PASS at head `502d021` / byte-identical tree `b56529e`; historical release-readiness READY RC-1..RC-9 (`openspec/evidence/release-readiness.md`); final parity audit PASS with DL dispositions later rejected by this interlock (`openspec/evidence/parity/final-parity-audit.md`); evidence archive complete (`openspec/evidence/`)

@@ -644,3 +644,33 @@ body {
     font-size: 12px;
   }
 }
+
+/* Recovery-required product flow (257): non-destructive in-product recovery. */
+.recovery-panel {
+  max-width: 560px;
+}
+
+.recovery-status {
+  margin: 8px 0 4px;
+  min-height: 1.2em;
+  font-size: 13px;
+  color: #ffd479;
+}
+
+.recovery-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.recovery-btn-danger {
+  border-color: #c0392b;
+  color: #ffb3a7;
+}
+
+.recovery-btn-danger:hover {
+  background: #c0392b;
+  color: #fff;
+}
