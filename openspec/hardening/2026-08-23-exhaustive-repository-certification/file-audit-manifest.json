@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-31T15:24:00.000Z",
+  "generatedAt": "2026-08-31T15:35:00.000Z",
   "startSha": "5e032877a6d2bad7ccd2af201d9dd77fe6ddc20d",
-  "reviewedSha": "ad75b6511de2dbbdb7aeceb19383e2c6fdc42611",
+  "reviewedSha": "b439044944894bef260cad3c02096e01a7577444",
   "schemaNote": "Reviewed manifest for the 2026-08-23 exhaustive-repository-certification campaign. Every production file carries a semantic-review note citing the pass that covered it; verdict fields were filled from that evidence, never generated.",
   "allowedReviewLevels": [
     "semantic",
@@ -11,7 +11,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2615,
+  "total": 2620,
   "pending": 0,
   "unclassified": 0,
   "rows": [
@@ -23122,6 +23122,106 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file. Archived as 2026-08-30-255-high-performance-voxel-engine.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-31-256-production-readiness-hardening/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Archived Change 256 design.md (VERIFIED 23/23, production-readiness hardening).",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "planning-only",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "Change 256 archived verification"
+      ],
+      "riskAreas": [
+        "hardening"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Archived 256 openspec/changes/archive/2026-08-31-256-production-readiness-hardening/design.md — VERIFIED 23/23, hardening slices PASS, file-audit 2620.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-31-256-production-readiness-hardening/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Archived Change 256 proposal.md (VERIFIED 23/23, production-readiness hardening).",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "planning-only",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "Change 256 archived verification"
+      ],
+      "riskAreas": [
+        "hardening"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Archived 256 openspec/changes/archive/2026-08-31-256-production-readiness-hardening/proposal.md — VERIFIED 23/23, hardening slices PASS, file-audit 2620.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-31-256-production-readiness-hardening/specs/production-hardening/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Archived Change 256 spec.md (VERIFIED 23/23, production-readiness hardening).",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "planning-only",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "Change 256 archived verification"
+      ],
+      "riskAreas": [
+        "hardening"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Archived 256 openspec/changes/archive/2026-08-31-256-production-readiness-hardening/specs/production-hardening/spec.md — VERIFIED 23/23, hardening slices PASS, file-audit 2620.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-31-256-production-readiness-hardening/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Archived Change 256 tasks.md (VERIFIED 23/23, production-readiness hardening).",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "planning-only",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "Change 256 archived verification"
+      ],
+      "riskAreas": [
+        "hardening"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Archived 256 openspec/changes/archive/2026-08-31-256-production-readiness-hardening/tasks.md — VERIFIED 23/23, hardening slices PASS, file-audit 2620.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-31-256-production-readiness-hardening/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Archived Change 256 verification.md (VERIFIED 23/23, production-readiness hardening).",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "planning-only",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "Change 256 archived verification"
+      ],
+      "riskAreas": [
+        "hardening"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Archived 256 openspec/changes/archive/2026-08-31-256-production-readiness-hardening/verification.md — VERIFIED 23/23, hardening slices PASS, file-audit 2620.",
       "status": "audited"
     },
     {
