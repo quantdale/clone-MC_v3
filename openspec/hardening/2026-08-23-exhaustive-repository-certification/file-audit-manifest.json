@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-31T21:44:24Z",
+  "generatedAt": "2026-08-31T21:44:35Z",
   "startSha": "5e032877a6d2bad7ccd2af201d9dd77fe6ddc20d",
-  "reviewedSha": "9f121477ff2a198f589668355064f22db2634e1b",
+  "reviewedSha": "ed73e72f9f797b97b631724123977fe61cb9c1e3",
   "schemaNote": "Reviewed manifest for the 2026-08-23 exhaustive-repository-certification campaign. Every production file carries a semantic-review note citing the pass that covered it; verdict fields were filled from that evidence, never generated.",
   "allowedReviewLevels": [
     "semantic",
