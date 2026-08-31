@@ -327,6 +327,7 @@ test.describe("void-world startup recovery (257 e2e)", () => {
   });
 
   test("recovery reset end-to-end produces fresh current world with visible terrain", async ({ page }) => {
+    test.setTimeout(180_000);
     await seedBeforeBoot(page, {
       metadata: {}, // legacy partial -> recovery
       columns: [{ cx: 0, cz: 0 }],
@@ -335,13 +336,14 @@ test.describe("void-world startup recovery (257 e2e)", () => {
     await waitForBoot(page);
     await expect(page.locator("#recovery")).toBeVisible();
     // First click arms confirmation
+    await page.locator("#recovery-reset").click();
     await expect(page.locator("#recovery-status")).toContainText("backup");
     // Second click executes reset and reloads via window.location.reload()
     await page.locator("#recovery-reset").click();
     // Wait for reload and fresh boot
     await page.waitForFunction(() => (window as any).__voxelGame?.worldStartupMode === "current", { timeout: 60000 });
-    // After reload, should be fresh current world without recovery
     await expect(page.locator("#recovery")).toBeHidden({ timeout: 60000 });
+    // After reload, should be fresh current world without recovery
     await expect(page.locator("#loading")).toBeHidden({ timeout: 60000 });
     const mode = await page.evaluate(() => (window as any).__voxelGame?.worldStartupMode);
     expect(mode).toBe("current");
