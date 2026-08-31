@@ -599,6 +599,28 @@ body {
   height: auto;
 }
 
+/* Wither boss bar (252) — extracted from inline style.cssText for CSP and maintainability */
+#wither-boss-bar {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 14px;
+  background: #222;
+  border: 1px solid #555;
+  display: none;
+  z-index: 5;
+}
+#wither-boss-bar.visible {
+  display: block;
+}
+#wither-boss-bar-fill {
+  height: 100%;
+  width: 50%;
+  background: #555;
+}
+
 @media (max-width: 640px) {
   .hotbar-slot {
     width: 34px;

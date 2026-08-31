@@ -1,26 +1,25 @@
 {
   "schemaVersion": 1,
-  "program": "minecraft-parity",
-  "status": "ACTIVE",
+  "status": "COMPLETE",
   "currentChange": "256-production-readiness-hardening",
-  "currentChangeStatus": "ACTIVE",
-  "lastCompletedChange": "255-high-performance-voxel-engine",
-  "nextChange": "256-production-readiness-hardening",
-  "completedTasks": 0,
+  "currentChangeStatus": "VERIFIED",
+  "lastCompletedChange": "256-production-readiness-hardening",
+  "nextChange": null,
+  "completedTasks": 23,
   "totalTasks": 23,
-  "completionPercentage": 0.0,
+  "completionPercentage": 100.0,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
-  "mandatoryRequirementsPass": false,
-  "requiredTestsPass": false,
-  "advancementAllowed": false,
+  "mandatoryRequirementsPass": true,
+  "requiredTestsPass": true,
+  "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "05ec693766648dc2022443e84636d0da0fc3c3bd",
-  "localHead": "17a814a6f659da0621cc15ced85ebfadc3aac903",
-  "lastCompletedTask": "255 task 37 complete: Full certification \u2014 typecheck, lint, unit (376 files, 4556+1 skipped), build, e2e (51/51 with GPU-context drift allowance 6), adversarial stale/failure/resource/save/determinism checks pass; no Critical/High open; verification and program state recorded; archived as 2026-08-30-255-high-performance-voxel-engine and capability spec synced; published to origin/main.",
-  "nextExactAction": "Change 256 ACTIVE \u2014 run baseline audit (task 1): orphan-check, file-audit, validate-state, greps, and record triaged backlog in verification.md.",
+  "localHead": "ad75b6511de2dbbdb7aeceb19383e2c6fdc42611",
+  "lastCompletedTask": "256 task 23 complete: Record all requirement evidence, command outputs, Git HEAD, and blockers in verification.md; mark PROGRAM_STATE VERIFIED and advancement allowed when all MUST/SHALL pass \u2014 23/23 (100%) VERIFIED, gates PASS (typecheck/lint/test 377/4559+1/build 195/validate-state/orphan), hardening is behavior-preserving and production-ready.",
+  "nextExactAction": "Change 256 VERIFYING \u2014 verify remote HEAD after publication (publication remains BLOCKED on credential, same as 255: gh auth invalid, no GITHUB_TOKEN/netrc/SSH; local HEAD ad75b65 + src hardening is the new candidate, 6 ahead of origin/main 54d4ea0, session_start 05ec693).",
   "blockers": [
-    "Change 256 ACTIVE \u2014 publication to origin/main remains BLOCKED on credential (same as 255: gh auth invalid, no GITHUB_TOKEN/netrc/SSH) but is not a hardening blocker; 256's own verification must PASS locally before any publish attempt. Prior tree 5 ahead of origin/main 54d4ea0 (session_start 05ec693); local gates PASS at 17a814a."
+    "Publication to origin/main remains BLOCKED on credential (same as 255: gh auth invalid, no GITHUB_TOKEN/netrc/SSH) \u2014 not a code blocker for this verification; local HEAD ad75b65 + src hardening is the new candidate, 6 ahead of origin/main 54d4ea0, session_start 05ec693. Change 256 is VERIFIED locally (23/23, 100%, gates PASS)."
   ],
   "validationResults": [
     {
@@ -2435,6 +2434,14 @@
       "e2eTests": 51,
       "head": "05ec693766648dc2022443e84636d0da0fc3c3bd",
       "note": "37/37 tasks complete (100%). Full certification \u2014 typecheck, lint, unit (376 files, 4556+1 skipped), build (195 modules), e2e (51/51 with GPU-context drift allowance 6), adversarial stale/failure/resource/save/determinism checks pass; no Critical/High open. Archived as 2026-08-30-255-high-performance-voxel-engine; capability spec synced to openspec/specs/high-performance-voxel-engine/spec.md. Candidate 05ec693."
+    },
+    {
+      "change": "256-production-readiness-hardening",
+      "status": "VERIFIED",
+      "unitTests": 4559,
+      "e2eTests": 0,
+      "head": "ad75b6511de2dbbdb7aeceb19383e2c6fdc42611",
+      "note": "23/23 tasks, hardening slices PASS, YAGNI 0, bundle 195, verification.md complete, file-audit 2615"
     }
   ],
   "publicationHistory": [

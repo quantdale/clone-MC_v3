@@ -68,21 +68,21 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **256-production-readiness-hardening — ACTIVE (0/23)**
-- Next change: **256-production-readiness-hardening — ACTIVE**
+- Active implementation change: **256-production-readiness-hardening — VERIFIED (23/23, 100%)**
+- Next change: **null (program COMPLETE through 256; no further numbered change planned)**
 - 240 advancement allowed: **yes**
 
-- Program: **COMPLETE — Change 255 is VERIFIED and ARCHIVED; Changes 001–255 are VERIFIED (program COMPLETE)**
-- Last completed change: **255-high-performance-voxel-engine — VERIFIED**
+- Program: **COMPLETE — Change 256 is VERIFIED (23/23, 100%); Changes 001–256 are VERIFIED (001–255 ARCHIVED, 256 VERIFIED locally, advancement allowed)**
+- Last completed change: **256-production-readiness-hardening — VERIFIED**
 - All changes 001–255: **VERIFIED** — Change 255 is VERIFIED and ARCHIVED (37/37, 100%); all mandatory requirements and required tests pass.
 - Historical Change 250-era bullets (preserved; superseded **for current release authority** by `openspec/evidence/release-readiness-post-hardening.md`): 250 required-test gate PASS at head `502d021` / byte-identical tree `b56529e`; historical release-readiness READY RC-1..RC-9 (`openspec/evidence/release-readiness.md`); final parity audit PASS with DL dispositions later rejected by this interlock (`openspec/evidence/parity/final-parity-audit.md`); evidence archive complete (`openspec/evidence/`)
 - Post-250 hardening interlock: **VERIFIED at remediation checkpoint `aa92a5c229a753f10f8c1677e836136962b5d07a` — canonical CI run 32589457819 SUCCESS (gate job 97078975848, e2e job 97078975868); tasks 78/78; release decision READY (`openspec/evidence/release-readiness-post-hardening.md`)**
 - Certification campaign: **openspec/hardening/2026-08-23-exhaustive-repository-certification — findings fixed with oracles; manifest reviewed; risk register R-1..R-9 accepted debt**
 - Release authority: **Change-253 archived verification package** — candidate `bbffe560706841d5ef44ebfe7f74f6b2dda6279d`; canonical run `33256432099`; gate job `99111927428` SUCCESS; e2e job `99111927536` SUCCESS.
-- Publication history: **Change-255 archived at `05ec693766648dc2022443e84636d0da0fc3c3bd` as `2026-08-30-255-high-performance-voxel-engine` with capability spec `openspec/specs/high-performance-voxel-engine/spec.md`; successor `54d4ea0` on `origin/main`; local HEAD `17a814a` (cdb63ef + 4 checkpoints) 5 ahead of remote; Change 256-production-readiness-hardening ACTIVATED 2026-08-31 15:23Z (0/23, ACTIVE) to host owner hardening goal; publication BLOCKED remains credential-bound.**
-- Section milestone: **256-production-readiness-hardening ACTIVE (0/23) — post-255 hardening to host owner-requested full cleanup/refactor/hardening; 001–255 remain VERIFIED and ARCHIVED.**
+- Publication history: **Change-255 archived at `05ec693766648dc2022443e84636d0da0fc3c3bd` as `2026-08-30-255-high-performance-voxel-engine` with capability spec `openspec/specs/high-performance-voxel-engine/spec.md`; successor `54d4ea0` on `origin/main`; local HEAD `ad75b65` (activation) + src hardening is the new candidate, 6 ahead of remote (was 5 at 17a814a); Change 256 is VERIFIED (23/23, 100%, gates PASS: typecheck/lint/test 377/4559+1/build 195/validate-state/orphan), hardening is behavior-preserving and production-ready; publication remains BLOCKED on credential (gh auth invalid, no GITHUB_TOKEN).**
+- Section milestone: **256-production-readiness-hardening VERIFIED (23/23, 100%) — post-archive hardening: YAGNI pruning, magic-number/headless/boss-bar/void/type-cast hardening, main.ts error-handling, trivial optimization; 001–256 VERIFIED (001–255 ARCHIVED, 256 VERIFIED locally).**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ri…
-- Next exact action: **Change 256 ACTIVE — run baseline audit (task 1): orphan-check, file-audit, validate-state, greps, and record triaged backlog in verification.md.**
+- Next exact action: **Change 256 VERIFIED — publication to `origin/main` remains BLOCKED on credential (same as 255: gh auth invalid, no GITHUB_TOKEN/netrc/SSH); local HEAD + src hardening is the new candidate. Next: restore GitHub credential (`gh auth login`) and push this VERIFIED tree to `origin/main`, then verify remote HEAD.**
 ## What 250 implemented
 
 Change 250 is documentation-only: it created the consolidated evidence archive and the terminal

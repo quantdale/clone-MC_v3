@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-30T13:55:03.767Z",
+  "generatedAt": "2026-08-31T15:24:00.000Z",
   "startSha": "5e032877a6d2bad7ccd2af201d9dd77fe6ddc20d",
-  "reviewedSha": "05ec693766648dc2022443e84636d0da0fc3c3bd",
+  "reviewedSha": "ad75b6511de2dbbdb7aeceb19383e2c6fdc42611",
   "schemaNote": "Reviewed manifest for the 2026-08-23 exhaustive-repository-certification campaign. Every production file carries a semantic-review note citing the pass that covered it; verdict fields were filled from that evidence, never generated.",
   "allowedReviewLevels": [
     "semantic",
@@ -11,7 +11,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2610,
+  "total": 2615,
   "pending": 0,
   "unclassified": 0,
   "rows": [
@@ -22168,6 +22168,116 @@
       "status": "audited"
     },
     {
+      "path": "openspec/changes/256-production-readiness-hardening/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Change 256 design for production-readiness hardening (owner-authorized post-255 cleanup/refactor/hardening, 0/23 ACTIVE).",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "planning-only",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "Change 256 spec/design/tasks/verification review"
+      ],
+      "riskAreas": [
+        "hardening scope control",
+        "YAGNI",
+        "behavioral preservation"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed 256 openspec/changes/256-production-readiness-hardening/design.md: proposal/design/spec/tasks are coherent, YAGNI-gated, no new gameplay scope, hardening-only. Gates at activation: typecheck/lint/build PASS at 17a814a.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/256-production-readiness-hardening/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Change 256 proposal for production-readiness hardening (owner-authorized post-255 cleanup/refactor/hardening, 0/23 ACTIVE).",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "planning-only",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "Change 256 spec/design/tasks/verification review"
+      ],
+      "riskAreas": [
+        "hardening scope control",
+        "YAGNI",
+        "behavioral preservation"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed 256 openspec/changes/256-production-readiness-hardening/proposal.md: proposal/design/spec/tasks are coherent, YAGNI-gated, no new gameplay scope, hardening-only. Gates at activation: typecheck/lint/build PASS at 17a814a.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/256-production-readiness-hardening/specs/production-hardening/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Change 256 spec for production-readiness hardening (owner-authorized post-255 cleanup/refactor/hardening, 0/23 ACTIVE).",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "planning-only",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "Change 256 spec/design/tasks/verification review"
+      ],
+      "riskAreas": [
+        "hardening scope control",
+        "YAGNI",
+        "behavioral preservation"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed 256 openspec/changes/256-production-readiness-hardening/specs/production-hardening/spec.md: proposal/design/spec/tasks are coherent, YAGNI-gated, no new gameplay scope, hardening-only. Gates at activation: typecheck/lint/build PASS at 17a814a.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/256-production-readiness-hardening/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Change 256 tasks for production-readiness hardening (owner-authorized post-255 cleanup/refactor/hardening, 0/23 ACTIVE).",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "planning-only",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "Change 256 spec/design/tasks/verification review"
+      ],
+      "riskAreas": [
+        "hardening scope control",
+        "YAGNI",
+        "behavioral preservation"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed 256 openspec/changes/256-production-readiness-hardening/tasks.md: proposal/design/spec/tasks are coherent, YAGNI-gated, no new gameplay scope, hardening-only. Gates at activation: typecheck/lint/build PASS at 17a814a.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/256-production-readiness-hardening/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Change 256 verification for production-readiness hardening (owner-authorized post-255 cleanup/refactor/hardening, 0/23 ACTIVE).",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "planning-only",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "Change 256 spec/design/tasks/verification review"
+      ],
+      "riskAreas": [
+        "hardening scope control",
+        "YAGNI",
+        "behavioral preservation"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed 256 openspec/changes/256-production-readiness-hardening/verification.md: proposal/design/spec/tasks are coherent, YAGNI-gated, no new gameplay scope, hardening-only. Gates at activation: typecheck/lint/build PASS at 17a814a.",
+      "status": "audited"
+    },
+    {
       "path": "openspec/changes/add-voxel-game/.openspec.yaml",
       "gitBlob": null,
       "category": "spec",
@@ -22916,6 +23026,102 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "OpenSpec change 253 artifact reviewed for consistency with governance standards.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-30-255-high-performance-voxel-engine/.openspec.yaml",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Change 255 archived campaign artifact reviewed for task-5 integration and repository compatibility.",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "evidence",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file. Archived as 2026-08-30-255-high-performance-voxel-engine.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-30-255-high-performance-voxel-engine/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Change 255 archived campaign artifact reviewed for task-5 integration and repository compatibility.",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "evidence",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file. Archived as 2026-08-30-255-high-performance-voxel-engine.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-30-255-high-performance-voxel-engine/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Change 255 archived campaign artifact reviewed for task-5 integration and repository compatibility.",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "evidence",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file. Archived as 2026-08-30-255-high-performance-voxel-engine.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-30-255-high-performance-voxel-engine/specs/high-performance-voxel-engine/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Change 255 archived campaign artifact reviewed for task-5 integration and repository compatibility.",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "evidence",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file. Archived as 2026-08-30-255-high-performance-voxel-engine.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-30-255-high-performance-voxel-engine/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Change 255 archived campaign artifact reviewed for task-5 integration and repository compatibility.",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "evidence",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file. Archived as 2026-08-30-255-high-performance-voxel-engine.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/archive/2026-08-30-255-high-performance-voxel-engine/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Change 255 archived campaign artifact reviewed for task-5 integration and repository compatibility.",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "evidence",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file. Archived as 2026-08-30-255-high-performance-voxel-engine.",
       "status": "audited"
     },
     {
@@ -27766,6 +27972,22 @@
       ],
       "disposition": "fixed-with-regression-test",
       "reviewNotes": "Governance-critical state/order/handoff documents reconciled against actual repository state this session.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/specs/high-performance-voxel-engine/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "Capability spec synced from archived Change 255 (high-performance voxel engine).",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "evidence",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Synced capability spec for terminal program state; content identical to archived spec.",
       "status": "audited"
     },
     {
@@ -40179,6 +40401,22 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/VisualRegressionDeterminism.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Unit/browser regression coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Fix (visual): deterministic visual regression freeze coverage for DynamicResolutionController setScaleForTest and dwell logic (3 tests).",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/VoxelShape.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -43038,134 +43276,6 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Tracked auxiliary file; presence/format checked, no runtime role.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/archive/2026-08-30-255-high-performance-voxel-engine/.openspec.yaml",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "Change 255 archived campaign artifact reviewed for task-5 integration and repository compatibility.",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "evidence",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file. Archived as 2026-08-30-255-high-performance-voxel-engine.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/archive/2026-08-30-255-high-performance-voxel-engine/design.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "Change 255 archived campaign artifact reviewed for task-5 integration and repository compatibility.",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "evidence",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file. Archived as 2026-08-30-255-high-performance-voxel-engine.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/archive/2026-08-30-255-high-performance-voxel-engine/proposal.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "Change 255 archived campaign artifact reviewed for task-5 integration and repository compatibility.",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "evidence",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file. Archived as 2026-08-30-255-high-performance-voxel-engine.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/archive/2026-08-30-255-high-performance-voxel-engine/tasks.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "Change 255 archived campaign artifact reviewed for task-5 integration and repository compatibility.",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "evidence",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file. Archived as 2026-08-30-255-high-performance-voxel-engine.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/archive/2026-08-30-255-high-performance-voxel-engine/verification.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "Change 255 archived campaign artifact reviewed for task-5 integration and repository compatibility.",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "evidence",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file. Archived as 2026-08-30-255-high-performance-voxel-engine.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/archive/2026-08-30-255-high-performance-voxel-engine/specs/high-performance-voxel-engine/spec.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "Change 255 archived campaign artifact reviewed for task-5 integration and repository compatibility.",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "evidence",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Reviewed in the Change 255 task-5 checkpoint; no unresolved finding in this file. Archived as 2026-08-30-255-high-performance-voxel-engine.",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/specs/high-performance-voxel-engine/spec.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "Capability spec synced from archived Change 255 (high-performance voxel engine).",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "evidence",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Synced capability spec for terminal program state; content identical to archived spec.",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/VisualRegressionDeterminism.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "Unit/browser regression coverage",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Fix (visual): deterministic visual regression freeze coverage for DynamicResolutionController setScaleForTest and dwell logic (3 tests).",
       "status": "audited"
     }
   ]

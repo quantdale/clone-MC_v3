@@ -38,8 +38,11 @@ async function bootstrap(): Promise<void> {
   }
 
   // Compose + open persistence BEFORE constructing Game (249-DL-001/005) so the
-  // bulk-loaded state is available synchronously at construction. open() never
-  // throws per its contract; the catch is purely defensive (offline-first).
+  // bulk-loaded state is available synchronously at construction. `open()`
+  // never throws per its contract; the catch is purely defensive
+  // (offline-first): a failure degrades to memory-only play with the
+  // `bootSaveDegraded` banner surfaced via `GamePersistence.health`, never a
+  // fatal init error.
   const seed = resolveGameSeed();
   let persistence: GamePersistence | undefined;
   try {

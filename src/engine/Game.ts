@@ -122,7 +122,7 @@ import { FixedTickDriver } from './FixedTickDriver';
 import { TICK_RATE } from './SimulationClock';
 import { RenderInterpolator } from './RenderInterpolator';
 import { RenderPerformanceMonitor, type RenderPipelineMetrics } from '../rendering/RenderPerformanceMonitor';
-import { createDefaultBlockShapeTable } from '../world/VoxelShape';
+import { createDefaultBlockShapeTable, VoxelShape } from '../world/VoxelShape';
 import type { SelectionShapeWorld } from '../world/ShapeRaycast';
 import { LiveBlockEntityHost } from './LiveBlockEntityHost';
 import { FURNACE_BLOCK_ID, type FurnaceContext } from '../world/FurnaceBlockEntity';
@@ -139,13 +139,32 @@ import type { WitherState } from '../simulation/WitherBoss';
 import { detectWitherSummon, consumeSummonStructure } from '../simulation/WitherSummon';
 import { createWitherSkull, stepWitherSkull, scaledWitherDuration } from '../simulation/WitherSkull';
 import type { WitherSkullState } from '../simulation/WitherSkull';
-import { CollisionResolver } from '../world/CollisionResolver';
+import { CollisionResolver, type ShapeWorld } from '../world/CollisionResolver';
 import { computeExplosion } from '../simulation/ExplosionCore';
 
 /** Maximum eye-to-furnace distance before an open furnace screen auto-closes (251). */
 const FURNACE_MAX_USE_DISTANCE = 8;
 /** Ticks a defeated wither lingers (with reward already granted) before despawn (252). */
 const WITHER_DESPAWN_TICKS = 400;
+/** XP granted when a wither is defeated (252). */
+const WITHER_XP_REWARD = 50;
+/** Maximum wither skull projectiles live at once (252). */
+const WITHER_SKULL_CAP = 12;
+/** Ticks between wither melee attempts when in range (252). */
+const WITHER_MELEE_COOLDOWN_TICKS = 10;
+/** Ticks between wither status-effect damage ticks (252). */
+const WITHER_EFFECT_PERIOD_TICKS = 40;
+/** Toast notification visible duration in milliseconds. */
+const TOAST_DURATION_MS = 1500;
+/** FPS sampling window in seconds. */
+const FPS_SAMPLE_INTERVAL_S = 0.5;
+/** Synthetic player entity id used for wither targeting (252). */
+const WITHER_TARGET_PLAYER_ID = 9999;
+
+/** Whether the current session is headless/automated. */
+function isHeadlessSession(): boolean {
+  return typeof navigator !== 'undefined' && navigator.webdriver === true;
+}
 
 /**
  * Wires the entire game together: renderer, world, player, interaction, UI, and
@@ -560,14 +579,13 @@ export class Game {
       world: this.world,
       persistence: this.persistenceImpl,
       furnaceContext: this.furnaceContext,
-      onQuarantined: (message) => {
+      onQuarantined: () => {
         // A quarantined record means durable data was corrupt or from a
         // future/unknown schema version; surface it via the save-health
         // banner instead of crashing boot, and keep the warning sticky
         // until a verified durable commit proves current writes are healthy.
         this.bootSaveDegraded = true;
         this.refreshSaveStatus();
-        void message;
       },
     });
     if (this.selfOpenPromise === null) {
@@ -589,25 +607,23 @@ export class Game {
     this.resources.track(this.hostileMobRenderer);
     this.breeding = new BreedingSystem();
     this.pigBreedableSpecies = { typeId: entityRegistry.getByKey('pig')!.id, breedingFoodItemId: ItemId.Wheat };
-    // 252 wither boss setup
+    // 252 wither boss setup — styling lives in src/styles.css (#wither-boss-bar)
     this.witherBossDefinition = createDefaultBossRegistry().getByKey('wither')!;
     this.renderer.scene.add(this.witherGroup);
     this.witherBossBarEl = document.createElement('div');
     this.witherBossBarEl.id = 'wither-boss-bar';
-    this.witherBossBarEl.style.cssText = 'position:absolute;top:40px;left:50%;transform:translateX(-50%);width:300px;height:14px;background:#222;border:1px solid #555;display:none;z-index:5';
-    const fill=document.createElement('div');
-    fill.id='wither-boss-bar-fill';
-    fill.style.cssText='height:100%;width:50%;background:#555';
+    const fill = document.createElement('div');
+    fill.id = 'wither-boss-bar-fill';
     this.witherBossBarEl.appendChild(fill);
-    const hudEl=document.getElementById('hud');
+    const hudEl = document.getElementById('hud');
     hudEl?.appendChild(this.witherBossBarEl);
     // hydrate withers if injected persistence already open
     if (this.selfOpenPromise === null) {
       this.hydrateWithers(this.persistenceImpl?.initialWithers ?? []);
     } else {
       void this.selfOpenPromise.then(() => {
-        if (!this.disposed) this.hydrateWithers((this.persistenceImpl as unknown as { initialWithers: unknown[] })?.initialWithers ?? []);
-      });
+        if (!this.disposed) this.hydrateWithers(this.persistenceImpl?.initialWithers ?? []);
+      }).catch(() => undefined);
     }
 
     this.player = new Player();
@@ -813,6 +829,11 @@ export class Game {
         }
         this.showOverlay();
         this.loop.start();
+      }).catch(() => {
+        if (!this.disposed) {
+          this.showOverlay();
+          this.loop.start();
+        }
       });
     } else {
       this.showOverlay();
@@ -1433,7 +1454,7 @@ export class Game {
   private updateFPS(dt: number): void {
     this.fpsFrames++;
     this.fpsTime += dt;
-    if (this.fpsTime >= 0.5) {
+    if (this.fpsTime >= FPS_SAMPLE_INTERVAL_S) {
       const sample = this.fpsFrames / this.fpsTime;
       this.fps = this.fps === 0 ? sample : this.fps * 0.75 + sample * 0.25;
       this.fpsFrames = 0;
@@ -2084,7 +2105,7 @@ export class Game {
         next.z,
         Math.random,
       );
-      this.experience.addXp(50);
+      this.experience.addXp(WITHER_XP_REWARD);
       next = { ...next, hasDroppedReward: true };
       this.showToast('Wither defeated');
     }
@@ -2128,7 +2149,7 @@ export class Game {
     if (this.withers.length > 0 || this.witherSkulls.length > 0) {
       const playerAlive = this.survival.health > 0;
       const candidates = playerAlive
-        ? [{ id: 9999, x: this.player.position.x, y: this.player.position.y, z: this.player.position.z, alive: true }]
+        ? [{ id: WITHER_TARGET_PLAYER_ID, x: this.player.position.x, y: this.player.position.y, z: this.player.position.z, alive: true }]
         : [];
       const next: WitherState[] = [];
       let witherDirty = false;
@@ -2140,12 +2161,12 @@ export class Game {
           witherDirty = true;
         }
         for (const s of res.spawnedSkulls) {
-          if (this.witherSkulls.length >= 12) this.witherSkulls.shift();
+          if (this.witherSkulls.length >= WITHER_SKULL_CAP) this.witherSkulls.shift();
           this.witherSkulls.push(createWitherSkull(s.x, s.y, s.z, s.vx, s.vy, s.vz, s.kind, w.id));
         }
         if (state.bossState.status === 'DEFEATED' && !state.hasDroppedReward) {
           this.itemEntities.spawnLootStacks([{ item: ItemId.NetherStar, count: 1 }], state.x, state.y, state.z, Math.random);
-          this.experience.addXp(50);
+          this.experience.addXp(WITHER_XP_REWARD);
           state = { ...state, hasDroppedReward: true };
           witherDirty = true;
           this.showToast('Wither defeated');
@@ -2165,13 +2186,13 @@ export class Game {
               let nw = res.state;
               if (res.defeated && !nw.hasDroppedReward) {
                 this.itemEntities.spawnLootStacks([{ item: ItemId.NetherStar, count: 1 }], nw.x, nw.y, nw.z, Math.random);
-                this.experience.addXp(50);
+                this.experience.addXp(WITHER_XP_REWARD);
                 nw = { ...nw, hasDroppedReward: true };
                 witherDirty = true;
                 this.showToast('Wither defeated');
               }
               next[i] = nw;
-              this.witherAttackCooldown = 10;
+              this.witherAttackCooldown = WITHER_MELEE_COOLDOWN_TICKS;
               break;
             }
           }
@@ -2184,14 +2205,16 @@ export class Game {
       if (witherDirty) this.saveWithers();
 
       // Skull stepping.
-      const shapeWorld = {
-        getBlock: (x: number, y: number, z: number): number => this.world.getBlock(x, y, z),
-        isOpaque: (x: number, y: number, z: number): boolean => this.blockRegistry.isOpaque(this.world.getBlock(x, y, z)),
-      } as unknown as import('../world/CollisionResolver').ShapeWorld;
+      const shapeWorld: ShapeWorld = {
+        getCollisionShape: (x: number, y: number, z: number) => {
+          if (!this.world.isSolid(x, y, z)) return VoxelShape.EMPTY;
+          return this.blockShapes.getCollisionShape(this.world.getBlock(x, y, z));
+        },
+      };
       const surviving: WitherSkullState[] = [];
       for (const skull of this.witherSkulls) {
         const targets = playerAlive
-          ? [{ id: 9999, x: this.player.position.x, y: this.player.position.y + 0.8, z: this.player.position.z, radius: 0.6 }]
+          ? [{ id: WITHER_TARGET_PLAYER_ID, x: this.player.position.x, y: this.player.position.y + 0.8, z: this.player.position.z, radius: 0.6 }]
           : [];
         const step = stepWitherSkull(shapeWorld, this.collisionResolver, skull, targets);
         if (step.expired) continue;
@@ -2216,7 +2239,7 @@ export class Game {
       this.witherSkulls = surviving;
 
       // Wither status effect periodic damage (1 HP per 2 s while active).
-      if (playerAlive && this.simTick % 40 === 0) {
+      if (playerAlive && this.simTick % WITHER_EFFECT_PERIOD_TICKS === 0) {
         if (this.playerEffects.get(createResourceId('minecraft', 'effect/wither'))) {
           this.survival.damage(1, 'wither');
         }
@@ -2287,11 +2310,11 @@ export class Game {
     if (this.witherBossBarEl) {
       const first = this.withers[0];
       if (first) {
-        this.witherBossBarEl.style.display = 'block';
+        this.witherBossBarEl.classList.add('visible');
         const fill = this.witherBossBarEl.querySelector('#wither-boss-bar-fill') as HTMLElement | null;
         if (fill) fill.style.width = `${Math.round(bossBarProgress(first) * 100)}%`;
       } else {
-        this.witherBossBarEl.style.display = 'none';
+        this.witherBossBarEl.classList.remove('visible');
       }
     }
   }
@@ -2422,7 +2445,7 @@ export class Game {
     this.toastTimer = setTimeout(() => {
       this.toastTimer = null;
       this.toastEl.classList.add('hidden');
-    }, 1500);
+    }, TOAST_DURATION_MS);
   }
 
   private resizeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -2602,14 +2625,12 @@ export class Game {
 
   /** Keep automated/headless sessions responsive without changing desktop quality. */
   private runtimeRenderDistance(): number {
-    const headless = typeof navigator !== 'undefined' && navigator.webdriver;
-    return headless ? CONFIG.headless.renderDistance : CONFIG.renderDistance;
+    return isHeadlessSession() ? CONFIG.headless.renderDistance : CONFIG.renderDistance;
   }
 
   /** Simulation/ticking radius for the current runtime; headless uses its own override. */
   private runtimeSimulationDistance(): number {
-    const headless = typeof navigator !== 'undefined' && navigator.webdriver;
-    return headless ? CONFIG.headless.simulationDistance : CONFIG.simulationDistance;
+    return isHeadlessSession() ? CONFIG.headless.simulationDistance : CONFIG.simulationDistance;
   }
 
   private requireElement(id: string): HTMLElement {
