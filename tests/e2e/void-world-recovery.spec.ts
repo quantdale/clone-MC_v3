@@ -231,7 +231,7 @@ test.describe("void-world startup recovery (257 e2e)", () => {
   test("legacy-unknown partial world shows recovery and never simulates free-fall", async ({ page }) => {
     await seedBeforeBoot(page, {
       metadata: {}, // legacy-unknown: no generationVersion
-      columns: [{ cx: 0, cz: 0 }], // only one column, missing required coverage
+      columns: [],
       player: null,
     });
     await waitForBoot(page);
@@ -253,7 +253,7 @@ test.describe("void-world startup recovery (257 e2e)", () => {
   test("unsupported future-generation world with partial coverage is recovery-required and preserves records", async ({ page }) => {
     await seedBeforeBoot(page, {
       metadata: { generationVersion: "future-worldgen-v99" },
-      columns: [{ cx: 0, cz: 0 }],
+      columns: [],
       player: { position: [8.5, 64, 8.5] },
     });
     await waitForBoot(page);
