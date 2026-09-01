@@ -169,7 +169,7 @@ describe('WorldArchiver', () => {
     expect(await target.playerStates.listPlayerStates()).toHaveLength(0);
   });
 
-  it('normalizes playerState.worldId to the archive worldId', async () => {
+  it('rejects tampered playerState.worldId before any write (F257-D)', async () => {
     const source = makeDeps();
     await populateWorld(source, WORLD);
     const exported = await new WorldArchiver(source).exportWorld(WORLD);
@@ -179,9 +179,26 @@ describe('WorldArchiver', () => {
     };
 
     const target = makeDeps();
-    await new WorldArchiver(target).importWorld(tampered);
-
-    expect(await target.playerStates.getPlayerState(WORLD)).not.toBeNull();
+    await target.metadata.open();
+    await target.playerStates.open();
+    await expect(new WorldArchiver(target).importWorld(tampered)).rejects.toThrow(/playerState\.worldId/);
+    // Nothing was written.
+    expect(await target.playerStates.getPlayerState(WORLD)).toBeNull();
     expect(await target.playerStates.getPlayerState('other')).toBeNull();
+  });
+
+  it('imports a consistent archive whose playerState.worldId matches the top-level worldId', async () => {
+    const source = makeDeps();
+    await populateWorld(source, WORLD);
+    const exported = await new WorldArchiver(source).exportWorld(WORLD);
+    const target = makeDeps();
+    await target.metadata.open();
+    await target.chunkSections.open();
+    await target.blockEntities.open();
+    await target.entities.open();
+    await target.playerStates.open();
+    const report = await new WorldArchiver(target).importWorld(exported);
+    expect(report.playerStateImported).toBe(true);
+    expect((await target.playerStates.getPlayerState(WORLD))?.worldId).toBe(WORLD);
   });
 });

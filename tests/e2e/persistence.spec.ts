@@ -396,7 +396,7 @@ test.describe("persistence durability (249 e2e)", () => {
     await expect(page.locator("#error")).toBeHidden();
   });
 
-  test.skip("migrated legacy save restores edits and player state non-destructively", async ({
+  test("migrated legacy save restores edits and player state non-destructively", async ({
     page,
   }) => {
     test.setTimeout(240_000);
@@ -404,6 +404,8 @@ test.describe("persistence durability (249 e2e)", () => {
     // idx1 = 1 + 1*16 + 40*256 = 10257 → world (1, 40, 1); normal index.
     // idx2 = 12000 → ly=46, lz=14, lx=0 → world (0, 46, 14); regression guard
     // for the old 4096-cell section truncation bug (index ≥ 4096).
+    // With 0 canonical columns + sparse edits this world is recovery-required
+    // per 257's coverage gate, so we wait deterministically for recovery.
     const IDX1 = 1 + 1 * 16 + 40 * 256;
     const IDX2 = 12000;
     await page.addInitScript({
@@ -426,31 +428,47 @@ test.describe("persistence durability (249 e2e)", () => {
         })();
       `,
     });
-    // Wait for either ready or recovery (migrated legacy with 0 columns is recovery-required per strict coverage)
-    await page.waitForFunction(() => {
-      const loading = document.getElementById("loading");
-      const recovery = document.getElementById("recovery");
-      const loadingHidden = loading ? loading.classList.contains("hidden") : true;
-      const recoveryVisible = recovery ? !recovery.classList.contains("hidden") : false;
-      return loadingHidden || recoveryVisible;
-    }, { timeout: 30000 });
-    // If recovery, verify via DB that edits were migrated (world not ready)
-    const isRecovery = await page.evaluate(() => {
-      const r = document.getElementById("recovery");
-      return r ? !r.classList.contains("hidden") : false;
+    await page.goto(`/?seed=${SEED}`);
+    // Deterministically wait for recovery (0 columns + sparse edits = recovery-required).
+    await page.waitForSelector("#recovery:not(.hidden)", { timeout: 30_000 });
+    // Verify via direct IDB that chunk-edits were migrated (world not ready, so skip getBlock checks).
+    const hasEdits = await page.evaluate(async () => {
+      return await new Promise<boolean>((resolve) => {
+        const req = (window as unknown as { indexedDB: IDBFactory }).indexedDB.open("voxel-world-db", 6);
+        req.onsuccess = () => {
+          const db = req.result as unknown as IDBDatabase;
+          const tx = db.transaction("chunk-edits", "readonly");
+          const r = tx.objectStore("chunk-edits").getAll() as unknown as IDBRequest<unknown[]>;
+          r.onsuccess = () => {
+            const all = (r.result || []) as Array<{ worldId: string; changes?: unknown[] }>;
+            const has = all.some((rec) => rec.worldId === "world-20260821" && rec.changes && rec.changes.length > 0);
+            db.close();
+            resolve(has);
+          };
+          r.onerror = () => resolve(false);
+        };
+        req.onerror = () => resolve(false);
+      });
     });
-    if (isRecovery) {
-      // Check via direct DB that chunk-edits were migrated (world not ready, so skip getBlock checks)
-      const hasEdits = await page.evaluate(async () => {
+    expect(hasEdits).toBe(true);
+    // Non-destructive migration: both legacy keys are still present.
+    const legacyPresent = await page.evaluate(
+      ({ editKey, stateKey }) => localStorage.getItem(editKey) !== null && localStorage.getItem(stateKey) !== null,
+      { editKey: EDIT_KEY, stateKey: STATE_KEY },
+    );
+    expect(legacyPresent).toBe(true);
+    // High-index chunk edit (idx2=12000) decodes correctly via DB.
+    const hasHighIdx = await page.evaluate(
+      async ({ idx2 }) => {
         return await new Promise<boolean>((resolve) => {
-          const req: any = (window as any).indexedDB.open("voxel-world-db", 6);
+          const req = (window as unknown as { indexedDB: IDBFactory }).indexedDB.open("voxel-world-db", 6);
           req.onsuccess = () => {
-            const db: any = req.result;
+            const db = req.result as unknown as IDBDatabase;
             const tx = db.transaction("chunk-edits", "readonly");
-            const r: any = tx.objectStore("chunk-edits").getAll();
+            const r = tx.objectStore("chunk-edits").getAll() as unknown as IDBRequest<unknown[]>;
             r.onsuccess = () => {
-              const all: any[] = r.result || [];
-              const has = all.some((rec: any) => rec.worldId === "world-771" && rec.changes && rec.changes.length > 0);
+              const all = (r.result || []) as Array<{ worldId: string; changes?: Array<[number, number]> }>;
+              const has = all.some((rec) => rec.worldId === "world-20260821" && rec.changes?.some(([i]) => i === idx2));
               db.close();
               resolve(has);
             };
@@ -458,47 +476,13 @@ test.describe("persistence durability (249 e2e)", () => {
           };
           req.onerror = () => resolve(false);
         });
-      });
-      expect(hasEdits).toBe(true);
-      return;
-    }
-      // Non-destructive migration: both legacy keys are still present.
-      // (non-recovery path, world ready)
-    // Migrated edits decode to the exact world cells (worldY = cy*64 + ly).
-    expect(await getBlock(page, 1, 40, 1)).toBe(STONE);
-    expect(await getBlock(page, 0, 46, 14)).toBe(COBBLESTONE);
-
-    // Player state restored (gravity may settle y, so only x/z/yaw/pitch pin).
-    const player = await page.evaluate(() => {
-      const g = (window as unknown as { __voxelGame?: GameHandle }).__voxelGame;
-      if (!g) throw new Error("game handle missing");
-      return {
-        x: g.player.position.x,
-        z: g.player.position.z,
-        yaw: g.player.yaw,
-        pitch: g.player.pitch,
-      };
-    });
-    expect(Math.abs(player.x - 8.5)).toBeLessThan(3);
-    expect(Math.abs(player.z - 8.5)).toBeLessThan(3);
-    expect(player.yaw).toBeCloseTo(45, 5);
-    expect(player.pitch).toBeCloseTo(-10, 5);
-
-    // initialEdits includes both migrated cells for chunk (0,0,0).
-    const initialEdits = await page.evaluate(() => {
-      const g = (window as unknown as { __voxelGame?: GameHandle }).__voxelGame;
-      return g?.persistence?.initialEdits ?? null;
-    });
-    expect(initialEdits).not.toBeNull();
-    const entry = initialEdits!.edits.find(
-      (e) => e.chunk[0] === 0 && e.chunk[1] === 0 && e.chunk[2] === 0,
+      },
+      { idx2: IDX2 },
     );
-    expect(entry).toBeDefined();
-    expect(entry!.changes).toContainEqual([IDX1, STONE]);
-    expect(entry!.changes).toContainEqual([IDX2, COBBLESTONE]);
+    expect(hasHighIdx).toBe(true);
   });
 
-  test.skip("abrupt-close pagehide flush persists the placed block", async ({
+  test("abrupt-close pagehide flush persists the placed block", async ({
     page,
   }) => {
     test.setTimeout(180_000);

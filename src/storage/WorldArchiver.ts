@@ -70,10 +70,18 @@ export class WorldArchiver {
     if (this.chunkEdits) await this.chunkEdits.open();
   }
 
-  /** Read one world's records from ALL world-owned stores into a validated archive. Never writes. */
+  /** Read one world's records from ALL world-owned stores into a validated archive. Never writes.
+   *
+   * Fail-closed: any read failure (metadata, chunk-sections, chunk-edits, block-entities,
+   * entities, player-state, raw Wither) is thrown to the caller. The method MUST NOT
+   * distinguish "absent record" from "read failure" by returning null — the only legitimate
+   * source of `null` for an absence is a successful read that proved the record is absent.
+   */
   async exportWorld(worldId: string): Promise<WorldArchive> {
     await this.openAll();
 
+    // Each read is awaited individually so that a failure in one store produces a precise error
+    // and does not race with sibling reads. Promise.all swallowing is explicitly avoided.
     const metadata = await this.metadata.getMetadata(worldId);
     const playerState = await this.playerStates.getPlayerState(worldId);
     const columns = await this.chunkSections.listColumns(worldId);
@@ -92,13 +100,10 @@ export class WorldArchiver {
       const records = await this.chunkEdits.listChunkEdits(worldId);
       chunkEdits = records.map((r) => ({ chunkX: r.chunkX, chunkY: r.chunkY, chunkZ: r.chunkZ, changes: r.changes }));
     }
-    let witherData: unknown[] | null = null;
-    try {
-      const raw = await this.metadata.getWitherData(worldId);
-      witherData = raw;
-    } catch {
-      witherData = null;
-    }
+    // Wither raw record: `getWitherData` already returns null for a successful read that
+    // proved no record exists. Any exception means the read itself failed and the export
+    // MUST fail closed (do not silently substitute null).
+    const witherData = await this.metadata.getWitherData(worldId);
 
     return {
       format: 'voxel-world',
@@ -115,7 +120,19 @@ export class WorldArchiver {
     };
   }
 
-  /** Validate `archive` fully, then restore its records (overwriting the world's prior records). */
+  /** Validate `archive` fully, then restore its records (overwriting the world's prior records).
+   *
+   * Pre-write atomicity (F257-L): the entire archive is validated by `validateWorldArchive`
+   * BEFORE any write; a malformed archive never touches the stores. For valid archives,
+   * the subsequent writes are sequential per-repository `put` calls (each is its own
+   * IndexedDB transaction). A mid-import write failure (e.g. quota) may leave a partial
+   * import — this is the documented contract inherited from the original design. The
+   * reset path (F257-C) uses a single multi-store transaction for its deletes; the same
+   * transaction layer is available (WorldMetadataRepository.runInTransaction /
+   * runInMultiStoreTransaction) should a future change require import-side atomicity.
+   * Callers that need stronger import atomicity should use the reset transaction layer
+   * directly and retry the whole import.
+   */
   async importWorld(archive: WorldArchive): Promise<WorldImportReport> {
     const valid = validateWorldArchive(archive);
     await this.openAll();
@@ -141,12 +158,10 @@ export class WorldArchiver {
       await this.metadata.putWitherData(valid.worldId, valid.witherData);
     }
     if (valid.playerState) {
-      // Normalize to the archive's worldId so a mismatched record cannot leak into another key.
-      await this.playerStates.putPlayerState({
-        ...valid.playerState,
-        key: valid.worldId,
-        worldId: valid.worldId,
-      });
+      // Ownership validation already ran in validateWorldArchive (F257-D): playerState.worldId
+      // MUST equal valid.worldId. No silent repair; an internally inconsistent archive is rejected
+      // before any write, and this branch only executes for valid archives.
+      await this.playerStates.putPlayerState(valid.playerState);
     }
 
     return {

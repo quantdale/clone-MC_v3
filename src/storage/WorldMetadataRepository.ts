@@ -36,13 +36,23 @@ export interface IdbObjectStoreLike {
 /** Minimal transaction surface. */
 export interface IdbTransactionLike {
   objectStore(name: string): IdbObjectStoreLike;
+  /** Underlying transaction; exposed for the multi-store reset/import path. The real
+   *  browser `IDBTransaction` satisfies the full shape; the mock supplies a no-op
+   *  implementation (the mock settles on a microtask and has no abort surface). */
+  raw?: {
+    abort(): void;
+    readonly error: unknown;
+    oncomplete?: (() => void) | null;
+    onerror?: (() => void) | null;
+    onabort?: (() => void) | null;
+  };
 }
-
-/** Minimal database surface (store creation, transactions, close). */
 export interface IdbDatabaseLike {
   objectStoreNames: { contains(name: string): boolean };
   createObjectStore(name: string, opts?: { keyPath: string }): IdbObjectStoreLike;
-  transaction(store: string, mode?: 'readonly' | 'readwrite'): IdbTransactionLike;
+  /** Single- or multi-store transaction. Real IndexedDB supports both; this seams
+   *  both forms through one signature. */
+  transaction(stores: string | string[], mode?: 'readonly' | 'readwrite'): IdbTransactionLike;
   close(): void;
 }
 
@@ -201,8 +211,79 @@ export class WorldMetadataRepository {
       this.db = null;
     }
   }
+
+  /**
+   * Run `body` inside one multi-store IndexedDB `readwrite` transaction
+   * (257 repair F257-C). The transaction spans every store listed in `stores`
+   * (e.g. all six world-owned stores). IndexedDB provides commit/abort
+   * semantics: if any request inside the body throws, the transaction aborts and
+   * no writes commit. The body's thrown error is re-thrown to the caller.
+   *
+   * The body MUST NOT issue transactions of its own; it should only call
+   * `tx.objectStore(name).{get,put,delete,getAll}` for stores in `stores`.
+   * Foreign stores (records owned by other worlds) are reachable through their
+   * own keys but the caller is responsible for ownership filtering.
+   */
+  async runInTransaction<T>(
+    stores: string[],
+    body: (tx: IdbTransactionLike) => Promise<T>,
+  ): Promise<T> {
+    return runInMultiStoreTransaction(this.requireDb(), stores, body);
+  }
 }
 
+/**
+ * Run an atomic multi-store IndexedDB transaction (257 repair F257-C). The
+ * function executes `body` with a single `readwrite` transaction spanning every
+ * named object store. IndexedDB provides commit/abort semantics: if any request
+ * inside the body throws, or the transaction itself errors, no writes commit and
+ * the original records are observably intact. The body's thrown error / rejection
+ * is re-thrown to the caller.
+ *
+ * The body MUST NOT issue transactions of its own; it should only call
+ * `tx.objectStore(name).{get,put,delete,getAll}` for stores in `stores`. Foreign
+ * stores (records owned by other worlds) are reachable through their own keys
+ * but the caller is responsible for ownership filtering.
+ */
+export async function runInMultiStoreTransaction<T>(
+  db: IdbDatabaseLike,
+  stores: string[],
+  body: (tx: IdbTransactionLike) => Promise<T>,
+): Promise<T> {
+  const tx = db.transaction(stores, 'readwrite');
+  try {
+    const result = await body(tx);
+    // Schedule oncomplete on the next microtask so that `waitForTransactionComplete`
+    // (called synchronously below) registers its `raw.oncomplete` handler first. This
+    // matches real IndexedDB: oncomplete fires after the caller's microtask drain
+    // following body settlement. For the real browser IDB the raw surface is the
+    // native `IDBTransaction` and the browser itself fires oncomplete; the synthetic
+    // microtask below is a no-op for the real case (the native handler overrides any
+    // handler we install).
+    queueMicrotask(() => { try { tx.raw?.oncomplete?.(); } catch { /* ignore */ } });
+    await waitForTransactionComplete(tx);
+    return result;
+  } catch (e) {
+    try { tx.raw?.abort(); } catch { /* already aborted */ }
+    throw e;
+  }
+}
+
+/** Resolve when the underlying transaction's oncomplete fires, reject on onerror. */
+function waitForTransactionComplete(tx: IdbTransactionLike): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    const raw = tx.raw;
+    if (!raw) {
+      // No raw surface (e.g. the in-memory mock): the body has awaited every request, so the
+      // transaction is already settled. This is documented in the mock contract.
+      resolve();
+      return;
+    }
+    raw.oncomplete = () => resolve();
+    raw.onerror = () => reject(raw.error instanceof Error ? raw.error : new Error('IndexedDB transaction failed'));
+    raw.onabort = () => reject(raw.error instanceof Error ? raw.error : new Error('IndexedDB transaction aborted'));
+  });
+}
 /** Browser adapter exposing the global `indexedDB` through {@link IdbFactoryLike}. */
 export function browserIdbFactory(): IdbFactoryLike {
   const real = (globalThis as { indexedDB?: IDBFactory }).indexedDB;

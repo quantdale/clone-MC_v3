@@ -940,7 +940,7 @@ export class SaveRecoveryMatrix {
         return 'format/column/player-state corruptions each rejected; all 5 stores empty';
       }),
 
-      await runScenario('import-export.worldid-normalization', axis, async () => {
+      await runScenario('import-export.worldid-rejection', axis, async () => {
         const source = this.makeRepositories();
         await source.openAll();
         await this.populate(source.deps, 'x');
@@ -951,10 +951,16 @@ export class SaveRecoveryMatrix {
         };
         const target = this.makeRepositories();
         await target.openAll();
-        await new WorldArchiver(target.deps).importWorld(tampered);
-        assertThat((await target.deps.playerStates.getPlayerState('x')) !== null, 'player state not under archive worldId');
-        assertThat((await target.deps.playerStates.getPlayerState('other')) === null, 'player state leaked under mismatched key');
-        return 'playerState.worldId normalized to archive worldId; no mismatch leak';
+        let threw = false;
+        try {
+          await new WorldArchiver(target.deps).importWorld(tampered);
+        } catch (e) {
+          threw = /playerState\.worldId/.test(e instanceof Error ? e.message : String(e));
+        }
+        assertThat(threw, 'tampered playerState.worldId was not rejected');
+        assertThat((await target.deps.playerStates.getPlayerState('x')) === null, 'player state written under archive worldId despite rejection');
+        assertThat((await target.deps.playerStates.getPlayerState('other')) === null, 'player state written under mismatched key despite rejection');
+        return 'playerState.worldId mismatch rejected; nothing written';
       }),
 
       await runScenario('import-export.export-read-only', axis, async () => {

@@ -39,28 +39,22 @@ describe('import-export-recovery', () => {
     expect(r.outcome).toBe('pass');
   });
 
-  it('worldid-normalization: a mismatched playerState.worldId is normalized on import', async () => {
+  it('worldid-rejection: a mismatched playerState.worldId rejects on import (F257-D)', async () => {
     const results = await makeMatrix().runImportExport();
-    const r = results.find((x) => x.scenarioId === 'import-export.worldid-normalization')!;
+    const r = results.find((x) => x.scenarioId === 'import-export.worldid-rejection')!;
     expect(r.outcome).toBe('pass');
   });
 
-  it('worldid-normalization is exercised directly', async () => {
+  it('worldid-rejection is exercised directly', async () => {
     const source = makeSaveRecoveryFixture();
     await populate(source, 'world-7');
     const exported = await new WorldArchiver(source.deps).exportWorld('world-7');
     const tampered = { ...exported, playerState: { ...exported.playerState!, key: 'other', worldId: 'other' } };
     const target = makeSaveRecoveryFixture();
     await target.openAll();
-    await new WorldArchiver(target.deps).importWorld(tampered);
-    expect(await target.deps.playerStates.getPlayerState('world-7')).not.toBeNull();
+    await expect(new WorldArchiver(target.deps).importWorld(tampered)).rejects.toThrow(/playerState\.worldId/);
+    expect(await target.deps.playerStates.getPlayerState('world-7')).toBeNull();
     expect(await target.deps.playerStates.getPlayerState('other')).toBeNull();
-  });
-
-  it('export-read-only: two exports leave all stores unchanged', async () => {
-    const results = await makeMatrix().runImportExport();
-    const r = results.find((x) => x.scenarioId === 'import-export.export-read-only')!;
-    expect(r.outcome).toBe('pass');
   });
 
   it('all five import-export scenarios are present and pass', async () => {
@@ -70,7 +64,7 @@ describe('import-export-recovery', () => {
       'import-export.export-complete',
       'import-export.round-trip-stable',
       'import-export.atomic-rejection',
-      'import-export.worldid-normalization',
+      'import-export.worldid-rejection',
       'import-export.export-read-only',
     ]);
     for (const r of results) expect(r.outcome).toBe('pass');

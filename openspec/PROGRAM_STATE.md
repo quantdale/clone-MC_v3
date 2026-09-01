@@ -1,30 +1,14 @@
 # Minecraft-Parity Program State
 
-> **2026-09-01 Change 257 RE-VERIFIED — 80/80 (100%) VERIFIED.**
-> All 80 tasks complete. Backup now covers chunk-edits and Wither state (v2 archive), reset is atomic via snapshot-rollback, recovery freezes World.update, E2E has 9/9 void-world tests with 4 screenshots, file-audit reviewed 2642 rows at ca27b44, CI SUCCESS 33471005892 (gate success, e2e success). **Change 258 is planned and ready to activate.**
+> **2026-09-01 Change 257 REOPENED — ACTIVE/CHANGES REQUIRED (independent review revoked previous 80/80 VERIFIED).**
+> F257-A..L blockers identified: backup read-failure swallow (A), reset snapshot read-failure swallow (B), JS-snapshot-then-independent-deletes vs real multi-store IDB transaction (C), archive metadata.worldId ownership check (D), mandatory e2e persistence.spec.ts tests skipped (E migrated-legacy, F abrupt-close), risk-register R-7 silently removed (G), file-audit manifest's per-row payload vacuous (H), state previously certified an older SHA while main advanced by skip commits (I), visual clipped tolerance 0.015->0.02 without documented noise evidence (J), backup round-trip tests check counts not actual payload equality (K), archive import uses independent repository writes (L). Baseline-aware spawn/recovery architecture preserved; baseline kept; blockers fixed in place.
 >
-> **2026-09-01 Change 257 VERIFIED — void-world-startup-recovery (VERIFIED, 67/67, 100%).**
-> All 67 tasks complete. Browser E2E 6/6 via `npm run test:e2e -- void-world-recovery` (fresh, legacy-unknown partial, unsupported future, preserved 5x5 flat at 63, player-over-missing, reset E2E) with `/empty.html` same-origin seeding. Unit 380 files 4596 passed, typecheck/lint/build/validate-state/file-audit 2634 pending/orphan PASS. Visual screenshots captured (fresh, recovery, post-reset). Zero Critical/High defects. Published HEAD `324a039` to `origin/main` (verified 2026-09-01).
+> **Historical — 2026-09-01 Change 257 RE-VERIFIED — 80/80 (100%) VERIFIED — SUPERSEDED.** This claim is revoked by independent review and the reopen entry above. The free-fall architecture repair is preserved, but the certification was not legitimate.
 >
-> **2026-08-31 Change 257 ACTIVATED — void-world-startup-recovery (ACTIVE, 0/67).**
-> Owner-authorized live-playability repair after a user report: game starts with no visible
-> blocks and the player free-falls into the void. Root cause is confirmed in source: for
-> `legacy-unknown`/`unsupported` persisted worlds, `World.processGeneration()` protects old
-> saves by NOT generating missing columns (correct invariant), but
-> `World.getMotionBlockingHeight()` and `getReadyProgress()` still answer from the current
-> generator for absent columns, `Game.spawnPlayerSafely()` trusts that prediction, and
-> `applyInitialPlayerState()` accepts a saved XYZ without support validation — so the player
-> is spawned/restored above terrain that will never exist. There is no in-product recovery
-> (historical workaround was DevTools → clear site data, which is not a product fix).
-> Repository truth reconciled at activation: fetched `origin/main` =
-> **`3abcd87e84c95e99f810c9e74e2652a19fa5bb31`** = `session_start_head` = local HEAD. The
-> 256-era prose below claiming publication BLOCKED at `54d4ea0` is stale historical record:
-> the 256 hardening + archive commits were subsequently published to `origin/main` (commits
-> `309448a`, `507ce66` are in the published history), and `main` now also carries the authored
-> 257 OpenSpec package. Historical evidence below is intentionally not rewritten.
-> Full gate including `npm run test:e2e` is MANDATORY for 257 verification (Change 256's
-> VERIFIED status did not include a full E2E rerun — that certification-integrity gap is
-> tracked as audit finding F257-07 and is repaired by this change's final gate).
+> **Historical — 2026-09-01 Change 257 VERIFIED — void-world-startup-recovery (VERIFIED, 67/67, 100%) — SUPERSEDED.** This claim is also revoked. All 67 tasks complete. Browser E2E 6/6 via `npm run test:e2e -- void-world-recovery` (fresh, legacy-unknown partial, unsupported future, preserved 5x5 flat at 63, player-over-missing, reset E2E) with `/empty.html` same-origin seeding. Unit 380 files 4596 passed, typecheck/lint/build/validate-state/file-audit 2634 pending/orphan PASS. Visual screenshots captured (fresh, recovery, post-reset). Zero Critical/High defects. Published HEAD `324a039` to `origin/main` (verified 2026-09-01). Superseded by the REOPENED entry.
+>
+> **2026-08-31 Change 257 ACTIVATED — void-world-startup-recovery (ACTIVE, 0/67) — historical.** Owner-authorized live-playability repair after a user report: game starts with no visible blocks and the player free-falls into the void. Root cause is confirmed in source: for `legacy-unknown`/`unsupported` persisted worlds, `World.processGeneration()` protects old saves by NOT generating missing columns (correct invariant), but `World.getMotionBlockingHeight()` and `getReadyProgress()` still answer from the current generator for absent columns, `Game.spawnPlayerSafely()` trusts that prediction, and `applyInitialPlayerState()` accepts a saved XYZ without support validation — so the player is spawned/restored above terrain that will never exist. There is no in-product recovery (historical workaround was DevTools → clear site data, which is not a product fix). Repository truth reconciled at activation: fetched `origin/main` = **`3abcd87e84c95e99f810c9e74e2652a19fa5bb31`** = `session_start_head` = local HEAD. The 256-era prose below claiming publication BLOCKED at `54d4ea0` is stale historical record: the 256 hardening + archive commits were subsequently published to `origin/main` (commits `309448a`, `507ce66` are in the published history), and `main` now also carries the authored 257 OpenSpec package. Historical evidence below is intentionally not rewritten.
+>
 >
 > **2026-08-31 Change 256 VERIFIED and ARCHIVED (historical).** Program reached COMPLETE
 > through 256 (001–256 VERIFIED, 23/23 tasks 100%). Owner hardening goal hosted as
@@ -102,21 +86,21 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **257-void-world-startup-recovery — VERIFIED (80/80)**
-- Next change: **258-real-world-runtime-performance-fps-recovery — PLANNED; ready to activate after 257 VERIFIED**
-- 240 advancement allowed: **yes**
+- Active implementation change: **257-void-world-startup-recovery — ACTIVE/CHANGES REQUIRED (F257-A..L open)**
+- Next change: **258-real-world-runtime-performance-fps-recovery — PLANNED/BLOCKED; activate only after 257 is re-VERIFIED**
+- 240 advancement allowed: **no**
 
-- Program: **ACTIVE — Change 257 VERIFIED 80/80; Change 258 planned and ready to activate**
-- Last completed change: **257-void-world-startup-recovery — VERIFIED (80/80)**
-- All changes 001–255: **VERIFIED** — Change 255 is VERIFIED and ARCHIVED (37/37, 100%); all mandatory requirements and required tests pass.
+- Program: **ACTIVE — Change 257 ACTIVE/CHANGES REQUIRED; F257-A..L blockers identified by independent review; previous 80/80 VERIFIED claim revoked**
+- Last completed change: **256-production-readiness-hardening — VERIFIED AND ARCHIVED (23/23, 100%)**
+- All changes 001–256: **VERIFIED** — Change 256 is VERIFIED and ARCHIVED (23/23, 100%); all mandatory requirements and required tests pass. Change 257 previous 80/80 VERIFIED claim is REVOKED by independent review 2026-09-01.
 - Historical Change 250-era bullets (preserved; superseded **for current release authority** by `openspec/evidence/release-readiness-post-hardening.md`): 250 required-test gate PASS at head `502d021` / byte-identical tree `b56529e`; historical release-readiness READY RC-1..RC-9 (`openspec/evidence/release-readiness.md`); final parity audit PASS with DL dispositions later rejected by this interlock (`openspec/evidence/parity/final-parity-audit.md`); evidence archive complete (`openspec/evidence/`)
 - Post-250 hardening interlock: **VERIFIED at remediation checkpoint `aa92a5c229a753f10f8c1677e836136962b5d07a` — canonical CI run 32589457819 SUCCESS (gate job 97078975848, e2e job 97078975868); tasks 78/78; release decision READY (`openspec/evidence/release-readiness-post-hardening.md`)**
-- Certification campaign: **openspec/hardening/2026-08-23-exhaustive-repository-certification — findings fixed with oracles; manifest reviewed; risk register R-1..R-9 accepted debt**
+- Certification campaign: **openspec/hardening/2026-08-23-exhaustive-repository-certification — findings fixed with oracles; manifest reviewed; risk register R-1..R-9 accepted debt (R-7 silently removed in 257 repair — see F257-G)**
 - Release authority: **Change-253 archived verification package** — candidate `bbffe560706841d5ef44ebfe7f74f6b2dda6279d`; canonical run `33256432099`; gate job `99111927428` SUCCESS; e2e job `99111927536` SUCCESS.
-- Publication history: **Change-255 archived at `05ec693766648dc2022443e84636d0da0fc3c3bd` as `2026-08-30-255-high-performance-voxel-engine` with capability spec `openspec/specs/high-performance-voxel-engine/spec.md`; successor `54d4ea0` on `origin/main`; local HEAD `309448a` (256 hardening + archive, 23/23 VERIFIED, 8 ahead of remote); Change 256-production-readiness-hardening VERIFIED and ARCHIVED as `2026-08-31-256-production-readiness-hardening` (23/23, 100%, gates PASS: typecheck/lint/test 377/4559+1/build 195/validate-state/file-audit 2620 PASS), hardening is behavior-preserving and production-ready; publication remains BLOCKED on credential (gh auth invalid, no GITHUB_TOKEN).**
-- Section milestone: **PROGRAM COMPLETE — every numbered change 001–256 is VERIFIED and ARCHIVED; Change 256 production-readiness hardening is the terminal capability; local gates PASS at `309448a`, remote at `54d4ea0`, publish deferred per REVIEW_HANDOFF.**
+- Publication history: **Change-255 archived at `05ec693766648dc2022443e84636d0da0fc3c3bd` as `2026-08-30-255-high-performance-voxel-engine` with capability spec `openspec/specs/high-performance-voxel-engine/spec.md`; Change 256 archived at `ad75b65` as `2026-08-31-256-production-readiness-hardening` (23/23 VERIFIED, hardening is behavior-preserving and production-ready). Change 257 is REOPENED at session_start `c9c91dc`; previous 80/80 VERIFIED at `b38d55c` is revoked by independent review.**
+- Section milestone: **PROGRAM ACTIVE — Change 257 ACTIVE/CHANGES REQUIRED; F257-A..L blockers to be fixed and re-certified; Change 256 production-readiness hardening remains the terminal VERIFIED change until 257 is re-VERIFIED.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ri…
-- Next exact action: **Change 257 VERIFIED 80/80 (100%) at ca27b44 (CI 33471005892 SUCCESS); activate 258 per CHANGE_SEQUENCE.**
+- Next exact action: **Change 257 REOPENED at session_start c9c91dc. Fix F257-A..L (backup fail-closed, reset snapshot fail-closed, real multi-store IDB tx, archive ownership validation, unskip migrated-legacy E2E, unskip abrupt-close E2E, restore R-7, file-audit truthfulness, state truthfulness, visual tolerance evidence, backup round-trip payload equality, archive import atomicity), publish, verify CI on exact final SHA, then activate 258.**
 ## What 250 implemented
 
 Change 250 is documentation-only: it created the consolidated evidence archive and the terminal

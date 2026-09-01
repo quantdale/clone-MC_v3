@@ -137,11 +137,20 @@ export function validateWorldArchive(input: unknown): WorldArchive {
     throw new Error('WorldArchive: exportedAt must be a finite number');
   }
 
+  // Structural validation first (catches malformed payloads: bad seed, NaN timestamps, etc.).
+  // Ownership consistency (F257-D) is checked AFTER structural validation so the typed payload
+  // is what we compare against the top-level worldId.
   if (r.metadata !== null && r.metadata !== undefined) {
-    validateWorldMetadata(r.metadata);
+    const validMeta = validateWorldMetadata(r.metadata);
+    if (validMeta.worldId !== r.worldId) {
+      throw new Error(`WorldArchive: metadata.worldId ('${validMeta.worldId}') must match archive worldId ('${r.worldId}')`);
+    }
   }
   if (r.playerState !== null && r.playerState !== undefined) {
-    validatePlayerStateRecord(r.playerState);
+    const validPlayer = validatePlayerStateRecord(r.playerState);
+    if (validPlayer.worldId !== r.worldId) {
+      throw new Error(`WorldArchive: playerState.worldId ('${validPlayer.worldId}') must match archive worldId ('${r.worldId}')`);
+    }
   }
 
   if (!Array.isArray(r.columns)) {

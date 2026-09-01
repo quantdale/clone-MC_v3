@@ -69,12 +69,41 @@ export class MockDatabase implements IdbDatabaseLike {
     return store;
   }
 
-  transaction(store: string, _mode?: 'readonly' | 'readwrite'): IdbTransactionLike {
-    const s = this.stores.get(store);
-    if (!s) {
-      throw new Error(`MockDatabase: object store "${store}" does not exist`);
+  transaction(stores: string | string[], _mode?: 'readonly' | 'readwrite'): IdbTransactionLike {
+    const list = typeof stores === 'string' ? [stores] : stores;
+    const resolved: MockStore[] = [];
+    for (const s of list) {
+      const found = this.stores.get(s);
+      if (!found) throw new Error(`MockDatabase: object store "${s}" does not exist`);
+      resolved.push(found);
     }
-    return { objectStore: () => s };
+    const byName = new Map<string, MockStore>();
+    list.forEach((s, i) => { byName.set(s, resolved[i] as MockStore); });
+    const raw: { abort(): void; readonly error: unknown; oncomplete?: (() => void) | null; onerror?: (() => void) | null; onabort?: (() => void) | null } = {
+      abort: () => { /* no-op: mock commits every request on a microtask before body awaits */ },
+      error: null,
+      oncomplete: null,
+      onerror: null,
+      onabort: null,
+    };
+    // The mock commits each request synchronously on a microtask. The real IDB API
+    // fires `oncomplete` after the caller's microtask drain following body settlement;
+    // `runInMultiStoreTransaction` schedules `raw.oncomplete` on the microtask after the
+    // body promise resolves, so this tx needs no timer of its own. The mock never
+    // errors unless a `put` / `delete` override is installed by the test (see
+    // FaultFactory in RecoveryBackupAndAtomicReset); in that case the request's
+    // onerror fires before the body awaits, the body throws, the
+    // runInMultiStoreTransaction catch calls raw.abort() (no-op), and the body's
+    // thrown error propagates.
+    const tx: IdbTransactionLike = {
+      objectStore: (name: string) => {
+        const s = byName.get(name);
+        if (!s) throw new Error(`MockDatabase: object store "${name}" not in transaction scope`);
+        return s;
+      },
+      raw,
+    };
+    return tx;
   }
 
   close(): void {

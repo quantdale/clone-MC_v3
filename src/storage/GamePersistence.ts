@@ -32,8 +32,16 @@ import {
   type StorageFailure,
   type StorageStatus,
 } from './StorageHealth';
-import { WorldMetadataRepository, type IdbFactoryLike } from './WorldMetadataRepository';
+import { WorldMetadataRepository, type IdbFactoryLike, type IdbRequestLike } from './WorldMetadataRepository';
 import type { WorldMetadata } from './WorldMetadata';
+import {
+  WORLD_METADATA_STORE,
+  WORLD_CHUNK_SECTION_STORE,
+  WORLD_CHUNK_EDIT_STORE,
+  WORLD_PLAYER_STATE_STORE,
+  WORLD_BLOCK_ENTITY_STORE,
+  WORLD_ENTITY_STORE,
+} from './WorldMetadata';
 import { ChunkSectionRepository } from './ChunkSectionRepository';
 import { BlockEntityRepository } from './BlockEntityRepository';
 import { EntityRepository } from './EntityRepository';
@@ -56,7 +64,26 @@ import {
 } from './WorldStartupAssessment';
 import { WorldArchiver } from './WorldArchiver';
 
-/** The currently executable generated-world baseline. */
+/**
+ * Composite key for a 2D chunk (worldId|chunkX|chunkZ). Mirrors the key shape used by
+ * ChunkSectionRepository, BlockEntityRepository, and EntityRepository. Centralized
+ * here so the multi-store atomic reset path (F257-C) can issue the deletes without
+ * taking a per-repository dependency.
+ */
+function worldChunkKey(worldId: string, chunkX: number, chunkZ: number): string {
+  return `${worldId}|${chunkX}|${chunkZ}`;
+}
+/** Composite key for a 3D chunk edit (worldId|chunkX|chunkY|chunkZ). Mirrors ChunkEditRepository. */
+function worldChunkEditKey(worldId: string, chunkX: number, chunkY: number, chunkZ: number): string {
+  return `${worldId}|${chunkX}|${chunkY}|${chunkZ}`;
+}
+/** Resolve a request's result or error. Mirrors WorldMetadataRepository's internal helper. */
+function awaitRequest(req: IdbRequestLike): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error instanceof Error ? req.error : new Error('IndexedDB request failed'));
+  });
+}
 export const CURRENT_WORLDGEN_VERSION = WORLDGEN_MATRIX_VERSION;
 
 /** The game-level player snapshot the facade persists/restores (see `Game.savePlayerState`). */
@@ -700,14 +727,19 @@ export class GamePersistence implements WorldEditDurability {
     if (!this.opened || this.disposed) {
       return { ok: false, error: 'reset failed: persistence is not open' };
     }
-    // Stop scheduled autosave + recovery probes and drop every pending dirty
-    // unit so nothing can write between/after the deletions.
+    // Stop scheduled autosave + recovery probes and drop every pending dirty unit so
+    // nothing can write between/after the destructive phase.
     this.stopRecoveryTimer();
     this.coordinator.stop();
     this.queue.clear();
     this.pendingEdits.clear();
     const worldId = this.worldIdValue;
-    // Snapshot every world-owned record BEFORE any destructive mutation.
+
+    // PHASE 1 (F257-B): snapshot every world-owned record. Any read failure here
+    // means the snapshot is incomplete and the reset MUST NOT proceed. We use
+    // sequential awaits (no Promise.all swallowing) so a failure in one store
+    // produces a precise error and does not race with sibling reads. The Wither
+    // read is NOT wrapped in `.catch` — a transient read failure must surface.
     let snapshot: {
       metadata: WorldMetadata | null;
       witherData: unknown[] | null;
@@ -718,15 +750,13 @@ export class GamePersistence implements WorldEditDurability {
       entityChunks: Array<{ chunkX: number; chunkZ: number; entities: SerializedEntity[] }>;
     } | null = null;
     try {
-      const [metadata, witherData, columns, editRecords, playerState, blockEntityChunks, entityChunks] = await Promise.all([
-        this.metadata.getMetadata(worldId),
-        this.metadata.getWitherData(worldId).catch(() => null as unknown[] | null),
-        this.chunkSections.listColumns(worldId),
-        this.chunkEdits.listChunkEdits(worldId),
-        this.playerStates.getPlayerState(worldId),
-        this.blockEntities.listChunks(worldId),
-        this.entities.listChunks(worldId),
-      ]);
+      const metadata = await this.metadata.getMetadata(worldId);
+      const witherData = await this.metadata.getWitherData(worldId);
+      const columns = await this.chunkSections.listColumns(worldId);
+      const editRecords = await this.chunkEdits.listChunkEdits(worldId);
+      const playerState = await this.playerStates.getPlayerState(worldId);
+      const blockEntityChunks = await this.blockEntities.listChunks(worldId);
+      const entityChunks = await this.entities.listChunks(worldId);
       snapshot = {
         metadata,
         witherData,
@@ -737,44 +767,76 @@ export class GamePersistence implements WorldEditDurability {
         entityChunks: entityChunks.map((c) => ({ chunkX: c.chunkX, chunkZ: c.chunkZ, entities: [...c.entities] })),
       };
     } catch (e) {
-      return { ok: false, error: `reset failed: snapshot failed: ${e instanceof Error ? e.message : String(e)}` };
+      // F257-B: snapshot read failure MUST abort before any destructive write.
+      const msg = e instanceof Error ? e.message : String(e);
+      return { ok: false, error: `reset failed: snapshot failed: ${msg}` };
     }
+
+    // PHASE 2 (F257-C): a single real multi-store IndexedDB `readwrite` transaction
+    // spans all six world-owned stores. Every delete in this world is enqueued
+    // inside that one transaction. If any request errors, the transaction aborts
+    // and no writes commit — the world is left observably equivalent to its
+    // pre-snapshot state. This is the authoritative atomicity mechanism; the
+    // legacy JS rollback is preserved as a defensive last-resort only.
+    const stores = [
+      WORLD_METADATA_STORE,
+      WORLD_CHUNK_SECTION_STORE,
+      WORLD_CHUNK_EDIT_STORE,
+      WORLD_PLAYER_STATE_STORE,
+      WORLD_BLOCK_ENTITY_STORE,
+      WORLD_ENTITY_STORE,
+    ];
     try {
-      // Destructive phase: every world-owned store/key for this worldId.
-      // Idempotent on absent records: try/catch swallows the "not found" error.
-      if (snapshot.metadata !== null) {
-        await this.metadata.deleteMetadata(worldId);
-      } else {
-        try { await this.metadata.deleteMetadata(worldId); } catch (e) { void e; }
-      }
-      await this.metadata.deleteRaw(`__wither__:${worldId}`);
-      for (const column of snapshot.columns) {
-        await this.chunkSections.deleteColumn(worldId, column.chunkX, column.chunkZ);
-      }
-      for (const record of snapshot.edits) {
-        await this.chunkEdits.deleteChunkEdits(worldId, record.chunkX, record.chunkY, record.chunkZ);
-      }
-      if (snapshot.playerState !== null) {
-        await this.playerStates.deletePlayerState(worldId);
-      } else {
-        try { await this.playerStates.deletePlayerState(worldId); } catch (e) { void e; }
-      }
-      for (const record of snapshot.blockEntityChunks) {
-        await this.blockEntities.deleteChunkEntities(worldId, record.chunkX, record.chunkZ);
-      }
-      for (const record of snapshot.entityChunks) {
-        await this.entities.deleteChunkEntities(worldId, record.chunkX, record.chunkZ);
-      }
+      await this.metadata.runInTransaction(stores, async (tx) => {
+        const metaStore = tx.objectStore(WORLD_METADATA_STORE);
+        const csStore = tx.objectStore(WORLD_CHUNK_SECTION_STORE);
+        const ceStore = tx.objectStore(WORLD_CHUNK_EDIT_STORE);
+        const psStore = tx.objectStore(WORLD_PLAYER_STATE_STORE);
+        const beStore = tx.objectStore(WORLD_BLOCK_ENTITY_STORE);
+        const enStore = tx.objectStore(WORLD_ENTITY_STORE);
+
+        // 1. Normal metadata record.
+        if (snapshot!.metadata !== null) {
+          await awaitRequest(metaStore.delete(worldId));
+        }
+        // 2. Raw Wither record (separate key in the same metadata store).
+        await awaitRequest(metaStore.delete(`__wither__:${worldId}`));
+        // 3. Every chunk column for this world. Key shape: `${worldId}|${cx}|${cz}`.
+        for (const column of snapshot!.columns) {
+          await awaitRequest(csStore.delete(worldChunkKey(worldId, column.chunkX, column.chunkZ)));
+        }
+        // 4. Every chunk-edit group for this world.
+        for (const record of snapshot!.edits) {
+          await awaitRequest(ceStore.delete(worldChunkEditKey(worldId, record.chunkX, record.chunkY, record.chunkZ)));
+        }
+        // 5. Player state.
+        if (snapshot!.playerState !== null) {
+          await awaitRequest(psStore.delete(worldId));
+        }
+        // 6. Block-entity chunk groups.
+        for (const record of snapshot!.blockEntityChunks) {
+          await awaitRequest(beStore.delete(worldChunkKey(worldId, record.chunkX, record.chunkZ)));
+        }
+        // 7. Entity chunk groups.
+        for (const record of snapshot!.entityChunks) {
+          await awaitRequest(enStore.delete(worldChunkKey(worldId, record.chunkX, record.chunkZ)));
+        }
+      });
     } catch (e) {
+      // The multi-store transaction aborted. The world is left in its pre-transaction
+      // state, but we still attempt the defensive legacy JS restore from the snapshot
+      // for the case where the abort happened after some commits in a non-standard
+      // adapter. This is best-effort; the authoritative atomicity guarantee is the
+      // multi-store transaction itself.
       const msg = e instanceof Error ? e.message : String(e);
       try {
-        if (snapshot.metadata) await this.metadata.putMetadata(snapshot.metadata);
-        if (snapshot.witherData !== null) await this.metadata.putWitherData(worldId, snapshot.witherData);
-        for (const col of snapshot.columns) await this.chunkSections.putColumn(worldId, col);
-        for (const rec of snapshot.edits) await this.chunkEdits.putChunkEdits(worldId, rec.chunkX, rec.chunkY, rec.chunkZ, rec.changes);
-        if (snapshot.playerState) await this.playerStates.putPlayerState(snapshot.playerState);
-        for (const rec of snapshot.blockEntityChunks) await this.blockEntities.putChunkEntities(worldId, rec.chunkX, rec.chunkZ, rec.entities);
-        for (const rec of snapshot.entityChunks) await this.entities.putChunkEntities(worldId, rec.chunkX, rec.chunkZ, rec.entities);
+        if (snapshot!.metadata) await this.metadata.putMetadata(snapshot!.metadata);
+        if (snapshot!.witherData !== null) await this.metadata.putWitherData(worldId, snapshot!.witherData);
+        for (const col of snapshot!.columns) await this.chunkSections.putColumn(worldId, col);
+        for (const rec of snapshot!.edits) await this.chunkEdits.putChunkEdits(worldId, rec.chunkX, rec.chunkY, rec.chunkZ, rec.changes);
+        if (snapshot!.playerState) await this.playerStates.putPlayerState(snapshot!.playerState);
+        for (const rec of snapshot!.blockEntityChunks) await this.blockEntities.putChunkEntities(worldId, rec.chunkX, rec.chunkZ, rec.entities);
+        for (const rec of snapshot!.entityChunks) await this.entities.putChunkEntities(worldId, rec.chunkX, rec.chunkZ, rec.entities);
       } catch (restoreErr) {
         const restoreMsg = restoreErr instanceof Error ? restoreErr.message : String(restoreErr);
         return { ok: false, error: `reset failed: ${msg}; rollback incomplete: ${restoreMsg}` };

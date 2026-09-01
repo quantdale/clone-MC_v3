@@ -55,8 +55,9 @@ const PIXEL_DIFF = { channelTolerance: 24, maxChangedFraction: 0.02 };
 // byte-equality on high-quality clipped cells with changed fractions of 0.000012–0.0107,
 // all hugging DOM-text glyph edges (font anti-aliasing varies per capture under software
 // rasterization at 1920×1080). Clipped cells therefore use the same channel tolerance as
-// full-frame captures with a stricter fraction bound above the measured noise ceiling.
-const CLIPPED_DIFF = { channelTolerance: 24, maxChangedFraction: 0.02 };
+// full-frame captures with a fraction bound at the same 0.02 threshold (equal to
+// PIXEL_DIFF, safely above the measured 0.0107 noise ceiling). See evidence in
+// verification.md §12 and audit-findings.md F257-J.
 /** Fixed camera pose for every capture. */
 const POSE_YAW = 0.6;
 const POSE_PITCH = -0.15;
