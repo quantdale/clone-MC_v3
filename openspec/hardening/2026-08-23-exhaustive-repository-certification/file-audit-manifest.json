@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-01T00:59:37.876Z",
-  "reviewedSha": "324a039d23a23cdca4fc2a2e096fcf549f961ee9",
+  "generatedAt": "2026-09-01T01:02:23.170Z",
+  "reviewedSha": "9c3ca85bab40514b174304c5430a95ea07e77044",
   "schemaNote": "Inventory only. Every row is pending until a reviewer fills purpose/reviewLevel/evidence/disposition from actual content. Verdict fields are never machine-assigned.",
   "allowedReviewLevels": [
     "semantic",
