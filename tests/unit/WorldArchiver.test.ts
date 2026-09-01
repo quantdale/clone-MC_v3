@@ -87,7 +87,7 @@ describe('WorldArchiver', () => {
 
     const archive = await archiver.exportWorld(WORLD);
     expect(archive.format).toBe('voxel-world');
-    expect(archive.version).toBe(1);
+    expect(archive.version).toBe(2);
     expect(archive.worldId).toBe(WORLD);
     expect(Number.isFinite(archive.exportedAt)).toBe(true);
     expect(archive.metadata?.seed).toBe(7);
@@ -95,6 +95,8 @@ describe('WorldArchiver', () => {
     expect(archive.blockEntityChunks).toHaveLength(1);
     expect(archive.entityChunks).toHaveLength(1);
     expect(archive.playerState?.position).toEqual([1.5, 64, 2.5]);
+    expect(archive.chunkEdits).toEqual([]);
+    expect(archive.witherData).toBeNull();
     expect(validateWorldArchive(archive)).toEqual(archive);
   });
 
@@ -111,8 +113,10 @@ describe('WorldArchiver', () => {
       columns: 2,
       blockEntityChunks: 1,
       entityChunks: 1,
+      chunkEdits: 0,
       metadataImported: true,
       playerStateImported: true,
+      witherDataImported: false,
     });
     expect(await target.metadata.getMetadata(WORLD)).not.toBeNull();
     expect(await target.chunkSections.listColumns(WORLD)).toHaveLength(2);

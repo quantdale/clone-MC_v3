@@ -61,12 +61,12 @@ describe('migration-recovery', () => {
     expect(input.schemaVersion).toBe(1);
   });
 
-  it('unsupported-archive-version: a version-2 archive is refused by validateWorldArchive', async () => {
+  it('unsupported-archive-version: a version-3 archive is refused by validateWorldArchive', async () => {
     const results = await makeMatrix().runMigration();
     const r = results.find((x) => x.scenarioId === 'migration.unsupported-archive-version')!;
     expect(r.outcome).toBe('pass');
     expect(() =>
-      validateWorldArchive({ format: 'voxel-world', version: 2, exportedAt: 0, worldId: 'w', metadata: null, playerState: null, columns: [], blockEntityChunks: [], entityChunks: [] }),
+      validateWorldArchive({ format: 'voxel-world', version: 3, exportedAt: 0, worldId: 'w', metadata: null, playerState: null, columns: [], blockEntityChunks: [], entityChunks: [], chunkEdits: [], witherData: null }),
     ).toThrow(/unsupported version/);
   });
 

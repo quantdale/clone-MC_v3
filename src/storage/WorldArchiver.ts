@@ -1,8 +1,9 @@
 /**
- * World archive export/import (042). `WorldArchiver` reads one world's records from all five
- * repositories (034-040) into a validated {@link WorldArchive}, and restores a validated archive back
- * into the stores. Export is read-only; import validates the entire archive before the first write and
- * normalizes `playerState.worldId` to the archive's `worldId`.
+ * World archive export/import (042, revised 257). `WorldArchiver` reads one world's records from ALL
+ * world-owned repositories (including chunk-edits and Wither data) into a validated
+ * {@link WorldArchive}, and restores a validated archive back into the stores. Export is
+ * read-only; import validates the entire archive before the first write and normalizes
+ * `playerState.worldId` to the archive's `worldId`.
  */
 import { validateWorldArchive, type WorldArchive } from './WorldArchive';
 import { WorldMetadataRepository } from './WorldMetadataRepository';
@@ -10,14 +11,17 @@ import { ChunkSectionRepository } from './ChunkSectionRepository';
 import { BlockEntityRepository } from './BlockEntityRepository';
 import { EntityRepository } from './EntityRepository';
 import { PlayerStateRepository } from './PlayerStateRepository';
+import { ChunkEditRepository } from './ChunkEditRepository';
 
-/** The five repositories the archiver reads/writes. */
+/** The repositories the archiver reads/writes (now seven including chunk-edits and metadata raw Wither). */
 export interface WorldArchiverDeps {
   metadata: WorldMetadataRepository;
   chunkSections: ChunkSectionRepository;
   blockEntities: BlockEntityRepository;
   entities: EntityRepository;
   playerStates: PlayerStateRepository;
+  chunkEdits?: ChunkEditRepository;
+  // Wither data lives in the metadata store's raw namespace; accessed via metadata.getWitherData/putWitherData
 }
 
 /** Audit trail for one import. */
@@ -29,10 +33,14 @@ export interface WorldImportReport {
   blockEntityChunks: number;
   /** Entity chunk groups restored. */
   entityChunks: number;
+  /** Chunk-edit groups restored. */
+  chunkEdits: number;
   /** Whether metadata was written. */
   metadataImported: boolean;
   /** Whether player state was written. */
   playerStateImported: boolean;
+  /** Whether wither data was written. */
+  witherDataImported: boolean;
 }
 
 /** Exports and imports whole-world archives over the five repositories. */
@@ -42,6 +50,7 @@ export class WorldArchiver {
   private readonly blockEntities: BlockEntityRepository;
   private readonly entities: EntityRepository;
   private readonly playerStates: PlayerStateRepository;
+  private readonly chunkEdits: ChunkEditRepository | null;
 
   constructor(deps: WorldArchiverDeps) {
     this.metadata = deps.metadata;
@@ -49,6 +58,7 @@ export class WorldArchiver {
     this.blockEntities = deps.blockEntities;
     this.entities = deps.entities;
     this.playerStates = deps.playerStates;
+    this.chunkEdits = deps.chunkEdits ?? null;
   }
 
   private async openAll(): Promise<void> {
@@ -57,9 +67,10 @@ export class WorldArchiver {
     await this.blockEntities.open();
     await this.entities.open();
     await this.playerStates.open();
+    if (this.chunkEdits) await this.chunkEdits.open();
   }
 
-  /** Read one world's records from all five stores into a validated archive. Never writes. */
+  /** Read one world's records from ALL world-owned stores into a validated archive. Never writes. */
   async exportWorld(worldId: string): Promise<WorldArchive> {
     await this.openAll();
 
@@ -76,10 +87,22 @@ export class WorldArchiver {
       chunkZ,
       entities,
     }));
+    let chunkEdits: { chunkX: number; chunkY: number; chunkZ: number; changes: Array<[number, number]> }[] = [];
+    if (this.chunkEdits) {
+      const records = await this.chunkEdits.listChunkEdits(worldId);
+      chunkEdits = records.map((r) => ({ chunkX: r.chunkX, chunkY: r.chunkY, chunkZ: r.chunkZ, changes: r.changes }));
+    }
+    let witherData: unknown[] | null = null;
+    try {
+      const raw = await this.metadata.getWitherData(worldId);
+      witherData = raw;
+    } catch {
+      witherData = null;
+    }
 
     return {
       format: 'voxel-world',
-      version: 1,
+      version: 2,
       exportedAt: Date.now(),
       worldId,
       metadata,
@@ -87,6 +110,8 @@ export class WorldArchiver {
       columns,
       blockEntityChunks,
       entityChunks,
+      chunkEdits,
+      witherData,
     };
   }
 
@@ -107,6 +132,14 @@ export class WorldArchiver {
     for (const chunk of valid.entityChunks) {
       await this.entities.putChunkEntities(valid.worldId, chunk.chunkX, chunk.chunkZ, chunk.entities);
     }
+    if (this.chunkEdits) {
+      for (const edit of valid.chunkEdits) {
+        await this.chunkEdits.putChunkEdits(valid.worldId, edit.chunkX, edit.chunkY, edit.chunkZ, edit.changes);
+      }
+    }
+    if (valid.witherData !== null && valid.witherData !== undefined) {
+      await this.metadata.putWitherData(valid.worldId, valid.witherData);
+    }
     if (valid.playerState) {
       // Normalize to the archive's worldId so a mismatched record cannot leak into another key.
       await this.playerStates.putPlayerState({
@@ -121,8 +154,10 @@ export class WorldArchiver {
       columns: valid.columns.length,
       blockEntityChunks: valid.blockEntityChunks.length,
       entityChunks: valid.entityChunks.length,
+      chunkEdits: valid.chunkEdits.length,
       metadataImported: valid.metadata !== null,
       playerStateImported: valid.playerState !== null,
+      witherDataImported: valid.witherData !== null,
     };
   }
 }

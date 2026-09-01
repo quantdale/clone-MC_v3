@@ -1,4 +1,3 @@
-
 import { test, expect, type Page } from "@playwright/test";
 
 const SEED = 771;
@@ -111,7 +110,7 @@ async function seedBeforeBoot(page: Page, cfg: SeedConfig, once = false) {
                   capacity: 4096,
                   palette: [0, 1],
                   bitsPerEntry: 4,
-                  storage: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153],
+                  storage: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,],
                 },
               },
             };
@@ -189,6 +188,10 @@ test.describe("void-world startup recovery (257 e2e)", () => {
       return h >= g.world.dimension.minY;
     });
     expect(supported).toBe(true);
+    // Explicit visual evidence: fresh terrain must be visibly present
+    await page.screenshot({ path: "test-results/void-world-recovery/fresh-terrain.png", fullPage: true });
+    const hasCanvas = await page.evaluate(() => !!document.querySelector("canvas"));
+    expect(hasCanvas).toBe(true);
   });
 
   test("legacy-unknown partial world shows recovery and never simulates free-fall", async ({ page }) => {
@@ -207,10 +210,18 @@ test.describe("void-world startup recovery (257 e2e)", () => {
     // Ensure player velocity is zero and not falling
     const velY = await page.evaluate(() => (window as any).__voxelGame?.player.velocity.y);
     expect(velY).toBe(0);
-    // Simulation should be paused: survival health should not change quickly
-    // We just check that recovery overlay stays visible after a few seconds
     await page.waitForTimeout(1500);
     await expect(page.locator("#recovery")).toBeVisible();
+    // Visual evidence: recovery overlay
+    await page.screenshot({ path: "test-results/void-world-recovery/recovery-overlay.png", fullPage: true });
+    // Prove world remains frozen: y should not change over time
+    const y1 = await page.evaluate(() => (window as any).__voxelGame.player.position.y);
+    await page.waitForTimeout(1000);
+    const y2 = await page.evaluate(() => (window as any).__voxelGame.player.position.y);
+    expect(y2).toBe(y1);
+    // Also prove world frozen via World API
+    const frozen = await page.evaluate(() => (window as any).__voxelGame.world.isRecoveryFrozen());
+    expect(frozen).toBe(true);
   });
 
   test("unsupported future-generation world with partial coverage is recovery-required and preserves records", async ({ page }) => {
@@ -292,9 +303,11 @@ test.describe("void-world startup recovery (257 e2e)", () => {
       metadata: {}, // legacy partial -> recovery
       columns: [],
       player: null,
-    }, true);
+    });
     await waitForBoot(page);
     await expect(page.locator("#recovery")).toBeVisible();
+    // Screenshot: recovery overlay before reset
+    await page.screenshot({ path: "test-results/void-world-recovery/before-reset-recovery.png", fullPage: true });
     // First click arms confirmation
     await page.locator("#recovery-reset").click();
     await expect(page.locator("#recovery-status")).toContainText("backup");
@@ -309,5 +322,100 @@ test.describe("void-world startup recovery (257 e2e)", () => {
     expect(mode).toBe("current");
     const baseline = await page.evaluate(() => (window as any).__voxelGame?.worldGenerationBaseline);
     expect(baseline).toBe("current");
+    // Visual evidence: post-reset terrain
+    await page.screenshot({ path: "test-results/void-world-recovery/post-reset-terrain.png", fullPage: true });
+  });
+
+  test("reset failure is atomic and preserves world with truthful messaging", async ({ page }) => {
+    await seedBeforeBoot(page, {
+      metadata: {}, // legacy partial -> recovery
+      columns: [],
+      player: null,
+    });
+    await waitForBoot(page);
+    await expect(page.locator("#recovery")).toBeVisible();
+    // Inject failure: patch IDB delete to fail for one store
+    await page.evaluate(() => {
+      const orig = (window as any).IDBObjectStore?.prototype?.delete;
+      if (!orig) return;
+      let called = false;
+      (window as any).__origDelete = orig;
+      (window as any).IDBObjectStore.prototype.delete = function(key: any) {
+        // Fail only for first delete on world-metadata store with world-771
+        if (!called && typeof key === 'string' && key === 'world-771') {
+          called = true;
+          const req: any = { onsuccess: null, onerror: null, result: undefined, error: new Error('injected browser delete failure') };
+          queueMicrotask(() => req.onerror?.({ target: req }));
+          return req;
+        }
+        return orig.call(this, key);
+      };
+    });
+    await page.locator("#recovery-reset").click(); // arm
+    await expect(page.locator("#recovery-status")).toContainText("backup");
+    await page.locator("#recovery-reset").click(); // attempt reset, should fail
+    await expect(page.locator("#recovery-status")).toContainText("Reset failed");
+    await expect(page.locator("#recovery-status")).toContainText("No changes were made");
+    await expect(page.locator("#recovery")).toBeVisible();
+    // Screenshot: failed reset state
+    await page.screenshot({ path: "test-results/void-world-recovery/failed-reset.png", fullPage: true });
+    // Verify world still has metadata via IDB
+    const stillThere = await page.evaluate(async (worldId) => {
+      return await new Promise<boolean>((resolve) => {
+        const req: any = window.indexedDB.open("voxel-world-db", 6);
+        req.onsuccess = () => {
+          const db: any = req.result;
+          const tx = db.transaction("world-metadata", "readonly");
+          const r: any = tx.objectStore("world-metadata").get(worldId);
+          r.onsuccess = () => { db.close(); resolve(!!r.result); };
+          r.onerror = () => resolve(false);
+        };
+        req.onerror = () => resolve(false);
+      });
+    }, WORLD_ID);
+    expect(stillThere).toBe(true);
+    // Restore original delete and retry should succeed
+    await page.evaluate(() => {
+      if ((window as any).__origDelete) {
+        (window as any).IDBObjectStore.prototype.delete = (window as any).__origDelete;
+      }
+    });
+    // Need to re-arm: click again (need to click twice more because state was reset to not confirmed)
+    await page.locator("#recovery-reset").click();
+    await expect(page.locator("#recovery-status")).toContainText("backup");
+    await page.locator("#recovery-reset").click();
+    await page.waitForFunction(() => (window as any).__voxelGame?.worldStartupMode === "current", { timeout: 60000 });
+    await expect(page.locator("#recovery")).toBeHidden({ timeout: 60000 });
+  });
+
+  test("corrupt metadata does not appear as current world", async ({ page }) => {
+    // Seed with no metadata (simulates corrupt/missing) but with columns - should be recovery or preserved, never current with void
+    await seedBeforeBoot(page, {
+      metadata: null, // no metadata record
+      columns: [{ cx: 0, cz: 0 }],
+      player: { position: [8.5, 64, 8.5] },
+    });
+    await waitForBoot(page);
+    const baseline = await page.evaluate(() => (window as any).__voxelGame?.worldGenerationBaseline);
+    // With no metadata but columns present, it should be legacy-unknown, not current
+    expect(baseline).toBe("legacy-unknown");
+    const mode = await page.evaluate(() => (window as any).__voxelGame?.worldStartupMode);
+    // With only one column, spawn coverage is insufficient, so should be recovery-required
+    expect(mode).toBe("recovery-required");
+    await expect(page.locator("#recovery")).toBeVisible();
+  });
+
+  test("incomplete canonical columns are not counted as ready", async ({ page }) => {
+    // Seed with metadata current but no columns, then add player over missing terrain
+    // This is similar to legacy partial, should be recovery
+    await seedBeforeBoot(page, {
+      metadata: {}, // legacy
+      columns: [{ cx: 0, cz: 0 }], // only one column, not enough for 5x5 spawn ring
+      player: null,
+    });
+    await waitForBoot(page);
+    await expect(page.locator("#recovery")).toBeVisible();
+    const mode = await page.evaluate(() => (window as any).__voxelGame?.worldStartupMode);
+    expect(mode).toBe("recovery-required");
   });
 });

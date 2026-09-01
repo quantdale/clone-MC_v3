@@ -111,7 +111,7 @@
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
 - Active implementation change: **257-void-world-startup-recovery — ACTIVE (53/80, reopened after independent review)**
 - Next change: **258-real-world-runtime-performance-fps-recovery — PLANNED; implementation blocked until 257 VERIFIED**
-- 240 advancement allowed: **no (active Change 257 has unresolved HIGH blockers)**
+- 240 advancement allowed: **no (active change not yet verified)**
 
 - Program: **ACTIVE — Change 257 reopened at 53/80; Change 258 planned and blocked behind it**
 - Last completed change: **256-production-readiness-hardening — VERIFIED**

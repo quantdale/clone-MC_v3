@@ -41,6 +41,7 @@ import { PlayerStateRepository } from './PlayerStateRepository';
 import { validatePlayerStateRecord, type PlayerStateRecord } from './PlayerStateRecord';
 import { ChunkEditRepository } from './ChunkEditRepository';
 import type { SerializedBlockEntity } from './BlockEntityRecord';
+import type { SerializedEntity } from './EntityRecord';
 import {
   LegacyLocalStorageMigrator,
   type LegacyMigrationReport,
@@ -682,17 +683,18 @@ export class GamePersistence implements WorldEditDurability {
   }
 
   /**
-   * Reset ONLY the selected world's records across every world store (257).
-   * World-scoped by construction — no origin/site-wide storage clearing. Stops
-   * the autosave coordinator and drops pending dirty units first so no queued
-   * write can resurrect a record after deletion, and marks the facade inert
-   * (`resetCompleted`) so later capture/save calls cannot re-create records
-   * before the page reloads into the fresh world.
+   * World-scoped reset for the current `worldId` (257). Deletes ONLY the
+   * selected world's records. Atomic via snapshot-restore: a full snapshot of
+   * every world-owned record is captured BEFORE the first destructive delete.
+   * If any delete fails, every record from the snapshot is restored before
+   * returning failure, so `Your saved world was kept` remains true. After a
+   * successful reset the facade becomes inert (`resetCompleted`) so later
+   * capture/save calls cannot re-create records before the page reloads into
+   * the fresh world.
    *
    * Failure behavior: the first store failure aborts the sequence and is
-   * reported; the method NEVER reports success after a partial failure, and any
-   * already-deleted records stay deleted (the repository transaction model is
-   * per-record, so partial deletion is surfaced, not hidden).
+   * reported; the method NEVER reports success after a partial failure, and
+   * the previous world is restored to observably equivalent state.
    */
   async resetCurrentWorld(): Promise<{ ok: true } | { ok: false; error: string }> {
     if (!this.opened || this.disposed) {
@@ -705,28 +707,79 @@ export class GamePersistence implements WorldEditDurability {
     this.queue.clear();
     this.pendingEdits.clear();
     const worldId = this.worldIdValue;
+    // Snapshot every world-owned record BEFORE any destructive mutation.
+    let snapshot: {
+      metadata: WorldMetadata | null;
+      witherData: unknown[] | null;
+      columns: SerializedChunkColumn[];
+      edits: Array<{ chunkX: number; chunkY: number; chunkZ: number; changes: Array<[number, number]> }>;
+      playerState: PlayerStateRecord | null;
+      blockEntityChunks: Array<{ chunkX: number; chunkZ: number; entities: SerializedBlockEntity[] }>;
+      entityChunks: Array<{ chunkX: number; chunkZ: number; entities: SerializedEntity[] }>;
+    } | null = null;
     try {
-      await this.metadata.deleteMetadata(worldId);
+      const [metadata, witherData, columns, editRecords, playerState, blockEntityChunks, entityChunks] = await Promise.all([
+        this.metadata.getMetadata(worldId),
+        this.metadata.getWitherData(worldId).catch(() => null as unknown[] | null),
+        this.chunkSections.listColumns(worldId),
+        this.chunkEdits.listChunkEdits(worldId),
+        this.playerStates.getPlayerState(worldId),
+        this.blockEntities.listChunks(worldId),
+        this.entities.listChunks(worldId),
+      ]);
+      snapshot = {
+        metadata,
+        witherData,
+        columns: [...columns],
+        edits: editRecords.map((r) => ({ chunkX: r.chunkX, chunkY: r.chunkY, chunkZ: r.chunkZ, changes: [...r.changes] })),
+        playerState,
+        blockEntityChunks: blockEntityChunks.map((c) => ({ chunkX: c.chunkX, chunkZ: c.chunkZ, entities: [...c.entities] })),
+        entityChunks: entityChunks.map((c) => ({ chunkX: c.chunkX, chunkZ: c.chunkZ, entities: [...c.entities] })),
+      };
+    } catch (e) {
+      return { ok: false, error: `reset failed: snapshot failed: ${e instanceof Error ? e.message : String(e)}` };
+    }
+    try {
+      // Destructive phase: every world-owned store/key for this worldId.
+      // Idempotent on absent records: try/catch swallows the "not found" error.
+      if (snapshot.metadata !== null) {
+        await this.metadata.deleteMetadata(worldId);
+      } else {
+        try { await this.metadata.deleteMetadata(worldId); } catch (e) { void e; }
+      }
       await this.metadata.deleteRaw(`__wither__:${worldId}`);
-      const columns = await this.chunkSections.listColumns(worldId);
-      for (const column of columns) {
+      for (const column of snapshot.columns) {
         await this.chunkSections.deleteColumn(worldId, column.chunkX, column.chunkZ);
       }
-      const editRecords = await this.chunkEdits.listChunkEdits(worldId);
-      for (const record of editRecords) {
+      for (const record of snapshot.edits) {
         await this.chunkEdits.deleteChunkEdits(worldId, record.chunkX, record.chunkY, record.chunkZ);
       }
-      await this.playerStates.deletePlayerState(worldId);
-      const blockEntityChunks = await this.blockEntities.listChunks(worldId);
-      for (const record of blockEntityChunks) {
+      if (snapshot.playerState !== null) {
+        await this.playerStates.deletePlayerState(worldId);
+      } else {
+        try { await this.playerStates.deletePlayerState(worldId); } catch (e) { void e; }
+      }
+      for (const record of snapshot.blockEntityChunks) {
         await this.blockEntities.deleteChunkEntities(worldId, record.chunkX, record.chunkZ);
       }
-      const entityChunks = await this.entities.listChunks(worldId);
-      for (const record of entityChunks) {
+      for (const record of snapshot.entityChunks) {
         await this.entities.deleteChunkEntities(worldId, record.chunkX, record.chunkZ);
       }
     } catch (e) {
-      return { ok: false, error: `reset failed: ${e instanceof Error ? e.message : String(e)}` };
+      const msg = e instanceof Error ? e.message : String(e);
+      try {
+        if (snapshot.metadata) await this.metadata.putMetadata(snapshot.metadata);
+        if (snapshot.witherData) await this.metadata.putWitherData(worldId, snapshot.witherData);
+        for (const col of snapshot.columns) await this.chunkSections.putColumn(worldId, col);
+        for (const rec of snapshot.edits) await this.chunkEdits.putChunkEdits(worldId, rec.chunkX, rec.chunkY, rec.chunkZ, rec.changes);
+        if (snapshot.playerState) await this.playerStates.putPlayerState(snapshot.playerState);
+        for (const rec of snapshot.blockEntityChunks) await this.blockEntities.putChunkEntities(worldId, rec.chunkX, rec.chunkZ, rec.entities);
+        for (const rec of snapshot.entityChunks) await this.entities.putChunkEntities(worldId, rec.chunkX, rec.chunkZ, rec.entities);
+      } catch (restoreErr) {
+        const restoreMsg = restoreErr instanceof Error ? restoreErr.message : String(restoreErr);
+        return { ok: false, error: `reset failed: ${msg}; rollback incomplete: ${restoreMsg}` };
+      }
+      return { ok: false, error: `reset failed: ${msg}` };
     }
     this.resetCompleted = true;
     return { ok: true };
@@ -747,6 +800,7 @@ export class GamePersistence implements WorldEditDurability {
         blockEntities: this.blockEntities,
         entities: this.entities,
         playerStates: this.playerStates,
+        chunkEdits: this.chunkEdits,
       });
       const archive = await archiver.exportWorld(this.worldIdValue);
       return { ok: true, json: JSON.stringify(archive) };

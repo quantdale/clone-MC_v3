@@ -1036,7 +1036,12 @@ export class Game {
     // that must also progress while paused/loading, and its readiness gate
     // (`worldReady`) is what makes fixed ticks safe to run at all. Deterministic
     // world mutation (random/fluid ticks) runs inside the tick body instead.
-    this.world.update(dt, pcx, pcz);
+    // Recovery-required freeze (257 blocker C): while recoveryRequired, world
+    // truth must not mutate behind the overlay. World.update is gated here and
+    // also defensively no-ops via World.setRecoveryFrozen.
+    if (!this.recoveryRequiredValue) {
+      this.world.update(dt, pcx, pcz);
+    }
     const readyProgress = this.world.getReadyProgress(pcx, pcz);
     const worldReady = readyProgress >= 1;
     // Device input wiring (246): poll/assemble the four devices, resolve them
@@ -1563,7 +1568,7 @@ export class Game {
     this.recoveryRequiredValue = true;
     this.spawnResolutionValue = 'none';
     this.player.velocity.set(0, 0, 0);
-    // UI may not be constructed yet during the injected-persistence boot path
+    try { this.world.setRecoveryFrozen(true); } catch (e) { void e; }
     // (applyStartupSafety runs before LoadingIndicator/HUD are created). In
     // that case defer the visible overlay until after construction.
     const anySelf = this as unknown as { loading?: { hide(): void }; recoveryEl?: HTMLElement };
@@ -1645,7 +1650,12 @@ export class Game {
     const result = await persistence.resetCurrentWorld();
     if (!result.ok) {
       // Failure-visible and failure-atomic: never claim success; keep controls usable.
-      this.recoveryStatusEl.textContent = `Reset failed: ${result.error}. Your saved world was kept.`;
+      // Truthful copy: after atomic snapshot-rollback, the world is preserved unless
+      // the error explicitly reports an incomplete rollback.
+      const wasKept = !result.error.includes('rollback incomplete');
+      this.recoveryStatusEl.textContent = wasKept
+        ? `Reset failed: ${result.error}. No changes were made to your saved world.`
+        : `Reset failed: ${result.error}.`;
       this.recoveryResetBtn.disabled = false;
       this.recoveryBackupBtn.disabled = false;
       this.recoveryResetConfirmed = false;

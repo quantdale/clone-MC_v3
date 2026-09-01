@@ -188,6 +188,7 @@ export function withStorageFailure(
   };
   const metadata = Object.create(deps.metadata) as WorldArchiverDeps['metadata'];
   metadata.putMetadata = reject;
+  (metadata as any).putWitherData = reject;
   const chunkSections = Object.create(deps.chunkSections) as WorldArchiverDeps['chunkSections'];
   chunkSections.putColumn = reject;
   const blockEntities = Object.create(deps.blockEntities) as WorldArchiverDeps['blockEntities'];
@@ -196,7 +197,13 @@ export function withStorageFailure(
   entities.putChunkEntities = reject;
   const playerStates = Object.create(deps.playerStates) as WorldArchiverDeps['playerStates'];
   playerStates.putPlayerState = reject;
-  return { metadata, chunkSections, blockEntities, entities, playerStates };
+  const out: WorldArchiverDeps = { metadata, chunkSections, blockEntities, entities, playerStates };
+  if ((deps as any).chunkEdits) {
+    const chunkEdits = Object.create((deps as any).chunkEdits) as any;
+    chunkEdits.putChunkEdits = reject;
+    (out as any).chunkEdits = chunkEdits;
+  }
+  return out;
 }
 
 /**
@@ -715,7 +722,7 @@ export class SaveRecoveryMatrix {
       await runScenario('migration.unsupported-archive-version', axis, async () => {
         const archive = {
           format: 'voxel-world',
-          version: 2,
+          version: 99,
           exportedAt: 0,
           worldId: 'w',
           metadata: null,
@@ -723,13 +730,15 @@ export class SaveRecoveryMatrix {
           columns: [],
           blockEntityChunks: [],
           entityChunks: [],
+          chunkEdits: [],
+          witherData: null,
         } as unknown as WorldArchive;
         const rejected = await rejects(() => {
           validateWorldArchive(archive);
           return Promise.resolve();
         });
         assertThat(rejected, 'unsupported archive version was accepted');
-        return 'version-2 archive rejected by validateWorldArchive';
+        return 'version-99 archive rejected by validateWorldArchive';
       }),
     ];
   }
@@ -868,7 +877,7 @@ export class SaveRecoveryMatrix {
         await fixture.openAll();
         await this.populate(fixture.deps, 'x');
         const archive = await new WorldArchiver(fixture.deps).exportWorld('x');
-        assertThat(archive.format === 'voxel-world' && archive.version === 1, 'archive format/version not current');
+        assertThat(archive.format === 'voxel-world' && archive.version === 2, 'archive format/version not current');
         assertThat(archive.worldId === 'x', 'archive worldId mismatch');
         assertThat(archive.metadata !== null, 'metadata missing from export');
         assertThat(archive.columns.length === 2, `expected 2 columns, got ${archive.columns.length}`);
@@ -1061,6 +1070,10 @@ export class SaveRecoveryMatrix {
     await deps.blockEntities.putChunkEntities(worldId, 1, 2, [this.makeBlockEntity()]);
     await deps.entities.putChunkEntities(worldId, 1, 2, [this.makeEntity()]);
     await deps.playerStates.putPlayerState(this.makePlayerState(worldId));
+    if ((deps as any).chunkEdits) {
+      await (deps as any).chunkEdits.putChunkEdits(worldId, 0, 0, 0, [[0, 1]]);
+    }
+    try { await deps.metadata.putWitherData(worldId, [{ id: 1, x: 0, y: 64, z: 0 }]); } catch (e) { void e; }
   }
 
   /** Assert every store can be written and read (proves the store exists and is usable). */

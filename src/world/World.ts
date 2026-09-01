@@ -349,6 +349,10 @@ export class World implements WorldAccess {
   private lastUploadBytesThisFrame = 0;
   /** Context-loss gate: no worker result or scene replacement may publish while lost. */
   private contextLost = false;
+  /** Recovery freeze gate (257): while true, no terrain generation, meshing,
+   *  falling-block, lighting mutation, unload or streaming mutation may run.
+   *  Rendering of already-loaded immutable scene data remains allowed. */
+  private recoveryFrozen = false;
   /** Optional observability feeder (audit 05); null keeps World headless. */
   private readonly monitor: WorldMonitorHandle | null;
 
@@ -483,6 +487,16 @@ export class World implements WorldAccess {
     return this.generationBaseline === 'current';
   }
 
+  /** Freeze or unfreeze all world mutation while recovery-required (257). */
+  setRecoveryFrozen(frozen: boolean): void {
+    this.recoveryFrozen = frozen;
+  }
+
+  /** Whether world mutation is currently frozen for recovery. */
+  get isRecoveryFrozen(): boolean {
+    return this.recoveryFrozen;
+  }
+
   // ── WorldAccess ────────────────────────────────────────────────────────────
 
   /** Reused per-(x,z) skylight carry buffer for {@link seedChunkLight}; avoids a
@@ -549,6 +563,7 @@ export class World implements WorldAccess {
    * projection, invalidation, lighting, and edit bridge exactly once.
    */
   private applyCanonicalState(x: number, y: number, z: number, state: BlockState): void {
+    if (this.recoveryFrozen) return;
     if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(z)) {
       return;
     }
@@ -969,6 +984,11 @@ export class World implements WorldAccess {
 
   update(_dt: number, playerChunkX: number, playerChunkZ: number): void {
     if (this.contextLost) return;
+    if (this.recoveryFrozen) {
+      this.budgets.beginFrame();
+      this.feedMonitor();
+      return;
+    }
     this.budgets.beginFrame();
     this.lastUploadBytesThisFrame = this.uploadBytesThisFrame;
     this.uploadBytesThisFrame = 0;
@@ -977,10 +997,6 @@ export class World implements WorldAccess {
     this.processMeshing();
     this.processFallingBlocks();
     this.processLightUpdates();
-    // Generation, meshing, and light propagation can all enqueue work after
-    // ensureChunks() has scanned the resident area. A higher-priority enqueue
-    // may displace a queued mesh job in any of those stages; defer the rescan
-    // until the next frame so the displaced generated chunk is re-admitted.
     if (this.chunkManager.pipeline.takeDisplacedCount() > 0) {
       this.needsEnsure = true;
     }
