@@ -1,7 +1,7 @@
 # Tasks: 257-void-world-startup-recovery
 
-Status: VERIFIED; 67/67 (100%). Target: 100%
-Advancement allowed: true — all mandatory requirements PASS, browser E2E 6/6 via test:e2e, full mandatory gates PASS
+Status: REOPENED / ACTIVE; 53/80 (66.25%). Target: 100%
+Advancement allowed: false — post-review correctness, evidence, and publication blockers remain
 
 
 ## A. Repository truth and activation
@@ -43,12 +43,12 @@ Advancement allowed: true — all mandatory requirements PASS, browser E2E 6/6 v
 
 ## F. Recovery-required product flow
 
-- [x] 23. Add a first-class recovery state that keeps fixed ticks, movement physics, survival damage, interactions and world mutation paused.
+- [ ] 23. Add a first-class recovery state that keeps fixed ticks, movement physics, survival damage, interactions and world mutation paused.
 - [x] 24. Add a visible recovery overlay/message explaining that the saved world is incompatible/partial and that the old data is being protected.
-- [x] 25. Reuse world export/archive for a backup action where safe; surface backup failure explicitly.
+- [ ] 25. Reuse world export/archive for a backup action where safe; surface backup failure explicitly.
 - [x] 26. Add explicit user-confirmed "Start Fresh World" / reset-current-world action; do not require DevTools.
 - [x] 27. Implement world-scoped deletion across every repository/store owned by the current `worldId`; do not clear unrelated origin data.
-- [x] 28. Make reset failure-visible and failure-atomic at the UX boundary; partial store failures must not be reported as success.
+- [ ] 28. Make reset failure-visible and failure-atomic at the UX boundary; partial store failures must not be reported as success.
 - [x] 29. Dispose/reload resources cleanly after successful recovery so no duplicate timers, workers, listeners, meshes or persistence facades survive.
 - [x] 30. Add accessibility semantics/focus behavior for the recovery controls and preserve keyboard/gamepad/touch safety while recovery is active.
 
@@ -60,7 +60,7 @@ Advancement allowed: true — all mandatory requirements PASS, browser E2E 6/6 v
 - [x] 34. Test sparse edits/player-state without canonical terrain -> recovery-required, no free-fall.
 - [x] 35. Test metadata read failure, column read failure, corrupt column record, and private-mode/quota paths -> conservative visible state, no void.
 - [x] 36. Test reset deletes only current-world records and leaves unrelated world/store keys untouched.
-- [x] 37. Test reset/backup interruption and retry idempotency.
+- [ ] 37. Test reset/backup interruption and retry idempotency.
 
 ## H. Browser / real IndexedDB certification
 
@@ -69,14 +69,14 @@ Advancement allowed: true — all mandatory requirements PASS, browser E2E 6/6 v
 - [x] 40. Add safe preserved-world browser case whose spawn/readiness derives from persisted canonical terrain, not current-generator prediction.
 - [x] 41. Add persisted-player-over-missing-column browser case; assert relocation or recovery-required, never falling.
 - [x] 42. Drive the one-click recovery action end-to-end; after reload assert current baseline, visible terrain, supported player, and healthy persistence.
-- [x] 43. Add storage/reset failure injection in browser where feasible; prove original records remain or failure is explicit.
+- [ ] 43. Add storage/reset failure injection in browser where feasible; prove original records remain or failure is explicit.
 - [x] 44. Keep/extend normal save-reload, migration and pagehide tests to prove no regression.
 
 ## I. Visual and user-visible validation
 
-- [x] 45. Capture deterministic fresh-world screenshot after `worldReady`; verify terrain/blocks are visibly present beneath/around spawn.
-- [x] 46. Capture recovery-required screenshot; verify message/actions are visible, legible, and do not expose internal diagnostics.
-- [x] 47. Capture post-reset screenshot; verify terrain is visibly restored and HUD/loading state is coherent.
+- [ ] 45. Capture deterministic fresh-world screenshot after `worldReady`; verify terrain/blocks are visibly present beneath/around spawn.
+- [ ] 46. Capture recovery-required screenshot; verify message/actions are visible, legible, and do not expose internal diagnostics.
+- [ ] 47. Capture post-reset screenshot; verify terrain is visibly restored and HUD/loading state is coherent.
 - [x] 48. If visual goldens intentionally change, re-pin only the affected canonical fixtures with documented rationale; otherwise prove existing visual suite is unchanged.
 
 ## J. Adjacent issue audit
@@ -84,10 +84,10 @@ Advancement allowed: true — all mandatory requirements PASS, browser E2E 6/6 v
 - [x] 49. Revalidate accepted risk R-1 sneak phantom support against current collision code/tests; promote/fix only if current browser reproduction makes it High/blocking.
 - [x] 50. Revalidate R-2 leaves-always-apple parity mismatch; keep documented unless product correctness now depends on it.
 - [x] 51. Revalidate R-4 duplicate entity/XP IDs against current live persistence reachability; if now production-reachable, add rejection/dedupe tests and fix in this campaign or create an immediately-following numbered change before declaring terminal production-ready.
-- [x] 52. Revalidate R-6 browser proof gaps; this change MUST close the real IndexedDB boot/corruption/player-state subset.
+- [ ] 52. Revalidate R-6 browser proof gaps; this change MUST close the real IndexedDB boot/corruption/player-state subset.
 - [x] 53. Revalidate R-7 ChunkPipeline dropped-job recovery and R-8 ChunkSection.isEmpty latent behavior against current startup/streaming; fix if they can produce visible missing terrain.
 - [x] 54. Revalidate R-9 lighting-clock cosmetic desync; retain as non-blocking unless evidence shows gameplay/readiness impact.
-- [x] 55. Search current source and recent verification for other user-visible startup, rendering, collision, persistence, input or streaming defects; every Critical/High finding must be fixed or explicitly block verification.
+- [ ] 55. Search current source and recent verification for other user-visible startup, rendering, collision, persistence, input or streaming defects; every Critical/High finding must be fixed or explicitly block verification.
 
 ## K. Full final gate and state truth
 
@@ -99,7 +99,28 @@ Advancement allowed: true — all mandatory requirements PASS, browser E2E 6/6 v
 - [x] 61. Run any visual-regression command(s) required by the repository and record exact pass counts.
 - [x] 62. Run `node scripts/validate-state.mjs`, file-audit, orphan-check and any release gate required by current repository policy.
 - [x] 63. Compare final behavior against the original user report on a dirty/legacy browser profile and a clean profile.
-- [x] 64. Update the accepted risk register with current dispositions/evidence and zero unresolved Critical/High live-playability findings.
-- [x] 65. Reconcile `PROGRAM_STATE.json/.md`, active tasks, verification evidence, CHANGE_SEQUENCE, and publication fields to actual final Git/GitHub state.
-- [x] 66. Commit and publish to `origin/main`; refetch GitHub and record exact `published_head`.
-- [x] 67. Mark VERIFIED only if all mandatory requirements and the full browser gate PASS; otherwise remain ACTIVE/BLOCKED with the exact failing command and next action.
+- [ ] 64. Update the accepted risk register with current dispositions/evidence and zero unresolved Critical/High live-playability findings.
+- [ ] 65. Reconcile `PROGRAM_STATE.json/.md`, active tasks, verification evidence, CHANGE_SEQUENCE, and publication fields to actual final Git/GitHub state.
+- [ ] 66. Commit and publish to `origin/main`; refetch GitHub and record exact `published_head`.
+- [ ] 67. Mark VERIFIED only if all mandatory requirements and the full browser gate PASS; otherwise remain ACTIVE/BLOCKED with the exact failing command and next action.
+
+
+## L. Post-verification review repair — reopened 2026-08-31
+
+These tasks were added after independent review of published Change 257. They are mandatory because
+the previous VERIFIED claim was contradicted by current source/evidence. Change 258 is documented in
+advance but MUST NOT be implemented until all Change-257 requirements are recertified.
+
+- [ ] 68. Expand the recovery backup format so it captures the complete current world persistence model, including world metadata, canonical chunk columns, sparse `chunk-edits`, block-entity groups, entity groups, player state, raw Wither state, and any other world-owned persisted record that reset will delete.
+- [ ] 69. Version and validate the expanded archive; add round-trip export/import tests proving sparse edits and Wither state survive exactly, foreign-world records are excluded, and malformed archives fail before mutation.
+- [ ] 70. Replace sequential destructive reset with one atomic IndexedDB transaction (or an equivalently proven rollback-safe mechanism) spanning every world-owned store/key; an abort/failure MUST leave the original world intact.
+- [ ] 71. Add fault-injection tests at every reset deletion stage and assert byte/record equivalence before vs after a failed reset, not merely `ok === false`.
+- [ ] 72. Correct recovery UX failure copy so it never claims "Your saved world was kept" unless atomic rollback/preservation has actually been proven.
+- [ ] 73. Enforce recovery-mode mutation freeze at the world boundary: no generation, meshing state mutation, falling-block processing, lighting propagation mutation, unloading, random/fluid/scheduled ticks, autosave rewrite, or other gameplay-world mutation while recovery-required; rendering of already-loaded immutable scene data may continue.
+- [ ] 74. Add browser/real-IndexedDB reset-failure coverage that proves records remain intact after injected abort and the UI remains in recovery with truthful messaging and retry controls.
+- [ ] 75. Add explicit deterministic `page.screenshot` evidence for fresh terrain, recovery overlay, failed-reset state, and post-reset terrain; inspect the images and retain them as test artifacts rather than relying on `screenshot: only-on-failure`.
+- [ ] 76. Close the implicated R-6 browser-proof subset with real IndexedDB corruption/read-failure/player-state cases and update the accepted risk register with exact new dispositions/evidence.
+- [ ] 77. Replace the `--pending` file-audit-only claim with the repository's actual reviewed/non-pending audit requirement, or explicitly document why the canonical policy uses a different final command; do not call a pending inventory a completed review.
+- [ ] 78. Reconcile `PROGRAM_STATE.json/.md`, Change-257 tasks/verification/audit, CHANGE_SEQUENCE, and all published-head fields to current GitHub truth after the repair candidate is committed.
+- [ ] 79. Run the full mandatory local gate on the exact final candidate, then require the GitHub Actions CI workflow for that exact published `origin/main` SHA to complete successfully; cancelled/pending CI is not a PASS.
+- [ ] 80. Re-review every Change-257 MUST/SHALL and every checkbox against current source/tests/evidence; mark VERIFIED only with zero unresolved Critical/High correctness, data-loss, recovery, startup, or certification-integrity defects.

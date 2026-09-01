@@ -41,3 +41,19 @@ The existing suites strongly cover fresh generation, deterministic worldgen, per
 was not asserted end-to-end. Unit tests even explicitly preserve unsupported metadata/columns, which validates data protection but not playability safety.
 
 Change 257 therefore treats composed browser startup state as a first-class contract rather than inferring safety from subsystem tests.
+
+
+## Post-verification independent review findings (2026-08-31)
+
+These findings supersede the published 67/67 VERIFIED decision and reopen Change 257.
+
+| ID | Severity | Finding | Evidence / consequence | Required disposition |
+|---|---|---|---|---|
+| F257-10 | HIGH data-loss | Recovery backup omits live persisted state that reset deletes. | `WorldArchiver` exports five repositories and omits `chunk-edits`; it also omits raw Wither metadata, while `resetCurrentWorld()` deletes those world-owned records. "Save Backup" followed by reset can lose data not present in the backup. | Expand/version the archive to complete current persistence ownership and prove round-trip. |
+| F257-11 | HIGH integrity | Reset is sequential, not atomic, and failure copy can be false. | Metadata/columns/edits can be deleted before a later store delete fails. The method returns failure but UI says "Your saved world was kept." Existing fault test checks only the return value. | Single transaction or rollback-safe equivalent; record-equivalence failure tests; truthful UX. |
+| F257-12 | HIGH correctness | Recovery mode does not freeze all world mutation. | `Game.update()` calls `world.update()` even while recovery-required; that path processes generation, meshing, falling blocks, lighting and unload work. | Gate/make read-only the world-update path while recovery-required and test no mutation. |
+| F257-13 | HIGH process integrity | Claimed visual evidence does not exist in the 257 E2E source. | No `page.screenshot` call exists in `void-world-recovery.spec.ts`; global screenshot policy is failure-only. | Explicit captures + inspection + retained artifacts. |
+| F257-14 | MEDIUM/HIGH governance | Risk-register task was checked without updating the register. | R-6 still describes the exact corruption-at-boot/player durability browser gaps as accepted debt. | Run/close the implicated subset and update the register. |
+| F257-15 | MEDIUM/HIGH certification | Pending file inventory was reported as final audit proof. | `validate-file-audit.mjs --pending` intentionally skips reviewed-manifest completeness requirements. | Run canonical reviewed audit or amend policy truthfully. |
+| F257-16 | HIGH certification | Published state and CI do not support final VERIFIED posture. | State SHAs drift from current `main`; Change-257 release CI was cancelled and subsequent-head CI was not yet successful at review. | Reconcile state after repair and require successful CI on exact final SHA. |
+| F257-17 | HIGH user-visible performance | Owner reports severe low FPS in normal gameplay despite prior performance certification. | Desktop path uses render/simulation distance 6, DPR up to 2, shadows/AA; Game does not opt into available worker meshing; configured background budgets can exceed a 60-FPS frame before render; headless settings are much cheaper. | Track as Change 258 after 257 integrity repair. Earlier synthetic/headless evidence is not proof of user-visible FPS. |

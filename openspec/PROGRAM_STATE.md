@@ -1,5 +1,15 @@
 # Minecraft-Parity Program State
 
+> **2026-08-31 Change 257 REOPENED after independent review — ACTIVE, 53/80 (66.25%).**
+> The prior 67/67 VERIFIED claim is superseded. Blocking findings: incomplete backup omits
+> `chunk-edits`/raw Wither state; reset is sequential and can partially delete while failure UX says
+> the world was kept; recovery still executes `World.update()` mutation work; claimed Change-257
+> screenshots are absent; R-6/file-audit/state/CI evidence is not final. Repair tasks 68-80 are now
+> mandatory. **Change 258-real-world-runtime-performance-fps-recovery is fully planned but MUST NOT
+> be implemented until Change 257 returns to VERIFIED.** The owner additionally reports severe low
+> FPS in normal desktop gameplay, invalidating any assumption that prior synthetic/headless
+> performance certification proves user-visible performance.
+>
 > **2026-09-01 Change 257 VERIFIED — void-world-startup-recovery (VERIFIED, 67/67, 100%).**
 > All 67 tasks complete. Browser E2E 6/6 via `npm run test:e2e -- void-world-recovery` (fresh, legacy-unknown partial, unsupported future, preserved 5x5 flat at 63, player-over-missing, reset E2E) with `/empty.html` same-origin seeding. Unit 380 files 4596 passed, typecheck/lint/build/validate-state/file-audit 2634 pending/orphan PASS. Visual screenshots captured (fresh, recovery, post-reset). Zero Critical/High defects. Published HEAD `324a039` to `origin/main` (verified 2026-09-01).
 >
@@ -99,12 +109,12 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **257-void-world-startup-recovery — VERIFIED (67/67, owner-authorized live-playability repair)**
-- Next change: **null (Change 257 VERIFIED; next change per CHANGE_SEQUENCE.md after reconciliation)**
-- 240 advancement allowed: **yes**
+- Active implementation change: **257-void-world-startup-recovery — ACTIVE (53/80, reopened after independent review)**
+- Next change: **258-real-world-runtime-performance-fps-recovery — PLANNED; implementation blocked until 257 VERIFIED**
+- 240 advancement allowed: **no (active Change 257 has unresolved HIGH blockers)**
 
-- Program: **COMPLETE — Changes 001–257 are VERIFIED (001–255 ARCHIVED, 256 VERIFIED, 257 VERIFIED 67/67); no active implementation change**
-- Last completed change: **257-void-world-startup-recovery — VERIFIED**
+- Program: **ACTIVE — Change 257 reopened at 53/80; Change 258 planned and blocked behind it**
+- Last completed change: **256-production-readiness-hardening — VERIFIED**
 - All changes 001–255: **VERIFIED** — Change 255 is VERIFIED and ARCHIVED (37/37, 100%); all mandatory requirements and required tests pass.
 - Historical Change 250-era bullets (preserved; superseded **for current release authority** by `openspec/evidence/release-readiness-post-hardening.md`): 250 required-test gate PASS at head `502d021` / byte-identical tree `b56529e`; historical release-readiness READY RC-1..RC-9 (`openspec/evidence/release-readiness.md`); final parity audit PASS with DL dispositions later rejected by this interlock (`openspec/evidence/parity/final-parity-audit.md`); evidence archive complete (`openspec/evidence/`)
 - Post-250 hardening interlock: **VERIFIED at remediation checkpoint `aa92a5c229a753f10f8c1677e836136962b5d07a` — canonical CI run 32589457819 SUCCESS (gate job 97078975848, e2e job 97078975868); tasks 78/78; release decision READY (`openspec/evidence/release-readiness-post-hardening.md`)**
