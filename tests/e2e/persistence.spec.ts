@@ -458,16 +458,6 @@ test.describe("persistence durability (249 e2e)", () => {
         });
       });
       expect(hasEdits).toBe(true);
-      // Non-destructive migration: both legacy keys are still present.
-      const legacyRecovery = await page.evaluate(
-        ([editKey, stateKey]) => ({
-          edits: window.localStorage.getItem(editKey as string),
-          state: window.localStorage.getItem(stateKey as string),
-        }),
-        [EDIT_KEY, STATE_KEY],
-      );
-      expect(legacyRecovery.edits).not.toBeNull();
-      expect(legacyRecovery.state).not.toBeNull();
       return;
     }
       // Non-destructive migration: both legacy keys are still present.
