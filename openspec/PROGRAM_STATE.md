@@ -1,7 +1,7 @@
 # Minecraft-Parity Program State
 
 > **2026-09-01 Change 257 VERIFIED — void-world-startup-recovery (VERIFIED, 67/67, 100%).**
-> All 67 tasks complete. Browser E2E 6/6 via `npm run test:e2e -- void-world-recovery` (fresh, legacy-unknown partial, unsupported future, preserved 5x5 flat, player-over-missing, reset E2E) with `/empty.html` same-origin seeding. Unit 380 files 4596 passed, typecheck/lint/build/validate-state/file-audit 2634 pending/orphan PASS. Visual screenshots captured (fresh, recovery, post-reset). Zero Critical/High defects. Published HEAD `ce1a95c` to `origin/main` (pending).
+> All 67 tasks complete. Browser E2E 6/6 via `npm run test:e2e -- void-world-recovery` (fresh, legacy-unknown partial, unsupported future, preserved 5x5 flat at 63, player-over-missing, reset E2E) with `/empty.html` same-origin seeding. Unit 380 files 4596 passed, typecheck/lint/build/validate-state/file-audit 2634 pending/orphan PASS. Visual screenshots captured (fresh, recovery, post-reset). Zero Critical/High defects. Published HEAD `324a039` to `origin/main` (verified 2026-09-01).
 >
 > **2026-08-31 Change 257 ACTIVATED — void-world-startup-recovery (ACTIVE, 0/67).**
 > Owner-authorized live-playability repair after a user report: game starts with no visible

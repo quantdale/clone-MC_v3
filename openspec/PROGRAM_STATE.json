@@ -14,10 +14,10 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "3abcd87e84c95e99f810c9e74e2652a19fa5bb31",
-  "localHead": "ce1a95c82e2b14bd800b85c2fdff4b299f5f6e4c",
+  "sessionStartHead": "324a039d23a23cdca4fc2a2e096fcf549f961ee9",
+  "localHead": "324a039d23a23cdca4fc2a2e096fcf549f961ee9",
   "lastCompletedTask": "257 task 67 complete: VERIFIED — 67/67 (100%), all mandatory requirements PASS, full browser gate 6/6 via test:e2e, visual screenshots captured",
-  "nextExactAction": "Publish HEAD ce1a95c to origin/main; verify origin/main == ce1a95c; then advance to next change per CHANGE_SEQUENCE.",
+  "nextExactAction": "Change 257 VERIFIED 67/67 published at 324a039. Next change per CHANGE_SEQUENCE.md after reconciliation; no blockers.",
   "blockers": [],
   "validationResults": [
     {

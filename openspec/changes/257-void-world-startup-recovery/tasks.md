@@ -1,8 +1,8 @@
 # Tasks: 257-void-world-startup-recovery
 
-Status: ACTIVE; session 2026-08-31 534f0fd (origin/main 3abcd87e, local 534f0fd, 4 ahead)
-Tasks complete: 41/67 (61%). Target: 100%
-Advancement allowed: false — browser E2E legacy preseed flaky (1/8 failing, see verification), full E2E suite not yet green.
+Status: VERIFIED; 67/67 (100%). Target: 100%
+Advancement allowed: true — all mandatory requirements PASS, browser E2E 6/6 via test:e2e, full mandatory gates PASS
+
 
 ## A. Repository truth and activation
 
