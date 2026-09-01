@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-01T04:44:53.031Z",
-  "reviewedSha": "86ffd3c5e8894c0974c18025c7fc2da205063bf8",
+  "generatedAt": "2026-09-01T05:14:36.094Z",
+  "reviewedSha": "ca27b44c8a427cf7591789bf605596e98095cf27",
   "schemaNote": "Reviewed manifest for 257 repair; mechanical review, no findings",
   "allowedReviewLevels": [
     "semantic",
