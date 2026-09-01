@@ -1,9 +1,29 @@
 import { test, expect, type Page } from "@playwright/test";
+import { ChunkColumn } from "../../src/world/ChunkColumn";
+import { createDefaultBlockStateRegistry } from "../../src/world/BlockStateRegistry";
+import { BlockId } from "../../src/world/BlockRegistry";
+import { OVERWORLD_DIMENSION_TYPE } from "../../src/data/DimensionTypes";
 
 const SEED = 771;
 const WORLD_ID = `world-${SEED}`;
 const DB_NAME = "voxel-world-db";
 const DB_VERSION = 6;
+
+const REG = createDefaultBlockStateRegistry();
+function makeSerializedStoneColumn(cx: number, cz: number) {
+  const col = new ChunkColumn({
+    chunkX: cx,
+    chunkZ: cz,
+    sectionCount: OVERWORLD_DIMENSION_TYPE.sectionCount,
+    minSectionY: OVERWORLD_DIMENSION_TYPE.minSectionY,
+    registry: REG,
+  });
+  // Fill the top layer (y=63) with stone across the entire 16x16 to ensure flat spawn
+  for (let x = 0; x < 16; x++) for (let z = 0; z < 16; z++) col.setBlockState(x, 63, z, REG.getDefaultState(BlockId.Stone));
+  // Also fill y=62 with stone to ensure solid support (so height is 63 but support is solid)
+  for (let x = 0; x < 16; x++) for (let z = 0; z < 16; z++) col.setBlockState(x, 62, z, REG.getDefaultState(BlockId.Stone));
+  return col.serialize();
+}
 
 
 type SeedConfig = {
@@ -13,6 +33,8 @@ type SeedConfig = {
 };
 
 async function seedBeforeBoot(page: Page, cfg: SeedConfig, once = false) {
+  // Convert simple cx,cz columns to full serialized stone columns for flat spawn (fixes palette 0,1 vs Stone=3 and sparse storage)
+  const serializedColumns = (cfg.columns ?? []).map(({ cx, cz }) => makeSerializedStoneColumn(cx, cz));
   await page.goto("/empty.html");
   if (once) {
     const already = await page.evaluate(
@@ -95,27 +117,12 @@ async function seedBeforeBoot(page: Page, cfg: SeedConfig, once = false) {
         await new Promise<void>((resolve, reject) => {
           const tx = db.transaction("chunk-sections", "readwrite");
           const store = tx.objectStore("chunk-sections");
-          for (const c of columns) {
-            const col = {
-              key: `${worldId}|${c.cx}|${c.cz}`,
-              worldId,
-              version: 1,
-              chunkX: c.cx,
-              chunkZ: c.cz,
-              sectionCount: 24,
-              minSectionY: -4,
-              sections: {
-                "7": {
-                  version: 1,
-                  capacity: 4096,
-                  palette: [0, 1],
-                  bitsPerEntry: 4,
-                  storage: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,],
-                },
-              },
-            };
+          for (const col of columns as any[]) {
+            // columns are pre-serialized stone columns from makeSerializedStoneColumn
+            (col as any).key = `${worldId}|${(col as any).chunkX}|${(col as any).chunkZ}`;
+            (col as any).worldId = worldId;
             const req2: any = store.put(col);
-            req2.onerror = () => console.error("put failed", c, req2.error);
+            req2.onerror = () => console.error("put failed", col, req2.error);
           }
           tx.oncomplete = () => resolve();
           tx.onerror = () => reject(tx.error);
@@ -139,7 +146,7 @@ async function seedBeforeBoot(page: Page, cfg: SeedConfig, once = false) {
       db.close();
       (window as any).__seedDone = true;
     },
-    { worldId: WORLD_ID, dbName: DB_NAME, dbVersion: DB_VERSION, cfg, columns: cfg.columns ?? [] },
+    { worldId: WORLD_ID, dbName: DB_NAME, dbVersion: DB_VERSION, cfg, columns: serializedColumns },
   );
   if (once) {
     await page.evaluate(
@@ -219,8 +226,11 @@ test.describe("void-world startup recovery (257 e2e)", () => {
     await page.waitForTimeout(1000);
     const y2 = await page.evaluate(() => (window as any).__voxelGame.player.position.y);
     expect(y2).toBe(y1);
-    // Also prove world frozen via World API
-    const frozen = await page.evaluate(() => (window as any).__voxelGame.world.isRecoveryFrozen());
+    // Also prove world frozen via World API (supports getter)
+    const frozen = await page.evaluate(() => {
+      const w: any = (window as any).__voxelGame.world;
+      return typeof w.isRecoveryFrozen === 'function' ? w.isRecoveryFrozen() : w.isRecoveryFrozen;
+    });
     expect(frozen).toBe(true);
   });
 

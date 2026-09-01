@@ -497,6 +497,11 @@ export class World implements WorldAccess {
     return this.recoveryFrozen;
   }
 
+  /** Method alias for E2E `isRecoveryFrozen()` call compat. */
+  isRecoveryFrozenMethod(): boolean {
+    return this.recoveryFrozen;
+  }
+
   // ── WorldAccess ────────────────────────────────────────────────────────────
 
   /** Reused per-(x,z) skylight carry buffer for {@link seedChunkLight}; avoids a
