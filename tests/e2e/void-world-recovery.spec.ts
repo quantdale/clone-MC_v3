@@ -14,99 +14,88 @@ type SeedConfig = {
 };
 
 async function seedBeforeBoot(page: Page, cfg: SeedConfig, once = false) {
-  await page.addInitScript(
-    ({ worldId, dbName, dbVersion, cfg, columns, once }) => {
-      const flag = `__seeded_${worldId}`;
-      if (once && sessionStorage.getItem(flag)) return;
-      const originalOpen = window.indexedDB.open.bind(window.indexedDB);
-      let seedingDone = false;
-      const pending: Array<{ name: string; version?: number; req: any }> = [];
-      (window as any).__seedDone = false;
-
-      // Intercept open until seeding completes
-      (window.indexedDB as any).open = function (name: string, version?: number) {
-        if (name !== dbName || seedingDone) return originalOpen(name, version);
-        const fake: any = {};
-        pending.push({ name, version, req: fake });
-        return fake;
+  await page.goto("/empty.html");
+  if (once) {
+    const already = await page.evaluate(
+      ({ worldId }) => sessionStorage.getItem(`__seeded_${worldId}`),
+      { worldId: WORLD_ID },
+    ).catch(() => null);
+    if (already) return;
+  }
+  await page.evaluate(
+    async ({ worldId, dbName, dbVersion, cfg, columns }) => {
+      const req = window.indexedDB.open(dbName, dbVersion);
+      req.onupgradeneeded = () => {
+        const db = req.result as any;
+        if (!db.objectStoreNames.contains("world-metadata"))
+          db.createObjectStore("world-metadata", { keyPath: "worldId" });
+        if (!db.objectStoreNames.contains("chunk-sections"))
+          db.createObjectStore("chunk-sections", { keyPath: "key" });
+        if (!db.objectStoreNames.contains("block-entities"))
+          db.createObjectStore("block-entities", { keyPath: "key" });
+        if (!db.objectStoreNames.contains("entities"))
+          db.createObjectStore("entities", { keyPath: "key" });
+        if (!db.objectStoreNames.contains("player-state"))
+          db.createObjectStore("player-state", { keyPath: "key" });
+        if (!db.objectStoreNames.contains("chunk-edits"))
+          db.createObjectStore("chunk-edits", { keyPath: "key" });
       };
-
-      (async () => {
-        // Open real DB for seeding (bypass interceptor)
-        const realReq: any = originalOpen(dbName, dbVersion);
-        realReq.onupgradeneeded = () => {
-          const db = realReq.result as any;
-          if (!db.objectStoreNames.contains("world-metadata"))
-            db.createObjectStore("world-metadata", { keyPath: "worldId" });
-          if (!db.objectStoreNames.contains("chunk-sections"))
-            db.createObjectStore("chunk-sections", { keyPath: "key" });
-          if (!db.objectStoreNames.contains("block-entities"))
-            db.createObjectStore("block-entities", { keyPath: "key" });
-          if (!db.objectStoreNames.contains("entities"))
-            db.createObjectStore("entities", { keyPath: "key" });
-          if (!db.objectStoreNames.contains("player-state"))
-            db.createObjectStore("player-state", { keyPath: "key" });
-          if (!db.objectStoreNames.contains("chunk-edits"))
-            db.createObjectStore("chunk-edits", { keyPath: "key" });
-        };
+      await new Promise<void>((resolve, reject) => {
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+      });
+      const db: any = req.result;
+      async function put(store: string, value: any) {
         await new Promise<void>((resolve, reject) => {
-          realReq.onsuccess = () => resolve();
-          realReq.onerror = () => reject(realReq.error);
+          const tx = db.transaction(store, "readwrite");
+          const st = tx.objectStore(store);
+          const r: any = st.put(value);
+          r.onsuccess = () => resolve();
+          r.onerror = () => reject(r.error);
         });
-        const db: any = realReq.result;
-
-        // Helper to do a put transaction
-        async function put(store: string, value: any) {
+      }
+      async function clearAll() {
+        for (const store of [
+          "world-metadata",
+          "chunk-sections",
+          "block-entities",
+          "entities",
+          "player-state",
+          "chunk-edits",
+        ]) {
           await new Promise<void>((resolve, reject) => {
             const tx = db.transaction(store, "readwrite");
             const st = tx.objectStore(store);
-            const r: any = st.put(value);
+            const r: any = st.clear();
             r.onsuccess = () => resolve();
             r.onerror = () => reject(r.error);
           });
         }
-        async function clearAll() {
-          for (const store of [
-            "world-metadata",
-            "chunk-sections",
-            "block-entities",
-            "entities",
-            "player-state",
-            "chunk-edits",
-          ]) {
-            await new Promise<void>((resolve, reject) => {
-              const tx = db.transaction(store, "readwrite");
-              const st = tx.objectStore(store);
-              const r: any = st.clear();
-              r.onsuccess = () => resolve();
-              r.onerror = () => reject(r.error);
-            });
+      }
+      await clearAll();
+      if (cfg.metadata !== null) {
+        const meta: any = cfg.metadata === undefined ? undefined : cfg.metadata;
+        if (meta !== undefined) {
+          const record: any = {
+            schemaVersion: 1,
+            worldId,
+            seed: 771,
+            dimensionId: "minecraft:overworld",
+            minY: -64,
+            height: 384,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          };
+          if (meta && meta.generationVersion !== undefined) {
+            record.generationVersion = meta.generationVersion;
           }
+          await put("world-metadata", record);
         }
-        await clearAll();
-
-        if (cfg.metadata !== null) {
-          const meta: any = cfg.metadata === undefined ? undefined : cfg.metadata;
-          if (meta !== undefined) {
-            const record: any = {
-              schemaVersion: 1,
-              worldId,
-              seed: 771,
-              dimensionId: "minecraft:overworld",
-              minY: -64,
-              height: 384,
-              createdAt: Date.now(),
-              updatedAt: Date.now(),
-            };
-            if (meta && meta.generationVersion !== undefined) {
-              record.generationVersion = meta.generationVersion;
-            }
-            // when meta is {} we omit generationVersion (legacy)
-            await put("world-metadata", record);
-          }
-        }
-
-        if (columns && columns.length > 0) {
+      }
+      if (columns && columns.length > 0) {
+        await new Promise<void>((resolve, reject) => {
+          const tx = db.transaction("chunk-sections", "readwrite");
+          const store = tx.objectStore("chunk-sections");
           for (const c of columns) {
             const col = {
               key: `${worldId}|${c.cx}|${c.cz}`,
@@ -117,86 +106,60 @@ async function seedBeforeBoot(page: Page, cfg: SeedConfig, once = false) {
               sectionCount: 24,
               minSectionY: -4,
               sections: {
-                "2": {
+                "7": {
                   version: 1,
-                  palette: [3],
-                  bitsPerEntry: 0,
-                  storage: [],
+                  capacity: 4096,
+                  palette: [0, 1],
+                  bitsPerEntry: 4,
+                  storage: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,286331153,286331153],
                 },
               },
             };
-            await put("chunk-sections", col);
+            const req2: any = store.put(col);
+            req2.onerror = () => console.error("put failed", c, req2.error);
           }
-        }
-
-        if (cfg.player) {
-          const rec = {
-            key: worldId,
-            worldId,
-            seed: 771,
-            position: cfg.player.position,
-            yaw: 0,
-            pitch: 0,
-            inventory: { slots: [] },
-            survival: { hunger: 20 },
-            experience: { level: 0 },
-          };
-          await put("player-state", rec);
-        }
-
-        db.close();
-        seedingDone = true;
-        if (once) sessionStorage.setItem(flag, "1");
-        (window as any).__seedDone = true;
-        // flush pending opens
-        for (const p of pending) {
-          const r: any = originalOpen(p.name as string, p.version as any);
-          if (p.req.onupgradeneeded) r.onupgradeneeded = p.req.onupgradeneeded;
-          r.onsuccess = () => {
-            p.req.result = r.result;
-            if (p.req.onsuccess) p.req.onsuccess({ target: p.req });
-          };
-          r.onerror = () => {
-            p.req.error = r.error;
-            if (p.req.onerror) p.req.onerror({ target: p.req });
-          };
-        }
-        // restore
-        (window.indexedDB as any).open = originalOpen;
-      })().catch((e) => {
-        console.error("seed failed", e);
-        seedingDone = true;
-        if (once) sessionStorage.setItem(flag, "1");
-        (window as any).__seedDone = true;
-        (window.indexedDB as any).open = originalOpen;
-        for (const p of pending) {
-          const r: any = originalOpen(p.name as string, p.version as any);
-          if (p.req.onupgradeneeded) r.onupgradeneeded = p.req.onupgradeneeded;
-          r.onsuccess = () => {
-            p.req.result = r.result;
-            if (p.req.onsuccess) p.req.onsuccess({ target: p.req });
-          };
-          r.onerror = () => {
-            p.req.error = r.error;
-            if (p.req.onerror) p.req.onerror({ target: p.req });
-          };
-        }
-      });
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+          tx.onabort = () => reject(tx.error);
+        });
+      }
+      if (cfg.player) {
+        const rec = {
+          key: worldId,
+          worldId,
+          seed: 771,
+          position: cfg.player.position,
+          yaw: 0,
+          pitch: 0,
+          inventory: { slots: [] },
+          survival: { hunger: 20 },
+          experience: { level: 0 },
+        };
+        await put("player-state", rec);
+      }
+      db.close();
+      (window as any).__seedDone = true;
     },
-    { worldId: WORLD_ID, dbName: DB_NAME, dbVersion: DB_VERSION, cfg, columns: cfg.columns ?? [], once }
+    { worldId: WORLD_ID, dbName: DB_NAME, dbVersion: DB_VERSION, cfg, columns: cfg.columns ?? [] },
   );
+  if (once) {
+    await page.evaluate(
+      ({ worldId }) => sessionStorage.setItem(`__seeded_${worldId}`, "1"),
+      { worldId: WORLD_ID },
+    );
+  }
 }
 
 async function waitForBoot(page: Page) {
   await page.goto(`/?seed=${SEED}`);
-  // Wait for either loading hidden or recovery visible
   await page.waitForFunction(
     () => {
       const loading = document.getElementById("loading");
       const recovery = document.getElementById("recovery");
       const loadingHidden = loading ? loading.classList.contains("hidden") : true;
       const recoveryVisible = recovery ? !recovery.classList.contains("hidden") : false;
-      return loadingHidden || recoveryVisible;
+      const hasGame = !!(window as any).__voxelGame;
+      return (loadingHidden || recoveryVisible) && hasGame;
     },
     { timeout: 60000 }
   );
@@ -291,14 +254,11 @@ test.describe("void-world startup recovery (257 e2e)", () => {
     });
     await waitForBoot(page);
     await expect(page.locator("#recovery")).toBeHidden();
-    // Should be preserved, not recovery
     const mode = await page.evaluate(() => (window as any).__voxelGame?.worldStartupMode);
     expect(mode).toBe("preserved");
     const baseline = await page.evaluate(() => (window as any).__voxelGame?.worldGenerationBaseline);
     expect(baseline).toBe("legacy-unknown");
-    // Wait for world ready (loading hidden)
     await expect(page.locator("#loading")).toBeHidden({ timeout: 60000 });
-    // Spawn resolution should be canonical for preserved world
     const spawnRes = await page.evaluate(() => (window as any).__voxelGame?.spawnResolution);
     expect(spawnRes).toBe("canonical");
   });

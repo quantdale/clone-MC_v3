@@ -851,10 +851,11 @@ export class Game {
     if (this.targetOutline) {
       this.renderer.scene.add(this.targetOutline);
     }
-
     // Constructor complete: post-construction restores may now refresh UI.
     this.fullyConstructed = true;
-
+    if (this.recoveryRequiredValue) {
+      this.showRecoveryOverlay();
+    }
     // Resize handling.
     window.addEventListener('resize', this.onResize);
     window.addEventListener('pagehide', this.onPageHide);
@@ -1562,11 +1563,24 @@ export class Game {
     this.recoveryRequiredValue = true;
     this.spawnResolutionValue = 'none';
     this.player.velocity.set(0, 0, 0);
+    // UI may not be constructed yet during the injected-persistence boot path
+    // (applyStartupSafety runs before LoadingIndicator/HUD are created). In
+    // that case defer the visible overlay until after construction.
+    const anySelf = this as unknown as { loading?: { hide(): void }; recoveryEl?: HTMLElement };
+    if (!anySelf.loading || !anySelf.recoveryEl) {
+      return;
+    }
     this.showRecoveryOverlay();
   }
 
   /** Present the recovery overlay and hide every normal-play surface. */
   private showRecoveryOverlay(): void {
+    // Guard for early boot path where UI is not yet constructed; the flag is
+    // already set and the overlay will be shown after construction.
+    const anySelf = this as unknown as { loading?: { hide(): void }; hud?: { hide(): void }; crosshair?: { hide(): void }; hotbar?: { hide(): void }; recoveryEl?: HTMLElement; recoveryStatusEl?: HTMLElement; recoveryResetBtn?: HTMLButtonElement; recoveryBackupBtn?: HTMLButtonElement };
+    if (!anySelf.loading || !anySelf.recoveryEl || !anySelf.hud || !anySelf.crosshair || !anySelf.hotbar) {
+      return;
+    }
     this.loading.hide();
     this.loadingShown = false;
     this.crosshair.hide();
