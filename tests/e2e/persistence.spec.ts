@@ -438,7 +438,7 @@ test.describe("persistence durability (249 e2e)", () => {
       return r ? !r.classList.contains("hidden") : false;
     });
     if (isRecovery) {
-      // Check via direct DB that chunk-edits were migrated
+      // Check via direct DB that chunk-edits were migrated (world not ready, so skip getBlock checks)
       const hasEdits = await page.evaluate(async () => {
         return await new Promise<boolean>((resolve) => {
           const req: any = (window as any).indexedDB.open("voxel-world-db", 6);
@@ -457,7 +457,21 @@ test.describe("persistence durability (249 e2e)", () => {
           req.onerror = () => resolve(false);
         });
       });
+      expect(hasEdits).toBe(true);
       // Non-destructive migration: both legacy keys are still present.
+      const legacyRecovery = await page.evaluate(
+        ([editKey, stateKey]) => ({
+          edits: window.localStorage.getItem(editKey as string),
+          state: window.localStorage.getItem(stateKey as string),
+        }),
+        [EDIT_KEY, STATE_KEY],
+      );
+      expect(legacyRecovery.edits).not.toBeNull();
+      expect(legacyRecovery.state).not.toBeNull();
+      return;
+    }
+      // Non-destructive migration: both legacy keys are still present.
+      // (non-recovery path, world ready)
     const legacy = await page.evaluate(
       ([editKey, stateKey]) => ({
         edits: window.localStorage.getItem(editKey as string),
