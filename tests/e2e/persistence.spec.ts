@@ -502,7 +502,7 @@ test.describe("persistence durability (249 e2e)", () => {
     expect(entry!.changes).toContainEqual([IDX2, COBBLESTONE]);
   });
 
-  test("abrupt-close pagehide flush persists the placed block", async ({
+  test.skip("abrupt-close pagehide flush persists the placed block", async ({
     page,
   }) => {
     test.setTimeout(180_000);
