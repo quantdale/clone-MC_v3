@@ -15,8 +15,8 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "330408ff1d1bed14a02beff7125db91136565812",
-  "localHead": "ca27b44c8a427cf7591789bf605596e98095cf27",
-  "lastCompletedTask": "257-void-world-startup-recovery VERIFIED 80/80 - backup complete, atomic reset, recovery freeze, visual evidence, file-audit reviewed, CI SUCCESS 33471005892",
+  "localHead": "b38d55c0974bec478cdde6fe5f528bc69122b807",
+  "lastCompletedTask": "257-void-world-startup-recovery VERIFIED 80/80 - backup, atomic reset, freeze, visual, file-audit, CI 33475037838 SUCCESS (b38d55c)",
   "nextExactAction": "Activate 258-real-world-runtime-performance-fps-recovery per CHANGE_SEQUENCE; begin baseline measurement at default desktop quality.",
   "blockers": [],
   "validationResults": [

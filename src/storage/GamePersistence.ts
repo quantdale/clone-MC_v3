@@ -769,7 +769,7 @@ export class GamePersistence implements WorldEditDurability {
       const msg = e instanceof Error ? e.message : String(e);
       try {
         if (snapshot.metadata) await this.metadata.putMetadata(snapshot.metadata);
-        if (snapshot.witherData) await this.metadata.putWitherData(worldId, snapshot.witherData);
+        if (snapshot.witherData !== null) await this.metadata.putWitherData(worldId, snapshot.witherData);
         for (const col of snapshot.columns) await this.chunkSections.putColumn(worldId, col);
         for (const rec of snapshot.edits) await this.chunkEdits.putChunkEdits(worldId, rec.chunkX, rec.chunkY, rec.chunkZ, rec.changes);
         if (snapshot.playerState) await this.playerStates.putPlayerState(snapshot.playerState);

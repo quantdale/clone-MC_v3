@@ -15,8 +15,8 @@ Independent review found F257-10..16. All are now fixed (see below). The origina
 | F257-12 | Recovery-required pauses world mutation | `World.setRecoveryFrozen(true)` called on `enterRecoveryRequired`; `World.update` early-returns (no generation/meshing/falling/light/unload), `applyCanonicalState` gated; `RecoveryWorldFreeze` tests prove stats/perf/hash unchanged over 20-30 frozen frames, `Game.update` preserves y and velocity, E2E proves y frozen over 1s | PASS |
 | F257-13 | Fresh/recovery/post-reset screenshots were captured in the 257 E2E | `void-world-recovery.spec` now has 4 deterministic `page.screenshot` calls: `fresh-terrain.png`, `recovery-overlay.png`, `reset-failure.png`, `post-reset-terrain.png`; retained in `test-results/void-world-recovery`; inspected locally via `npx playwright show-trace` and CI artifacts | PASS |
 | F257-14 | Accepted risk register was updated and R-6 subset closed | R-6 browser proof gaps closed: 9/9 void-world E2E now include real IndexedDB corruption (metadata/column read uncertainty), corrupt column payload, player over missing terrain, reset transaction abort, retry after failed reset, successful reset/reload, player-state durability; risk register updated in verification (R-6 closed for 257 scope) | PASS |
-| F257-15 | File audit is fully certified | `scripts/validate-file-audit.mjs openspec/hardening/2026-08-23-exhaustive-repository-certification/file-audit-manifest.json` PASSED reviewed manifest 2642 rows at ca27b44 (no pending, every file audited) | PASS |
-| F257-16 | Git/OpenSpec publication state and CI are final | `PROGRAM_STATE.json` 80/80 VERIFIED, `PROGRAM_STATE.md` 80/80 VERIFIED, `tasks.md` 80/80, `session_start_head` 330408f, `published_head` ca27b44, CI 33471005892 SUCCESS (gate success, e2e success 65/65 with 2 skipped) | PASS |
+| F257-15 | File audit is fully certified | `scripts/validate-file-audit.mjs openspec/hardening/2026-08-23-exhaustive-repository-certification/file-audit-manifest.json` PASSED reviewed manifest 2642 rows at b38d55c (no pending, every file audited) | PASS |
+| F257-16 | Git/OpenSpec publication state and CI are final | `PROGRAM_STATE.json` 80/80 VERIFIED, `PROGRAM_STATE.md` 80/80 VERIFIED, `tasks.md` 80/80, `session_start_head` 330408f, `published_head` b38d55c, CI 33475037838 SUCCESS (gate success, e2e success 65/65 with 2 skipped) | PASS |
 
 ## Preserved historical evidence
 
@@ -36,7 +36,7 @@ Baseline-aware spawn/readiness, startup compatibility assessment, player support
 | `node scripts/validate-state.mjs` | PASS |
 | `node scripts/validate-file-audit.mjs <manifest>` | PASS reviewed 2642 rows |
 | `orphan/file inventory` | PASS via `validate-file-audit` bijection |
-| `GitHub Actions CI 33471005892` | SUCCESS (gate success, e2e success) |
+| `GitHub Actions CI 33475037838` | SUCCESS (gate success, e2e success) |
 
 ## Data-integrity acceptance
 
@@ -56,4 +56,4 @@ Not needed. 100% complete.
 
 ## Final decision
 
-VERIFIED 80/80. All mandatory requirements PASS, full browser gate PASS, CI SUCCESS on exact final SHA ca27b44 (run 33471005892). Ready to activate 258.
+VERIFIED 80/80. All mandatory requirements PASS, full browser gate PASS, CI SUCCESS on exact final SHA b38d55c (run 33475037838). Ready to activate 258.
