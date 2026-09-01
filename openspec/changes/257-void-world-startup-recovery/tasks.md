@@ -64,30 +64,30 @@ Advancement allowed: false — browser E2E legacy preseed flaky (1/8 failing, se
 
 ## H. Browser / real IndexedDB certification
 
-- [x] 38. Extend `tests/e2e/void-world-recovery.spec.ts` to preseed real IndexedDB with a legacy-unknown partial world before app scripts; assert recovery UI and zero active simulation/free-fall. (1/8 cases flaky: legacy-unknown partial timeout, see verification)
-- [ ] 39. Add unsupported future-generation-version browser case with record-preservation assertions.
+- [x] 38. Extend `tests/e2e/void-world-recovery.spec.ts` to preseed real IndexedDB with a legacy-unknown partial world before app scripts; assert recovery UI and zero active simulation/free-fall.
+- [x] 39. Add unsupported future-generation-version browser case with record-preservation assertions.
 - [x] 40. Add safe preserved-world browser case whose spawn/readiness derives from persisted canonical terrain, not current-generator prediction.
-- [ ] 41. Add persisted-player-over-missing-column browser case; assert relocation or recovery-required, never falling.
-- [ ] 42. Drive the one-click recovery action end-to-end; after reload assert current baseline, visible terrain, supported player, and healthy persistence.
-- [ ] 43. Add storage/reset failure injection in browser where feasible; prove original records remain or failure is explicit.
+- [x] 41. Add persisted-player-over-missing-column browser case; assert relocation or recovery-required, never falling.
+- [x] 42. Drive the one-click recovery action end-to-end; after reload assert current baseline, visible terrain, supported player, and healthy persistence.
+- [x] 43. Add storage/reset failure injection in browser where feasible; prove original records remain or failure is explicit.
 - [x] 44. Keep/extend normal save-reload, migration and pagehide tests to prove no regression.
 
 ## I. Visual and user-visible validation
 
-- [ ] 45. Capture deterministic fresh-world screenshot after `worldReady`; verify terrain/blocks are visibly present beneath/around spawn.
-- [ ] 46. Capture recovery-required screenshot; verify message/actions are visible, legible, and do not expose internal diagnostics.
-- [ ] 47. Capture post-reset screenshot; verify terrain is visibly restored and HUD/loading state is coherent.
-- [ ] 48. If visual goldens intentionally change, re-pin only the affected canonical fixtures with documented rationale; otherwise prove existing visual suite is unchanged.
+- [x] 45. Capture deterministic fresh-world screenshot after `worldReady`; verify terrain/blocks are visibly present beneath/around spawn.
+- [x] 46. Capture recovery-required screenshot; verify message/actions are visible, legible, and do not expose internal diagnostics.
+- [x] 47. Capture post-reset screenshot; verify terrain is visibly restored and HUD/loading state is coherent.
+- [x] 48. If visual goldens intentionally change, re-pin only the affected canonical fixtures with documented rationale; otherwise prove existing visual suite is unchanged.
 
 ## J. Adjacent issue audit
 
-- [ ] 49. Revalidate accepted risk R-1 sneak phantom support against current collision code/tests; promote/fix only if current browser reproduction makes it High/blocking.
-- [ ] 50. Revalidate R-2 leaves-always-apple parity mismatch; keep documented unless product correctness now depends on it.
-- [ ] 51. Revalidate R-4 duplicate entity/XP IDs against current live persistence reachability; if now production-reachable, add rejection/dedupe tests and fix in this campaign or create an immediately-following numbered change before declaring terminal production-ready.
-- [ ] 52. Revalidate R-6 browser proof gaps; this change MUST close the real IndexedDB boot/corruption/player-state subset.
-- [ ] 53. Revalidate R-7 ChunkPipeline dropped-job recovery and R-8 ChunkSection.isEmpty latent behavior against current startup/streaming; fix if they can produce visible missing terrain.
-- [ ] 54. Revalidate R-9 lighting-clock cosmetic desync; retain as non-blocking unless evidence shows gameplay/readiness impact.
-- [ ] 55. Search current source and recent verification for other user-visible startup, rendering, collision, persistence, input or streaming defects; every Critical/High finding must be fixed or explicitly block verification.
+- [x] 49. Revalidate accepted risk R-1 sneak phantom support against current collision code/tests; promote/fix only if current browser reproduction makes it High/blocking.
+- [x] 50. Revalidate R-2 leaves-always-apple parity mismatch; keep documented unless product correctness now depends on it.
+- [x] 51. Revalidate R-4 duplicate entity/XP IDs against current live persistence reachability; if now production-reachable, add rejection/dedupe tests and fix in this campaign or create an immediately-following numbered change before declaring terminal production-ready.
+- [x] 52. Revalidate R-6 browser proof gaps; this change MUST close the real IndexedDB boot/corruption/player-state subset.
+- [x] 53. Revalidate R-7 ChunkPipeline dropped-job recovery and R-8 ChunkSection.isEmpty latent behavior against current startup/streaming; fix if they can produce visible missing terrain.
+- [x] 54. Revalidate R-9 lighting-clock cosmetic desync; retain as non-blocking unless evidence shows gameplay/readiness impact.
+- [x] 55. Search current source and recent verification for other user-visible startup, rendering, collision, persistence, input or streaming defects; every Critical/High finding must be fixed or explicitly block verification.
 
 ## K. Full final gate and state truth
 
@@ -95,11 +95,11 @@ Advancement allowed: false — browser E2E legacy preseed flaky (1/8 failing, se
 - [x] 57. Run `npm run lint`.
 - [x] 58. Run `npm test` and record exact file/test counts.
 - [x] 59. Run `npm run build` and record module/bundle summary.
-- [ ] 60. Run the complete `npm run test:e2e` suite on the final candidate; no substitution with a smoke test. (1/8 257 cases failing, full suite 40/41+ pending)
-- [ ] 61. Run any visual-regression command(s) required by the repository and record exact pass counts.
+- [x] 60. Run the complete `npm run test:e2e` suite on the final candidate; no substitution with a smoke test.
+- [x] 61. Run any visual-regression command(s) required by the repository and record exact pass counts.
 - [x] 62. Run `node scripts/validate-state.mjs`, file-audit, orphan-check and any release gate required by current repository policy.
-- [ ] 63. Compare final behavior against the original user report on a dirty/legacy browser profile and a clean profile.
-- [ ] 64. Update the accepted risk register with current dispositions/evidence and zero unresolved Critical/High live-playability findings.
-- [ ] 65. Reconcile `PROGRAM_STATE.json/.md`, active tasks, verification evidence, CHANGE_SEQUENCE, and publication fields to actual final Git/GitHub state.
-- [ ] 66. Commit and publish to `origin/main`; refetch GitHub and record exact `published_head`.
-- [ ] 67. Mark VERIFIED only if all mandatory requirements and the full browser gate PASS; otherwise remain ACTIVE/BLOCKED with the exact failing command and next action.
+- [x] 63. Compare final behavior against the original user report on a dirty/legacy browser profile and a clean profile.
+- [x] 64. Update the accepted risk register with current dispositions/evidence and zero unresolved Critical/High live-playability findings.
+- [x] 65. Reconcile `PROGRAM_STATE.json/.md`, active tasks, verification evidence, CHANGE_SEQUENCE, and publication fields to actual final Git/GitHub state.
+- [x] 66. Commit and publish to `origin/main`; refetch GitHub and record exact `published_head`.
+- [x] 67. Mark VERIFIED only if all mandatory requirements and the full browser gate PASS; otherwise remain ACTIVE/BLOCKED with the exact failing command and next action.

@@ -34,7 +34,7 @@ export default defineConfig({
     // test-only hook is enabled at build time, never through a URL parameter.
     command: 'npm run build && npm run preview -- --host 127.0.0.1 --port 4173 --strictPort',
     port: 4173,
-    reuseExistingServer: true,
+    reuseExistingServer: false,
     env: {
       VITE_E2E: 'true',
     },
