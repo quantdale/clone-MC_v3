@@ -15,7 +15,7 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "c9c91dc6098bda6cabd8473dded6a6743d2fe2e8",
-  "localHead": "c9c91dc6098bda6cabd8473dded6a6743d2fe2e8",
+  "localHead": "604b4920080364725d7822bbd164b0fc282a98dc",
   "lastCompletedTask": "session_start: Change 257 reopened ACTIVE/CHANGES REQUIRED per independent review (F257-A..L). Previous 80/80 VERIFIED claim revoked; baseline-aware spawn/recovery architecture preserved.",
   "nextExactAction": "Local unit/edit gates green (73/73 for 257); E2E + file-audit + final CI on exact final SHA after push required. 88/92.",
   "blockers": [
@@ -2452,8 +2452,8 @@
       "status": "REOPENED — previous 80/80 VERIFIED at b38d55c revoked by independent review 2026-09-01",
       "unitTests": null,
       "e2eTests": null,
-      "head": "c9c91dc6098bda6cabd8473dded6a6743d2fe2e8",
-      "note": "Reopened ACTIVE/CHANGES REQUIRED at session_start c9c91dc. F257-A..L: backup read-failure swallow (A), reset snapshot read-failure swallow (B), JS-snapshot-then-independent-deletes vs real multi-store IDB transaction (C), archive metadata.worldId ownership check (D), mandatory e2e persistence.spec.ts tests skipped (E migrated-legacy, F abrupt-close), risk-register R-7 silently removed (G), file-audit manifest has every row runtimeReachability=unknown testEvidence=[] findingIds=[] gitBlob=null with 'auto-reviewed ... no findings' (H), state previously certified an older SHA while main advanced by skip commits (I), visual clipped tolerance 0.015->0.02 without documented noise evidence (J), backup round-trip tests check counts not actual payload equality (K), archive import uses independent repository writes (L). Re-fix and re-certify; only then activate 258."
+      "head": "604b4920080364725d7822bbd164b0fc282a98dc",
+      "note": "REOPEN ongoing at 604b492 (88/92). Origin/main and local HEAD now agree; F257-A..G,J,K,L source fixes + 22 new tests. Remaining: file-audit per-row review (H), final CI (I)."
     }
   ],
   "publicationHistory": [
