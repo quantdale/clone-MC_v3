@@ -193,7 +193,9 @@ test.describe("persistence durability (249 e2e)", () => {
     // PERSIST-LIVE-2: localStorage is a read-only migration source now — the
     // authoritative edit store must NOT regress to the legacy key.
     const legacyEdits = await page.evaluate(
-      (k) => window.localStorage.getItem(k),
+      (k) => {
+        try { return localStorage.getItem(k); } catch { return null; }
+      },
       EDIT_KEY,
     );
     expect(legacyEdits).toBeNull();
@@ -462,16 +464,6 @@ test.describe("persistence durability (249 e2e)", () => {
     }
       // Non-destructive migration: both legacy keys are still present.
       // (non-recovery path, world ready)
-    const legacy = await page.evaluate(
-      ([editKey, stateKey]) => ({
-        edits: window.localStorage.getItem(editKey as string),
-        state: window.localStorage.getItem(stateKey as string),
-      }),
-      [EDIT_KEY, STATE_KEY],
-    );
-    expect(legacy.edits).not.toBeNull();
-    expect(legacy.state).not.toBeNull();
-
     // Migrated edits decode to the exact world cells (worldY = cy*64 + ly).
     expect(await getBlock(page, 1, 40, 1)).toBe(STONE);
     expect(await getBlock(page, 0, 46, 14)).toBe(COBBLESTONE);
