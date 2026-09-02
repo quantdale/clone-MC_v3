@@ -1,6 +1,6 @@
 {
   "generatedAt": "2026-09-03T06:00:00.000Z",
-  "reviewedSha": "e9406ad4cf4eb5209780e70863eea3f3b8ea14ee",
+  "reviewedSha": "0de0de3416a9a2e0c6641fb307c01a8d804b304f",
   "schemaNote": "Reviewed manifest for 257 reopen at 96b32c2; per-row semantic review for 5 257-repair files; mechanical inventory for the rest",
   "allowedReviewLevels": [
     "semantic",
@@ -10,7 +10,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2643,
+  "total": 2644,
   "rows": [
     {
       "path": ".agent/EXECUTION_PROMPT.md",
@@ -42391,6 +42391,26 @@
       ],
       "disposition": "NEW \u2014 22 fault-injection tests added in the 257 reopen",
       "reviewNotes": "Covers every read class (7 stores), every delete class (6 stores), ownership rejection (metadata + playerState), and round-trip payload equality (every field) plus foreign-world preservation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/257-void-world-startup-recovery/evidence/visual-tolerance-j.md",
+      "gitBlob": "91a5656757ff2a9ec62a39e9e0db154fc0dfedb5",
+      "category": "evidence",
+      "purpose": "F257-J visual tolerance evidence: 0.0107 ceiling -> 0.02 = 2x ceiling, CLIPPED_DIFF comment fixed",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "evidence",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "tests/e2e/visual-regression.spec.ts lines 47-62"
+      ],
+      "riskAreas": [],
+      "findingIds": [
+        "F257-J"
+      ],
+      "disposition": "Evidence retained; threshold justified",
+      "reviewNotes": "J evidence file satisfies F257-J",
       "status": "audited"
     }
   ]
