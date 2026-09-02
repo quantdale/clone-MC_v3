@@ -1,16 +1,16 @@
 # Tasks: 258-real-world-runtime-performance-fps-recovery
 
 Status: ACTIVE — Change 257 VERIFIED 92/92 at d55c2e7 (CI 33600754305 success); baseline measurement phase
-Tasks complete: 0/100 (0%). Target: 100% — 257 VERIFIED
+Tasks complete: 4/100 (4%). Target: 100% — 257 VERIFIED
 Advancement allowed: false
 
 ## A. Repository truth, activation and performance authority
 
-- [ ] 1. Fetch current `origin/main`, record exact `session_start_head`, require clean history-preserving start, and verify Change 257 is VERIFIED before activating 258.
-- [ ] 2. Run the OpenSpec pre-implementation quality gate and reconcile spec/source drift.
+- [x] 1. Fetch current `origin/main`, record exact `session_start_head`, require clean history-preserving start, and verify Change 257 is VERIFIED before activating 258.
+- [x] 2. Run the OpenSpec pre-implementation quality gate and reconcile spec/source drift.
 - [ ] 3. Record exact reference host/browser/GPU/renderer/viewport/DPR/display-refresh/quality configuration.
-- [ ] 4. Reclassify prior 247/254/255 evidence as synthetic, headless, microbenchmark, or production-representative; no old result may override a failing headed baseline.
-- [ ] 5. Activate 258 in PROGRAM_STATE at 0/100 with no pre-filled PASS evidence.
+- [x] 4. Reclassify prior 247/254/255 evidence as synthetic, headless, microbenchmark, or production-representative; no old result may override a failing headed baseline.
+- [x] 5. Activate 258 in PROGRAM_STATE at 0/100 with no pre-filled PASS evidence.
 
 ## B. Reproduce the user's low-FPS report
 
