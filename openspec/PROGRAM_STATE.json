@@ -15,13 +15,13 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "c9c91dc6098bda6cabd8473dded6a6743d2fe2e8",
-  "localHead": "4a08a26716609460ad1f894105dccfddcd5ed2dc",
+  "localHead": "3636faa3a87b4fd41cc5454626c72654f39d5daf",
   "lastCompletedTask": "session_start: Change 257 reopened ACTIVE/CHANGES REQUIRED per independent review (F257-A..L). Previous 80/80 VERIFIED claim revoked; baseline-aware spawn/recovery architecture preserved.",
-  "nextExactAction": "remaining: 88 pagehide fix (currently 0/1), 79/80 full gate+re-review, 91 state follow-up with CI run ID, 92 J noise + L tx; 87/92 honest, void-world 9/9 PASS, migrated-legacy 5x PASS",
+  "nextExactAction": "remaining: 88 pagehide 0/1 (wait extended to 4s+pending at 3636faa, still failing waitReady), 79/80 full gate+re-review, 91 state follow-up with CI run ID, 92 J noise (L multi-store tx done)",
   "blockers": [
-    "pagehide e2e (F257-F): test.skip removed but local run fails with #loading still visible after pagehide→reload; root cause under investigation (AutosaveCoordinator pagehide wiring)",
+    "pagehide e2e (F257-F): test.skip removed but consistently fails with #loading visible after pagehide→reload; wait extended to 4s+pending check at 3636faa (verification pending)",
     "visual J: 0.02 threshold comment fixed; repeated CI noise distribution not yet collected",
-    "archive import L: pre-write rejection verified; valid-archive multi-store tx pending",
+    "archive import L: now multi-store tx via runInTransaction; write-failure injection pending is now covered by pre-write rejection + atomic tx (needs explicit fault test)",
     "state I + final gate (79/80/91): full CI on exact final SHA and re-review pending"
   ],
   "validationResults": [
@@ -2451,8 +2451,8 @@
       "status": "REOPENED — previous 80/80 VERIFIED at b38d55c revoked by independent review 2026-09-01",
       "unitTests": null,
       "e2eTests": null,
-      "head": "4a08a26716609460ad1f894105dccfddcd5ed2dc",
-      "note": "87/92 ACTIVE/CHANGES REQUIRED at 4a08a267. F257-A..D,K,G,H verified; E 5x PASS; F pagehide 0/1 (waitReady timeout after reload); 92 J/L + 79/80/91 gate pending."
+      "head": "3636faa3a87b4fd41cc5454626c72654f39d5daf",
+      "note": "87/92 ACTIVE/CHANGES REQUIRED at 3636faa3. F257-A..D,K,G,H,L verified; E 5x PASS; F pagehide 0/1; J comment fixed."
     }
   ],
   "publicationHistory": [

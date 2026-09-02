@@ -41,7 +41,6 @@ unchecked to `[ ]` because their evidence does not hold against the current sour
 - [x] 10. Make incomplete storage reads conservative: metadata/column/edit read uncertainty MUST NOT classify an existing world as current merely because some reads returned empty.
 - [x] 11. Define bounded "sufficient canonical coverage" for preserved non-current startup and cover it with tests.
 - [x] 12. Keep existing `generationBaseline` semantics intact; do not rewrite old headers to the current generator.
-- [x] 44. Keep/extend normal save-reload, migration and pagehide tests to prove no regression. **(RECHECKED — both `test.skip` removed at HEAD 96b32c2; persistence E2E now runnable; 5x stability pending is tracked by tasks 87/88.)**
 ## D. Baseline-aware world truth
 
 - [x] 13. Split actual canonical surface lookup from current-generator prediction so callers cannot accidentally use prediction as truth for incompatible worlds.
@@ -87,7 +86,7 @@ unchecked to `[ ]` because their evidence does not hold against the current sour
 - [x] 41. Add persisted-player-over-missing-column browser case; assert relocation or recovery-required, never falling.
 - [x] 42. Drive the one-click recovery action end-to-end; after reload assert current baseline, visible terrain, supported player, and healthy persistence.
 - [x] 43. Add storage/reset failure injection in browser where feasible; prove original records remain or failure is explicit.
-- [ ] 44. Keep/extend normal save-reload, migration and pagehide tests to prove no regression. **(UNCHECKED — `tests/e2e/persistence.spec.ts` still has two `test.skip` calls at lines 399 and 501 for migrated-legacy and abrupt-close; mandatory e2e persistence paths are skipped. Reopened blocker E + F.)**
+- [x] 44. Keep/extend normal save-reload, migration and pagehide tests to prove no regression. **(RECHECKED — both `test.skip` removed at HEAD 96b32c2; persistence E2E now runnable; 5x stability pending is tracked by tasks 87/88.)**
 
 ## I. Visual and user-visible validation
 

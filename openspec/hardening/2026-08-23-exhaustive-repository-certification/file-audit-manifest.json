@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-01T15:00:00.000Z",
-  "reviewedSha": "96b32c203cd08c3cceb222c6b51daa7344e480e5",
+  "generatedAt": "2026-09-03T06:00:00.000Z",
+  "reviewedSha": "3636faa3a87b4fd41cc5454626c72654f39d5daf",
   "schemaNote": "Reviewed manifest for 257 reopen at 96b32c2; per-row semantic review for 5 257-repair files; mechanical inventory for the rest",
   "allowedReviewLevels": [
     "semantic",
@@ -1182,7 +1182,7 @@
     },
     {
       "path": "openspec/PROGRAM_STATE.json",
-      "gitBlob": null,
+      "gitBlob": "ccd6e1e37eb1f7b35ced2217939e19fdffa68ed2",
       "category": "spec",
       "purpose": "257 repair coverage for openspec/PROGRAM_STATE.json",
       "reviewLevel": "mechanical",
@@ -22302,7 +22302,7 @@
     },
     {
       "path": "openspec/changes/257-void-world-startup-recovery/tasks.md",
-      "gitBlob": null,
+      "gitBlob": "625c14dc64012fbaffe4dc2411c7d06745d0c0da",
       "category": "spec",
       "purpose": "257 repair coverage for openspec/changes/257-void-world-startup-recovery/tasks.md",
       "reviewLevel": "mechanical",
@@ -32718,7 +32718,7 @@
     },
     {
       "path": "src/storage/WorldArchiver.ts",
-      "gitBlob": "75ed5cf327179a264395249c2c0871ee30e2ab79",
+      "gitBlob": "7646140dea4cfbb063ebbdf8177bc600af0611b7",
       "category": "production",
       "purpose": "World archive export/import (042, revised 257). 257 repair: exportWorld now fail-closed on any world-owned read failure (no try/catch swallow on getWitherData); importWorld now validates metadata.worldId===archive.worldId and playerState.worldId===archive.worldId via validateWorldArchive, then performs sequential per-store puts (pre-write atomicity contract documented; multi-store tx layer is available for future use via runInMultiStoreTransaction).",
       "reviewLevel": "semantic",
@@ -34101,7 +34101,7 @@
     },
     {
       "path": "tests/e2e/persistence.spec.ts",
-      "gitBlob": null,
+      "gitBlob": "39c70f3de8a27e8fc08b5349176999af7b39b576",
       "category": "test",
       "purpose": "257 repair coverage for tests/e2e/persistence.spec.ts",
       "reviewLevel": "mechanical",
@@ -42371,7 +42371,7 @@
     },
     {
       "path": "tests/unit/RecoveryBackupF257AtoL.test.ts",
-      "gitBlob": "6bc8260f5b285e401638dc451698d40cb137ac34",
+      "gitBlob": "3ca848cafd7116fa80504299e02dd994ba01d4c5",
       "category": "test",
       "purpose": "New 22-test fault-injection suite (F257-A/B/C/D/K) covering backup fail-closed, snapshot fail-closed, multi-store atomic reset, archive ownership rejection, and round-trip payload equality. Not present in the 6e263f2 manifest; added at 96b32c2.",
       "reviewLevel": "semantic",
