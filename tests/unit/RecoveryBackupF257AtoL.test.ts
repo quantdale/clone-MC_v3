@@ -156,13 +156,14 @@ class ReadFaultFactory {
   open(name: string, version?: number): IdbOpenRequestLike {
     const req = this.inner.open(name, version);
     const baseDb = (req as unknown as { result: MockDatabase }).result;
-    const self = this;
+    const faultedStore = this.faultedStore;
+    const faultedOp = this.faultedOp;
     const proxied = new Proxy(baseDb, {
       get(target, prop, receiver) {
         if (prop === 'transaction') {
           return (store: string) => {
             const tx = target.transaction(store);
-            if (store !== self.faultedStore) return tx;
+            if (store !== faultedStore) return tx;
             const txAny = tx as unknown as { objectStore: (n: string) => unknown };
             const origObj = txAny.objectStore.bind(tx);
             txAny.objectStore = (n: string) => {
@@ -172,16 +173,16 @@ class ReadFaultFactory {
               return {
                 ...s,
                 get: (...args: unknown[]) => {
-                  if (self.faultedOp === 'get') {
-                    const r = { onsuccess: null, onerror: null, result: undefined, error: new Error(`injected read failure on ${self.faultedStore}.get`) };
+                  if (faultedOp === 'get') {
+                    const r = { onsuccess: null, onerror: null, result: undefined, error: new Error(`injected read failure on ${faultedStore}.get`) };
                     queueMicrotask(() => (r as { onerror: (() => void) | null }).onerror?.());
                     return r;
                   }
                   return origGet(...args);
                 },
                 getAll: (...args: unknown[]) => {
-                  if (self.faultedOp === 'getAll') {
-                    const r = { onsuccess: null, onerror: null, result: undefined, error: new Error(`injected read failure on ${self.faultedStore}.getAll`) };
+                  if (faultedOp === 'getAll') {
+                    const r = { onsuccess: null, onerror: null, result: undefined, error: new Error(`injected read failure on ${faultedStore}.getAll`) };
                     queueMicrotask(() => (r as { onerror: (() => void) | null }).onerror?.());
                     return r;
                   }

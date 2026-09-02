@@ -58,6 +58,7 @@ const PIXEL_DIFF = { channelTolerance: 24, maxChangedFraction: 0.02 };
 // full-frame captures with a fraction bound at the same 0.02 threshold (equal to
 // PIXEL_DIFF, safely above the measured 0.0107 noise ceiling). See evidence in
 // verification.md §12 and audit-findings.md F257-J.
+const CLIPPED_DIFF = { channelTolerance: 24, maxChangedFraction: 0.02 };
 /** Fixed camera pose for every capture. */
 const POSE_YAW = 0.6;
 const POSE_PITCH = -0.15;

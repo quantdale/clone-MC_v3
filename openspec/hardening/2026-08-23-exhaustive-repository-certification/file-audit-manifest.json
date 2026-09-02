@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-01T07:09:01.522Z",
-  "reviewedSha": "6e263f242f9f38d772bfde4ba33dc6bc06288d42",
-  "schemaNote": "Reviewed manifest for 257 repair; mechanical review, no findings",
+  "generatedAt": "2026-09-01T15:00:00.000Z",
+  "reviewedSha": "96b32c203cd08c3cceb222c6b51daa7344e480e5",
+  "schemaNote": "Reviewed manifest for 257 reopen at 96b32c2; per-row semantic review for 5 257-repair files; mechanical inventory for the rest",
   "allowedReviewLevels": [
     "semantic",
     "mechanical",
@@ -10,7 +10,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2642,
+  "total": 2643,
   "rows": [
     {
       "path": ".agent/EXECUTION_PROMPT.md",
@@ -32542,18 +32542,50 @@
     },
     {
       "path": "src/storage/GamePersistence.ts",
-      "gitBlob": null,
+      "gitBlob": "8b5c544493cd8363370284056fa9a9969a2d6497",
       "category": "production",
-      "purpose": "257 repair coverage for src/storage/GamePersistence.ts",
+      "purpose": "Production persistence facade (reset/backup/load/save over 6 IDB stores). 257 repair: fail-closed backup (exportWorldBackup surfaces read failures as {ok:false,no json}); fail-closed reset snapshot (returns ok:false before any delete on snapshot read failure); reset now uses runInMultiStoreTransaction over all 6 world-owned stores for one IndexedDB readwrite transaction; JS snapshot+sequential deletes + repair rollback kept as defensive fallback only.",
       "reviewLevel": "semantic",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "runtimeReachability": "production",
+      "imports": [
+        "DirtySaveQueue",
+        "AutosaveCoordinator",
+        "RepositorySaveSink",
+        "StorageHealthMonitor",
+        "WorldMetadataRepository",
+        "ChunkSectionRepository",
+        "BlockEntityRepository",
+        "EntityRepository",
+        "PlayerStateRepository",
+        "ChunkEditRepository",
+        "LegacyLocalStorageMigrator",
+        "WorldArchiver"
+      ],
+      "importedBy": [
+        "Game (engine)",
+        "tests/unit/GamePersistence.test.ts",
+        "tests/unit/RecoveryBackupAndAtomicReset.test.ts",
+        "tests/unit/RecoveryBackupF257AtoL.test.ts",
+        "tests/unit/GameStartupPersistence.test.ts"
+      ],
+      "testEvidence": [
+        "tests/unit/GamePersistence.test.ts:22 tests (quota, dispose idempotency, open, etc.)",
+        "tests/unit/RecoveryBackupAndAtomicReset.test.ts:9 tests (existing JS-rollback)",
+        "tests/unit/RecoveryBackupF257AtoL.test.ts:22 new F257-A/B/C/D/K tests",
+        "tests/unit/GameStartupPersistence.test.ts"
+      ],
+      "riskAreas": [
+        "data-loss",
+        "persistence-recovery",
+        "write-atomicity"
+      ],
+      "findingIds": [
+        "F257-A",
+        "F257-B",
+        "F257-C"
+      ],
+      "disposition": "resetCurrentWorld rewritten to multi-store IDB readwrite; exportWorldBackup fail-closed; new test coverage in RecoveryBackupF257AtoL.test.ts",
+      "reviewNotes": "257 reopen: 22 new fault-injection tests prove snapshot read failure across 7 store classes aborts before any delete; 6 delete stages fault-injected in multi-store tx; world byte/record-equivalent after abort; foreign world preserved; isResetCompleted stays false; retry succeeds.",
       "status": "audited"
     },
     {
@@ -32686,18 +32718,43 @@
     },
     {
       "path": "src/storage/WorldArchiver.ts",
-      "gitBlob": null,
+      "gitBlob": "75ed5cf327179a264395249c2c0871ee30e2ab79",
       "category": "production",
-      "purpose": "257 repair coverage for src/storage/WorldArchiver.ts",
+      "purpose": "World archive export/import (042, revised 257). 257 repair: exportWorld now fail-closed on any world-owned read failure (no try/catch swallow on getWitherData); importWorld now validates metadata.worldId===archive.worldId and playerState.worldId===archive.worldId via validateWorldArchive, then performs sequential per-store puts (pre-write atomicity contract documented; multi-store tx layer is available for future use via runInMultiStoreTransaction).",
       "reviewLevel": "semantic",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "runtimeReachability": "production",
+      "imports": [
+        "WorldArchive",
+        "WorldMetadataRepository",
+        "ChunkSectionRepository",
+        "BlockEntityRepository",
+        "EntityRepository",
+        "PlayerStateRepository",
+        "ChunkEditRepository"
+      ],
+      "importedBy": [
+        "GamePersistence",
+        "tests/unit/WorldArchiver.test.ts",
+        "tests/unit/import-export-recovery.test.ts",
+        "tests/unit/RecoveryBackupF257AtoL.test.ts"
+      ],
+      "testEvidence": [
+        "tests/unit/WorldArchiver.test.ts:6 tests (incl. rejects tampered playerState.worldId; consistent archive imports cleanly)",
+        "tests/unit/import-export-recovery.test.ts:6 tests (worldid-rejection scenario)",
+        "tests/unit/RecoveryBackupF257AtoL.test.ts:F257-D section"
+      ],
+      "riskAreas": [
+        "data-integrity",
+        "ownership-validation",
+        "archive-format"
+      ],
+      "findingIds": [
+        "F257-A",
+        "F257-D",
+        "F257-L"
+      ],
+      "disposition": "exportWorld fail-closed; ownership validation enforced via validateWorldArchive; silent playerState.worldId normalization removed; WorldArchiver.test worldid-rejection case passes; SaveRecoveryMatrix worldid-rejection scenario passes",
+      "reviewNotes": "Verified: 22 new fault-injection tests prove fail-closed read; ownership tests cover metadata.worldId and playerState.worldId mismatch.",
       "status": "audited"
     },
     {
@@ -32718,18 +32775,32 @@
     },
     {
       "path": "src/storage/WorldMetadataRepository.ts",
-      "gitBlob": null,
+      "gitBlob": "210c79081ee194358ac2a3782692732dcfd32962",
       "category": "production",
-      "purpose": "257 repair coverage for src/storage/WorldMetadataRepository.ts",
+      "purpose": "World metadata repository + multi-store transaction boundary (257 repair). 257 repair: IdbDatabaseLike.transaction now accepts string|string[]; new runInMultiStoreTransaction helper (F257-C) wraps a single IndexedDB readwrite tx across multiple stores; public WorldMetadataRepository.runInTransaction method exposes it; queueMicrotask-after-body pattern matches real IDB oncomplete timing.",
       "reviewLevel": "semantic",
-      "runtimeReachability": "unknown",
+      "runtimeReachability": "production",
       "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "importedBy": [
+        "GamePersistence",
+        "WorldArchiver (via requireDb)",
+        "tests/unit/RecoveryBackupF257AtoL.test.ts"
+      ],
+      "testEvidence": [
+        "tests/unit/RecoveryBackupF257AtoL.test.ts:F257-B/C/D sections",
+        "tests/unit/RecoveryBackupAndAtomicReset.test.ts (9 tests via the new multi-store path)",
+        "tests/unit/GamePersistence.test.ts:22 tests"
+      ],
+      "riskAreas": [
+        "data-loss",
+        "transaction-atomicity",
+        "crash-safety"
+      ],
+      "findingIds": [
+        "F257-C"
+      ],
+      "disposition": "New multi-store transaction infrastructure; IdbFactoryMock updated to accept string|string[] and synthesize oncomplete on the next microtask after body settlement; validated by 22 new tests + 9 existing tests",
+      "reviewNotes": "Type checking passes; verified by 31 unit tests in the 257 scope (RecoveryBackupF257AtoL + RecoveryBackupAndAtomicReset + GamePersistence).",
       "status": "audited"
     },
     {
@@ -36510,18 +36581,32 @@
     },
     {
       "path": "tests/unit/IdbFactoryMock.ts",
-      "gitBlob": null,
+      "gitBlob": "9c4d9d81d0342ed74c4e63ad8971b94897361316",
       "category": "test",
-      "purpose": "257 repair coverage for tests/unit/IdbFactoryMock.ts",
+      "purpose": "In-memory IDB factory mock for unit tests. 257 repair: MockDatabase.transaction now accepts string|string[] (multi-store tx) and exposes raw={abort,error,oncomplete,onerror,onabort}; Proxies for read/delete fault injection used by ReadFaultFactory/DeleteFaultFactory; oncomplete fires on the next microtask after the body settles to match real IDB timing.",
       "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
+      "runtimeReachability": "test",
       "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "importedBy": [
+        "tests/unit/RecoveryBackupAndAtomicReset.test.ts",
+        "tests/unit/RecoveryBackupF257AtoL.test.ts",
+        "tests/unit/GamePersistence.test.ts",
+        "tests/unit/WorldArchiver.test.ts",
+        "tests/unit/SaveRecoveryMatrix.test.ts",
+        "tests/unit/import-export-recovery.test.ts",
+        "tests/unit/GameStartupPersistence.test.ts"
+      ],
+      "testEvidence": [
+        "Indirectly tested by every test that uses createIdbFactoryMock \u2014 the mock now matches real IDB multi-store + oncomplete timing, so the same mock can drive the multi-store reset path."
+      ],
+      "riskAreas": [
+        "mock-vs-real-fidelity"
+      ],
+      "findingIds": [
+        "F257-C"
+      ],
+      "disposition": "Mock now supports string|string[] tx and oncomplete microtask; fault-injection helpers (ReadFaultFactory/DeleteFaultFactory) defined in test files reuse the same Proxy approach",
+      "reviewNotes": "Validated by 73 tests in the 257 scope (RecoveryBackupF257AtoL 22, RecoveryBackupAndAtomicReset 9, GamePersistence 22, WorldArchiver 6, import-export-recovery 6, SaveRecoveryMatrix 8).",
       "status": "audited"
     },
     {
@@ -42282,6 +42367,30 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/RecoveryBackupF257AtoL.test.ts",
+      "gitBlob": "6bc8260f5b285e401638dc451698d40cb137ac34",
+      "category": "test",
+      "purpose": "New 22-test fault-injection suite (F257-A/B/C/D/K) covering backup fail-closed, snapshot fail-closed, multi-store atomic reset, archive ownership rejection, and round-trip payload equality. Not present in the 6e263f2 manifest; added at 96b32c2.",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "test",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "22 tests pass: F257-A 3, F257-B 7, F257-C 7, F257-D 3, F257-K 2"
+      ],
+      "riskAreas": [],
+      "findingIds": [
+        "F257-A",
+        "F257-B",
+        "F257-C",
+        "F257-D",
+        "F257-K"
+      ],
+      "disposition": "NEW \u2014 22 fault-injection tests added in the 257 reopen",
+      "reviewNotes": "Covers every read class (7 stores), every delete class (6 stores), ownership rejection (metadata + playerState), and round-trip payload equality (every field) plus foreign-world preservation.",
       "status": "audited"
     }
   ]
