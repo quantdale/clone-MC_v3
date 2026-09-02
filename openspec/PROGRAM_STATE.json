@@ -15,7 +15,7 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "c9c91dc6098bda6cabd8473dded6a6743d2fe2e8",
-  "localHead": "96b32c203cd08c3cceb222c6b51daa7344e480e5",
+  "localHead": "4aa1f6fffda9745c5bcd4633102fc5c76fdf4ecc",
   "lastCompletedTask": "session_start: Change 257 reopened ACTIVE/CHANGES REQUIRED per independent review (F257-A..L). Previous 80/80 VERIFIED claim revoked; baseline-aware spawn/recovery architecture preserved.",
   "nextExactAction": "remaining: 87/88 5x Playwright runs (E/F), 79/80 full gate+re-review, 91 state follow-up with CI run ID, 92 J noise distribution + L valid-archive multi-store tx (or documented contract)",
   "blockers": [
@@ -2453,8 +2453,8 @@
       "status": "REOPENED — previous 80/80 VERIFIED at b38d55c revoked by independent review 2026-09-01",
       "unitTests": null,
       "e2eTests": null,
-      "head": "96b32c203cd08c3cceb222c6b51daa7344e480e5",
-      "note": "88/92 ACTIVE/CHANGES REQUIRED at 96b32c2. F257-A..D,K source fixes + 22 new fault-injection tests. E/F unskipped (stability proof pending 5x Playwright runs). 90 (file-audit per-row) and 91 (state follow-up with CI run ID) still open."
+      "head": "4aa1f6fffda9745c5bcd4633102fc5c76fdf4ecc",
+      "note": "86/92 ACTIVE/CHANGES REQUIRED at 4aa1f6ff. F257-A..D,K source+tests verified; E/F unskipped (5x pending); H file-audit PASSED 2643; validate-state PASSED; unit 4632/1 skipped."
     }
   ],
   "publicationHistory": [
