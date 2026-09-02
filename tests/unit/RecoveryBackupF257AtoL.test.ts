@@ -515,15 +515,15 @@ describe('F257-K: backup round-trip proves actual payload equality', () => {
       normalizeMeta(before.meta as { worldId: string; updatedAt?: number; createdAt?: number; generationVersion?: string } | null),
     );
     expect(after.cols.length).toBe(before.cols.length);
-    expect(JSON.stringify(after.cols)).toEqual(JSON.stringify(before.cols));
+    expect(after.cols).toEqual(before.cols);
     expect(after.edits.length).toBe(before.edits.length);
-    expect(JSON.stringify(after.edits)).toEqual(JSON.stringify(before.edits));
+    expect(after.edits).toEqual(before.edits);
     expect(after.bes.length).toBe(before.bes.length);
-    expect(JSON.stringify(after.bes)).toEqual(JSON.stringify(before.bes));
+    expect(after.bes).toEqual(before.bes);
     expect(after.es.length).toBe(before.es.length);
-    expect(JSON.stringify(after.es)).toEqual(JSON.stringify(before.es));
-    expect(JSON.stringify(after.ps)).toEqual(JSON.stringify(before.ps));
-    expect(JSON.stringify(after.wither)).toEqual(JSON.stringify(before.wither));
+    expect(after.es).toEqual(before.es);
+    expect(after.ps).toEqual(before.ps);
+    expect(after.wither).toEqual(before.wither);
     await p.dispose();
   });
 

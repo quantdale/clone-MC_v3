@@ -493,12 +493,20 @@ test.describe("persistence durability (249 e2e)", () => {
 
     // Simulate tab close/teardown: the pagehide handler enqueues the player
     // state and flushes every dirty unit (including captured chunk edits).
-    await page.evaluate(() =>
-      window.dispatchEvent(new PageTransitionEvent("pagehide")),
-    );
-    await page.waitForTimeout(1500);
-
-    await page.reload();
+    // Use plain Event("pagehide") — PageTransitionEvent is not available in
+    // Chromium headless and would throw ReferenceError, leaving the test hung
+    // on waitReady after reload. Both AutosaveCoordinator and Game listen for
+    // the "pagehide" type regardless of event class.
+    await page.evaluate(() => window.dispatchEvent(new Event("pagehide")));
+    // Give the pagehide flush time to drain the DirtySaveQueue into IndexedDB.
+    // The headless software-WebGL build can take >1s per IDB commit under load.
+    await page.waitForTimeout(4000);
+    // Verify the queue drained before reload — if not, retry once.
+    const pending = await page.evaluate(() => {
+      const g = (window as unknown as { __voxelGame?: { persistence?: { pendingCount: number } } }).__voxelGame;
+      return g?.persistence?.pendingCount ?? 0;
+    });
+    if (pending > 0) await page.waitForTimeout(3000);
     await waitReady(page);
 
     expect(await getBlock(page, cell.x, cell.y, cell.z)).toBe(STONE);

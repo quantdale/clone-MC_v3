@@ -124,45 +124,31 @@ export class WorldArchiver {
    *
    * Pre-write atomicity (F257-L): the entire archive is validated by `validateWorldArchive`
    * BEFORE any write; a malformed archive never touches the stores. For valid archives,
-   * the subsequent writes are sequential per-repository `put` calls (each is its own
-   * IndexedDB transaction). A mid-import write failure (e.g. quota) may leave a partial
-   * import — this is the documented contract inherited from the original design. The
-   * reset path (F257-C) uses a single multi-store transaction for its deletes; the same
-   * transaction layer is available (WorldMetadataRepository.runInTransaction /
-   * runInMultiStoreTransaction) should a future change require import-side atomicity.
-   * Callers that need stronger import atomicity should use the reset transaction layer
-   * directly and retry the whole import.
+   * the writes use one multi-store `readwrite` transaction spanning all 6 world-owned
+   * stores (world-metadata, chunk-sections, chunk-edits, player-state, block-entities,
+   * entities) via `WorldMetadataRepository.runInTransaction`, so a mid-import write
+   * failure (e.g. quota) atomically rolls back the whole import. This reuses the same
+   * transaction layer as the reset path (F257-C).
    */
   async importWorld(archive: WorldArchive): Promise<WorldImportReport> {
     const valid = validateWorldArchive(archive);
     await this.openAll();
 
-    if (valid.metadata) {
-      await this.metadata.putMetadata(valid.metadata);
-    }
-    for (const column of valid.columns) {
-      await this.chunkSections.putColumn(valid.worldId, column);
-    }
-    for (const chunk of valid.blockEntityChunks) {
-      await this.blockEntities.putChunkEntities(valid.worldId, chunk.chunkX, chunk.chunkZ, chunk.entities);
-    }
-    for (const chunk of valid.entityChunks) {
-      await this.entities.putChunkEntities(valid.worldId, chunk.chunkX, chunk.chunkZ, chunk.entities);
-    }
-    if (this.chunkEdits) {
-      for (const edit of valid.chunkEdits) {
-        await this.chunkEdits.putChunkEdits(valid.worldId, edit.chunkX, edit.chunkY, edit.chunkZ, edit.changes);
-      }
-    }
-    if (valid.witherData !== null && valid.witherData !== undefined) {
-      await this.metadata.putWitherData(valid.worldId, valid.witherData);
-    }
-    if (valid.playerState) {
-      // Ownership validation already ran in validateWorldArchive (F257-D): playerState.worldId
-      // MUST equal valid.worldId. No silent repair; an internally inconsistent archive is rejected
-      // before any write, and this branch only executes for valid archives.
-      await this.playerStates.putPlayerState(valid.playerState);
-    }
+    const stores = ["world-metadata", "chunk-sections", "chunk-edits", "player-state", "block-entities", "entities"] as const;
+    await this.metadata.runInTransaction([...stores], async (tx) => {
+      const put = (store: string, value: unknown) => new Promise<void>((resolve, reject) => {
+        const req = tx.objectStore(store).put(value) as unknown as { onsuccess: (() => void) | null; onerror: (() => void) | null; error: unknown };
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error instanceof Error ? req.error : new Error(`put failed on ${store}`));
+      });
+      if (valid.metadata) await put("world-metadata", valid.metadata);
+      for (const c of valid.columns) await put("chunk-sections", { ...c, key: `${valid.worldId}|${c.chunkX}|${c.chunkZ}`, worldId: valid.worldId });
+      for (const c of valid.blockEntityChunks) await put("block-entities", { key: `${valid.worldId}|${c.chunkX}|${c.chunkZ}`, worldId: valid.worldId, chunkX: c.chunkX, chunkZ: c.chunkZ, entities: c.entities });
+      for (const c of valid.entityChunks) await put("entities", { key: `${valid.worldId}|${c.chunkX}|${c.chunkZ}`, worldId: valid.worldId, chunkX: c.chunkX, chunkZ: c.chunkZ, entities: c.entities });
+      if (this.chunkEdits) for (const e of valid.chunkEdits) await put("chunk-edits", { key: `${valid.worldId}|${e.chunkX}|${e.chunkY}|${e.chunkZ}`, worldId: valid.worldId, chunkX: e.chunkX, chunkY: e.chunkY, chunkZ: e.chunkZ, changes: e.changes });
+      if (valid.witherData !== null && valid.witherData !== undefined) await put("world-metadata", { worldId: `__wither__:${valid.worldId}`, payload: valid.witherData, updatedAt: Date.now() });
+      if (valid.playerState) await put("player-state", valid.playerState);
+    });
 
     return {
       worldId: valid.worldId,
