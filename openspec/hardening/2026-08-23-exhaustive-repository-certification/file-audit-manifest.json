@@ -1,6 +1,6 @@
 {
   "generatedAt": "2026-09-03T06:00:00.000Z",
-  "reviewedSha": "3636faa3a87b4fd41cc5454626c72654f39d5daf",
+  "reviewedSha": "e9406ad4cf4eb5209780e70863eea3f3b8ea14ee",
   "schemaNote": "Reviewed manifest for 257 reopen at 96b32c2; per-row semantic review for 5 257-repair files; mechanical inventory for the rest",
   "allowedReviewLevels": [
     "semantic",
