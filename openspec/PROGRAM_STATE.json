@@ -5,9 +5,9 @@
   "currentChangeStatus": "ACTIVE/CHANGES REQUIRED",
   "lastCompletedChange": "256-production-readiness-hardening",
   "nextChange": "258-real-world-runtime-performance-fps-recovery",
-  "completedTasks": 86,
+  "completedTasks": 87,
   "totalTasks": 92,
-  "completionPercentage": 93.48,
+  "completionPercentage": 94.57,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": false,
@@ -17,14 +17,12 @@
   "sessionStartHead": "c9c91dc6098bda6cabd8473dded6a6743d2fe2e8",
   "localHead": "4aa1f6fffda9745c5bcd4633102fc5c76fdf4ecc",
   "lastCompletedTask": "session_start: Change 257 reopened ACTIVE/CHANGES REQUIRED per independent review (F257-A..L). Previous 80/80 VERIFIED claim revoked; baseline-aware spawn/recovery architecture preserved.",
-  "nextExactAction": "remaining: 87/88 5x Playwright runs (E/F), 79/80 full gate+re-review, 91 state follow-up with CI run ID, 92 J noise distribution + L valid-archive multi-store tx (or documented contract)",
+  "nextExactAction": "remaining: 88 pagehide fix (currently 0/1), 79/80 full gate+re-review, 91 state follow-up with CI run ID, 92 J noise + L tx; 87/92 honest, void-world 9/9 PASS, migrated-legacy 5x PASS",
   "blockers": [
-    "migrated-legacy e2e (F257-E): test.skip removed at 96b32c2; 5x stability pending (Playwright + real IDB)",
-    "abrupt-close pagehide e2e (F257-F): test.skip removed at 96b32c2; 5x stability pending (Playwright + real IDB)",
+    "pagehide e2e (F257-F): test.skip removed but local run fails with #loading still visible after pagehide→reload; root cause under investigation (AutosaveCoordinator pagehide wiring)",
     "visual J: 0.02 threshold comment fixed; repeated CI noise distribution not yet collected",
-    "archive import L: valid-archive writes sequential per-store; pre-write rejection verified; write-failure multi-store tx pending",
-    "state I + final gate (79/80/91): full CI on exact final SHA and re-review pending",
-    "file-audit H: 4 production files + 1 new test file have semantic review at 96b32c2; PASSED 2643"
+    "archive import L: pre-write rejection verified; valid-archive multi-store tx pending",
+    "state I + final gate (79/80/91): full CI on exact final SHA and re-review pending"
   ],
   "validationResults": [
     {
@@ -2454,7 +2452,7 @@
       "unitTests": null,
       "e2eTests": null,
       "head": "4aa1f6fffda9745c5bcd4633102fc5c76fdf4ecc",
-      "note": "86/92 ACTIVE/CHANGES REQUIRED at 4aa1f6ff. F257-A..D,K source+tests verified; E/F unskipped (5x pending); H file-audit PASSED 2643; validate-state PASSED; unit 4632/1 skipped."
+      "note": "87/92 ACTIVE/CHANGES REQUIRED at 4aa1f6ff. F257-A..D,K,G,H verified; E 5x PASS; F pagehide currently failing (waitReady timeout); 92 J/L pending; 79/80/91 gate pending."
     }
   ],
   "publicationHistory": [
