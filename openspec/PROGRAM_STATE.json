@@ -15,7 +15,7 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "c9c91dc6098bda6cabd8473dded6a6743d2fe2e8",
-  "localHead": "4aa1f6fffda9745c5bcd4633102fc5c76fdf4ecc",
+  "localHead": "4a08a26716609460ad1f894105dccfddcd5ed2dc",
   "lastCompletedTask": "session_start: Change 257 reopened ACTIVE/CHANGES REQUIRED per independent review (F257-A..L). Previous 80/80 VERIFIED claim revoked; baseline-aware spawn/recovery architecture preserved.",
   "nextExactAction": "remaining: 88 pagehide fix (currently 0/1), 79/80 full gate+re-review, 91 state follow-up with CI run ID, 92 J noise + L tx; 87/92 honest, void-world 9/9 PASS, migrated-legacy 5x PASS",
   "blockers": [
@@ -2451,8 +2451,8 @@
       "status": "REOPENED — previous 80/80 VERIFIED at b38d55c revoked by independent review 2026-09-01",
       "unitTests": null,
       "e2eTests": null,
-      "head": "4aa1f6fffda9745c5bcd4633102fc5c76fdf4ecc",
-      "note": "87/92 ACTIVE/CHANGES REQUIRED at 4aa1f6ff. F257-A..D,K,G,H verified; E 5x PASS; F pagehide currently failing (waitReady timeout); 92 J/L pending; 79/80/91 gate pending."
+      "head": "4a08a26716609460ad1f894105dccfddcd5ed2dc",
+      "note": "87/92 ACTIVE/CHANGES REQUIRED at 4a08a267. F257-A..D,K,G,H verified; E 5x PASS; F pagehide 0/1 (waitReady timeout after reload); 92 J/L + 79/80/91 gate pending."
     }
   ],
   "publicationHistory": [
