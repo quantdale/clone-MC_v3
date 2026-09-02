@@ -1,7 +1,7 @@
 # Tasks: 258-real-world-runtime-performance-fps-recovery
 
-Status: PLANNED — implementation blocked until Change 257 is VERIFIED
-Tasks complete: 0/100 (0%). Target: 100%
+Status: ACTIVE — Change 257 VERIFIED 92/92 at d55c2e7 (CI 33600754305 success); baseline measurement phase
+Tasks complete: 0/100 (0%). Target: 100% — 257 VERIFIED
 Advancement allowed: false
 
 ## A. Repository truth, activation and performance authority
