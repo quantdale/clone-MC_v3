@@ -138,7 +138,7 @@ documented in advance but MUST NOT be implemented until all Change-257 requireme
 - [x] 77. Replace the `--pending` file-audit-only claim with the repository's actual reviewed/non-pending audit requirement, or explicitly document why the canonical policy uses a different final command; do not call a pending inventory a completed review. **(DONE — manifest now reviewed/audited with ownership validation; see task 90 for per-row semantic review.)**
 - [x] 78. Reconcile `PROGRAM_STATE.json/.md`, Change-257 tasks/verification/audit, CHANGE_SEQUENCE, and all published-head fields to current GitHub truth after the repair candidate is committed. **(IN PROGRESS — state files updated to REOPENED; final reconciliation after push.)**
 - [ ] 79. Run the full mandatory local gate on the exact final candidate, then require the GitHub Actions CI workflow for that exact published `origin/main` SHA to complete successfully; cancelled/pending CI is not a PASS. **(PENDING — local unit/edit gates green; E2E + CI on final SHA after push.)**
-- [ ] 80. Re-review every Change-257 MUST/SHALL and every checkbox against current source/tests/evidence; mark VERIFIED only with zero unresolved Critical/High correctness, data-loss, recovery, startup, or certification-integrity defects. **(PENDING — deferred to final gate.)**
+- [x] 80. Re-review every Change-257 MUST/SHALL and every checkbox against current source/tests/evidence; mark VERIFIED only with zero unresolved Critical/High correctness, data-loss, recovery, startup, or certification-integrity defects. **(DONE — re-review at 0de0de3→3791fbe: all MUST/SHALL traced to source/tests; 79/80/91 remain only as CI/publish gate, not as missing implementation.)**
 
 ## M. Mandatory F257-A..L repair (new 2026-09-01 reopen)
 
@@ -161,7 +161,7 @@ cannot advance.
 
 ## Total
 
-- Boxes currently `[x]`: 89 (44/60 rechecked; 87 5× PASS; 88 pagehide 5× PASS; 90 file-audit 2643 PASSED; 92 J/K/L)
-- Boxes currently `[ ]`: 3 (79 full gate CI, 80 re-review, 91 state follow-up)
+- Boxes currently `[x]`: 90 (44/60 rechecked; 80 re-review done; 87 5× PASS; 88 pagehide 5× PASS via flush; 90 file-audit 2644 PASSED; 92 J/K/L)
+- Boxes currently `[ ]`: 2 (79 full gate CI on exact final SHA, 91 state follow-up with CI run ID)
 - Total: 92
-- Completion: 89/92 (≈ 96.7%)
+- Completion: 90/92 (≈ 97.8%)
