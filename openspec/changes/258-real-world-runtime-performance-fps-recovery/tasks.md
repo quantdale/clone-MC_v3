@@ -1,7 +1,7 @@
 # Tasks: 258-real-world-runtime-performance-fps-recovery
 
-Status: ACTIVE — Change 257 VERIFIED 92/92 at d55c2e7 (CI 33600754305 success); Phase-1/2/3 foundation + gates + World-internal phases + worker fault injection + worker pack-axis fix + duplicate-submit guard + harness scenarios
-Tasks complete: 29/100 (29%). Target: 100% — 257 VERIFIED
+Status: ACTIVE — Change 257 VERIFIED 92/92 at d55c2e7 (CI 33600754305 success); Phase-1/2/3 foundation + gates + World-internal phases + worker fault injection + worker pack-axis fix + duplicate-submit guard + harness scenarios + fallback/stale/startup evidence
+Tasks complete: 32/100 (32%). Target: 100% — 257 VERIFIED
 Advancement allowed: false
 
 ## A. Repository truth, activation and performance authority
@@ -47,7 +47,7 @@ Advancement allowed: false
 - [ ] 30. Record commit/browser/GPU/viewport/DPR/buffer/quality metadata.
 - [x] 31. Reject software rendering/headless overrides from canonical results. (Pure `CanonicalRunGate.evaluateCanonicalRun` + `isSoftwareRenderer`: headless/WebGL-down/software-renderer/DPR-out-of-range/reduced-distance all non-canonical with named reasons, malformed fail closed; 7 unit tests; runner `canonical-perf-run.mjs` mirrors the rules with MUST-match comments.)
 - [x] 32. Add deterministic seed/spawn/route/action scripting. (Seed flag + fixed waypoint teleports; `interaction` scenario drives the real input path (pointer lock + break-hold + hotbar + place click); `entities-day-night` cycles the fixed daylight hook with camera sweep. No benchmark-only hooks. Headless smoke run: 5 scenarios, zero action errors.)
-- [ ] 33. Add warm-up policy and separate startup vs steady-state evidence.
+- [x] 33. Add warm-up policy and separate startup vs steady-state evidence. (Warm-up 5 s stationary / 2 s others; per-sample `startup` snapshot right after warm-up vs steady-state snapshot at window end, both in the versioned artifact. Headed adequacy pending.)
 - [ ] 34. Run at least three samples/scenario and report median plus worst relevant percentile.
 - [x] 35. Emit versioned JSON and human summary artifacts. (Versioned `canonical-perf.json` now carries per-sample whole-frame stats + rolling minima + phase percentiles + aux + worker + work counts + pipeline + action errors + trace flags; `summary.md`; headless smoke artifact verified.)
 - [x] 36. Emit screenshots at scenario checkpoints. (Per-sample PNGs for all five scenarios; headless smoke captured 5/5.)
@@ -59,9 +59,9 @@ Advancement allowed: false
 - [ ] 39. Characterize sync mesh cost and worker parity on identical fixtures.
 - [x] 40. Define capability checks and conservative pool sizing. (Pure `WorkerMeshCapability`: `recommendedWorkerPoolSize` = half cores clamped [1,4], `resolveWorkerMeshingSupport` fails closed without `Worker`; 5 unit tests. Production default stays sync fallback; activation (41) pending headed proof.)
 - [ ] 41. Enable `workerMeshing` in shipped Game composition when supported.
-- [ ] 42. Preserve deterministic sync fallback when Worker unavailable.
+- [x] 42. Preserve deterministic sync fallback when Worker unavailable. (Pre-existing construction-failure fallback test + throwing-factory nested-fallback test + `WorkerMeshCapability` fail-closed resolution; production default stays sync. All green headless.)
 - [x] 43. Prove worker/sync semantic equivalence across render streams. (Headless slice: `WorkerSyncEquivalence.test.ts` drives identical scripted content through live sync + worker Worlds and proves identical attached section sets, exact translucent match, and identical opaque visible unit-face sets; module parity `WorkerMeshParity` exact incl. corner order. Proved + fixed a real pre-existing pack bug on the way: `PACKED_FACE_LAYOUTS` u/v swapped on + faces corrupted non-square merged rects — fixed with axis mapping + (m0,m3,m2,m1) corner permutation, standard indices. Headed FPS-scale proof still pending.)
-- [ ] 44. Prove stale generation/section versions cannot attach.
+- [x] 44. Prove stale generation/section versions cannot attach. (Pre-existing delayed-result rejection after replacement/unload + `MeshWorkerClient` validate/reject suites + live equivalence attaching only current versions. All green headless; headed race-scale proof pending.)
 - [x] 45. Inject worker crash/protocol/bad-response failures. (`WorkerFallbackRecovery.test.ts`: throwing factory + mid-batch `onerror` crash; malformed/stale rejection pre-existing via `MeshWorkerClient` validation + `World.test.ts` delayed-result rejection.)
 - [x] 46. Prove failure recovers chunks through bounded fallback. (Both fault tests drain `pendingMesh` to 0, attach geometry, leak no batches, disable workers; failures/fallbacks counted.)
 - [x] 47. Prevent duplicate work for same current mesh version. (`ensureMeshableRecord` skips the cancel/reset when a worker batch for the exact chunk version is in flight and current + defense-in-depth check in `submitWorkerMeshJob`; `WorkerFallbackRecovery` dedupe test proves no cancel/resubmit across bump-free teleports and fails with the guard removed. No behavior change for edited/stale versions.)

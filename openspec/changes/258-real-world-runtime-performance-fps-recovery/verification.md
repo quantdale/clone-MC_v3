@@ -1,7 +1,7 @@
 # Verification: 258-real-world-runtime-performance-fps-recovery
 
 Status: NOT VERIFIED
-Completion: 29/100 (29%)
+Completion: 32/100 (32%)
 Advancement allowed: false
 
 ## Requirement evidence
@@ -132,10 +132,16 @@ full unit 4670 passed + 1 skipped; file-audit manifest extended to 2651 rows and
 
 ## Incomplete tasks
 
-71/100 incomplete. Tasks 1, 2, 4, 5, 16–28, 31, 32, 35–38, 40, 43, 45, 46, 47, and 58 complete;
+68/100 incomplete. Tasks 1, 2, 4, 5, 16–28, 31–33, 35–38, 40, 42–47, and 58 complete;
 task 3 and baseline tasks 6–15 (plus 91–95) are blocked on a headed hardware-WebGL reference
 host. The governor/worker production-wiring tasks (33, 34, 39, 41–44, 47–57, 59, 60) and hot-path
 sections G–J remain open pending headed profiling proof.
+
+## Phase-3 evidence continued (tasks 33, 42, 44, 47)
+
+- Task 33: runner records a post-warm-up `startup` snapshot plus the end-of-window steady-state sample per scenario (syntax-checked; headed adequacy pending).
+- Task 42: sync-fallback preservation evidence — pre-existing construction-failure fallback + throwing-factory nested fallback + capability fail-closed, production default untouched (all green).
+- Task 44: stale-attach prevention evidence — pre-existing delayed-result rejection + client validation suites + live current-version attach (all green; headed race-scale proof pending).
 
 ## Phase-3 evidence continued (task 47 duplicate-submit guard)
 

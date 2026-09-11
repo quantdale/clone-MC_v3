@@ -281,9 +281,17 @@ async function main() {
       tracing = false;
     }
     for (let s = 0; s < opts.samples; s++) {
-      // Warm-up separation: stationary warms 5 s; traversal scenarios reuse
-      // the route so sample 0 is fresh and later samples are cached-state.
+      // Warm-up separation (258 task 33): stationary warms 5 s, others 2 s.
+      // A startup snapshot right after warm-up separates startup costs from
+      // the steady-state sample at the end of the workload window.
       await page.waitForTimeout(scenario.name === 'stationary' ? 5000 : 2000);
+      const startupSnapshot = await page.evaluate(() => {
+        const game = window.__voxelGame;
+        return {
+          stats: game.getWholeFrameStats(),
+          rollingMin10sFps: game.getWholeFrameRollingMinFps(10_000),
+        };
+      });
       if (scenario.action === 'traverse') {
         await page.evaluate((sampleIndex) => {
           const game = window.__voxelGame;
@@ -323,6 +331,7 @@ async function main() {
       samples.push({
         ...snapshot.stats,
         rollingMin10sFps: snapshot.rollingMin10sFps,
+        startup: startupSnapshot,
         phases: snapshot.phases,
         aux: snapshot.aux,
         worker: snapshot.worker,

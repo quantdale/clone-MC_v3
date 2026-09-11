@@ -5,9 +5,9 @@
   "currentChangeStatus": "ACTIVE",
   "lastCompletedChange": "257-void-world-startup-recovery",
   "nextChange": "258-real-world-runtime-performance-fps-recovery",
-  "completedTasks": 29,
+  "completedTasks": 32,
   "totalTasks": 100,
-  "completionPercentage": 29,
+  "completionPercentage": 32,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": false,
@@ -15,11 +15,11 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "d699685dae0fd22e3acd6a78e5086c3ce7a26962",
-  "localHead": "6e83777fec1f58c30233e1e810f34f53c0d8968c",
-  "lastCompletedTask": "258 task 47 — duplicate-submit guard in ensureMeshableRecord + submit path (1 test, discrimination-proven); 29/100 complete; headed hardware-GPU baseline still blocked",
-  "nextExactAction": "Record the full headless e2e result now running; then on a reference host with headed Chrome/Chromium and hardware WebGL, record task 3 environment metadata and run the Phase-3 production build at default quality for baselines (tasks 6-15); then governor/worker production wiring with headed proof. Environment-independent remainder (tasks 33-34, 39, 41, 42, 44, 48-57, 59-90) needs headed profiling before any production retune.",
+  "localHead": "bf491ba49dbb8edb1b346a41fdaa7c2fb4bcd5ee",
+  "lastCompletedTask": "258 tasks 33/42/44 evidence complete (startup snapshots, fallback + stale suites); 32/100 complete; headed hardware-GPU baseline still blocked",
+  "nextExactAction": "Record the full headless e2e result now running; then on a reference host with headed Chrome/Chromium and hardware WebGL, record task 3 environment metadata and run the Phase-3 production build at default quality for baselines (tasks 6-15); then governor/worker production wiring with headed proof. Environment-independent remainder (tasks 34, 39, 41, 48-57, 59-90) needs headed profiling before any production retune.",
   "blockers": [
-    "Canonical Change 258 headed baseline still unavailable: this host exposes system Chrome 151 but only SwiftShader software WebGL (no GPU, no /dev/dri). Tasks 3, 6-15 and 91-95 require a headed production build with hardware WebGL and remain blocked; headless/SwiftShader evidence cannot substitute. Environment-independent work (tasks 16-28, 31, 32, 35-38, 40, 43, 45-47, 58) landed and headless-verified; production default remains sync with no quality retune."
+    "Canonical Change 258 headed baseline still unavailable: this host exposes system Chrome 151 but only SwiftShader software WebGL (no GPU, no /dev/dri). Tasks 3, 6-15 and 91-95 require a headed production build with hardware WebGL and remain blocked; headless/SwiftShader evidence cannot substitute. Environment-independent work (tasks 16-28, 31-33, 35-38, 40, 42-47, 58) landed and headless-verified; production default remains sync with no quality retune."
   ],
   "validationResults": [
     {
