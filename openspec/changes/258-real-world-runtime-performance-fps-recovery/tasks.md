@@ -1,7 +1,7 @@
 # Tasks: 258-real-world-runtime-performance-fps-recovery
 
-Status: ACTIVE — Change 257 VERIFIED 92/92 at d55c2e7 (CI 33600754305 success); Phase-1 foundation + canonical gate + worker capability + live phase proof
-Tasks complete: 14/100 (14%). Target: 100% — 257 VERIFIED
+Status: ACTIVE — Change 257 VERIFIED 92/92 at d55c2e7 (CI 33600754305 success); Phase-1/2 foundation + gates + World-internal phases + worker fault injection + harness scenarios
+Tasks complete: 27/100 (27%). Target: 100% — 257 VERIFIED
 Advancement allowed: false
 
 ## A. Repository truth, activation and performance authority
@@ -28,13 +28,13 @@ Advancement allowed: false
 ## C. True whole-frame and phase instrumentation
 
 - [x] 16. Add rAF-to-rAF whole-frame metric including update/world/simulation/render. (`GameLoop` 4th-param boundary hook reports the raw rAF interval before update/render, even on throw; `Game` records every interval into a 600-sample `WholeFrameRing` via `recordInterval`; render-submit bracket in `RenderPerformanceMonitor` kept separate. `Game.getWholeFrameStats/getWholeFrameRollingMinFps` expose the authority to the harness. GameLoop +9.6m live-boot e2e 30/30 green.)
-- [ ] 17. Add bounded timers for input/update, fixed ticks, world.update, generation, meshing, lighting, upload, unload, UI and render. (Game-level input/fixedTicks/worldUpdate/renderSubmit wired via disabled-by-default `PhaseTimer`, live-proven by `whole-frame-metrics.spec.ts`; World-internal generation/meshing/lighting/upload/unload phases NOT DONE.)
-- [ ] 18. Add generation timing/count telemetry.
-- [ ] 19. Add main-thread meshing and worker dispatch/completion timing.
-- [ ] 20. Add lighting actual elapsed/work telemetry.
-- [ ] 21. Add GPU-upload elapsed/bytes/queue/deferred telemetry.
-- [ ] 22. Merge renderer.info/drawing-buffer into whole-frame samples.
-- [ ] 23. Add worker utilization/failure/retry/fallback telemetry.
+- [x] 17. Add bounded timers for input/update, fixed ticks, world.update, generation, meshing, lighting, upload, unload, UI and render. (Game-level input/fixedTicks/worldUpdate/renderSubmit wired before; World-internal generation/meshingMain/workerDispatch/lighting/upload/unload now accumulate in World's own disabled-by-default `PhaseTimer` and merge into the Game sample in `render()`. Nest-guarded `withPhase` bracket (never nests, never throws, exception-safe) after a live production crash (`begin(upload) while meshingMain is open` on the canonical section path) was caught by the new e2e and fixed. Live-proven by extended `whole-frame-metrics.spec.ts` 2/2: teleport-forced generation shows generation 158 ms / meshingMain 213 ms / upload / unload totals.)
+- [x] 18. Add generation timing/count telemetry. (`generation` phase + per-frame `generatedChunks` in `WorldFrameWorkCounts`, snapshotted at end of `update`; unit 12 + live proof.)
+- [x] 19. Add main-thread meshing and worker dispatch/completion timing. (`meshingMain` + `workerDispatch` phases; `syncMeshedJobs`/`workerDispatchedJobs`/`workerCompletedJobs` counts; unit + live proof; sync default shows workerDispatch 0.)
+- [x] 20. Add lighting actual elapsed/work telemetry. (`lighting` phase around the real `lightEngine.drain` + `lightOpsUsed` count; unit.)
+- [x] 21. Add GPU-upload elapsed/bytes/queue/deferred telemetry. (`upload` phase around both attach paths + `uploadedMeshes` count; bytes/queues pre-existing in `performanceSnapshot`; unit + live proof.)
+- [x] 22. Merge renderer.info/drawing-buffer into whole-frame samples. (Always-on fixed `FrameAuxRing`: calls/triangles/geometries/textures/buffer/dynScale recorded per rendered frame, `getWholeFrameAuxLatest`/`getWholeFrameMaxCalls`; unit + live proof with real buffer size.)
+- [x] 23. Add worker utilization/failure/retry/fallback telemetry. (Counters pre-existing; `Game.getWorkerTelemetry` + per-frame `getWorldFrameWorkCounts` accessors; runner captures all five scenarios; unit + live proof.)
 - [x] 24. Add fixed-size sample ring with p50/p95/p99/long-frame analysis. (`WholeFrameRing`: fixed Float64Array rings, p50/p95/p99, avg FPS, >50 ms long frames, >100 ms severe stalls; 17 unit tests.)
 - [x] 25. Add rolling-window FPS/frame analysis. (`rollingMinFps` trailing-window minimum over newest-first interval accumulation, default 10 s; `longFrameFraction`; unit-tested.)
 - [x] 26. Add low-overhead diagnostics switch and measure disabled/enabled overhead. (`PhaseTimer` enabled flag; disabled `begin/end` never touch the clock — zero clock reads asserted by test; totals reset per frame.)
@@ -46,12 +46,12 @@ Advancement allowed: false
 - [ ] 29. Run actual production build/default desktop quality.
 - [ ] 30. Record commit/browser/GPU/viewport/DPR/buffer/quality metadata.
 - [x] 31. Reject software rendering/headless overrides from canonical results. (Pure `CanonicalRunGate.evaluateCanonicalRun` + `isSoftwareRenderer`: headless/WebGL-down/software-renderer/DPR-out-of-range/reduced-distance all non-canonical with named reasons, malformed fail closed; 7 unit tests; runner `canonical-perf-run.mjs` mirrors the rules with MUST-match comments.)
-- [ ] 32. Add deterministic seed/spawn/route/action scripting.
+- [x] 32. Add deterministic seed/spawn/route/action scripting. (Seed flag + fixed waypoint teleports; `interaction` scenario drives the real input path (pointer lock + break-hold + hotbar + place click); `entities-day-night` cycles the fixed daylight hook with camera sweep. No benchmark-only hooks. Headless smoke run: 5 scenarios, zero action errors.)
 - [ ] 33. Add warm-up policy and separate startup vs steady-state evidence.
 - [ ] 34. Run at least three samples/scenario and report median plus worst relevant percentile.
-- [ ] 35. Emit versioned JSON and human summary artifacts.
-- [ ] 36. Emit screenshots at scenario checkpoints.
-- [ ] 37. Capture PerformanceObserver long tasks and CDP trace where supported.
+- [x] 35. Emit versioned JSON and human summary artifacts. (Versioned `canonical-perf.json` now carries per-sample whole-frame stats + rolling minima + phase percentiles + aux + worker + work counts + pipeline + action errors + trace flags; `summary.md`; headless smoke artifact verified.)
+- [x] 36. Emit screenshots at scenario checkpoints. (Per-sample PNGs for all five scenarios; headless smoke captured 5/5.)
+- [x] 37. Capture PerformanceObserver long tasks and CDP trace where supported. (Long tasks pre-existing; per-scenario CDP `trace.zip` via context tracing with graceful no-trace degrade; headless smoke captured 5/5 trace zips.)
 - [x] 38. Harness self-test: injected busy loop must fail the gate. (`busyLoopSelfTestSummary` fails all four `PerfGate` gates; `PerfGate.test.ts` 7 tests + runner `--self-test` PASS.)
 
 ## E. Production worker meshing
@@ -62,8 +62,8 @@ Advancement allowed: false
 - [ ] 42. Preserve deterministic sync fallback when Worker unavailable.
 - [ ] 43. Prove worker/sync semantic equivalence across render streams.
 - [ ] 44. Prove stale generation/section versions cannot attach.
-- [ ] 45. Inject worker crash/protocol/bad-response failures.
-- [ ] 46. Prove failure recovers chunks through bounded fallback.
+- [x] 45. Inject worker crash/protocol/bad-response failures. (`WorkerFallbackRecovery.test.ts`: throwing factory + mid-batch `onerror` crash; malformed/stale rejection pre-existing via `MeshWorkerClient` validation + `World.test.ts` delayed-result rejection.)
+- [x] 46. Prove failure recovers chunks through bounded fallback. (Both fault tests drain `pendingMesh` to 0, attach geometry, leak no batches, disable workers; failures/fallbacks counted.)
 - [ ] 47. Prevent duplicate work for same current mesh version.
 - [ ] 48. Measure/optimize pack-transfer-expand cost with safe transferables/reuse.
 - [ ] 49. Re-run baseline and quantify p95/main-thread improvement.
@@ -125,6 +125,8 @@ Advancement allowed: false
 - [ ] 90. Capture/review every intentional default presentation change and re-pin only justified goldens.
 
 ## K. Final real-world certification and publication
+
+> Phase-2 checkpoint (2026-09-11): tasks 17–23, 32, 35–37, 45–46 complete headless-verified (27/100). No production behavior retuned: all timing is disabled-by-default with zero clock reads; the only behavioral delta is structural (exception-safe nest-guarded brackets). Headed hardware-WebGL baselines (3, 6–15, 29–30, 33–34, 39, 41–44, 47–49, 91–95) remain blocked on a GPU host — see verification.md.
 
 - [ ] 91. Stationary 30 s: average >=55 FPS, p95 <=22 ms, p99 <=33 ms, >50 ms <=1%.
 - [ ] 92. Fresh traversal 60 s: average >=45 FPS, p95 <=28 ms, p99 <=50 ms, no recurring >100 ms stalls.

@@ -8,6 +8,14 @@
  * rAF-to-rAF whole-frame stats from the live game (`getWholeFrameStats`),
  * and writes a versioned JSON artifact plus a human summary.
  *
+ * Scenario scripting (258 task 32) is deterministic and seed-fixed: traversal
+ * routes teleport along a fixed waypoint line, the interaction scenario
+ * drives the REAL input path (pointer lock + mouse/keyboard, no
+ * benchmark-only hooks) through a fixed break/place/hotbar script, and the
+ * entities/day-night scenario cycles the fixed daylight hook while
+ * traversing. No benchmark-only code path: every action the shipped game
+ * ships is exercised through production seams.
+ *
  * Canonical rules (fail-closed, per the runtime-performance spec):
  * - canonical runs MUST be headed with hardware WebGL at default desktop
  *   quality. SwiftShader/llvmpipe/software rendering, headless overrides,
@@ -110,6 +118,52 @@ async function runSelfTest() {
   console.log('[perf] SELF-TEST PASSED: busy-loop summary fails every gate (gate is not vacuous).');
 }
 
+/**
+ * One deterministic interaction workload step (258 task 32, scenario
+ * `interaction`): fixed waypoint teleport, look-down camera, a real
+ * break-hold through pointer-locked mouse input, hotbar select, and a
+ * real place/use click. Uses only the shipped input path; failures throw
+ * and are recorded per-sample as actionErrors (never fail the run).
+ */
+async function scriptInteractionStep(page, sampleIndex, step) {
+  await page.evaluate(
+    ([sample, i]) => {
+      const game = window.__voxelGame;
+      const base = 400 + sample * 160;
+      game?.player?.position?.set?.(base + (i % 4) * 8, 40, 8);
+      game?.testSetCameraPose?.(0, -0.5);
+    },
+    [sampleIndex, step],
+  );
+  await page.click('#game-canvas');
+  await page.waitForFunction(() => document.pointerLockElement !== null, { timeout: 5000 });
+  await page.mouse.down();
+  await page.waitForTimeout(1200);
+  await page.mouse.up();
+  await page.keyboard.press(`${(step % 9) + 1}`);
+  await page.mouse.click(640, 360, { button: 'right' });
+}
+
+/**
+ * One deterministic entity/day-night workload step (258 task 32, scenario
+ * `entities-day-night`): fixed daylight cycle through the shipped test hook
+ * while traversing a fixed waypoint line with a slow camera sweep, so
+ * lighting/presentation and mob simulation stay in the measured path.
+ */
+async function scriptDayNightStep(page, sampleIndex, step) {
+  const daylight = [1.0, 0.35, 0.0][step % 3];
+  await page.evaluate(
+    ([sample, i, light]) => {
+      const game = window.__voxelGame;
+      const base = 800 + sample * 160;
+      game?.player?.position?.set?.(base + (i % 6) * 8, 40, 8);
+      game?.testFreezeDayNight?.(light);
+      game?.testSetCameraPose?.(((i * 45) % 360) * (Math.PI / 180), 0);
+    },
+    [sampleIndex, step, daylight],
+  );
+}
+
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (opts.selfTest) {
@@ -129,7 +183,10 @@ async function main() {
   });
 
   const viewport = { width: 1280, height: 720 };
-  const page = await browser.newPage({ viewport });
+  // Tracing context (258 task 37): CDP trace per scenario where supported.
+  // A fresh context owns tracing; failures degrade to no-trace artifacts.
+  const context = await browser.newContext({ viewport });
+  const page = await context.newPage();
   const longTasks = [];
   await page.exposeFunction('__perfReportLongTask', (entry) => {
     longTasks.push(entry);
@@ -199,15 +256,30 @@ async function main() {
   if (renderDistance !== 6) nonCanonicalReasons.push(`reduced renderDistance ${renderDistance} (canonical expects 6)`);
   const canonical = nonCanonicalReasons.length === 0;
 
+  // Phase timing on for the whole run so every scenario captures phase
+  // percentiles alongside whole-frame stats (258 tasks 13/17).
+  await page.evaluate(() => window.__voxelGame?.setWholeFramePhaseTimingEnabled?.(true));
+
   const scenarios = [
     { name: 'stationary', durationMs: 30_000, action: 'none' },
     { name: 'fresh-traversal', durationMs: 60_000, action: 'traverse' },
     { name: 'cached-traversal', durationMs: 60_000, action: 'traverse' },
+    { name: 'interaction', durationMs: 60_000, action: 'interact' },
+    { name: 'entities-day-night', durationMs: 60_000, action: 'daynight' },
   ];
   const results = {};
   mkdirSync(opts.out, { recursive: true });
   for (const scenario of scenarios) {
     const samples = [];
+    // CDP trace per scenario where supported (258 task 37); a missing
+    // tracing API degrades to trace: false in the artifact, never a crash.
+    let tracing = false;
+    try {
+      await context.tracing.start({ screenshots: true, snapshots: false });
+      tracing = true;
+    } catch {
+      tracing = false;
+    }
     for (let s = 0; s < opts.samples; s++) {
       // Warm-up separation: stationary warms 5 s; traversal scenarios reuse
       // the route so sample 0 is fresh and later samples are cached-state.
@@ -220,19 +292,56 @@ async function main() {
         }, s);
       }
       const started = Date.now();
-      while (Date.now() - started < Math.min(scenario.durationMs, 15_000)) {
+      const actionErrors = [];
+      const deadline = started + Math.min(scenario.durationMs, 15_000);
+      let step = 0;
+      while (Date.now() < deadline) {
         // Skeleton cap: 15 s per sample until the reference-host lane tunes
         // full durations; the artifact records the effective duration.
+        // Deterministic scripted workload while sampling (258 task 32).
+        try {
+          if (scenario.action === 'interact') await scriptInteractionStep(page, s, step);
+          else if (scenario.action === 'daynight') await scriptDayNightStep(page, s, step);
+        } catch (err) {
+          actionErrors.push(String(err?.message ?? err));
+        }
+        step++;
         await page.waitForTimeout(1000);
       }
-      const stats = await page.evaluate(() => window.__voxelGame.getWholeFrameStats());
-      const rolling = await page.evaluate(() => window.__voxelGame.getWholeFrameRollingMinFps(10_000));
-      samples.push({ ...stats, rollingMin10sFps: rolling, effectiveDurationMs: Date.now() - started });
+      const snapshot = await page.evaluate(() => {
+        const game = window.__voxelGame;
+        return {
+          stats: game.getWholeFrameStats(),
+          rollingMin10sFps: game.getWholeFrameRollingMinFps(10_000),
+          phases: game.getWholeFramePhaseStats?.() ?? null,
+          aux: game.getWholeFrameAuxLatest?.() ?? null,
+          worker: game.getWorkerTelemetry?.() ?? null,
+          workCounts: game.getWorldFrameWorkCounts?.() ?? null,
+          pipeline: JSON.parse(game.getPerformanceSnapshot())?.pipeline ?? null,
+        };
+      });
+      samples.push({
+        ...snapshot.stats,
+        rollingMin10sFps: snapshot.rollingMin10sFps,
+        phases: snapshot.phases,
+        aux: snapshot.aux,
+        worker: snapshot.worker,
+        workCounts: snapshot.workCounts,
+        pipeline: snapshot.pipeline,
+        actionErrors,
+        effectiveDurationMs: Date.now() - started,
+      });
       await page.screenshot({ path: join(opts.out, `${scenario.name}-sample${s}.png`) });
+    }
+    try {
+      if (tracing) await context.tracing.stop({ path: join(opts.out, `${scenario.name}-trace.zip`) });
+    } catch {
+      tracing = false;
     }
     const pick = (key) => samples.map((sample) => sample[key] ?? 0);
     results[scenario.name] = {
       samples,
+      traceCaptured: tracing,
       medianFps: median(pick('fpsAvg')),
       medianP95Ms: median(pick('p95Ms')),
       worstP95Ms: Math.max(...pick('p95Ms')),

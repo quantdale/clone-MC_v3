@@ -1,7 +1,7 @@
 # Verification: 258-real-world-runtime-performance-fps-recovery
 
 Status: NOT VERIFIED
-Completion: 14/100 (14%)
+Completion: 27/100 (27%)
 Advancement allowed: false
 
 ## Requirement evidence
@@ -10,12 +10,14 @@ Advancement allowed: false
 |---|---|---|
 | Headed GPU-backed baseline/final certification | Not run (SwiftShader-only host) | NOT RUN |
 | Whole-frame rAF timing includes update + world + render | `GameLoop` boundary hook + `Game.wholeFrameRing` + `getWholeFrameStats`; unit 17 + GameLoop 6 + live-boot e2e 30/30 | PASS (headless-verified foundation; canonical headed proof pending) |
-| Phase attribution | Game-level input/fixedTicks/worldUpdate/renderSubmit wired (disabled-by-default) + live e2e proof; World-internal phases open | PARTIAL |
+| Phase attribution | Game-level input/fixedTicks/worldUpdate/renderSubmit + World-internal generation/meshingMain/workerDispatch/lighting/upload/unload via disabled-by-default timers merged in `render()`; live e2e 2/2 proof (teleport-forced generation: worldUpdate 382 ms / generation 158 ms / meshingMain 213 ms totals) | PASS (mechanism headless-verified; canonical headed proof pending) |
+| Generation/meshing/lighting/upload telemetry | Phase timers + per-frame `WorldFrameWorkCounts` (snapshotted at end of `update`, flow while disabled); `FrameAuxRing` renderer/buffer snapshots; unit 13 + live proof | PASS (mechanism headless-verified; canonical headed proof pending) |
 | Canonical-run rejection logic | `CanonicalRunGate` unit-tested; runner mirrors rules | PASS (logic; canonical headed run pending) |
 | Worker capability + pool sizing | `WorkerMeshCapability` unit-tested; production default unchanged | PASS (definition; activation pending) |
+| Worker crash/fallback fault injection | `WorkerFallbackRecovery.test.ts` 2/2 (throwing factory incl. nested-fallback-inside-dispatch with timing enabled; mid-batch `onerror` crash → bounded sync recovery, no leaks); malformed/stale rejection pre-existing | PASS (headless fault injection; headed parity pending) |
 | Production worker meshing with fallback | Existing code opt-in; production activation not implemented | NOT RUN |
 | Shared adaptive main-thread budget | Pure `FrameBudgetGovernor` core + 11 unit tests; production wiring not done | PARTIAL |
-| Headed perf harness + self-test | `npm run test:perf` skeleton + `PerfGate` thresholds + `--self-test` PASS | PASS (skeleton; canonical scenarios not run) |
+| Headed perf harness + self-test | `npm run test:perf` 5 scenarios (stationary/fresh/cached/interaction/entities-day-night) + scripted real-input actions + per-sample phases/aux/worker/pipeline + screenshots + CDP traces; `--self-test` PASS; headless smoke 5/5 with zero action errors (non-canonical as required) | PASS (skeleton; canonical headed run pending) |
 | Stationary/fresh/cached default-quality gates | Not run | NOT RUN |
 | Sustained resource stability | Not run | NOT RUN |
 | Gameplay/visual/persistence regressions | Headless game.spec 30/30 PASS; full suite NOT RUN | PARTIAL |
@@ -29,19 +31,21 @@ execution environment exposes neither Chrome/Chromium nor a hardware GPU rendere
 | Evidence | Result |
 |---|---|
 | headed canonical perf runner and five canonical scenarios | Skeleton landed; canonical headed scenarios NOT RUN |
-| worker equivalence/failure tests | NOT RUN |
+| worker equivalence/failure tests | PASS: pre-existing parity/stale suites + new `WorkerFallbackRecovery.test.ts` 2/2 (headless fault injection) |
 | governor tests | PASS: `FrameBudgetGovernor.test.ts` 11/11 (pure core; production wiring pending) |
-| whole-frame instrumentation tests | PASS: `WholeFrameMetrics.test.ts` 17/17 + `GameLoop.test.ts` 6/6 |
+| whole-frame instrumentation tests | PASS: `WholeFrameMetrics.test.ts` 17/17 + `WorldPhaseTelemetry.test.ts` 13/13 + `GameLoop.test.ts` 6/6 + live e2e 2/2 |
 | gate-threshold tests | PASS: `PerfGate.test.ts` 7/7 + `test:perf --self-test` PASS |
-| `npm run validate-state` | PASS |
-| `npm run typecheck` | PASS |
-| `npm run lint` | PASS with 80 pre-existing warnings, 0 errors |
-| `npm test` | PASS: 389 files; 4682 passed, 1 skipped |
-| `npm run build` | PASS (2.24 s production bundle) |
+| `npm run validate-state` | PASS (re-run at checkpoint; see state section) |
+| `npm run typecheck` | PASS (this session, after all Phase-2 edits) |
+| `npm run lint` | PASS, 0 errors (5 new `any` warnings in 258 test fixtures match repo style; baseline 80) |
+| `npm test` | PASS: 391 files; 4697 passed, 1 skipped (this session, incl. 15 new Phase-2 tests) |
+| `npm run build` | PASS (1.9 s production bundle, rebuilt after Phase-2) |
 | `npm run test:e2e` (game.spec headless SwiftShader smoke) | PASS 30/30 (9.6 m, prior session) |
-| `npm run test:e2e` (whole-frame-metrics live proof) | PASS 1/1 (22.8 s): samples accumulate, phase timing attributes worldUpdate/renderSubmit > 0, disable path clean |
+| `npm run test:e2e` (whole-frame-metrics live proof) | PASS 2/2 (31.3 s this session): Game-level + World-internal attribution, teleport-forced generation, aux/worker/counts shapes, disable path clean |
+| `npm run test:perf -- --self-test` | PASS (this session, after runner extension) |
+| `npm run test:perf` headless smoke (non-canonical) | 5/5 scenarios captured with phases/aux/worker/pipeline + 5 PNGs + 5 trace zips, zero actionErrors; correctly NON-CANONICAL (headless + SwiftShader + reduced distance) |
 | full e2e / visual / orphan / release gates | NOT RUN |
-| file-audit manifest | PASS 2651 rows (7 new 258 rows registered) |
+| file-audit manifest | PASS 2658 rows (3 new Phase-2 rows: 1 production + 2 test) |
 | exact-final-SHA GitHub CI | NOT RUN |
 
 ## Activation and repository-truth evidence
@@ -127,10 +131,23 @@ full unit 4670 passed + 1 skipped; file-audit manifest extended to 2651 rows and
 
 ## Incomplete tasks
 
-86/100 incomplete. Tasks 1, 2, 4, 5, 16, 24, 25, 26, 27, 28, 31, 38, 40, and 58 complete;
+73/100 incomplete. Tasks 1, 2, 4, 5, 16–28, 31, 32, 35–38, 40, 45, 46, and 58 complete;
 task 3 and baseline tasks 6–15 (plus 91–95) are blocked on a headed hardware-WebGL reference
-host. Task 17 (World-internal phases) and the governor/worker production-wiring tasks remain
-open pending headed profiling proof.
+host. The governor/worker production-wiring tasks (33, 34, 39, 41–44, 47–57, 59, 60) and hot-path
+sections G–J remain open pending headed profiling proof.
+
+## Phase-2 evidence (2026-09-11 session, third checkpoint)
+
+- `src/world/WorldPhaseTelemetry.ts` (new) — `WORLD_TIMED_PHASES` (6 World-internal phases, subset of `WHOLE_FRAME_PHASES`), `WorldFrameWorkCounts` + validation.
+- `World` — own disabled-by-default `PhaseTimer`, nest-guarded exception-safe `withPhase` bracket, per-frame work-count snapshot at end of `update`, `drainPhaseTotals`/`getLastFrameWorkCounts`/`setPhaseTimingEnabled`/`isPhaseTimingEnabled`. `PhaseTimer.hasOpenPhase` added (additive; nesting still throws on direct misuse).
+- `WholeFrameMetrics` — `PhaseTimer.accumulate` + always-on fixed `FrameAuxRing` (renderer/buffer/dynScale per frame, zero per-frame allocation).
+- `Game` — forwards the timing switch to `World`, merges World phases into the sample in `render()`, records aux snapshots every frame, `getWholeFrameAuxLatest`/`getWholeFrameMaxCalls`/`getWorkerTelemetry`/`getWorldFrameWorkCounts` accessors. No tick/streaming/budget/render behavior change.
+- Production crash found and fixed by the new live proof: canonical section path nested `upload` inside `meshingMain` (`The game stopped: WholeFrameMetrics: begin(upload) while meshingMain is open`); fixed via `withPhase` sequential/nest-guarded brackets at all attach sites (sync, canonical-per-section, fallback, worker completion). Live e2e now green with real attribution.
+- `tests/unit/WorldPhaseTelemetry.test.ts` (13) + `tests/unit/WorkerFallbackRecovery.test.ts` (2): disabled/enabled/reset/defensive-copy, busy-stub >0 attribution, `hasOpenPhase`, throwing-factory nested fallback, mid-batch crash recovery. Fixture lesson recorded: stub meshers must echo the caller `inputVersion` (like production) or `failStage` bumps self-invalidate the stub forever.
+- `tests/e2e/whole-frame-metrics.spec.ts` extended to 2 tests: World-internal phase keys + teleport-forced generation total > 0, aux buffer > 0, worker/count shapes. PASS 2/2 (31.3 s).
+- Runner `canonical-perf-run.mjs`: 5 scenarios, scripted real-input interaction + daylight-cycle steps, per-sample phases/aux/worker/counts/pipeline/actionErrors, per-scenario CDP traces. Headless smoke (`--allow-non-canonical`): 5/5 samples + PNGs + trace zips, zero actionErrors, correctly NON-CANONICAL (headless + SwiftShader + reduced distance 0). `--self-test` PASS.
+- Gates this session: typecheck PASS; lint 0 errors; unit 391 files 4697+1 PASS; build PASS (1.9 s); validate-state PASS; file-audit manifest PASS 2658 rows (3 new Phase-2 rows).
+- Blocker unchanged: headed hardware-WebGL baselines unavailable on this host (Chrome 151 present, SwiftShader-only, no `/dev/dri`); no headed result claimed, no default-quality retune.
 
 ## Follow-up evidence (2026-09-11 session, second checkpoint)
 
