@@ -49,7 +49,7 @@ import { PlayerStateRepository } from './PlayerStateRepository';
 import { validatePlayerStateRecord, type PlayerStateRecord } from './PlayerStateRecord';
 import { ChunkEditRepository } from './ChunkEditRepository';
 import type { SerializedBlockEntity } from './BlockEntityRecord';
-import type { SerializedEntity } from './EntityRecord';
+import { validateSerializedEntity, type SerializedEntity } from './EntityRecord';
 import {
   LegacyLocalStorageMigrator,
   type LegacyMigrationReport,
@@ -89,6 +89,19 @@ function worldChunkKey(worldId: string, chunkX: number, chunkZ: number): string 
 /** Composite key for a 3D chunk edit (worldId|chunkX|chunkY|chunkZ). Mirrors ChunkEditRepository. */
 function worldChunkEditKey(worldId: string, chunkX: number, chunkY: number, chunkZ: number): string {
   return `${worldId}|${chunkX}|${chunkY}|${chunkZ}`;
+}
+/**
+ * Validate a raw world-scoped entity snapshot (264): an array of 037
+ * `SerializedEntity` envelopes. Throws descriptively on a non-array payload
+ * or any envelope-invalid entry; returns the narrowed array on success.
+ * Full semantic validation (duplicate ids, registry, bounds) is owned by the
+ * hardened manager readers at Game hydrate time.
+ */
+function validateEntitySnapshot(input: unknown, label: 'itementities' | 'xporbs'): SerializedEntity[] {
+  if (!Array.isArray(input)) {
+    throw new Error(`GamePersistence: ${label} payload must be an array`);
+  }
+  return (input as unknown[]).map((e) => validateSerializedEntity(e));
 }
 /** Resolve a request's result or error. Mirrors WorldMetadataRepository's internal helper. */
 function awaitRequest(req: IdbRequestLike): Promise<unknown> {
@@ -311,6 +324,10 @@ export class GamePersistence implements WorldEditDurability {
   /** Validated recipe book bulk-loaded at open() (262; null when absent or corrupt). */
   private initialRecipeBookValue: RecipeBookState | null = null;
   private initialAdvancementsValue: AdvancementProgress[] | null = null;
+  /** Validated item-entity snapshot bulk-loaded at open() (264; null when absent or corrupt). */
+  private initialItemEntitiesValue: SerializedEntity[] | null = null;
+  /** Validated XP-orb snapshot bulk-loaded at open() (264; null when absent or corrupt). */
+  private initialXpOrbsValue: SerializedEntity[] | null = null;
   private initialColumnsValue: SerializedChunkColumn[] = [];
   /** World generation baseline compatibility classification. */
   private generationBaselineValue: WorldGenerationBaseline = 'current';
@@ -669,6 +686,26 @@ export class GamePersistence implements WorldEditDurability {
         this.initialAdvancementsValue = null;
         this.recordError(`load advancements: ${errorMessage(e)}`);
       }
+      // 264 hydration: item-entity / XP-orb snapshots stored via raw records.
+      // Absent stays null (Game boots empty managers); non-array or
+      // envelope-invalid payloads degrade to null with a recorded error so
+      // boot continues empty. Full semantic validation (duplicate ids,
+      // registry, bounds) runs at Game hydrate through the hardened
+      // `deserializeAll` readers (R-4), which quarantine independently.
+      try {
+        const raw = await this.metadata.getItemEntityData(this.worldIdValue);
+        if (raw !== null) this.initialItemEntitiesValue = validateEntitySnapshot(raw, 'itementities');
+      } catch (e) {
+        this.initialItemEntitiesValue = null;
+        this.recordError(`load itementities: ${errorMessage(e)}`);
+      }
+      try {
+        const raw = await this.metadata.getXpOrbData(this.worldIdValue);
+        if (raw !== null) this.initialXpOrbsValue = validateEntitySnapshot(raw, 'xporbs');
+      } catch (e) {
+        this.initialXpOrbsValue = null;
+        this.recordError(`load xporbs: ${errorMessage(e)}`);
+      }
     }
 
     // 5.5 Authoritative startup compatibility decision (257). Computed after the
@@ -745,6 +782,8 @@ export class GamePersistence implements WorldEditDurability {
       this.initialGameRulesValue = null;
       this.initialRecipeBookValue = null;
       this.initialAdvancementsValue = null;
+      this.initialItemEntitiesValue = null;
+      this.initialXpOrbsValue = null;
       this.initialColumnsValue = [];
     }
     this.opened = true;
@@ -800,6 +839,8 @@ export class GamePersistence implements WorldEditDurability {
       gameruleData: unknown | null;
       recipeBookData: unknown | null;
       advancementData: unknown | null;
+      itemEntityData: unknown | null;
+      xpOrbData: unknown | null;
       columns: SerializedChunkColumn[];
       edits: Array<{ chunkX: number; chunkY: number; chunkZ: number; changes: Array<[number, number]> }>;
       playerState: PlayerStateRecord | null;
@@ -812,6 +853,8 @@ export class GamePersistence implements WorldEditDurability {
       const gameruleData = await this.metadata.getGameRuleData(worldId);
       const recipeBookData = await this.metadata.getRecipeBookData(worldId);
       const advancementData = await this.metadata.getAdvancementData(worldId);
+      const itemEntityData = await this.metadata.getItemEntityData(worldId);
+      const xpOrbData = await this.metadata.getXpOrbData(worldId);
       const columns = await this.chunkSections.listColumns(worldId);
       const editRecords = await this.chunkEdits.listChunkEdits(worldId);
       const playerState = await this.playerStates.getPlayerState(worldId);
@@ -823,6 +866,8 @@ export class GamePersistence implements WorldEditDurability {
         gameruleData,
         recipeBookData,
         advancementData,
+        itemEntityData,
+        xpOrbData,
         columns: [...columns],
         edits: editRecords.map((r) => ({ chunkX: r.chunkX, chunkY: r.chunkY, chunkZ: r.chunkZ, changes: [...r.changes] })),
         playerState,
@@ -870,6 +915,9 @@ export class GamePersistence implements WorldEditDurability {
         await awaitRequest(metaStore.delete(`__recipebook__:${worldId}`));
         // 2d. Raw advancement record (263; separate key in the same metadata store).
         await awaitRequest(metaStore.delete(`__advancements__:${worldId}`));
+        // 2e. Raw item-entity + XP-orb records (264; separate keys in the same metadata store).
+        await awaitRequest(metaStore.delete(`__itementities__:${worldId}`));
+        await awaitRequest(metaStore.delete(`__xporbs__:${worldId}`));
         // 3. Every chunk column for this world. Key shape: `${worldId}|${cx}|${cz}`.
         for (const column of snapshot!.columns) {
           await awaitRequest(csStore.delete(worldChunkKey(worldId, column.chunkX, column.chunkZ)));
@@ -904,6 +952,8 @@ export class GamePersistence implements WorldEditDurability {
         if (snapshot!.gameruleData !== null) await this.metadata.putGameRuleData(worldId, snapshot!.gameruleData);
         if (snapshot!.recipeBookData !== null) await this.metadata.putRecipeBookData(worldId, snapshot!.recipeBookData);
         if (snapshot!.advancementData !== null) await this.metadata.putAdvancementData(worldId, snapshot!.advancementData);
+        if (snapshot!.itemEntityData !== null) await this.metadata.putItemEntityData(worldId, snapshot!.itemEntityData);
+        if (snapshot!.xpOrbData !== null) await this.metadata.putXpOrbData(worldId, snapshot!.xpOrbData);
         for (const col of snapshot!.columns) await this.chunkSections.putColumn(worldId, col);
         for (const rec of snapshot!.edits) await this.chunkEdits.putChunkEdits(worldId, rec.chunkX, rec.chunkY, rec.chunkZ, rec.changes);
         if (snapshot!.playerState) await this.playerStates.putPlayerState(snapshot!.playerState);
@@ -1222,6 +1272,16 @@ export class GamePersistence implements WorldEditDurability {
     return this.initialAdvancementsValue;
   }
 
+  /** Validated item-entity snapshot bulk-loaded at `open()` (264; null when absent or corrupt). */
+  get initialItemEntities(): SerializedEntity[] | null {
+    return this.initialItemEntitiesValue;
+  }
+
+  /** Validated XP-orb snapshot bulk-loaded at `open()` (264; null when absent or corrupt). */
+  get initialXpOrbs(): SerializedEntity[] | null {
+    return this.initialXpOrbsValue;
+  }
+
   /** Bulk-loaded persisted canonical columns for this world. */
   get initialColumns(): SerializedChunkColumn[] {
     return this.initialColumnsValue;
@@ -1250,6 +1310,18 @@ export class GamePersistence implements WorldEditDurability {
   saveWithers(payload: unknown[]): void {
     if (this.disposed || this.resetCompleted) return;
     void this.metadata.putWitherData(this.worldIdValue, payload).catch((e) => this.recordError(`save withers: ${errorMessage(e)}`));
+  }
+
+  /** Persist the item-entity snapshot via raw item-entity data (264). */
+  saveItemEntities(payload: unknown): void {
+    if (this.disposed || this.resetCompleted) return;
+    void this.metadata.putItemEntityData(this.worldIdValue, payload).catch((e) => this.recordError(`save itementities: ${errorMessage(e)}`));
+  }
+
+  /** Persist the XP-orb snapshot via raw XP-orb data (264). */
+  saveXpOrbs(payload: unknown): void {
+    if (this.disposed || this.resetCompleted) return;
+    void this.metadata.putXpOrbData(this.worldIdValue, payload).catch((e) => this.recordError(`save xporbs: ${errorMessage(e)}`));
   }
 
   /** Persist the advancement payload via raw advancement data (263). */

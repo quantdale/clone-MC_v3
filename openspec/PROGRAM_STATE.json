@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "status": "ACTIVE",
-  "currentChange": "263-advancement-panel-ui",
+  "currentChange": "264-item-xp-entity-persistence-hardening",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "263-advancement-panel-ui",
+  "lastCompletedChange": "264-item-xp-entity-persistence-hardening",
   "nextChange": "258-real-world-runtime-performance-fps-recovery",
-  "completedTasks": 15,
-  "totalTasks": 15,
+  "completedTasks": 13,
+  "totalTasks": 13,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -14,15 +14,22 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "fe23ac8e19614b6e2a304d19157f2568541ddfed",
-  "localHead": "d77fa70b073079c837762e85e354ea3afb745f4d",
-  "lastCompletedTask": "Change 263-advancement-panel-ui VERIFIED 15/15 (2026-09-11): in-game advancements panel over 185/186 (list with title/description/progress, live obtain wiring + trigger seam, toast-once, __advancements__ persistence, R-4 advancement half closed), proven via unit 56 new + browser E2E open-see-defs-craft-trigger-reload + lifecycle; full gates green (typecheck/lint 0 errors/unit 4898+1/build 2.30s/e2e 73/73/file-audit 2719); published as d77fa70 (range fe23ac8..d77fa70); 258 BLOCKED, 259/260/261/262 VERIFIED",
-  "nextExactAction": "Resume 258 headed tasks only on a hardware-WebGL host when available (263 VERIFIED 15/15 published as d77fa70; 259/260/261/262 VERIFIED; 258 remains BLOCKED/resumable)",
+  "sessionStartHead": "c783781525489bd48613b71a59b4ff478d641c67",
+  "localHead": "c783781525489bd48613b71a59b4ff478d641c67",
+  "lastCompletedTask": "Change 264-item-xp-entity-persistence-hardening VERIFIED 13/13 (2026-09-11): ItemEntityManager/XpOrbManager deserializeAll fail-closed (duplicate ids + malformed payloads throw, manager unchanged), world-scoped live Game persistence (__itementities__/__xporbs__ with quarantine, reset/archive passthrough), proven via unit 26 new + browser E2E drop+orb-reload + removal-via-live-collection; full gates green (typecheck/lint 0 errors/unit 4924+1/build 2.38s/e2e 75/75/file-audit 2726); 258 BLOCKED, 259/260/261/262/263 VERIFIED. Supersedes: Change 263-advancement-panel-ui VERIFIED 15/15 (2026-09-11): in-game advancements panel over 185/186 (list with title/description/progress, live obtain wiring + trigger seam, toast-once, __advancements__ persistence, R-4 advancement half closed), proven via unit 56 new + browser E2E open-see-defs-craft-trigger-reload + lifecycle; full gates green (typecheck/lint 0 errors/unit 4898+1/build 2.30s/e2e 73/73/file-audit 2719); published range fe23ac8..d77fa70 with tip c783781; 258 BLOCKED, 259/260/261/262 VERIFIED",
+  "nextExactAction": "Publish Change 264-item-xp-entity-persistence-hardening checkpoint to origin/main (264 VERIFIED 13/13; 258 BLOCKED; 259/260/261/262/263 VERIFIED)",
 
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. 001-257 VERIFIED; game shippable with known performance-certification debt. The 259 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
   "validationResults": [
+    {
+      "change": "264-item-xp-entity-persistence-hardening",
+      "status": "VERIFIED",
+      "unitTests": 4924,
+      "e2eTests": 75,
+      "note": "Standing owner order 2026-09-11, implemented while 258 stays BLOCKED and 259/260/261/262/263 stay VERIFIED. 13/13 tasks: ItemEntityManager dup/negative/unknown-item/count-bounds fail-closed + XpOrbManager dup fail-closed (atomic), __itementities__/__xporbs__ raw records + open bulk-load + save/reset + archive passthrough, Game hydrate/quarantine + autosave/dispose/pagehide + accessors, 26 new unit tests, 2 new browser E2E (drop+orb reload-preserves + removal via live-tick collection); R-4 CLOSED (both halves); C264 matrix row exact. Gates: typecheck/lint 0 errors/unit 4924+1/build 2.38s PASS, e2e 75/75 PASS, file-audit 2726."
+    },
     {
       "change": "263-advancement-panel-ui",
       "status": "VERIFIED",

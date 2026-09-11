@@ -47,6 +47,10 @@ export interface WorldImportReport {
   recipeBookDataImported: boolean;
   /** Whether advancement data was written (263). */
   advancementDataImported: boolean;
+  /** Whether item-entity data was written (264). */
+  itemEntityDataImported: boolean;
+  /** Whether XP-orb data was written (264). */
+  xpOrbDataImported: boolean;
 }
 
 /** Exports and imports whole-world archives over the five repositories. */
@@ -116,6 +120,9 @@ export class WorldArchiver {
     const recipeBookData = await this.metadata.getRecipeBookData(worldId);
     // Advancement raw record (263): same fail-closed contract.
     const advancementData = await this.metadata.getAdvancementData(worldId);
+    // Item-entity + XP-orb raw records (264): same fail-closed contract.
+    const itemEntityData = await this.metadata.getItemEntityData(worldId);
+    const xpOrbData = await this.metadata.getXpOrbData(worldId);
 
     return {
       format: 'voxel-world',
@@ -132,6 +139,8 @@ export class WorldArchiver {
       gameruleData,
       recipeBookData,
       advancementData,
+      itemEntityData,
+      xpOrbData,
     };
   }
 
@@ -165,6 +174,8 @@ export class WorldArchiver {
       if (valid.gameruleData !== null && valid.gameruleData !== undefined) await put("world-metadata", { worldId: `__gamerules__:${valid.worldId}`, payload: valid.gameruleData, updatedAt: Date.now() });
       if (valid.recipeBookData !== null && valid.recipeBookData !== undefined) await put("world-metadata", { worldId: `__recipebook__:${valid.worldId}`, payload: valid.recipeBookData, updatedAt: Date.now() });
       if (valid.advancementData !== null && valid.advancementData !== undefined) await put("world-metadata", { worldId: `__advancements__:${valid.worldId}`, payload: valid.advancementData, updatedAt: Date.now() });
+      if (valid.itemEntityData !== null && valid.itemEntityData !== undefined) await put("world-metadata", { worldId: `__itementities__:${valid.worldId}`, payload: valid.itemEntityData, updatedAt: Date.now() });
+      if (valid.xpOrbData !== null && valid.xpOrbData !== undefined) await put("world-metadata", { worldId: `__xporbs__:${valid.worldId}`, payload: valid.xpOrbData, updatedAt: Date.now() });
       if (valid.playerState) await put("player-state", valid.playerState);
     });
 
@@ -180,6 +191,8 @@ export class WorldArchiver {
       gameruleDataImported: valid.gameruleData !== null && valid.gameruleData !== undefined,
       recipeBookDataImported: valid.recipeBookData !== null && valid.recipeBookData !== undefined,
       advancementDataImported: valid.advancementData !== null && valid.advancementData !== undefined,
+      itemEntityDataImported: valid.itemEntityData !== null && valid.itemEntityData !== undefined,
+      xpOrbDataImported: valid.xpOrbData !== null && valid.xpOrbData !== undefined,
     };
   }
 }

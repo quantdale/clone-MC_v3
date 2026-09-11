@@ -78,6 +78,7 @@ import {
   GamePersistence,
   type GamePlayerSnapshot,
 } from '../storage/GamePersistence';
+import type { SerializedEntity } from '../storage/EntityRecord';
 import { WorldLife } from '../world/WorldLife';
 import { createDefaultEntityRegistry } from '../data/EntityType';
 import { createDefaultBiomeRegistry } from '../data/Biome';
@@ -452,7 +453,8 @@ export class Game {
   /** Active status effects for the player; ticked each frame and fed by consume. */
   playerEffects: StatusEffectManager;
   private readonly experience: ExperienceSystem;
-  private readonly xpOrbs: XpOrbManager;
+  /** Live world XP-orb store (117); block/mob XP flows into this. */
+  readonly xpOrbs: XpOrbManager;
   private readonly interaction: PlayerInteraction;
   /** Enchantment definitions (118); fed to PlayerInteraction (119) for enchant reads. */
   private readonly enchantmentRegistry: EnchantmentRegistry;
@@ -965,6 +967,26 @@ export class Game {
       // Health transitions (probe/sink driven) refresh the banner live.
       this.unsubscribeHealth = this.persistenceImpl.onHealthChange(() => this.refreshSaveStatus());
     }
+    // 264 item/XP entity persistence: hydrate the live managers from the
+    // validated bulk-loaded snapshots. Injected persistence is already open
+    // (hydrate now — the save-status indicator above exists, so quarantine
+    // can banner); self-composed persistence hydrates when open settles.
+    // Each half quarantines independently (duplicate/malformed ⇒ empty +
+    // banner, never a boot crash).
+    if (this.selfOpenPromise !== null) {
+      void this.selfOpenPromise.then(() => {
+        if (this.disposed) return;
+        this.hydrateItemAndXpEntities(
+          this.persistenceImpl?.initialItemEntities ?? null,
+          this.persistenceImpl?.initialXpOrbs ?? null,
+        );
+      }).catch(() => undefined);
+    } else {
+      this.hydrateItemAndXpEntities(
+        this.persistenceImpl?.initialItemEntities ?? null,
+        this.persistenceImpl?.initialXpOrbs ?? null,
+      );
+    }
     const craftingEl = this.requireElement('crafting');
     this.overlayEl = this.requireElement('overlay');
     this.overlayMessageEl = this.requireElement('overlay-message');
@@ -1203,6 +1225,7 @@ export class Game {
     this.closeAdvancements();
     this.savePlayerStateDurable();
     this.saveWithers();
+    this.saveItemAndXpEntities();
     this.saveTimer = 0;
     void this.persistenceImpl?.dispose().catch(() => undefined);
     if (this.unsubscribeHealth !== null) {
@@ -1402,6 +1425,7 @@ export class Game {
       if (this.saveTimer >= 5000) {
         this.saveTimer = 0;
         this.persistenceImpl?.savePlayerState(this.buildPlayerSnapshot());
+        this.saveItemAndXpEntities();
       }
     }
 
@@ -3115,6 +3139,67 @@ export class Game {
     }
   }
 
+  // ── Item/XP entity persistence (264, R-4) ───────────────────────────────
+
+  /**
+   * Hydrate the live drop/orb managers through the hardened batch readers.
+   * Each half quarantines independently: a throwing batch clears that manager
+   * and raises the save-health banner instead of crashing boot. Null inputs
+   * (absent or facade-degraded records) leave the managers empty.
+   */
+  private hydrateItemAndXpEntities(
+    items: SerializedEntity[] | null,
+    orbs: SerializedEntity[] | null,
+  ): void {
+    if (items !== null) {
+      try {
+        this.itemEntities.deserializeAll(items);
+      } catch {
+        this.itemEntities.clear();
+        this.bootSaveDegraded = true;
+        this.refreshSaveStatus();
+      }
+    }
+    if (orbs !== null) {
+      try {
+        this.xpOrbs.deserializeAll(orbs);
+      } catch {
+        this.xpOrbs.clear();
+        this.bootSaveDegraded = true;
+        this.refreshSaveStatus();
+      }
+    }
+  }
+
+  /**
+   * Serialize both live entity sets into the durable records. No-op when
+   * persistence is absent or the world is recovery-required (257 parity with
+   * the player-state path); after a completed reset the facade is inert.
+   * Also the deterministic E2E save seam (fire-and-forget puts need a settle
+   * wait before reload, 263 precedent).
+   */
+  saveItemAndXpEntities(): void {
+    const p = this.persistenceImpl;
+    if (!p || this.recoveryRequiredValue) return;
+    p.saveItemEntities(this.itemEntities.serializeAll());
+    p.saveXpOrbs(this.xpOrbs.serializeAll());
+  }
+
+  /** Live item-entity count (test/E2E read surface). */
+  getItemEntityCount(): number {
+    return this.itemEntities.size;
+  }
+
+  /** Live XP-orb count (test/E2E read surface). */
+  getXpOrbCount(): number {
+    return this.xpOrbs.size;
+  }
+
+  /** Live player position (test/E2E read surface for drop/orb placement). */
+  getPlayerPosition(): [number, number, number] {
+    return [this.player.position.x, this.player.position.y, this.player.position.z];
+  }
+
   /** Test/E2E surface: current wither states. */
   getWithers(): readonly WitherState[] {
     return [...this.withers];
@@ -3879,6 +3964,7 @@ export class Game {
     // the facade is inert anyway. Skipping keeps old data protected.
     if (this.recoveryRequiredValue) return;
     this.savePlayerStateDurable();
+    this.saveItemAndXpEntities();
     this.saveTimer = 0;
   };
 

@@ -313,25 +313,44 @@ export class ItemEntityManager {
 
   /**
    * Restore entities from 037 payloads. The whole batch is validated first
-   * (envelope, `minecraft:item` type, and data shape); on any rejection the manager
-   * is left unchanged and an `Error` is thrown. Returns the number of entities added.
+   * (envelope, `minecraft:item` type, data shape, id uniqueness, and registry
+   * consistency); on any rejection the manager is left unchanged and a
+   * deterministic `Error` naming the fault and batch index is thrown (264
+   * R-4 fail-closed: duplicate ids, negative ids, unknown item ids, and
+   * counts outside `1..stackSize(item)` are all rejected). Returns the number
+   * of entities added.
    */
   deserializeAll(entities: unknown[]): number {
     const parsed = entities.map((e) => validateSerializedEntity(e));
     const rebuilt: ItemEntity[] = [];
+    const seenIds = new Set<number>();
     let maxId = -1;
-    for (const record of parsed) {
+    for (let i = 0; i < parsed.length; i++) {
+      const record = parsed[i]!;
       if (record.typeKey !== ITEM_ENTITY_TYPE_KEY) {
         throw new Error(`ItemEntityManager: unexpected entity typeKey ${record.typeKey}`);
       }
       const d = record.data as Record<string, unknown>;
+      if (!isFiniteNumber(d.id) || !Number.isInteger(d.id) || (d.id as number) < 0) {
+        throw new Error(`ItemEntityManager: id must be a non-negative integer (got ${String(d.id)}) at index ${i}`);
+      }
+      const id = d.id as number;
+      if (seenIds.has(id)) {
+        throw new Error(`ItemEntityManager: duplicate item-entity id ${id} at index ${i}`);
+      }
+      seenIds.add(id);
+      if (!isFiniteNumber(d.item) || !Number.isInteger(d.item) || !this.itemRegistry.has(d.item as number)) {
+        throw new Error(`ItemEntityManager: unknown item id ${String(d.item)} at index ${i}`);
+      }
+      const item = d.item as number;
+      const max = this.itemRegistry.get(item).stackSize;
+      if (!isFiniteNumber(d.count) || !Number.isInteger(d.count) || (d.count as number) < 1) {
+        throw new Error(`ItemEntityManager: count must be a positive integer (got ${String(d.count)}) at index ${i}`);
+      }
+      if ((d.count as number) > max) {
+        throw new Error(`ItemEntityManager: count ${d.count as number} exceeds stackSize ${max} for item ${item} at index ${i}`);
+      }
       if (
-        !isFiniteNumber(d.id) ||
-        !Number.isInteger(d.id) ||
-        !isFiniteNumber(d.item) ||
-        !Number.isInteger(d.item) ||
-        !isFiniteNumber(d.count) ||
-        !Number.isInteger(d.count) ||
         !isFiniteNumber(d.x) ||
         !isFiniteNumber(d.y) ||
         !isFiniteNumber(d.z) ||
@@ -342,7 +361,7 @@ export class ItemEntityManager {
         !Number.isInteger(d.ageTicks) ||
         (d.ageTicks as number) < 0
       ) {
-        throw new Error('ItemEntityManager: malformed item-entity data payload');
+        throw new Error(`ItemEntityManager: malformed item-entity data payload at index ${i}`);
       }
       rebuilt.push(
         createItemEntity({

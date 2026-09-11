@@ -219,21 +219,30 @@ export class XpOrbManager {
 
   /**
    * Restore orbs from 037 payloads. The whole batch is validated first (envelope,
-   * `minecraft:xp_orb` type, and data shape); on any rejection the manager is left
-   * unchanged and an `Error` is thrown. Returns the number of orbs added.
+   * `minecraft:xp_orb` type, data shape, and id uniqueness); on any rejection the
+   * manager is left unchanged and a deterministic `Error` is thrown (264 R-4
+   * fail-closed: duplicate ids are rejected). Returns the number of orbs added.
    */
   deserializeAll(entities: unknown[]): number {
     const parsed = entities.map((e) => validateSerializedEntity(e));
     const rebuilt: XpOrb[] = [];
+    const seenIds = new Set<number>();
     let maxId = -1;
-    for (const record of parsed) {
+    for (let i = 0; i < parsed.length; i++) {
+      const record = parsed[i]!;
       if (record.typeKey !== XP_ORB_TYPE_KEY) {
         throw new Error(`XpOrbManager: unexpected entity typeKey ${record.typeKey}`);
       }
       const d = record.data as Record<string, unknown>;
+      if (!isFiniteInteger(d.id) || (d.id as number) < 0) {
+        throw new Error(`XpOrbManager: malformed xp-orb data payload at index ${i}`);
+      }
+      const id = d.id as number;
+      if (seenIds.has(id)) {
+        throw new Error(`XpOrbManager: duplicate xp-orb id ${id} at index ${i}`);
+      }
+      seenIds.add(id);
       if (
-        !isFiniteInteger(d.id) ||
-        (d.id as number) < 0 ||
         !isFiniteInteger(d.value) ||
         (d.value as number) < 1 ||
         !isFiniteNumber(d.x) ||
@@ -245,7 +254,7 @@ export class XpOrbManager {
         !isFiniteInteger(d.ageTicks) ||
         (d.ageTicks as number) < 0
       ) {
-        throw new Error('XpOrbManager: malformed xp-orb data payload');
+        throw new Error(`XpOrbManager: malformed xp-orb data payload at index ${i}`);
       }
       rebuilt.push(
         createXpOrb({

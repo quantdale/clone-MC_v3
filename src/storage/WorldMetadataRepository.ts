@@ -207,6 +207,44 @@ export class WorldMetadataRepository {
     await promisifyRequest(tx.objectStore(this.store).put(raw));
   }
 
+  /** Raw put for the item-entity payload bypassing WorldMetadata validation (264; advancement precedent). */
+  async putItemEntityData(worldId: string, payload: unknown): Promise<void> {
+    const raw = {
+      worldId: `__itementities__:${worldId}`,
+      payload,
+      updatedAt: Date.now(),
+    };
+    const tx = this.requireDb().transaction(this.store, 'readwrite');
+    await promisifyRequest(tx.objectStore(this.store).put(raw));
+  }
+
+  /** Raw put for the XP-orb payload bypassing WorldMetadata validation (264; advancement precedent). */
+  async putXpOrbData(worldId: string, payload: unknown): Promise<void> {
+    const raw = {
+      worldId: `__xporbs__:${worldId}`,
+      payload,
+      updatedAt: Date.now(),
+    };
+    const tx = this.requireDb().transaction(this.store, 'readwrite');
+    await promisifyRequest(tx.objectStore(this.store).put(raw));
+  }
+
+  /** Raw get for the item-entity payload (264). Returns null when absent. */
+  async getItemEntityData(worldId: string): Promise<unknown | null> {
+    const tx = this.requireDb().transaction(this.store, 'readonly');
+    const result = await promisifyRequest(tx.objectStore(this.store).get(`__itementities__:${worldId}`)) as { payload?: unknown } | undefined;
+    if (!result || !('payload' in (result as Record<string, unknown>))) return null;
+    return (result as { payload: unknown }).payload ?? null;
+  }
+
+  /** Raw get for the XP-orb payload (264). Returns null when absent. */
+  async getXpOrbData(worldId: string): Promise<unknown | null> {
+    const tx = this.requireDb().transaction(this.store, 'readonly');
+    const result = await promisifyRequest(tx.objectStore(this.store).get(`__xporbs__:${worldId}`)) as { payload?: unknown } | undefined;
+    if (!result || !('payload' in (result as Record<string, unknown>))) return null;
+    return (result as { payload: unknown }).payload ?? null;
+  }
+
   /** Raw get for the advancement payload (263). Returns null when absent. */
   async getAdvancementData(worldId: string): Promise<unknown | null> {
     const tx = this.requireDb().transaction(this.store, 'readonly');
@@ -255,8 +293,10 @@ export class WorldMetadataRepository {
    * Delete an arbitrary record by exact key in the world-metadata store (257).
    * Used for the wither-data record (`__wither__:<worldId>`), the gamerule
    * record (`__gamerules__:<worldId>`), the recipe-book record
-   * (`__recipebook__:<worldId>`), and the advancement record
-   * (`__advancements__:<worldId>`), which share this store under a reserved
+   * (`__recipebook__:<worldId>`), the advancement record
+   * (`__advancements__:<worldId>`), the item-entity record
+   * (`__itementities__:<worldId>`), and the XP-orb record
+   * (`__xporbs__:<worldId>`), which share this store under a reserved
    * key namespace rather than the metadata keyPath.
    */
   async deleteRaw(key: string): Promise<void> {

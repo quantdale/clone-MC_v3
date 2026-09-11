@@ -133,3 +133,74 @@ describe('XpOrbManager 037 serialization', () => {
     expect(m.size).toBe(1);
   });
 });
+
+describe('XpOrbManager deserializeAll fail-closed (264 R-4)', () => {
+  function record(overrides: Record<string, unknown> = {}): unknown {
+    return {
+      schemaVersion: 1,
+      typeKey: XP_ORB_TYPE_KEY,
+      x: 1,
+      y: 64,
+      z: 1,
+      data: {
+        id: 0,
+        value: 5,
+        x: 1.5,
+        y: 64.5,
+        z: 1.5,
+        vx: 0,
+        vy: 0,
+        vz: 0,
+        ageTicks: 0,
+        ...overrides,
+      },
+    };
+  }
+
+  it('rejects a duplicate id pair naming the id and index', () => {
+    const m = manager();
+    m.spawnXpOrb(5, 1, 1, 1);
+    expect(() => m.deserializeAll([record({ id: 7 }), record({ id: 7 })])).toThrow(
+      /duplicate xp-orb id 7 at index 1/,
+    );
+    expect(m.size).toBe(1);
+    expect(m.getXpOrbs().map((o) => o.id)).toEqual([0]);
+  });
+
+  it('rejects a late duplicate in a longer batch and stays empty', () => {
+    const m = manager();
+    expect(() =>
+      m.deserializeAll([record({ id: 1 }), record({ id: 2 }), record({ id: 1 })]),
+    ).toThrow(/duplicate xp-orb id 1 at index 2/);
+    expect(m.size).toBe(0);
+  });
+
+  it('leaves a populated manager untouched when a late record is malformed', () => {
+    const m = manager();
+    m.spawnXpOrb(5, 1, 1, 1);
+    m.spawnXpOrb(3, 2, 2, 2);
+    const good = record({ id: 2 });
+    const bad = record({ id: 3, value: 0 });
+    expect(() => m.deserializeAll([good, bad])).toThrow(/malformed xp-orb/);
+    expect(m.getXpOrbs().map((o) => o.id)).toEqual([0, 1]);
+  });
+
+  it('round-trips ticked orbs field-for-field with mint continuity', () => {
+    const m = manager();
+    m.spawnXpOrb(7, 1.25, 2.5, 3.75);
+    m.spawnXpOrb(3, 4, 5, 6);
+    const restored = manager();
+    expect(restored.deserializeAll(m.serializeAll())).toBe(2);
+    expect(restored.getXpOrbs()).toEqual(m.getXpOrbs());
+    expect(restored.spawnXpOrb(1, 0, 0, 0).id).toBe(2);
+  });
+
+  it('survives an unload/reload cycle (serialize → clear → deserialize)', () => {
+    const m = manager();
+    m.spawnXpOrb(7, 1.25, 2.5, 3.75);
+    const snap = m.serializeAll();
+    m.clear();
+    expect(m.deserializeAll(snap)).toBe(1);
+    expect(m.getXpOrbs().map((o) => [o.id, o.value])).toEqual([[0, 7]]);
+  });
+});

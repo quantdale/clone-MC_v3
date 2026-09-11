@@ -185,3 +185,29 @@ Change **258-real-world-runtime-performance-fps-recovery** remains **BLOCKED**
   under-validation debt (duplicate/unknown/inconsistent payloads fail closed).
 - Change 258 remains recorded BLOCKED and resumable on a hardware-WebGL host;
   the 263 track does not consume, waive, or re-litigate any 258 headed task.
+
+## 264 activation alongside BLOCKED 258 — owner-authorized parallel track (2026-09-11)
+
+The product owner (Standing owner order, 2026-09-11 campaign instruction) authorized
+activating and implementing OpenSpec change **264-item-xp-entity-persistence-hardening** while
+Change **258-real-world-runtime-performance-fps-recovery** remains **BLOCKED**
+(headed hardware-WebGL certification deferred) and Changes **259-enchanting-panel-ui**,
+**260-live-brewing-stand-production-integration**, **261-gamerule-settings-ui**,
+**262-recipe-book-ui**, and **263-advancement-panel-ui** stand **VERIFIED**.
+
+- Change 258 status stays **BLOCKED** at 40/100 with its existing deferral intact.
+  No headed FPS work is touched, no GPU evidence is faked, and 258 MUST NOT be
+  marked VERIFIED by the 264 track.
+- Changes 259 (18/18), 260 (19/19), 261 (16/16), 262 (14/14), and 263 (15/15)
+  stand **VERIFIED** and MUST NOT be reopened unless an item/XP persistence
+  regression blocks the 264 player loop.
+- Change 264 (`264-item-xp-entity-persistence-hardening`) is the sole
+  **ACTIVE** implementation change: harden `ItemEntityManager`/`XpOrbManager`
+  batch deserialization to fail closed on duplicate ids and malformed payloads
+  (deterministic throw, manager unchanged), and wire world-scoped live Game
+  persistence for item entities + XP orbs (`__itementities__` / `__xporbs__`
+  raw metadata records with degrade-to-empty quarantine, reset/archive
+  passthrough) so drops/orbs survive page refresh, closing certification debt
+  **R-4** (entity-manager half; advancement half already closed by 263).
+- Change 258 remains recorded BLOCKED and resumable on a hardware-WebGL host;
+  the 264 track does not consume, waive, or re-litigate any 258 headed task.

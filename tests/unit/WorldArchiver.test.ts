@@ -120,6 +120,8 @@ describe('WorldArchiver', () => {
       gameruleDataImported: false,
       recipeBookDataImported: false,
       advancementDataImported: false,
+      itemEntityDataImported: false,
+      xpOrbDataImported: false,
     });
     expect(await target.metadata.getMetadata(WORLD)).not.toBeNull();
     expect(await target.chunkSections.listColumns(WORLD)).toHaveLength(2);

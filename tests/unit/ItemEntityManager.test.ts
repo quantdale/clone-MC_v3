@@ -228,6 +228,111 @@ describe('ItemEntityManager 037 serialization', () => {
   });
 });
 
+describe('ItemEntityManager deserializeAll fail-closed (264 R-4)', () => {
+  function record(overrides: Record<string, unknown> = {}, index = 0): unknown {
+    return {
+      schemaVersion: 1,
+      typeKey: ITEM_ENTITY_TYPE_KEY,
+      x: 0,
+      y: 64,
+      z: 0,
+      data: {
+        id: index,
+        item: STONE,
+        count: 1,
+        x: 0.5,
+        y: 64.5,
+        z: 0.5,
+        vx: 0,
+        vy: 0,
+        vz: 0,
+        ageTicks: 0,
+        ...overrides,
+      },
+    };
+  }
+
+  function snapshot(m: ItemEntityManager): { size: number; ids: number[]; nextProbe: number } {
+    const probe = m.spawnItemEntity({ item: DIRT, count: 1 }, 0, 0, 0);
+    const nextProbe = probe.id;
+    m.removeItemEntity(probe.id);
+    return { size: m.size, ids: m.getItemEntities().map((e) => e.id), nextProbe };
+  }
+
+  it('rejects a duplicate id pair naming the id and index', () => {
+    const m = manager();
+    m.spawnItemEntity({ item: STONE, count: 1 }, 0, 0, 0);
+    const before = snapshot(m);
+    expect(() => m.deserializeAll([record({ id: 4 }, 4), record({ id: 4 }, 4)])).toThrow(
+      /duplicate item-entity id 4 at index 1/,
+    );
+    expect(m.size).toBe(before.size);
+    expect(m.getItemEntities().map((e) => e.id)).toEqual(before.ids);
+  });
+
+  it('rejects a late duplicate in a longer batch', () => {
+    const m = manager();
+    expect(() => m.deserializeAll([record({ id: 1 }, 1), record({ id: 2 }, 2), record({ id: 1 }, 1)])).toThrow(
+      /duplicate item-entity id 1 at index 2/,
+    );
+    expect(m.size).toBe(0);
+  });
+
+  it('rejects a negative id', () => {
+    const m = manager();
+    expect(() => m.deserializeAll([record({ id: -1 })])).toThrow(/non-negative integer/);
+    expect(m.size).toBe(0);
+  });
+
+  it('rejects an unknown registry item id', () => {
+    const m = manager();
+    expect(() => m.deserializeAll([record({ item: 999999 })])).toThrow(/unknown item id 999999 at index 0/);
+    expect(m.size).toBe(0);
+  });
+
+  it('rejects a zero count and a count above stackSize', () => {
+    const m = manager();
+    expect(() => m.deserializeAll([record({ count: 0 })])).toThrow(/positive integer/);
+    expect(m.size).toBe(0);
+    expect(() => m.deserializeAll([record({ count: 65 })])).toThrow(/exceeds stackSize 64/);
+    expect(m.size).toBe(0);
+  });
+
+  it('round-trips ticked state field-for-field with mint continuity', () => {
+    const m = manager();
+    const a = m.spawnItemEntity({ item: STONE, count: 3 }, 10.25, 20.75, 30.1, { vx: 0.05, vy: 0.05, vz: -0.02 });
+    const b = m.spawnItemEntity({ item: DIRT, count: 64 }, -5.5, 70, 8.25);
+    m.tickItemEntities(0.5);
+    const restored = manager();
+    expect(restored.deserializeAll(m.serializeAll())).toBe(2);
+    expect(restored.getItemEntities()).toEqual(m.getItemEntities());
+    const next = restored.spawnItemEntity({ item: SAND, count: 1 }, 0, 0, 0);
+    expect(next.id).toBe(Math.max(a.id, b.id) + 1);
+  });
+
+  it('restores an empty batch to empty with nextId 0', () => {
+    const m = manager();
+    m.spawnItemEntity({ item: STONE, count: 1 }, 0, 0, 0);
+    expect(m.deserializeAll([])).toBe(0);
+    expect(m.size).toBe(0);
+    expect(m.spawnItemEntity({ item: STONE, count: 1 }, 0, 0, 0).id).toBe(0);
+  });
+
+  it('survives an unload/reload cycle (serialize → clear → deserialize)', () => {
+    const m = manager();
+    m.spawnItemEntity({ item: STONE, count: 3 }, 10.25, 20.75, 30.1);
+    m.spawnItemEntity({ item: DIRT, count: 64 }, -5.5, 70, 8.25);
+    const snap = m.serializeAll();
+    m.clear();
+    expect(m.size).toBe(0);
+    expect(m.deserializeAll(snap)).toBe(2);
+    expect(m.getItemEntities().map((e) => [e.id, e.item, e.count])).toEqual([
+      [0, STONE, 3],
+      [1, DIRT, 64],
+    ]);
+  });
+});
+
 describe('createSpawnPosition', () => {
   it('returns the block center raised 0.5 on Y', () => {
     expect(createSpawnPosition(2, 3, 4)).toEqual({ x: 2.5, y: 3.5, z: 4.5 });

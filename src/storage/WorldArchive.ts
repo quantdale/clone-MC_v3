@@ -13,6 +13,9 @@
  * v2 archives without it validate and import with a null (empty) recipe book.
  * Change 263 adds an optional `advancementData` field (missing reads as null); v1 and
  * v2 archives without it validate and import with null (default) advancement progress.
+ * Change 264 adds optional `itemEntityData` / `xpOrbData` fields (missing read as
+ * null); v1 and v2 archives without them validate and import with null (empty)
+ * item/XP sets.
  */
 import type { WorldMetadata } from './WorldMetadata';
 import { validateWorldMetadata } from './WorldMetadata';
@@ -96,6 +99,20 @@ export interface WorldArchive {
    * this field (v1, or v2 written before 263) validate and import as null.
    */
   advancementData?: unknown | null;
+  /**
+   * Raw item-entity snapshot stored under __itementities__:${worldId}, or null
+   * when absent (264). OPTIONAL: archives without this field validate and
+   * import as null. A present value must be an array of 037 envelopes
+   * (re-validated at load by the hardened `ItemEntityManager.deserializeAll`).
+   */
+  itemEntityData?: unknown | null;
+  /**
+   * Raw XP-orb snapshot stored under __xporbs__:${worldId}, or null when
+   * absent (264). OPTIONAL: archives without this field validate and import
+   * as null. A present value must be an array of 037 envelopes (re-validated
+   * at load by the hardened `XpOrbManager.deserializeAll`).
+   */
+  xpOrbData?: unknown | null;
 }
 
 function isFiniteNumber(v: unknown): v is number {
@@ -270,6 +287,24 @@ export function validateWorldArchive(input: unknown): WorldArchive {
     advancementData = r.advancementData;
   }
 
+  // 264: optional in every version; missing/null reads as null. A present value
+  // must be an array of 037 envelopes (each entry envelope-validated here and
+  // fully re-validated at load by the hardened manager readers).
+  let itemEntityData: unknown | null = null;
+  if (r.itemEntityData !== null && r.itemEntityData !== undefined) {
+    if (!Array.isArray(r.itemEntityData)) {
+      throw new Error('WorldArchive: itemEntityData must be an array or null');
+    }
+    itemEntityData = (r.itemEntityData as unknown[]).map((e) => validateSerializedEntity(e));
+  }
+  let xpOrbData: unknown | null = null;
+  if (r.xpOrbData !== null && r.xpOrbData !== undefined) {
+    if (!Array.isArray(r.xpOrbData)) {
+      throw new Error('WorldArchive: xpOrbData must be an array or null');
+    }
+    xpOrbData = (r.xpOrbData as unknown[]).map((e) => validateSerializedEntity(e));
+  }
+
   return {
     format: WORLD_ARCHIVE_FORMAT as 'voxel-world',
     version: 2 as const,
@@ -285,5 +320,7 @@ export function validateWorldArchive(input: unknown): WorldArchive {
     gameruleData,
     recipeBookData,
     advancementData,
+    itemEntityData,
+    xpOrbData,
   };
 }
