@@ -1435,14 +1435,17 @@ export class Game {
     const dynamicState = this.renderer.dynamicResolutionState();
     const worldPipeline = this.world.performanceSnapshot();
     const buffer = this.renderer.actualDrawingBufferSize();
+    // Sanitized: observability must never throw (a throw here stops the game
+    // loop), so non-finite renderer readings degrade to zeros in the artifact.
+    const finite = (value: number): number => (Number.isFinite(value) ? value : 0);
     this.frameAuxRing.record(
-      info?.render.calls ?? 0,
-      info?.render.triangles ?? 0,
-      info?.memory.geometries ?? 0,
-      info?.memory.textures ?? 0,
-      buffer.width,
-      buffer.height,
-      dynamicState.scale,
+      finite(info?.render.calls ?? 0),
+      finite(info?.render.triangles ?? 0),
+      finite(info?.memory.geometries ?? 0),
+      finite(info?.memory.textures ?? 0),
+      finite(buffer.width),
+      finite(buffer.height),
+      finite(dynamicState.scale),
     );
     const pipeline: RenderPipelineMetrics = {
       drawingBuffer: buffer,
