@@ -123,7 +123,9 @@ panel, shell, lifecycle, and harness patterns are mirrored, never forked.
   drift fixed; C261 matrix row exact + summary counts + note flipped to
   VERIFIED; `PROGRAM_STATE.json`/`.md` checkpoint (18/18 100% when all
   checked, heads recorded, 258 BLOCKED blocker kept); `validate-state` PASS.
-- [ ] **T16.** Publish: commit, push to `origin/main`, remote head verified,
+- [x] **T16.** Publish: committed as `111ad94`, pushed to `origin/main`, remote head verified (`111ad94`), localHead sync residual `640c032` pushed, remote==local verified; final report below. 258 NOT marked VERIFIED; no headed FPS work; 259/260 NOT reopened. Do NOT mark 258 VERIFIED;
+  do NOT touch headed FPS work; do NOT reopen 259/260.
+- [x] **T16-done.** commit, push to `origin/main`, remote head verified,
   `published_head` recorded; final report (SHAs, status, completion,
   validations, blockers, next action). Do NOT mark 258 VERIFIED; do NOT
   touch headed FPS work; do NOT reopen 259/260.
