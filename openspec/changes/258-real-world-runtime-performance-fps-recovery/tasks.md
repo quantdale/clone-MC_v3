@@ -1,7 +1,7 @@
 # Tasks: 258-real-world-runtime-performance-fps-recovery
 
-Status: ACTIVE — Change 257 VERIFIED 92/92 at d55c2e7 (CI 33600754305 success); Phase-1/2/3 foundation + gates + World-internal phases + worker fault injection + worker pack-axis fix + duplicate-submit guard + harness scenarios + fallback/stale/startup/metadata evidence
-Tasks complete: 33/100 (33%). Target: 100% — 257 VERIFIED
+Status: ACTIVE — Change 257 VERIFIED 92/92 at d55c2e7 (CI 33600754305 success); Phase-1/2/3 foundation + gates + World-internal phases + worker fault injection + worker pack-axis fix + duplicate-submit guard + harness scenarios + fallback/stale/startup/metadata/quality-guard evidence
+Tasks complete: 34/100 (34%). Target: 100% — 257 VERIFIED
 Advancement allowed: false
 
 ## A. Repository truth, activation and performance authority
@@ -117,7 +117,7 @@ Advancement allowed: false
 
 ## J. Product-quality and settings behavior
 
-- [ ] 85. Preserve default render/simulation distance and visible quality through first optimization pass.
+- [x] 85. Preserve default render/simulation distance and visible quality through first optimization pass. (`DefaultQualityPreservation.test.ts` pins rd 6 / sim 6 / DPR 2 / shadows / clouds / shadow map+distance and keeps the headless profile explicitly separate; no default cut exists in the Phase-1..3 diffs. Any later intentional cut still requires task 86/90 proof + review.)
 - [ ] 86. If default tuning remains required, prove why and prefer non-visual scheduling/simulation changes first.
 - [ ] 87. Make tier/adaptive behavior explicit; never infer a hidden lower tier to pass.
 - [ ] 88. Preserve deterministic fixed-tick state across render-quality settings.
