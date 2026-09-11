@@ -139,11 +139,18 @@ import { createDefaultBlockShapeTable, VoxelShape } from '../world/VoxelShape';
 import type { SelectionShapeWorld } from '../world/ShapeRaycast';
 import { LiveBlockEntityHost } from './LiveBlockEntityHost';
 import { FURNACE_BLOCK_ID, type FurnaceContext } from '../world/FurnaceBlockEntity';
+import { BREWING_STAND_BLOCK_ID, type BrewingState } from '../world/BrewingStandBlockEntity';
+import { createDefaultBrewingContext, type BrewingContext } from '../inventory/BrewingRecipes';
 import { createDefaultTypedRecipes } from '../inventory/TypedRecipe';
 import { createDefaultFuelValues, createFurnaceContext, takeFurnaceXp } from '../inventory/FurnaceRecipes';
 import { menuSlotToStack } from '../inventory/MenuSlots';
 import type { MenuSlot } from '../inventory/MenuTransaction';
 import { FurnacePanel } from '../ui/FurnacePanel';
+import { BrewingPanel, type BrewingCursor } from '../ui/BrewingPanel';
+import { createPotionContents, POTION_CONTENTS_COMPONENT } from '../data/PotionItemData';
+import { AWKWARD_BASE } from '../inventory/BrewingRecipes';
+import { StackComponentMap, createDefaultStackComponentRegistry } from '../inventory/StackDataComponents';
+import type { ItemStack } from '../inventory/Inventory';
 import { EnchantingPanel, formatEnchantLevel, prettifyEnchantmentKey } from '../ui/EnchantingPanel';
 import type { LootStack } from '../inventory/LootTable';
 import { createDefaultBossRegistry } from '../simulation/BossFramework';
@@ -236,16 +243,24 @@ export class Game {
   private readonly randomTickSelector: RandomTickSelector;
   /** Behavior-facing world access adapter (125). */
   private readonly worldBlockAccess: WorldBlockAccess;
-  /** Live block-entity host (251): owns the authoritative furnace states. */
+  /** Live block-entity host (251; brewing section 260): owns the authoritative furnace + brewing states. */
   readonly blockEntityHost: LiveBlockEntityHost;
   /** Furnace recipe/fuel context (110 data) injected into the 109 engine. */
   private readonly furnaceContext: FurnaceContext;
+  /** Brewing recipe/fuel context (123 data) injected into the 123 engine. */
+  private readonly brewingContext: BrewingContext;
   /** Whether the furnace container screen is open (251). */
   private furnaceOpen = false;
   /** The open furnace's position, or null when closed. */
   private furnacePos: { x: number; y: number; z: number } | null = null;
   /** DOM controller for the live furnace screen (251). */
   private readonly furnacePanel: FurnacePanel;
+  /** Whether the brewing container screen is open (260). */
+  private brewingOpen = false;
+  /** The open brewing stand's position, or null when closed. */
+  private brewingPos: { x: number; y: number; z: number } | null = null;
+  /** DOM controller for the live brewing screen (260). */
+  private readonly brewingPanel: BrewingPanel;
   /** Whether the enchanting panel screen is open (259). */
   private enchantingOpen = false;
   /** The open enchanting table's position, or null when closed. */
@@ -646,11 +661,14 @@ export class Game {
     // 251: the live block-entity host owns every placed furnace's authoritative
     // state. Hydration from persisted records happens at the same moment as the
     // bulk-loaded edits (injected persistence) or when open() settles.
+    // 260 extends the same host with the brewing context (123 data).
     this.furnaceContext = createFurnaceContext(createDefaultTypedRecipes(), createDefaultFuelValues());
+    this.brewingContext = createDefaultBrewingContext();
     this.blockEntityHost = new LiveBlockEntityHost({
       world: this.world,
       persistence: this.persistenceImpl,
       furnaceContext: this.furnaceContext,
+      brewingContext: this.brewingContext,
       onQuarantined: () => {
         // A quarantined record means durable data was corrupt or from a
         // future/unknown schema version; surface it via the save-health
@@ -861,6 +879,25 @@ export class Game {
       },
       onClose: () => this.closeFurnace(),
     });
+    // Live brewing screen (260): a pure view over the host's authoritative state.
+    this.brewingPanel = new BrewingPanel(this.requireElement('brewing'), {
+      inventory: this.inventory,
+      registry: this.itemRegistry,
+      atlas: this.atlas,
+      getState: () =>
+        this.brewingPos
+          ? this.blockEntityHost.getBrewingState(this.brewingPos.x, this.brewingPos.y, this.brewingPos.z)
+          : null,
+      applySlots: (slots) =>
+        this.brewingPos
+          ? this.blockEntityHost.applyBrewingMenuSlots(this.brewingPos.x, this.brewingPos.y, this.brewingPos.z, slots)
+          : null,
+      onInventoryChanged: () => {
+        this.hotbar.render();
+        if (this.craftingOpen) this.craftingPanel.render(this.itemRegistry);
+      },
+      onClose: () => this.closeBrewing(),
+    });
     // Live enchanting screen (259): a pure view over the 120 session.
     this.enchantingPanel = new EnchantingPanel(this.requireElement('enchanting'), {
       getSession: () => this.enchantingSession,
@@ -979,6 +1016,9 @@ export class Game {
     // Settle the furnace session first so its cursor/xp land in the state that
     // savePlayerStateDurable + the facade flush are about to persist (251).
     this.closeFurnace();
+    // The brewing cursor may carry a potion bottle: settle it before the
+    // persist flush for the same reason (260).
+    this.closeBrewing();
     // The enchanting panel owns no transient state (259: no cursor), but it
     // must not stay up over teardown — close it before the persist flush.
     this.closeEnchanting();
@@ -1223,6 +1263,7 @@ export class Game {
       !this.craftingOpen &&
       !this.overlayOpen &&
       !this.furnaceOpen &&
+      !this.brewingOpen &&
       !this.enchantingOpen &&
       (this.pointerLocked || this.hasControllerInput(deviceFrame));
 
@@ -1307,6 +1348,9 @@ export class Game {
         // One container at a time: the toggle closes the furnace instead of
         // stacking the crafting screen on top of it (251).
         this.closeFurnace();
+      } else if (this.brewingOpen) {
+        // Same rule for the brewing panel (260): close instead of stacking.
+        this.closeBrewing();
       } else if (this.enchantingOpen) {
         // Same rule for the enchanting panel (259): close instead of stacking.
         this.closeEnchanting();
@@ -1328,6 +1372,20 @@ export class Game {
         this.closeFurnace();
       } else {
         this.furnacePanel.render();
+      }
+    }
+
+    // Brewing session upkeep (260): close on destruction or walking away, and
+    // keep the brew/fuel indicators live while it stays open.
+    if (this.brewingOpen && this.brewingPos) {
+      const p = this.player.position;
+      const pos = this.brewingPos;
+      const stillThere = this.world.getBlock(pos.x, pos.y, pos.z) === BlockId.BrewingStand;
+      const distance = Math.hypot(p.x - (pos.x + 0.5), p.y - (pos.y + 0.5), p.z - (pos.z + 0.5));
+      if (!stillThere || distance > FURNACE_MAX_USE_DISTANCE) {
+        this.closeBrewing();
+      } else {
+        this.brewingPanel.render();
       }
     }
 
@@ -1418,6 +1476,9 @@ export class Game {
     // 3.5 Block entities (251): furnaces in simulating chunks advance one
     // canonical tick; pause/loading/non-simulating chunks stay frozen.
     this.blockEntityHost.tickFurnaces();
+    // 3.5b Brewing stands (260): same canonical-tick discipline over the 123
+    // engine, in the same fixed-tick slot. The two stores are independent.
+    this.blockEntityHost.tickBrewingStands();
 
     // 3.6 Wither boss (252): authoritative tick over live bosses + skulls.
     this.tickWithers();
@@ -1983,6 +2044,10 @@ export class Game {
         // panel can never stay stuck over live input.
         this.closeFurnace();
       }
+      if (this.brewingOpen) {
+        // Same rule for the brewing panel (260).
+        this.closeBrewing();
+      }
       if (this.enchantingOpen) {
         // Same rule for the enchanting panel (259).
         this.closeEnchanting();
@@ -1994,7 +2059,7 @@ export class Game {
         this.hud.show();
         this.hotbar.show();
       }
-    } else if (!this.craftingOpen && !this.furnaceOpen && !this.enchantingOpen) {
+    } else if (!this.craftingOpen && !this.furnaceOpen && !this.brewingOpen && !this.enchantingOpen) {
       // Unlock caused by OPENING a container session must not stack the pause
       // overlay behind/on the open panel; the panel itself represents the
       // paused state and its owner re-shows the overlay on close (251).
@@ -2344,7 +2409,7 @@ export class Game {
    */
   private maybeDismissOverlayForControllerPlay(frame: DeviceFrame, worldReady: boolean): void {
     if (!this.overlayOpen || !worldReady) return;
-    if (this.craftingOpen || this.furnaceOpen || this.enchantingOpen || this.contextLost || !this.errorEl.classList.contains('hidden')) return;
+    if (this.craftingOpen || this.furnaceOpen || this.brewingOpen || this.enchantingOpen || this.contextLost || !this.errorEl.classList.contains('hidden')) return;
     if (!this.hasControllerInput(frame)) return;
     this.hideOverlay();
     if (this.shouldShowHud()) {
@@ -2367,6 +2432,7 @@ export class Game {
       !this.pointerLocked &&
       !this.craftingOpen &&
       !this.furnaceOpen &&
+      !this.brewingOpen &&
       !this.enchantingOpen &&
       !this.contextLost &&
       this.errorEl.classList.contains('hidden')
@@ -2411,6 +2477,13 @@ export class Game {
         ) {
           this.blockEntityHost.placeFurnace(coords.x, coords.y, coords.z);
         }
+        // A committed brewing-stand placement instantiates its block entity (260).
+        if (
+          coords &&
+          this.world.getBlock(coords.x, coords.y, coords.z) === BREWING_STAND_BLOCK_ID
+        ) {
+          this.blockEntityHost.placeBrewing(coords.x, coords.y, coords.z);
+        }
         // 252 wither summon: localized T-pattern check authoritative
         if (coords) {
           const summonWorld = {
@@ -2446,6 +2519,11 @@ export class Game {
           this.world.getBlock(coords.x, coords.y, coords.z) === BlockId.Furnace
         ) {
           this.openFurnace(coords.x, coords.y, coords.z);
+        } else if (
+          coords &&
+          this.world.getBlock(coords.x, coords.y, coords.z) === BlockId.BrewingStand
+        ) {
+          this.openBrewing(coords.x, coords.y, coords.z);
         } else if (this.isBonemealSelected()) {
           this.useBonemeal();
         } else if (
@@ -2470,6 +2548,155 @@ export class Game {
     return this.furnacePos;
   }
 
+  /** Whether the brewing container screen is open (E2E/test surface). */
+  get isBrewingOpen(): boolean {
+    return this.brewingOpen;
+  }
+
+  /** The open brewing stand's position, or null (E2E/test surface). */
+  get brewingSessionPosition(): { x: number; y: number; z: number } | null {
+    return this.brewingPos;
+  }
+
+  /**
+   * Open the live brewing screen for the stand at `(x, y, z)`. The session is
+   * authoritative-state-backed; closing returns the cursor slot (with its
+   * potion contents) to the player. Opening closes furnace/crafting/
+   * enchanting first: one container at a time.
+   */
+  openBrewing(x: number, y: number, z: number): void {
+    if (this.brewingOpen) return;
+    if (!this.blockEntityHost.hasBrewing(x, y, z)) return;
+    if (this.furnaceOpen) this.closeFurnace();
+    if (this.craftingOpen) this.closeCrafting();
+    if (this.enchantingOpen) this.closeEnchanting();
+    this.brewingOpen = true;
+    this.brewingPos = { x, y, z };
+    this.input.releasePointerLock();
+    this.hideOverlay();
+    this.crosshair.hide();
+    this.hud.hide();
+    this.hotbar.hide();
+    this.setBreakProgress(0);
+    this.interaction.clearTarget();
+    this.brewingPanel.show();
+  }
+
+  /**
+   * Close the brewing screen and settle its transient state: the cursor slot
+   * goes back into the inventory with its components intact (dropped as plain
+   * item entities when full — the bottle item is never deleted, though
+   * overflow detaches its contents per the component-less 112 pickup
+   * contract, pinned by unit test).
+   */
+  closeBrewing(): void {
+    if (!this.brewingOpen) return;
+    const cursor = this.brewingPanel.takeCursor();
+    if (cursor) {
+      this.returnBrewingCursorToPlayer(cursor);
+    }
+    this.brewingOpen = false;
+    this.brewingPos = null;
+    this.brewingPanel.hide();
+    this.showOverlay('Click to play');
+  }
+
+  /** Merge a brewing cursor slot back into the inventory or drop it. */
+  private returnBrewingCursorToPlayer(cursor: BrewingCursor): void {
+    const stack = menuSlotToStack(
+      cursor.components !== undefined
+        ? { item: cursor.item, count: cursor.count, maxStack: 64, components: cursor.components }
+        : { item: cursor.item, count: cursor.count, maxStack: 64 },
+      this.itemRegistry,
+    );
+    if (!stack) {
+      // Unrepresentable cursor content is quarantined loudly, never deleted silently.
+      console.warn(`[voxel] brewing cursor stack ${String(cursor.item)} x${cursor.count} could not be restored`);
+      return;
+    }
+    const left = this.insertBrewingStackPreservingComponents(stack);
+    if (left > 0) {
+      const p = this.player.position;
+      this.itemEntities.spawnLootStacks([{ item: stack.id, count: left }], p.x, p.y + 1, p.z, Math.random);
+    }
+    this.hotbar.render();
+  }
+
+  /**
+   * Insert a (possibly component-carrying) stack into the player inventory,
+   * merging only with component-identical stacks and otherwise using empty
+   * slots. Returns the uninserted leftover count. Unlike `addItem` (plain
+   * stacks only), this preserves 122 potion contents.
+   */
+  private insertBrewingStackPreservingComponents(stack: ItemStack): number {
+    let remaining = stack.count;
+    // The stack converted through menuSlotToStack, so its id is registry-known.
+    const max = this.itemRegistry.get(stack.id).stackSize;
+    const fits = (candidate: ItemStack): boolean => {
+      if (candidate.id !== stack.id || candidate.count >= max) return false;
+      if (stack.components === undefined) return candidate.components === undefined;
+      return candidate.components !== undefined && candidate.components.equals(stack.components);
+    };
+    for (const slot of this.inventory.slots) {
+      if (remaining <= 0) break;
+      if (fits(slot)) {
+        const moved = Math.min(remaining, max - slot.count);
+        slot.count += moved;
+        remaining -= moved;
+      }
+    }
+    for (const slot of this.inventory.storage) {
+      if (remaining <= 0) break;
+      if (fits(slot)) {
+        const moved = Math.min(remaining, max - slot.count);
+        slot.count += moved;
+        remaining -= moved;
+      }
+    }
+    for (let i = 0; i < this.inventory.slots.length && remaining > 0; i++) {
+      const slot = this.inventory.slots[i]!;
+      if ((slot.count ?? 0) > 0) continue;
+      const moved = Math.min(remaining, max);
+      this.inventory.slots[i] = {
+        id: stack.id,
+        count: moved,
+        ...(stack.components ? { components: stack.components.copy() } : {}),
+      };
+      remaining -= moved;
+    }
+    while (remaining > 0 && this.inventory.storage.length < 27) {
+      const moved = Math.min(remaining, max);
+      this.inventory.storage.push({
+        id: stack.id,
+        count: moved,
+        ...(stack.components ? { components: stack.components.copy() } : {}),
+      });
+      remaining -= moved;
+    }
+    return remaining;
+  }
+
+  /**
+   * Test-only setup seam (260, E2E-covered): grant one awkward potion bottle
+   * (awkward base + zeroed placeholder effect, the 123 unit-test pattern)
+   * into the player inventory. Stands in for bottle acquisition (water
+   * bottles / creative menu are future work); the brewed loop itself runs on
+   * real ticks, real transactions, and real persistence. Returns leftover.
+   */
+  testGrantAwkwardBottle(): number {
+    const contents = createPotionContents({
+      base: AWKWARD_BASE,
+      customEffects: [{ typeId: 'minecraft:effect/speed', duration: 0, amplifier: 0 }],
+    });
+    const map = new StackComponentMap(createDefaultStackComponentRegistry()).with(
+      POTION_CONTENTS_COMPONENT,
+      contents as never,
+    );
+    const def = this.itemRegistry.getByKey('potion');
+    if (!def) return 1;
+    return this.insertBrewingStackPreservingComponents({ id: def.id, count: 1, components: map });
+  }
+
   /**
    * Open the live furnace screen for the furnace at `(x, y, z)`. The session is
    * authoritative-state-backed; closing returns the cursor stack to the player.
@@ -2477,6 +2704,8 @@ export class Game {
   openFurnace(x: number, y: number, z: number): void {
     if (this.furnaceOpen) return;
     if (!this.blockEntityHost.has(x, y, z)) return;
+    if (this.brewingOpen) this.closeBrewing();
+    if (this.enchantingOpen) this.closeEnchanting();
     this.furnaceOpen = true;
     this.furnacePos = { x, y, z };
     this.input.releasePointerLock();
@@ -2548,6 +2777,21 @@ export class Game {
     ) {
       this.closeEnchanting();
     }
+    // An open brewing panel must never ghost-reference a destroyed stand
+    // (260): close first (cursor settled with contents), before removal.
+    if (
+      this.brewingOpen &&
+      this.brewingPos &&
+      this.brewingPos.x === x &&
+      this.brewingPos.y === y &&
+      this.brewingPos.z === z
+    ) {
+      this.closeBrewing();
+    }
+    if (this.blockEntityHost.hasBrewing(x, y, z)) {
+      this.breakBrewingStand(x, y, z);
+      return;
+    }
     if (!this.blockEntityHost.has(x, y, z)) return;
     if (this.furnaceOpen && this.furnacePos && this.furnacePos.x === x && this.furnacePos.y === y && this.furnacePos.z === z) {
       this.closeFurnace();
@@ -2568,6 +2812,30 @@ export class Game {
         vy: CONFIG.xp.orbSpawnUpVelocity,
       });
     }
+  }
+
+  /**
+   * Brewing-stand destruction handling (260): drop contained stacks and remove
+   * the block entity exactly once. Component-carrying stacks (the bottle)
+   * return straight to the inventory with contents intact; only true overflow
+   * spills as plain loot (contents-detach pinned by unit test). Runs BEFORE
+   * the generic toast so an open panel can never ghost-reference a
+   * destroyed stand (the panel was pre-closed above).
+   */
+  private breakBrewingStand(x: number, y: number, z: number): void {
+    const state: BrewingState | null = this.blockEntityHost.removeBrewing(x, y, z);
+    if (!state) return;
+    for (const slot of [state.bottle, state.fuel, state.ingredient] as MenuSlot[]) {
+      const stack = menuSlotToStack(slot, this.itemRegistry);
+      if (!stack) continue;
+      const left = stack.components
+        ? this.insertBrewingStackPreservingComponents(stack)
+        : this.inventory.addItem(stack.id, stack.count);
+      if (left > 0) {
+        this.itemEntities.spawnLootStacks([{ item: stack.id, count: left }], x + 0.5, y + 0.5, z + 0.5, Math.random);
+      }
+    }
+    this.hotbar.render();
   }
 
   // ── Wither boss (252) ──────────────────────────────────────────────────────
@@ -2889,6 +3157,7 @@ export class Game {
     if (px === undefined || py === undefined || pz === undefined) return;
     if (this.world.getBlock(px, py, pz) !== BlockId.EnchantingTable) return;
     if (this.furnaceOpen) this.closeFurnace();
+    if (this.brewingOpen) this.closeBrewing();
     if (this.craftingOpen) this.closeCrafting();
     const bookShelves = this.countBookshelves(px, py, pz);
     this.enchantingSession = createSession({
@@ -3206,6 +3475,7 @@ export class Game {
   private respawnPlayer(): void {
     // A death closes any open container so it cannot ghost-reference the old world.
     this.closeFurnace();
+    this.closeBrewing();
     this.closeEnchanting();
     if (this.craftingOpen) {
       this.closeCrafting();

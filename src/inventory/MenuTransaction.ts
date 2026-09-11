@@ -11,6 +11,63 @@
 export interface MenuCursor {
   item: string | null;
   count: number;
+  /**
+   * Optional carried components (additive, change 260). A bottle picked up
+   * onto the cursor keeps its `potion_contents`; absent on the vast
+   * majority of cursors; never required.
+   */
+  components?: Readonly<Record<string, unknown>>;
+}
+
+/**
+ * Component identity for transaction routing (260): two component records
+ * describe the same stack contents only when their canonical forms match.
+ * Both absent means equal (the common component-less case, byte-identical to
+ * the pre-260 merge behavior). Canonicalization sorts object keys so
+ * engine-produced records compare by value, never by construction order.
+ */
+export function menuComponentsEqual(
+  a: Readonly<Record<string, unknown>> | undefined,
+  b: Readonly<Record<string, unknown>> | undefined,
+): boolean {
+  if (a === undefined || b === undefined) return a === b;
+  return canonicalize(a) === canonicalize(b);
+}
+
+function canonicalize(value: unknown): string {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? 'null';
+  if (Array.isArray(value)) return `[${value.map(canonicalize).join(',')}]`;
+  const record = value as Readonly<Record<string, unknown>>;
+  const keys = Object.keys(record).sort();
+  return `{${keys.map((k) => `${JSON.stringify(k)}:${canonicalize(record[k])}`).join(',')}}`;
+}
+
+function takeComponents(slot: MenuSlot): Readonly<Record<string, unknown>> | undefined {
+  const components = slot.components;
+  if (components !== undefined) delete slot.components;
+  return components;
+}
+
+function setComponents(slot: MenuSlot, components: Readonly<Record<string, unknown>> | undefined): void {
+  if (components !== undefined) {
+    slot.components = components;
+  } else {
+    delete slot.components;
+  }
+}
+
+function takeCursorComponents(cursor: MenuCursor): Readonly<Record<string, unknown>> | undefined {
+  const components = cursor.components;
+  if (components !== undefined) delete cursor.components;
+  return components;
+}
+
+function setCursorComponents(cursor: MenuCursor, components: Readonly<Record<string, unknown>> | undefined): void {
+  if (components !== undefined) {
+    cursor.components = components;
+  } else {
+    delete cursor.components;
+  }
 }
 
 /** One menu slot with a per-slot stack cap. */
@@ -119,6 +176,12 @@ export function validateContainerMenu(input: unknown): ContainerMenu {
   }
   const cursorInput = r.cursor as Record<string, unknown>;
   const cursor: MenuCursor = { item: cursorInput.item as string | null, count: cursorInput.count as number };
+  if (cursorInput.components !== undefined) {
+    if (typeof cursorInput.components !== 'object' || cursorInput.components === null || Array.isArray(cursorInput.components)) {
+      throw new Error('MenuTransaction: cursor.components must be an object when present');
+    }
+    cursor.components = cursorInput.components as Readonly<Record<string, unknown>>;
+  }
   validateCursor(cursor);
   return { slots, playerSlotStart, cursor };
 }
@@ -147,9 +210,11 @@ export function applyMenuTransaction(menu: ContainerMenu, transaction: MenuTrans
   switch (transaction.type) {
     case 'leftClick': {
       if (cursor.item === null) {
-        // Pick up the slot.
+        // Pick up the slot, components riding along (260); the emptied slot
+        // keeps no orphan components.
         cursor.item = slot.item;
         cursor.count = slot.count;
+        setCursorComponents(cursor, takeComponents(slot));
         slot.item = null;
         slot.count = 0;
       } else if (slot.item === null) {
@@ -157,39 +222,52 @@ export function applyMenuTransaction(menu: ContainerMenu, transaction: MenuTrans
         if (cursor.count <= slot.maxStack) {
           slot.item = cursor.item;
           slot.count = cursor.count;
+          setComponents(slot, takeCursorComponents(cursor));
           cursor.item = null;
           cursor.count = 0;
         } else {
           slot.item = cursor.item;
           slot.count = slot.maxStack;
+          setComponents(slot, cursor.components);
           cursor.count -= slot.maxStack;
         }
-      } else if (slot.item === cursor.item) {
+      } else if (slot.item === cursor.item && menuComponentsEqual(slot.components, cursor.components)) {
         // Merge as much as fits; the remainder stays on the cursor.
+        // Components must match (260): differing contents never merge.
         const moved = Math.min(cursor.count, slot.maxStack - slot.count);
         slot.count += moved;
         cursor.count -= moved;
         if (cursor.count === 0) {
           cursor.item = null;
+          setCursorComponents(cursor, undefined);
         }
       } else {
-        // Swap.
+        // Swap (including same-item/differing-components, 260).
         const oldItem = slot.item;
         const oldCount = slot.count;
+        const oldComponents = takeComponents(slot);
         slot.item = cursor.item;
         slot.count = cursor.count;
+        setComponents(slot, takeCursorComponents(cursor));
         cursor.item = oldItem;
         cursor.count = oldCount;
+        setCursorComponents(cursor, oldComponents);
       }
       break;
     }
     case 'rightClick': {
-      if (slot.item !== null && (cursor.item === null || cursor.item === slot.item)) {
-        // Split-half pickup (merge-limited by cursor room).
+      if (
+        slot.item !== null &&
+        (cursor.item === null ||
+          (cursor.item === slot.item && menuComponentsEqual(slot.components, cursor.components)))
+      ) {
+        // Split-half pickup (merge-limited by cursor room). The carried half
+        // shares the slot's contents (260); an emptied slot keeps no orphans.
         const wanted = Math.ceil(slot.count / 2);
         if (cursor.item === null) {
           cursor.item = slot.item;
           cursor.count = wanted;
+          setCursorComponents(cursor, slot.components);
           slot.count -= wanted;
         } else {
           const room = MAX_CURSOR_COUNT - cursor.count;
@@ -199,18 +277,21 @@ export function applyMenuTransaction(menu: ContainerMenu, transaction: MenuTrans
         }
         if (slot.count === 0) {
           slot.item = null;
+          setComponents(slot, undefined);
         }
-      } else if (cursor.item !== null && (slot.item === null || (slot.item === cursor.item && slot.count < slot.maxStack))) {
-        // Place one.
+      } else if (cursor.item !== null && (slot.item === null || (slot.item === cursor.item && slot.count < slot.maxStack && menuComponentsEqual(slot.components, cursor.components)))) {
+        // Place one (merge gated on matching contents, 260).
         if (slot.item === null) {
           slot.item = cursor.item;
           slot.count = 1;
+          setComponents(slot, cursor.components);
         } else {
           slot.count += 1;
         }
         cursor.count -= 1;
         if (cursor.count === 0) {
           cursor.item = null;
+          setCursorComponents(cursor, undefined);
         }
       }
       break;
@@ -222,13 +303,15 @@ export function applyMenuTransaction(menu: ContainerMenu, transaction: MenuTrans
       if (slot.item === null) {
         slot.item = cursor.item;
         slot.count = 1;
+        setComponents(slot, cursor.components);
         cursor.count -= 1;
-      } else if (slot.item === cursor.item && slot.count < slot.maxStack) {
+      } else if (slot.item === cursor.item && slot.count < slot.maxStack && menuComponentsEqual(slot.components, cursor.components)) {
         slot.count += 1;
         cursor.count -= 1;
       }
       if (cursor.count === 0) {
         cursor.item = null;
+        setCursorComponents(cursor, undefined);
       }
       break;
     }
@@ -238,28 +321,31 @@ export function applyMenuTransaction(menu: ContainerMenu, transaction: MenuTrans
       const end = toPlayer ? slots.length : menu.playerSlotStart;
       if (slot.item !== null) {
         let remaining = slot.count;
-        // First pass: merge into same-item slots with room.
+        // First pass: merge into same-item slots with room AND matching
+        // contents (260): differing components never merge.
         for (let i = start; i < end && remaining > 0; i++) {
           const target = slots[i]!;
-          if (target.item === slot.item && target.count < target.maxStack) {
+          if (target.item === slot.item && target.count < target.maxStack && menuComponentsEqual(target.components, slot.components)) {
             const moved = Math.min(remaining, target.maxStack - target.count);
             target.count += moved;
             remaining -= moved;
           }
         }
-        // Second pass: first empty slot.
+        // Second pass: first empty slot, contents riding along (260).
         for (let i = start; i < end && remaining > 0; i++) {
           const target = slots[i]!;
           if (target.item === null) {
             const moved = Math.min(remaining, target.maxStack);
             target.item = slot.item;
             target.count = moved;
+            setComponents(target, slot.components);
             remaining -= moved;
           }
         }
         slot.count = remaining;
         if (remaining === 0) {
           slot.item = null;
+          setComponents(slot, undefined);
         }
       }
       break;

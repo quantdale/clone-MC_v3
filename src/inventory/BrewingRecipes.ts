@@ -14,11 +14,11 @@
 
 import { type PotionEffectData } from '../data/PotionItemData';
 
-/** Resource-id string of the blaze-powder fuel item. */
-export const BLAZE_POWDER_ITEM = 'minecraft:item/blaze_powder';
+/** Resource-id string of the blaze-powder fuel item (live-registry shape, 260). */
+export const BLAZE_POWDER_ITEM = 'minecraft:blaze_powder';
 
-/** Resource-id string of a potion bottle item. */
-export const POTION_BOTTLE_ITEM = 'minecraft:item/potion';
+/** Resource-id string of a potion bottle item (live-registry shape, 260). */
+export const POTION_BOTTLE_ITEM = 'minecraft:potion';
 
 /** Base name of a plain water bottle. */
 export const WATER_BASE = 'minecraft:potion/water';
@@ -27,14 +27,14 @@ export const AWKWARD_BASE = 'minecraft:potion/awkward';
 /** Base name of a mundane potion (no effects). */
 export const MUNDANE_BASE = 'minecraft:potion/mundane';
 
-/** The ingredient items used by the starter table. */
-export const NETHER_WART_ITEM = 'minecraft:item/nether_wart';
-export const REDSTONE_ITEM = 'minecraft:item/redstone';
-export const GLOWSTONE_ITEM = 'minecraft:item/glowstone';
-export const FERMENTED_SPIDER_EYE_ITEM = 'minecraft:item/fermented_spider_eye';
-export const SPEED_REAGENT_ITEM = 'minecraft:item/speed_reagent';
-export const STRENGTH_REAGENT_ITEM = 'minecraft:item/strength_reagent';
-export const HEALING_REAGENT_ITEM = 'minecraft:item/healing_reagent';
+/** The ingredient items used by the starter table (live-registry shape, 260). */
+export const NETHER_WART_ITEM = 'minecraft:nether_wart';
+export const REDSTONE_ITEM = 'minecraft:redstone';
+export const GLOWSTONE_ITEM = 'minecraft:glowstone';
+export const FERMENTED_SPIDER_EYE_ITEM = 'minecraft:fermented_spider_eye';
+export const SPEED_REAGENT_ITEM = 'minecraft:speed_reagent';
+export const STRENGTH_REAGENT_ITEM = 'minecraft:strength_reagent';
+export const HEALING_REAGENT_ITEM = 'minecraft:healing_reagent';
 
 /** Blaze-powder burn ticks (vanilla: 20 brews). */
 export const BLAZE_POWDER_BURN_TICKS = 1200;

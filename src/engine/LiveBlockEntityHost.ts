@@ -1,8 +1,9 @@
 /**
- * Live block-entity host (251). Owns the single authoritative runtime store for
- * furnaces placed in the playable world and adapts the verified headless stack —
- * the 052 manager, the 109/110 furnace engine, and the 036 persistence envelope —
- * to the Game lifecycle.
+ * Live block-entity host (251; brewing section 260). Owns the single
+ * authoritative runtime store for furnaces AND brewing stands placed in the
+ * playable world and adapts the verified headless stacks — the 052 manager,
+ * the 109/110 furnace engine, the 122/123 brewing engine, and the 036
+ * persistence envelope — to the Game lifecycle.
  *
  * Guarantees:
  * - Exactly one `BlockEntityInstance` per position; every view (menu UI, save
@@ -37,6 +38,18 @@ import {
   type FurnaceContext,
   type FurnaceState,
 } from '../world/FurnaceBlockEntity';
+import {
+  BREWING_STAND_BLOCK_ID,
+  BREWING_STAND_TYPE_KEY,
+  createBrewingStandBlockEntity,
+  createBrewingState,
+  deserializeBrewingState,
+  readBrewingState,
+  tickBrewing,
+  updateBrewingState,
+  type BrewingState,
+} from '../world/BrewingStandBlockEntity';
+import type { BrewingContext } from '../inventory/BrewingRecipes';
 
 /** Minimal world surface the host needs (kept narrow for testability). */
 export interface HostWorldView {
@@ -53,11 +66,27 @@ export interface LiveBlockEntityHostDeps {
     saveBlockEntities(cx: number, cz: number, entities: SerializedBlockEntity[]): void;
   } | null;
   furnaceContext: FurnaceContext;
+  /** Brewing recipe/fuel context (123 data) injected into the 123 engine. */
+  brewingContext?: BrewingContext;
   onQuarantined?: (message: string) => void;
 }
 
 function chunkCoords(x: number, z: number): { cx: number; cz: number } {
   return { cx: Math.floor(x / SECTION_SIZE), cz: Math.floor(z / SECTION_SIZE) };
+}
+
+function brewingStateEquals(a: BrewingState, b: BrewingState): boolean {
+  const slotEquals = (x: BrewingState['bottle'], y: BrewingState['bottle']) =>
+    x.item === y.item && x.count === y.count;
+  return (
+    slotEquals(a.bottle, b.bottle) &&
+    slotEquals(a.fuel, b.fuel) &&
+    slotEquals(a.ingredient, b.ingredient) &&
+    a.brewTime === b.brewTime &&
+    a.brewTimeTotal === b.brewTimeTotal &&
+    a.fuelBurnTime === b.fuelBurnTime &&
+    a.fuelBurnTimeTotal === b.fuelBurnTimeTotal
+  );
 }
 
 function furnaceStateEquals(a: FurnaceState, b: FurnaceState): boolean {
@@ -80,12 +109,14 @@ export class LiveBlockEntityHost {
   private readonly world: HostWorldView;
   private readonly persistence: LiveBlockEntityHostDeps['persistence'];
   private readonly furnaceContext: FurnaceContext;
+  private readonly brewingContext: BrewingContext | null;
   private readonly onQuarantined?: (message: string) => void;
 
   constructor(deps: LiveBlockEntityHostDeps) {
     this.world = deps.world;
     this.persistence = deps.persistence;
     this.furnaceContext = deps.furnaceContext;
+    this.brewingContext = deps.brewingContext ?? null;
     this.onQuarantined = deps.onQuarantined;
   }
 
@@ -182,13 +213,139 @@ export class LiveBlockEntityHost {
     }
   }
 
+  // ── Brewing stands (260) ───────────────────────────────────────────────────
+  // Mirrors the furnace section one-for-one over the 123 engine: one
+  // authoritative BrewingState per placed stand, fixed-tick brewing in
+  // simulating chunks only, snapshot persistence, envelope+version quarantine,
+  // and lazy stale removal. The bottle slot may carry 122 potion_contents
+  // components; equality intentionally compares item identity + count (plus
+  // all four timers) exactly like the furnace comparator.
+
+  /** Register a freshly placed brewing stand. Returns false when the spot is taken. */
+  placeBrewing(x: number, y: number, z: number): boolean {
+    const added = this.manager.add(createBrewingStandBlockEntity(x, y, z));
+    if (added) {
+      const { cx, cz } = chunkCoords(x, z);
+      this.persistChunk(cx, cz);
+    }
+    return added;
+  }
+
+  /**
+   * Remove the brewing stand at `(x, y, z)` exactly once, returning its final
+   * state so the caller can drop contents. Null when no instance exists there.
+   */
+  removeBrewing(x: number, y: number, z: number): BrewingState | null {
+    const instance = this.manager.get(x, y, z);
+    if (!instance || instance.typeKey !== BREWING_STAND_TYPE_KEY) return null;
+    let state: BrewingState;
+    try {
+      state = readBrewingState(instance);
+    } catch {
+      state = createBrewingState();
+    }
+    this.manager.remove(x, y, z);
+    const { cx, cz } = chunkCoords(x, z);
+    this.persistChunk(cx, cz);
+    return state;
+  }
+
+  hasBrewing(x: number, y: number, z: number): boolean {
+    const instance = this.manager.get(x, y, z);
+    return instance !== null && instance.typeKey === BREWING_STAND_TYPE_KEY;
+  }
+
+  /** Read-only view of the authoritative brewing state, or null when absent/corrupt. */
+  getBrewingState(x: number, y: number, z: number): BrewingState | null {
+    const instance = this.manager.get(x, y, z);
+    if (!instance || instance.typeKey !== BREWING_STAND_TYPE_KEY) return null;
+    try {
+      return readBrewingState(instance);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Atomically write menu-derived slots back into the authoritative brewing
+   * state. Returns the new state, or null when no live stand exists there.
+   */
+  applyBrewingMenuSlots(
+    x: number,
+    y: number,
+    z: number,
+    slots: { bottle: BrewingState['bottle']; fuel: BrewingState['fuel']; ingredient: BrewingState['ingredient'] },
+  ): BrewingState | null {
+    const instance = this.manager.get(x, y, z);
+    if (!instance || instance.typeKey !== BREWING_STAND_TYPE_KEY) return null;
+    try {
+      const current = readBrewingState(instance);
+      const next = updateBrewingState(instance, { ...current, ...slots });
+      this.manager.replace(next);
+      const { cx, cz } = chunkCoords(x, z);
+      this.persistChunk(cx, cz);
+      return readBrewingState(next);
+    } catch {
+      // A rejected write leaves the authoritative state untouched.
+      return null;
+    }
+  }
+
+  /**
+   * Advance every brewing stand in a simulating chunk by one canonical tick.
+   * Returns the number of stands whose observable state changed. A stand
+   * whose block vanished (stale record) is removed lazily here. Stands never
+   * tick without an injected brewing context (fail-closed, never garbage).
+   */
+  tickBrewingStands(): number {
+    if (!this.brewingContext) return 0;
+    let changed = 0;
+    const dirtyChunks = new Set<string>();
+    for (const instance of this.manager.all()) {
+      if (instance.typeKey !== BREWING_STAND_TYPE_KEY) continue;
+      const { cx, cz } = chunkCoords(instance.x, instance.z);
+      if (!this.world.isChunkSimulating(cx, cz)) continue;
+
+      // Lazy staleness cleanup: once the chunk actually simulates we can trust
+      // the block query; a missing stand block invalidates the record.
+      if (this.world.getBlock(instance.x, instance.y, instance.z) !== BREWING_STAND_BLOCK_ID) {
+        this.manager.remove(instance.x, instance.y, instance.z);
+        dirtyChunks.add(`${cx},${cz}`);
+        continue;
+      }
+
+      let current: BrewingState;
+      try {
+        current = readBrewingState(instance);
+      } catch {
+        // Corrupt runtime payload (should not happen): drop the instance rather
+        // than ticking garbage forever.
+        this.manager.remove(instance.x, instance.y, instance.z);
+        dirtyChunks.add(`${cx},${cz}`);
+        continue;
+      }
+      const next = tickBrewing(current, this.brewingContext, 1);
+      if (!brewingStateEquals(current, next)) {
+        this.manager.replace(updateBrewingState(instance, next));
+        changed++;
+        dirtyChunks.add(`${cx},${cz}`);
+      }
+    }
+    for (const key of dirtyChunks) {
+      const [cx, cz] = key.split(',').map(Number) as [number, number];
+      this.persistChunk(cx, cz);
+    }
+    return changed;
+  }
+
   // ── Hydration ──────────────────────────────────────────────────────────────
 
   /**
    * Restore persisted records into the runtime store before the first frame.
    * Malformed payloads are quarantined (skipped + warned), never fatal. Staleness
    * (block no longer a furnace) cannot be judged before chunks generate, so it is
-   * handled lazily by {@link tickFurnaces}. Idempotent per position.
+   * handled lazily by {@link tickFurnaces} (furnaces) and {@link tickBrewingStands}
+   * (stands). Idempotent per position.
    */
   hydrate(records: ReadonlyArray<SerializedBlockEntity>): { hydrated: number; quarantined: number } {
     let hydrated = 0;
@@ -206,7 +363,7 @@ export class LiveBlockEntityHost {
         this.warnQuarantine(raw, 'envelope', err);
         continue;
       }
-      if (record.typeKey !== FURNACE_TYPE_KEY) continue;
+      if (record.typeKey !== FURNACE_TYPE_KEY && record.typeKey !== BREWING_STAND_TYPE_KEY) continue;
       // Future/unknown envelope version: fail safe (campaign 251 §9). A
       // different shape could silently corrupt runtime state if trusted.
       if (record.schemaVersion !== BLOCK_ENTITY_RECORD_VERSION) {
@@ -216,8 +373,13 @@ export class LiveBlockEntityHost {
       }
       if (this.manager.get(record.x, record.y, record.z)) continue;
       try {
-        const state = deserializeFurnaceState(record.data);
-        this.manager.add(createFurnaceBlockEntity(record.x, record.y, record.z, state));
+        if (record.typeKey === BREWING_STAND_TYPE_KEY) {
+          const brewing = deserializeBrewingState(record.data);
+          this.manager.add(createBrewingStandBlockEntity(record.x, record.y, record.z, brewing));
+        } else {
+          const state = deserializeFurnaceState(record.data);
+          this.manager.add(createFurnaceBlockEntity(record.x, record.y, record.z, state));
+        }
         hydrated++;
       } catch (err) {
         quarantined++;
@@ -244,7 +406,7 @@ export class LiveBlockEntityHost {
       );
     } else {
       console.warn(
-        `[voxel] furnace record at ${coords} (typeKey=${typeKey}) was quarantined: ${reason}`,
+        `[voxel] block-entity record at ${coords} (typeKey=${typeKey}) was quarantined: ${reason}`,
         err,
       );
     }

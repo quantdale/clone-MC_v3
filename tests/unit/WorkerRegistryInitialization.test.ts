@@ -14,6 +14,7 @@ import {
   validateMeshSectionRequest,
 } from '../../src/rendering/WorkerMeshing';
 import { WorkerPool } from '../../src/engine/WorkerPool';
+import { ATLAS_ROWS } from '../../src/rendering/AtlasGrid';
 
 const definitions = [
   { id: 3, opaque: false, renderCategory: 1, topTile: 7, bottomTile: 8, sideTile: 9 },
@@ -81,8 +82,10 @@ describe('mesh worker registry initialization', () => {
     expect(result.layerStreams?.opaque.quadCount).toBeGreaterThan(0);
     expect(result.layerStreams?.opaque.vertexCount).toBe(result.layerStreams!.opaque.quadCount * 4);
     const opaqueUvs = Array.from(result.layerStreams!.opaque.uvs);
+    // GPU streams are float32: compare with tolerance (0.8 is not float32-exact).
+    const close = (a: number, b: number): boolean => Math.abs(a - b) < 1e-6;
     const hasTopTileUv = opaqueUvs.some((value, index) =>
-      index % 2 === 0 && value === 4 / 16 && opaqueUvs[index + 1] === 1 - (Math.floor(4 / 16) + 1) / 4,
+      index % 2 === 0 && close(value, 4 / 16) && close(opaqueUvs[index + 1]!, 1 - (Math.floor(4 / 16) + 1) / ATLAS_ROWS),
     );
     expect(hasTopTileUv).toBe(true);
     expect(result.layerStreams?.cutout.quadCount).toBe(0);

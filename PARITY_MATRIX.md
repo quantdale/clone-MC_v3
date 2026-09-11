@@ -284,6 +284,7 @@ Narrow-outcome text is quoted from `openspec/CHANGE_SEQUENCE.md` (authoritative 
 | C251 | `251-live-furnace-production-integration` | Wire the verified furnace/block-entity stack into the playable Game: place, open, operate, persist, unload/reload, and break a furnace end-to-end. | exact | `openspec/changes/archive/2026-08-25-251-live-furnace-production-integration/verification.md` (VERIFIED) + `openspec/specs/live-furnace-integration/spec.md` (7 requirements, 9 scenarios) | — | VERIFIED |
 | C252 | `252-wither-secondary-boss` | Close MP-19.4-1: player-driven Wither-like secondary boss — summon structure detection/consumption, invulnerable charge with exactly-once spawn explosion via the Explosion Core, three-head targeting, normal/blue skull projectiles over the projectile core, difficulty-scaled wither status effect, armored-phase projectile immunity, exactly-once Nether-Star reward through the loot pipeline, versioned persistence, live block-placement/Game integration. | exact | `openspec/changes/archive/2026-08-25-252-wither-secondary-boss/verification.md` (VERIFIED) + `specs/wither-boss/spec.md` in the same archive | Known differences (original-asset policy): original procedural visuals/audio; wire-level wither codecs deferred until a transport consumer exists; mobGriefing destroyable-filter seam not yet wired to a gamerule UI toggle. | VERIFIED |
 | C259 | `259-enchanting-panel-ui` | In-game enchanting panel UI over the verified headless seam (118–120/219): place/use an enchanting table opens the panel; held item + XP level + lapis count + three generated offers shown; reselect offers; apply spends XP/lapis atomically and writes the enchanted stack; session-guard preserved with browser E2E (place→open→reselect→apply→reload-persists→close, walk-away/focus/selection-void lifecycle); furnace-parity close/walk-away/focus/dispose lifecycle; original assets only. | exact | `openspec/changes/259-enchanting-panel-ui/verification.md` (VERIFIED 18/18) + `specs/enchanting-panel-ui/spec.md` (8 requirements, 22 scenarios) | Closes certification debt R-3 (risk register 2026-08-23). | VERIFIED |
+| C260 | `260-live-brewing-stand-production-integration` | Live brewing-stand wiring over the verified headless seam (122–123/219): place a brewing stand (block 62), right-click to open the panel, insert bottle/ingredient/blaze-powder through 106 menu transactions with component carry, brew deterministically on the fixed tick in simulating chunks (awkward+redstone→speed, 400 ticks) with live progress UI, persist across reload via block-entity persistence, break drops contents safely; close/walk-away/focus/dispose lifecycle safe; browser E2E journey (place→open→insert→brew→collect→reload→break) plus lifecycle; original procedural assets only. | exact | `openspec/changes/260-live-brewing-stand-production-integration/verification.md` (VERIFIED 19/19) + `specs/live-brewing-stand/spec.md` (9 requirements, 25 scenarios) | Closes certification debt R-8 brewing half (risk register 2026-08-23); known accepted debt: overflow ground drops detach bottle contents (component-less 112 pickup contract), water→awkward pauses per pinned 123 rule. | VERIFIED |
 
 ## Master-plan-only features
 
@@ -296,18 +297,20 @@ Feature areas named in `MINECRAFT_PARITY_MASTER_PLAN.md` that no single numbered
 
 **Post-terminal note (2026-09-11):** the enchanting-table seam (C120, exact, headless) is player-reachable via the in-game panel UI of Change `259-enchanting-panel-ui` (VERIFIED 18/18; place→open→reselect→apply with XP/lapis costs, session-guard preserved, browser E2E in `tests/e2e/enchanting.spec.ts`), closing certification debt R-3. Row C259 added below per the C251/C252 precedent. Change 258 remains BLOCKED (headed hardware-WebGL certification deferred) and carries no row while in flight.
 
+**Post-terminal note (2026-09-11, brewing):** the brewing-stand seam (C123, exact, headless) is player-reachable via the in-game panel UI of Change `260-live-brewing-stand-production-integration` (VERIFIED 19/19; place→open→insert→brew→collect→reload→break with browser E2E in `tests/e2e/brewing.spec.ts`), closing certification debt R-8 (brewing half). Row C260 added below per the C251–C259 precedent. Change 258 remains BLOCKED and 259 remains VERIFIED; neither is touched by the 260 track.
+
 **Coverage note (master plan → changes):** every other master-plan feature area maps onto numbered changes, so no further MP rows are invented: §2.2 secondary targets → C193/C194/C195 (hardcore/adventure/spectator), C209/C210 (gamepad/touch), C222–C237 (dedicated-authoritative-server multiplayer), C208 (Bedrock-inspired QoL/accessibility options); §17.4 utility/tameable mobs → C218 mob-content expansion; §25 performance → C075, C238–C240, C247; §26 test strategy → C055, C102, C173, C241–C247; §27 save compatibility/migrations → C040/C041; §30 Detailed Feature Checklist areas → the phase-mapped changes 002–221 (content-breadth bullets land via C215–C220).
 
 ## Summary
 
 | Category | Rows |
 |---|---|
-| exact | 242 (incl. C252 and MP-19.4-1 Wither-like secondary boss via C252, plus C259 enchanting panel) |
+| exact | 243 (incl. C252 and MP-19.4-1 Wither-like secondary boss via C252, plus C259 enchanting panel, plus C260 brewing stand) |
 | equivalent | 4 |
 | approx | 5 |
 | out-of-scope | 1 (MP-33-1 proprietary services/assets) |
 | n/a (documentation) | 3 (C248, C249, C250) |
-| **Total rows** | **255** (253 change rows + 2 master-plan rows) |
+| **Total rows** | **256** (254 change rows + 2 master-plan rows) |
 
 Change-rows-only split: exact 241 / equivalent 4 / approx 5 / n/a 3 = 253.
 

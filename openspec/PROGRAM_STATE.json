@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "status": "ACTIVE",
-  "currentChange": "259-enchanting-panel-ui",
+  "currentChange": "260-live-brewing-stand-production-integration",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "259-enchanting-panel-ui",
+  "lastCompletedChange": "260-live-brewing-stand-production-integration",
   "nextChange": "258-real-world-runtime-performance-fps-recovery",
-  "completedTasks": 18,
-  "totalTasks": 18,
+  "completedTasks": 19,
+  "totalTasks": 19,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -14,14 +14,21 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "056e76a77114bec475e486bc4a8e24c9d6a7f22f",
-  "localHead": "d1ccdec82a6835432bcdd1bd3afafe12b6d3920e",
-  "lastCompletedTask": "Change 259-enchanting-panel-ui VERIFIED 18/18 (2026-09-11): in-game panel over the 120 seam, R-3 closed via browser E2E open-reselect-apply; full gates green (typecheck/lint/unit 4716+1/build/e2e 64/64); 258 untouched and BLOCKED",
-  "nextExactAction": "Resume 258 headed tasks on a hardware-WebGL host when available (259 VERIFIED; 258 remains BLOCKED/resumable, no headed work touched by the 259 track)",
+  "sessionStartHead": "a1a734c378361fe5ffac567a4bdbeef3b8df9173",
+  "localHead": "a1a734c378361fe5ffac567a4bdbeef3b8df9173",
+  "lastCompletedTask": "Change 260-live-brewing-stand-production-integration VERIFIED 19/19 (2026-09-11): live brewing stand over the 122-123/219 seam, R-8 brewing half closed via browser E2E place-open-insert-brew-collect-reload-break; full gates green (typecheck/lint 0 errors/unit 4779+1/build/e2e 66/66/file-audit 2684); 258 untouched and BLOCKED, 259 untouched and VERIFIED",
+  "nextExactAction": "T18 publish 260 to origin/main, then resume 258 headed tasks only on a hardware-WebGL host when available (259 VERIFIED; 258 remains BLOCKED/resumable, no headed work touched by the 260 track)",
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. 001-257 VERIFIED; game shippable with known performance-certification debt. The 259 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
   "validationResults": [
+    {
+      "change": "260-live-brewing-stand-production-integration",
+      "status": "VERIFIED",
+      "unitTests": 4779,
+      "e2eTests": 66,
+      "note": "Owner-authorized 2026-09-11 (Michael via Minecraft Clone Dev), implemented while 258 stays BLOCKED and 259 stays VERIFIED. 19/19 tasks: registries (block 62, items 64-66, tiles 66-68) + LiveBlockEntityHost brewing section + BrewingPanel + Game wiring + HTML/CSS, 63 new unit tests, 2 new browser E2E (place-open-insert-brew-collect-reload-break + lifecycle incl. walk-away/blur/destroy); R-8 brewing half closed; C260 matrix row exact. Gates: typecheck/lint 0 errors/unit 4779+1/build PASS, e2e 66/66 PASS, file-audit 2684."
+    },
     {
       "change": "259-enchanting-panel-ui",
       "status": "VERIFIED",

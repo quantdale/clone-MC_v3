@@ -47,6 +47,8 @@ import {
 } from '../data/PotionItemData';
 import { resourceIdToString } from '../data/ResourceId';
 
+/** Stable numeric block id for the brewing stand block (260: BlockId.BrewingStand). */
+export const BREWING_STAND_BLOCK_ID = 62;
 /** Block-entity type key for a brewing stand (018 default registry). */
 export const BREWING_STAND_TYPE_KEY = 'brewing_stand';
 /** Brewing slot count: bottle, fuel, ingredient. */

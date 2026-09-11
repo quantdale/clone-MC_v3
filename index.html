@@ -142,6 +142,39 @@
             <p class="crafting-hint">Left click move · right click split / place one · shift-click quick move.</p>
           </div>
         </div>
+        <div id="brewing" class="ui hidden" aria-label="Brewing screen">
+          <div class="crafting-panel" role="dialog" aria-modal="true" aria-labelledby="brewing-title">
+            <div class="crafting-header">
+              <div>
+                <h2 id="brewing-title">Brewing</h2>
+                <p id="brewing-status">Insert bottle, ingredient and fuel.</p>
+              </div>
+              <button id="brewing-close" class="crafting-close" type="button" aria-label="Close brewing">×</button>
+            </div>
+            <div class="inventory-section">
+              <div class="inventory-section-title">Brewing Stand</div>
+              <div class="brewing-io">
+                <div class="brewing-io-column">
+                  <div id="brewing-bottle-slot" class="inventory-cell brewing-slot"></div>
+                  <div class="brewing-flame" role="progressbar" aria-label="Fuel burn progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                    <div id="brewing-flame-bar" class="brewing-flame-bar"></div>
+                  </div>
+                  <div id="brewing-fuel-slot" class="inventory-cell brewing-slot"></div>
+                </div>
+                <div class="brewing-arrow" role="progressbar" aria-label="Brewing progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                  <div id="brewing-arrow-bar" class="brewing-arrow-bar"></div>
+                </div>
+                <div id="brewing-ingredient-slot" class="inventory-cell brewing-slot"></div>
+                <div id="brewing-cursor" class="inventory-cell brewing-cursor empty" title="Held on cursor"></div>
+              </div>
+            </div>
+            <div class="inventory-section">
+              <div class="inventory-section-title">Inventory</div>
+              <div id="brewing-player-grid" class="inventory-grid" aria-label="Player inventory slots"></div>
+            </div>
+            <p class="crafting-hint">Left click move · right click split / place one · shift-click quick move.</p>
+          </div>
+        </div>
         <div id="enchanting" class="ui hidden" aria-label="Enchanting screen">
           <div class="crafting-panel" role="dialog" aria-modal="true" aria-labelledby="enchanting-title">
             <div class="crafting-header">

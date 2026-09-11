@@ -89,3 +89,27 @@ Change **258-real-world-runtime-performance-fps-recovery** remains **BLOCKED**
   certification debt **R-3** (enchanting session open→reselect→apply browser E2E).
 - Change 258 remains recorded BLOCKED and resumable on a hardware-WebGL host;
   the 259 track does not consume, waive, or re-litigate any 258 headed task.
+
+## 260 activation alongside BLOCKED 258 — owner-authorized parallel track (2026-09-11)
+
+The product owner (Michael via Minecraft Clone Dev, 2026-09-11) authorized
+activating and implementing OpenSpec change **260-live-brewing-stand-production-integration**
+while Change **258-real-world-runtime-performance-fps-recovery** remains **BLOCKED**
+(headed hardware-WebGL certification deferred) and Change **259-enchanting-panel-ui**
+stands **VERIFIED**.
+
+- Change 258 status stays **BLOCKED** at 40/100 with its existing deferral intact.
+  No headed FPS work is touched, no GPU evidence is faked, and 258 MUST NOT be
+  marked VERIFIED by the 260 track.
+- Change 259 stands **VERIFIED** (18/18) and MUST NOT be reopened unless a
+  brewing regression blocks the 260 player loop.
+- Change 260 (`260-live-brewing-stand-production-integration`) is the sole
+  **ACTIVE** implementation change: live Game wiring for the verified headless
+  brewing seam (`src/world/BrewingStandBlockEntity.ts`, change 123, over
+  `src/inventory/BrewingRecipes.ts` + change 122 potion item data + 219 potion
+  catalog data), mirroring the Change 251 furnace and Change 259 panel
+  lifecycle patterns. It closes certification debt **R-8 (brewing half)**
+  (risk register 2026-08-23) with a browser E2E journey
+  (place→open→insert→brew→collect→reload→break).
+- Change 258 remains recorded BLOCKED and resumable on a hardware-WebGL host;
+  the 260 track does not consume, waive, or re-litigate any 258 headed task.

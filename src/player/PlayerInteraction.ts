@@ -251,6 +251,16 @@ export class PlayerInteraction {
               z: this.target.blockZ,
             });
             this.lastActionTime = this.elapsed;
+          } else if (targetBlockId === BlockId.BrewingStand) {
+            // Right-clicking a brewing stand opens its container instead of
+            // placing (260, furnace parity); the held stack is untouched
+            // regardless of what it is.
+            this.onAction?.('use', targetBlockId, {
+              x: this.target.blockX,
+              y: this.target.blockY,
+              z: this.target.blockZ,
+            });
+            this.lastActionTime = this.elapsed;
           } else if (selectedId === ItemId.BoneMeal) {
             // Bone meal is used on the block under the crosshair instead of placing.
             this.onAction?.('use', targetBlockId);

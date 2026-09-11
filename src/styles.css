@@ -47,6 +47,7 @@ body {
 #hotbar.hidden,
 #crafting.hidden,
 #furnace.hidden,
+#brewing.hidden,
 #enchanting.hidden,
 #break-progress.hidden,
 #toast.hidden,
@@ -570,6 +571,70 @@ body {
   opacity: 0.92;
 }
 #furnace-cursor.carrying {
+  outline: 2px solid #ffe08a;
+}
+
+/* Brewing screen (260) — furnace-mirrored layout; original styling. */
+#brewing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  background: rgba(10, 3, 17, 0.36);
+}
+.brewing-io {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+}
+.brewing-io-column {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+}
+.brewing-slot {
+  width: 52px;
+}
+.brewing-flame {
+  width: 26px;
+  height: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+}
+.brewing-flame-bar {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(to top, #ff9d3c, #ffd166);
+  transition: width 120ms linear;
+}
+.brewing-flame-bar.lit {
+  box-shadow: 0 0 12px rgba(255, 157, 60, 0.65);
+}
+.brewing-arrow {
+  position: relative;
+  width: 74px;
+  height: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+.brewing-arrow-bar {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(to right, #c77bd8, #e8b8f2);
+  transition: width 120ms linear;
+}
+#brewing-cursor {
+  pointer-events: none;
+  opacity: 0.92;
+}
+#brewing-cursor.carrying {
   outline: 2px solid #ffe08a;
 }
 

@@ -10,11 +10,8 @@ import { PRNG } from '../math/PRNG';
  * tiles; tile index → UV mapping is derived from the index.
  */
 
-export const TILE_SIZE = 16;
-export const TILES_PER_ROW = 16;
-export const ATLAS_ROWS = 4;
-export const ATLAS_WIDTH = TILE_SIZE * TILES_PER_ROW; // 256
-export const ATLAS_HEIGHT = TILE_SIZE * ATLAS_ROWS; // 64
+import { TILE_SIZE, TILES_PER_ROW, ATLAS_ROWS, ATLAS_WIDTH, ATLAS_HEIGHT } from './AtlasGrid';
+export { TILE_SIZE, TILES_PER_ROW, ATLAS_ROWS, ATLAS_WIDTH, ATLAS_HEIGHT };
 /** Backwards-compatible alias for the atlas width. */
 export const ATLAS_SIZE = ATLAS_WIDTH;
 
@@ -50,6 +47,9 @@ export const TILE_INDEX = {
   chest: 27,
   furnace: 28,
   ironIngot: 29,
+  brewingStand: 66,
+  blazePowder: 67,
+  potionBottle: 68,
 } as const;
 
 export function tileUV(tile: number): { u0: number; v0: number; u1: number; v1: number } {
@@ -584,6 +584,66 @@ export class TextureAtlas {
       ctx.fillStyle = '#7e848e';
       ctx.fillRect(4, 6, 2, TILE_SIZE - 12);
       ctx.fillRect(TILE_SIZE - 6, 6, 2, TILE_SIZE - 12);
+    });
+    // 66: brewing_stand (260, original art) — full-bleed dark stone plate so
+    // the tile doubles as the stand block's faces, with a pale three-arm
+    // stand rod and an amber brew dot at the center.
+    this.drawTile(TILE_INDEX.brewingStand, (ctx, rng) => {
+      ctx.fillStyle = '#4c4f55';
+      ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+      for (let i = 0; i < 22; i++) {
+        const v = Math.floor(rng.range(0.6, 1.1) * 255);
+        ctx.fillStyle = `rgb(${Math.floor(v * 0.32)}, ${Math.floor(v * 0.33)}, ${Math.floor(v * 0.36)})`;
+        ctx.fillRect(rng.nextInt(TILE_SIZE), rng.nextInt(TILE_SIZE), 1, 1);
+      }
+      // Stand rod with three arms.
+      ctx.fillStyle = '#c9ccd4';
+      ctx.fillRect(7, 2, 2, 12);
+      ctx.fillRect(3, 5, 4, 2);
+      ctx.fillRect(9, 5, 4, 2);
+      ctx.fillRect(2, 13, 12, 2);
+      // Amber brew dot.
+      ctx.fillStyle = '#e08a1e';
+      ctx.fillRect(7, 8, 2, 2);
+      ctx.fillStyle = '#f7c948';
+      ctx.fillRect(7, 8, 1, 1);
+    });
+    // 67: blaze_powder (260, original art) — an orange-yellow powder mound
+    // with hot speckles on a transparent ground.
+    this.drawTile(TILE_INDEX.blazePowder, (ctx, rng) => {
+      ctx.clearRect(0, 0, TILE_SIZE, TILE_SIZE);
+      ctx.fillStyle = '#b85c14';
+      ctx.fillRect(3, 9, 10, 4);
+      ctx.fillStyle = '#e08a1e';
+      ctx.fillRect(4, 7, 8, 3);
+      ctx.fillStyle = '#f7c948';
+      ctx.fillRect(6, 5, 4, 3);
+      for (let i = 0; i < 14; i++) {
+        ctx.fillStyle = rng.next() > 0.5 ? '#ffe08a' : '#7a3c0c';
+        ctx.fillRect(3 + rng.nextInt(10), 5 + rng.nextInt(8), 1, 1);
+      }
+    });
+    // 68: potion_bottle (260, original art) — a glass bottle silhouette with
+    // a red liquid fill and a bright specular streak.
+    this.drawTile(TILE_INDEX.potionBottle, (ctx) => {
+      ctx.clearRect(0, 0, TILE_SIZE, TILE_SIZE);
+      // Neck and cork.
+      ctx.fillStyle = '#9fb3c8';
+      ctx.fillRect(7, 1, 2, 4);
+      ctx.fillStyle = '#6b4a2a';
+      ctx.fillRect(6, 0, 4, 2);
+      // Glass body outline.
+      ctx.fillStyle = '#9fb3c8';
+      ctx.fillRect(4, 5, 8, 9);
+      ctx.fillRect(5, 14, 6, 1);
+      // Red liquid fill.
+      ctx.fillStyle = '#c81e3a';
+      ctx.fillRect(5, 8, 6, 5);
+      ctx.fillStyle = '#f2545b';
+      ctx.fillRect(5, 8, 6, 1);
+      // Specular streak.
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(5, 6, 1, 6);
     });
   }
 

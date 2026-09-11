@@ -48,6 +48,7 @@ import {
 import type { ModelFace } from '../data/BlockModel';
 import type * as THREE from 'three';
 import type { MeshStreamData, MeshStreamName, UvRect } from '../world/MeshingTypes';
+import { ATLAS_ROWS, TILES_PER_ROW } from './AtlasGrid';
 import { meshFluidSurfaceInto } from './FluidSurfaceMesher';
 import { createFluidState } from '../world/FluidState';
 import { sortTranslucentBackToFront } from './TranslucentGeometry';
@@ -558,13 +559,15 @@ export function packQuadsToTypedArrays(quads: readonly OpaqueFaceQuad[]): Packed
 }
 
 function workerTileUv(tile: number): UvRect {
-  const col = tile % 16;
-  const row = Math.floor(tile / 16);
+  // Atlas geometry is single-sourced from AtlasGrid (260): the worker bundle
+  // cannot import TextureAtlas (THREE/DOM), so it shares these constants.
+  const col = tile % TILES_PER_ROW;
+  const row = Math.floor(tile / TILES_PER_ROW);
   return {
-    u0: col / 16,
-    v0: 1 - (row + 1) / 4,
-    u1: (col + 1) / 16,
-    v1: 1 - row / 4,
+    u0: col / TILES_PER_ROW,
+    v0: 1 - (row + 1) / ATLAS_ROWS,
+    u1: (col + 1) / TILES_PER_ROW,
+    v1: 1 - row / ATLAS_ROWS,
   };
 }
 

@@ -79,6 +79,9 @@ export const enum ItemId {
   WitherSkull = 61,
   WitherSkeletonSkull = 62,
   NetherStar = 63,
+  BrewingStand = 64,
+  BlazePowder = 65,
+  Potion = 66,
 }
 
 /**
@@ -797,6 +800,35 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       name: 'Nether Star',
       iconTile: 65,
       stackSize: 64,
+    },
+    {
+      // Live brewing stand kit (260): the stand places block 62; blaze
+      // powder fuels the 123 engine (1200 ticks per powder); the potion item
+      // is the brewable bottle (stackSize 1, vanilla-accurate) whose 122
+      // potion_contents ride the MenuSlots component path, never this def.
+      id: ItemId.BrewingStand,
+      resourceId: rid('brewing_stand'),
+      key: 'brewing_stand',
+      name: 'Brewing Stand',
+      iconTile: 66,
+      stackSize: 64,
+      placeBlock: rid('brewing_stand'),
+    },
+    {
+      id: ItemId.BlazePowder,
+      resourceId: rid('blaze_powder'),
+      key: 'blaze_powder',
+      name: 'Blaze Powder',
+      iconTile: 67,
+      stackSize: 64,
+    },
+    {
+      id: ItemId.Potion,
+      resourceId: rid('potion'),
+      key: 'potion',
+      name: 'Potion',
+      iconTile: 68,
+      stackSize: 1,
     },
   ];
   assertDurableItemsDoNotStack(defs);

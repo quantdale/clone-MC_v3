@@ -66,6 +66,7 @@ export const enum BlockId {
   NetherWart = 59,
   SoulSoil = 60,
   WitherSkull = 61,
+  BrewingStand = 62,
 }
 
 /**
@@ -1273,6 +1274,26 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       sideTile: 63,
       hardness: 1,
       dropItem: rid('wither_skeleton_skull'),
+    },
+    {
+      // Live brewing stand (260): an opaque device cube over tile 66 art.
+      // Single-state (no property schema), pickaxe-harvestable by hand or
+      // better (miningLevel 0, SoulSand precedent), quick to mine (0.5).
+      id: BlockId.BrewingStand,
+      resourceId: rid('brewing_stand'),
+      key: 'brewing_stand',
+      name: 'Brewing Stand',
+      solid: true,
+      opaque: true,
+      breakable: true,
+      renderCategory: RenderCategory.Opaque,
+      topTile: 66,
+      bottomTile: 66,
+      sideTile: 66,
+      hardness: 0.5,
+      preferredTool: ToolKind.Pickaxe,
+      miningLevel: 0,
+      dropItem: rid('brewing_stand'),
     },
   ];
   return new BlockTypeRegistry(defs);
