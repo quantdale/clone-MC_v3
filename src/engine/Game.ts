@@ -132,7 +132,8 @@ import { FixedTickDriver } from './FixedTickDriver';
 import { TICK_RATE } from './SimulationClock';
 import { RenderInterpolator } from './RenderInterpolator';
 import { RenderPerformanceMonitor, type RenderPipelineMetrics } from '../rendering/RenderPerformanceMonitor';
-import { PhaseTimer, WHOLE_FRAME_PHASES, WholeFrameRing, type WholeFramePhase, type WholeFrameStats } from '../rendering/WholeFrameMetrics';
+import { FrameAuxRing, PhaseTimer, WHOLE_FRAME_PHASES, WholeFrameRing, type WholeFramePhase, type WholeFrameStats } from '../rendering/WholeFrameMetrics';
+import { WORLD_TIMED_PHASES, type WorldFrameWorkCounts } from '../world/WorldPhaseTelemetry';
 import { createDefaultBlockShapeTable, VoxelShape } from '../world/VoxelShape';
 import type { SelectionShapeWorld } from '../world/ShapeRaycast';
 import { LiveBlockEntityHost } from './LiveBlockEntityHost';
@@ -266,12 +267,20 @@ export class Game {
   private readonly wholeFrameRing = new WholeFrameRing(600);
   /**
    * Coarse per-phase attribution timers (258 task 17): input, fixed ticks,
-   * world update, and render-submit are timed at the `Game` level. Disabled
-   * by default — disabled `begin/end` never touch the clock. World-internal
-   * phases (generation/meshing/lighting/upload/unload) stay zero until the
-   * `World.update` internals are instrumented with headed proof.
+   * world update, and render-submit are timed at the `Game` level, and
+   * World-internal phases (generation/meshingMain/workerDispatch/lighting/
+   * upload/unload) accumulate in `World`'s own disabled-by-default timer and
+   * are merged into the sample in `render`. Disabled by default — disabled
+   * `begin/end` never touch the clock.
    */
   private readonly phaseTimer = new PhaseTimer(() => performance.now(), false);
+  /**
+   * Per-frame renderer/resource snapshots joined to the whole-frame stream
+   * (258 task 22): recorded once per rendered frame from `renderer.info`
+   * plus drawing-buffer size and dynamic-resolution scale. Always-on fixed
+   * ring (seven number stores per frame); read via `getWholeFrameAuxLatest`.
+   */
+  private readonly frameAuxRing = new FrameAuxRing(600);
   /** Last raw rAF interval, captured by the loop boundary hook. */
   private lastRafIntervalMs = 0;
   /**
@@ -1035,13 +1044,67 @@ export class Game {
   }
 
   /**
-   * Test/harness-only switch for coarse per-phase attribution (258 task 17).
+   * Test/harness-only switch for per-phase attribution (258 task 17).
    * Disabled by default (zero clock reads); the headed harness enables it
-   * explicitly per scenario. World-internal phases stay zero until `World`
-   * internals are instrumented.
+   * explicitly per scenario. Forwards to `World` so World-internal phases
+   * (generation/meshingMain/workerDispatch/lighting/upload/unload) attribute
+   * alongside the Game-level phases. No tick, streaming, budget, or render
+   * behavior changes either way.
    */
   setWholeFramePhaseTimingEnabled(enabled: boolean): void {
     this.phaseTimer.setEnabled(enabled);
+    this.world.setPhaseTimingEnabled(enabled);
+  }
+
+  /**
+   * Latest per-frame renderer/resource snapshot joined to the whole-frame
+   * stream (258 task 22): draw calls, triangles, geometries, textures,
+   * drawing-buffer size, and dynamic-resolution scale. Read-only; feeds the
+   * headed perf harness.
+   */
+  getWholeFrameAuxLatest(): {
+    calls: number;
+    triangles: number;
+    geometries: number;
+    textures: number;
+    bufferWidth: number;
+    bufferHeight: number;
+    dynamicScale: number;
+  } {
+    return this.frameAuxRing.latest();
+  }
+
+  /** Maximum draw calls over the retained aux snapshots (burst detection). */
+  getWholeFrameMaxCalls(): number {
+    return this.frameAuxRing.maxCalls();
+  }
+
+  /**
+   * Live worker-mesh utilization/failure telemetry (258 task 23): enabled
+   * flag, pool size, pending/in-flight/completed/failed/retried/fallback
+   * counts from `World.performanceSnapshot`. Read-only; feeds the headed
+   * perf harness.
+   */
+  getWorkerTelemetry(): {
+    enabled: boolean;
+    poolSize: number;
+    pending: number;
+    inFlight: number;
+    completed: number;
+    failures: number;
+    retries: number;
+    fallbacks: number;
+  } {
+    return { ...this.world.performanceSnapshot().worker };
+  }
+
+  /**
+   * Last completed `World.update`'s per-frame work counts (258 tasks 18-23):
+   * generated chunks, sync/worker mesh jobs, light ops, uploads, unloads.
+   * Read-only; valid even when phase timing is disabled.
+   */
+  getWorldFrameWorkCounts(): WorldFrameWorkCounts {
+    return this.world.getLastFrameWorkCounts();
   }
 
   /** Test-only hook (239): force the next update to throw and enter the error state. */
@@ -1361,6 +1424,10 @@ export class Game {
         memory: { geometries: info.memory.geometries, textures: info.memory.textures },
       });
     }
+    // Renderer/resource snapshot joined to the whole-frame stream (258 task
+    // 22): zeros when `renderer.info` is unavailable (e.g. context loss).
+    // Always-on fixed ring — seven number stores, no allocation per frame.
+    // Recorded below, after the dynamic-resolution state is refreshed.
     const frameStats = this.perfMonitor.frameTimeStats();
     const dynamicUpdate = this.renderer.updateDynamicResolution(performance.now(), {
       p95FrameTimeMillis: frameStats.p95Millis,
@@ -1368,6 +1435,15 @@ export class Game {
     const dynamicState = this.renderer.dynamicResolutionState();
     const worldPipeline = this.world.performanceSnapshot();
     const buffer = this.renderer.actualDrawingBufferSize();
+    this.frameAuxRing.record(
+      info?.render.calls ?? 0,
+      info?.render.triangles ?? 0,
+      info?.memory.geometries ?? 0,
+      info?.memory.textures ?? 0,
+      buffer.width,
+      buffer.height,
+      dynamicState.scale,
+    );
     const pipeline: RenderPipelineMetrics = {
       drawingBuffer: buffer,
       worker: {
@@ -1420,7 +1496,18 @@ export class Game {
     void dynamicUpdate;
     this.perfMonitor.endFrame();
     if (this.phaseTimer.isEnabled) {
-      this.wholeFrameRing.record(this.phaseTimer.finishFrame(this.lastRafIntervalMs));
+      const sample = this.phaseTimer.finishFrame(this.lastRafIntervalMs);
+      // Merge World-internal sub-phases (258 task 17): `World.update` ran
+      // earlier this frame and accumulated generation/meshing/lighting/upload/
+      // unload into its own timer. Draining unconditionally here (rather than
+      // only when the World timer reports enabled) also resets World totals
+      // after a mid-frame disable, so no stale attribution leaks into a later
+      // enabled window. Disabled-World drains return zeros.
+      const worldPhases = this.world.drainPhaseTotals();
+      for (const phase of WORLD_TIMED_PHASES) {
+        sample.phases[phase] += worldPhases[phase];
+      }
+      this.wholeFrameRing.record(sample);
     }
 
   }

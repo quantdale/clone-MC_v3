@@ -42478,6 +42478,22 @@
       "status": "audited"
     },
     {
+      "path": "src/world/WorldPhaseTelemetry.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "258 Phase-2 coverage for src/world/WorldPhaseTelemetry.ts",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 258 Phase-2 (World-internal phase timing + work counters, Game merge, aux ring); no findings",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/WholeFrameMetrics.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -42491,6 +42507,38 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 258 Phase-1 (whole-frame instrumentation + headed harness skeleton); no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/WorkerFallbackRecovery.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "258 Phase-2 coverage for tests/unit/WorkerFallbackRecovery.test.ts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 258 Phase-2 (worker crash/fallback fault injection); no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/WorldPhaseTelemetry.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "258 Phase-2 coverage for tests/unit/WorldPhaseTelemetry.test.ts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 258 Phase-2 (World-internal phase timing + work counters, Game merge, aux ring); no findings",
       "status": "audited"
     },
     {

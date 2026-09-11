@@ -67,6 +67,8 @@ import {
   type SectionVersionSnapshot,
 } from './SectionVersionSnapshot';
 import { extractSectionSnapshot } from './SectionSnapshot';
+import { PhaseTimer, type WholeFramePhase } from '../rendering/WholeFrameMetrics';
+import { zeroWorldFrameWorkCounts, type WorldFrameWorkCounts } from './WorldPhaseTelemetry';
 /** A queued meshing job; carries the meshVersion captured at queue time. */
 interface MeshJob {
   key: string;
@@ -355,6 +357,17 @@ export class World implements WorldAccess {
   private recoveryFrozen = false;
   /** Optional observability feeder (audit 05); null keeps World headless. */
   private readonly monitor: WorldMonitorHandle | null;
+  /**
+   * World-internal whole-frame phase timer (258 task 17). Disabled by
+   * default: `begin`/`end` never touch the clock, so the shipped default pays
+   * one boolean check per bracket. `Game` enables it explicitly for the headed
+   * harness and drains the totals after each update.
+   */
+  private readonly phaseTimer = new PhaseTimer(() => performance.now(), false);
+  /** Work counts accumulating during the current `update` (258 tasks 18-23). */
+  private frameWorkCounts = zeroWorldFrameWorkCounts();
+  /** Last completed `update`'s work counts (read via `getLastFrameWorkCounts`). */
+  private lastFrameWorkCounts = zeroWorldFrameWorkCounts();
 
   private readonly retryMeshQueue: MeshJob[] = [];
   private readonly retryMeshSet = new Set<string>();
@@ -1008,6 +1021,13 @@ export class World implements WorldAccess {
     if (this.needsUnload) {
       this.needsUnload = this.unloadChunks(playerChunkX, playerChunkZ);
     }
+    // Snapshot the per-frame work counts (258 tasks 18-23) at the end of the
+    // update they describe, then reset for the next frame. Worker-completion
+    // callbacks arriving between updates accumulate into the fresh counter
+    // and are reported by the following update. Phase totals are drained
+    // separately by `Game` after this update.
+    this.lastFrameWorkCounts = this.frameWorkCounts;
+    this.frameWorkCounts = zeroWorldFrameWorkCounts();
     this.feedMonitor();
   }
 
@@ -1181,6 +1201,12 @@ export class World implements WorldAccess {
   }
 
   private processGeneration(): void {
+    // Whole-frame attribution (258 task 17/18): one bracket for the entire
+    // bounded generation slice; completed chunks are counted per frame.
+    this.withPhase('generation', () => this.processGenerationInner());
+  }
+
+  private processGenerationInner(): void {
     const pipeline = this.chunkManager.pipeline;
     let done = 0;
     for (;;) {
@@ -1337,6 +1363,7 @@ export class World implements WorldAccess {
 
       this.enqueueMeshWithRetry(chunk);
       this.budgets.recordActual('generate', performance.now() - t0);
+      this.frameWorkCounts.generatedChunks++;
       done++;
     }
   }
@@ -1454,7 +1481,13 @@ export class World implements WorldAccess {
       return;
     }
     const t0 = performance.now();
-    const result = this.lightEngine.drain({ budgetMs: CONFIG.budgets.lightDrainMs });
+    // Whole-frame attribution (258 tasks 17/20): actual drain elapsed plus
+    // drained operation count per frame.
+    let result!: { opsUsed: number; completed: boolean };
+    this.withPhase('lighting', () => {
+      result = this.lightEngine.drain({ budgetMs: CONFIG.budgets.lightDrainMs });
+    });
+    this.frameWorkCounts.lightOpsUsed += result.opsUsed;
     this.budgets.recordActual('light', performance.now() - t0);
     if (result.opsUsed > 0) {
       // Light values changed: invalidate canonical sections in every affected
@@ -1531,21 +1564,39 @@ export class World implements WorldAccess {
       const versionSnapshot = this.captureSectionVersions(chunk);
       if (this.supportsCanonicalSectionMeshing()) {
         if (this.useWorkers) {
-          this.submitWorkerMeshJob(chunk, record.generation, chunk.meshVersion, versionSnapshot, true);
+          // Whole-frame attribution (258 tasks 17/19): worker submits time
+          // the dispatch only; completion attaches attribute to `upload`.
+          // `withPhase` keeps a synchronous fallback nested inside the
+          // dispatch attributed (never nested, never throwing).
+          this.withPhase('workerDispatch', () => {
+            this.submitWorkerMeshJob(chunk, record.generation, chunk.meshVersion, versionSnapshot, true);
+          });
+          this.frameWorkCounts.workerDispatchedJobs++;
         } else {
+          // Whole-frame attribution (258 tasks 17/19/21):
+          // `processCanonicalSectionMeshing` brackets `meshingMain` around
+          // each section build and `upload` around each section attach
+          // internally, so the two never nest.
           this.processCanonicalSectionMeshing(chunk, record.generation, versionSnapshot);
+          this.frameWorkCounts.syncMeshedJobs++;
         }
         this.budgets.recordActual('mesh-upload', performance.now() - t0);
         done++;
         continue;
       }
       if (this.useWorkers) {
-        this.submitWorkerMeshJob(chunk, record.generation, chunk.meshVersion, versionSnapshot, false);
+        this.withPhase('workerDispatch', () => {
+          this.submitWorkerMeshJob(chunk, record.generation, chunk.meshVersion, versionSnapshot, false);
+        });
+        this.frameWorkCounts.workerDispatchedJobs++;
       } else {
-        const result = this.mesher.mesh(chunk, (cx, cy, cz) => this.chunkManager.getChunk(cx, cy, cz), {
-          inputVersion: record.generation,
-          versionSnapshot,
-          lightSampler: this.mesherLightSampler,
+        let result!: ChunkMeshResult;
+        this.withPhase('meshingMain', () => {
+          result = this.mesher.mesh(chunk, (cx, cy, cz) => this.chunkManager.getChunk(cx, cy, cz), {
+            inputVersion: record.generation,
+            versionSnapshot,
+            lightSampler: this.mesherLightSampler,
+          });
         });
         // Stale rejection: drop results built against a superseded generation. Legacy
         // mesher results carry no `streams` stamp and cannot be staleness-checked;
@@ -1555,7 +1606,11 @@ export class World implements WorldAccess {
           pipeline.failStage(job.key, 'mesh');
           continue;
         }
-        this.attach(chunk, result);
+        // Whole-frame attribution (258 tasks 17/21): scene attachment is
+        // the synchronous upload path; `withPhase` keeps it sequential with
+        // (never nested in) the `meshingMain` bracket above.
+        this.withPhase('upload', () => this.attach(chunk, result));
+        this.frameWorkCounts.syncMeshedJobs++;
         chunk.dirty = false;
         chunk.state = ChunkState.Visible;
         pipeline.completeStage(job.key, 'mesh', job.version);
@@ -1606,18 +1661,23 @@ export class World implements WorldAccess {
         column.clearMeshDirty(sy);
         continue;
       }
-      const result = this.mesher.meshSection(
-        chunk.cx,
-        sectionY,
-        chunk.cz,
-        section,
-        (wx, wy, wz) => this.storage.getBlockState(wx, wy, wz),
-        {
-          inputVersion: generation,
-          versionSnapshot,
-          lightSampler: this.mesherLightSampler,
-        },
-      );
+      // Whole-frame attribution (258 tasks 17/19/21): the section build
+      // and its scene attach are bracketed sequentially (never nested).
+      let result!: ChunkMeshResult;
+      this.withPhase('meshingMain', () => {
+        result = this.mesher.meshSection(
+          chunk.cx,
+          sectionY,
+          chunk.cz,
+          section,
+          (wx, wy, wz) => this.storage.getBlockState(wx, wy, wz),
+          {
+            inputVersion: generation,
+            versionSnapshot,
+            lightSampler: this.mesherLightSampler,
+          },
+        );
+      });
       if (
         result.streams.inputVersion !== generation ||
         !this.isSectionVersionSnapshotCurrent(versionSnapshot)
@@ -1633,7 +1693,7 @@ export class World implements WorldAccess {
         this.enqueueMeshWithRetry(chunk);
         return;
       }
-      this.attachCanonicalSection(key, chunk.cx, sectionY, chunk.cz, result);
+      this.withPhase('upload', () => this.attachCanonicalSection(key, chunk.cx, sectionY, chunk.cz, result));
       column.clearMeshDirty(sy);
     }
 
@@ -1645,6 +1705,16 @@ export class World implements WorldAccess {
   }
 
   private unloadChunks(playerChunkX: number, playerChunkZ: number): boolean {
+    // Whole-frame attribution (258 task 17): one bracket for the bounded
+    // unload slice; evicted chunks are counted per frame.
+    let moreWork = false;
+    this.withPhase('unload', () => {
+      moreWork = this.unloadChunksInner(playerChunkX, playerChunkZ);
+    });
+    return moreWork;
+  }
+
+  private unloadChunksInner(playerChunkX: number, playerChunkZ: number): boolean {
     // Hysteresis: chunks unload one ring beyond the load radius so a player
     // oscillating around the boundary cannot churn allocations.
     const candidates: Chunk[] = [];
@@ -1720,6 +1790,7 @@ export class World implements WorldAccess {
     }
     this.needsUnload = candidates.length > unloaded;
     this.pendingUnloadValue = candidates.length - unloaded;
+    this.frameWorkCounts.unloadedChunks += unloaded;
     return this.needsUnload;
   }
 
@@ -2084,6 +2155,11 @@ export class World implements WorldAccess {
       castShadow: boolean;
     }>,
   ): void {
+    // Whole-frame attribution (258 tasks 17/21) is bracketed by CALLERS as
+    // `upload` (sync mesh sites, canonical section loop, worker completion)
+    // so it never nests inside a `meshingMain` bracket: scene attachment is
+    // the synchronous upload path, and completions arriving from worker
+    // callbacks attribute to whichever frame drains after they run.
     const meshes: THREE.Mesh[] = [];
     let triangles = 0;
     let uploadBytes = 0;
@@ -2113,6 +2189,7 @@ export class World implements WorldAccess {
     this.sectionTriangles.set(key, triangles);
     this.triangles += triangles;
     this.uploadBytesThisFrame += uploadBytes;
+    this.frameWorkCounts.uploadedMeshes++;
   }
   /** Replace one canonical section's render streams without touching sibling sections. */
   private attachCanonicalSection(
@@ -2191,6 +2268,8 @@ export class World implements WorldAccess {
       offsetY?: number;
     }>,
   ): void {
+    // Whole-frame attribution: bracketed by callers as `upload` (see
+    // `attachCanonicalWorkerSection`).
     const key = chunkKey(chunk.cx, chunk.cy, chunk.cz);
     const meshes: THREE.Mesh[] = [];
     let tris = 0;
@@ -2231,6 +2310,7 @@ export class World implements WorldAccess {
     this.chunkTriangles.set(key, tris);
     this.triangles += tris;
     this.uploadBytesThisFrame += uploadBytes;
+    this.frameWorkCounts.uploadedMeshes++;
   }
 
   // ── Worker meshing path (inert while `useWorkers` is false) ────────────────
@@ -2491,14 +2571,20 @@ export class World implements WorldAccess {
       this.processCanonicalSectionMeshing(chunk, generation, versionSnapshot);
       return;
     }
-    const result = this.mesher.mesh(chunk, (cx, cy, cz) => this.chunkManager.getChunk(cx, cy, cz), {
-      inputVersion: generation,
-      versionSnapshot,
-      lightSampler: this.mesherLightSampler,
+    // Whole-frame attribution (258 tasks 17/19/21): sync fallback work
+    // attributes as meshingMain/upload. `withPhase` keeps these sequential
+    // when the fallback nests inside a `workerDispatch` submit bracket.
+    let result!: ChunkMeshResult;
+    this.withPhase('meshingMain', () => {
+      result = this.mesher.mesh(chunk, (cx, cy, cz) => this.chunkManager.getChunk(cx, cy, cz), {
+        inputVersion: generation,
+        versionSnapshot,
+        lightSampler: this.mesherLightSampler,
+      });
     });
     const builtVersion = result.streams?.inputVersion;
     if (builtVersion !== undefined && builtVersion !== generation) return;
-    this.attach(chunk, result);
+    this.withPhase('upload', () => this.attach(chunk, result));
     chunk.dirty = false;
     chunk.state = ChunkState.Visible;
     const key = chunkKey(chunk.cx, chunk.cy, chunk.cz);
@@ -2583,28 +2669,37 @@ export class World implements WorldAccess {
     if (this.workerMeshBatches.get(batch.key) === batch) {
       this.workerMeshBatches.delete(batch.key);
     }
-    if (batch.canonical) {
-      const grouped = new Map<string, typeof batch.geometries>();
-      for (const entry of batch.geometries) {
-        const sectionKey = canonicalSectionKey(entry.sectionX, entry.sectionY, entry.sectionZ);
-        const entries = grouped.get(sectionKey);
-        if (entries) entries.push(entry);
-        else grouped.set(sectionKey, [entry]);
-      }
-      for (const [sectionKey, entries] of grouped) {
-        const first = entries[0]!;
-        this.attachCanonicalWorkerSection(sectionKey, first.sectionX, first.sectionY, first.sectionZ, entries);
-        const column = this.storage.getColumn(first.sectionX, first.sectionZ);
-        const inColumnSection = first.sectionY - this.dimension.minSectionY;
-        if (column && inColumnSection >= 0 && inColumnSection < column.sectionCount) {
-          column.clearMeshDirty(inColumnSection);
+    // Whole-frame attribution (258 tasks 17/21): completion attaches are the
+    // upload path. Callbacks run outside `World.update`, but `withPhase`
+    // keeps them safe if a transport ever completes synchronously inside a
+    // dispatch bracket (time then attributes to the outer phase, correctly).
+    this.withPhase('upload', () => {
+      if (batch.canonical) {
+        const grouped = new Map<string, typeof batch.geometries>();
+        for (const entry of batch.geometries) {
+          const sectionKey = canonicalSectionKey(entry.sectionX, entry.sectionY, entry.sectionZ);
+          const entries = grouped.get(sectionKey);
+          if (entries) entries.push(entry);
+          else grouped.set(sectionKey, [entry]);
         }
+        for (const [sectionKey, entries] of grouped) {
+          const first = entries[0]!;
+          this.attachCanonicalWorkerSection(sectionKey, first.sectionX, first.sectionY, first.sectionZ, entries);
+          const column = this.storage.getColumn(first.sectionX, first.sectionZ);
+          const inColumnSection = first.sectionY - this.dimension.minSectionY;
+          if (column && inColumnSection >= 0 && inColumnSection < column.sectionCount) {
+            column.clearMeshDirty(inColumnSection);
+          }
+        }
+      } else {
+        this.attachGeometries(chunk, batch.geometries);
       }
-    } else {
-      this.attachGeometries(chunk, batch.geometries);
-    }
+    });
     batch.geometries.length = 0;
     this.workerCompletedCount++;
+    // Whole-frame work count (258 task 19): completions arriving from worker
+    // callbacks attribute to whichever frame is in progress when they run.
+    this.frameWorkCounts.workerCompletedJobs++;
     chunk.dirty = false;
     chunk.state = ChunkState.Visible;
     pipeline.completeStage(batch.key, 'mesh', batch.generation);
@@ -3066,6 +3161,67 @@ export class World implements WorldAccess {
   /** Whether worker meshing is currently enabled for this world. */
   isWorkerMeshingEnabled(): boolean {
     return this.useWorkers;
+  }
+
+  /**
+   * Enable or disable World-internal whole-frame phase timing (258 task 17).
+   * Disabled by default (zero clock reads); the headed harness enables it
+   * explicitly via `Game.setWholeFramePhaseTimingEnabled`. No tick,
+   * streaming, budget, or render behavior changes either way.
+   */
+  setPhaseTimingEnabled(enabled: boolean): void {
+    this.phaseTimer.setEnabled(enabled);
+    if (!enabled) {
+      // Reset accumulated totals on disable so a later drain cannot report
+      // stale attribution from an earlier enabled window.
+      this.phaseTimer.finishFrame(0);
+    }
+  }
+
+  /**
+   * Run `fn` bracketed by `phase` unless a phase is already open. Nesting
+   * `begin` throws, and nested time already attributes to the outer phase
+   * (e.g. a synchronous worker fallback inside `workerDispatch`), so the
+   * inner bracket is skipped — telemetry never crashes the game and never
+   * double-counts. Always exception-safe: the phase closes even when `fn`
+   * throws. No-op (no clock read) while timing is disabled.
+   */
+  private withPhase(phase: WholeFramePhase, fn: () => void): void {
+    if (!this.phaseTimer.isEnabled || this.phaseTimer.hasOpenPhase) {
+      fn();
+      return;
+    }
+    this.phaseTimer.begin(phase);
+    try {
+      fn();
+    } finally {
+      this.phaseTimer.end();
+    }
+  }
+
+  /** Whether World-internal whole-frame phase timing is active. */
+  isPhaseTimingEnabled(): boolean {
+    return this.phaseTimer.isEnabled;
+  }
+
+  /**
+   * Drain accumulated World-internal phase totals and reset them (258 tasks
+   * 17-21). `Game` calls this once per frame after `update` and merges the
+   * result into its whole-frame sample. Returns zeros when timing is
+   * disabled; async worker-completion attaches land in the frame whose drain
+   * runs after they complete.
+   */
+  drainPhaseTotals(): Record<WholeFramePhase, number> {
+    return this.phaseTimer.finishFrame(0).phases;
+  }
+
+  /**
+   * Last completed `update`'s per-frame work counts (258 tasks 18-23):
+   * generated chunks, sync/worker mesh jobs, light ops, uploads, unloads.
+   * Defensive copy; valid even when phase timing is disabled.
+   */
+  getLastFrameWorkCounts(): WorldFrameWorkCounts {
+    return { ...this.lastFrameWorkCounts };
   }
 
   /** Read-only live pipeline diagnostics for renderer/performance monitoring. */

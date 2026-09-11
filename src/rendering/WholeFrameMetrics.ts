@@ -280,6 +280,16 @@ export class PhaseTimer {
     return this.enabled;
   }
 
+  /**
+   * Whether a phase is currently open (timing in progress). Read-only;
+   * lets callers with re-entrant work (e.g. sync worker fallbacks) avoid
+   * nesting `begin` calls, which throw. Nested time already attributes to
+   * the outer phase, so skipping the inner bracket loses nothing.
+   */
+  get hasOpenPhase(): boolean {
+    return this.openPhase !== null;
+  }
+
   /** Enable or disable timing. Disabling mid-phase discards the open phase. */
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
@@ -313,6 +323,25 @@ export class PhaseTimer {
   }
 
   /**
+   * Add an externally measured contribution to one phase of the current
+   * frame (e.g. World-internal sub-phases drained after `World.update`).
+   * No-op while disabled. Throws `WholeFrameMetrics: <detail>` on an unknown
+   * phase or a negative/non-finite contribution.
+   */
+  accumulate(phase: WholeFramePhase, elapsedMs: number): void {
+    if (!this.enabled) return;
+    if (!isPhase(phase)) {
+      throw new Error(`WholeFrameMetrics: unknown phase ${String(phase)}`);
+    }
+    if (typeof elapsedMs !== 'number' || !Number.isFinite(elapsedMs) || elapsedMs < 0) {
+      throw new Error(
+        `WholeFrameMetrics: accumulate(${phase}) must be a non-negative finite number, got ${String(elapsedMs)}`,
+      );
+    }
+    this.totals[phase] += elapsedMs;
+  }
+
+  /**
    * Close the current frame: returns the sample (rAF interval + accumulated
    * phases) and resets phase totals. Throws when a phase is still open.
    */
@@ -326,5 +355,123 @@ export class PhaseTimer {
       this.totals[phase] = 0;
     }
     return sample;
+  }
+}
+
+/**
+ * Per-frame renderer/resource snapshot joined to the whole-frame stream
+ * (258 task 22). Recorded once per rendered frame from `renderer.info` plus
+ * the drawing-buffer size and dynamic-resolution scale, so headed artifacts
+ * can correlate GPU-side cost with whole-frame latency without reshaping the
+ * validated `WholeFrameSample`.
+ *
+ * Fixed-size and allocation-free after construction: seven `Float64Array`
+ * columns; once full, new snapshots overwrite the oldest.
+ */
+export class FrameAuxRing {
+  private readonly capacity: number;
+  private readonly calls: Float64Array;
+  private readonly triangles: Float64Array;
+  private readonly geometries: Float64Array;
+  private readonly textures: Float64Array;
+  private readonly bufferWidth: Float64Array;
+  private readonly bufferHeight: Float64Array;
+  private readonly dynamicScale: Float64Array;
+  private count = 0;
+  private index = 0;
+
+  constructor(capacity = 600) {
+    if (!Number.isInteger(capacity) || capacity <= 0) {
+      throw new RangeError(`WholeFrameMetrics: FrameAuxRing capacity must be a positive integer, got ${capacity}`);
+    }
+    this.capacity = capacity;
+    this.calls = new Float64Array(capacity);
+    this.triangles = new Float64Array(capacity);
+    this.geometries = new Float64Array(capacity);
+    this.textures = new Float64Array(capacity);
+    this.bufferWidth = new Float64Array(capacity);
+    this.bufferHeight = new Float64Array(capacity);
+    this.dynamicScale = new Float64Array(capacity);
+  }
+
+  /** Fixed snapshot capacity. */
+  get size(): number {
+    return this.capacity;
+  }
+
+  /** Snapshots recorded (capped at capacity). */
+  get samples(): number {
+    return this.count;
+  }
+
+  /** Record one frame's renderer snapshot; overwrites the oldest when full. */
+  record(
+    calls: number,
+    triangles: number,
+    geometries: number,
+    textures: number,
+    bufferWidth: number,
+    bufferHeight: number,
+    dynamicScale: number,
+  ): void {
+    const values = [calls, triangles, geometries, textures, bufferWidth, bufferHeight, dynamicScale];
+    const names = ['calls', 'triangles', 'geometries', 'textures', 'bufferWidth', 'bufferHeight', 'dynamicScale'];
+    for (let i = 0; i < values.length; i++) {
+      const value = values[i]!;
+      if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+        throw new Error(`WholeFrameMetrics: FrameAuxRing ${names[i]} must be a non-negative finite number, got ${String(value)}`);
+      }
+    }
+    this.calls[this.index] = calls;
+    this.triangles[this.index] = triangles;
+    this.geometries[this.index] = geometries;
+    this.textures[this.index] = textures;
+    this.bufferWidth[this.index] = bufferWidth;
+    this.bufferHeight[this.index] = bufferHeight;
+    this.dynamicScale[this.index] = dynamicScale;
+    this.index = (this.index + 1) % this.capacity;
+    if (this.count < this.capacity) {
+      this.count += 1;
+    }
+  }
+
+  /** Most recently recorded snapshot, or zeros when empty. */
+  latest(): {
+    calls: number;
+    triangles: number;
+    geometries: number;
+    textures: number;
+    bufferWidth: number;
+    bufferHeight: number;
+    dynamicScale: number;
+  } {
+    if (this.count === 0) {
+      return { calls: 0, triangles: 0, geometries: 0, textures: 0, bufferWidth: 0, bufferHeight: 0, dynamicScale: 0 };
+    }
+    const at = (this.index - 1 + this.capacity) % this.capacity;
+    return {
+      calls: this.calls[at]!,
+      triangles: this.triangles[at]!,
+      geometries: this.geometries[at]!,
+      textures: this.textures[at]!,
+      bufferWidth: this.bufferWidth[at]!,
+      bufferHeight: this.bufferHeight[at]!,
+      dynamicScale: this.dynamicScale[at]!,
+    };
+  }
+
+  /** Maximum draw calls over the retained snapshots (burst detection). */
+  maxCalls(): number {
+    let max = 0;
+    for (let i = 0; i < this.count; i++) {
+      if (this.calls[i]! > max) max = this.calls[i]!;
+    }
+    return max;
+  }
+
+  /** Clear all retained snapshots (e.g. between harness scenarios). */
+  reset(): void {
+    this.count = 0;
+    this.index = 0;
   }
 }
