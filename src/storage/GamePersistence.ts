@@ -67,6 +67,10 @@ import {
   deserializeGameRules,
   type GameRuleStore,
 } from '../simulation/GameRuleFramework';
+import {
+  deserializeRecipeBook,
+  type RecipeBookState,
+} from '../inventory/RecipeBook';
 
 /**
  * Composite key for a 2D chunk (worldId|chunkX|chunkZ). Mirrors the key shape used by
@@ -299,6 +303,8 @@ export class GamePersistence implements WorldEditDurability {
   private initialWithersValue: unknown[] = [];
   /** Validated gamerule store bulk-loaded at open() (261; null when absent or corrupt). */
   private initialGameRulesValue: GameRuleStore | null = null;
+  /** Validated recipe book bulk-loaded at open() (262; null when absent or corrupt). */
+  private initialRecipeBookValue: RecipeBookState | null = null;
   private initialColumnsValue: SerializedChunkColumn[] = [];
   /** World generation baseline compatibility classification. */
   private generationBaselineValue: WorldGenerationBaseline = 'current';
@@ -634,6 +640,16 @@ export class GamePersistence implements WorldEditDurability {
         this.initialGameRulesValue = null;
         this.recordError(`load gamerules: ${errorMessage(e)}`);
       }
+      // 262 hydration: recipe-book payload stored via raw recipe-book data. Absent
+      // stays null (Game boots the empty book); corrupt payloads degrade to null
+      // with a recorded error so boot continues on the empty book.
+      try {
+        const raw = await this.metadata.getRecipeBookData(this.worldIdValue);
+        if (raw !== null) this.initialRecipeBookValue = deserializeRecipeBook(raw);
+      } catch (e) {
+        this.initialRecipeBookValue = null;
+        this.recordError(`load recipebook: ${errorMessage(e)}`);
+      }
     }
 
     // 5.5 Authoritative startup compatibility decision (257). Computed after the
@@ -708,6 +724,7 @@ export class GamePersistence implements WorldEditDurability {
     if (fatal) {
       this.initialWithersValue = [];
       this.initialGameRulesValue = null;
+      this.initialRecipeBookValue = null;
       this.initialColumnsValue = [];
     }
     this.opened = true;
@@ -761,6 +778,7 @@ export class GamePersistence implements WorldEditDurability {
       metadata: WorldMetadata | null;
       witherData: unknown[] | null;
       gameruleData: unknown | null;
+      recipeBookData: unknown | null;
       columns: SerializedChunkColumn[];
       edits: Array<{ chunkX: number; chunkY: number; chunkZ: number; changes: Array<[number, number]> }>;
       playerState: PlayerStateRecord | null;
@@ -771,6 +789,7 @@ export class GamePersistence implements WorldEditDurability {
       const metadata = await this.metadata.getMetadata(worldId);
       const witherData = await this.metadata.getWitherData(worldId);
       const gameruleData = await this.metadata.getGameRuleData(worldId);
+      const recipeBookData = await this.metadata.getRecipeBookData(worldId);
       const columns = await this.chunkSections.listColumns(worldId);
       const editRecords = await this.chunkEdits.listChunkEdits(worldId);
       const playerState = await this.playerStates.getPlayerState(worldId);
@@ -780,6 +799,7 @@ export class GamePersistence implements WorldEditDurability {
         metadata,
         witherData,
         gameruleData,
+        recipeBookData,
         columns: [...columns],
         edits: editRecords.map((r) => ({ chunkX: r.chunkX, chunkY: r.chunkY, chunkZ: r.chunkZ, changes: [...r.changes] })),
         playerState,
@@ -823,6 +843,8 @@ export class GamePersistence implements WorldEditDurability {
         await awaitRequest(metaStore.delete(`__wither__:${worldId}`));
         // 2b. Raw gamerule record (261; separate key in the same metadata store).
         await awaitRequest(metaStore.delete(`__gamerules__:${worldId}`));
+        // 2c. Raw recipe-book record (262; separate key in the same metadata store).
+        await awaitRequest(metaStore.delete(`__recipebook__:${worldId}`));
         // 3. Every chunk column for this world. Key shape: `${worldId}|${cx}|${cz}`.
         for (const column of snapshot!.columns) {
           await awaitRequest(csStore.delete(worldChunkKey(worldId, column.chunkX, column.chunkZ)));
@@ -855,6 +877,7 @@ export class GamePersistence implements WorldEditDurability {
         if (snapshot!.metadata) await this.metadata.putMetadata(snapshot!.metadata);
         if (snapshot!.witherData !== null) await this.metadata.putWitherData(worldId, snapshot!.witherData);
         if (snapshot!.gameruleData !== null) await this.metadata.putGameRuleData(worldId, snapshot!.gameruleData);
+        if (snapshot!.recipeBookData !== null) await this.metadata.putRecipeBookData(worldId, snapshot!.recipeBookData);
         for (const col of snapshot!.columns) await this.chunkSections.putColumn(worldId, col);
         for (const rec of snapshot!.edits) await this.chunkEdits.putChunkEdits(worldId, rec.chunkX, rec.chunkY, rec.chunkZ, rec.changes);
         if (snapshot!.playerState) await this.playerStates.putPlayerState(snapshot!.playerState);
@@ -1163,6 +1186,11 @@ export class GamePersistence implements WorldEditDurability {
     return this.initialGameRulesValue;
   }
 
+  /** Validated recipe book bulk-loaded at `open()` (262; null when absent or corrupt). */
+  get initialRecipeBook(): RecipeBookState | null {
+    return this.initialRecipeBookValue;
+  }
+
   /** Bulk-loaded persisted canonical columns for this world. */
   get initialColumns(): SerializedChunkColumn[] {
     return this.initialColumnsValue;
@@ -1191,6 +1219,12 @@ export class GamePersistence implements WorldEditDurability {
   saveWithers(payload: unknown[]): void {
     if (this.disposed || this.resetCompleted) return;
     void this.metadata.putWitherData(this.worldIdValue, payload).catch((e) => this.recordError(`save withers: ${errorMessage(e)}`));
+  }
+
+  /** Persist the recipe-book payload via raw recipe-book data (262). */
+  saveRecipeBook(payload: unknown): void {
+    if (this.disposed || this.resetCompleted) return;
+    void this.metadata.putRecipeBookData(this.worldIdValue, payload).catch((e) => this.recordError(`save recipebook: ${errorMessage(e)}`));
   }
 
   /** Persist the gamerule payload via raw gamerule data (261). */

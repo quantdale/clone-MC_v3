@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "status": "ACTIVE",
-  "currentChange": "261-gamerule-settings-ui",
+  "currentChange": "262-recipe-book-ui",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "261-gamerule-settings-ui",
+  "lastCompletedChange": "262-recipe-book-ui",
   "nextChange": "258-real-world-runtime-performance-fps-recovery",
-  "completedTasks": 16,
-  "totalTasks": 16,
+  "completedTasks": 14,
+  "totalTasks": 14,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -14,14 +14,22 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "60eb9ba0023bcb9e9a89846c4c697c775305ce1e",
-  "localHead": "111ad94e75085df843dd4ee0c6e73aa1161a48df",
-  "lastCompletedTask": "Change 261-gamerule-settings-ui VERIFIED 16/16 (2026-09-11): in-game gamerule settings UI over the 189 registry (view/edit 9 rules with validation, world-scoped persistence, mobGriefing/doFireTick/randomTickSpeed live wiring), MP-19.4-1 UI debt closed via browser E2E open-toggle-persist-reload-contrast; full gates green (typecheck/lint 0 errors/unit 4803+1/build/e2e 69/69/file-audit 2694); 258 untouched and BLOCKED, 259/260 untouched and VERIFIED",
-  "nextExactAction": "Resume 258 headed tasks only on a hardware-WebGL host when available (261 VERIFIED 16/16 published; 259/260 VERIFIED; 258 remains BLOCKED/resumable)",
+  "sessionStartHead": "c9ae063c6ceeec6e5fe66bb0f83d8099f6093e2b",
+  "localHead": "c9ae063c6ceeec6e5fe66bb0f83d8099f6093e2b",
+  "lastCompletedTask": "Change 262-recipe-book-ui VERIFIED 14/14 (2026-09-11): in-game recipe book UI over the 204 RecipeBook (known-only search, layoutRecipe preview, transactional craft, __recipebook__ persistence, R1+R2 unlocks), proven via unit 39 new + browser E2E open-search-select-craft-reload-preserves + lifecycle; full gates green (typecheck/lint 0 errors/unit 4842+1/build/e2e 71/71/file-audit 2705); 258 untouched and BLOCKED, 259/260/261 untouched and VERIFIED",
+  "nextExactAction": "262 T14: commit the session range, push to origin/main, verify remote head equals published_head, report SHAs (14/14 VERIFIED; 258 BLOCKED, 259/260/261 VERIFIED)",
+
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. 001-257 VERIFIED; game shippable with known performance-certification debt. The 259 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
   "validationResults": [
+    {
+      "change": "262-recipe-book-ui",
+      "status": "VERIFIED",
+      "unitTests": 4842,
+      "e2eTests": 71,
+      "note": "Standing owner order 2026-09-11, implemented while 258 stays BLOCKED and 259/260/261 stay VERIFIED. 14/14 tasks: RecipeBookView pure helpers + RecipeBookPanel + Game store/R1-R2/lifecycle + shell + __recipebook__ persistence with reset/archive passthrough, 39 new unit tests, 2 new browser E2E (open-search-select-craft-reload-preserves + lifecycle incl. close/C/blur/no-match); C262 matrix row exact. Gates: typecheck/lint 0 errors/unit 4842+1/build PASS, e2e 71/71 PASS, file-audit 2705."
+    },
     {
       "change": "261-gamerule-settings-ui",
       "status": "VERIFIED",

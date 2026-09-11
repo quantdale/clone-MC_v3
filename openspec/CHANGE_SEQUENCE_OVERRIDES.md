@@ -135,3 +135,27 @@ and **260-live-brewing-stand-production-integration** stand **VERIFIED**.
   "seam not wired to UI" debt noted on C252/MP-19.4-1.
 - Change 258 remains recorded BLOCKED and resumable on a hardware-WebGL host;
   the 261 track does not consume, waive, or re-litigate any 258 headed task.
+
+## 262 activation alongside BLOCKED 258 — owner-authorized parallel track (2026-09-11)
+
+The product owner (Standing owner order, 2026-09-11 campaign instruction) authorized
+activating and implementing OpenSpec change **262-recipe-book-ui** while
+Change **258-real-world-runtime-performance-fps-recovery** remains **BLOCKED**
+(headed hardware-WebGL certification deferred) and Changes **259-enchanting-panel-ui**,
+**260-live-brewing-stand-production-integration**, and **261-gamerule-settings-ui**
+stand **VERIFIED**.
+
+- Change 258 status stays **BLOCKED** at 40/100 with its existing deferral intact.
+  No headed FPS work is touched, no GPU evidence is faked, and 258 MUST NOT be
+  marked VERIFIED by the 262 track.
+- Changes 259 (18/18), 260 (19/19), and 261 (16/16) stand **VERIFIED** and MUST NOT be
+  reopened unless a recipe-book regression blocks the 262 player loop.
+- Change 262 (`262-recipe-book-ui`) is the sole **ACTIVE** implementation
+  change: an in-game recipe book UI over the existing headless `RecipeBook`
+  (change 204), opened from the crafting UI (`CraftingPanel` flow), with
+  known-recipe search/filter via the existing helpers, `layoutRecipe`
+  ingredient preview with have/missing accounting, transactional craft-on-select
+  through `CraftingSystem`, world-scoped unlock persistence, and craft-output +
+  craftable-discovery unlock triggers.
+- Change 258 remains recorded BLOCKED and resumable on a hardware-WebGL host;
+  the 262 track does not consume, waive, or re-litigate any 258 headed task.

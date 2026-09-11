@@ -50,6 +50,7 @@ body {
 #brewing.hidden,
 #enchanting.hidden,
 #gamerule.hidden,
+#recipebook.hidden,
 #break-progress.hidden,
 #toast.hidden,
 #debug-overlay.hidden {
@@ -748,12 +749,121 @@ body {
   text-align: center;
   margin: 4px 0 0;
 }
+#recipebook {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  background: rgba(3, 10, 17, 0.36);
+}
 #gamerule-open {
   cursor: pointer;
   /* The .ui HUD container is pointer-events:none; re-enable for the button. */
   pointer-events: auto;
   top: 44px;
   right: 8px;
+}
+.recipebook-search-label {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12px;
+  display: block;
+  margin-bottom: 4px;
+}
+.recipebook-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+.recipebook-list {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+  max-height: 30vh;
+  overflow-y: auto;
+}
+.recipebook-recipe {
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 6px;
+  background: rgba(30, 60, 100, 0.55);
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+}
+.recipebook-recipe[aria-pressed='true'] {
+  background: rgba(50, 110, 70, 0.6);
+}
+.recipebook-recipe-title {
+  pointer-events: none;
+}
+.recipebook-empty {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  text-align: center;
+}
+.recipebook-detail-title {
+  margin-bottom: 6px;
+}
+.recipebook-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.recipebook-cell {
+  min-height: 30px;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.35);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 11px;
+  font-family: 'Consolas', 'Menlo', monospace;
+  word-break: break-all;
+}
+.recipebook-cell.empty {
+  background: rgba(255, 255, 255, 0.04);
+}
+.recipebook-cell.missing {
+  border-color: rgba(255, 120, 120, 0.7);
+  color: #ffb3b3;
+}
+.recipebook-missing {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12px;
+  margin: 0 0 8px;
+}
+.recipebook-craft {
+  padding: 6px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 6px;
+  background: rgba(40, 90, 60, 0.55);
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+}
+.recipebook-status {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  text-align: center;
+  margin: 4px 0 0;
+}
+.crafting-recipebook-open {
+  margin-top: 8px;
+  padding: 6px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 6px;
+  background: rgba(30, 60, 100, 0.55);
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
 }
 .overlay-btn:focus-visible {
   outline: 3px solid #ffe08a;

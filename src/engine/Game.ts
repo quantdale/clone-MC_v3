@@ -153,6 +153,26 @@ import { StackComponentMap, createDefaultStackComponentRegistry } from '../inven
 import type { ItemStack } from '../inventory/Inventory';
 import { EnchantingPanel, formatEnchantLevel, prettifyEnchantmentKey } from '../ui/EnchantingPanel';
 import { GameRulePanel } from '../ui/GameRulePanel';
+import { RecipeBookPanel } from '../ui/RecipeBookPanel';
+import { CraftingSystem } from '../inventory/Crafting';
+import {
+  createDefaultRecipeBook,
+  serializeRecipeBook,
+  unlockRecipe,
+  unlockRecipes,
+  type RecipeBookState,
+} from '../inventory/RecipeBook';
+import {
+  describeRecipeBookSelection,
+  findDiscoverableRecipes,
+  searchRecipeBook,
+  type RecipeBookSelectionView,
+} from '../inventory/RecipeBookView';
+import {
+  createDefaultRecipeRegistry,
+  type RecipeDefinition,
+  type RecipeRegistry,
+} from '../inventory/RecipeRegistry';
 import {
   createDefaultGameRules,
   isValidGameRuleValue,
@@ -296,6 +316,20 @@ export class Game {
   private readonly gamerulePanel: GameRulePanel;
   /** Authoritative gamerule store (261): validated persisted payload or defaults. */
   private gameRules: GameRuleStore;
+  /** Whether the recipe book screen is open (262). */
+  private recipeBookOpen = false;
+  /** DOM controller for the live recipe book screen (262). */
+  private readonly recipeBookPanel: RecipeBookPanel;
+  /** Authoritative known-recipe set (262): validated persisted payload or empty. */
+  private recipeBook: RecipeBookState;
+  /** Transient book search query (262, never persisted). */
+  private recipeBookQuery = '';
+  /** Transient selected recipe key (262, cleared on close). */
+  private selectedRecipeBookKey: string | null = null;
+  /** Registry backing book search/discovery/craft (262, default catalog). */
+  private readonly recipeRegistry: RecipeRegistry;
+  /** Transactional one-click craft engine for the book (262, shares inventory). */
+  private readonly recipeBookSystem: CraftingSystem;
   /** Registry key of the Fire block, resolved once for the doFireTick gate (261). */
   private readonly fireBlockKey: string;
   /** Monotonic simulation tick counter driving random-tick seeding. */
@@ -763,6 +797,21 @@ export class Game {
         }
       }).catch(() => undefined);
     }
+    // 262 recipe book: the validated persisted known set when present, the
+    // empty book otherwise (absent or corrupt records never break boot). The
+    // self-composed path applies the late-loaded payload when its promise
+    // settles (gamerule parity above).
+    this.recipeBook = this.persistenceImpl?.initialRecipeBook ?? createDefaultRecipeBook();
+    if (this.selfOpenPromise !== null) {
+      void this.selfOpenPromise.then(() => {
+        if (this.disposed) return;
+        const late = this.persistenceImpl?.initialRecipeBook;
+        if (late) {
+          this.recipeBook = late;
+          if (this.recipeBookOpen) this.recipeBookPanel.render();
+        }
+      }).catch(() => undefined);
+    }
 
     this.player = new Player();
     // Startup compatibility decision (257): for an injected (already open)
@@ -980,6 +1029,26 @@ export class Game {
     // HUD button opens the settings for mouse/touch players (261).
     const gameruleOpenBtn = document.getElementById('gamerule-open');
     gameruleOpenBtn?.addEventListener('click', () => this.openGamerule());
+    // Live recipe book screen (262): a pure view over the known set.
+    this.recipeRegistry = createDefaultRecipeRegistry();
+    this.recipeBookSystem = new CraftingSystem(this.inventory, this.recipeRegistry);
+    this.recipeBookPanel = new RecipeBookPanel(this.requireElement('recipebook'), {
+      getQuery: () => this.recipeBookQuery,
+      setQuery: (query: string) => {
+        this.recipeBookQuery = query;
+      },
+      listRecipes: () => this.searchRecipeBook(),
+      getSelected: () => this.getRecipeBookSelection(),
+      getSelectedKey: () => this.selectedRecipeBookKey,
+      selectRecipe: (key: string | null) => this.selectRecipeBookRecipe(key),
+      craftSelected: () => this.craftRecipeBookSelection(),
+      onChanged: () => undefined,
+      onClose: () => this.closeRecipeBook(),
+    });
+    // Recipe-book entry inside the crafting dialog (262): the crafting screen
+    // closes first (one-container rule) when the book opens.
+    const recipeBookOpenBtn = document.getElementById('crafting-recipebook-open');
+    recipeBookOpenBtn?.addEventListener('click', () => this.openRecipeBook());
 
     // Fixed-tick ownership (044): the driver turns frame deltas into bounded,
     // deterministic 20 TPS ticks; the tick body enforces the simulation order.
@@ -1083,6 +1152,9 @@ export class Game {
     // The gamerule panel owns no transient state either (261: pure view over
     // the already-persisted store) — close it before the persist flush.
     this.closeGamerule();
+    // The recipe book owns no transient state either (262: pure view over
+    // the already-persisted known set) — close it before the persist flush.
+    this.closeRecipeBook();
     this.savePlayerStateDurable();
     this.saveWithers();
     this.saveTimer = 0;
@@ -1327,6 +1399,7 @@ export class Game {
       !this.brewingOpen &&
       !this.enchantingOpen &&
       !this.gameruleOpen &&
+      !this.recipeBookOpen &&
       (this.pointerLocked || this.hasControllerInput(deviceFrame));
 
     // Pause/resume mapping (044): while inactive the driver's time anchor keeps
@@ -1419,6 +1492,9 @@ export class Game {
       } else if (this.gameruleOpen) {
         // Same rule for the gamerule settings screen (261).
         this.closeGamerule();
+      } else if (this.recipeBookOpen) {
+        // Same rule for the recipe book screen (262).
+        this.closeRecipeBook();
       } else if (this.craftingOpen) {
         this.closeCrafting();
       } else {
@@ -1463,6 +1539,11 @@ export class Game {
     // block-bound panels); keep the rows live while open.
     if (this.gameruleOpen) {
       this.gamerulePanel.render();
+    }
+    // Recipe book upkeep (262): no position to track either; keep the list
+    // and selection live while open (inventory may change under E2E grants).
+    if (this.recipeBookOpen) {
+      this.recipeBookPanel.render();
     }
     // Enchanting session upkeep (259): a voided session, a destroyed table,
     // or walking away closes the panel; otherwise keep offers live.
@@ -2137,6 +2218,10 @@ export class Game {
         // Same rule for the gamerule settings screen (261).
         this.closeGamerule();
       }
+      if (this.recipeBookOpen) {
+        // Same rule for the recipe book screen (262).
+        this.closeRecipeBook();
+      }
       this.hideOverlay();
       // The HUD/crosshair only appear once the world is ready (see update()).
       if (!this.loadingShown) {
@@ -2144,7 +2229,7 @@ export class Game {
         this.hud.show();
         this.hotbar.show();
       }
-    } else if (!this.craftingOpen && !this.furnaceOpen && !this.brewingOpen && !this.enchantingOpen && !this.gameruleOpen) {
+    } else if (!this.craftingOpen && !this.furnaceOpen && !this.brewingOpen && !this.enchantingOpen && !this.gameruleOpen && !this.recipeBookOpen) {
       // Unlock caused by OPENING a container session must not stack the pause
       // overlay behind/on the open panel; the panel itself represents the
       // paused state and its owner re-shows the overlay on close (251).
@@ -2203,6 +2288,7 @@ export class Game {
   private openCrafting(): void {
     if (this.craftingOpen) return;
     if (this.gameruleOpen) this.closeGamerule();
+    if (this.recipeBookOpen) this.closeRecipeBook();
     this.craftingOpen = true;
     this.input.releasePointerLock();
     this.hideOverlay();
@@ -2224,10 +2310,13 @@ export class Game {
   }
 
   private onCrafted(recipe: CraftingRecipe): void {
-    this.hud.setSelectedName(`Crafted ${recipe.name}`);
+    // R1 craft-output unlock (262): a successful craft teaches the recipe.
+    const learned = this.unlockRecipeBookKey(recipe.id);
+    this.hud.setSelectedName(learned ? `Crafted ${recipe.name}. Learned ${recipe.name}.` : `Crafted ${recipe.name}`);
     this.hotbar.render();
     this.audio.play('craft');
     this.craftingPanel.render(this.itemRegistry);
+    if (this.recipeBookOpen) this.recipeBookPanel.render();
   }
 
   /** Show a recoverable input notice without trapping the player in the fatal error UI. */
@@ -2521,6 +2610,7 @@ export class Game {
       !this.brewingOpen &&
       !this.enchantingOpen &&
       !this.gameruleOpen &&
+      !this.recipeBookOpen &&
       !this.contextLost &&
       this.errorEl.classList.contains('hidden')
     ) {
@@ -2658,6 +2748,7 @@ export class Game {
     if (this.craftingOpen) this.closeCrafting();
     if (this.enchantingOpen) this.closeEnchanting();
     if (this.gameruleOpen) this.closeGamerule();
+    if (this.recipeBookOpen) this.closeRecipeBook();
     this.brewingOpen = true;
     this.brewingPos = { x, y, z };
     this.input.releasePointerLock();
@@ -2795,6 +2886,7 @@ export class Game {
     if (this.brewingOpen) this.closeBrewing();
     if (this.enchantingOpen) this.closeEnchanting();
     if (this.gameruleOpen) this.closeGamerule();
+    if (this.recipeBookOpen) this.closeRecipeBook();
     this.furnaceOpen = true;
     this.furnacePos = { x, y, z };
     this.input.releasePointerLock();
@@ -3252,6 +3344,7 @@ export class Game {
     if (this.brewingOpen) this.closeBrewing();
     if (this.craftingOpen) this.closeCrafting();
     if (this.gameruleOpen) this.closeGamerule();
+    if (this.recipeBookOpen) this.closeRecipeBook();
     const bookShelves = this.countBookshelves(px, py, pz);
     this.enchantingSession = createSession({
       stack: held,
@@ -3326,6 +3419,7 @@ export class Game {
     if (this.brewingOpen) this.closeBrewing();
     if (this.enchantingOpen) this.closeEnchanting();
     if (this.craftingOpen) this.closeCrafting();
+    if (this.recipeBookOpen) this.closeRecipeBook();
     this.gameruleOpen = true;
     this.input.releasePointerLock();
     this.hideOverlay();
@@ -3379,6 +3473,144 @@ export class Game {
     const parsed = parseGameRuleValue(key, text);
     if (parsed === null) return false;
     return this.setGameRule(key, parsed);
+  }
+
+  // ── Recipe book (262) ────────────────────────────────────────────────
+
+  /** The live known-recipe set (E2E observability; the panel reads the same). */
+  getRecipeBook(): RecipeBookState {
+    return this.recipeBook;
+  }
+
+  /** Transient search query (E2E observability). */
+  getRecipeBookQuery(): string {
+    return this.recipeBookQuery;
+  }
+
+  /** Known recipes matching the query, registry-ordered per the 204 contract. */
+  searchRecipeBook(): RecipeDefinition[] {
+    return searchRecipeBook(this.recipeRegistry, this.recipeBook, this.recipeBookQuery);
+  }
+
+  /** Selection detail for the panel (null = nothing selectable). */
+  getRecipeBookSelection(): RecipeBookSelectionView | null {
+    return describeRecipeBookSelection(
+      this.recipeRegistry,
+      this.recipeBook,
+      this.selectedRecipeBookKey,
+      (id) => this.inventory.getItemCount(id),
+      (def) =>
+        this.inventory.canAddItem(
+          this.recipeRegistry.itemRegistry.getByResourceId(def.output.item).id,
+          def.output.count,
+        ),
+      (def) =>
+        `${this.itemRegistry.getByLegacyId(this.recipeRegistry.itemRegistry.getByResourceId(def.output.item).id)?.name ?? def.key} ×${def.output.count}`,
+    );
+  }
+
+  /**
+   * Select a book recipe (null clears). Unknown or unlisted keys clear the
+   * selection and return false (stale-button guard — never throws).
+   */
+  selectRecipeBookRecipe(key: string | null): boolean {
+    if (key === null) {
+      this.selectedRecipeBookKey = null;
+      return true;
+    }
+    if (!this.recipeBook.known.includes(key) || this.recipeRegistry.getByKey(key) === undefined) {
+      this.selectedRecipeBookKey = null;
+      return false;
+    }
+    this.selectedRecipeBookKey = key;
+    return true;
+  }
+
+  /**
+   * Craft the selected recipe through the transactional engine. Success
+   * unlocks the key (R1) and persists; failure (or no selection) returns
+   * false with the inventory byte-identical. Never throws.
+   */
+  craftRecipeBookSelection(): boolean {
+    const key = this.selectedRecipeBookKey;
+    if (key === null) return false;
+    const crafted = this.recipeBookSystem.craft(key);
+    if (crafted === null) return false;
+    const learned = this.unlockRecipeBookKey(crafted.id);
+    this.hud.setSelectedName(learned ? `Crafted ${crafted.name}. Learned ${crafted.name}.` : `Crafted ${crafted.name}`);
+    this.hotbar.render();
+    this.audio.play('craft');
+    this.craftingPanel.render(this.itemRegistry);
+    if (this.recipeBookOpen) this.recipeBookPanel.render();
+    return true;
+  }
+
+  /**
+   * R1 primitive: unlock one key, persisting when the set grows. Returns
+   * whether the key was newly learned.
+   */
+  private unlockRecipeBookKey(key: string): boolean {
+    const next = unlockRecipe(this.recipeBook, key);
+    if (next === this.recipeBook) return false;
+    this.recipeBook = next;
+    this.persistenceImpl?.saveRecipeBook(serializeRecipeBook(next));
+    return true;
+  }
+
+  /**
+   * Open the recipe book screen (262). Closes any other container first:
+   * one container at a time (251/259/260/261 parity). R2 craftable-discovery
+   * runs on every open and persists when the set grows; the query and
+   * selection reset so the book always opens on the full known list.
+   */
+  private openRecipeBook(): void {
+    if (this.recipeBookOpen) return;
+    if (this.furnaceOpen) this.closeFurnace();
+    if (this.brewingOpen) this.closeBrewing();
+    if (this.enchantingOpen) this.closeEnchanting();
+    if (this.gameruleOpen) this.closeGamerule();
+    if (this.craftingOpen) this.closeCrafting();
+    const before = this.recipeBook.known.length;
+    const grown = unlockRecipes(
+      this.recipeBook,
+      findDiscoverableRecipes(this.recipeRegistry, (id) => this.inventory.getItemCount(id)),
+    );
+    if (grown !== this.recipeBook) {
+      this.recipeBook = grown;
+      this.persistenceImpl?.saveRecipeBook(serializeRecipeBook(grown));
+    }
+    this.recipeBookOpen = true;
+    this.recipeBookQuery = '';
+    this.selectedRecipeBookKey = null;
+    this.input.releasePointerLock();
+    this.hideOverlay();
+    this.crosshair.hide();
+    this.hud.hide();
+    this.hotbar.hide();
+    this.setBreakProgress(0);
+    this.interaction.clearTarget();
+    this.recipeBookPanel.show();
+    this.recipeBookPanel.render();
+    const discovered = grown.known.length - before;
+    this.recipeBookPanel.setStatus(discovered > 0 ? `Learned ${discovered} recipe${discovered === 1 ? '' : 's'}.` : '');
+  }
+
+  /**
+   * Close the recipe book screen. The panel owns no book state (the known
+   * set is already persisted), so hiding it plus clearing the transient
+   * selection and returning the overlay is the whole settle.
+   */
+  private closeRecipeBook(): void {
+    if (!this.recipeBookOpen) return;
+    this.recipeBookOpen = false;
+    this.selectedRecipeBookKey = null;
+    this.recipeBookPanel.hide();
+    this.showOverlay('Click to play');
+  }
+
+  /** Whether the recipe book screen is open (E2E observability). */
+  isRecipeBookOpen(): boolean {
+    return this.recipeBookOpen;
   }
 
   /**
@@ -3637,6 +3869,7 @@ export class Game {
     this.closeBrewing();
     this.closeEnchanting();
     this.closeGamerule();
+    this.closeRecipeBook();
     if (this.craftingOpen) {
       this.closeCrafting();
     }

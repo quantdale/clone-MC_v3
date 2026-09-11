@@ -43,6 +43,8 @@ export interface WorldImportReport {
   witherDataImported: boolean;
   /** Whether gamerule data was written (261). */
   gameruleDataImported: boolean;
+  /** Whether recipe-book data was written (262). */
+  recipeBookDataImported: boolean;
 }
 
 /** Exports and imports whole-world archives over the five repositories. */
@@ -108,6 +110,8 @@ export class WorldArchiver {
     const witherData = await this.metadata.getWitherData(worldId);
     // Gamerule raw record (261): same fail-closed contract as the wither record.
     const gameruleData = await this.metadata.getGameRuleData(worldId);
+    // Recipe-book raw record (262): same fail-closed contract.
+    const recipeBookData = await this.metadata.getRecipeBookData(worldId);
 
     return {
       format: 'voxel-world',
@@ -122,6 +126,7 @@ export class WorldArchiver {
       chunkEdits,
       witherData,
       gameruleData,
+      recipeBookData,
     };
   }
 
@@ -153,6 +158,7 @@ export class WorldArchiver {
       if (this.chunkEdits) for (const e of valid.chunkEdits) await put("chunk-edits", { key: `${valid.worldId}|${e.chunkX}|${e.chunkY}|${e.chunkZ}`, worldId: valid.worldId, chunkX: e.chunkX, chunkY: e.chunkY, chunkZ: e.chunkZ, changes: e.changes });
       if (valid.witherData !== null && valid.witherData !== undefined) await put("world-metadata", { worldId: `__wither__:${valid.worldId}`, payload: valid.witherData, updatedAt: Date.now() });
       if (valid.gameruleData !== null && valid.gameruleData !== undefined) await put("world-metadata", { worldId: `__gamerules__:${valid.worldId}`, payload: valid.gameruleData, updatedAt: Date.now() });
+      if (valid.recipeBookData !== null && valid.recipeBookData !== undefined) await put("world-metadata", { worldId: `__recipebook__:${valid.worldId}`, payload: valid.recipeBookData, updatedAt: Date.now() });
       if (valid.playerState) await put("player-state", valid.playerState);
     });
 
@@ -166,6 +172,7 @@ export class WorldArchiver {
       playerStateImported: valid.playerState !== null,
       witherDataImported: valid.witherData !== null,
       gameruleDataImported: valid.gameruleData !== null && valid.gameruleData !== undefined,
+      recipeBookDataImported: valid.recipeBookData !== null && valid.recipeBookData !== undefined,
     };
   }
 }

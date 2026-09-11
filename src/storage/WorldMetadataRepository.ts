@@ -185,6 +185,25 @@ export class WorldMetadataRepository {
     await promisifyRequest(tx.objectStore(this.store).put(raw));
   }
 
+  /** Raw put for the recipe-book payload bypassing WorldMetadata validation (262; gamerule precedent). */
+  async putRecipeBookData(worldId: string, payload: unknown): Promise<void> {
+    const raw = {
+      worldId: `__recipebook__:${worldId}`,
+      payload,
+      updatedAt: Date.now(),
+    };
+    const tx = this.requireDb().transaction(this.store, 'readwrite');
+    await promisifyRequest(tx.objectStore(this.store).put(raw));
+  }
+
+  /** Raw get for the recipe-book payload (262). Returns null when absent. */
+  async getRecipeBookData(worldId: string): Promise<unknown | null> {
+    const tx = this.requireDb().transaction(this.store, 'readonly');
+    const result = await promisifyRequest(tx.objectStore(this.store).get(`__recipebook__:${worldId}`)) as { payload?: unknown } | undefined;
+    if (!result || !('payload' in (result as Record<string, unknown>))) return null;
+    return (result as { payload: unknown }).payload ?? null;
+  }
+
   /** Raw get for the gamerule payload (261). Returns null when absent. */
   async getGameRuleData(worldId: string): Promise<unknown | null> {
     const tx = this.requireDb().transaction(this.store, 'readonly');
@@ -215,8 +234,9 @@ export class WorldMetadataRepository {
 
   /**
    * Delete an arbitrary record by exact key in the world-metadata store (257).
-   * Used for the wither-data record (`__wither__:<worldId>`) and the gamerule
-   * record (`__gamerules__:<worldId>`), which share this store under a reserved
+   * Used for the wither-data record (`__wither__:<worldId>`), the gamerule
+   * record (`__gamerules__:<worldId>`), and the recipe-book record
+   * (`__recipebook__:<worldId>`), which share this store under a reserved
    * key namespace rather than the metadata keyPath.
    */
   async deleteRaw(key: string): Promise<void> {

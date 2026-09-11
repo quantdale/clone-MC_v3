@@ -9,6 +9,8 @@
  * readable and are treated as having empty chunkEdits and null witherData.
  * Change 261 adds an optional `gameruleData` field (missing reads as null); v1 and
  * v2 archives without it validate and import with null gamerules.
+ * Change 262 adds an optional `recipeBookData` field (missing reads as null); v1 and
+ * v2 archives without it validate and import with a null (empty) recipe book.
  */
 import type { WorldMetadata } from './WorldMetadata';
 import { validateWorldMetadata } from './WorldMetadata';
@@ -80,6 +82,12 @@ export interface WorldArchive {
    * field (v1, or v2 written before 261) validate and import as null.
    */
   gameruleData?: unknown | null;
+  /**
+   * Raw recipe-book payload stored under __recipebook__:${worldId}, or null when
+   * absent (262). OPTIONAL for backward compatibility: archives without this
+   * field (v1, or v2 written before 262) validate and import as null.
+   */
+  recipeBookData?: unknown | null;
 }
 
 function isFiniteNumber(v: unknown): v is number {
@@ -232,6 +240,17 @@ export function validateWorldArchive(input: unknown): WorldArchive {
     gameruleData = r.gameruleData;
   }
 
+  // 262: optional in every version; missing/null reads as null. A present value
+  // must be a plain object payload (the raw 204 SerializedRecipeBook shape is
+  // validated again at load by `deserializeRecipeBook`, never trusted blindly).
+  let recipeBookData: unknown | null = null;
+  if (r.recipeBookData !== null && r.recipeBookData !== undefined) {
+    if (typeof r.recipeBookData !== 'object' || Array.isArray(r.recipeBookData)) {
+      throw new Error('WorldArchive: recipeBookData must be an object or null');
+    }
+    recipeBookData = r.recipeBookData;
+  }
+
   return {
     format: WORLD_ARCHIVE_FORMAT as 'voxel-world',
     version: 2 as const,
@@ -245,5 +264,6 @@ export function validateWorldArchive(input: unknown): WorldArchive {
     chunkEdits,
     witherData,
     gameruleData,
+    recipeBookData,
   };
 }
