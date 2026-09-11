@@ -1,7 +1,7 @@
 # Tasks: 258-real-world-runtime-performance-fps-recovery
 
-Status: ACTIVE — Change 257 VERIFIED 92/92 at d55c2e7 (CI 33600754305 success); Phase-1/2/3 foundation + gates + World-internal phases + worker fault injection + worker pack-axis fix + duplicate-submit guard + harness scenarios + fallback/stale/startup evidence
-Tasks complete: 32/100 (32%). Target: 100% — 257 VERIFIED
+Status: ACTIVE — Change 257 VERIFIED 92/92 at d55c2e7 (CI 33600754305 success); Phase-1/2/3 foundation + gates + World-internal phases + worker fault injection + worker pack-axis fix + duplicate-submit guard + harness scenarios + fallback/stale/startup/metadata evidence
+Tasks complete: 33/100 (33%). Target: 100% — 257 VERIFIED
 Advancement allowed: false
 
 ## A. Repository truth, activation and performance authority
@@ -44,7 +44,7 @@ Advancement allowed: false
 
 - [x] 28. Add dedicated headed perf command separate from normal headless E2E. (`npm run test:perf` → `scripts/perf/canonical-perf-run.mjs`; production-build URL, deterministic seed, warm-up/startup separation, versioned JSON + summary + screenshots + long-task collection; `--self-test` green.)
 - [ ] 29. Run actual production build/default desktop quality.
-- [ ] 30. Record commit/browser/GPU/viewport/DPR/buffer/quality metadata.
+- [x] 30. Record commit/browser/GPU/viewport/DPR/buffer/quality metadata. (Runner records commit, chrome version, user agent, viewport, DPR, drawing buffer, quality tier, headed flag, and WebGL vendor/renderer into every artifact; smoke artifact verified all fields. Values fill at run time on the reference host.)
 - [x] 31. Reject software rendering/headless overrides from canonical results. (Pure `CanonicalRunGate.evaluateCanonicalRun` + `isSoftwareRenderer`: headless/WebGL-down/software-renderer/DPR-out-of-range/reduced-distance all non-canonical with named reasons, malformed fail closed; 7 unit tests; runner `canonical-perf-run.mjs` mirrors the rules with MUST-match comments.)
 - [x] 32. Add deterministic seed/spawn/route/action scripting. (Seed flag + fixed waypoint teleports; `interaction` scenario drives the real input path (pointer lock + break-hold + hotbar + place click); `entities-day-night` cycles the fixed daylight hook with camera sweep. No benchmark-only hooks. Headless smoke run: 5 scenarios, zero action errors.)
 - [x] 33. Add warm-up policy and separate startup vs steady-state evidence. (Warm-up 5 s stationary / 2 s others; per-sample `startup` snapshot right after warm-up vs steady-state snapshot at window end, both in the versioned artifact. Headed adequacy pending.)
