@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "status": "ACTIVE",
   "currentChange": "263-advancement-panel-ui",
-  "currentChangeStatus": "ACTIVE",
-  "lastCompletedChange": "262-recipe-book-ui",
+  "currentChangeStatus": "VERIFIED",
+  "lastCompletedChange": "263-advancement-panel-ui",
   "nextChange": "258-real-world-runtime-performance-fps-recovery",
-  "completedTasks": 14,
+  "completedTasks": 15,
   "totalTasks": 15,
-  "completionPercentage": 93,
+  "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": true,
@@ -15,14 +15,21 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "fe23ac8e19614b6e2a304d19157f2568541ddfed",
-  "localHead": "fe23ac8e19614b6e2a304d19157f2568541ddfed",
-  "lastCompletedTask": "Change 263-advancement-panel-ui T14 reconciled 14/15 (2026-09-11): E2E 2/2 + full gates green (typecheck/lint 0 errors/unit 4898+1/build 2.30s/e2e 73/73/file-audit 2719); C263 matrix row exact; R-4 advancement half closed; 258 BLOCKED, 259/260/261/262 VERIFIED",
-  "nextExactAction": "T15 commit + push to origin/main, verify remote head, record published_head (263 14/15 VERIFIED-pending-publish; 258 BLOCKED; 259/260/261/262 VERIFIED)",
+  "localHead": "6d2ac4d7d0d5b1a6eb24ba74955a0d22aec16236",
+  "lastCompletedTask": "Change 263-advancement-panel-ui VERIFIED 15/15 (2026-09-11): in-game advancements panel over 185/186 (list with title/description/progress, live obtain wiring + trigger seam, toast-once, __advancements__ persistence, R-4 advancement half closed), proven via unit 56 new + browser E2E open-see-defs-craft-trigger-reload + lifecycle; full gates green (typecheck/lint 0 errors/unit 4898+1/build 2.30s/e2e 73/73/file-audit 2719); published as 6d2ac4d; 258 BLOCKED, 259/260/261/262 VERIFIED",
+  "nextExactAction": "Resume 258 headed tasks only on a hardware-WebGL host when available (263 VERIFIED 15/15 published as 6d2ac4d; 259/260/261/262 VERIFIED; 258 remains BLOCKED/resumable)",
 
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. 001-257 VERIFIED; game shippable with known performance-certification debt. The 259 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
   "validationResults": [
+    {
+      "change": "263-advancement-panel-ui",
+      "status": "VERIFIED",
+      "unitTests": 4898,
+      "e2eTests": 73,
+      "note": "Standing owner order 2026-09-11, implemented while 258 stays BLOCKED and 259/260/261/262 stay VERIFIED. 15/15 tasks: AdvancementSave batch envelope + R-4 fail-closed validation + fan-out, AdvancementView rows, AdvancementPanel, __advancements__ persistence with reset/archive passthrough, Game store/trigger seam/obtain chokes/toast-once, HUD-chip shell, 56 new unit tests, 2 new browser E2E (open-see-defs-craft-trigger-reload-preserves + lifecycle incl. close/C/one-container/blur/no-double); C263 matrix row exact. Gates: typecheck/lint 0 errors/unit 4898+1/build 2.30s PASS, e2e 73/73 PASS, file-audit 2719."
+    },
     {
       "change": "262-recipe-book-ui",
       "status": "VERIFIED",

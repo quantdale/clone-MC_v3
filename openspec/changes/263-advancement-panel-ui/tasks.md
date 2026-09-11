@@ -138,7 +138,7 @@ harness patterns are mirrored, never forked.
   VERIFIED; `PROGRAM_STATE.json`/`.md` checkpoint (15/15 100% when all
   checked, heads recorded, 258 BLOCKED blocker kept,
   mandatory/required true, advancementAllowed true); `validate-state` PASS.
-- [ ] **T15.** Publish: commit, push to `origin/main`, remote head verified,
+- [x] **T15.** Publish (DONE 2026-09-11; committed + pushed `fe23ac8..6d2ac4d`, local == remote verified): commit, push to `origin/main`, remote head verified,
   local == remote verified, `published_head` recorded; final report (SHAs,
   status, completion, validations, blockers, next action). Do NOT mark 258
   VERIFIED; do NOT touch headed FPS work; do NOT reopen 259/260/261/262.

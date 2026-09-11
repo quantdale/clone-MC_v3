@@ -1,8 +1,8 @@
 # Verification: 263-advancement-panel-ui
 
-Status: VERIFIED (pending publish T15)
-Completion: 93% (14/15)
-Advancement allowed: true (all gates pass; publish only)
+Status: VERIFIED
+Completion: 100% (15/15)
+Advancement allowed: true
 
 ## Requirement evidence
 
@@ -69,7 +69,7 @@ WorldArchiver.test.ts only); 258 files untouched, 258 stays BLOCKED.
 
 ## Incomplete tasks
 
-T15 only (publish).
+None — 15/15 complete.
 
 ## Advancement Exception
 
@@ -77,7 +77,6 @@ Not applicable unless completion is 90-99.99%.
 
 ## Final decision
 
-VERIFIED pending publish: 14/15 tasks complete (100% of implementation +
-verification work); all 8 requirements PASS with evidence above; all gates
-green; advancement gate satisfied (completion will be 15/15 = 100% at
-publish; no exception needed). T15 publishes to origin/main.
+VERIFIED: 15/15 tasks complete (100%); all 8 requirements PASS with
+evidence above; all gates green; advancement gate satisfied with no
+exception. Published to origin/main as 6d2ac4d (range fe23ac8..6d2ac4d).
