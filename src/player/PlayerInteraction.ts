@@ -233,8 +233,14 @@ export class PlayerInteraction {
           const targetBlockId = this.world.getBlock(this.target.blockX, this.target.blockY, this.target.blockZ);
           const selectedId = this.selector.getSelectedItemId();
           // Right-clicking an enchanting table opens a session instead of placing.
+          // Coords ride along (259, furnace parity) so the game can anchor the
+          // panel without re-deriving the target.
           if (targetBlockId === BlockId.EnchantingTable) {
-            this.onAction?.('use', targetBlockId);
+            this.onAction?.('use', targetBlockId, {
+              x: this.target.blockX,
+              y: this.target.blockY,
+              z: this.target.blockZ,
+            });
             this.lastActionTime = this.elapsed;
           } else if (targetBlockId === BlockId.Furnace) {
             // Right-clicking a furnace opens its container instead of placing

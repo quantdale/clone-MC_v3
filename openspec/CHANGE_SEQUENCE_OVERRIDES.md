@@ -72,3 +72,20 @@ or waiting for a GPU host.
   the game is shippable with known performance-certification debt.
 - Resume order on a hardware-WebGL host: task 3 → tasks 6–15 → tasks 29/34 →
   governor/worker wiring with headed proof → tasks 91–95 → tasks 97–100.
+
+## 259 activation alongside BLOCKED 258 — owner-authorized parallel track (2026-09-11)
+
+The product owner (Michael via Minecraft Clone Dev, 2026-09-11) authorized
+activating and implementing OpenSpec change **259-enchanting-panel-ui** while
+Change **258-real-world-runtime-performance-fps-recovery** remains **BLOCKED**
+(headed hardware-WebGL certification deferred).
+
+- Change 258 status stays **BLOCKED** at 40/100 with its existing deferral intact.
+  No headed FPS work is touched, no GPU evidence is faked, and 258 MUST NOT be
+  marked VERIFIED by the 259 track.
+- Change 259 (`259-enchanting-panel-ui`) is the sole **ACTIVE** implementation
+  change: an in-game enchanting panel UI over the existing headless enchanting
+  seam (`src/inventory/EnchantingTable.ts`, changes 118–120 / 219). It closes
+  certification debt **R-3** (enchanting session open→reselect→apply browser E2E).
+- Change 258 remains recorded BLOCKED and resumable on a hardware-WebGL host;
+  the 259 track does not consume, waive, or re-litigate any 258 headed task.

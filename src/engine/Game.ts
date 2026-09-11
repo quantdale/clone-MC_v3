@@ -52,8 +52,9 @@ import { createDefaultEnchantmentRegistry, type EnchantmentRegistry } from '../i
 import {
   createSession,
   enchantingTargetMatches,
-  type EnchantingTableSession,
   type EnchantApplyResult,
+  type EnchantingTableSession,
+  type EnchantOffer,
 } from '../inventory/EnchantingTable';
 import { Inventory } from '../inventory/Inventory';
 import { Hotbar } from '../inventory/Hotbar';
@@ -80,7 +81,7 @@ import {
 import { WorldLife } from '../world/WorldLife';
 import { createDefaultEntityRegistry } from '../data/EntityType';
 import { createDefaultBiomeRegistry } from '../data/Biome';
-import { createResourceId, type ResourceId } from '../data/ResourceId';
+import { createResourceId, resourceIdToString, type ResourceId } from '../data/ResourceId';
 import {
   PassiveMobWorldAdapter,
   PassiveMobSystem,
@@ -143,6 +144,7 @@ import { createDefaultFuelValues, createFurnaceContext, takeFurnaceXp } from '..
 import { menuSlotToStack } from '../inventory/MenuSlots';
 import type { MenuSlot } from '../inventory/MenuTransaction';
 import { FurnacePanel } from '../ui/FurnacePanel';
+import { EnchantingPanel, formatEnchantLevel, prettifyEnchantmentKey } from '../ui/EnchantingPanel';
 import type { LootStack } from '../inventory/LootTable';
 import { createDefaultBossRegistry } from '../simulation/BossFramework';
 import type { BossDefinition } from '../simulation/BossFramework';
@@ -244,6 +246,12 @@ export class Game {
   private furnacePos: { x: number; y: number; z: number } | null = null;
   /** DOM controller for the live furnace screen (251). */
   private readonly furnacePanel: FurnacePanel;
+  /** Whether the enchanting panel screen is open (259). */
+  private enchantingOpen = false;
+  /** The open enchanting table's position, or null when closed. */
+  private enchantingPos: { x: number; y: number; z: number } | null = null;
+  /** DOM controller for the live enchanting screen (259). */
+  private readonly enchantingPanel: EnchantingPanel;
   /** Monotonic simulation tick counter driving random-tick seeding. */
   private simTick = 0;
   /** Registry-derived random-tick eligibility table (254); built lazily. */
@@ -853,6 +861,30 @@ export class Game {
       },
       onClose: () => this.closeFurnace(),
     });
+    // Live enchanting screen (259): a pure view over the 120 session.
+    this.enchantingPanel = new EnchantingPanel(this.requireElement('enchanting'), {
+      getSession: () => this.enchantingSession,
+      getPlayerLevel: () => this.experience.level,
+      getLapisCount: () => this.inventory.getItemCount(ItemId.LapisLazuli),
+      getHeldName: () => {
+        const held = this.inventory.getSelectedStack();
+        if (!held || held.count <= 0) return '';
+        return this.itemRegistry.getByLegacyId(held.id)?.name ?? '';
+      },
+      describeOffer: (offer: EnchantOffer) =>
+        offer.enchantments.map((inst) => {
+          const def = this.enchantmentRegistry.getByResourceId(inst.id);
+          const key = def
+            ? resourceIdToString(def.resourceId).split(':')[1]!
+            : String(inst.id);
+          return `${prettifyEnchantmentKey(key)} ${formatEnchantLevel(inst.level)}`;
+        }),
+      applyOffer: (index: number) => this.applyEnchantingOffer(index),
+      onChanged: () => {
+        this.hotbar.render();
+      },
+      onClose: () => this.closeEnchanting(),
+    });
 
     // Fixed-tick ownership (044): the driver turns frame deltas into bounded,
     // deterministic 20 TPS ticks; the tick body enforces the simulation order.
@@ -947,6 +979,9 @@ export class Game {
     // Settle the furnace session first so its cursor/xp land in the state that
     // savePlayerStateDurable + the facade flush are about to persist (251).
     this.closeFurnace();
+    // The enchanting panel owns no transient state (259: no cursor), but it
+    // must not stay up over teardown — close it before the persist flush.
+    this.closeEnchanting();
     this.savePlayerStateDurable();
     this.saveWithers();
     this.saveTimer = 0;
@@ -1188,6 +1223,7 @@ export class Game {
       !this.craftingOpen &&
       !this.overlayOpen &&
       !this.furnaceOpen &&
+      !this.enchantingOpen &&
       (this.pointerLocked || this.hasControllerInput(deviceFrame));
 
     // Pause/resume mapping (044): while inactive the driver's time anchor keeps
@@ -1271,6 +1307,9 @@ export class Game {
         // One container at a time: the toggle closes the furnace instead of
         // stacking the crafting screen on top of it (251).
         this.closeFurnace();
+      } else if (this.enchantingOpen) {
+        // Same rule for the enchanting panel (259): close instead of stacking.
+        this.closeEnchanting();
       } else if (this.craftingOpen) {
         this.closeCrafting();
       } else {
@@ -1289,6 +1328,26 @@ export class Game {
         this.closeFurnace();
       } else {
         this.furnacePanel.render();
+      }
+    }
+
+    // Enchanting session upkeep (259): a voided session, a destroyed table,
+    // or walking away closes the panel; otherwise keep offers live.
+    if (this.enchantingOpen) {
+      if (!this.enchantingSession) {
+        this.closeEnchanting();
+      } else if (this.enchantingPos) {
+        const p = this.player.position;
+        const pos = this.enchantingPos;
+        const stillThere = this.world.getBlock(pos.x, pos.y, pos.z) === BlockId.EnchantingTable;
+        const distance = Math.hypot(p.x - (pos.x + 0.5), p.y - (pos.y + 0.5), p.z - (pos.z + 0.5));
+        if (!stillThere || distance > FURNACE_MAX_USE_DISTANCE) {
+          this.closeEnchanting();
+        } else {
+          this.enchantingPanel.render();
+        }
+      } else {
+        this.enchantingPanel.render();
       }
     }
 
@@ -1864,6 +1923,11 @@ export class Game {
       // stack no longer lives in the selected slot (hardening 2026-08-23).
       this.enchantingSession = null;
       this.enchantingSessionSlot = null;
+      // A voided session cannot back an open panel (259): close it so the
+      // overlay returns instead of stranding a hidden paused state.
+      if (this.enchantingOpen) {
+        this.closeEnchanting();
+      }
       this.hotbar.render();
       const id = this.inventory.getSelectedItemId();
       this.hud.setSelectedName(this.itemRegistry.getByLegacyId(id)?.name ?? '');
@@ -1919,6 +1983,10 @@ export class Game {
         // panel can never stay stuck over live input.
         this.closeFurnace();
       }
+      if (this.enchantingOpen) {
+        // Same rule for the enchanting panel (259).
+        this.closeEnchanting();
+      }
       this.hideOverlay();
       // The HUD/crosshair only appear once the world is ready (see update()).
       if (!this.loadingShown) {
@@ -1926,7 +1994,7 @@ export class Game {
         this.hud.show();
         this.hotbar.show();
       }
-    } else if (!this.craftingOpen && !this.furnaceOpen) {
+    } else if (!this.craftingOpen && !this.furnaceOpen && !this.enchantingOpen) {
       // Unlock caused by OPENING a container session must not stack the pause
       // overlay behind/on the open panel; the panel itself represents the
       // paused state and its owner re-shows the overlay on close (251).
@@ -2276,7 +2344,7 @@ export class Game {
    */
   private maybeDismissOverlayForControllerPlay(frame: DeviceFrame, worldReady: boolean): void {
     if (!this.overlayOpen || !worldReady) return;
-    if (this.craftingOpen || this.furnaceOpen || this.contextLost || !this.errorEl.classList.contains('hidden')) return;
+    if (this.craftingOpen || this.furnaceOpen || this.enchantingOpen || this.contextLost || !this.errorEl.classList.contains('hidden')) return;
     if (!this.hasControllerInput(frame)) return;
     this.hideOverlay();
     if (this.shouldShowHud()) {
@@ -2299,6 +2367,7 @@ export class Game {
       !this.pointerLocked &&
       !this.craftingOpen &&
       !this.furnaceOpen &&
+      !this.enchantingOpen &&
       !this.contextLost &&
       this.errorEl.classList.contains('hidden')
     ) {
@@ -2379,6 +2448,11 @@ export class Game {
           this.openFurnace(coords.x, coords.y, coords.z);
         } else if (this.isBonemealSelected()) {
           this.useBonemeal();
+        } else if (
+          coords &&
+          this.world.getBlock(coords.x, coords.y, coords.z) === BlockId.EnchantingTable
+        ) {
+          this.openEnchanting(coords.x, coords.y, coords.z);
         } else {
           this.openEnchanting();
         }
@@ -2463,6 +2537,17 @@ export class Game {
    * destroyed furnace.
    */
   private onBlockBrokenAt(x: number, y: number, z: number): void {
+    // An open enchanting panel must never ghost-reference a destroyed table
+    // (259): close first, before the generic toast/drops below.
+    if (
+      this.enchantingOpen &&
+      this.enchantingPos &&
+      this.enchantingPos.x === x &&
+      this.enchantingPos.y === y &&
+      this.enchantingPos.z === z
+    ) {
+      this.closeEnchanting();
+    }
     if (!this.blockEntityHost.has(x, y, z)) return;
     if (this.furnaceOpen && this.furnacePos && this.furnacePos.x === x && this.furnacePos.y === y && this.furnacePos.z === z) {
       this.closeFurnace();
@@ -2771,19 +2856,41 @@ export class Game {
     this.showToast('Fertilized');
   }
 
+  /** Whether the enchanting panel screen is open (E2E/test surface). */
+  get isEnchantingOpen(): boolean {
+    return this.enchantingOpen;
+  }
+
+  /** The open enchanting table's position, or null (E2E/test surface). */
+  get enchantingSessionPosition(): { x: number; y: number; z: number } | null {
+    return this.enchantingPos;
+  }
+
   /**
    * Open an enchanting session for the currently held item by right-clicking an
-   * enchanting table. The deferred DOM panel (a later change) will consume the
-   * resulting {@link EnchantingTableSession}; here we build it and expose it for
-   * headless consumers via {@link getEnchantingSession} / {@link applyEnchantingOffer}.
+   * enchanting table, and show the live panel (259) over it. The panel is a
+   * pure view over the resulting {@link EnchantingTableSession}; headless
+   * consumers keep using {@link getEnchantingSession} /
+   * {@link applyEnchantingOffer}. Explicit coords (from the interaction layer,
+   * furnace parity) win; otherwise the current target is used. Opens nothing
+   * when the resolved cell is not an enchanting table or no usable held item
+   * exists. Opening closes furnace/crafting first: one container at a time.
    */
-  private openEnchanting(): void {
+  private openEnchanting(x?: number, y?: number, z?: number): void {
+    if (this.enchantingOpen) return;
     const target = this.interaction.getTarget();
     const held = this.inventory.getSelectedStack();
-    if (!target || !held || held.count <= 0) return;
+    if (!held || held.count <= 0) return;
     const itemDef = this.itemRegistry.getByLegacyId(held.id);
     if (!itemDef) return;
-    const bookShelves = this.countBookshelves(target.blockX, target.blockY, target.blockZ);
+    const px = x ?? target?.blockX;
+    const py = y ?? target?.blockY;
+    const pz = z ?? target?.blockZ;
+    if (px === undefined || py === undefined || pz === undefined) return;
+    if (this.world.getBlock(px, py, pz) !== BlockId.EnchantingTable) return;
+    if (this.furnaceOpen) this.closeFurnace();
+    if (this.craftingOpen) this.closeCrafting();
+    const bookShelves = this.countBookshelves(px, py, pz);
     this.enchantingSession = createSession({
       stack: held,
       itemDef,
@@ -2793,6 +2900,32 @@ export class Game {
       registry: this.enchantmentRegistry,
     });
     this.enchantingSessionSlot = this.inventory.selected;
+    this.enchantingOpen = true;
+    this.enchantingPos = { x: px, y: py, z: pz };
+    this.input.releasePointerLock();
+    this.hideOverlay();
+    this.crosshair.hide();
+    this.hud.hide();
+    this.hotbar.hide();
+    this.setBreakProgress(0);
+    this.interaction.clearTarget();
+    this.enchantingPanel.show();
+  }
+
+  /**
+   * Close the enchanting screen and clear its session. The panel owns no
+   * transient item state (unlike the furnace cursor), so nothing needs
+   * settling — clearing the session/slot/pos/flag plus hiding the panel and
+   * returning the overlay is the whole settle.
+   */
+  private closeEnchanting(): void {
+    if (!this.enchantingOpen) return;
+    this.enchantingOpen = false;
+    this.enchantingPos = null;
+    this.enchantingSession = null;
+    this.enchantingSessionSlot = null;
+    this.enchantingPanel.hide();
+    this.showOverlay('Click to play');
   }
 
   /**
@@ -2851,8 +2984,42 @@ export class Game {
       if (result.lapisSpent && result.lapisSpent > 0) {
         this.inventory.removeItem(ItemId.LapisLazuli, result.lapisSpent);
       }
+      // The consumed offers are spent: rebuild a fresh session for the
+      // still-held stack (same inputs, new level) so the open panel keeps
+      // showing live offers instead of dead ones (259).
+      this.rebuildEnchantingSession();
     }
     return result;
+  }
+
+  /**
+   * Rebuild the live enchanting session after a successful apply. Clears the
+   * session when the held stack is gone or unusable (the panel then renders
+   * itself closed via the upkeep path).
+   */
+  private rebuildEnchantingSession(): void {
+    const held = this.inventory.getSelectedStack();
+    const pos = this.enchantingPos;
+    if (!held || held.count <= 0 || !pos) {
+      this.enchantingSession = null;
+      this.enchantingSessionSlot = null;
+      return;
+    }
+    const itemDef = this.itemRegistry.getByLegacyId(held.id);
+    if (!itemDef) {
+      this.enchantingSession = null;
+      this.enchantingSessionSlot = null;
+      return;
+    }
+    this.enchantingSession = createSession({
+      stack: held,
+      itemDef,
+      bookShelves: this.countBookshelves(pos.x, pos.y, pos.z),
+      playerLevel: this.experience.level,
+      seed: this.seed,
+      registry: this.enchantmentRegistry,
+    });
+    this.enchantingSessionSlot = this.inventory.selected;
   }
 
   private setBreakProgress(progress: number): void {
@@ -3039,6 +3206,7 @@ export class Game {
   private respawnPlayer(): void {
     // A death closes any open container so it cannot ghost-reference the old world.
     this.closeFurnace();
+    this.closeEnchanting();
     if (this.craftingOpen) {
       this.closeCrafting();
     }

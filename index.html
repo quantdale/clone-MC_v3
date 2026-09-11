@@ -142,6 +142,28 @@
             <p class="crafting-hint">Left click move · right click split / place one · shift-click quick move.</p>
           </div>
         </div>
+        <div id="enchanting" class="ui hidden" aria-label="Enchanting screen">
+          <div class="crafting-panel" role="dialog" aria-modal="true" aria-labelledby="enchanting-title">
+            <div class="crafting-header">
+              <div>
+                <h2 id="enchanting-title">Enchanting</h2>
+                <p id="enchanting-status">Select an offer, then Apply.</p>
+              </div>
+              <button id="enchanting-close" class="crafting-close" type="button" aria-label="Close enchanting">×</button>
+            </div>
+            <div class="inventory-section">
+              <div class="inventory-section-title">Item</div>
+              <p id="enchanting-item" class="enchanting-item"></p>
+              <div id="enchanting-offers" class="enchanting-offers" aria-label="Enchantment offers">
+                <button id="enchanting-offer-0" class="enchanting-offer" type="button" data-offer-index="0">Offer 1</button>
+                <button id="enchanting-offer-1" class="enchanting-offer" type="button" data-offer-index="1">Offer 2</button>
+                <button id="enchanting-offer-2" class="enchanting-offer" type="button" data-offer-index="2">Offer 3</button>
+              </div>
+              <button id="enchanting-apply" class="enchanting-apply" type="button">Apply</button>
+            </div>
+            <p class="crafting-hint">Select an offer, then Apply. Close to keep your item unenchanted.</p>
+          </div>
+        </div>
         <div id="error" class="ui hidden" role="alert">
           <div class="overlay-panel error-panel">
             <h1 class="overlay-title">Unable to start</h1>
