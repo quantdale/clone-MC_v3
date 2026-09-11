@@ -1,6 +1,8 @@
 # Minecraft-Parity Program State
 
-> **2026-09-02 Change 258 ACTIVE 4/100 (4%) — canonical headed baseline blocked in this environment.** Repository truth, OpenSpec quality, prior-evidence classification, and activation reconciliation are complete. Session start is `1c958fce11b2234c1e99a8640c63de593600911f`. The current execution environment exposes neither Chrome/Chromium nor a hardware GPU renderer, so tasks 3 and 6–15 remain blocked; headless/SwiftShader evidence cannot substitute for the required production/default-quality baseline.
+> **2026-09-11 Change 258 ACTIVE 12/100 (12%) — Phase-1 measurement foundation landed; canonical headed baseline still blocked.** Tasks 16, 24, 25, 26, 27, 28, 38, 58 complete: `WholeFrameRing`/`PhaseTimer` whole-frame authority wired through a `GameLoop` boundary hook into `Game`, pure `FrameBudgetGovernor` core, exact `PerfGate` thresholds, and the `npm run test:perf` headed-runner skeleton with a green self-test. Session start is `d699685dae0fd22e3acd6a78e5086c3ce7a26962`. Re-probe: system Chrome 151 present, but WebGL is SwiftShader-only (no GPU, no `/dev/dri`), so tasks 3, 6–15 and 91–95 remain blocked; headless/SwiftShader smoke (game.spec 30/30) is non-canonical support only. No production behavior retuned.
+>
+> **2026-09-02 Change 258 ACTIVE 4/100 (4%) — canonical headed baseline blocked in this environment (historical).** Repository truth, OpenSpec quality, prior-evidence classification, and activation reconciliation were completed. Session start was `1c958fce11b2234c1e99a8640c63de593600911f`. Superseded by the 12/100 entry above.
 >
 > **2026-09-03 Change 257 VERIFIED 92/92 (100%) — F257-A..L closed, CI 33600754305 success (gate + e2e) at 96b5dc37.**
 > 22 new fault-injection tests (F257-A/B/C/D/K), migrated-legacy 5× PASS, pagehide 5× PASS via flush, R-7 restored, file-audit 2644 (5 semantic rows), import multi-store tx, visual 0.02 justified. Local gate green (typecheck/lint/test 4632/build 2.3s/void-world 9/9/persistence 6/6). `origin/main` `96b5dc37`.
@@ -86,11 +88,11 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **258-real-world-runtime-performance-fps-recovery — ACTIVE (4/100)**
+- Active implementation change: **258-real-world-runtime-performance-fps-recovery — ACTIVE (12/100)**
 - Next change: **258-real-world-runtime-performance-fps-recovery — ACTIVE; headed hardware-GPU baseline required**
 - 240 advancement allowed: **no (active change not yet verified)**
 
-- Program: **ACTIVE — Change 258 ACTIVE 4/100; canonical headed hardware-GPU baseline blocked in current environment**
+- Program: **ACTIVE — Change 258 ACTIVE 12/100; Phase-1 foundation landed, canonical headed hardware-GPU baseline blocked in current environment**
 - Last completed change: **257-void-world-startup-recovery — VERIFIED (92/92) at 96b5dc37 — CI 33600754305 success (gate + e2e)**
 - All changes 001–257: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed (backup fail-closed, snapshot fail-closed, multi-store tx 6 stores, archive ownership, migrated-legacy 5×, pagehide 5× via flush, R-7, file-audit 2644, import tx, visual 0.02, payload equality, full local gate + CI).
 - Historical Change 250-era bullets (preserved; superseded **for current release authority** by `openspec/evidence/release-readiness-post-hardening.md`): 250 required-test gate PASS at head `502d021` / byte-identical tree `b56529e`; historical release-readiness READY RC-1..RC-9 (`openspec/evidence/release-readiness.md`); final parity audit PASS with DL dispositions later rejected by this interlock (`openspec/evidence/parity/final-parity-audit.md`); evidence archive complete (`openspec/evidence/`)
@@ -98,9 +100,9 @@
 - Certification campaign: **openspec/hardening/2026-08-23-exhaustive-repository-certification — R-1..R-9 accepted debt, R-7 restored with ChunkPipeline 498-512 evidence; manifest 2644 reviewed at 96b5dc37**
 - Release authority: **Change 257 VERIFIED 92/92 at 96b5dc37 — CI 33600754305 success (gate + e2e) — local gate green (typecheck/lint/test 4632/build 2.3s/file-audit 2644/void-world 9/9/persistence 6/6)**
 - Publication history: **Change 257 VERIFIED 92/92 at 96b5dc37 (F257-A..L closed, 22 new fault-injection tests, 5× proofs, import tx); Change 256 archived at `ad75b65` as `2026-08-31-256-production-readiness-hardening` (23/23).**
-- Section milestone: **PROGRAM ACTIVE — Change 258 ACTIVE 4/100; repository/spec activation checks complete, headed baseline pending hardware-GPU host.**
+- Section milestone: **PROGRAM ACTIVE — Change 258 ACTIVE 12/100; whole-frame/governor/gate/harness foundation landed headless-verified, headed baseline pending hardware-GPU host.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ri…
-- Next exact action: **On a host with headed Chrome/Chromium and hardware WebGL, record task 3 environment metadata and run the unmodified final-257 default-quality baselines (tasks 6–15); do not substitute headless or software rendering.**
+- Next exact action: **On a host with headed Chrome/Chromium and hardware WebGL, record task 3 environment metadata and run the unmodified final-257 default-quality baselines (tasks 6–15); then wire PhaseTimer phases (task 17) and governor/worker production paths with headed proof. Do not substitute headless or software rendering.**
 
 Change 250 is documentation-only: it created the consolidated evidence archive and the terminal
 program artifacts, touching no `src/` or `tests/` file and rewriting no per-change

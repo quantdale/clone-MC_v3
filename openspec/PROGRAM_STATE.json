@@ -5,21 +5,21 @@
   "currentChangeStatus": "ACTIVE",
   "lastCompletedChange": "257-void-world-startup-recovery",
   "nextChange": "258-real-world-runtime-performance-fps-recovery",
-  "completedTasks": 4,
+  "completedTasks": 12,
   "totalTasks": 100,
-  "completionPercentage": 4,
+  "completionPercentage": 12,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": false,
   "requiredTestsPass": false,
   "advancementAllowed": false,
   "exceptionUsed": false,
-  "sessionStartHead": "1c958fce11b2234c1e99a8640c63de593600911f",
-  "localHead": "1c958fce11b2234c1e99a8640c63de593600911f",
-  "lastCompletedTask": "258 task 5 — activation reconciled after repository-truth, OpenSpec quality, and prior-evidence classification checks (tasks 1, 2, 4, 5 complete)",
-  "nextExactAction": "On a reference host with headed Chrome/Chromium and hardware WebGL, record task 3 environment metadata and run the unmodified final-257 default-quality baselines (tasks 6-15); do not substitute headless or software rendering",
+  "sessionStartHead": "d699685dae0fd22e3acd6a78e5086c3ce7a26962",
+  "localHead": "d699685dae0fd22e3acd6a78e5086c3ce7a26962",
+  "lastCompletedTask": "258 task 58 — governor unit tests (overload/recovery/invalid/starvation/caps); tasks 16, 24, 25, 26, 27, 28, 38, 58 Phase-1 foundation complete (12/100)",
+  "nextExactAction": "On a reference host with headed Chrome/Chromium and hardware WebGL, record task 3 environment metadata and run the unmodified final-257 default-quality baselines (tasks 6-15); then wire PhaseTimer phases (task 17) and the governor/worker production paths with headed proof. Do not substitute headless or software rendering",
   "blockers": [
-    "Canonical Change 258 baseline is unavailable in the current execution environment: no Chrome/Chromium executable or hardware GPU renderer is exposed. Tasks 3 and 6-15 require a headed production build with hardware WebGL and remain blocked; headless/SwiftShader evidence cannot substitute."
+    "Canonical Change 258 headed baseline still unavailable: this host exposes system Chrome 151 but only SwiftShader software WebGL (no GPU, no /dev/dri). Tasks 3, 6-15 and 91-95 require a headed production build with hardware WebGL and remain blocked; headless/SwiftShader evidence cannot substitute. Environment-independent foundation (tasks 16, 24-28, 38, 58) is landed and headless-verified with no production behavior retune."
   ],
   "validationResults": [
     {

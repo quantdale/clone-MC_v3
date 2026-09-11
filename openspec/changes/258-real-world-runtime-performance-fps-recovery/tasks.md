@@ -1,7 +1,7 @@
 # Tasks: 258-real-world-runtime-performance-fps-recovery
 
-Status: ACTIVE — Change 257 VERIFIED 92/92 at d55c2e7 (CI 33600754305 success); baseline measurement phase
-Tasks complete: 4/100 (4%). Target: 100% — 257 VERIFIED
+Status: ACTIVE — Change 257 VERIFIED 92/92 at d55c2e7 (CI 33600754305 success); Phase-1 measurement foundation landed headlessly
+Tasks complete: 12/100 (12%). Target: 100% — 257 VERIFIED
 Advancement allowed: false
 
 ## A. Repository truth, activation and performance authority
@@ -27,22 +27,22 @@ Advancement allowed: false
 
 ## C. True whole-frame and phase instrumentation
 
-- [ ] 16. Add rAF-to-rAF whole-frame metric including update/world/simulation/render.
-- [ ] 17. Add bounded timers for input/update, fixed ticks, world.update, generation, meshing, lighting, upload, unload, UI and render.
+- [x] 16. Add rAF-to-rAF whole-frame metric including update/world/simulation/render. (`GameLoop` 4th-param boundary hook reports the raw rAF interval before update/render, even on throw; `Game` records every interval into a 600-sample `WholeFrameRing` via `recordInterval`; render-submit bracket in `RenderPerformanceMonitor` kept separate. `Game.getWholeFrameStats/getWholeFrameRollingMinFps` expose the authority to the harness. GameLoop +9.6m live-boot e2e 30/30 green.)
+- [ ] 17. Add bounded timers for input/update, fixed ticks, world.update, generation, meshing, lighting, upload, unload, UI and render. (Pure `PhaseTimer` core landed + tested; production wiring into `Game.update/render` phases NOT DONE.)
 - [ ] 18. Add generation timing/count telemetry.
 - [ ] 19. Add main-thread meshing and worker dispatch/completion timing.
 - [ ] 20. Add lighting actual elapsed/work telemetry.
 - [ ] 21. Add GPU-upload elapsed/bytes/queue/deferred telemetry.
 - [ ] 22. Merge renderer.info/drawing-buffer into whole-frame samples.
 - [ ] 23. Add worker utilization/failure/retry/fallback telemetry.
-- [ ] 24. Add fixed-size sample ring with p50/p95/p99/long-frame analysis.
-- [ ] 25. Add rolling-window FPS/frame analysis.
-- [ ] 26. Add low-overhead diagnostics switch and measure disabled/enabled overhead.
-- [ ] 27. Test sample validity, wraparound, percentiles, invalid metrics and bounded memory.
+- [x] 24. Add fixed-size sample ring with p50/p95/p99/long-frame analysis. (`WholeFrameRing`: fixed Float64Array rings, p50/p95/p99, avg FPS, >50 ms long frames, >100 ms severe stalls; 17 unit tests.)
+- [x] 25. Add rolling-window FPS/frame analysis. (`rollingMinFps` trailing-window minimum over newest-first interval accumulation, default 10 s; `longFrameFraction`; unit-tested.)
+- [x] 26. Add low-overhead diagnostics switch and measure disabled/enabled overhead. (`PhaseTimer` enabled flag; disabled `begin/end` never touch the clock — zero clock reads asserted by test; totals reset per frame.)
+- [x] 27. Test sample validity, wraparound, percentiles, invalid metrics and bounded memory. (Validation throws `WholeFrameMetrics: <detail>`; wraparound/percentile/invalid-window tests; capacity fixed at construction.)
 
 ## D. Headed canonical performance harness
 
-- [ ] 28. Add dedicated headed perf command separate from normal headless E2E.
+- [x] 28. Add dedicated headed perf command separate from normal headless E2E. (`npm run test:perf` → `scripts/perf/canonical-perf-run.mjs`; production-build URL, deterministic seed, warm-up/startup separation, versioned JSON + summary + screenshots + long-task collection; `--self-test` green.)
 - [ ] 29. Run actual production build/default desktop quality.
 - [ ] 30. Record commit/browser/GPU/viewport/DPR/buffer/quality metadata.
 - [ ] 31. Reject software rendering/headless overrides from canonical results.
@@ -52,7 +52,7 @@ Advancement allowed: false
 - [ ] 35. Emit versioned JSON and human summary artifacts.
 - [ ] 36. Emit screenshots at scenario checkpoints.
 - [ ] 37. Capture PerformanceObserver long tasks and CDP trace where supported.
-- [ ] 38. Harness self-test: injected busy loop must fail the gate.
+- [x] 38. Harness self-test: injected busy loop must fail the gate. (`busyLoopSelfTestSummary` fails all four `PerfGate` gates; `PerfGate.test.ts` 7 tests + runner `--self-test` PASS.)
 
 ## E. Production worker meshing
 
@@ -78,7 +78,7 @@ Advancement allowed: false
 - [ ] 55. Add starvation floors/deadlines for every non-empty queue.
 - [ ] 56. Add count/byte/age backpressure for ready/upload queues.
 - [ ] 57. Prioritize near/visible work without changing world truth.
-- [ ] 58. Unit test overload, recovery, invalid metrics, starvation, aging and caps.
+- [x] 58. Unit test overload, recovery, invalid metrics, starvation, aging and caps. (`FrameBudgetGovernor.test.ts` 11 tests: full-cap/empty-queue split, hard-maxima ceiling, overload cutback + render-reserve growth, gradual recovery to 1.0, fail-closed invalid latch, starvation floors, determinism, reset.)
 - [ ] 59. Browser-prove background work does not monopolize repeated fresh-traversal frames.
 - [ ] 60. Re-profile and document remaining long-frame sources.
 

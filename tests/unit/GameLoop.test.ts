@@ -117,6 +117,51 @@ describe("GameLoop", () => {
     }
   });
 
+  it("reports raw rAF intervals to the whole-frame boundary observer", () => {
+    const raf = installFakeRaf();
+    try {
+      const intervals: number[] = [];
+      const loop = new GameLoop(
+        () => {},
+        () => {},
+        undefined,
+        (ms) => intervals.push(ms),
+      );
+      loop.start();
+      raf.pump(16);
+      raf.pump(33);
+      // A hidden-tab lapse still reports its true interval (unclamped), even
+      // though update dt is capped to CONFIG.maxDeltaTime.
+      raf.pump(10_000);
+      expect(intervals).toEqual([16, 33, 10_000]);
+      loop.stop();
+    } finally {
+      raf.restore();
+    }
+  });
+
+  it("reports the boundary interval even when update throws", () => {
+    const raf = installFakeRaf();
+    try {
+      const intervals: number[] = [];
+      const errors: unknown[] = [];
+      const loop = new GameLoop(
+        () => {
+          throw new Error("update exploded");
+        },
+        () => {},
+        (err) => errors.push(err),
+        (ms) => intervals.push(ms),
+      );
+      loop.start();
+      raf.pump(16);
+      expect(intervals).toEqual([16]);
+      expect(errors.length).toBe(1);
+    } finally {
+      raf.restore();
+    }
+  });
+
   it("stops and reports when render throws", () => {
     const raf = installFakeRaf();
     try {

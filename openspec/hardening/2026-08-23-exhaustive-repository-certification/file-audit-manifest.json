@@ -36597,7 +36597,7 @@
         "tests/unit/GameStartupPersistence.test.ts"
       ],
       "testEvidence": [
-        "Indirectly tested by every test that uses createIdbFactoryMock \u2014 the mock now matches real IDB multi-store + oncomplete timing, so the same mock can drive the multi-store reset path."
+        "Indirectly tested by every test that uses createIdbFactoryMock — the mock now matches real IDB multi-store + oncomplete timing, so the same mock can drive the multi-store reset path."
       ],
       "riskAreas": [
         "mock-vs-real-fidelity"
@@ -42389,7 +42389,7 @@
         "F257-D",
         "F257-K"
       ],
-      "disposition": "NEW \u2014 22 fault-injection tests added in the 257 reopen",
+      "disposition": "NEW — 22 fault-injection tests added in the 257 reopen",
       "reviewNotes": "Covers every read class (7 stores), every delete class (6 stores), ownership rejection (metadata + playerState), and round-trip payload equality (every field) plus foreign-world preservation.",
       "status": "audited"
     },
@@ -42411,6 +42411,118 @@
       ],
       "disposition": "Evidence retained; threshold justified",
       "reviewNotes": "J evidence file satisfies F257-J",
+      "status": "audited"
+    },
+    {
+      "path": "src/rendering/WholeFrameMetrics.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "258 Phase-1 coverage for src/rendering/WholeFrameMetrics.ts",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 258 Phase-1 (whole-frame instrumentation + headed harness skeleton); no findings",
+      "status": "audited"
+    },
+    {
+      "path": "src/rendering/FrameBudgetGovernor.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "258 Phase-1 coverage for src/rendering/FrameBudgetGovernor.ts",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 258 Phase-1 (whole-frame instrumentation + headed harness skeleton); no findings",
+      "status": "audited"
+    },
+    {
+      "path": "src/rendering/PerfGate.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "258 Phase-1 coverage for src/rendering/PerfGate.ts",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 258 Phase-1 (whole-frame instrumentation + headed harness skeleton); no findings",
+      "status": "audited"
+    },
+    {
+      "path": "scripts/perf/canonical-perf-run.mjs",
+      "gitBlob": null,
+      "category": "script",
+      "purpose": "258 Phase-1 coverage for scripts/perf/canonical-perf-run.mjs",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 258 Phase-1 (whole-frame instrumentation + headed harness skeleton); no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/WholeFrameMetrics.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "258 Phase-1 coverage for tests/unit/WholeFrameMetrics.test.ts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 258 Phase-1 (whole-frame instrumentation + headed harness skeleton); no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/FrameBudgetGovernor.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "258 Phase-1 coverage for tests/unit/FrameBudgetGovernor.test.ts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 258 Phase-1 (whole-frame instrumentation + headed harness skeleton); no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/PerfGate.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "258 Phase-1 coverage for tests/unit/PerfGate.test.ts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 258 Phase-1 (whole-frame instrumentation + headed harness skeleton); no findings",
       "status": "audited"
     }
   ]

@@ -132,6 +132,7 @@ import { FixedTickDriver } from './FixedTickDriver';
 import { TICK_RATE } from './SimulationClock';
 import { RenderInterpolator } from './RenderInterpolator';
 import { RenderPerformanceMonitor, type RenderPipelineMetrics } from '../rendering/RenderPerformanceMonitor';
+import { WholeFrameRing, type WholeFrameStats } from '../rendering/WholeFrameMetrics';
 import { createDefaultBlockShapeTable, VoxelShape } from '../world/VoxelShape';
 import type { SelectionShapeWorld } from '../world/ShapeRaycast';
 import { LiveBlockEntityHost } from './LiveBlockEntityHost';
@@ -256,6 +257,13 @@ export class Game {
   private readonly playerInterpolator = new RenderInterpolator();
   /** Render performance observability (audit 05): fed by render() + World's monitor. */
   private readonly perfMonitor = new RenderPerformanceMonitor(() => performance.now());
+  /**
+   * Whole-frame rAF authority (258): the GameLoop boundary hook records every
+   * rAF interval here (update + world + simulation + render), alongside the
+   * render-submit bracket in `perfMonitor`. Fixed 600-sample capacity (~10 s
+   * at 60 FPS); interval-only until per-phase timers are wired.
+   */
+  private readonly wholeFrameRing = new WholeFrameRing(600);
   /**
    * Observability handle handed to World (audit 05): World pushes queue depths,
    * oldest-job age, and upload bytes each frame straight into the monitor.
@@ -844,6 +852,9 @@ export class Game {
         const message = err instanceof Error ? err.message : String(err);
         this.showError(`The game stopped: ${message}`);
       },
+      (rafIntervalMs) => {
+        this.wholeFrameRing.recordInterval(rafIntervalMs);
+      },
     );
 
     // Attach the target selection outline to the scene.
@@ -983,6 +994,20 @@ export class Game {
   /** Test-only read-only performance snapshot for release baseline characterization. */
   getPerformanceSnapshot(): string {
     return this.perfMonitor.exportJSON();
+  }
+
+  /**
+   * Whole-frame authority accessor (258): rAF-to-rAF stats covering update +
+   * world + simulation + render, distinct from the render-submit bracket in
+   * `getPerformanceSnapshot`. Read-only; feeds the headed perf harness.
+   */
+  getWholeFrameStats(): WholeFrameStats {
+    return this.wholeFrameRing.frameStats();
+  }
+
+  /** Rolling minimum FPS over the trailing window (default 10 s) for 258 floor gates. */
+  getWholeFrameRollingMinFps(windowMs = 10_000): number {
+    return this.wholeFrameRing.rollingMinFps(windowMs);
   }
 
   /** Test-only hook (239): force the next update to throw and enter the error state. */

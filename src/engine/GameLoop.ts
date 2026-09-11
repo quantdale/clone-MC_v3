@@ -11,6 +11,13 @@ export class GameLoop {
   private readonly update: (dt: number) => void;
   private readonly render: () => void;
   private readonly onError?: (err: unknown) => void;
+  /**
+   * Whole-frame boundary observer (258): receives the raw rAF-to-rAF
+   * interval in milliseconds before update/render run, so telemetry can own
+   * the full frame (update + world + simulation + render) instead of only
+   * the render-submit bracket. Optional; never affects timing or dispatch.
+   */
+  private readonly onFrameBoundary?: (rafIntervalMs: number) => void;
 
   private running = false;
   private frameId = 0;
@@ -20,10 +27,12 @@ export class GameLoop {
     update: (dt: number) => void,
     render: () => void,
     onError?: (err: unknown) => void,
+    onFrameBoundary?: (rafIntervalMs: number) => void,
   ) {
     this.update = update;
     this.render = render;
     this.onError = onError;
+    this.onFrameBoundary = onFrameBoundary;
   }
 
   /** Begins the animation loop. Safe to call multiple times. */
@@ -44,7 +53,11 @@ export class GameLoop {
   private readonly tick = (now: number): void => {
     if (!this.running) return;
 
-    const elapsed = (now - this.lastTime) / 1000;
+    // Raw rAF interval first: the whole-frame observer sees the true frame
+    // boundary even when update/render below throws (reported before the try).
+    const rafIntervalMs = Math.max(0, now - this.lastTime);
+    this.onFrameBoundary?.(rafIntervalMs);
+    const elapsed = rafIntervalMs / 1000;
     // Clamp both bounds: a large lapse (hidden tab / hitch) is capped to
     // maxDeltaTime, and a regressed clock cannot drive physics backwards.
     const dt = Math.max(0, Math.min(elapsed, CONFIG.maxDeltaTime));
