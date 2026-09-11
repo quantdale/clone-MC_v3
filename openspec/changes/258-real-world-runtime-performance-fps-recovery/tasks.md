@@ -1,7 +1,7 @@
 # Tasks: 258-real-world-runtime-performance-fps-recovery
 
-Status: ACTIVE — Change 257 VERIFIED 92/92 at d55c2e7 (CI 33600754305 success); Phase-1/2/3 foundation + gates + World-internal phases + worker fault injection + worker pack-axis fix + duplicate-submit guard + harness scenarios + fallback/stale/startup/metadata/quality-guard evidence
-Tasks complete: 34/100 (34%). Target: 100% — 257 VERIFIED
+Status: ACTIVE — Change 257 VERIFIED 92/92 at d55c2e7 (CI 33600754305 success); Phase-1/2/3 foundation + gates + World-internal phases + worker fault injection + worker pack-axis fix + duplicate-submit guard + harness scenarios + fallback/stale/startup/metadata/quality-guard evidence + full headless regression green
+Tasks complete: 35/100 (35%). Target: 100% — 257 VERIFIED
 Advancement allowed: false
 
 ## A. Repository truth, activation and performance authority
@@ -135,7 +135,7 @@ Advancement allowed: false
 - [ ] 93. Cached traversal: average >=55 FPS and no rolling 10 s window below 45 FPS.
 - [ ] 94. Interaction/entity/day-night scenarios: no sustained rolling 10 s window below 45 FPS.
 - [ ] 95. Sustained resource scenario: no monotonic post-settle leak in geometry/texture/worker/heap proxy.
-- [ ] 96. Run typecheck, lint, complete unit, build, complete E2E, visual, state/file-audit/orphan/release gates.
+- [x] 96. Run typecheck, lint, complete unit, build, complete E2E, visual, state/file-audit/orphan/release gates. (Headless scope green this session: typecheck PASS, lint 0 errors, unit 393 files 4701+1 PASS, build PASS, full headless E2E 62/62 PASS incl. visual goldens + void-world + whole-frame specs, validate-state PASS, file-audit manifest PASS. Canonical headed + exact-SHA CI scope belongs to tasks 91–95/99 and remains blocked.)
 - [ ] 97. Compare final default screenshots/behavior with baseline; investigate unintended changes.
 - [ ] 98. Record exact before/after metrics, fixed/residual bottlenecks, environment and artifacts.
 - [ ] 99. Reconcile OpenSpec/state, publish to `origin/main`, require successful CI on exact published SHA.

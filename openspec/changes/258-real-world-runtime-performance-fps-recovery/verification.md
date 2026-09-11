@@ -1,7 +1,7 @@
 # Verification: 258-real-world-runtime-performance-fps-recovery
 
 Status: NOT VERIFIED
-Completion: 34/100 (34%)
+Completion: 35/100 (35%)
 Advancement allowed: false
 
 ## Requirement evidence
@@ -43,6 +43,7 @@ execution environment exposes neither Chrome/Chromium nor a hardware GPU rendere
 | `npm run build` | PASS (1.9 s production bundle, rebuilt after Phase-2) |
 | `npm run test:e2e` (game.spec headless SwiftShader smoke) | PASS 30/30 (9.6 m, prior session) |
 | `npm run test:e2e` (whole-frame-metrics live proof) | PASS 2/2 (31.3 s this session): Game-level + World-internal attribution, teleport-forced generation, aux/worker/counts shapes, disable path clean |
+| `npm run test:e2e` (complete headless suite) | PASS 62/62 (25.6 m this session, incl. visual goldens, void-world recovery, furnace, persistence, memory-stress) — ran against the pre-sanitize tree; the only later production change is the 10-line aux-sanitize (finite-passthrough, tsc/lint clean, values proven finite live) |
 | `npm run test:perf -- --self-test` | PASS (this session, after runner extension) |
 | `npm run test:perf` headless smoke (non-canonical) | 5/5 scenarios captured with phases/aux/worker/pipeline + 5 PNGs + 5 trace zips, zero actionErrors; correctly NON-CANONICAL (headless + SwiftShader + reduced distance) |
 | full e2e / visual / orphan / release gates | NOT RUN |
@@ -132,7 +133,7 @@ full unit 4670 passed + 1 skipped; file-audit manifest extended to 2651 rows and
 
 ## Incomplete tasks
 
-66/100 incomplete. Tasks 1, 2, 4, 5, 16–28, 30–33, 35–38, 40, 42–47, 58, and 85 complete;
+65/100 incomplete. Tasks 1, 2, 4, 5, 16–28, 30–33, 35–38, 40, 42–47, 58, 85, and 96 (headless scope) complete;
 task 3 and baseline tasks 6–15 (plus 91–95) are blocked on a headed hardware-WebGL reference
 host. The governor/worker production-wiring tasks (33, 34, 39, 41–44, 47–57, 59, 60) and hot-path
 sections G–J remain open pending headed profiling proof.
