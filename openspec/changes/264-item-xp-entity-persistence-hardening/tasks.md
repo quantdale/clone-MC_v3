@@ -111,7 +111,7 @@ mirrored, never forked.
   `.md` checkpoint (13/13 100% when all checked, heads recorded, 258 BLOCKED
   blocker kept, mandatory/required true, advancementAllowed true);
   `validate-state` PASS.
-- [ ] **T13.** Publish: commit, push to `origin/main`, remote head verified,
+- [x] **T13.** Publish: (DONE 2026-09-11; committed + pushed `c783781..8291e3a`, local == remote verified; sync checkpoint follows) commit, push to `origin/main`, remote head verified,
   local == remote verified, `published_head` recorded; final report (SHAs,
   status, completion, validations, blockers, next action). Do NOT mark 258
   VERIFIED; do NOT touch headed FPS work; do NOT reopen 259/260/261/262/263.

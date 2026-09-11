@@ -15,7 +15,7 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "c783781525489bd48613b71a59b4ff478d641c67",
-  "localHead": "c783781525489bd48613b71a59b4ff478d641c67",
+  "localHead": "8291e3a06e8a6bfaf1ea8ca8cebfa5e6fda2ec12",
   "lastCompletedTask": "Change 264-item-xp-entity-persistence-hardening VERIFIED 13/13 (2026-09-11): ItemEntityManager/XpOrbManager deserializeAll fail-closed (duplicate ids + malformed payloads throw, manager unchanged), world-scoped live Game persistence (__itementities__/__xporbs__ with quarantine, reset/archive passthrough), proven via unit 26 new + browser E2E drop+orb-reload + removal-via-live-collection; full gates green (typecheck/lint 0 errors/unit 4924+1/build 2.38s/e2e 75/75/file-audit 2726); 258 BLOCKED, 259/260/261/262/263 VERIFIED. Supersedes: Change 263-advancement-panel-ui VERIFIED 15/15 (2026-09-11): in-game advancements panel over 185/186 (list with title/description/progress, live obtain wiring + trigger seam, toast-once, __advancements__ persistence, R-4 advancement half closed), proven via unit 56 new + browser E2E open-see-defs-craft-trigger-reload + lifecycle; full gates green (typecheck/lint 0 errors/unit 4898+1/build 2.30s/e2e 73/73/file-audit 2719); published range fe23ac8..d77fa70 with tip c783781; 258 BLOCKED, 259/260/261/262 VERIFIED",
   "nextExactAction": "Publish Change 264-item-xp-entity-persistence-hardening checkpoint to origin/main (264 VERIFIED 13/13; 258 BLOCKED; 259/260/261/262/263 VERIFIED)",
 
