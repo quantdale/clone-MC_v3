@@ -1,7 +1,7 @@
 # Verification: 258-real-world-runtime-performance-fps-recovery
 
 Status: NOT VERIFIED
-Completion: 12/100 (12%)
+Completion: 14/100 (14%)
 Advancement allowed: false
 
 ## Requirement evidence
@@ -10,7 +10,9 @@ Advancement allowed: false
 |---|---|---|
 | Headed GPU-backed baseline/final certification | Not run (SwiftShader-only host) | NOT RUN |
 | Whole-frame rAF timing includes update + world + render | `GameLoop` boundary hook + `Game.wholeFrameRing` + `getWholeFrameStats`; unit 17 + GameLoop 6 + live-boot e2e 30/30 | PASS (headless-verified foundation; canonical headed proof pending) |
-| Phase attribution | Pure `PhaseTimer` core only; production phase wiring not done | PARTIAL |
+| Phase attribution | Game-level input/fixedTicks/worldUpdate/renderSubmit wired (disabled-by-default) + live e2e proof; World-internal phases open | PARTIAL |
+| Canonical-run rejection logic | `CanonicalRunGate` unit-tested; runner mirrors rules | PASS (logic; canonical headed run pending) |
+| Worker capability + pool sizing | `WorkerMeshCapability` unit-tested; production default unchanged | PASS (definition; activation pending) |
 | Production worker meshing with fallback | Existing code opt-in; production activation not implemented | NOT RUN |
 | Shared adaptive main-thread budget | Pure `FrameBudgetGovernor` core + 11 unit tests; production wiring not done | PARTIAL |
 | Headed perf harness + self-test | `npm run test:perf` skeleton + `PerfGate` thresholds + `--self-test` PASS | PASS (skeleton; canonical scenarios not run) |
@@ -34,9 +36,10 @@ execution environment exposes neither Chrome/Chromium nor a hardware GPU rendere
 | `npm run validate-state` | PASS |
 | `npm run typecheck` | PASS |
 | `npm run lint` | PASS with 80 pre-existing warnings, 0 errors |
-| `npm test` | PASS: 387 files; 4670 passed, 1 skipped |
-| `npm run build` | PASS (5.70 s production bundle) |
-| `npm run test:e2e` (game.spec headless SwiftShader smoke) | PASS 30/30 (9.6 m) |
+| `npm test` | PASS: 389 files; 4682 passed, 1 skipped |
+| `npm run build` | PASS (2.24 s production bundle) |
+| `npm run test:e2e` (game.spec headless SwiftShader smoke) | PASS 30/30 (9.6 m, prior session) |
+| `npm run test:e2e` (whole-frame-metrics live proof) | PASS 1/1 (22.8 s): samples accumulate, phase timing attributes worldUpdate/renderSubmit > 0, disable path clean |
 | full e2e / visual / orphan / release gates | NOT RUN |
 | file-audit manifest | PASS 2651 rows (7 new 258 rows registered) |
 | exact-final-SHA GitHub CI | NOT RUN |
@@ -124,9 +127,25 @@ full unit 4670 passed + 1 skipped; file-audit manifest extended to 2651 rows and
 
 ## Incomplete tasks
 
-88/100 incomplete. Tasks 1, 2, 4, 5, 16, 24, 25, 26, 27, 28, 38, and 58 complete; task 3 and
-baseline tasks 6–15 (plus 91–95) are blocked on a headed hardware-WebGL reference host. Task 17
-and the governor/worker production-wiring tasks remain open pending headed profiling proof.
+86/100 incomplete. Tasks 1, 2, 4, 5, 16, 24, 25, 26, 27, 28, 31, 38, 40, and 58 complete;
+task 3 and baseline tasks 6–15 (plus 91–95) are blocked on a headed hardware-WebGL reference
+host. Task 17 (World-internal phases) and the governor/worker production-wiring tasks remain
+open pending headed profiling proof.
+
+## Follow-up evidence (2026-09-11 session, second checkpoint)
+
+- `src/rendering/CanonicalRunGate.ts` — deterministic headed/hardware/quality classifier
+  (7 unit tests incl. the exact SwiftShader string observed on this host).
+- `src/rendering/WorkerMeshCapability.ts` — half-cores-clamped-[1,4] pool sizing with
+  fail-closed capability resolution (5 unit tests); production default untouched.
+- `Game` phase wiring: `phaseTimer` (disabled default, zero clock reads) times
+  input/fixedTicks/worldUpdate/renderSubmit; `getWholeFramePhaseStats` exposes attribution;
+  `setWholeFramePhaseTimingEnabled` is the harness-only switch. No tick, streaming, budget,
+  or render behavior changed (disabled path adds one boolean check per boundary).
+- `tests/e2e/whole-frame-metrics.spec.ts` — live proof against the production build that
+  samples accumulate and enabled phase timing records real worldUpdate/renderSubmit work.
+- Runner `canonical-perf-run.mjs` now also gates on render distance (6) and DPR range [1,2],
+  mirroring `CanonicalRunGate` under MUST-match comments.
 
 ## Advancement Exception
 

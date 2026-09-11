@@ -1,7 +1,7 @@
 # Tasks: 258-real-world-runtime-performance-fps-recovery
 
-Status: ACTIVE — Change 257 VERIFIED 92/92 at d55c2e7 (CI 33600754305 success); Phase-1 measurement foundation landed headlessly
-Tasks complete: 12/100 (12%). Target: 100% — 257 VERIFIED
+Status: ACTIVE — Change 257 VERIFIED 92/92 at d55c2e7 (CI 33600754305 success); Phase-1 foundation + canonical gate + worker capability + live phase proof
+Tasks complete: 14/100 (14%). Target: 100% — 257 VERIFIED
 Advancement allowed: false
 
 ## A. Repository truth, activation and performance authority
@@ -28,7 +28,7 @@ Advancement allowed: false
 ## C. True whole-frame and phase instrumentation
 
 - [x] 16. Add rAF-to-rAF whole-frame metric including update/world/simulation/render. (`GameLoop` 4th-param boundary hook reports the raw rAF interval before update/render, even on throw; `Game` records every interval into a 600-sample `WholeFrameRing` via `recordInterval`; render-submit bracket in `RenderPerformanceMonitor` kept separate. `Game.getWholeFrameStats/getWholeFrameRollingMinFps` expose the authority to the harness. GameLoop +9.6m live-boot e2e 30/30 green.)
-- [ ] 17. Add bounded timers for input/update, fixed ticks, world.update, generation, meshing, lighting, upload, unload, UI and render. (Pure `PhaseTimer` core landed + tested; production wiring into `Game.update/render` phases NOT DONE.)
+- [ ] 17. Add bounded timers for input/update, fixed ticks, world.update, generation, meshing, lighting, upload, unload, UI and render. (Game-level input/fixedTicks/worldUpdate/renderSubmit wired via disabled-by-default `PhaseTimer`, live-proven by `whole-frame-metrics.spec.ts`; World-internal generation/meshing/lighting/upload/unload phases NOT DONE.)
 - [ ] 18. Add generation timing/count telemetry.
 - [ ] 19. Add main-thread meshing and worker dispatch/completion timing.
 - [ ] 20. Add lighting actual elapsed/work telemetry.
@@ -45,7 +45,7 @@ Advancement allowed: false
 - [x] 28. Add dedicated headed perf command separate from normal headless E2E. (`npm run test:perf` → `scripts/perf/canonical-perf-run.mjs`; production-build URL, deterministic seed, warm-up/startup separation, versioned JSON + summary + screenshots + long-task collection; `--self-test` green.)
 - [ ] 29. Run actual production build/default desktop quality.
 - [ ] 30. Record commit/browser/GPU/viewport/DPR/buffer/quality metadata.
-- [ ] 31. Reject software rendering/headless overrides from canonical results.
+- [x] 31. Reject software rendering/headless overrides from canonical results. (Pure `CanonicalRunGate.evaluateCanonicalRun` + `isSoftwareRenderer`: headless/WebGL-down/software-renderer/DPR-out-of-range/reduced-distance all non-canonical with named reasons, malformed fail closed; 7 unit tests; runner `canonical-perf-run.mjs` mirrors the rules with MUST-match comments.)
 - [ ] 32. Add deterministic seed/spawn/route/action scripting.
 - [ ] 33. Add warm-up policy and separate startup vs steady-state evidence.
 - [ ] 34. Run at least three samples/scenario and report median plus worst relevant percentile.
@@ -57,7 +57,7 @@ Advancement allowed: false
 ## E. Production worker meshing
 
 - [ ] 39. Characterize sync mesh cost and worker parity on identical fixtures.
-- [ ] 40. Define capability checks and conservative pool sizing.
+- [x] 40. Define capability checks and conservative pool sizing. (Pure `WorkerMeshCapability`: `recommendedWorkerPoolSize` = half cores clamped [1,4], `resolveWorkerMeshingSupport` fails closed without `Worker`; 5 unit tests. Production default stays sync fallback; activation (41) pending headed proof.)
 - [ ] 41. Enable `workerMeshing` in shipped Game composition when supported.
 - [ ] 42. Preserve deterministic sync fallback when Worker unavailable.
 - [ ] 43. Prove worker/sync semantic equivalence across render streams.

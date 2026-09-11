@@ -132,7 +132,7 @@ import { FixedTickDriver } from './FixedTickDriver';
 import { TICK_RATE } from './SimulationClock';
 import { RenderInterpolator } from './RenderInterpolator';
 import { RenderPerformanceMonitor, type RenderPipelineMetrics } from '../rendering/RenderPerformanceMonitor';
-import { WholeFrameRing, type WholeFrameStats } from '../rendering/WholeFrameMetrics';
+import { PhaseTimer, WHOLE_FRAME_PHASES, WholeFrameRing, type WholeFramePhase, type WholeFrameStats } from '../rendering/WholeFrameMetrics';
 import { createDefaultBlockShapeTable, VoxelShape } from '../world/VoxelShape';
 import type { SelectionShapeWorld } from '../world/ShapeRaycast';
 import { LiveBlockEntityHost } from './LiveBlockEntityHost';
@@ -264,6 +264,16 @@ export class Game {
    * at 60 FPS); interval-only until per-phase timers are wired.
    */
   private readonly wholeFrameRing = new WholeFrameRing(600);
+  /**
+   * Coarse per-phase attribution timers (258 task 17): input, fixed ticks,
+   * world update, and render-submit are timed at the `Game` level. Disabled
+   * by default — disabled `begin/end` never touch the clock. World-internal
+   * phases (generation/meshing/lighting/upload/unload) stay zero until the
+   * `World.update` internals are instrumented with headed proof.
+   */
+  private readonly phaseTimer = new PhaseTimer(() => performance.now(), false);
+  /** Last raw rAF interval, captured by the loop boundary hook. */
+  private lastRafIntervalMs = 0;
   /**
    * Observability handle handed to World (audit 05): World pushes queue depths,
    * oldest-job age, and upload bytes each frame straight into the monitor.
@@ -853,7 +863,12 @@ export class Game {
         this.showError(`The game stopped: ${message}`);
       },
       (rafIntervalMs) => {
-        this.wholeFrameRing.recordInterval(rafIntervalMs);
+        this.lastRafIntervalMs = rafIntervalMs;
+        if (!this.phaseTimer.isEnabled) {
+          this.wholeFrameRing.recordInterval(rafIntervalMs);
+        }
+        // When phase timing is enabled, the interval is recorded together
+        // with its phase attribution at the end of render().
       },
     );
 
@@ -1010,6 +1025,25 @@ export class Game {
     return this.wholeFrameRing.rollingMinFps(windowMs);
   }
 
+  /** Per-phase p50/p95/p99/total attribution over the retained whole frames. */
+  getWholeFramePhaseStats(): Record<WholeFramePhase, { p50Ms: number; p95Ms: number; p99Ms: number; totalMs: number }> {
+    const out = {} as Record<WholeFramePhase, { p50Ms: number; p95Ms: number; p99Ms: number; totalMs: number }>;
+    for (const phase of WHOLE_FRAME_PHASES) {
+      out[phase] = this.wholeFrameRing.phaseStats(phase);
+    }
+    return out;
+  }
+
+  /**
+   * Test/harness-only switch for coarse per-phase attribution (258 task 17).
+   * Disabled by default (zero clock reads); the headed harness enables it
+   * explicitly per scenario. World-internal phases stay zero until `World`
+   * internals are instrumented.
+   */
+  setWholeFramePhaseTimingEnabled(enabled: boolean): void {
+    this.phaseTimer.setEnabled(enabled);
+  }
+
   /** Test-only hook (239): force the next update to throw and enter the error state. */
   failSimulation(): void {
     this.failNextUpdate = true;
@@ -1065,7 +1099,9 @@ export class Game {
     // truth must not mutate behind the overlay. World.update is gated here and
     // also defensively no-ops via World.setRecoveryFrozen.
     if (!this.recoveryRequiredValue) {
+      this.phaseTimer.begin('worldUpdate');
       this.world.update(dt, pcx, pcz);
+      this.phaseTimer.end();
     }
     const readyProgress = this.world.getReadyProgress(pcx, pcz);
     const worldReady = readyProgress >= 1;
@@ -1073,8 +1109,10 @@ export class Game {
     // through the pure coordinator, then evaluate the playable-state rule.
     // Keyboard/mouse frames are active only while pointer-locked; gamepad/touch
     // drive lock-free; a paused/overlaid or still-loading game delivers nothing.
+    this.phaseTimer.begin('input');
     const deviceFrame = this.buildDeviceFrame(worldReady);
     this.resolvedInput = resolveFrame(deviceFrame);
+    this.phaseTimer.end();
     // Feed the arbitrated analog movement into the controller path. While
     // pointer-locked the keyboard owns movement exactly as before (the external
     // contribution is zeroed); in lock-free play the resolved gamepad/touch
@@ -1097,7 +1135,9 @@ export class Game {
     } else {
       this.tickDriver.pause();
     }
+    this.phaseTimer.begin('fixedTicks');
     this.tickDriver.advance(dt);
+    this.phaseTimer.end();
 
     if (!simulationActive) {
       this.controller.update(0);
@@ -1311,7 +1351,9 @@ export class Game {
     // Observability (audit 05): bracket the frame and feed renderer.info after
     // the draw; World feeds queue depths/upload bytes via `worldMonitor`.
     this.perfMonitor.beginFrame();
+    this.phaseTimer.begin('renderSubmit');
     this.renderer.render();
+    this.phaseTimer.end();
     const info = this.renderer.renderer?.info;
     if (info) {
       this.perfMonitor.recordRendererInfo({
@@ -1377,6 +1419,9 @@ export class Game {
     this.perfMonitor.recordPipelineMetrics(pipeline);
     void dynamicUpdate;
     this.perfMonitor.endFrame();
+    if (this.phaseTimer.isEnabled) {
+      this.wholeFrameRing.record(this.phaseTimer.finishFrame(this.lastRafIntervalMs));
+    }
 
   }
 

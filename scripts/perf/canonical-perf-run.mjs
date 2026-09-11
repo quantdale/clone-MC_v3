@@ -78,8 +78,12 @@ function chromeVersion(chromePath) {
   return result.status === 0 ? result.stdout.trim() : 'unknown';
 }
 
+// Canonical-run rules MUST match src/rendering/CanonicalRunGate.ts exactly:
+// headed + WebGL + hardware renderer + DPR in [1, 2] + default render
+// distance. Any rule change here must change CanonicalRunGate.ts (and its
+// unit tests) in the same commit, and vice versa.
 function isSoftwareRenderer(renderer) {
-  return /swiftshader|llvmpipe|software|basic render/i.test(renderer ?? '');
+  return /swiftshader|llvmpipe|software|basic\s*render/i.test(renderer ?? '');
 }
 
 function median(values) {
@@ -176,12 +180,23 @@ async function main() {
   });
   const browserVersion = await page.evaluate(() => window.navigator.userAgent);
 
+  const renderDistance = await page.evaluate(() => {
+    try {
+      return JSON.parse(window.__voxelGame.getPerformanceSnapshot())?.render?.renderDistanceChunks ?? 0;
+    } catch {
+      return 0;
+    }
+  });
   const nonCanonicalReasons = [];
   if (!opts.headed) nonCanonicalReasons.push('headless run (canonical requires headed)');
-  if (isSoftwareRenderer(identity.renderer)) {
+  if (!identity.supported) nonCanonicalReasons.push('WebGL unsupported');
+  if (typeof identity.renderer !== 'string' || identity.renderer.length === 0) {
+    nonCanonicalReasons.push(`invalid renderer: ${identity.renderer}`);
+  } else if (isSoftwareRenderer(identity.renderer)) {
     nonCanonicalReasons.push(`software renderer: ${identity.renderer}`);
   }
-  if (dpr !== 1 && dpr > 2) nonCanonicalReasons.push(`unexpected DPR ${dpr}`);
+  if (!(dpr >= 1 && dpr <= 2)) nonCanonicalReasons.push(`non-canonical devicePixelRatio: ${dpr}`);
+  if (renderDistance !== 6) nonCanonicalReasons.push(`reduced renderDistance ${renderDistance} (canonical expects 6)`);
   const canonical = nonCanonicalReasons.length === 0;
 
   const scenarios = [
