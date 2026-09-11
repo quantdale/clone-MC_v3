@@ -593,8 +593,22 @@ export function packQuadsToTypedLayerStreams(
     const { corners, normal, faceIndex } = packedQuadGeometryInputs(quad);
     const uv = workerTileUv(workerTileForFace(textureTiles, quad.blockId, faceIndex));
     const tint = packedTintRgb(quad.tintClass ?? 0);
-    emitQuad(builder.builder(streamName), corners, normal[0], normal[1], normal[2], uv,
-      quad.vertexLights, quad.vertexAO, tint[0], tint[1], tint[2]);
+    // Left-handed pack frames emit corners/attributes permuted to the
+    // synchronous order (see PACKED_FACE_PERMUTED); indices stay standard.
+    const permute = PACKED_FACE_PERMUTED[faceIndex] ?? false;
+    const order = permute ? [0, 3, 2, 1] : [0, 1, 2, 3];
+    const permutedCorners = [
+      corners[order[0]!]!,
+      corners[order[1]!]!,
+      corners[order[2]!]!,
+      corners[order[3]!]!,
+    ] as [number, number, number][];
+    const lights = quad.vertexLights;
+    const permutedLights = [lights[order[0]!]!, lights[order[1]!]!, lights[order[2]!]!, lights[order[3]!]!];
+    const aoLevels = quad.vertexAO;
+    const permutedAo = [aoLevels[order[0]!]!, aoLevels[order[1]!]!, aoLevels[order[2]!]!, aoLevels[order[3]!]!];
+    emitQuad(builder.builder(streamName), permutedCorners, normal[0], normal[1], normal[2], uv,
+      permutedLights, permutedAo, tint[0], tint[1], tint[2]);
   }
   const built = builder.build(0);
   const streams = {} as Record<MeshStreamName, TypedMeshLayerStreams[MeshStreamName]>;
@@ -1152,14 +1166,42 @@ interface PackedFaceLayout {
   vDir: [number, number, number];
 }
 
-/** Expansion layouts indexed by `FACE_INDEX` (up, down, north, south, east, west). */
+/**
+ * Expansion layouts indexed by `FACE_INDEX` (up, down, north, south, east, west).
+ *
+ * uDir/vDir MUST follow the greedy merger's (u, v) frame (`GreedyMesher`:
+ * axis 1 → u=x,v=z; axis 2 → u=x,v=y; axis 0 → u=z,v=y) so merged width/height
+ * extend along the merged axes. The +X/+Y/-Z frames are left-handed, so those
+ * faces additionally permute corner order (see `PACKED_FACE_PERMUTED`); the
+ * -X/-Y/+Z frames are right-handed and keep the standard order. The pre-258
+ * table swapped u/v on the + faces to fake the winding, which placed
+ * non-square merged rects on wrong cells.
+ */
 const PACKED_FACE_LAYOUTS: readonly PackedFaceLayout[] = [
-  { normal: [0, 1, 0], origin: [0, 0, 0], uDir: [0, 0, 1], vDir: [1, 0, 0] }, // up    (+Y)
+  { normal: [0, 1, 0], origin: [0, 0, 0], uDir: [1, 0, 0], vDir: [0, 0, 1] }, // up    (+Y)
   { normal: [0, -1, 0], origin: [0, 0, 0], uDir: [1, 0, 0], vDir: [0, 0, 1] }, // down  (-Y)
-  { normal: [0, 0, -1], origin: [0, 0, 0], uDir: [0, 1, 0], vDir: [1, 0, 0] }, // north (-Z)
+  { normal: [0, 0, -1], origin: [0, 0, 0], uDir: [1, 0, 0], vDir: [0, 1, 0] }, // north (-Z)
   { normal: [0, 0, 1], origin: [0, 0, 0], uDir: [1, 0, 0], vDir: [0, 1, 0] }, // south (+Z)
-  { normal: [1, 0, 0], origin: [0, 0, 0], uDir: [0, 1, 0], vDir: [0, 0, 1] }, // east  (+X)
+  { normal: [1, 0, 0], origin: [0, 0, 0], uDir: [0, 0, 1], vDir: [0, 1, 0] }, // east  (+X)
   { normal: [-1, 0, 0], origin: [0, 0, 0], uDir: [0, 0, 1], vDir: [0, 1, 0] }, // west  (-X)
+];
+
+/**
+ * Whether a packed face needs permuted corner order (left-handed merger
+ * frames: +Y (up), -Z (north), +X (east) by `FACE_INDEX`). The pack corner
+ * order is (m0, m1, m2, m3) = ((0,0), (W,0), (W,H), (0,H)); with the corrected
+ * axis mapping above that winds inward on these faces. Emitting corners (and
+ * their packed per-corner attributes) in (m0, m3, m2, m1) order reproduces
+ * the synchronous mesher's exact outward corner convention with standard
+ * (0,1,2)/(0,2,3) indices everywhere.
+ */
+const PACKED_FACE_PERMUTED: readonly boolean[] = [
+  true, // up    (+Y): merger (u,v) = (x,z), left-handed
+  false, // down  (-Y): right-handed
+  true, // north (-Z): merger (u,v) = (x,y), left-handed
+  false, // south (+Z): right-handed
+  true, // east  (+X): merger (u,v) = (z,y), left-handed
+  false, // west  (-X): right-handed
 ];
 
 /** Main-thread collaborators `expandPackedMeshResult` needs (keeps this file THREE-free). */
@@ -1246,6 +1288,7 @@ class TypedExpandStream {
     packedData: Float32Array,
     offset: number,
     tintRgb: [number, number, number],
+    permuteCorners: boolean,
   ): void {
     const base = this.vIdx / 3;
     const [tr, tg, tb] = tintRgb;
@@ -1253,9 +1296,14 @@ class TypedExpandStream {
     const ny = layout.normal[1];
     const nz = layout.normal[2];
 
+    // Left-handed pack frames permute corners/attributes to the synchronous
+    // order (m0, m2, m3, m1); standard (0,1,2)/(0,2,3) indices then wind
+    // outward. Right-handed frames keep the standard corner pattern.
+    const order = permuteCorners ? [0, 3, 2, 1] : [0, 1, 2, 3];
     for (let c = 0; c < 4; c++) {
-      const cu = c === 1 || c === 2 ? width : 0;
-      const cv = c >= 2 ? height : 0;
+      const mc = order[c]!;
+      const cu = mc === 1 || mc === 2 ? width : 0;
+      const cv = mc >= 2 ? height : 0;
 
       const pIdx = this.vIdx;
       this.positions[pIdx] = x + layout.origin[0] + layout.uDir[0] * cu + layout.vDir[0] * cv;
@@ -1274,7 +1322,8 @@ class TypedExpandStream {
       this.uvs[uvIdx] = c === 1 || c === 2 ? uv.u1 : uv.u0;
       this.uvs[uvIdx + 1] = c >= 2 ? uv.v1 : uv.v0;
 
-      const lightBase = offset + 10 + c * 3;
+      const read = order[c]!;
+      const lightBase = offset + 10 + read * 3;
       const cIdx = base + c;
       this.skyLight[cIdx] = packedData[lightBase]!;
       this.blockLight[cIdx] = packedData[lightBase + 1]!;
@@ -1353,7 +1402,7 @@ export function expandPackedMeshResult(packed: PackedMeshResult, info: PackedMes
     const uv = info.uvFor(blockId, faceIndex);
     const tintRgb = packedTintRgb(packed.data[o + 7]!);
 
-    stream.pushQuad(x, y, z, width, height, layout, uv, packed.data, o, tintRgb);
+    stream.pushQuad(x, y, z, width, height, layout, uv, packed.data, o, tintRgb, PACKED_FACE_PERMUTED[faceIndex] ?? false);
   }
 
   return {

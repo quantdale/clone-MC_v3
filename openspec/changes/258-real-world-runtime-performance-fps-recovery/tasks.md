@@ -1,7 +1,7 @@
 # Tasks: 258-real-world-runtime-performance-fps-recovery
 
-Status: ACTIVE — Change 257 VERIFIED 92/92 at d55c2e7 (CI 33600754305 success); Phase-1/2 foundation + gates + World-internal phases + worker fault injection + harness scenarios
-Tasks complete: 27/100 (27%). Target: 100% — 257 VERIFIED
+Status: ACTIVE — Change 257 VERIFIED 92/92 at d55c2e7 (CI 33600754305 success); Phase-1/2/3 foundation + gates + World-internal phases + worker fault injection + worker pack-axis fix + harness scenarios
+Tasks complete: 28/100 (28%). Target: 100% — 257 VERIFIED
 Advancement allowed: false
 
 ## A. Repository truth, activation and performance authority
@@ -60,7 +60,7 @@ Advancement allowed: false
 - [x] 40. Define capability checks and conservative pool sizing. (Pure `WorkerMeshCapability`: `recommendedWorkerPoolSize` = half cores clamped [1,4], `resolveWorkerMeshingSupport` fails closed without `Worker`; 5 unit tests. Production default stays sync fallback; activation (41) pending headed proof.)
 - [ ] 41. Enable `workerMeshing` in shipped Game composition when supported.
 - [ ] 42. Preserve deterministic sync fallback when Worker unavailable.
-- [ ] 43. Prove worker/sync semantic equivalence across render streams.
+- [x] 43. Prove worker/sync semantic equivalence across render streams. (Headless slice: `WorkerSyncEquivalence.test.ts` drives identical scripted content through live sync + worker Worlds and proves identical attached section sets, exact translucent match, and identical opaque visible unit-face sets; module parity `WorkerMeshParity` exact incl. corner order. Proved + fixed a real pre-existing pack bug on the way: `PACKED_FACE_LAYOUTS` u/v swapped on + faces corrupted non-square merged rects — fixed with axis mapping + (m0,m3,m2,m1) corner permutation, standard indices. Headed FPS-scale proof still pending.)
 - [ ] 44. Prove stale generation/section versions cannot attach.
 - [x] 45. Inject worker crash/protocol/bad-response failures. (`WorkerFallbackRecovery.test.ts`: throwing factory + mid-batch `onerror` crash; malformed/stale rejection pre-existing via `MeshWorkerClient` validation + `World.test.ts` delayed-result rejection.)
 - [x] 46. Prove failure recovers chunks through bounded fallback. (Both fault tests drain `pendingMesh` to 0, attach geometry, leak no batches, disable workers; failures/fallbacks counted.)
@@ -127,6 +127,8 @@ Advancement allowed: false
 ## K. Final real-world certification and publication
 
 > Phase-2 checkpoint (2026-09-11): tasks 17–23, 32, 35–37, 45–46 complete headless-verified (27/100). No production behavior retuned: all timing is disabled-by-default with zero clock reads; the only behavioral delta is structural (exception-safe nest-guarded brackets). Headed hardware-WebGL baselines (3, 6–15, 29–30, 33–34, 39, 41–44, 47–49, 91–95) remain blocked on a GPU host — see verification.md.
+>
+> Phase-3 checkpoint (2026-09-11): task 43 headless slice complete (28/100) via a real worker-path correctness fix — `PACKED_FACE_LAYOUTS` u/v axes were swapped on +X/+Y/-Z faces (invisible for square rects/unit quads, corrupting merged non-square rects on concave content; caught by the new World-level equivalence test, minimized to plain-vs-notch/pillar variants). Fix: corrected axis mapping + (m0,m3,m2,m1) corner permutation reproducing the sync mesher's exact corner convention with standard indices; no shared-mesher change. Production worker default still sync (task 41 pending headed proof).
 
 - [ ] 91. Stationary 30 s: average >=55 FPS, p95 <=22 ms, p99 <=33 ms, >50 ms <=1%.
 - [ ] 92. Fresh traversal 60 s: average >=45 FPS, p95 <=28 ms, p99 <=50 ms, no recurring >100 ms stalls.

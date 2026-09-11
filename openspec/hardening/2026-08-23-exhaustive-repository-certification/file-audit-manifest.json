@@ -42510,6 +42510,22 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/WorkerSyncEquivalence.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "258 Phase-3 coverage for tests/unit/WorkerSyncEquivalence.test.ts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 258 Phase-3 (worker/sync visible-surface equivalence regression for the pack axis-mapping fix); no findings",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/WorkerFallbackRecovery.test.ts",
       "gitBlob": null,
       "category": "test",

@@ -143,11 +143,17 @@ function streamsFromQuads(
     const cornerUv: ReadonlyArray<readonly [number, number]> = [
       [uv.u0, uv.v0], [uv.u1, uv.v0], [uv.u1, uv.v1], [uv.u0, uv.v1],
     ];
+    // Replicates production: left-handed pack frames (up/north/east) emit
+    // corners/attributes permuted to (m0, m2, m3, m1) with standard indices.
+    const order = quad.face === 'up' || quad.face === 'north' || quad.face === 'east'
+      ? [0, 3, 2, 1]
+      : [0, 1, 2, 3];
     for (let c = 0; c < 4; c++) {
-      const [x, y, z] = corners[c]!;
-      const light = quad.vertexLights[c]!;
+      const read = order[c]!;
+      const [x, y, z] = corners[read]!;
+      const light = quad.vertexLights[read]!;
       sb.pushVertex(x, y, z, normal[0], normal[1], normal[2], cornerUv[c]![0], cornerUv[c]![1],
-        light.sky, light.block, quad.vertexAO[c]!, ...packedTintRgb(quad.tintClass ?? 0));
+        light.sky, light.block, quad.vertexAO[read]!, ...packedTintRgb(quad.tintClass ?? 0));
     }
     sb.pushQuadIndices(sb.vertexCount - 1);
   }
@@ -264,14 +270,20 @@ function directStreams(quads: ReturnType<typeof processMeshSectionRequest>['quad
       [uv.u1, uv.v1],
       [uv.u0, uv.v1],
     ];
+    // Replicates production: left-handed pack frames (up/north/east) emit
+    // corners/attributes permuted to (m0, m2, m3, m1) with standard indices.
+    const order = quad.face === 'up' || quad.face === 'north' || quad.face === 'east'
+      ? [0, 3, 2, 1]
+      : [0, 1, 2, 3];
     for (let c = 0; c < 4; c++) {
-      const [x, y, z] = corners[c]!;
-      const light = quad.vertexLights[c]!;
+      const read = order[c]!;
+      const [x, y, z] = corners[read]!;
+      const light = quad.vertexLights[read]!;
       sb.pushVertex(
         x, y, z,
         normal[0], normal[1], normal[2],
         cornerUv[c]![0], cornerUv[c]![1],
-        light.sky, light.block, quad.vertexAO[c]!,
+        light.sky, light.block, quad.vertexAO[read]!,
         ...packedTintRgb(quad.tintClass ?? 0),
       );
     }

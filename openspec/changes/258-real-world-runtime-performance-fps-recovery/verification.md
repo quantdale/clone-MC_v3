@@ -1,7 +1,7 @@
 # Verification: 258-real-world-runtime-performance-fps-recovery
 
 Status: NOT VERIFIED
-Completion: 27/100 (27%)
+Completion: 28/100 (28%)
 Advancement allowed: false
 
 ## Requirement evidence
@@ -16,6 +16,7 @@ Advancement allowed: false
 | Worker capability + pool sizing | `WorkerMeshCapability` unit-tested; production default unchanged | PASS (definition; activation pending) |
 | Worker crash/fallback fault injection | `WorkerFallbackRecovery.test.ts` 2/2 (throwing factory incl. nested-fallback-inside-dispatch with timing enabled; mid-batch `onerror` crash → bounded sync recovery, no leaks); malformed/stale rejection pre-existing | PASS (headless fault injection; headed parity pending) |
 | Production worker meshing with fallback | Existing code opt-in; production activation not implemented | NOT RUN |
+| Worker/sync equivalence (headless slice) | Identical scripted content through live sync + worker Worlds: same sections, exact translucent match, identical opaque visible-face sets; module parity exact incl. corner order | PASS (headless; headed FPS-scale proof pending) |
 | Shared adaptive main-thread budget | Pure `FrameBudgetGovernor` core + 11 unit tests; production wiring not done | PARTIAL |
 | Headed perf harness + self-test | `npm run test:perf` 5 scenarios (stationary/fresh/cached/interaction/entities-day-night) + scripted real-input actions + per-sample phases/aux/worker/pipeline + screenshots + CDP traces; `--self-test` PASS; headless smoke 5/5 with zero action errors (non-canonical as required) | PASS (skeleton; canonical headed run pending) |
 | Stationary/fresh/cached default-quality gates | Not run | NOT RUN |
@@ -38,14 +39,14 @@ execution environment exposes neither Chrome/Chromium nor a hardware GPU rendere
 | `npm run validate-state` | PASS (re-run at checkpoint; see state section) |
 | `npm run typecheck` | PASS (this session, after all Phase-2 edits) |
 | `npm run lint` | PASS, 0 errors (5 new `any` warnings in 258 test fixtures match repo style; baseline 80) |
-| `npm test` | PASS: 391 files; 4697 passed, 1 skipped (this session, incl. 15 new Phase-2 tests) |
+| `npm test` | PASS: 392 files; 4698 passed, 1 skipped (this session, incl. 15 Phase-2 + 1 Phase-3 equivalence tests) |
 | `npm run build` | PASS (1.9 s production bundle, rebuilt after Phase-2) |
 | `npm run test:e2e` (game.spec headless SwiftShader smoke) | PASS 30/30 (9.6 m, prior session) |
 | `npm run test:e2e` (whole-frame-metrics live proof) | PASS 2/2 (31.3 s this session): Game-level + World-internal attribution, teleport-forced generation, aux/worker/counts shapes, disable path clean |
 | `npm run test:perf -- --self-test` | PASS (this session, after runner extension) |
 | `npm run test:perf` headless smoke (non-canonical) | 5/5 scenarios captured with phases/aux/worker/pipeline + 5 PNGs + 5 trace zips, zero actionErrors; correctly NON-CANONICAL (headless + SwiftShader + reduced distance) |
 | full e2e / visual / orphan / release gates | NOT RUN |
-| file-audit manifest | PASS 2658 rows (3 new Phase-2 rows: 1 production + 2 test) |
+| file-audit manifest | PASS 2660 rows per validator (incl. 3 Phase-2 + 1 Phase-3 rows) |
 | exact-final-SHA GitHub CI | NOT RUN |
 
 ## Activation and repository-truth evidence
@@ -131,10 +132,16 @@ full unit 4670 passed + 1 skipped; file-audit manifest extended to 2651 rows and
 
 ## Incomplete tasks
 
-73/100 incomplete. Tasks 1, 2, 4, 5, 16–28, 31, 32, 35–38, 40, 45, 46, and 58 complete;
+72/100 incomplete. Tasks 1, 2, 4, 5, 16–28, 31, 32, 35–38, 40, 43, 45, 46, and 58 complete;
 task 3 and baseline tasks 6–15 (plus 91–95) are blocked on a headed hardware-WebGL reference
 host. The governor/worker production-wiring tasks (33, 34, 39, 41–44, 47–57, 59, 60) and hot-path
 sections G–J remain open pending headed profiling proof.
+
+## Phase-3 evidence (2026-09-11 session, fourth checkpoint)
+
+- Finding F-258-W1 (worker pack axis mapping, pre-existing 255-path bug): `PACKED_FACE_LAYOUTS` mapped merger width/height to the wrong axes on +X/+Y/-Z faces. Invisible for square rects and unit quads (the entire prior fixture set), it misplaced merged non-square rects on concave content: World-level sync-vs-worker comparison showed 66 vs 144 triangles with phantom faces at never-written cells. Minimized to plain (pass) vs notch/pillar (fail) variants via direct `processMeshSectionRequest`.
+- Fix (worker-path-only, no shared-mesher change): corrected uDir/vDir per the merger's (u,v) frame + (m0,m3,m2,m1) corner/attribute permutation reproducing the sync mesher's exact corner convention with standard indices. Proof: `WorkerMeshParity` exact incl. corner order/uvs/light (updated helpers replicate production), new `WorkerSyncEquivalence.test.ts` (live sync + worker Worlds, identical scripted cube/notch/pillar/glass content: same sections, exact translucent match, identical opaque visible-face sets). Sync mesher, greedy merger, shared builders untouched; production default remains sync (task 41 still pending headed proof).
+- Gates: typecheck PASS; lint 0 errors; unit 392 files 4698+1 PASS; file-audit manifest PASS 2660 rows; full headless e2e re-running at checkpoint (webServer build fixed) — result to be recorded before VERIFIED, not as an exception.
 
 ## Phase-2 evidence (2026-09-11 session, third checkpoint)
 
