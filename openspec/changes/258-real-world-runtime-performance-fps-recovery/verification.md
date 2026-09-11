@@ -77,7 +77,9 @@ No prior result may override a failing or unavailable Change 258 canonical run.
 
 ## Environment blocker probe
 
-Re-probed 2026-09-11 in this session (prior probe reported no Chrome):
+Re-probed 2026-09-11T07:05Z this session (Chrome 151.0.7922.169 present, `/dev/dri` absent, `nvidia-smi` missing — SwiftShader-only host, unchanged): headed hardware-WebGL tasks remain blocked; no headed result claimed.
+
+Prior probe 2026-09-11 in this session (prior probe reported no Chrome):
 
 - Chrome executable: PRESENT (`/usr/bin/google-chrome`, version 151.0.7922.169); Playwright
   bundled Chromium was absent and installed this session (headless-shell 151.0.7922.34) for
