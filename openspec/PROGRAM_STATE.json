@@ -15,9 +15,9 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "d699685dae0fd22e3acd6a78e5086c3ce7a26962",
-  "localHead": "36fa6f2cc6457b7b08bb7023665a0f3bd0b4df08",
-  "lastCompletedTask": "CI audit gate repair, round 2 — full audit step aligned to --audit-level=high (vitest moderate needs breaking major, deferred); watching CI run 34578471065 on 36fa6f2. Change 258 ACTIVE 40/100; headed hardware-GPU baseline still blocked",
-  "nextExactAction": "Watch CI to green on the exact published SHA, record exact-SHA CI evidence for task 99, then continue headed-blocked remainder. Do not push until CI greens (supersession cancels queued runs).",
+  "localHead": "8f9406e02d094757385ddca630500962da6e166e",
+  "lastCompletedTask": "CI SUCCESS on exact SHA 8f9406e — run 34578554173 (gate 3m57s incl. fixed audit step + e2e 22m1s). Change 258 ACTIVE 40/100; headed hardware-GPU baseline still blocked",
+  "nextExactAction": "CI green recorded for 8f9406e; pushing this state update moves HEAD, so CI re-runs on the new exact SHA — watch it to green, then continue headed-blocked remainder. Do not push until that CI greens.",
   "blockers": [
     "Canonical Change 258 headed baseline still unavailable: this host exposes system Chrome 151 but only SwiftShader software WebGL (no GPU, no /dev/dri). Tasks 3, 6-15 and 91-95 require a headed production build with hardware WebGL and remain blocked; headless/SwiftShader evidence cannot substitute. Environment-independent work (tasks 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless) landed and headless-verified; production default remains sync with no quality retune."
   ],

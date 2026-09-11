@@ -48,7 +48,7 @@ execution environment exposes neither Chrome/Chromium nor a hardware GPU rendere
 | `npm run test:perf` headless smoke (non-canonical) | 5/5 scenarios captured with phases/aux/worker/pipeline + 5 PNGs + 5 trace zips, zero actionErrors; correctly NON-CANONICAL (headless + SwiftShader + reduced distance) |
 | full e2e / visual / orphan / release gates | NOT RUN |
 | file-audit manifest | PASS 2660 rows per validator (incl. 3 Phase-2 + 1 Phase-3 rows) |
-| exact-final-SHA GitHub CI | NOT RUN |
+| exact-final-SHA GitHub CI | PASS on 8f9406e: CI run 34578554173 SUCCESS — gate 3m57s (validate/typecheck/lint/build/release-bundle/unit/coverage/both audits incl. the fixed full-audit step) + e2e 22m1s (full headless suite). Re-run required on any later SHA per the exact-SHA rule |
 
 ## Activation and repository-truth evidence
 
