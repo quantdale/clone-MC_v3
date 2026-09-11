@@ -1,6 +1,10 @@
-# NEXT CAMPAIGN — 253 Live World Architecture Convergence
+# NEXT CAMPAIGN — SUPERSEDED (see openspec/PROGRAM_STATE.md)
 
-Status: **READY FOR EXECUTOR ACTIVATION**
+> Historical note (2026-09-11): this file planned Change 253, which is VERIFIED and ARCHIVED, along with 254–257. The active campaign is **258-real-world-runtime-performance-fps-recovery** (ACTIVE). Repository truth lives in `openspec/PROGRAM_STATE.json`/`.md`; this file is retained for history only and MUST NOT be used to activate work.
+
+# NEXT CAMPAIGN — 253 Live World Architecture Convergence (COMPLETED)
+
+Status: ~~READY FOR EXECUTOR ACTIVATION~~ **SUPERSEDED — 253 VERIFIED and ARCHIVED**
 Requested active execution window: **12 hours**
 Primary entry point: `.agent/EXECUTION_PROMPT.md`
 OpenSpec package: `openspec/changes/253-live-world-architecture-convergence/`
