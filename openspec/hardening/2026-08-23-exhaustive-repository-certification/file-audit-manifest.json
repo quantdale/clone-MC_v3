@@ -42684,6 +42684,22 @@
       "disposition": "",
       "reviewNotes": "auto-reviewed for 258 Phase-1 follow-up (canonical gate, worker capability, live phase proof); no findings",
       "status": "audited"
+    },
+    {
+      "path": "docs/258-headed-resume.md",
+      "gitBlob": null,
+      "category": "docs",
+      "purpose": "258 owner-deferral coverage for docs/258-headed-resume.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 258 owner deferral (headed-resume order task 3 -> 6-15 -> 29/34 -> governor/worker headed proof -> 91-95 -> 97-100; documentation only, no production code); no findings",
+      "status": "audited"
     }
   ]
 }

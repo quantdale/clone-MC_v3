@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "status": "ACTIVE",
   "currentChange": "258-real-world-runtime-performance-fps-recovery",
-  "currentChangeStatus": "ACTIVE",
+  "currentChangeStatus": "BLOCKED",
   "lastCompletedChange": "257-void-world-startup-recovery",
   "nextChange": "258-real-world-runtime-performance-fps-recovery",
   "completedTasks": 40,
@@ -14,14 +14,19 @@
   "requiredTestsPass": false,
   "advancementAllowed": false,
   "exceptionUsed": false,
-  "sessionStartHead": "d699685dae0fd22e3acd6a78e5086c3ce7a26962",
-  "localHead": "263de49ebd05f41a8c6df62dff55b9a5d8a82a74",
-  "lastCompletedTask": "CI SUCCESS on exact SHA 263de49 — run 34583627196 (gate 4m10s + e2e 38m29s). Change 258 ACTIVE 40/100; headed hardware-GPU baseline still blocked; no further commits planned pending headed lane.",
-  "nextExactAction": "HEAD 263de49 is CI-green (run 34583627196). Do NOT commit anything further or the exact-SHA CI match voids. Next work requires a headed hardware-GPU host: task 3 metadata, baselines 6-15, governor/worker wiring with headed proof.",
+  "sessionStartHead": "a237c4fc68cbcfc66dfbbd121fd638eed4987fc1",
+  "localHead": "a237c4fc68cbcfc66dfbbd121fd638eed4987fc1",
+  "lastCompletedTask": "Owner deferral recorded 2026-09-11 (Michael via Minecraft Clone Dev): Change 258 formally BLOCKED at 40/100 with headed hardware-WebGL certification deferred; no headed GPU evidence faked. Ship-hygiene gates re-run this session (see verification.md).",
+  "nextExactAction": "Resume 258 headed tasks on a hardware-WebGL host when available; until then program remains BLOCKED on 258 headed cert with owner-accepted deferral",
   "blockers": [
-    "Canonical Change 258 headed baseline still unavailable: this host exposes system Chrome 151 but only SwiftShader software WebGL (no GPU, no /dev/dri). Tasks 3, 6-15 and 91-95 require a headed production build with hardware WebGL and remain blocked; headless/SwiftShader evidence cannot substitute. Environment-independent work (tasks 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless) landed and headless-verified; production default remains sync with no quality retune."
+    "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. 001-257 VERIFIED; game shippable with known performance-certification debt."
   ],
   "validationResults": [
+    {
+      "change": "258-real-world-runtime-performance-fps-recovery",
+      "status": "BLOCKED",
+      "note": "Owner deferral 2026-09-11 (Michael via Minecraft Clone Dev): 40/100 environment-independent tasks complete and headless-verified; headed hardware-WebGL certification (tasks 3, 6-15, 29, 34, 91-95, 97-98 strictly; 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90 profiling-gated; 99-100 closure) deferred — host is SwiftShader-only, no /dev/dri. Production default remains sync meshing; no quality retune. 001-257 VERIFIED; shippable with known performance-certification debt."
+    },
     {
       "change": "253-live-world-architecture-convergence",
       "status": "VERIFIED",

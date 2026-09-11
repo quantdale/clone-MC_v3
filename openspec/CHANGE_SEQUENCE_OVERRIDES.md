@@ -52,3 +52,23 @@ This section is a sequence-number override only. It does not alter either
 campaign's scope, ordering contract, or gate requirements.
 
 ## Mandatory post-250 production-persistence hardening interlock
+
+## 258 headed-certification deferral — owner-authorized BLOCKED (2026-09-11)
+
+The product owner (Michael via Minecraft Clone Dev, 2026-09-11) formally deferred headed
+hardware-WebGL certification for `258-real-world-runtime-performance-fps-recovery` and
+authorized moving on to whatever else is still allowed without faking headed GPU evidence
+or waiting for a GPU host.
+
+- Change 258 status is **BLOCKED** at 40/100 (not ACTIVE waiting forever). The 40 completed
+  tasks are environment-independent and headless-verified; the remaining 60 require a
+  hardware-WebGL host (strictly headed: 3, 6–15, 29, 34, 91–95, 97–98; headed-profiling-
+  gated: 39, 41, 48–57, 59–63, 65, 67–76, 78–81, 83, 86–90; closure: 99–100) and stay
+  unchecked. Full classification lives in the change's `verification.md`.
+- This deferral does NOT verify 258 and does NOT authorize any higher-numbered content
+  campaign: no later change may be implemented as if 258 were VERIFIED. Only
+  production-readiness / ship-hygiene work that needs no headed GPU is allowed meanwhile.
+- Production default is unchanged (sync meshing, no quality retune). 001–257 remain VERIFIED;
+  the game is shippable with known performance-certification debt.
+- Resume order on a hardware-WebGL host: task 3 → tasks 6–15 → tasks 29/34 →
+  governor/worker wiring with headed proof → tasks 91–95 → tasks 97–100.

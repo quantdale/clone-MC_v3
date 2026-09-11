@@ -1,6 +1,6 @@
 # Tasks: 258-real-world-runtime-performance-fps-recovery
 
-Status: ACTIVE — Change 257 VERIFIED 92/92 at d55c2e7 (CI 33600754305 success); Phase-1/2/3 foundation + gates + World-internal phases + worker fault injection + worker pack-axis fix + duplicate-submit guard + harness scenarios + fallback/stale/startup/metadata/quality-guard/worldgen/HUD/memory evidence + full headless regression green
+Status: BLOCKED — owner deferral of headed hardware-WebGL certification (2026-09-11). Change 257 VERIFIED 92/92 at d55c2e7 (CI 33600754305 success); Phase-1/2/3 foundation + gates + World-internal phases + worker fault injection + worker pack-axis fix + duplicate-submit guard + harness scenarios + fallback/stale/startup/metadata/quality-guard/worldgen/HUD/memory evidence + full headless regression green. GPU-only tasks left unchecked per verification.md; no headed evidence faked.
 Tasks complete: 40/100 (40%). Target: 100% — 257 VERIFIED
 Advancement allowed: false
 

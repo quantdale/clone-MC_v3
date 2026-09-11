@@ -74,7 +74,7 @@ npx playwright install chromium
 
 ### Canonical performance harness (Change 258, in progress)
 
-`npm run test:perf` boots the production build at default desktop quality and records whole-frame/phase/queue/worker metrics across scripted scenarios (stationary, fresh/cached traversal, interaction, day/night) into a versioned JSON artifact plus screenshots and CDP traces. Canonical results require headed Chrome with hardware WebGL at default quality — headless or SwiftShader runs are recorded non-canonical and refuse PASS. Current status and blockers live in `openspec/PROGRAM_STATE.md` (Change 258 ACTIVE).
+`npm run test:perf` boots the production build at default desktop quality and records whole-frame/phase/queue/worker metrics across scripted scenarios (stationary, fresh/cached traversal, interaction, day/night) into a versioned JSON artifact plus screenshots and CDP traces. Canonical results require headed Chrome with hardware WebGL at default quality — headless or SwiftShader runs are recorded non-canonical and refuse PASS. Current status and blockers live in `openspec/PROGRAM_STATE.md` (Change 258 BLOCKED — headed hardware-WebGL certification deferred by owner decision 2026-09-11; 001–257 VERIFIED, shippable with known performance-certification debt).
 
 ---
 

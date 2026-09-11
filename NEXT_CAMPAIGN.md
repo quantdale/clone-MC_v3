@@ -1,6 +1,6 @@
 # NEXT CAMPAIGN — SUPERSEDED (see openspec/PROGRAM_STATE.md)
 
-> Historical note (2026-09-11): this file planned Change 253, which is VERIFIED and ARCHIVED, along with 254–257. The active campaign is **258-real-world-runtime-performance-fps-recovery** (ACTIVE). Repository truth lives in `openspec/PROGRAM_STATE.json`/`.md`; this file is retained for history only and MUST NOT be used to activate work.
+> Historical note (2026-09-11, updated): this file planned Change 253, which is VERIFIED and ARCHIVED, along with 254–257. The active campaign is **258-real-world-runtime-performance-fps-recovery** (BLOCKED — headed hardware-WebGL certification deferred by owner decision 2026-09-11; 001–257 VERIFIED). Repository truth lives in `openspec/PROGRAM_STATE.json`/`.md`; this file is retained for history only and MUST NOT be used to activate work.
 
 # NEXT CAMPAIGN — 253 Live World Architecture Convergence (COMPLETED)
 

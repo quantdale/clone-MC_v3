@@ -1,6 +1,6 @@
 # Verification: 258-real-world-runtime-performance-fps-recovery
 
-Status: NOT VERIFIED
+Status: BLOCKED — owner deferral of headed hardware-WebGL certification (2026-09-11)
 Completion: 40/100 (40%)
 Advancement allowed: false
 
@@ -49,6 +49,22 @@ execution environment exposes neither Chrome/Chromium nor a hardware GPU rendere
 | full e2e / visual / orphan / release gates | NOT RUN |
 | file-audit manifest | PASS 2660 rows per validator (incl. 3 Phase-2 + 1 Phase-3 rows) |
 | exact-final-SHA GitHub CI | PASS on 8f9406e (run 34578554173: gate 3m57s + e2e 22m1s) and re-run PASS on 263de49 (run 34583627196: gate 4m10s + e2e 38m29s, incl. the fixed full-audit step). No commits after 263de49 so HEAD holds the green exact SHA. |
+
+## Ship-hygiene gates (2026-09-11 owner-deferral session)
+
+Documentation-only session (no `src/` change): 258 set to BLOCKED, state/README prose
+made truthful, `docs/258-headed-resume.md` authored.
+
+| Evidence | Result |
+|---|---|
+| `npm run validate-state` | PASS (after adding the BLOCKED entries; one self-inflicted advancement-label mismatch fixed by keeping the validator-required wording) |
+| `npm run typecheck` | PASS, 0 errors |
+| `npm run lint` | PASS, 0 errors (85 warnings; baseline 80 + 5 pre-existing 258-fixture `any` notes) |
+| `npm test` | PASS: 393 files, 4701 passed + 1 skipped. Single initial failure was the file-audit manifest missing the new `docs/258-headed-resume.md` row (added in matching style); re-run green. No production-code finding. |
+| `npm run build` | PASS (3.74 s production bundle) |
+| `npx playwright test tests/e2e/whole-frame-metrics.spec.ts` (headless playable-boot proof) | PASS 2/2 (1.4 m). First attempt failed 2/2 on a missing Playwright browser binary (empty `~/.cache/ms-playwright`); fixed per README with `npx playwright install chromium` (Headless Shell 151.0.7922.34); re-run green. Environment issue, not a code regression. |
+| full headless e2e 62/62 | NOT RE-RUN this session (prior checkpoint PASS 62/62 recorded above; no `src/` change since, boot path re-proven 2/2) |
+| headed canonical perf | NOT RUN — deferred by owner decision (see Owner deferral section); nothing faked |
 
 ## Activation and repository-truth evidence
 
@@ -135,7 +151,9 @@ full unit 4670 passed + 1 skipped; file-audit manifest extended to 2651 rows and
 
 ## Incomplete tasks
 
-60/100 incomplete. Tasks 1, 2, 4, 5, 16–28, 30–33, 35–38, 40, 42–47, 58, 64, 66, 77, 82, 84, 85, and 96 (headless scope) complete;
+60/100 incomplete — precise headed-blocker classification lives in
+"Owner deferral / environment blocker (2026-09-11)" above and is authoritative.
+Tasks 1, 2, 4, 5, 16–28, 30–33, 35–38, 40, 42–47, 58, 64, 66, 77, 82, 84, 85, and 96 (headless scope) complete;
 task 3 and baseline tasks 6–15 (plus 91–95) are blocked on a headed hardware-WebGL reference
 host. The governor/worker production-wiring tasks (33, 34, 39, 41–44, 47–57, 59, 60) and hot-path
 sections G–J remain open pending headed profiling proof.
@@ -186,11 +204,50 @@ sections G–J remain open pending headed profiling proof.
 - Runner `canonical-perf-run.mjs` now also gates on render distance (6) and DPR range [1,2],
   mirroring `CanonicalRunGate` under MUST-match comments.
 
+## Owner deferral / environment blocker (2026-09-11, Michael via Minecraft Clone Dev)
+
+The owner formally deferred headed hardware-WebGL certification for Change 258 on
+2026-09-11 and authorized moving on to whatever else is still allowed. No headed GPU
+evidence is faked and no GPU host is waited for. This section is the durable record.
+
+- Host: Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL
+  (`ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)),
+  SwiftShader driver)`), no `/dev/dri`, no `nvidia-smi`. Re-probed 2026-09-11 this session:
+  unchanged. Headless/SwiftShader evidence cannot substitute for canonical headed proof.
+- Strictly headed-hardware-WebGL-blocked tasks (require a headed production run to even
+  execute; left unchecked, NOT passed): 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 29, 34,
+  91, 92, 93, 94, 95, 97, 98.
+  - 3: reference host/browser/GPU/renderer/viewport/DPR/refresh/quality metadata.
+  - 6–15: unmodified-candidate headed baselines (stationary, fresh/cached traversal,
+    interaction, entities/day-night) with frame/queue/worker metrics, screenshots, traces.
+  - 29: actual production build at default desktop quality.
+  - 34: three samples/scenario with median plus worst relevant percentile.
+  - 91–95: final FPS/resource certification gates.
+  - 97–98: final screenshot/behavior comparison and before/after metrics record.
+- Headed-profiling-gated tasks (no production retune without headed proof; left unchecked,
+  NOT passed): 39, 41, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 59, 60, 61, 62, 63, 65,
+  67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 78, 79, 80, 81, 83, 86, 87, 88, 89, 90.
+- Process-closure tasks blocked by the above (left unchecked): 99, 100.
+- Completed: 40/100 environment-independent tasks (1, 2, 4, 5, 16–28, 30–33, 35–38, 40,
+  42–47, 58, 64, 66, 77, 82, 84, 85, 96-headless). Production default remains sync
+  meshing; no quality retune; no default presentation change.
+- GPU-only task checkboxes are intentionally left unchecked. Partial work receives no
+  checkbox credit per the checkbox rule; environment-blocked tasks are NOT marked `[x]`.
+- Owner explicitly deferred headed certification on 2026-09-11 and authorized moving on
+  to production-readiness / ship-hygiene work that does not require headed GPU. Change 258
+  is therefore formally BLOCKED (not ACTIVE waiting forever), and no higher-numbered
+  content campaign may activate as if 258 were VERIFIED.
+
 ## Advancement Exception
 
-Not applicable. Canonical headed performance requirements cannot be excepted.
+Not applicable. Canonical headed performance requirements cannot be excepted, and no
+exception is claimed: the change is BLOCKED by owner deferral, not advanced.
 
 ## Final decision
 
-NOT VERIFIED. Change 257 is VERIFIED; implementation is blocked on the canonical headed
-hardware-WebGL baseline required before production performance changes.
+BLOCKED. Change 257 is VERIFIED; 001–257 VERIFIED. The game is shippable with known
+performance-certification debt: 40/100 environment-independent 258 tasks landed and
+headless-verified, production default unchanged (sync meshing, no quality retune), and the
+remaining 60/100 tasks require a hardware-WebGL host. Resume order on such a host:
+task 3 → tasks 6–15 → task 29/34 → governor/worker wiring with headed proof → 91–95 →
+97–100 (see `docs/258-headed-resume.md`).
