@@ -44,11 +44,6 @@ Advancement allowed: true
 | test:e2e enchanting.spec (T12/T13) | PASS | 2/2 standalone (incl. selection-void step, 39.6s re-run) AND 2/2 inside full suite |
 | test:e2e full suite (T16) | PASS | `npm run test:e2e`: 64/64 PASS (28.4m), zero regressions; slow files memory-stress 15.1m / visual 6.5m as before |
 | PARITY_MATRIX C259 (T14/T17) | PASS | C259 exact/VERIFIED row + summary (exact 242, total 255, change-split 241/4/5/3=253); `validate-state` PASSED |
-| typecheck (T15) | PENDING | |
-| lint (T15) | PENDING | |
-| unit incl. guard+furnace suites (T15) | PENDING | |
-| build (T15) | PENDING | |
-| test:e2e incl. enchanting.spec (T16) | PENDING | |
 
 ## Edge/adversarial validation
 
