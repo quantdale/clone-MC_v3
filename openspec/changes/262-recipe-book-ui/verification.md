@@ -21,7 +21,7 @@ Advancement allowed: true
 | Full regression (T11) | typecheck 0 errors / lint 0 errors / unit 406 files 4842+1 / build 2.34s / file-audit 2705 / validate-state (rerun at gate) | DONE (validate-state rerun at T13) |
 | Full E2E (T12) | `npm run test:e2e` PASS 71/71 (28.5m, single worker) incl. 2 recipebook specs; `test-results/.last-run.json` {"status":"passed","failedTests":[]} | DONE |
 | Reconciliation (T13) | C262 matrix row exact + summary counts + note VERIFIED; docs drift fixed (always-enabled Craft, spawn-kit discovery, RecipeBookView module, no new E2E seam); state checkpoint; `validate-state` PASS | DONE |
-| Publish (T14) | commit + push to `origin/main` + remote-head verify | PENDING (next) |
+| Publish (T14) | commit `b165042` pushed to `origin/main` (`c9ae063..b165042`), remote head verified equal to local; residual checkpoint carries localHead sync | DONE |
 
 ## Commands
 
@@ -54,8 +54,8 @@ None observed. Touch-set discipline: Game/storage/shell/panel/tests only;
 
 ## Incomplete tasks
 
-T14 publish only (13/14). Next exact action: T14 commit, push to
-`origin/main`, verify remote head, report SHAs.
+None (14/14). Session range `c9ae063..b165042` published to `origin/main`;
+next exact action: resume 258 headed tasks only on a hardware-WebGL host.
 
 ## Advancement Exception
 

@@ -15,9 +15,9 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "c9ae063c6ceeec6e5fe66bb0f83d8099f6093e2b",
-  "localHead": "c9ae063c6ceeec6e5fe66bb0f83d8099f6093e2b",
+  "localHead": "b16504238e5ff533147d935c9dda12283d08434e",
   "lastCompletedTask": "Change 262-recipe-book-ui VERIFIED 14/14 (2026-09-11): in-game recipe book UI over the 204 RecipeBook (known-only search, layoutRecipe preview, transactional craft, __recipebook__ persistence, R1+R2 unlocks), proven via unit 39 new + browser E2E open-search-select-craft-reload-preserves + lifecycle; full gates green (typecheck/lint 0 errors/unit 4842+1/build/e2e 71/71/file-audit 2705); 258 untouched and BLOCKED, 259/260/261 untouched and VERIFIED",
-  "nextExactAction": "262 T14: commit the session range, push to origin/main, verify remote head equals published_head, report SHAs (14/14 VERIFIED; 258 BLOCKED, 259/260/261 VERIFIED)",
+  "nextExactAction": "Resume 258 headed tasks only on a hardware-WebGL host when available (262 VERIFIED 14/14 published as b165042; 259/260/261 VERIFIED; 258 remains BLOCKED/resumable)",
 
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. 001-257 VERIFIED; game shippable with known performance-certification debt. The 259 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
