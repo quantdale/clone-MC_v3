@@ -71,6 +71,11 @@ import {
   deserializeRecipeBook,
   type RecipeBookState,
 } from '../inventory/RecipeBook';
+import {
+  deserializeAdvancementSave,
+  type AdvancementProgress,
+} from '../simulation/AdvancementSave';
+import { coreProgressionAdvancements } from '../simulation/CoreProgressionAdvancements';
 
 /**
  * Composite key for a 2D chunk (worldId|chunkX|chunkZ). Mirrors the key shape used by
@@ -305,6 +310,7 @@ export class GamePersistence implements WorldEditDurability {
   private initialGameRulesValue: GameRuleStore | null = null;
   /** Validated recipe book bulk-loaded at open() (262; null when absent or corrupt). */
   private initialRecipeBookValue: RecipeBookState | null = null;
+  private initialAdvancementsValue: AdvancementProgress[] | null = null;
   private initialColumnsValue: SerializedChunkColumn[] = [];
   /** World generation baseline compatibility classification. */
   private generationBaselineValue: WorldGenerationBaseline = 'current';
@@ -650,6 +656,19 @@ export class GamePersistence implements WorldEditDurability {
         this.initialRecipeBookValue = null;
         this.recordError(`load recipebook: ${errorMessage(e)}`);
       }
+      // 263 hydration: advancement payload stored via raw advancement data.
+      // Absent stays null (Game boots default progress); corrupt payloads
+      // degrade to null with a recorded error so boot continues on defaults.
+      // Validation is the strict catalog-aware batch deserializer (R-4).
+      try {
+        const raw = await this.metadata.getAdvancementData(this.worldIdValue);
+        if (raw !== null) {
+          this.initialAdvancementsValue = deserializeAdvancementSave(raw, coreProgressionAdvancements());
+        }
+      } catch (e) {
+        this.initialAdvancementsValue = null;
+        this.recordError(`load advancements: ${errorMessage(e)}`);
+      }
     }
 
     // 5.5 Authoritative startup compatibility decision (257). Computed after the
@@ -725,6 +744,7 @@ export class GamePersistence implements WorldEditDurability {
       this.initialWithersValue = [];
       this.initialGameRulesValue = null;
       this.initialRecipeBookValue = null;
+      this.initialAdvancementsValue = null;
       this.initialColumnsValue = [];
     }
     this.opened = true;
@@ -779,6 +799,7 @@ export class GamePersistence implements WorldEditDurability {
       witherData: unknown[] | null;
       gameruleData: unknown | null;
       recipeBookData: unknown | null;
+      advancementData: unknown | null;
       columns: SerializedChunkColumn[];
       edits: Array<{ chunkX: number; chunkY: number; chunkZ: number; changes: Array<[number, number]> }>;
       playerState: PlayerStateRecord | null;
@@ -790,6 +811,7 @@ export class GamePersistence implements WorldEditDurability {
       const witherData = await this.metadata.getWitherData(worldId);
       const gameruleData = await this.metadata.getGameRuleData(worldId);
       const recipeBookData = await this.metadata.getRecipeBookData(worldId);
+      const advancementData = await this.metadata.getAdvancementData(worldId);
       const columns = await this.chunkSections.listColumns(worldId);
       const editRecords = await this.chunkEdits.listChunkEdits(worldId);
       const playerState = await this.playerStates.getPlayerState(worldId);
@@ -800,6 +822,7 @@ export class GamePersistence implements WorldEditDurability {
         witherData,
         gameruleData,
         recipeBookData,
+        advancementData,
         columns: [...columns],
         edits: editRecords.map((r) => ({ chunkX: r.chunkX, chunkY: r.chunkY, chunkZ: r.chunkZ, changes: [...r.changes] })),
         playerState,
@@ -845,6 +868,8 @@ export class GamePersistence implements WorldEditDurability {
         await awaitRequest(metaStore.delete(`__gamerules__:${worldId}`));
         // 2c. Raw recipe-book record (262; separate key in the same metadata store).
         await awaitRequest(metaStore.delete(`__recipebook__:${worldId}`));
+        // 2d. Raw advancement record (263; separate key in the same metadata store).
+        await awaitRequest(metaStore.delete(`__advancements__:${worldId}`));
         // 3. Every chunk column for this world. Key shape: `${worldId}|${cx}|${cz}`.
         for (const column of snapshot!.columns) {
           await awaitRequest(csStore.delete(worldChunkKey(worldId, column.chunkX, column.chunkZ)));
@@ -878,6 +903,7 @@ export class GamePersistence implements WorldEditDurability {
         if (snapshot!.witherData !== null) await this.metadata.putWitherData(worldId, snapshot!.witherData);
         if (snapshot!.gameruleData !== null) await this.metadata.putGameRuleData(worldId, snapshot!.gameruleData);
         if (snapshot!.recipeBookData !== null) await this.metadata.putRecipeBookData(worldId, snapshot!.recipeBookData);
+        if (snapshot!.advancementData !== null) await this.metadata.putAdvancementData(worldId, snapshot!.advancementData);
         for (const col of snapshot!.columns) await this.chunkSections.putColumn(worldId, col);
         for (const rec of snapshot!.edits) await this.chunkEdits.putChunkEdits(worldId, rec.chunkX, rec.chunkY, rec.chunkZ, rec.changes);
         if (snapshot!.playerState) await this.playerStates.putPlayerState(snapshot!.playerState);
@@ -1191,6 +1217,11 @@ export class GamePersistence implements WorldEditDurability {
     return this.initialRecipeBookValue;
   }
 
+  /** Validated advancement progress bulk-loaded at `open()` (263; null when absent or corrupt). */
+  get initialAdvancements(): AdvancementProgress[] | null {
+    return this.initialAdvancementsValue;
+  }
+
   /** Bulk-loaded persisted canonical columns for this world. */
   get initialColumns(): SerializedChunkColumn[] {
     return this.initialColumnsValue;
@@ -1219,6 +1250,12 @@ export class GamePersistence implements WorldEditDurability {
   saveWithers(payload: unknown[]): void {
     if (this.disposed || this.resetCompleted) return;
     void this.metadata.putWitherData(this.worldIdValue, payload).catch((e) => this.recordError(`save withers: ${errorMessage(e)}`));
+  }
+
+  /** Persist the advancement payload via raw advancement data (263). */
+  saveAdvancements(payload: unknown): void {
+    if (this.disposed || this.resetCompleted) return;
+    void this.metadata.putAdvancementData(this.worldIdValue, payload).catch((e) => this.recordError(`save advancements: ${errorMessage(e)}`));
   }
 
   /** Persist the recipe-book payload via raw recipe-book data (262). */

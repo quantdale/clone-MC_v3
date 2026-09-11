@@ -45,6 +45,8 @@ export interface WorldImportReport {
   gameruleDataImported: boolean;
   /** Whether recipe-book data was written (262). */
   recipeBookDataImported: boolean;
+  /** Whether advancement data was written (263). */
+  advancementDataImported: boolean;
 }
 
 /** Exports and imports whole-world archives over the five repositories. */
@@ -112,6 +114,8 @@ export class WorldArchiver {
     const gameruleData = await this.metadata.getGameRuleData(worldId);
     // Recipe-book raw record (262): same fail-closed contract.
     const recipeBookData = await this.metadata.getRecipeBookData(worldId);
+    // Advancement raw record (263): same fail-closed contract.
+    const advancementData = await this.metadata.getAdvancementData(worldId);
 
     return {
       format: 'voxel-world',
@@ -127,6 +131,7 @@ export class WorldArchiver {
       witherData,
       gameruleData,
       recipeBookData,
+      advancementData,
     };
   }
 
@@ -159,6 +164,7 @@ export class WorldArchiver {
       if (valid.witherData !== null && valid.witherData !== undefined) await put("world-metadata", { worldId: `__wither__:${valid.worldId}`, payload: valid.witherData, updatedAt: Date.now() });
       if (valid.gameruleData !== null && valid.gameruleData !== undefined) await put("world-metadata", { worldId: `__gamerules__:${valid.worldId}`, payload: valid.gameruleData, updatedAt: Date.now() });
       if (valid.recipeBookData !== null && valid.recipeBookData !== undefined) await put("world-metadata", { worldId: `__recipebook__:${valid.worldId}`, payload: valid.recipeBookData, updatedAt: Date.now() });
+      if (valid.advancementData !== null && valid.advancementData !== undefined) await put("world-metadata", { worldId: `__advancements__:${valid.worldId}`, payload: valid.advancementData, updatedAt: Date.now() });
       if (valid.playerState) await put("player-state", valid.playerState);
     });
 
@@ -173,6 +179,7 @@ export class WorldArchiver {
       witherDataImported: valid.witherData !== null,
       gameruleDataImported: valid.gameruleData !== null && valid.gameruleData !== undefined,
       recipeBookDataImported: valid.recipeBookData !== null && valid.recipeBookData !== undefined,
+      advancementDataImported: valid.advancementData !== null && valid.advancementData !== undefined,
     };
   }
 }

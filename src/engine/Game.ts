@@ -154,6 +154,19 @@ import type { ItemStack } from '../inventory/Inventory';
 import { EnchantingPanel, formatEnchantLevel, prettifyEnchantmentKey } from '../ui/EnchantingPanel';
 import { GameRulePanel } from '../ui/GameRulePanel';
 import { RecipeBookPanel } from '../ui/RecipeBookPanel';
+import { AdvancementPanel } from '../ui/AdvancementPanel';
+import {
+  applyTriggerToProgresses,
+  createDefaultAdvancementProgresses,
+  serializeAdvancementSave,
+  type AdvancementProgress,
+} from '../simulation/AdvancementSave';
+import { coreProgressionAdvancements } from '../simulation/CoreProgressionAdvancements';
+import {
+  describeAdvancements,
+  type AdvancementRowView,
+} from '../simulation/AdvancementView';
+import type { AdvancementCriterion } from '../simulation/AdvancementFramework';
 import { CraftingSystem } from '../inventory/Crafting';
 import {
   createDefaultRecipeBook,
@@ -330,6 +343,12 @@ export class Game {
   private readonly recipeRegistry: RecipeRegistry;
   /** Transactional one-click craft engine for the book (262, shares inventory). */
   private readonly recipeBookSystem: CraftingSystem;
+  /** Whether the advancements screen is open (263). */
+  private advancementOpen = false;
+  /** DOM controller for the live advancements screen (263). */
+  private readonly advancementPanel: AdvancementPanel;
+  /** Authoritative advancement progress (263): validated persisted payload or defaults, catalog order. */
+  private advancements: AdvancementProgress[];
   /** Registry key of the Fire block, resolved once for the doFireTick gate (261). */
   private readonly fireBlockKey: string;
   /** Monotonic simulation tick counter driving random-tick seeding. */
@@ -812,6 +831,21 @@ export class Game {
         }
       }).catch(() => undefined);
     }
+    // 263 advancements: validated persisted progress when present, default
+    // (all-unachieved) progress otherwise. Same late-load parity as above.
+    this.advancements =
+      this.persistenceImpl?.initialAdvancements ??
+      createDefaultAdvancementProgresses(coreProgressionAdvancements());
+    if (this.selfOpenPromise !== null) {
+      void this.selfOpenPromise.then(() => {
+        if (this.disposed) return;
+        const late = this.persistenceImpl?.initialAdvancements;
+        if (late) {
+          this.advancements = late;
+          if (this.advancementOpen) this.advancementPanel.render();
+        }
+      }).catch(() => undefined);
+    }
 
     this.player = new Player();
     // Startup compatibility decision (257): for an injected (already open)
@@ -1049,6 +1083,15 @@ export class Game {
     // closes first (one-container rule) when the book opens.
     const recipeBookOpenBtn = document.getElementById('crafting-recipebook-open');
     recipeBookOpenBtn?.addEventListener('click', () => this.openRecipeBook());
+    // Live advancements screen (263): a pure view over the progress store.
+    this.advancementPanel = new AdvancementPanel(this.requireElement('advancements'), {
+      listRows: () => this.getAdvancementRows(),
+      onClose: () => this.closeAdvancements(),
+    });
+    // HUD button opens the advancements for mouse/touch players (263,
+    // gamerule-chip precedent).
+    const advancementsOpenBtn = document.getElementById('advancements-open');
+    advancementsOpenBtn?.addEventListener('click', () => this.openAdvancements());
 
     // Fixed-tick ownership (044): the driver turns frame deltas into bounded,
     // deterministic 20 TPS ticks; the tick body enforces the simulation order.
@@ -1155,6 +1198,9 @@ export class Game {
     // The recipe book owns no transient state either (262: pure view over
     // the already-persisted known set) — close it before the persist flush.
     this.closeRecipeBook();
+    // The advancements panel owns no transient state either (263: pure view
+    // over the already-persisted progress) — close it before the persist flush.
+    this.closeAdvancements();
     this.savePlayerStateDurable();
     this.saveWithers();
     this.saveTimer = 0;
@@ -1400,6 +1446,7 @@ export class Game {
       !this.enchantingOpen &&
       !this.gameruleOpen &&
       !this.recipeBookOpen &&
+      !this.advancementOpen &&
       (this.pointerLocked || this.hasControllerInput(deviceFrame));
 
     // Pause/resume mapping (044): while inactive the driver's time anchor keeps
@@ -1495,6 +1542,9 @@ export class Game {
       } else if (this.recipeBookOpen) {
         // Same rule for the recipe book screen (262).
         this.closeRecipeBook();
+      } else if (this.advancementOpen) {
+        // Same rule for the advancements screen (263).
+        this.closeAdvancements();
       } else if (this.craftingOpen) {
         this.closeCrafting();
       } else {
@@ -1544,6 +1594,11 @@ export class Game {
     // and selection live while open (inventory may change under E2E grants).
     if (this.recipeBookOpen) {
       this.recipeBookPanel.render();
+    }
+    // Advancements upkeep (263): no position to track either; keep the rows
+    // live while open (triggers may fire from play while the panel is up).
+    if (this.advancementOpen) {
+      this.advancementPanel.render();
     }
     // Enchanting session upkeep (259): a voided session, a destroyed table,
     // or walking away closes the panel; otherwise keep offers live.
@@ -1624,7 +1679,13 @@ export class Game {
       px,
       py,
       pz,
-      (id, count) => this.inventory.addItem(id, count),
+      (id, count) => {
+        const left = this.inventory.addItem(id, count);
+        // Advancement obtain wiring (263): items that actually entered the
+        // inventory fire the obtain trigger; unknown ids skip silently.
+        if (count - left > 0) this.noteItemObtained(id);
+        return left;
+      },
     );
     if (collected > 0) this.hotbar.render();
     this.xpOrbs.tickItemEntities(dt, px, py, pz, this.experience);
@@ -2222,6 +2283,10 @@ export class Game {
         // Same rule for the recipe book screen (262).
         this.closeRecipeBook();
       }
+      if (this.advancementOpen) {
+        // Same rule for the advancements screen (263).
+        this.closeAdvancements();
+      }
       this.hideOverlay();
       // The HUD/crosshair only appear once the world is ready (see update()).
       if (!this.loadingShown) {
@@ -2229,7 +2294,7 @@ export class Game {
         this.hud.show();
         this.hotbar.show();
       }
-    } else if (!this.craftingOpen && !this.furnaceOpen && !this.brewingOpen && !this.enchantingOpen && !this.gameruleOpen && !this.recipeBookOpen) {
+    } else if (!this.craftingOpen && !this.furnaceOpen && !this.brewingOpen && !this.enchantingOpen && !this.gameruleOpen && !this.recipeBookOpen && !this.advancementOpen) {
       // Unlock caused by OPENING a container session must not stack the pause
       // overlay behind/on the open panel; the panel itself represents the
       // paused state and its owner re-shows the overlay on close (251).
@@ -2289,6 +2354,7 @@ export class Game {
     if (this.craftingOpen) return;
     if (this.gameruleOpen) this.closeGamerule();
     if (this.recipeBookOpen) this.closeRecipeBook();
+    if (this.advancementOpen) this.closeAdvancements();
     this.craftingOpen = true;
     this.input.releasePointerLock();
     this.hideOverlay();
@@ -2312,6 +2378,9 @@ export class Game {
   private onCrafted(recipe: CraftingRecipe): void {
     // R1 craft-output unlock (262): a successful craft teaches the recipe.
     const learned = this.unlockRecipeBookKey(recipe.id);
+    // Advancement obtain wiring (263): the crafted output counts as obtaining
+    // the item (completion toasts through the fan-out below).
+    this.noteItemObtained(recipe.output);
     this.hud.setSelectedName(learned ? `Crafted ${recipe.name}. Learned ${recipe.name}.` : `Crafted ${recipe.name}`);
     this.hotbar.render();
     this.audio.play('craft');
@@ -2611,6 +2680,7 @@ export class Game {
       !this.enchantingOpen &&
       !this.gameruleOpen &&
       !this.recipeBookOpen &&
+      !this.advancementOpen &&
       !this.contextLost &&
       this.errorEl.classList.contains('hidden')
     ) {
@@ -2749,6 +2819,7 @@ export class Game {
     if (this.enchantingOpen) this.closeEnchanting();
     if (this.gameruleOpen) this.closeGamerule();
     if (this.recipeBookOpen) this.closeRecipeBook();
+    if (this.advancementOpen) this.closeAdvancements();
     this.brewingOpen = true;
     this.brewingPos = { x, y, z };
     this.input.releasePointerLock();
@@ -2887,6 +2958,7 @@ export class Game {
     if (this.enchantingOpen) this.closeEnchanting();
     if (this.gameruleOpen) this.closeGamerule();
     if (this.recipeBookOpen) this.closeRecipeBook();
+    if (this.advancementOpen) this.closeAdvancements();
     this.furnaceOpen = true;
     this.furnacePos = { x, y, z };
     this.input.releasePointerLock();
@@ -3345,6 +3417,7 @@ export class Game {
     if (this.craftingOpen) this.closeCrafting();
     if (this.gameruleOpen) this.closeGamerule();
     if (this.recipeBookOpen) this.closeRecipeBook();
+    if (this.advancementOpen) this.closeAdvancements();
     const bookShelves = this.countBookshelves(px, py, pz);
     this.enchantingSession = createSession({
       stack: held,
@@ -3420,6 +3493,7 @@ export class Game {
     if (this.enchantingOpen) this.closeEnchanting();
     if (this.craftingOpen) this.closeCrafting();
     if (this.recipeBookOpen) this.closeRecipeBook();
+    if (this.advancementOpen) this.closeAdvancements();
     this.gameruleOpen = true;
     this.input.releasePointerLock();
     this.hideOverlay();
@@ -3541,6 +3615,9 @@ export class Game {
     this.hotbar.render();
     this.audio.play('craft');
     this.craftingPanel.render(this.itemRegistry);
+    // Advancement obtain wiring (263): the recipe-book craft path bypasses
+    // onCrafted, so it fires the obtain trigger on its own success branch.
+    this.noteItemObtained(crafted.output);
     if (this.recipeBookOpen) this.recipeBookPanel.render();
     return true;
   }
@@ -3569,6 +3646,7 @@ export class Game {
     if (this.brewingOpen) this.closeBrewing();
     if (this.enchantingOpen) this.closeEnchanting();
     if (this.gameruleOpen) this.closeGamerule();
+    if (this.advancementOpen) this.closeAdvancements();
     if (this.craftingOpen) this.closeCrafting();
     const before = this.recipeBook.known.length;
     const grown = unlockRecipes(
@@ -3611,6 +3689,98 @@ export class Game {
   /** Whether the recipe book screen is open (E2E observability). */
   isRecipeBookOpen(): boolean {
     return this.recipeBookOpen;
+  }
+
+  /**
+   * Fire one advancement trigger across the catalog at the current tick
+   * (263). Total: a non-matching (or malformed) trigger returns [] with the
+   * store identical and no persistence write. When anything changed, the new
+   * store persists via `saveAdvancements`, each newly-completed definition
+   * toasts `Advancement made: <title>` exactly once, and the open panel
+   * re-renders. Returns the newly-completed definition keys in catalog order.
+   * This is the product seam for dimension/boss/kill sources (no live
+   * single-player producers exist yet) and the E2E harness entry point.
+   */
+  fireAdvancementTrigger(trigger: AdvancementCriterion): string[] {
+    const catalog = coreProgressionAdvancements();
+    const { progresses, completedKeys } = applyTriggerToProgresses(
+      this.advancements,
+      catalog,
+      trigger,
+      this.simTick,
+    );
+    if (progresses === this.advancements) return completedKeys;
+    this.advancements = progresses;
+    this.persistenceImpl?.saveAdvancements(serializeAdvancementSave(progresses));
+    for (const key of completedKeys) {
+      const def = catalog.find((d) => d.key === key);
+      if (def) this.showToast(`Advancement made: ${def.title}`);
+    }
+    if (this.advancementOpen) this.advancementPanel.render();
+    return completedKeys;
+  }
+
+  /**
+   * Note that the numeric item `id` entered the inventory (263): resolve its
+   * registry string key and fire the obtain trigger through the shared seam.
+   * Unknown ids skip silently (registry drift can never break pickup/craft).
+   * Returns the newly-completed definition keys.
+   */
+  private noteItemObtained(numericId: number): string[] {
+    const key = this.itemRegistry.getByLegacyId(numericId)?.key;
+    if (typeof key !== 'string' || key.length === 0) return [];
+    return this.fireAdvancementTrigger({ type: 'obtain_item', itemKey: key });
+  }
+
+  /** The live advancement rows the panel renders (E2E observability). */
+  getAdvancementRows(): AdvancementRowView[] {
+    return describeAdvancements(coreProgressionAdvancements(), this.advancements);
+  }
+
+  /**
+   * Open the advancements screen (263). Closes any other container first:
+   * one container at a time (251/259/260/261/262 parity). The panel is a
+   * pure view over the progress store; the status line narrates the totals.
+   */
+  private openAdvancements(): void {
+    if (this.advancementOpen) return;
+    if (this.furnaceOpen) this.closeFurnace();
+    if (this.brewingOpen) this.closeBrewing();
+    if (this.enchantingOpen) this.closeEnchanting();
+    if (this.gameruleOpen) this.closeGamerule();
+    if (this.recipeBookOpen) this.closeRecipeBook();
+    if (this.craftingOpen) this.closeCrafting();
+    this.advancementOpen = true;
+    this.input.releasePointerLock();
+    this.hideOverlay();
+    this.crosshair.hide();
+    this.hud.hide();
+    this.hotbar.hide();
+    this.setBreakProgress(0);
+    this.interaction.clearTarget();
+    this.advancementPanel.show();
+    this.advancementPanel.render();
+    const done = this.advancements.filter((p) => p.achieved).length;
+    this.advancementPanel.setStatus(
+      `${this.advancements.length} advancements, ${done} complete.`,
+    );
+  }
+
+  /**
+   * Close the advancements screen. The panel owns no progress state (the
+   * store is already persisted), so hiding it plus returning the overlay is
+   * the whole settle.
+   */
+  private closeAdvancements(): void {
+    if (!this.advancementOpen) return;
+    this.advancementOpen = false;
+    this.advancementPanel.hide();
+    this.showOverlay('Click to play');
+  }
+
+  /** Whether the advancements screen is open (E2E observability). */
+  isAdvancementOpen(): boolean {
+    return this.advancementOpen;
   }
 
   /**
@@ -3870,6 +4040,7 @@ export class Game {
     this.closeEnchanting();
     this.closeGamerule();
     this.closeRecipeBook();
+    this.closeAdvancements();
     if (this.craftingOpen) {
       this.closeCrafting();
     }

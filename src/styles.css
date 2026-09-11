@@ -51,6 +51,7 @@ body {
 #enchanting.hidden,
 #gamerule.hidden,
 #recipebook.hidden,
+#advancements.hidden,
 #break-progress.hidden,
 #toast.hidden,
 #debug-overlay.hidden {
@@ -967,4 +968,60 @@ body {
 .recovery-btn-danger:hover {
   background: #c0392b;
   color: #fff;
+}
+.advancement-list {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+.advancement-row {
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 6px;
+  background: rgba(30, 60, 100, 0.55);
+  color: #fff;
+  font-size: 13px;
+}
+.advancement-row.completed {
+  background: rgba(50, 110, 70, 0.6);
+}
+.advancement-title {
+  font-weight: bold;
+}
+.advancement-description {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12px;
+  margin: 2px 0;
+}
+.advancement-progress {
+  font-size: 12px;
+  font-family: 'Consolas', 'Menlo', monospace;
+}
+.advancement-empty {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  text-align: center;
+}
+.advancement-status {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  text-align: center;
+  margin: 4px 0 0;
+}
+/* Advancements screen (263) — reuses the crafting panel chrome; original styling. */
+#advancements {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  background: rgba(3, 10, 17, 0.36);
+}
+#advancements-open {
+  cursor: pointer;
+  /* The .ui HUD container is pointer-events:none; re-enable for the button. */
+  pointer-events: auto;
+  top: 44px;
+  right: 8px;
 }

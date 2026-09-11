@@ -11,6 +11,8 @@
  * v2 archives without it validate and import with null gamerules.
  * Change 262 adds an optional `recipeBookData` field (missing reads as null); v1 and
  * v2 archives without it validate and import with a null (empty) recipe book.
+ * Change 263 adds an optional `advancementData` field (missing reads as null); v1 and
+ * v2 archives without it validate and import with null (default) advancement progress.
  */
 import type { WorldMetadata } from './WorldMetadata';
 import { validateWorldMetadata } from './WorldMetadata';
@@ -88,6 +90,12 @@ export interface WorldArchive {
    * field (v1, or v2 written before 262) validate and import as null.
    */
   recipeBookData?: unknown | null;
+  /**
+   * Raw advancement payload stored under __advancements__:${worldId}, or null
+   * when absent (263). OPTIONAL for backward compatibility: archives without
+   * this field (v1, or v2 written before 263) validate and import as null.
+   */
+  advancementData?: unknown | null;
 }
 
 function isFiniteNumber(v: unknown): v is number {
@@ -251,6 +259,17 @@ export function validateWorldArchive(input: unknown): WorldArchive {
     recipeBookData = r.recipeBookData;
   }
 
+  // 263: optional in every version; missing/null reads as null. A present value
+  // must be a plain object payload (the raw AdvancementSave envelope is
+  // validated again at load by `deserializeAdvancementSave`, never trusted blindly).
+  let advancementData: unknown | null = null;
+  if (r.advancementData !== null && r.advancementData !== undefined) {
+    if (typeof r.advancementData !== 'object' || Array.isArray(r.advancementData)) {
+      throw new Error('WorldArchive: advancementData must be an object or null');
+    }
+    advancementData = r.advancementData;
+  }
+
   return {
     format: WORLD_ARCHIVE_FORMAT as 'voxel-world',
     version: 2 as const,
@@ -265,5 +284,6 @@ export function validateWorldArchive(input: unknown): WorldArchive {
     witherData,
     gameruleData,
     recipeBookData,
+    advancementData,
   };
 }

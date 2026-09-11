@@ -159,3 +159,29 @@ stand **VERIFIED**.
   craftable-discovery unlock triggers.
 - Change 258 remains recorded BLOCKED and resumable on a hardware-WebGL host;
   the 262 track does not consume, waive, or re-litigate any 258 headed task.
+
+## 263 activation alongside BLOCKED 258 — owner-authorized parallel track (2026-09-11)
+
+The product owner (Standing owner order, 2026-09-11 campaign instruction) authorized
+activating and implementing OpenSpec change **263-advancement-panel-ui** while
+Change **258-real-world-runtime-performance-fps-recovery** remains **BLOCKED**
+(headed hardware-WebGL certification deferred) and Changes **259-enchanting-panel-ui**,
+**260-live-brewing-stand-production-integration**, **261-gamerule-settings-ui**, and
+**262-recipe-book-ui** stand **VERIFIED**.
+
+- Change 258 status stays **BLOCKED** at 40/100 with its existing deferral intact.
+  No headed FPS work is touched, no GPU evidence is faked, and 258 MUST NOT be
+  marked VERIFIED by the 263 track.
+- Changes 259 (18/18), 260 (19/19), 261 (16/16), and 262 (14/14) stand
+  **VERIFIED** and MUST NOT be reopened unless an advancement regression blocks
+  the 263 player loop.
+- Change 263 (`263-advancement-panel-ui`) is the sole **ACTIVE** implementation
+  change: an in-game advancements panel UI over the existing headless
+  `AdvancementFramework` (185) + `CoreProgressionAdvancements` (186), with live
+  trigger wiring into Game play (item-obtain choke points plus a typed trigger
+  seam for dimension/boss/kill sources), world-scoped `__advancements__`
+  persistence with degrade-to-defaults, toast-on-completion, and a hardened
+  catalog-aware batch deserializer closing the R-4 advancement-half
+  under-validation debt (duplicate/unknown/inconsistent payloads fail closed).
+- Change 258 remains recorded BLOCKED and resumable on a hardware-WebGL host;
+  the 263 track does not consume, waive, or re-litigate any 258 headed task.
