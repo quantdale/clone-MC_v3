@@ -126,7 +126,5 @@ enchanting (259) shell/lifecycle patterns are reused.
   Evidence: exact outputs in verification.md.
 - [x] **T16.** Full E2E: `npm run test:e2e` 66/66 PASS (25.8m, single worker) incl. 2 brewing specs (journey + lifecycle); zero regressions; `test-results/.last-run.json` {"status":"passed","failedTests":[]}. Slow files memory-stress 12.6m / visual 7.0m as before; no flakes requiring isolation.
 - [x] **T17.** Reconciliation + state: artifacts re-read vs implementation — drift fixed (design 106-untouched claim → T7b carry rules; affected-files list incl. AtlasGrid/WorkerMeshing/MenuTransaction/BrewingRecipes; fingerprint re-pin → verified-unchanged; spec BREW-9.2 + proposal likewise; 1 typo); C260 matrix row exact + summary (exact 243, total 256) + brewing note flipped to VERIFIED; `PROGRAM_STATE.json`/`.md` checkpoint (19/19 100%, heads `a1a734c`, 258 BLOCKED blocker kept); `validate-state` PASS.
-- [ ] **T18.** Publish: commit coherent session work, push to `origin/main`,
-  verify remote head, record `published_head`; final report (SHAs, status,
-  completion, validations, blockers, next action). Do NOT mark 258 VERIFIED;
+- [x] **T18.** Publish: committed as `0e1e72f`, pushed to `origin/main`, remote head verified (`0e1e72f`), `published_head` recorded; final report (SHAs, status, completion, validations, blockers, next action). 258 NOT marked VERIFIED; no headed FPS work; 259 NOT reopened. Do NOT mark 258 VERIFIED;
   do NOT touch headed FPS work; do NOT reopen 259.
