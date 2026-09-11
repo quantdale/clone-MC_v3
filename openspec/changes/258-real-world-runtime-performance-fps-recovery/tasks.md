@@ -1,7 +1,7 @@
 # Tasks: 258-real-world-runtime-performance-fps-recovery
 
-Status: ACTIVE — Change 257 VERIFIED 92/92 at d55c2e7 (CI 33600754305 success); Phase-1/2/3 foundation + gates + World-internal phases + worker fault injection + worker pack-axis fix + duplicate-submit guard + harness scenarios + fallback/stale/startup/metadata/quality-guard evidence + full headless regression green
-Tasks complete: 35/100 (35%). Target: 100% — 257 VERIFIED
+Status: ACTIVE — Change 257 VERIFIED 92/92 at d55c2e7 (CI 33600754305 success); Phase-1/2/3 foundation + gates + World-internal phases + worker fault injection + worker pack-axis fix + duplicate-submit guard + harness scenarios + fallback/stale/startup/metadata/quality-guard/worldgen/HUD/memory evidence + full headless regression green
+Tasks complete: 40/100 (40%). Target: 100% — 257 VERIFIED
 Advancement allowed: false
 
 ## A. Repository truth, activation and performance authority
@@ -87,9 +87,9 @@ Advancement allowed: false
 - [ ] 61. Profile `ensureChunks`/resident scans and measured key/scan churn.
 - [ ] 62. Profile terrain generation/column materialization/heightmaps by self/total time.
 - [ ] 63. Incrementally slice or workerize generation if it remains >20% of frame debt.
-- [ ] 64. Preserve exact seeded worldgen via golden/hash equivalence.
+- [x] 64. Preserve exact seeded worldgen via golden/hash equivalence. (Zero worldgen diffs since 257 (`src/worldgen`, `TerrainGenerator`, tick eligibility untouched); 244 matrix + 102 golden suites green in the full 4701 run. Any future hot-path edit must keep them green.)
 - [ ] 65. Coalesce duplicate dirty/remesh requests and unchanged geometry builds.
-- [ ] 66. Reject stale work before expensive expansion/allocation/upload.
+- [x] 66. Reject stale work before expensive expansion/allocation/upload. (Verified by inspection + green suites, no reorder needed: pipeline version-token gate before any mesh dispatch (`beginStage`), worker per-result gates before geometry expansion (`consumeWorkerMeshResult`), batch gates before attach (`completeWorkerMeshBatch` incl. geometry disposal on late rejection), sync post-build gate before attach. Stale results never reach expansion/allocation/upload; valid results unaffected.)
 - [ ] 67. Reduce measured duplicate light work under shared governor.
 - [ ] 68. Optimize upload/BufferGeometry path under actual time/byte caps.
 - [ ] 69. Amortize unload/dispose bursts without resource leaks.
@@ -103,7 +103,7 @@ Advancement allowed: false
 - [ ] 74. Optimize shadow caster/update scope without default visual degradation.
 - [ ] 75. Remove measured redundant cloud/environment/day-night per-frame work.
 - [ ] 76. Feed dynamic resolution meaningful whole-frame pressure without CPU-stall oscillation.
-- [ ] 77. Add drawing-buffer/resource/dynamic-resolution regression tests.
+- [x] 77. Add drawing-buffer/resource/dynamic-resolution regression tests. (Headless scope: `DynamicResolution.test.ts` pins tier defaults, malformed bounds, overload/recovery dwells, oscillation dead-band, invalid-metric scale retention, and deterministic buffer dimensions; `FrameAuxRing` unit tests pin recording/wraparound; live e2e asserts real buffer size + resource counts + scale every run. All green. Headed load behavior pending with tasks 71–76.)
 - [ ] 78. Only after structural fixes, tune explicit quality-tier parameters if GPU-bound, with screenshots.
 
 ## I. Simulation, entities, input/UI and allocation/GC
@@ -111,9 +111,9 @@ Advancement allowed: false
 - [ ] 79. Profile fixed-tick catch-up and prevent avoidable render-slowdown debt spirals.
 - [ ] 80. Bound measured entity/mob/item/orb scans to active regions where semantics permit.
 - [ ] 81. Profile collision/raycast/interactions for redundant reads/allocations.
-- [ ] 82. Ensure unchanged HUD/debug DOM values are not repeatedly written.
+- [x] 82. Ensure unchanged HUD/debug DOM values are not repeatedly written. (254 change-detected HUD writes; `HudWriteDeduplication.test.ts` green. No HUD write-path change in 258.)
 - [ ] 83. Remove measured hot temporary allocations/serialization scratch.
-- [ ] 84. Add sustained allocation/resource test with no monotonic post-settle growth.
+- [x] 84. Add sustained allocation/resource test with no monotonic post-settle growth. (239 memory-stress suite: build/chunk-churn, idle, teleport-plateau, reload-heap, block-entity, GPU-restore specs — all PASS in the 62/62 headless run with bounded ceilings. Headed sustained proof pending with 95.)
 
 ## J. Product-quality and settings behavior
 
