@@ -74,6 +74,13 @@ export interface PlayerPhysicsOptions {
   frictionForBlock?: (blockId: number) => number;
   /** Whether the player is currently sneaking. Default: never. */
   isSneaking?: () => boolean;
+  /**
+   * Whether the player is flying (265, creative/spectator via 192 `canFly`).
+   * While true gravity, terminal-velocity clamping of falls, and fall-distance
+   * accumulation are skipped (collision integration is unchanged, so landing
+   * and standing still work). Default: never (legacy survival physics).
+   */
+  isFlying?: () => boolean;
   /** Per-block shape overrides consulted before the full-cube default. */
   blockShapes?: BlockShapeTable;
 }
@@ -153,18 +160,23 @@ export class PlayerPhysics {
         ? CONFIG.player.waterTerminalVelocity
         : CONFIG.player.terminalVelocity;
 
+    // Creative flight (265): a flying player keeps the Game-driven vertical
+    // velocity (ascend/descend/hover) with no gravity and no fall accumulation.
+    const flying = this.options.isFlying?.() ?? false;
     // Climbable contact suppresses gravity; vertical motion decays instead so
     // a climb hook can be driven by controller/Game input later.
     const onClimbable = this.probeClimbable(player);
-    if (onClimbable) {
+    if (flying) {
+      player.fallDistance = 0;
+    } else if (onClimbable) {
       player.velocity.y *= Math.max(0, 1 - 8 * d);
     } else {
       player.velocity.y -= gravity * d;
     }
-    if (player.velocity.y < -terminalVelocity) {
+    if (!flying && player.velocity.y < -terminalVelocity) {
       player.velocity.y = -terminalVelocity;
     }
-    if (player.velocity.y < 0 && !onClimbable) {
+    if (!flying && player.velocity.y < 0 && !onClimbable) {
       player.fallDistance += -player.velocity.y * d;
     }
 

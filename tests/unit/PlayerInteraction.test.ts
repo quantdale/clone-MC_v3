@@ -760,6 +760,186 @@ describe('player interaction bone meal (127)', () => {
     interaction.dispose();
   });
 
+describe('player interaction game-mode rules (265)', () => {
+  function aim(player: Player, camera: THREE.PerspectiveCamera): void {
+    camera.position.copy(player.eyePosition);
+    camera.lookAt(10, player.eyePosition.y, player.eyePosition.z);
+    camera.updateMatrixWorld(true);
+  }
+
+  function makeAimed(blockId = BlockId.Stone): {
+    player: Player;
+    camera: THREE.PerspectiveCamera;
+    world: import('../../src/world/WorldAccess').WorldAccess;
+  } {
+    const player = new Player({ position: new THREE.Vector3(0.5, 0, 0.5) });
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 20);
+    aim(player, camera);
+    return { player, camera, world: makeMutableWorld(blockId) };
+  }
+
+  it('places without consuming the held stack when depletion is off (creative)', () => {
+    const { player, camera, world } = makeAimed();
+    let consumed = 0;
+    const actions: string[] = [];
+    const interaction = new PlayerInteraction({
+      world,
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
+      selector: {
+        getSelectedItemId: () => ItemId.Dirt,
+        getSlotCount: () => 5,
+        consumeSelected: () => {
+          consumed++;
+          return true;
+        },
+      },
+      player,
+      camera,
+      input: { ...makeInput({ breakRequested: false, held: false }), consumePlace: () => true },
+      onAction: (action) => actions.push(action),
+      depletesItems: () => false,
+    });
+
+    interaction.update(0.016);
+
+    expect(actions).toContain('place');
+    expect(consumed).toBe(0);
+    expect(world.getBlock(1, 1, 0)).toBe(BlockId.Dirt);
+    interaction.dispose();
+  });
+
+  it('consumes one stack item on place by default (survival legacy)', () => {
+    const { player, camera, world } = makeAimed();
+    let consumed = 0;
+    const interaction = new PlayerInteraction({
+      world,
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
+      selector: {
+        getSelectedItemId: () => ItemId.Dirt,
+        getSlotCount: () => 5,
+        consumeSelected: () => {
+          consumed++;
+          return true;
+        },
+      },
+      player,
+      camera,
+      input: { ...makeInput({ breakRequested: false, held: false }), consumePlace: () => true },
+    });
+
+    interaction.update(0.016);
+
+    expect(consumed).toBe(1);
+    expect(world.getBlock(1, 1, 0)).toBe(BlockId.Dirt);
+    interaction.dispose();
+  });
+
+  it('breaks instantly with no drops, XP, or tool wear when instant and clean (creative)', () => {
+    const { player, camera, world } = makeAimed();
+    const itemEntities = new ItemEntityManager({ itemRegistry: createDefaultItemRegistry() });
+    const xpOrbs = new XpOrbManager();
+    let damaged = 0;
+    const state = { breakRequested: true, held: true };
+    const interaction = new PlayerInteraction({
+      world,
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
+      selector: {
+        getSelectedItemId: () => ItemId.WoodenPickaxe,
+        getSlotCount: () => 1,
+        damageSelectedItem: () => {
+          damaged++;
+          return false;
+        },
+      },
+      player,
+      camera,
+      input: makeInput(state),
+      itemEntities,
+      xpOrbs,
+      xpOrbValue: 5,
+      instantBreak: () => true,
+      dropsLoot: () => false,
+    });
+
+    interaction.update(0.05);
+
+    expect(world.getBlock(2, 1, 0)).toBe(BlockId.Air);
+    expect(itemEntities.size).toBe(0);
+    expect(xpOrbs.size).toBe(0);
+    expect(damaged).toBe(0);
+    interaction.dispose();
+  });
+
+  it('instant break still drops when the loot rule is on (knobs are independent)', () => {
+    const { player, camera, world } = makeAimed(BlockId.CoalOre);
+    const itemEntities = new ItemEntityManager({ itemRegistry: createDefaultItemRegistry() });
+    const state = { breakRequested: true, held: true };
+    const interaction = new PlayerInteraction({
+      world,
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
+      selector: { getSelectedItemId: () => BlockId.Stone, getSlotCount: () => 1 },
+      player,
+      camera,
+      input: makeInput(state),
+      itemEntities,
+      instantBreak: () => true,
+    });
+
+    interaction.update(0.05);
+
+    expect(world.getBlock(2, 1, 0)).toBe(BlockId.Air);
+    expect(itemEntities.size).toBe(1);
+    interaction.dispose();
+  });
+
+  it('a single update does not break stone by default (survival timing)', () => {
+    const { player, camera, world } = makeAimed();
+    const state = { breakRequested: true, held: true };
+    const interaction = new PlayerInteraction({
+      world,
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
+      selector: { getSelectedItemId: () => BlockId.Stone },
+      player,
+      camera,
+      input: makeInput(state),
+    });
+
+    interaction.update(0.05);
+
+    expect(world.getBlock(2, 1, 0)).toBe(BlockId.Stone);
+    interaction.dispose();
+  });
+
+  it('unbreakable blocks still refuse when instant break is on', () => {
+    const { player, camera, world } = makeAimed(BlockId.Bedrock);
+    const actions: string[] = [];
+    const state = { breakRequested: true, held: true };
+    const interaction = new PlayerInteraction({
+      world,
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
+      selector: { getSelectedItemId: () => BlockId.Stone },
+      player,
+      camera,
+      input: makeInput(state),
+      onAction: (action) => actions.push(action),
+      instantBreak: () => true,
+      dropsLoot: () => false,
+    });
+
+    for (let i = 0; i < 5; i++) interaction.update(0.05);
+
+    expect(world.getBlock(2, 1, 0)).toBe(BlockId.Bedrock);
+    expect(actions).toContain('blocked');
+    interaction.dispose();
+  });
+});
+
   it('does not emit use for bone meal when a non-bone-meal item is selected', () => {
     const player = new Player({ position: new THREE.Vector3(0.5, 0, 0.5) });
     const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 20);

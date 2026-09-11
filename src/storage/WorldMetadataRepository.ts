@@ -218,6 +218,17 @@ export class WorldMetadataRepository {
     await promisifyRequest(tx.objectStore(this.store).put(raw));
   }
 
+  /** Raw put for the game-mode payload bypassing WorldMetadata validation (265; item/XP precedent). */
+  async putGameModeData(worldId: string, payload: unknown): Promise<void> {
+    const raw = {
+      worldId: `__gamemode__:${worldId}`,
+      payload,
+      updatedAt: Date.now(),
+    };
+    const tx = this.requireDb().transaction(this.store, 'readwrite');
+    await promisifyRequest(tx.objectStore(this.store).put(raw));
+  }
+
   /** Raw put for the XP-orb payload bypassing WorldMetadata validation (264; advancement precedent). */
   async putXpOrbData(worldId: string, payload: unknown): Promise<void> {
     const raw = {
@@ -257,6 +268,14 @@ export class WorldMetadataRepository {
   async getRecipeBookData(worldId: string): Promise<unknown | null> {
     const tx = this.requireDb().transaction(this.store, 'readonly');
     const result = await promisifyRequest(tx.objectStore(this.store).get(`__recipebook__:${worldId}`)) as { payload?: unknown } | undefined;
+    if (!result || !('payload' in (result as Record<string, unknown>))) return null;
+    return (result as { payload: unknown }).payload ?? null;
+  }
+
+  /** Raw get for the game-mode payload (265). Returns null when absent. */
+  async getGameModeData(worldId: string): Promise<unknown | null> {
+    const tx = this.requireDb().transaction(this.store, 'readonly');
+    const result = await promisifyRequest(tx.objectStore(this.store).get(`__gamemode__:${worldId}`)) as { payload?: unknown } | undefined;
     if (!result || !('payload' in (result as Record<string, unknown>))) return null;
     return (result as { payload: unknown }).payload ?? null;
   }

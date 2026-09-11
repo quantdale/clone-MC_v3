@@ -153,6 +153,7 @@ import { AWKWARD_BASE } from '../inventory/BrewingRecipes';
 import { StackComponentMap, createDefaultStackComponentRegistry } from '../inventory/StackDataComponents';
 import type { ItemStack } from '../inventory/Inventory';
 import { EnchantingPanel, formatEnchantLevel, prettifyEnchantmentKey } from '../ui/EnchantingPanel';
+import { CreativeMenuPanel } from '../ui/CreativeMenuPanel';
 import { GameRulePanel } from '../ui/GameRulePanel';
 import { RecipeBookPanel } from '../ui/RecipeBookPanel';
 import { AdvancementPanel } from '../ui/AdvancementPanel';
@@ -168,6 +169,24 @@ import {
   type AdvancementRowView,
 } from '../simulation/AdvancementView';
 import type { AdvancementCriterion } from '../simulation/AdvancementFramework';
+import {
+  canFly,
+  createDefaultGameModeState,
+  depletesItems,
+  instantBlockBreak,
+  parseGameMode,
+  serializeGameModeState,
+  setGameMode as setGameModeState,
+  survivalStatsDeplete,
+  type GameMode,
+  type GameModeState,
+} from '../simulation/GameModeFramework';
+import {
+  listCreativeItems,
+  searchCreativeItems,
+  type CreativeItemView,
+} from '../simulation/CreativeInventory';
+import { resolveCreativeFlightVelocity } from '../player/CreativeFlight';
 import { CraftingSystem } from '../inventory/Crafting';
 import {
   createDefaultRecipeBook,
@@ -350,6 +369,16 @@ export class Game {
   private readonly advancementPanel: AdvancementPanel;
   /** Authoritative advancement progress (263): validated persisted payload or defaults, catalog order. */
   private advancements: AdvancementProgress[];
+  /** Whether the creative menu screen is open (265). */
+  private creativeOpen = false;
+  /** DOM controller for the live creative menu screen (265). */
+  private readonly creativePanel: CreativeMenuPanel;
+  /** Authoritative game mode (265): validated persisted payload or survival. */
+  private gameMode: GameModeState;
+  /** Transient creative-menu search query (265, never persisted). */
+  private creativeQuery = '';
+  /** HUD game-mode toggle chip (265, null until the shell binds it). */
+  private gameModeChipEl: HTMLButtonElement | null = null;
   /** Registry key of the Fire block, resolved once for the doFireTick gate (261). */
   private readonly fireBlockKey: string;
   /** Monotonic simulation tick counter driving random-tick seeding. */
@@ -848,6 +877,21 @@ export class Game {
         }
       }).catch(() => undefined);
     }
+    // 265 game mode: the validated persisted mode when present, survival
+    // otherwise (absent or corrupt records never break boot). Same late-load
+    // parity as above (chip relabels when the late payload lands).
+    this.gameMode = this.persistenceImpl?.initialGameMode ?? createDefaultGameModeState();
+    if (this.selfOpenPromise !== null) {
+      void this.selfOpenPromise.then(() => {
+        if (this.disposed) return;
+        const late = this.persistenceImpl?.initialGameMode;
+        if (late) {
+          this.gameMode = late;
+          this.updateGameModeChip();
+          if (this.creativeOpen) this.creativePanel.render();
+        }
+      }).catch(() => undefined);
+    }
 
     this.player = new Player();
     // Startup compatibility decision (257): for an injected (already open)
@@ -913,6 +957,8 @@ export class Game {
       blockShapes: this.blockShapes,
       frictionForBlock: () => 1.0,
       isSneaking: () => this.controller.isSneaking(),
+      // Creative flight (265): gravity suppression follows the live mode.
+      isFlying: () => canFly(this.gameMode.mode),
     });
     this.itemEntities = new ItemEntityManager({ itemRegistry: this.itemRegistry, rng: Math.random });
     this.xpOrbs = new XpOrbManager({ rng: Math.random });
@@ -940,6 +986,11 @@ export class Game {
       lootTables: this.lootTables,
       harvestRules: this.harvestRules,
       enchantmentRegistry: this.enchantmentRegistry,
+      // Live game-mode rules (265): closures over the current mode so every
+      // switch applies on the next tick with no restart.
+      depletesItems: () => depletesItems(this.gameMode.mode),
+      instantBreak: () => instantBlockBreak(this.gameMode.mode),
+      dropsLoot: () => !instantBlockBreak(this.gameMode.mode),
       rng: Math.random,
       itemEntities: this.itemEntities,
       xpOrbs: this.xpOrbs,
@@ -1114,6 +1165,23 @@ export class Game {
     // gamerule-chip precedent).
     const advancementsOpenBtn = document.getElementById('advancements-open');
     advancementsOpenBtn?.addEventListener('click', () => this.openAdvancements());
+    // Live creative menu screen (265): a pure view over the catalog +
+    // inventory. HUD buttons open the menu and toggle survival ⇄ creative.
+    this.creativePanel = new CreativeMenuPanel(this.requireElement('creative'), {
+      getQuery: () => this.creativeQuery,
+      setQuery: (query: string) => {
+        this.creativeQuery = query;
+      },
+      listItems: () => this.searchCreative(this.creativeQuery),
+      grantItem: (itemId: number) => this.grantCreativeItem(itemId),
+      onChanged: () => undefined,
+      onClose: () => this.closeCreative(),
+    });
+    const creativeOpenBtn = document.getElementById('creative-open');
+    creativeOpenBtn?.addEventListener('click', () => this.openCreative());
+    this.gameModeChipEl = document.getElementById('gamemode-toggle') as HTMLButtonElement | null;
+    this.gameModeChipEl?.addEventListener('click', () => this.toggleGameMode());
+    this.updateGameModeChip();
 
     // Fixed-tick ownership (044): the driver turns frame deltas into bounded,
     // deterministic 20 TPS ticks; the tick body enforces the simulation order.
@@ -1223,9 +1291,13 @@ export class Game {
     // The advancements panel owns no transient state either (263: pure view
     // over the already-persisted progress) — close it before the persist flush.
     this.closeAdvancements();
+    // The creative menu owns no transient state either (265: pure view over
+    // the catalog + inventory) — close it before the persist flush.
+    this.closeCreative();
     this.savePlayerStateDurable();
     this.saveWithers();
     this.saveItemAndXpEntities();
+    this.saveGameMode();
     this.saveTimer = 0;
     void this.persistenceImpl?.dispose().catch(() => undefined);
     if (this.unsubscribeHealth !== null) {
@@ -1426,6 +1498,7 @@ export class Game {
         this.saveTimer = 0;
         this.persistenceImpl?.savePlayerState(this.buildPlayerSnapshot());
         this.saveItemAndXpEntities();
+        this.saveGameMode();
       }
     }
 
@@ -1471,6 +1544,7 @@ export class Game {
       !this.gameruleOpen &&
       !this.recipeBookOpen &&
       !this.advancementOpen &&
+      !this.creativeOpen &&
       (this.pointerLocked || this.hasControllerInput(deviceFrame));
 
     // Pause/resume mapping (044): while inactive the driver's time anchor keeps
@@ -1569,6 +1643,9 @@ export class Game {
       } else if (this.advancementOpen) {
         // Same rule for the advancements screen (263).
         this.closeAdvancements();
+      } else if (this.creativeOpen) {
+        // Same rule for the creative menu (265).
+        this.closeCreative();
       } else if (this.craftingOpen) {
         this.closeCrafting();
       } else {
@@ -1580,6 +1657,11 @@ export class Game {
     if (this.input.consumeGameruleToggle()) {
       if (this.gameruleOpen) this.closeGamerule();
       else this.openGamerule();
+    }
+    // Creative menu toggle (265): E opens/closes the creative inventory.
+    if (this.input.consumeCreativeToggle()) {
+      if (this.creativeOpen) this.closeCreative();
+      else this.openCreative();
     }
     // Furnace session upkeep (251): close on destruction or walking away, and
     // keep the burn/smelt indicators live while it stays open.
@@ -1623,6 +1705,11 @@ export class Game {
     // live while open (triggers may fire from play while the panel is up).
     if (this.advancementOpen) {
       this.advancementPanel.render();
+    }
+    // Creative menu upkeep (265): no position to track either; keep the list
+    // live while open (mode switches re-render through the switch path).
+    if (this.creativeOpen) {
+      this.creativePanel.render();
     }
     // Enchanting session upkeep (259): a voided session, a destroyed table,
     // or walking away closes the panel; otherwise keep offers live.
@@ -1689,7 +1776,17 @@ export class Game {
     // block actions match what the player sees this tick (render bob is a
     // presentation-only offset applied in `update`).
     this.controller.update(dt);
+    // Creative flight (265): Game-driven vertical velocity (ascend/descend/
+    // hover) applied before physics; gravity suppression happens inside
+    // physics via the `isFlying` hook, and fall distance resets after so no
+    // landing damage can accrue while airborne in a fly mode.
+    const flight = resolveCreativeFlightVelocity(
+      this.gameMode.mode,
+      { jump: this.input.jump, sneak: this.controller.isSneaking() },
+    );
+    if (flight.flying) this.player.velocity.y = flight.verticalVelocity;
     this.physics.update(this.player, dt);
+    if (flight.flying) this.player.fallDistance = 0;
     const eye = this.player.eyePosition;
     this.applyCameraTransform(eye.x, eye.y, eye.z);
     this.interaction.update(dt);
@@ -1743,12 +1840,19 @@ export class Game {
       headY,
       Math.floor(pz),
     ) === BlockId.Water;
-    this.survival.update(dt, this.player, {
-      sprinting: this.input.sprint,
-      headSubmerged,
-      inLava: this.player.inLava,
-      landingDistance: this.physics.consumeLandingDistance(),
-    });
+    // Creative no-stats-drain (265): the survival tick (hunger, damage-over-
+    // time, drowning, starvation, fall) runs only while the mode depletes
+    // survival stats. The HUD keeps showing the last values (full in practice).
+    if (survivalStatsDeplete(this.gameMode.mode)) {
+      this.survival.update(dt, this.player, {
+        sprinting: this.input.sprint,
+        headSubmerged,
+        inLava: this.player.inLava,
+        landingDistance: this.physics.consumeLandingDistance(),
+      });
+    } else {
+      this.physics.consumeLandingDistance();
+    }
     this.playerEffects.tick(dt);
     if (this.input.consumeEat()) {
       this.tryEatSelected();
@@ -1963,7 +2067,7 @@ export class Game {
       this.passiveMobWorld,
       (cx, cz) => this.world.isChunkSimulating(cx, cz),
       () => ({ x: this.player.position.x, y: this.player.position.y, z: this.player.position.z }),
-      (amount) => this.survival.damage(amount, 'mob'),
+      (amount) => this.hurtPlayer(amount, 'mob'),
     );
   }
 
@@ -2311,6 +2415,10 @@ export class Game {
         // Same rule for the advancements screen (263).
         this.closeAdvancements();
       }
+      if (this.creativeOpen) {
+        // Same rule for the creative menu (265).
+        this.closeCreative();
+      }
       this.hideOverlay();
       // The HUD/crosshair only appear once the world is ready (see update()).
       if (!this.loadingShown) {
@@ -2318,7 +2426,7 @@ export class Game {
         this.hud.show();
         this.hotbar.show();
       }
-    } else if (!this.craftingOpen && !this.furnaceOpen && !this.brewingOpen && !this.enchantingOpen && !this.gameruleOpen && !this.recipeBookOpen && !this.advancementOpen) {
+    } else if (!this.craftingOpen && !this.furnaceOpen && !this.brewingOpen && !this.enchantingOpen && !this.gameruleOpen && !this.recipeBookOpen && !this.advancementOpen && !this.creativeOpen) {
       // Unlock caused by OPENING a container session must not stack the pause
       // overlay behind/on the open panel; the panel itself represents the
       // paused state and its owner re-shows the overlay on close (251).
@@ -2379,6 +2487,7 @@ export class Game {
     if (this.gameruleOpen) this.closeGamerule();
     if (this.recipeBookOpen) this.closeRecipeBook();
     if (this.advancementOpen) this.closeAdvancements();
+    if (this.creativeOpen) this.closeCreative();
     this.craftingOpen = true;
     this.input.releasePointerLock();
     this.hideOverlay();
@@ -2705,6 +2814,7 @@ export class Game {
       !this.gameruleOpen &&
       !this.recipeBookOpen &&
       !this.advancementOpen &&
+      !this.creativeOpen &&
       !this.contextLost &&
       this.errorEl.classList.contains('hidden')
     ) {
@@ -2844,6 +2954,7 @@ export class Game {
     if (this.gameruleOpen) this.closeGamerule();
     if (this.recipeBookOpen) this.closeRecipeBook();
     if (this.advancementOpen) this.closeAdvancements();
+    if (this.creativeOpen) this.closeCreative();
     this.brewingOpen = true;
     this.brewingPos = { x, y, z };
     this.input.releasePointerLock();
@@ -2983,6 +3094,7 @@ export class Game {
     if (this.gameruleOpen) this.closeGamerule();
     if (this.recipeBookOpen) this.closeRecipeBook();
     if (this.advancementOpen) this.closeAdvancements();
+    if (this.creativeOpen) this.closeCreative();
     this.furnaceOpen = true;
     this.furnacePos = { x, y, z };
     this.input.releasePointerLock();
@@ -3259,7 +3371,7 @@ export class Game {
     const d = Math.hypot(pos.x - center[0], pos.y - center[1], pos.z - center[2]);
     if (d <= strength * 2) {
       const dmg = Math.max(1, Math.floor((1 - d / (strength * 2)) * 7 * strength));
-      this.survival.damage(dmg, 'wither');
+      this.hurtPlayer(dmg, 'wither');
     }
   }
 
@@ -3349,7 +3461,7 @@ export class Game {
             if (durTicks > 0) {
               this.playerEffects.add(createResourceId('minecraft', 'effect/wither'), durTicks / 20, 0);
             }
-            this.survival.damage(skull.kind === 'blue' ? 12 : 8, 'wither');
+            this.hurtPlayer(skull.kind === 'blue' ? 12 : 8, 'wither');
           }
           continue;
         }
@@ -3360,7 +3472,7 @@ export class Game {
       // Wither status effect periodic damage (1 HP per 2 s while active).
       if (playerAlive && this.simTick % WITHER_EFFECT_PERIOD_TICKS === 0) {
         if (this.playerEffects.get(createResourceId('minecraft', 'effect/wither'))) {
-          this.survival.damage(1, 'wither');
+          this.hurtPlayer(1, 'wither');
         }
       }
     }
@@ -3457,7 +3569,10 @@ export class Game {
       target.blockX,
       target.blockY,
       target.blockZ,
-      () => this.inventory.consumeSelected(),
+      // Creative no-deplete (265): growth still applies, the bone meal stays.
+      () => {
+        if (depletesItems(this.gameMode.mode)) this.inventory.consumeSelected();
+      },
     );
     if (!applied) return;
     this.hotbar.render();
@@ -3503,6 +3618,7 @@ export class Game {
     if (this.gameruleOpen) this.closeGamerule();
     if (this.recipeBookOpen) this.closeRecipeBook();
     if (this.advancementOpen) this.closeAdvancements();
+    if (this.creativeOpen) this.closeCreative();
     const bookShelves = this.countBookshelves(px, py, pz);
     this.enchantingSession = createSession({
       stack: held,
@@ -3579,6 +3695,7 @@ export class Game {
     if (this.craftingOpen) this.closeCrafting();
     if (this.recipeBookOpen) this.closeRecipeBook();
     if (this.advancementOpen) this.closeAdvancements();
+    if (this.creativeOpen) this.closeCreative();
     this.gameruleOpen = true;
     this.input.releasePointerLock();
     this.hideOverlay();
@@ -3732,6 +3849,7 @@ export class Game {
     if (this.enchantingOpen) this.closeEnchanting();
     if (this.gameruleOpen) this.closeGamerule();
     if (this.advancementOpen) this.closeAdvancements();
+    if (this.creativeOpen) this.closeCreative();
     if (this.craftingOpen) this.closeCrafting();
     const before = this.recipeBook.known.length;
     const grown = unlockRecipes(
@@ -3835,6 +3953,7 @@ export class Game {
     if (this.gameruleOpen) this.closeGamerule();
     if (this.recipeBookOpen) this.closeRecipeBook();
     if (this.craftingOpen) this.closeCrafting();
+    if (this.creativeOpen) this.closeCreative();
     this.advancementOpen = true;
     this.input.releasePointerLock();
     this.hideOverlay();
@@ -3866,6 +3985,148 @@ export class Game {
   /** Whether the advancements screen is open (E2E observability). */
   isAdvancementOpen(): boolean {
     return this.advancementOpen;
+  }
+
+  // ── Game mode + creative menu (265) ────────────────────────────────────
+
+  /** The current live game mode (E2E observability; the rules read the same). */
+  getGameMode(): GameMode {
+    return this.gameMode.mode;
+  }
+
+  /**
+   * Switch the live mode. A different valid mode applies immediately (persist
+   * + chip + toast, rules live on the next tick); the same mode or an invalid
+   * value is an identity no-op returning false (no write, no toast). Never
+   * throws.
+   */
+  setGameMode(mode: GameMode): boolean {
+    const next = setGameModeState(this.gameMode, mode);
+    if (next === this.gameMode) return false;
+    this.gameMode = next;
+    this.saveGameMode();
+    this.updateGameModeChip();
+    if (this.creativeOpen) this.creativePanel.render();
+    this.showToast(`Game mode: ${next.mode === 'creative' ? 'Creative' : next.mode === 'survival' ? 'Survival' : next.mode}`);
+    return true;
+  }
+
+  /**
+   * Text entry for the mode (191 `/gamemode` parity without a chat UI): the
+   * 192 case-insensitive parse, then apply. Unknown text is a false no-op.
+   * Never throws.
+   */
+  setGameModeFromText(text: string): boolean {
+    if (typeof text !== 'string') return false;
+    const parsed = parseGameMode(text);
+    if (parsed === null) return false;
+    return this.setGameMode(parsed);
+  }
+
+  /**
+   * Flip survival ⇄ creative for the HUD chip. Other modes are reachable only
+   * through the text seam, so the chip can never cycle into adventure or
+   * spectator accidentally. Returns the resulting mode.
+   */
+  toggleGameMode(): GameMode {
+    this.setGameMode(this.gameMode.mode === 'creative' ? 'survival' : 'creative');
+    return this.gameMode.mode;
+  }
+
+  /** Serialize the live mode into the durable record (no-op without persistence). */
+  saveGameMode(): void {
+    const p = this.persistenceImpl;
+    if (!p || this.recoveryRequiredValue) return;
+    p.saveGameMode(serializeGameModeState(this.gameMode));
+  }
+
+  /** Relabel the HUD mode chip for the current mode (null-safe pre-shell). */
+  private updateGameModeChip(): void {
+    if (!this.gameModeChipEl) return;
+    const label = this.gameMode.mode === 'creative'
+      ? 'Creative'
+      : this.gameMode.mode === 'survival'
+        ? 'Survival'
+        : this.gameMode.mode;
+    this.gameModeChipEl.textContent = `Mode: ${label}`;
+  }
+
+  /** Whether the creative menu screen is open (E2E observability). */
+  isCreativeOpen(): boolean {
+    return this.creativeOpen;
+  }
+
+  /** The full placeable catalog in registry order (E2E observability). */
+  getCreativeItems(): CreativeItemView[] {
+    return listCreativeItems(this.itemRegistry, this.blockRegistry);
+  }
+
+  /** Transient creative-menu search (E2E observability). */
+  getCreativeQuery(): string {
+    return this.creativeQuery;
+  }
+
+  /** Placeable rows matching the query, registry-ordered per the helper contract. */
+  searchCreative(query: string): CreativeItemView[] {
+    return searchCreativeItems(this.getCreativeItems(), query);
+  }
+
+  /**
+   * Grant a full stack of the numeric item `id` into the inventory (265). No
+   * cost, no crafting gate. Returns false — with the inventory byte-identical
+   * — for unknown ids or a full inventory. Never throws.
+   */
+  grantCreativeItem(itemId: number): boolean {
+    const def = this.itemRegistry.getByLegacyId(itemId);
+    if (!def) return false;
+    if (!this.inventory.canAddItem(itemId, def.stackSize)) return false;
+    const leftover = this.inventory.addItem(itemId, def.stackSize);
+    if (leftover > 0) {
+      // Defensive: capacity was checked above, so unwind a partial grant
+      // instead of leaving a short stack.
+      this.inventory.removeItem(itemId, def.stackSize - leftover);
+      return false;
+    }
+    this.hotbar.render();
+    return true;
+  }
+
+  /**
+   * Open the creative menu (265). Closes any other container first: one
+   * container at a time (251/259/260/261/262/263 parity). The query persists
+   * across opens within the session; the list renders live.
+   */
+  private openCreative(): void {
+    if (this.creativeOpen) return;
+    if (this.furnaceOpen) this.closeFurnace();
+    if (this.brewingOpen) this.closeBrewing();
+    if (this.enchantingOpen) this.closeEnchanting();
+    if (this.craftingOpen) this.closeCrafting();
+    if (this.gameruleOpen) this.closeGamerule();
+    if (this.recipeBookOpen) this.closeRecipeBook();
+    if (this.advancementOpen) this.closeAdvancements();
+    this.creativeOpen = true;
+    this.input.releasePointerLock();
+    this.hideOverlay();
+    this.crosshair.hide();
+    this.hud.hide();
+    this.hotbar.hide();
+    this.setBreakProgress(0);
+    this.interaction.clearTarget();
+    this.creativePanel.show();
+    this.creativePanel.render();
+  }
+
+  /**
+   * Close the creative menu. The panel owns no catalog state (grants are
+   * already in the inventory), so hiding it plus returning the overlay is the
+   * whole settle.
+   */
+  private closeCreative(): void {
+    if (!this.creativeOpen) return;
+    this.creativeOpen = false;
+    this.creativePanel.hide();
+    this.showOverlay('Click to play');
   }
 
   /**
@@ -3965,6 +4226,7 @@ export class Game {
     if (this.recoveryRequiredValue) return;
     this.savePlayerStateDurable();
     this.saveItemAndXpEntities();
+    this.saveGameMode();
     this.saveTimer = 0;
   };
 
@@ -4089,6 +4351,18 @@ export class Game {
     this.saveStatusIndicator.setStatus(effective);
   }
 
+  /**
+   * Deal direct damage to the player unless the mode exempts survival stats
+   * (265: creative/spectator via 192 `survivalStatsDeplete`). The single choke
+   * for every direct `survival.damage` path (mobs, explosions, skulls,
+   * status-effect ticks); damage-over-time inside `survival.update` is gated
+   * separately at the tick call site.
+   */
+  private hurtPlayer(amount: number, reason = 'damage'): void {
+    if (!survivalStatsDeplete(this.gameMode.mode)) return;
+    this.survival.damage(amount, reason);
+  }
+
   private onSurvivalEvent(event: SurvivalEvent, amount?: number): void {
     if (event === 'damage') {
       this.audio.play('damage');
@@ -4112,7 +4386,8 @@ export class Game {
     const consume = resolveFoodConsume(def);
     if (!consume) return;
     if (!this.survival.eat({ hunger: consume.hunger, saturation: consume.saturation })) return;
-    this.inventory.consumeSelected();
+    // Creative no-deplete (265): the meal is enjoyed, the stack stays.
+    if (depletesItems(this.gameMode.mode)) this.inventory.consumeSelected();
     applyConsumeEffects(this.playerEffects, consume.effects);
     this.hotbar.render();
     this.audio.play('eat');
@@ -4127,6 +4402,7 @@ export class Game {
     this.closeGamerule();
     this.closeRecipeBook();
     this.closeAdvancements();
+    this.closeCreative();
     if (this.craftingOpen) {
       this.closeCrafting();
     }

@@ -16,6 +16,8 @@
  * Change 264 adds optional `itemEntityData` / `xpOrbData` fields (missing read as
  * null); v1 and v2 archives without them validate and import with null (empty)
  * item/XP sets.
+ * Change 265 adds an optional `gameModeData` field (missing reads as null);
+ * v1 and v2 archives without it validate and import with null (survival).
  */
 import type { WorldMetadata } from './WorldMetadata';
 import { validateWorldMetadata } from './WorldMetadata';
@@ -113,6 +115,14 @@ export interface WorldArchive {
    * at load by the hardened `XpOrbManager.deserializeAll`).
    */
   xpOrbData?: unknown | null;
+  /**
+   * Raw game-mode payload stored under __gamemode__:${worldId}, or null when
+   * absent (265). OPTIONAL: archives without this field validate and import
+   * as null (survival). A present value must be a plain object payload (the
+   * 192 SerializedGameModeState shape is validated again at load by
+   * `deserializeGameModeState`, never trusted blindly).
+   */
+  gameModeData?: unknown | null;
 }
 
 function isFiniteNumber(v: unknown): v is number {
@@ -305,6 +315,17 @@ export function validateWorldArchive(input: unknown): WorldArchive {
     xpOrbData = (r.xpOrbData as unknown[]).map((e) => validateSerializedEntity(e));
   }
 
+  // 265: optional in every version; missing/null reads as null. A present value
+  // must be a plain object payload (the 192 shape is validated again at load
+  // by `deserializeGameModeState`, never trusted blindly).
+  let gameModeData: unknown | null = null;
+  if (r.gameModeData !== null && r.gameModeData !== undefined) {
+    if (typeof r.gameModeData !== 'object' || Array.isArray(r.gameModeData)) {
+      throw new Error('WorldArchive: gameModeData must be an object or null');
+    }
+    gameModeData = r.gameModeData;
+  }
+
   return {
     format: WORLD_ARCHIVE_FORMAT as 'voxel-world',
     version: 2 as const,
@@ -322,5 +343,6 @@ export function validateWorldArchive(input: unknown): WorldArchive {
     advancementData,
     itemEntityData,
     xpOrbData,
+    gameModeData,
   };
 }

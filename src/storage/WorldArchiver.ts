@@ -51,6 +51,8 @@ export interface WorldImportReport {
   itemEntityDataImported: boolean;
   /** Whether XP-orb data was written (264). */
   xpOrbDataImported: boolean;
+  /** Whether game-mode data was written (265). */
+  gameModeDataImported: boolean;
 }
 
 /** Exports and imports whole-world archives over the five repositories. */
@@ -123,6 +125,8 @@ export class WorldArchiver {
     // Item-entity + XP-orb raw records (264): same fail-closed contract.
     const itemEntityData = await this.metadata.getItemEntityData(worldId);
     const xpOrbData = await this.metadata.getXpOrbData(worldId);
+    // Game-mode raw record (265): same fail-closed contract.
+    const gameModeData = await this.metadata.getGameModeData(worldId);
 
     return {
       format: 'voxel-world',
@@ -141,6 +145,7 @@ export class WorldArchiver {
       advancementData,
       itemEntityData,
       xpOrbData,
+      gameModeData,
     };
   }
 
@@ -176,6 +181,7 @@ export class WorldArchiver {
       if (valid.advancementData !== null && valid.advancementData !== undefined) await put("world-metadata", { worldId: `__advancements__:${valid.worldId}`, payload: valid.advancementData, updatedAt: Date.now() });
       if (valid.itemEntityData !== null && valid.itemEntityData !== undefined) await put("world-metadata", { worldId: `__itementities__:${valid.worldId}`, payload: valid.itemEntityData, updatedAt: Date.now() });
       if (valid.xpOrbData !== null && valid.xpOrbData !== undefined) await put("world-metadata", { worldId: `__xporbs__:${valid.worldId}`, payload: valid.xpOrbData, updatedAt: Date.now() });
+      if (valid.gameModeData !== null && valid.gameModeData !== undefined) await put("world-metadata", { worldId: `__gamemode__:${valid.worldId}`, payload: valid.gameModeData, updatedAt: Date.now() });
       if (valid.playerState) await put("player-state", valid.playerState);
     });
 
@@ -193,6 +199,7 @@ export class WorldArchiver {
       advancementDataImported: valid.advancementData !== null && valid.advancementData !== undefined,
       itemEntityDataImported: valid.itemEntityData !== null && valid.itemEntityData !== undefined,
       xpOrbDataImported: valid.xpOrbData !== null && valid.xpOrbData !== undefined,
+      gameModeDataImported: valid.gameModeData !== null && valid.gameModeData !== undefined,
     };
   }
 }

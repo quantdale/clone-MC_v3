@@ -75,6 +75,10 @@ import {
   deserializeAdvancementSave,
   type AdvancementProgress,
 } from '../simulation/AdvancementSave';
+import {
+  deserializeGameModeState,
+  type GameModeState,
+} from '../simulation/GameModeFramework';
 import { coreProgressionAdvancements } from '../simulation/CoreProgressionAdvancements';
 
 /**
@@ -328,6 +332,8 @@ export class GamePersistence implements WorldEditDurability {
   private initialItemEntitiesValue: SerializedEntity[] | null = null;
   /** Validated XP-orb snapshot bulk-loaded at open() (264; null when absent or corrupt). */
   private initialXpOrbsValue: SerializedEntity[] | null = null;
+  /** Validated game-mode state bulk-loaded at open() (265; null when absent or corrupt). */
+  private initialGameModeValue: GameModeState | null = null;
   private initialColumnsValue: SerializedChunkColumn[] = [];
   /** World generation baseline compatibility classification. */
   private generationBaselineValue: WorldGenerationBaseline = 'current';
@@ -706,6 +712,17 @@ export class GamePersistence implements WorldEditDurability {
         this.initialXpOrbsValue = null;
         this.recordError(`load xporbs: ${errorMessage(e)}`);
       }
+      // 265 hydration: game-mode payload stored via raw game-mode data.
+      // Absent stays null (Game boots survival); corrupt payloads degrade to
+      // null with a recorded error so boot continues on the default mode.
+      // Full strict validation is the 192 deserializer (exact-keys).
+      try {
+        const raw = await this.metadata.getGameModeData(this.worldIdValue);
+        if (raw !== null) this.initialGameModeValue = deserializeGameModeState(raw);
+      } catch (e) {
+        this.initialGameModeValue = null;
+        this.recordError(`load gamemode: ${errorMessage(e)}`);
+      }
     }
 
     // 5.5 Authoritative startup compatibility decision (257). Computed after the
@@ -784,6 +801,7 @@ export class GamePersistence implements WorldEditDurability {
       this.initialAdvancementsValue = null;
       this.initialItemEntitiesValue = null;
       this.initialXpOrbsValue = null;
+      this.initialGameModeValue = null;
       this.initialColumnsValue = [];
     }
     this.opened = true;
@@ -841,6 +859,7 @@ export class GamePersistence implements WorldEditDurability {
       advancementData: unknown | null;
       itemEntityData: unknown | null;
       xpOrbData: unknown | null;
+      gameModeData: unknown | null;
       columns: SerializedChunkColumn[];
       edits: Array<{ chunkX: number; chunkY: number; chunkZ: number; changes: Array<[number, number]> }>;
       playerState: PlayerStateRecord | null;
@@ -855,6 +874,7 @@ export class GamePersistence implements WorldEditDurability {
       const advancementData = await this.metadata.getAdvancementData(worldId);
       const itemEntityData = await this.metadata.getItemEntityData(worldId);
       const xpOrbData = await this.metadata.getXpOrbData(worldId);
+      const gameModeData = await this.metadata.getGameModeData(worldId);
       const columns = await this.chunkSections.listColumns(worldId);
       const editRecords = await this.chunkEdits.listChunkEdits(worldId);
       const playerState = await this.playerStates.getPlayerState(worldId);
@@ -868,6 +888,7 @@ export class GamePersistence implements WorldEditDurability {
         advancementData,
         itemEntityData,
         xpOrbData,
+        gameModeData,
         columns: [...columns],
         edits: editRecords.map((r) => ({ chunkX: r.chunkX, chunkY: r.chunkY, chunkZ: r.chunkZ, changes: [...r.changes] })),
         playerState,
@@ -918,6 +939,8 @@ export class GamePersistence implements WorldEditDurability {
         // 2e. Raw item-entity + XP-orb records (264; separate keys in the same metadata store).
         await awaitRequest(metaStore.delete(`__itementities__:${worldId}`));
         await awaitRequest(metaStore.delete(`__xporbs__:${worldId}`));
+        // 2f. Raw game-mode record (265; separate key in the same metadata store).
+        await awaitRequest(metaStore.delete(`__gamemode__:${worldId}`));
         // 3. Every chunk column for this world. Key shape: `${worldId}|${cx}|${cz}`.
         for (const column of snapshot!.columns) {
           await awaitRequest(csStore.delete(worldChunkKey(worldId, column.chunkX, column.chunkZ)));
@@ -954,6 +977,7 @@ export class GamePersistence implements WorldEditDurability {
         if (snapshot!.advancementData !== null) await this.metadata.putAdvancementData(worldId, snapshot!.advancementData);
         if (snapshot!.itemEntityData !== null) await this.metadata.putItemEntityData(worldId, snapshot!.itemEntityData);
         if (snapshot!.xpOrbData !== null) await this.metadata.putXpOrbData(worldId, snapshot!.xpOrbData);
+        if (snapshot!.gameModeData !== null) await this.metadata.putGameModeData(worldId, snapshot!.gameModeData);
         for (const col of snapshot!.columns) await this.chunkSections.putColumn(worldId, col);
         for (const rec of snapshot!.edits) await this.chunkEdits.putChunkEdits(worldId, rec.chunkX, rec.chunkY, rec.chunkZ, rec.changes);
         if (snapshot!.playerState) await this.playerStates.putPlayerState(snapshot!.playerState);
@@ -1282,6 +1306,11 @@ export class GamePersistence implements WorldEditDurability {
     return this.initialXpOrbsValue;
   }
 
+  /** Validated game-mode state bulk-loaded at `open()` (265; null when absent or corrupt). */
+  get initialGameMode(): GameModeState | null {
+    return this.initialGameModeValue;
+  }
+
   /** Bulk-loaded persisted canonical columns for this world. */
   get initialColumns(): SerializedChunkColumn[] {
     return this.initialColumnsValue;
@@ -1316,6 +1345,12 @@ export class GamePersistence implements WorldEditDurability {
   saveItemEntities(payload: unknown): void {
     if (this.disposed || this.resetCompleted) return;
     void this.metadata.putItemEntityData(this.worldIdValue, payload).catch((e) => this.recordError(`save itementities: ${errorMessage(e)}`));
+  }
+
+  /** Persist the game-mode payload via raw game-mode data (265). */
+  saveGameMode(payload: unknown): void {
+    if (this.disposed || this.resetCompleted) return;
+    void this.metadata.putGameModeData(this.worldIdValue, payload).catch((e) => this.recordError(`save gamemode: ${errorMessage(e)}`));
   }
 
   /** Persist the XP-orb snapshot via raw XP-orb data (264). */

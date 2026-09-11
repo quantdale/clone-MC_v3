@@ -61,6 +61,22 @@ export class PlayerInteraction {
   private readonly enchantmentRegistry?: EnchantmentRegistry;
   /** Optional selection-shape source; when absent targeting falls back to cell-level DDA. */
   private readonly selectionShapes?: SelectionShapeWorld;
+  /**
+   * Live game-mode rules (265): whether placing/using consumes the held stack
+   * (192 `depletesItems`). Absent = always deplete (legacy survival behavior).
+   */
+  private readonly depletesItems: () => boolean;
+  /**
+   * Live game-mode rules (265): whether mining completes instantly (192
+   * `instantBlockBreak` for creative). Absent = duration-based (legacy).
+   */
+  private readonly instantBreak: () => boolean;
+  /**
+   * Live game-mode rules (265): whether breaking spawns loot/XP and wears
+   * tools. Creative instant-breaks are clean (no drops, no XP, no wear).
+   * Absent = always drop (legacy).
+   */
+  private readonly dropsLoot: () => boolean;
 
   private readonly eyePos = new THREE.Vector3();
   private readonly dir = new THREE.Vector3();
@@ -95,6 +111,12 @@ export class PlayerInteraction {
     enchantmentRegistry?: EnchantmentRegistry;
     /** Optional per-cell selection-shape source enabling shape-aware targeting. */
     selectionShapes?: SelectionShapeWorld;
+    /** Live game-mode rule: item depletion on place/use (265; default always). */
+    depletesItems?: () => boolean;
+    /** Live game-mode rule: instant mining (265; default never). */
+    instantBreak?: () => boolean;
+    /** Live game-mode rule: loot/XP/tool-wear on break (265; default always). */
+    dropsLoot?: () => boolean;
   }) {
     this.world = opts.world;
     this.registry = opts.registry;
@@ -114,6 +136,9 @@ export class PlayerInteraction {
     this.xpOrbValue = opts.xpOrbValue ?? 0;
     this.enchantmentRegistry = opts.enchantmentRegistry;
     this.selectionShapes = opts.selectionShapes;
+    this.depletesItems = opts.depletesItems ?? (() => true);
+    this.instantBreak = opts.instantBreak ?? (() => false);
+    this.dropsLoot = opts.dropsLoot ?? (() => true);
 
     // A centered unit-cube wireframe marks the targeted block. Keeping the
     // geometry centered and placing it at block + 0.5 avoids the classic
@@ -342,6 +367,13 @@ export class PlayerInteraction {
       this.resetBreakProgress();
       return;
     }
+    // Creative instant-break (265): a breakable targeted block completes on
+    // the first mining update (unbreakable already refused above).
+    if (this.instantBreak()) {
+      this.finishBreak(blockId);
+      this.lastActionTime = this.elapsed;
+      return;
+    }
     const duration = this.getBreakDuration(def, this.selectedEnchantLevel('efficiency'));
     this.breakProgress = Math.min(1, this.breakProgress + dt / duration);
     this.onBreakProgress?.(this.breakProgress);
@@ -430,9 +462,12 @@ export class PlayerInteraction {
       }
     }
 
+    // Creative clean-break (265): no loot spawns, no XP, no tool wear.
+    const cleanBreak = !this.dropsLoot();
+    if (cleanBreak) stacks.length = 0;
     // Spawn the resolved drops as world item entities at the block center.
     const primaryDropId = stacks[0]?.item;
-    if (this.itemEntities && stacks.length > 0) {
+    if (!cleanBreak && this.itemEntities && stacks.length > 0) {
       const spawn = createSpawnPosition(this.target.blockX, this.target.blockY, this.target.blockZ);
       this.itemEntities.spawnLootStacks(stacks, spawn.x, spawn.y, spawn.z, this.rng);
       if (this.xpOrbs && this.xpOrbValue > 0) {
@@ -442,7 +477,7 @@ export class PlayerInteraction {
       }
     }
 
-    if (selectedTool?.maxDurability !== undefined && this.selector.damageSelectedItem) {
+    if (!cleanBreak && selectedTool?.maxDurability !== undefined && this.selector.damageSelectedItem) {
       const unbreakingLevel = selectedStack && this.enchantmentRegistry
         ? getEnchantmentLevel(selectedStack, 'unbreaking', this.enchantmentRegistry)
         : 0;
@@ -541,7 +576,9 @@ export class PlayerInteraction {
       return false;
     }
 
-    if (this.selector.consumeSelected && !this.selector.consumeSelected()) {
+    // Creative no-deplete (265): placing never consumes the held stack (the
+    // empty-hand guard above still refuses placement with nothing selected).
+    if (this.depletesItems() && this.selector.consumeSelected && !this.selector.consumeSelected()) {
       return false;
     }
     const targetBlockId = this.registry.getByResourceId(selected.placeBlock).id;

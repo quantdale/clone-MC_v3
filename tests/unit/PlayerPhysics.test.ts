@@ -391,6 +391,38 @@ describe("player physics — media, support and climbable contacts", () => {
     expect(player.position.x).toBeLessThan(5);
   });
 
+  it("a flying player hovers with no gravity and no fall accumulation (265)", () => {
+    const world = makeFloorWorld();
+    const physics = new PlayerPhysics(world, registry, { isFlying: () => true });
+    const player = new Player({ position: new THREE.Vector3(2, 10, 2) });
+    player.velocity.y = 0;
+    const before = player.position.y;
+    for (let i = 0; i < 10; i++) physics.update(player, 0.016);
+    expect(player.position.y).toBeCloseTo(before, 5);
+    expect(player.velocity.y).toBe(0);
+    expect(player.fallDistance).toBe(0);
+  });
+
+  it("a flying player keeps Game-driven vertical velocity (265)", () => {
+    const world = makeFloorWorld();
+    const physics = new PlayerPhysics(world, registry, { isFlying: () => true });
+    const player = new Player({ position: new THREE.Vector3(2, 10, 2) });
+    player.velocity.y = 8.0;
+    physics.update(player, 0.016);
+    // No gravity subtracted, no terminal clamp on the rise: upward motion intact.
+    expect(player.velocity.y).toBe(8.0);
+    expect(player.position.y).toBeGreaterThan(10);
+  });
+
+  it("physics without the flying hook falls exactly as legacy (265)", () => {
+    const world = makeFloorWorld();
+    const physics = new PlayerPhysics(world, registry);
+    const player = new Player({ position: new THREE.Vector3(2, 10, 2) });
+    player.velocity.y = 8.0;
+    physics.update(player, 0.016);
+    expect(player.velocity.y).toBeLessThan(8.0);
+  });
+
   it("step-up requires settle-down support within the rise", () => {
     // A floating slab at exactly one block above the floor ahead: the raised move passes over
     // but there is nothing to settle on within the rise at that spot... use a gap instead:

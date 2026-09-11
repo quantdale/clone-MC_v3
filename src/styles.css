@@ -52,6 +52,7 @@ body {
 #gamerule.hidden,
 #recipebook.hidden,
 #advancements.hidden,
+#creative.hidden,
 #break-progress.hidden,
 #toast.hidden,
 #debug-overlay.hidden {
@@ -1024,4 +1025,84 @@ body {
   pointer-events: auto;
   top: 44px;
   right: 8px;
+}
+/* Creative menu (265) — reuses the crafting panel chrome; original styling. */
+#creative {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  background: rgba(3, 10, 17, 0.36);
+}
+#creative-open {
+  cursor: pointer;
+  /* The .ui HUD container is pointer-events:none; re-enable for the button. */
+  pointer-events: auto;
+  top: 76px;
+  right: 8px;
+}
+#gamemode-toggle {
+  cursor: pointer;
+  pointer-events: auto;
+  top: 108px;
+  right: 8px;
+}
+.creative-search-label {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12px;
+  display: block;
+  margin-bottom: 4px;
+}
+.creative-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+.creative-list {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+.creative-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 6px;
+  background: rgba(30, 60, 100, 0.55);
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+}
+.creative-row-title {
+  font-weight: bold;
+  pointer-events: none;
+}
+.creative-row-key {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  font-family: 'Consolas', 'Menlo', monospace;
+  pointer-events: none;
+}
+.creative-empty {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  text-align: center;
+}
+.creative-status {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  text-align: center;
+  margin: 4px 0 0;
 }
