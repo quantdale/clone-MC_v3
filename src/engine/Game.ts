@@ -38,7 +38,7 @@ import { CropBlockBehavior } from '../simulation/CropBehavior';
 import { FarmlandBlockBehavior } from '../simulation/FarmlandBehavior';
 import { FireBlockBehavior } from '../simulation/FireBehavior';
 import { bonemealTarget } from '../simulation/Bonemeal';
-import { RandomTickSelector } from '../simulation/RandomTickSelector';
+import { RandomTickSelector, RANDOM_TICKS_PER_SUB_CHUNK } from '../simulation/RandomTickSelector';
 import { WorldBlockAccess } from '../simulation/WorldBlockAccess';
 import { Player } from '../player/Player';
 import { PlayerController } from '../player/PlayerController';
@@ -152,10 +152,21 @@ import { AWKWARD_BASE } from '../inventory/BrewingRecipes';
 import { StackComponentMap, createDefaultStackComponentRegistry } from '../inventory/StackDataComponents';
 import type { ItemStack } from '../inventory/Inventory';
 import { EnchantingPanel, formatEnchantLevel, prettifyEnchantmentKey } from '../ui/EnchantingPanel';
+import { GameRulePanel } from '../ui/GameRulePanel';
+import {
+  createDefaultGameRules,
+  isValidGameRuleValue,
+  parseGameRuleValue,
+  serializeGameRules,
+  setGameRule as setGameRuleValue,
+  type GameRuleKey,
+  type GameRuleStore,
+  type GameRuleValue,
+} from '../simulation/GameRuleFramework';
 import type { LootStack } from '../inventory/LootTable';
 import { createDefaultBossRegistry } from '../simulation/BossFramework';
 import type { BossDefinition } from '../simulation/BossFramework';
-import { createWither, tickWither, damageWither, serializeWithers, deserializeWithers, bossBarProgress, WITHER_SPAWN_EXPLOSION_STRENGTH } from '../simulation/WitherBoss';
+import { createWither, tickWither, damageWither, serializeWithers, deserializeWithers, bossBarProgress, witherExplosionWorld, WITHER_SPAWN_EXPLOSION_STRENGTH } from '../simulation/WitherBoss';
 import type { WitherState } from '../simulation/WitherBoss';
 import { detectWitherSummon, consumeSummonStructure } from '../simulation/WitherSummon';
 import { createWitherSkull, stepWitherSkull, scaledWitherDuration } from '../simulation/WitherSkull';
@@ -175,6 +186,18 @@ const WITHER_SKULL_CAP = 12;
 const WITHER_MELEE_COOLDOWN_TICKS = 10;
 /** Ticks between wither status-effect damage ticks (252). */
 const WITHER_EFFECT_PERIOD_TICKS = 40;
+
+/**
+ * Resolve the per-section random-tick selector count from the gamerule store
+ * (261). The store only ever holds kind-valid integers, but the clamp keeps
+ * the call site total against hand-built stores: negatives become 0 (silent
+ * ticks, a legal value) and the default reproduces the pre-261 call exactly.
+ */
+export function resolveRandomTickCount(store: GameRuleStore): number {
+  const raw = store.randomTickSpeed;
+  if (typeof raw !== 'number' || !Number.isInteger(raw)) return RANDOM_TICKS_PER_SUB_CHUNK;
+  return Math.max(0, raw);
+}
 /** Toast notification visible duration in milliseconds. */
 const TOAST_DURATION_MS = 1500;
 /** FPS sampling window in seconds. */
@@ -267,6 +290,14 @@ export class Game {
   private enchantingPos: { x: number; y: number; z: number } | null = null;
   /** DOM controller for the live enchanting screen (259). */
   private readonly enchantingPanel: EnchantingPanel;
+  /** Whether the gamerule settings screen is open (261). */
+  private gameruleOpen = false;
+  /** DOM controller for the gamerule settings screen (261). */
+  private readonly gamerulePanel: GameRulePanel;
+  /** Authoritative gamerule store (261): validated persisted payload or defaults. */
+  private gameRules: GameRuleStore;
+  /** Registry key of the Fire block, resolved once for the doFireTick gate (261). */
+  private readonly fireBlockKey: string;
   /** Monotonic simulation tick counter driving random-tick seeding. */
   private simTick = 0;
   /** Registry-derived random-tick eligibility table (254); built lazily. */
@@ -592,6 +623,8 @@ export class Game {
     this.behaviorRegistry.register(this.blockRegistry.get(BlockId.Wheat).key, this.cropBehavior);
     this.behaviorRegistry.register(this.blockRegistry.get(BlockId.Farmland).key, this.farmlandBehavior);
     this.behaviorRegistry.register(this.blockRegistry.get(BlockId.Fire).key, this.fireBehavior);
+    // 261: cache the Fire registry key once for the doFireTick dispatch gate.
+    this.fireBlockKey = this.blockRegistry.get(BlockId.Fire).key;
     this.randomTickEligibility = new RandomTickEligibility(this.blockRegistry, this.behaviorRegistry);
     this.randomTickSelector = new RandomTickSelector();
     this.lootTables = new LootTableRegistry(buildCurrentLootTables(this.blockRegistry, this.itemRegistry), this.itemRegistry);
@@ -713,6 +746,21 @@ export class Game {
     } else {
       void this.selfOpenPromise.then(() => {
         if (!this.disposed) this.hydrateWithers(this.persistenceImpl?.initialWithers ?? []);
+      }).catch(() => undefined);
+    }
+    // 261 gamerule store: the validated persisted payload when present,
+    // defaults otherwise (absent or corrupt records never break boot). The
+    // self-composed path applies the late-loaded payload when its promise
+    // settles (player-state parity below).
+    this.gameRules = this.persistenceImpl?.initialGameRules ?? createDefaultGameRules();
+    if (this.selfOpenPromise !== null) {
+      void this.selfOpenPromise.then(() => {
+        if (this.disposed) return;
+        const late = this.persistenceImpl?.initialGameRules;
+        if (late) {
+          this.gameRules = late;
+          if (this.gameruleOpen) this.gamerulePanel.render();
+        }
       }).catch(() => undefined);
     }
 
@@ -922,6 +970,16 @@ export class Game {
       },
       onClose: () => this.closeEnchanting(),
     });
+    // Live gamerule settings screen (261): a pure view over the gamerule store.
+    this.gamerulePanel = new GameRulePanel(this.requireElement('gamerule'), {
+      getRules: () => this.gameRules,
+      setRule: (key: string, text: string) => this.setGameRuleFromText(key, text),
+      onChanged: () => undefined,
+      onClose: () => this.closeGamerule(),
+    });
+    // HUD button opens the settings for mouse/touch players (261).
+    const gameruleOpenBtn = document.getElementById('gamerule-open');
+    gameruleOpenBtn?.addEventListener('click', () => this.openGamerule());
 
     // Fixed-tick ownership (044): the driver turns frame deltas into bounded,
     // deterministic 20 TPS ticks; the tick body enforces the simulation order.
@@ -1022,6 +1080,9 @@ export class Game {
     // The enchanting panel owns no transient state (259: no cursor), but it
     // must not stay up over teardown — close it before the persist flush.
     this.closeEnchanting();
+    // The gamerule panel owns no transient state either (261: pure view over
+    // the already-persisted store) — close it before the persist flush.
+    this.closeGamerule();
     this.savePlayerStateDurable();
     this.saveWithers();
     this.saveTimer = 0;
@@ -1265,6 +1326,7 @@ export class Game {
       !this.furnaceOpen &&
       !this.brewingOpen &&
       !this.enchantingOpen &&
+      !this.gameruleOpen &&
       (this.pointerLocked || this.hasControllerInput(deviceFrame));
 
     // Pause/resume mapping (044): while inactive the driver's time anchor keeps
@@ -1354,6 +1416,9 @@ export class Game {
       } else if (this.enchantingOpen) {
         // Same rule for the enchanting panel (259): close instead of stacking.
         this.closeEnchanting();
+      } else if (this.gameruleOpen) {
+        // Same rule for the gamerule settings screen (261).
+        this.closeGamerule();
       } else if (this.craftingOpen) {
         this.closeCrafting();
       } else {
@@ -1361,6 +1426,11 @@ export class Game {
       }
     }
 
+    // Gamerule settings toggle (261): G opens/closes the settings screen.
+    if (this.input.consumeGameruleToggle()) {
+      if (this.gameruleOpen) this.closeGamerule();
+      else this.openGamerule();
+    }
     // Furnace session upkeep (251): close on destruction or walking away, and
     // keep the burn/smelt indicators live while it stays open.
     if (this.furnaceOpen && this.furnacePos) {
@@ -1389,6 +1459,11 @@ export class Game {
       }
     }
 
+    // Gamerule settings upkeep (261): no position to track (unlike the
+    // block-bound panels); keep the rows live while open.
+    if (this.gameruleOpen) {
+      this.gamerulePanel.render();
+    }
     // Enchanting session upkeep (259): a voided session, a destroyed table,
     // or walking away closes the panel; otherwise keep offers live.
     if (this.enchantingOpen) {
@@ -1643,6 +1718,10 @@ export class Game {
    */
   private tickRandomBlocks(): void {
     this.simTick++;
+    // 261: the randomTickSpeed gamerule drives the per-section selector count
+    // (default 3 = the pre-261 call exactly); doFireTick gates Fire dispatch.
+    const tickCount = resolveRandomTickCount(this.gameRules);
+    const doFireTick = this.gameRules.doFireTick !== false;
     // Random ticks are dispatched over materialized canonical 16³ sections.
     // This keeps negative/high dimension Y authoritative and avoids rebuilding
     // section coordinates from the legacy 64-high slab projection.
@@ -1657,9 +1736,11 @@ export class Game {
         this.simTick,
         this.seed,
         (x, y, z) => this.isRandomTickEligible(x, y, z),
+        tickCount,
       );
       for (const [x, y, z] of positions) {
         const blockKey = this.blockRegistry.get(this.world.getBlock(x, y, z)).key;
+        if (!doFireTick && blockKey === this.fireBlockKey) continue;
         this.behaviorRegistry
           .getBehavior(blockKey)
           .onRandomTick?.({ x, y, z, tick: this.simTick, world: this.worldBlockAccess, seed: this.seed });
@@ -2052,6 +2133,10 @@ export class Game {
         // Same rule for the enchanting panel (259).
         this.closeEnchanting();
       }
+      if (this.gameruleOpen) {
+        // Same rule for the gamerule settings screen (261).
+        this.closeGamerule();
+      }
       this.hideOverlay();
       // The HUD/crosshair only appear once the world is ready (see update()).
       if (!this.loadingShown) {
@@ -2059,7 +2144,7 @@ export class Game {
         this.hud.show();
         this.hotbar.show();
       }
-    } else if (!this.craftingOpen && !this.furnaceOpen && !this.brewingOpen && !this.enchantingOpen) {
+    } else if (!this.craftingOpen && !this.furnaceOpen && !this.brewingOpen && !this.enchantingOpen && !this.gameruleOpen) {
       // Unlock caused by OPENING a container session must not stack the pause
       // overlay behind/on the open panel; the panel itself represents the
       // paused state and its owner re-shows the overlay on close (251).
@@ -2117,6 +2202,7 @@ export class Game {
 
   private openCrafting(): void {
     if (this.craftingOpen) return;
+    if (this.gameruleOpen) this.closeGamerule();
     this.craftingOpen = true;
     this.input.releasePointerLock();
     this.hideOverlay();
@@ -2434,6 +2520,7 @@ export class Game {
       !this.furnaceOpen &&
       !this.brewingOpen &&
       !this.enchantingOpen &&
+      !this.gameruleOpen &&
       !this.contextLost &&
       this.errorEl.classList.contains('hidden')
     ) {
@@ -2570,6 +2657,7 @@ export class Game {
     if (this.furnaceOpen) this.closeFurnace();
     if (this.craftingOpen) this.closeCrafting();
     if (this.enchantingOpen) this.closeEnchanting();
+    if (this.gameruleOpen) this.closeGamerule();
     this.brewingOpen = true;
     this.brewingPos = { x, y, z };
     this.input.releasePointerLock();
@@ -2706,6 +2794,7 @@ export class Game {
     if (!this.blockEntityHost.has(x, y, z)) return;
     if (this.brewingOpen) this.closeBrewing();
     if (this.enchantingOpen) this.closeEnchanting();
+    if (this.gameruleOpen) this.closeGamerule();
     this.furnaceOpen = true;
     this.furnacePos = { x, y, z };
     this.input.releasePointerLock();
@@ -2895,7 +2984,7 @@ export class Game {
   /** One bounded wither explosion through the ExplosionCore seam. */
   applyWitherExplosion(center: readonly [number, number, number], strength: number): void {
     const world = this.world;
-    const explosionWorld = {
+    const baseWorld = {
       getBlockState: (x: number, y: number, z: number): number => world.getBlock(x, y, z),
       isAir: (s: number): boolean => s === BlockId.Air,
       isDestroyable: (s: number): boolean =>
@@ -2907,6 +2996,9 @@ export class Game {
       },
       dropFor: (): string | null => null,
     };
+    // 261: mobGriefing=false spares every block (the destroyable filter goes
+    // dead) while player blast damage below is unchanged.
+    const explosionWorld = witherExplosionWorld(baseWorld, this.gameRules.mobGriefing !== false);
     const result = computeExplosion({ center, strength, world: explosionWorld });
     const cap = Math.min(result.destroyed.length, 32);
     for (let i = 0; i < cap; i++) {
@@ -3159,6 +3251,7 @@ export class Game {
     if (this.furnaceOpen) this.closeFurnace();
     if (this.brewingOpen) this.closeBrewing();
     if (this.craftingOpen) this.closeCrafting();
+    if (this.gameruleOpen) this.closeGamerule();
     const bookShelves = this.countBookshelves(px, py, pz);
     this.enchantingSession = createSession({
       stack: held,
@@ -3220,6 +3313,72 @@ export class Game {
   /** The active enchanting session, or null when none is open. */
   getEnchantingSession(): EnchantingTableSession | null {
     return this.enchantingSession;
+  }
+
+  /**
+   * Open the gamerule settings screen (261). Closes any other container
+   * first: one container at a time (251/259/260 parity). No position or
+   * session state — the panel is a pure view over the gamerule store.
+   */
+  private openGamerule(): void {
+    if (this.gameruleOpen) return;
+    if (this.furnaceOpen) this.closeFurnace();
+    if (this.brewingOpen) this.closeBrewing();
+    if (this.enchantingOpen) this.closeEnchanting();
+    if (this.craftingOpen) this.closeCrafting();
+    this.gameruleOpen = true;
+    this.input.releasePointerLock();
+    this.hideOverlay();
+    this.crosshair.hide();
+    this.hud.hide();
+    this.hotbar.hide();
+    this.setBreakProgress(0);
+    this.interaction.clearTarget();
+    this.gamerulePanel.show();
+  }
+
+  /**
+   * Close the gamerule settings screen. The panel owns no transient state,
+   * so hiding it plus returning the overlay is the whole settle.
+   */
+  private closeGamerule(): void {
+    if (!this.gameruleOpen) return;
+    this.gameruleOpen = false;
+    this.gamerulePanel.hide();
+    this.showOverlay('Click to play');
+  }
+
+  /** Whether the gamerule settings screen is open (E2E observability). */
+  isGameruleOpen(): boolean {
+    return this.gameruleOpen;
+  }
+
+  /** The live gamerule store (E2E observability; the panel reads the same). */
+  getGameRules(): GameRuleStore {
+    return this.gameRules;
+  }
+
+  /**
+   * Set one gamerule (261). Unknown keys and wrong-kind values are a no-op
+   * returning false (the 189 identity rule); valid edits persist through the
+   * facade, re-render the open panel, and return true. Never throws.
+   */
+  setGameRule(key: string, value: GameRuleValue): boolean {
+    if (!isValidGameRuleValue(key, value)) return false;
+    const next = setGameRuleValue(this.gameRules, key as GameRuleKey, value);
+    if (next !== this.gameRules) {
+      this.gameRules = next;
+      this.persistenceImpl?.saveGameRules(serializeGameRules(next));
+      if (this.gameruleOpen) this.gamerulePanel.render();
+    }
+    return true;
+  }
+
+  /** Text entry for the panel: parse, then apply (false = invalid no-op). */
+  private setGameRuleFromText(key: string, text: string): boolean {
+    const parsed = parseGameRuleValue(key, text);
+    if (parsed === null) return false;
+    return this.setGameRule(key, parsed);
   }
 
   /**
@@ -3477,6 +3636,7 @@ export class Game {
     this.closeFurnace();
     this.closeBrewing();
     this.closeEnchanting();
+    this.closeGamerule();
     if (this.craftingOpen) {
       this.closeCrafting();
     }

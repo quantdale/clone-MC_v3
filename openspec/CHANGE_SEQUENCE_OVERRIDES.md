@@ -113,3 +113,25 @@ stands **VERIFIED**.
   (place→open→insert→brew→collect→reload→break).
 - Change 258 remains recorded BLOCKED and resumable on a hardware-WebGL host;
   the 260 track does not consume, waive, or re-litigate any 258 headed task.
+
+## 261 activation alongside BLOCKED 258 — owner-authorized parallel track (2026-09-11)
+
+The product owner (Standing owner order, 2026-09-11 campaign instruction) authorized
+activating and implementing OpenSpec change **261-gamerule-settings-ui** while
+Change **258-real-world-runtime-performance-fps-recovery** remains **BLOCKED**
+(headed hardware-WebGL certification deferred) and Changes **259-enchanting-panel-ui**
+and **260-live-brewing-stand-production-integration** stand **VERIFIED**.
+
+- Change 258 status stays **BLOCKED** at 40/100 with its existing deferral intact.
+  No headed FPS work is touched, no GPU evidence is faked, and 258 MUST NOT be
+  marked VERIFIED by the 261 track.
+- Changes 259 (18/18) and 260 (19/19) stand **VERIFIED** and MUST NOT be
+  reopened unless a gamerule regression blocks the 261 player loop.
+- Change 261 (`261-gamerule-settings-ui`) is the sole **ACTIVE** implementation
+  change: an in-game settings/gamerule UI over the existing `GameRuleFramework`
+  (change 189) with world-scoped persistence and live-consumer wiring
+  (`mobGriefing` into the Wither/destroyable paths that already accept the flag,
+  plus other 189 keys where a production consumer already exists). It closes the
+  "seam not wired to UI" debt noted on C252/MP-19.4-1.
+- Change 258 remains recorded BLOCKED and resumable on a hardware-WebGL host;
+  the 261 track does not consume, waive, or re-litigate any 258 headed task.

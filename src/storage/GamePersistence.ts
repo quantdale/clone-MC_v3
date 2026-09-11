@@ -63,6 +63,10 @@ import {
   type WorldStartupAssessment,
 } from './WorldStartupAssessment';
 import { WorldArchiver } from './WorldArchiver';
+import {
+  deserializeGameRules,
+  type GameRuleStore,
+} from '../simulation/GameRuleFramework';
 
 /**
  * Composite key for a 2D chunk (worldId|chunkX|chunkZ). Mirrors the key shape used by
@@ -293,6 +297,8 @@ export class GamePersistence implements WorldEditDurability {
   private initialPlayerStateValue: GamePlayerSnapshot | null = null;
   private initialBlockEntitiesValue: SerializedBlockEntity[] = [];
   private initialWithersValue: unknown[] = [];
+  /** Validated gamerule store bulk-loaded at open() (261; null when absent or corrupt). */
+  private initialGameRulesValue: GameRuleStore | null = null;
   private initialColumnsValue: SerializedChunkColumn[] = [];
   /** World generation baseline compatibility classification. */
   private generationBaselineValue: WorldGenerationBaseline = 'current';
@@ -618,6 +624,16 @@ export class GamePersistence implements WorldEditDurability {
         this.recordError(`load withers: ${errorMessage(e)}`);
       }
       this.initialWithersValue = initialWithers;
+      // 261 hydration: gamerule payload stored via raw gamerule data. Absent
+      // stays null (Game boots defaults); corrupt payloads degrade to null
+      // with a recorded error so boot continues on defaults.
+      try {
+        const raw = await this.metadata.getGameRuleData(this.worldIdValue);
+        if (raw !== null) this.initialGameRulesValue = deserializeGameRules(raw);
+      } catch (e) {
+        this.initialGameRulesValue = null;
+        this.recordError(`load gamerules: ${errorMessage(e)}`);
+      }
     }
 
     // 5.5 Authoritative startup compatibility decision (257). Computed after the
@@ -691,6 +707,7 @@ export class GamePersistence implements WorldEditDurability {
     // initialWithers already set above; fallback to empty if fatal
     if (fatal) {
       this.initialWithersValue = [];
+      this.initialGameRulesValue = null;
       this.initialColumnsValue = [];
     }
     this.opened = true;
@@ -743,6 +760,7 @@ export class GamePersistence implements WorldEditDurability {
     let snapshot: {
       metadata: WorldMetadata | null;
       witherData: unknown[] | null;
+      gameruleData: unknown | null;
       columns: SerializedChunkColumn[];
       edits: Array<{ chunkX: number; chunkY: number; chunkZ: number; changes: Array<[number, number]> }>;
       playerState: PlayerStateRecord | null;
@@ -752,6 +770,7 @@ export class GamePersistence implements WorldEditDurability {
     try {
       const metadata = await this.metadata.getMetadata(worldId);
       const witherData = await this.metadata.getWitherData(worldId);
+      const gameruleData = await this.metadata.getGameRuleData(worldId);
       const columns = await this.chunkSections.listColumns(worldId);
       const editRecords = await this.chunkEdits.listChunkEdits(worldId);
       const playerState = await this.playerStates.getPlayerState(worldId);
@@ -760,6 +779,7 @@ export class GamePersistence implements WorldEditDurability {
       snapshot = {
         metadata,
         witherData,
+        gameruleData,
         columns: [...columns],
         edits: editRecords.map((r) => ({ chunkX: r.chunkX, chunkY: r.chunkY, chunkZ: r.chunkZ, changes: [...r.changes] })),
         playerState,
@@ -801,6 +821,8 @@ export class GamePersistence implements WorldEditDurability {
         }
         // 2. Raw Wither record (separate key in the same metadata store).
         await awaitRequest(metaStore.delete(`__wither__:${worldId}`));
+        // 2b. Raw gamerule record (261; separate key in the same metadata store).
+        await awaitRequest(metaStore.delete(`__gamerules__:${worldId}`));
         // 3. Every chunk column for this world. Key shape: `${worldId}|${cx}|${cz}`.
         for (const column of snapshot!.columns) {
           await awaitRequest(csStore.delete(worldChunkKey(worldId, column.chunkX, column.chunkZ)));
@@ -832,6 +854,7 @@ export class GamePersistence implements WorldEditDurability {
       try {
         if (snapshot!.metadata) await this.metadata.putMetadata(snapshot!.metadata);
         if (snapshot!.witherData !== null) await this.metadata.putWitherData(worldId, snapshot!.witherData);
+        if (snapshot!.gameruleData !== null) await this.metadata.putGameRuleData(worldId, snapshot!.gameruleData);
         for (const col of snapshot!.columns) await this.chunkSections.putColumn(worldId, col);
         for (const rec of snapshot!.edits) await this.chunkEdits.putChunkEdits(worldId, rec.chunkX, rec.chunkY, rec.chunkZ, rec.changes);
         if (snapshot!.playerState) await this.playerStates.putPlayerState(snapshot!.playerState);
@@ -1135,6 +1158,11 @@ export class GamePersistence implements WorldEditDurability {
     return this.initialWithersValue;
   }
 
+  /** Validated gamerule store bulk-loaded at `open()` (261; null when absent or corrupt). */
+  get initialGameRules(): GameRuleStore | null {
+    return this.initialGameRulesValue;
+  }
+
   /** Bulk-loaded persisted canonical columns for this world. */
   get initialColumns(): SerializedChunkColumn[] {
     return this.initialColumnsValue;
@@ -1163,6 +1191,12 @@ export class GamePersistence implements WorldEditDurability {
   saveWithers(payload: unknown[]): void {
     if (this.disposed || this.resetCompleted) return;
     void this.metadata.putWitherData(this.worldIdValue, payload).catch((e) => this.recordError(`save withers: ${errorMessage(e)}`));
+  }
+
+  /** Persist the gamerule payload via raw gamerule data (261). */
+  saveGameRules(payload: unknown): void {
+    if (this.disposed || this.resetCompleted) return;
+    void this.metadata.putGameRuleData(this.worldIdValue, payload).catch((e) => this.recordError(`save gamerules: ${errorMessage(e)}`));
   }
 
   /** Last classified write failure observed by the monitoring sink, or `null` (debug surface). */

@@ -174,6 +174,25 @@ export class WorldMetadataRepository {
     return (result as { payload: unknown[] }).payload;
   }
 
+  /** Raw put for the gamerule payload bypassing WorldMetadata validation (261; wither precedent). */
+  async putGameRuleData(worldId: string, payload: unknown): Promise<void> {
+    const raw = {
+      worldId: `__gamerules__:${worldId}`,
+      payload,
+      updatedAt: Date.now(),
+    };
+    const tx = this.requireDb().transaction(this.store, 'readwrite');
+    await promisifyRequest(tx.objectStore(this.store).put(raw));
+  }
+
+  /** Raw get for the gamerule payload (261). Returns null when absent. */
+  async getGameRuleData(worldId: string): Promise<unknown | null> {
+    const tx = this.requireDb().transaction(this.store, 'readonly');
+    const result = await promisifyRequest(tx.objectStore(this.store).get(`__gamerules__:${worldId}`)) as { payload?: unknown } | undefined;
+    if (!result || !('payload' in (result as Record<string, unknown>))) return null;
+    return (result as { payload: unknown }).payload ?? null;
+  }
+
   /** Return the metadata for `worldId`, or `null` if absent. */
   async getMetadata(worldId: string): Promise<WorldMetadata | null> {
     const tx = this.requireDb().transaction(this.store, 'readonly');
@@ -196,8 +215,9 @@ export class WorldMetadataRepository {
 
   /**
    * Delete an arbitrary record by exact key in the world-metadata store (257).
-   * Used for the wither-data record (`__wither__:<worldId>`), which shares this
-   * store under a reserved key namespace rather than the metadata keyPath.
+   * Used for the wither-data record (`__wither__:<worldId>`) and the gamerule
+   * record (`__gamerules__:<worldId>`), which share this store under a reserved
+   * key namespace rather than the metadata keyPath.
    */
   async deleteRaw(key: string): Promise<void> {
     const tx = this.requireDb().transaction(this.store, 'readwrite');

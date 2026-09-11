@@ -49,6 +49,7 @@ body {
 #furnace.hidden,
 #brewing.hidden,
 #enchanting.hidden,
+#gamerule.hidden,
 #break-progress.hidden,
 #toast.hidden,
 #debug-overlay.hidden {
@@ -687,6 +688,72 @@ body {
 .enchanting-apply[disabled] {
   opacity: 0.45;
   cursor: default;
+}
+
+/* Gamerule settings screen (261) — reuses the crafting panel chrome; original styling. */
+#gamerule {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  background: rgba(3, 10, 17, 0.36);
+}
+#gamerule-rows {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+.gamerule-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.3);
+}
+.gamerule-label {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  font-family: 'Consolas', 'Menlo', monospace;
+}
+.gamerule-toggle {
+  min-width: 64px;
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 6px;
+  background: rgba(40, 90, 60, 0.55);
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+}
+.gamerule-toggle[aria-pressed='false'] {
+  background: rgba(90, 40, 40, 0.55);
+}
+.gamerule-input {
+  width: 90px;
+  padding: 6px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 13px;
+}
+.gamerule-status {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  text-align: center;
+  margin: 4px 0 0;
+}
+#gamerule-open {
+  cursor: pointer;
+  /* The .ui HUD container is pointer-events:none; re-enable for the button. */
+  pointer-events: auto;
+  top: 44px;
+  right: 8px;
 }
 .overlay-btn:focus-visible {
   outline: 3px solid #ffe08a;

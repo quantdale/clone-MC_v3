@@ -58,6 +58,7 @@
             <span id="hunger-status">🍗 20</span>
           </div>
           <div id="world-time" class="hud-chip" aria-label="World time">☀ 12:00</div>
+          <button id="gamerule-open" class="hud-chip" type="button" aria-label="Open game rule settings">⚙ Rules</button>
           <div id="selected-block-name" class="hud-chip"></div>
         </div>
         <div id="hotbar" class="ui hidden"></div>
@@ -195,6 +196,22 @@
               <button id="enchanting-apply" class="enchanting-apply" type="button">Apply</button>
             </div>
             <p class="crafting-hint">Select an offer, then Apply. Close to keep your item unenchanted.</p>
+          </div>
+        </div>
+        <div id="gamerule" class="ui hidden" aria-label="Game rule settings screen">
+          <div class="crafting-panel" role="dialog" aria-modal="true" aria-labelledby="gamerule-title">
+            <div class="crafting-header">
+              <div>
+                <h2 id="gamerule-title">Game Rules</h2>
+                <p id="gamerule-status" class="gamerule-status" role="status" aria-live="polite">Edit a rule — changes apply immediately.</p>
+              </div>
+              <button id="gamerule-close" class="crafting-close" type="button" aria-label="Close game rules">×</button>
+            </div>
+            <div class="inventory-section">
+              <div class="inventory-section-title">Rules</div>
+              <div id="gamerule-rows" class="gamerule-rows" aria-label="Game rules"></div>
+            </div>
+            <p class="crafting-hint">Toggle a rule or edit a value — press G or close this panel, then click the world to resume.</p>
           </div>
         </div>
         <div id="error" class="ui hidden" role="alert">

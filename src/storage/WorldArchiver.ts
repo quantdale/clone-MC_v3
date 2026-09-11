@@ -41,6 +41,8 @@ export interface WorldImportReport {
   playerStateImported: boolean;
   /** Whether wither data was written. */
   witherDataImported: boolean;
+  /** Whether gamerule data was written (261). */
+  gameruleDataImported: boolean;
 }
 
 /** Exports and imports whole-world archives over the five repositories. */
@@ -104,6 +106,8 @@ export class WorldArchiver {
     // proved no record exists. Any exception means the read itself failed and the export
     // MUST fail closed (do not silently substitute null).
     const witherData = await this.metadata.getWitherData(worldId);
+    // Gamerule raw record (261): same fail-closed contract as the wither record.
+    const gameruleData = await this.metadata.getGameRuleData(worldId);
 
     return {
       format: 'voxel-world',
@@ -117,6 +121,7 @@ export class WorldArchiver {
       entityChunks,
       chunkEdits,
       witherData,
+      gameruleData,
     };
   }
 
@@ -147,6 +152,7 @@ export class WorldArchiver {
       for (const c of valid.entityChunks) await put("entities", { key: `${valid.worldId}|${c.chunkX}|${c.chunkZ}`, worldId: valid.worldId, chunkX: c.chunkX, chunkZ: c.chunkZ, entities: c.entities });
       if (this.chunkEdits) for (const e of valid.chunkEdits) await put("chunk-edits", { key: `${valid.worldId}|${e.chunkX}|${e.chunkY}|${e.chunkZ}`, worldId: valid.worldId, chunkX: e.chunkX, chunkY: e.chunkY, chunkZ: e.chunkZ, changes: e.changes });
       if (valid.witherData !== null && valid.witherData !== undefined) await put("world-metadata", { worldId: `__wither__:${valid.worldId}`, payload: valid.witherData, updatedAt: Date.now() });
+      if (valid.gameruleData !== null && valid.gameruleData !== undefined) await put("world-metadata", { worldId: `__gamerules__:${valid.worldId}`, payload: valid.gameruleData, updatedAt: Date.now() });
       if (valid.playerState) await put("player-state", valid.playerState);
     });
 
@@ -159,6 +165,7 @@ export class WorldArchiver {
       metadataImported: valid.metadata !== null,
       playerStateImported: valid.playerState !== null,
       witherDataImported: valid.witherData !== null,
+      gameruleDataImported: valid.gameruleData !== null && valid.gameruleData !== undefined,
     };
   }
 }

@@ -7,6 +7,8 @@
  *
  * Backward compatibility: version 1 archives (without chunkEdits/witherData) remain
  * readable and are treated as having empty chunkEdits and null witherData.
+ * Change 261 adds an optional `gameruleData` field (missing reads as null); v1 and
+ * v2 archives without it validate and import with null gamerules.
  */
 import type { WorldMetadata } from './WorldMetadata';
 import { validateWorldMetadata } from './WorldMetadata';
@@ -72,6 +74,12 @@ export interface WorldArchive {
   chunkEdits: ChunkEditArchivePayload[];
   /** Raw Wither boss data stored under __wither__:${worldId}, or null when absent. */
   witherData: unknown[] | null;
+  /**
+   * Raw gamerule payload stored under __gamerules__:${worldId}, or null when
+   * absent (261). OPTIONAL for backward compatibility: archives without this
+   * field (v1, or v2 written before 261) validate and import as null.
+   */
+  gameruleData?: unknown | null;
 }
 
 function isFiniteNumber(v: unknown): v is number {
@@ -213,6 +221,17 @@ export function validateWorldArchive(input: unknown): WorldArchive {
     else witherData = null;
   }
 
+  // 261: optional in every version; missing/null reads as null. A present value
+  // must be a plain object payload (the raw 189 SerializedGameRules shape is
+  // validated again at load by `deserializeGameRules`, never trusted blindly).
+  let gameruleData: unknown | null = null;
+  if (r.gameruleData !== null && r.gameruleData !== undefined) {
+    if (typeof r.gameruleData !== 'object' || Array.isArray(r.gameruleData)) {
+      throw new Error('WorldArchive: gameruleData must be an object or null');
+    }
+    gameruleData = r.gameruleData;
+  }
+
   return {
     format: WORLD_ARCHIVE_FORMAT as 'voxel-world',
     version: 2 as const,
@@ -225,5 +244,6 @@ export function validateWorldArchive(input: unknown): WorldArchive {
     entityChunks,
     chunkEdits,
     witherData,
+    gameruleData,
   };
 }

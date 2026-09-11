@@ -83,6 +83,7 @@ export class InputManager implements InputState {
   private hotbarIndex = -1;
   private debugToggleQueued = false;
   private craftingToggleQueued = false;
+  private gameruleToggleQueued = false;
   private eatQueued = false;
 
   constructor(
@@ -250,6 +251,12 @@ export class InputManager implements InputState {
     return value;
   }
 
+  consumeGameruleToggle(): boolean {
+    const value = this.gameruleToggleQueued;
+    this.gameruleToggleQueued = false;
+    return value;
+  }
+
   consumeEat(): boolean {
     const value = this.eatQueued;
     this.eatQueued = false;
@@ -343,6 +350,9 @@ export class InputManager implements InputState {
       case 'KeyC':
         this.craftingToggleQueued = true;
         break;
+      case 'KeyG':
+        this.gameruleToggleQueued = true;
+        break;
       case 'KeyR':
         this.eatQueued = true;
         break;
@@ -366,6 +376,7 @@ export class InputManager implements InputState {
       this.isMovementKey(event.code) ||
       event.code === 'F3' ||
       event.code === 'KeyC' ||
+      event.code === 'KeyG' ||
       event.code === 'KeyR'
     ) {
       event.preventDefault();
@@ -517,6 +528,7 @@ export class InputManager implements InputState {
     this.hotbarDelta = 0;
     this.debugToggleQueued = false;
     this.craftingToggleQueued = false;
+    this.gameruleToggleQueued = false;
     this.eatQueued = false;
   }
 
