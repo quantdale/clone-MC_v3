@@ -15,7 +15,7 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "a237c4fc68cbcfc66dfbbd121fd638eed4987fc1",
-  "localHead": "a237c4fc68cbcfc66dfbbd121fd638eed4987fc1",
+  "localHead": "4a663f997dc09954cb5bc6336b08136a577f3c61",
   "lastCompletedTask": "Owner deferral recorded 2026-09-11 (Michael via Minecraft Clone Dev): Change 258 formally BLOCKED at 40/100 with headed hardware-WebGL certification deferred; no headed GPU evidence faked. Ship-hygiene gates re-run this session (see verification.md).",
   "nextExactAction": "Resume 258 headed tasks on a hardware-WebGL host when available; until then program remains BLOCKED on 258 headed cert with owner-accepted deferral",
   "blockers": [
