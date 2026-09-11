@@ -1,7 +1,7 @@
 # Verification: 258-real-world-runtime-performance-fps-recovery
 
 Status: NOT VERIFIED
-Completion: 28/100 (28%)
+Completion: 29/100 (29%)
 Advancement allowed: false
 
 ## Requirement evidence
@@ -132,10 +132,16 @@ full unit 4670 passed + 1 skipped; file-audit manifest extended to 2651 rows and
 
 ## Incomplete tasks
 
-72/100 incomplete. Tasks 1, 2, 4, 5, 16–28, 31, 32, 35–38, 40, 43, 45, 46, and 58 complete;
+71/100 incomplete. Tasks 1, 2, 4, 5, 16–28, 31, 32, 35–38, 40, 43, 45, 46, 47, and 58 complete;
 task 3 and baseline tasks 6–15 (plus 91–95) are blocked on a headed hardware-WebGL reference
 host. The governor/worker production-wiring tasks (33, 34, 39, 41–44, 47–57, 59, 60) and hot-path
 sections G–J remain open pending headed profiling proof.
+
+## Phase-3 evidence continued (task 47 duplicate-submit guard)
+
+- Root cause found while testing task 47: `ensureMeshableRecord` reset (cancel batch + bump generation) on EVERY requeue with status past `MeshQueued`, including dirty rescans with unchanged versions — systematically discarding in-flight worker progress. The first submit-level guard could never fire (generation always bumped first).
+- Fix: skip the reset when a worker batch for the exact chunk version is in flight and its snapshot is still current; defense-in-depth re-check in `submitWorkerMeshJob`. No behavior change for edited/stale versions (any bump still resets + resubmits).
+- Test proves discrimination: bump-free teleports within a settled area add zero submits with the guard, and the test FAILS with the guard removed. Stable 3/3 across repeats.
 
 ## Phase-3 evidence (2026-09-11 session, fourth checkpoint)
 

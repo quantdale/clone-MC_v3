@@ -54,6 +54,7 @@ Open the printed URL (default `http://localhost:5173`).
 | `npm test` | Run the Vitest unit test suite |
 | `npm run test:coverage` | Run the unit suite with coverage report |
 | `npm run test:e2e` | Build and run the headless Playwright browser suite against the production preview |
+| `npm run test:perf -- --self-test` | Self-test the headed canonical performance harness (gate logic + artifact shape) |
 | `npm run lint` | Run ESLint |
 | `npm run typecheck` | Run `tsc --noEmit` |
 
@@ -70,6 +71,10 @@ The first time you run Playwright you may need to install its browser:
 ```bash
 npx playwright install chromium
 ```
+
+### Canonical performance harness (Change 258, in progress)
+
+`npm run test:perf` boots the production build at default desktop quality and records whole-frame/phase/queue/worker metrics across scripted scenarios (stationary, fresh/cached traversal, interaction, day/night) into a versioned JSON artifact plus screenshots and CDP traces. Canonical results require headed Chrome with hardware WebGL at default quality — headless or SwiftShader runs are recorded non-canonical and refuse PASS. Current status and blockers live in `openspec/PROGRAM_STATE.md` (Change 258 ACTIVE).
 
 ---
 
@@ -147,7 +152,7 @@ Key design decisions:
 
 ## Known Limitations
 
-- **Meshing** — the shipped path is face-culled meshing; greedy opaque merging (062) exists behind the worker-meshing path, which stays disabled until its validation campaign lands. Both meet the performance target.
+- **Meshing** — the shipped default is face-culled synchronous meshing. The worker-meshing path (greedy opaque merging + stale-version guards + sync fallback) is validated headlessly — worker/sync visible-surface equivalence, crash/fallback fault injection, and duplicate-submit prevention are unit-proven — but stays disabled until the headed hardware-GPU performance campaign (Change 258) certifies it.
 - **Stateful block state is session-only** — crop age, farmland moisture, and fire age live in an in-memory overlay: they survive chunk unload/reload within a session but reset to block defaults on page refresh (Change-125 scope; bounded in-session by a 10k-chunk LRU).
 - **Live drop randomness** — item/xp drop rolls in the running game use `Math.random`; deterministic replay operates on the seeded headless simulation harness instead of the live composition.
 - **Mobile/touch controls** — supported for movement/look/actions via the 246 touch framework; the layout remains desktop-first.

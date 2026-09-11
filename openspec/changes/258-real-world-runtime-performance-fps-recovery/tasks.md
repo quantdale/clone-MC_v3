@@ -1,7 +1,7 @@
 # Tasks: 258-real-world-runtime-performance-fps-recovery
 
-Status: ACTIVE — Change 257 VERIFIED 92/92 at d55c2e7 (CI 33600754305 success); Phase-1/2/3 foundation + gates + World-internal phases + worker fault injection + worker pack-axis fix + harness scenarios
-Tasks complete: 28/100 (28%). Target: 100% — 257 VERIFIED
+Status: ACTIVE — Change 257 VERIFIED 92/92 at d55c2e7 (CI 33600754305 success); Phase-1/2/3 foundation + gates + World-internal phases + worker fault injection + worker pack-axis fix + duplicate-submit guard + harness scenarios
+Tasks complete: 29/100 (29%). Target: 100% — 257 VERIFIED
 Advancement allowed: false
 
 ## A. Repository truth, activation and performance authority
@@ -64,7 +64,7 @@ Advancement allowed: false
 - [ ] 44. Prove stale generation/section versions cannot attach.
 - [x] 45. Inject worker crash/protocol/bad-response failures. (`WorkerFallbackRecovery.test.ts`: throwing factory + mid-batch `onerror` crash; malformed/stale rejection pre-existing via `MeshWorkerClient` validation + `World.test.ts` delayed-result rejection.)
 - [x] 46. Prove failure recovers chunks through bounded fallback. (Both fault tests drain `pendingMesh` to 0, attach geometry, leak no batches, disable workers; failures/fallbacks counted.)
-- [ ] 47. Prevent duplicate work for same current mesh version.
+- [x] 47. Prevent duplicate work for same current mesh version. (`ensureMeshableRecord` skips the cancel/reset when a worker batch for the exact chunk version is in flight and current + defense-in-depth check in `submitWorkerMeshJob`; `WorkerFallbackRecovery` dedupe test proves no cancel/resubmit across bump-free teleports and fails with the guard removed. No behavior change for edited/stale versions.)
 - [ ] 48. Measure/optimize pack-transfer-expand cost with safe transferables/reuse.
 - [ ] 49. Re-run baseline and quantify p95/main-thread improvement.
 

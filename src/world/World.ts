@@ -1899,6 +1899,22 @@ export class World implements WorldAccess {
     if (!record || record.status < ChunkLifecycleStage.MeshQueued) {
       return; // Fresh flow advances stage by stage during generation.
     }
+    // Duplicate-work guard (258 task 47): when a worker batch for this exact
+    // chunk version is still in flight and current, the re-queue carries no
+    // new truth — resetting here would cancel real worker progress, bump the
+    // generation, and force an identical resubmit on every dirty rescan.
+    // Skip the reset; the submit path re-checks the same condition.
+    const active = this.workerMeshBatches.get(key);
+    if (
+      active !== undefined &&
+      !active.failed &&
+      !active.completed &&
+      active.generation === record.generation &&
+      active.meshVersion === chunk.meshVersion &&
+      this.isSectionVersionSnapshotCurrent(active.versionSnapshot)
+    ) {
+      return;
+    }
     const reset = (() => {
       // Cancel worker transport and temporary geometry before invalidating the
       // pipeline record, so a late result cannot touch replacement residency.
@@ -2388,6 +2404,22 @@ export class World implements WorldAccess {
     }
 
     const key = chunkKey(chunk.cx, chunk.cy, chunk.cz);
+    // Duplicate-submit guard (258 task 47, second layer): a re-queued mesh
+    // job for the same chunk version must not cancel and rebuild a batch
+    // that is still current. The primary guard lives in
+    // `ensureMeshableRecord` (skips the reset that would otherwise bump the
+    // generation first); this one protects any future direct submit path.
+    const active = this.workerMeshBatches.get(key);
+    if (
+      active !== undefined &&
+      !active.failed &&
+      !active.completed &&
+      active.generation === generation &&
+      active.meshVersion === meshVersion &&
+      this.isSectionVersionSnapshotCurrent(active.versionSnapshot)
+    ) {
+      return;
+    }
     const batch: WorkerMeshBatch = {
       key,
       generation,
