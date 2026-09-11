@@ -15,9 +15,9 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "a1a734c378361fe5ffac567a4bdbeef3b8df9173",
-  "localHead": "a1a734c378361fe5ffac567a4bdbeef3b8df9173",
+  "localHead": "5f2fbb9d79f313f9343e0dabce52a29feecdf62c",
   "lastCompletedTask": "Change 260-live-brewing-stand-production-integration VERIFIED 19/19 (2026-09-11): live brewing stand over the 122-123/219 seam, R-8 brewing half closed via browser E2E place-open-insert-brew-collect-reload-break; full gates green (typecheck/lint 0 errors/unit 4779+1/build/e2e 66/66/file-audit 2684); 258 untouched and BLOCKED, 259 untouched and VERIFIED",
-  "nextExactAction": "T18 publish 260 to origin/main, then resume 258 headed tasks only on a hardware-WebGL host when available (259 VERIFIED; 258 remains BLOCKED/resumable, no headed work touched by the 260 track)",
+  "nextExactAction": "Resume 258 headed tasks only on a hardware-WebGL host when available (260 VERIFIED 19/19 published; 259 VERIFIED; 258 remains BLOCKED/resumable)",
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. 001-257 VERIFIED; game shippable with known performance-certification debt. The 259 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
