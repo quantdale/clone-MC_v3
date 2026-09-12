@@ -15,7 +15,7 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "f9007bc6f8458eb2d1d09d2188280922c69384bc",
-  "localHead": "f9007bc6f8458eb2d1d09d2188280922c69384bc",
+  "localHead": "e049e887276d7bd2f725c338b80c25f536f6533e",
   "nextExactAction": "Change 270-leaf-apple-loot-probability VERIFIED 12/12 (2026-09-12): probabilistic leaf-apple loot via LootTable path (1/200, LEAF_APPLE_CHANCE=0.005), R-2 CLOSED, C270 matrix row; full gates green (typecheck/lint 0 errors/unit 423 files 5066+1/build 2.73s/e2e 83/83 with 1 env-flake proven via retry/file-audit 2775); 258 stays BLOCKED \u2014 resume headed tasks on a hardware-WebGL host when available; 259-269 stay VERIFIED.",
   "lastCompletedTask": "Change 270-leaf-apple-loot-probability VERIFIED 12/12 (2026-09-12): LootPool.chance gate + leaves 1/200 apple + finishBreak push removed + 12 new/updated unit proofs + C270 row; R-2 CLOSED. Session start f9007bc (fetched; local HEAD equaled remote).",
   "blockers": [
