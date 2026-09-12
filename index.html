@@ -60,6 +60,7 @@
           <div id="world-time" class="hud-chip" aria-label="World time">☀ 12:00</div>
           <button id="gamerule-open" class="hud-chip" type="button" aria-label="Open game rule settings">⚙ Rules</button>
           <button id="advancements-open" class="hud-chip" type="button" aria-label="Open advancements">🏆 Advancements</button>
+          <button id="statistics-open" class="hud-chip" type="button" aria-label="Open statistics">📊 Stats</button>
           <button id="creative-open" class="hud-chip" type="button" aria-label="Open creative inventory">🧱 Creative</button>
           <button id="gamemode-toggle" class="hud-chip" type="button" aria-label="Toggle game mode between survival and creative" aria-live="polite">Mode: Survival</button>
           <select id="gamemode-select" class="hud-chip" aria-label="Select game mode">
@@ -279,6 +280,22 @@
               <div id="advancement-list" class="advancement-list" aria-label="Core progression advancements"></div>
             </div>
             <p class="crafting-hint">Complete criteria through play — press C or close this panel, then click the world to resume.</p>
+          </div>
+        </div>
+        <div id="statistics" class="ui hidden" aria-label="Statistics screen">
+          <div class="crafting-panel" role="dialog" aria-modal="true" aria-labelledby="statistics-title">
+            <div class="crafting-header">
+              <div>
+                <h2 id="statistics-title">Statistics</h2>
+                <p id="statistics-status" class="statistics-status" role="status" aria-live="polite">Track your play through numbers.</p>
+              </div>
+              <button id="statistics-close" class="crafting-close" type="button" aria-label="Close statistics">×</button>
+            </div>
+            <div class="inventory-section">
+              <div class="inventory-section-title">General</div>
+              <div id="statistics-list" class="statistics-list" aria-label="General statistics"></div>
+            </div>
+            <p class="crafting-hint">Counters accrue through play — press H or close this panel, then click the world to resume.</p>
           </div>
         </div>
         <div id="creative" class="ui hidden" aria-label="Creative inventory screen">

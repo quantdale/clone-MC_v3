@@ -34,11 +34,18 @@ export class PlayerController {
    * keeps prior movement feel exactly.
    */
   private readonly frictionProvider?: () => number;
+  /**
+   * Optional jump-impulse observer, wired by Game to the 271 statistics
+   * hook. Fired once per upward impulse (manual + auto-jump); absent by
+   * default so headless/test paths keep prior behavior exactly.
+   */
+  private readonly onJump?: () => void;
 
-  constructor(player: Player, input: InputState, opts: { frictionProvider?: () => number } = {}) {
+  constructor(player: Player, input: InputState, opts: { frictionProvider?: () => number; onJump?: () => void } = {}) {
     this.player = player;
     this.input = input;
     this.frictionProvider = opts.frictionProvider;
+    this.onJump = opts.onJump;
   }
 
   /**
@@ -134,6 +141,7 @@ export class PlayerController {
         : CONFIG.player.jumpVelocity;
       this.player.onGround = false;
       this.manualJumped = true;
+      this.onJump?.();
     }
     // Auto-jump (206): when enabled and jump is not held, trigger a single
     // automatic jump on landing. Armed while airborne and consumed by exactly
@@ -155,6 +163,7 @@ export class PlayerController {
         this.player.velocity.y = CONFIG.player.jumpVelocity;
         this.player.onGround = false;
         this.autoJumpLanded = true;
+        this.onJump?.();
       }
     }
   }

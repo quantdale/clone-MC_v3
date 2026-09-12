@@ -139,6 +139,14 @@ export interface WorldArchive {
    * `deserializeDifficulty`, never trusted blindly).
    */
   difficultyData?: unknown | null;
+  /**
+   * Raw statistics payload stored under __statistics__:${worldId}, or null
+   * when absent (271). OPTIONAL: archives without this field validate and
+   * import as null (zeros). A present value must be a plain object payload
+   * (the 187 SerializedStatisticStore shape is validated again at load by
+   * `deserializeStatisticStore`, never trusted blindly).
+   */
+  statisticsData?: unknown | null;
 }
 
 function isFiniteNumber(v: unknown): v is number {
@@ -360,6 +368,17 @@ export function validateWorldArchive(input: unknown): WorldArchive {
     difficultyData = r.difficultyData;
   }
 
+  // 271: optional in every version; missing/null reads as null. A present
+  // value must be a plain object payload (the 187 shape is validated again
+  // at load by `deserializeStatisticStore`, never trusted blindly).
+  let statisticsData: unknown | null = null;
+  if (r.statisticsData !== null && r.statisticsData !== undefined) {
+    if (typeof r.statisticsData !== 'object' || Array.isArray(r.statisticsData)) {
+      throw new Error('WorldArchive: statisticsData must be an object or null');
+    }
+    statisticsData = r.statisticsData;
+  }
+
   return {
     format: WORLD_ARCHIVE_FORMAT as 'voxel-world',
     version: 2 as const,
@@ -380,5 +399,6 @@ export function validateWorldArchive(input: unknown): WorldArchive {
     gameModeData,
     hardcoreData,
     difficultyData,
+    statisticsData,
   };
 }

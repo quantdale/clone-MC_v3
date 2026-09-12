@@ -52,6 +52,7 @@ body {
 #gamerule.hidden,
 #recipebook.hidden,
 #advancements.hidden,
+#statistics.hidden,
 #creative.hidden,
 #break-progress.hidden,
 #hardcore-badge.hidden,
@@ -1021,6 +1022,57 @@ body {
   background: rgba(3, 10, 17, 0.36);
 }
 #advancements-open {
+  cursor: pointer;
+  /* The .ui HUD container is pointer-events:none; re-enable for the button. */
+  pointer-events: auto;
+  top: 44px;
+  right: 8px;
+}
+.statistics-list {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+.statistic-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 6px;
+  background: rgba(30, 60, 100, 0.55);
+  color: #fff;
+  font-size: 13px;
+}
+.statistic-label {
+  font-weight: bold;
+}
+.statistic-value {
+  font-size: 12px;
+  font-family: 'Consolas', 'Menlo', monospace;
+}
+.statistic-empty {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  text-align: center;
+}
+.statistics-status {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  text-align: center;
+  margin: 4px 0 0;
+}
+/* Statistics screen (271) — reuses the crafting panel chrome; original styling. */
+#statistics {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  background: rgba(3, 10, 17, 0.36);
+}
+#statistics-open {
   cursor: pointer;
   /* The .ui HUD container is pointer-events:none; re-enable for the button. */
   pointer-events: auto;

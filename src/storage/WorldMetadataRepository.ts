@@ -251,6 +251,17 @@ export class WorldMetadataRepository {
     await promisifyRequest(tx.objectStore(this.store).put(raw));
   }
 
+  /** Raw put for the statistics payload bypassing WorldMetadata validation (271; difficulty precedent). */
+  async putStatisticData(worldId: string, payload: unknown): Promise<void> {
+    const raw = {
+      worldId: `__statistics__:${worldId}`,
+      payload,
+      updatedAt: Date.now(),
+    };
+    const tx = this.requireDb().transaction(this.store, 'readwrite');
+    await promisifyRequest(tx.objectStore(this.store).put(raw));
+  }
+
   /** Raw put for the XP-orb payload bypassing WorldMetadata validation (264; advancement precedent). */
   async putXpOrbData(worldId: string, payload: unknown): Promise<void> {
     const raw = {
@@ -314,6 +325,14 @@ export class WorldMetadataRepository {
   async getDifficultyData(worldId: string): Promise<unknown | null> {
     const tx = this.requireDb().transaction(this.store, 'readonly');
     const result = await promisifyRequest(tx.objectStore(this.store).get(`__difficulty__:${worldId}`)) as { payload?: unknown } | undefined;
+    if (!result || !('payload' in (result as Record<string, unknown>))) return null;
+    return (result as { payload: unknown }).payload ?? null;
+  }
+
+  /** Raw get for the statistics payload (271). Returns null when absent. */
+  async getStatisticData(worldId: string): Promise<unknown | null> {
+    const tx = this.requireDb().transaction(this.store, 'readonly');
+    const result = await promisifyRequest(tx.objectStore(this.store).get(`__statistics__:${worldId}`)) as { payload?: unknown } | undefined;
     if (!result || !('payload' in (result as Record<string, unknown>))) return null;
     return (result as { payload: unknown }).payload ?? null;
   }

@@ -386,3 +386,36 @@ stand **VERIFIED**.
   certification debt **R-2**.
 - Change 258 remains recorded BLOCKED and resumable on a hardware-WebGL host;
   the 270 track does not consume, waive, or re-litigate any 258 headed task.
+
+## 271 activation alongside BLOCKED 258 — owner-authorized parallel track (2026-09-12)
+
+The product owner (Standing owner order, 2026-09-12 campaign instruction) authorized
+activating and implementing OpenSpec change **271-statistics-panel-ui**
+while Change **258-real-world-runtime-performance-fps-recovery** remains **BLOCKED**
+(headed hardware-WebGL certification deferred) and Changes **259-enchanting-panel-ui**,
+**260-live-brewing-stand-production-integration**, **261-gamerule-settings-ui**,
+**262-recipe-book-ui**, **263-advancement-panel-ui**,
+**264-item-xp-entity-persistence-hardening**, **265-live-creative-mode-integration**,
+**266-live-adventure-spectator-integration**, **267-live-hardcore-mode-integration**,
+**268-ci-immutable-action-pins**, **269-composed-game-dispose-worker-terminate**, and
+**270-leaf-apple-loot-probability** stand **VERIFIED**.
+
+- Change 258 status stays **BLOCKED** at 40/100 with its existing deferral intact.
+  No headed FPS work is touched, no GPU evidence is faked, and 258 MUST NOT be
+  marked VERIFIED by the 271 track.
+- Changes 259 (18/18), 260 (19/19), 261 (16/16), 262 (14/14), 263 (15/15),
+  264 (13/13), 265 (13/13), 266 (13/13), 267 (13/13), 268 (12/12), 269 (12/12),
+  and 270 (12/12) stand **VERIFIED** and MUST NOT be reopened unless a
+  statistics regression blocks the 271 player loop. The 271 track does not
+  redesign the 187 key set and performs no economy or progression retune.
+- Change 271 (`271-statistics-panel-ui`) is the sole **ACTIVE**
+  implementation change: wire the verified headless `StatisticsFramework`
+  (187) into the live Game — world-scoped `__statistics__` persistence with
+  degrade-to-defaults and reset/archive passthrough, live counter increments
+  from real gameplay events (walk distance, blocks broken, mob kills, deaths,
+  damage taken, jumps, time played via play_tick on the fixed tick), and an
+  in-game statistics panel (hotkey + HUD/pause entry, one-container rule)
+  rendering `statisticsSnapshot` values with readable labels and live updates
+  while open.
+- Change 258 remains recorded BLOCKED and resumable on a hardware-WebGL host;
+  the 271 track does not consume, waive, or re-litigate any 258 headed task.

@@ -164,6 +164,7 @@ import { CreativeMenuPanel } from '../ui/CreativeMenuPanel';
 import { GameRulePanel } from '../ui/GameRulePanel';
 import { RecipeBookPanel } from '../ui/RecipeBookPanel';
 import { AdvancementPanel } from '../ui/AdvancementPanel';
+import { StatisticsPanel } from '../ui/StatisticsPanel';
 import {
   applyTriggerToProgresses,
   createDefaultAdvancementProgresses,
@@ -176,6 +177,17 @@ import {
   type AdvancementRowView,
 } from '../simulation/AdvancementView';
 import type { AdvancementCriterion } from '../simulation/AdvancementFramework';
+import {
+  applyStatisticEvent,
+  createStatisticStore,
+  serializeStatisticStore,
+  type StatisticEvent,
+  type StatisticStore,
+} from '../simulation/StatisticsFramework';
+import {
+  describeStatistics,
+  type StatisticRowView,
+} from '../simulation/StatisticsView';
 import {
   canFly,
   createDefaultGameModeState,
@@ -416,6 +428,26 @@ export class Game {
   private readonly advancementPanel: AdvancementPanel;
   /** Authoritative advancement progress (263): validated persisted payload or defaults, catalog order. */
   private advancements: AdvancementProgress[];
+  /** Whether the statistics screen is open (271). */
+  private statisticsOpen = false;
+  /** DOM controller for the live statistics screen (271). */
+  private readonly statisticsPanel: StatisticsPanel;
+  /** Authoritative statistic store (271): validated persisted payload or zeros. */
+  private statistics: StatisticStore;
+  /**
+   * Last-tick horizontal position baseline for walk-distance accrual (271).
+   * Reset on every position discontinuity (spawn, respawn) so teleports
+   * never mint meters.
+   */
+  private lastStatX = 0;
+  private lastStatZ = 0;
+  /**
+   * Sub-meter walk remainder (271). The 187 framework floors each event to
+   * whole meters, so per-tick displacements (~0.2 m) would vanish if fed
+   * directly; the remainder carries the fraction across ticks and only
+   * whole meters are recorded (lossless over time).
+   */
+  private walkRemainder = 0;
   /** Whether the creative menu screen is open (265). */
   private creativeOpen = false;
   /** DOM controller for the live creative menu screen (265). */
@@ -975,6 +1007,22 @@ export class Game {
         }
       }).catch(() => undefined);
     }
+    // 271 statistics: the validated persisted store when present, zero
+    // counters otherwise (absent or corrupt records never break boot).
+    // Same late-load parity as above (the open panel re-renders when the
+    // late payload lands).
+    this.statistics = this.persistenceImpl?.initialStatistics ?? createStatisticStore();
+    if (this.selfOpenPromise !== null) {
+      void this.selfOpenPromise.then(() => {
+        if (this.disposed) return;
+        const late = this.persistenceImpl?.initialStatistics;
+        if (late) {
+          this.statistics = late;
+          this.resetWalkBaseline();
+          if (this.statisticsOpen) this.statisticsPanel.render();
+        }
+      }).catch(() => undefined);
+    }
 
     this.player = new Player();
     // Startup compatibility decision (257): for an injected (already open)
@@ -988,6 +1036,7 @@ export class Game {
       this.enterRecoveryRequired('no-safe-spawn-support');
     }
     this.spawnPosition = this.player.position.clone();
+    this.resetWalkBaseline();
     this.inventory = new Inventory();
     this.survival = new SurvivalSystem(undefined, (event, amount) => this.onSurvivalEvent(event, amount));
     this.playerEffects = new StatusEffectManager(
@@ -1031,7 +1080,10 @@ export class Game {
     // hand them to the input path before any frame runs.
     this.loadInputConfiguration();
     this.attachTouchCapture();
-    this.controller = new PlayerController(this.player, this.input);
+    this.controller = new PlayerController(this.player, this.input, {
+      // Statistics jump hook (271): each controller impulse counts one jump.
+      onJump: () => this.recordStatistic({ type: 'jump' }),
+    });
     // Physics hooks (behavior-neutral where data is missing): the block
     // registry exposes no slipperiness yet, so friction stays a constant-1.0
     // table. Sneak state flows from InputManager through the controller
@@ -1255,6 +1307,15 @@ export class Game {
     // gamerule-chip precedent).
     const advancementsOpenBtn = document.getElementById('advancements-open');
     advancementsOpenBtn?.addEventListener('click', () => { if (!this.disposed) this.openAdvancements(); });
+    // Live statistics screen (271): a pure view over the statistic store.
+    this.statisticsPanel = new StatisticsPanel(this.requireElement('statistics'), {
+      listRows: () => this.listStatisticRows(),
+      onClose: () => this.closeStatistics(),
+    });
+    // HUD button opens the statistics for mouse/touch players (271,
+    // advancements-chip precedent).
+    const statisticsOpenBtn = document.getElementById('statistics-open');
+    statisticsOpenBtn?.addEventListener('click', () => { if (!this.disposed) this.openStatistics(); });
     // Live creative menu screen (265): a pure view over the catalog +
     // inventory. HUD buttons open the menu and toggle survival ⇄ creative.
     this.creativePanel = new CreativeMenuPanel(this.requireElement('creative'), {
@@ -1418,12 +1479,16 @@ export class Game {
     // The creative menu owns no transient state either (265: pure view over
     // the catalog + inventory) — close it before the persist flush.
     this.closeCreative();
+    // The statistics panel owns no transient state either (271: pure view
+    // over the already-persisted store) — close it before the persist flush.
+    this.closeStatistics();
     this.savePlayerStateDurable();
     this.saveWithers();
     this.saveItemAndXpEntities();
     this.saveGameMode();
     this.saveHardcore();
     this.saveDifficulty();
+    this.saveStatistics();
     this.saveTimer = 0;
     void this.persistenceImpl?.dispose().catch(() => undefined);
     if (this.unsubscribeHealth !== null) {
@@ -1627,6 +1692,7 @@ export class Game {
         this.saveGameMode();
         this.saveHardcore();
         this.saveDifficulty();
+        this.saveStatistics();
       }
     }
 
@@ -1673,6 +1739,7 @@ export class Game {
       !this.recipeBookOpen &&
       !this.advancementOpen &&
       !this.creativeOpen &&
+      !this.statisticsOpen &&
       (this.pointerLocked || this.hasControllerInput(deviceFrame));
 
     // Pause/resume mapping (044): while inactive the driver's time anchor keeps
@@ -1774,6 +1841,9 @@ export class Game {
       } else if (this.creativeOpen) {
         // Same rule for the creative menu (265).
         this.closeCreative();
+      } else if (this.statisticsOpen) {
+        // Same rule for the statistics screen (271).
+        this.closeStatistics();
       } else if (this.craftingOpen) {
         this.closeCrafting();
       } else if (!canInteract(this.gameMode.mode)) {
@@ -1788,6 +1858,12 @@ export class Game {
     if (this.input.consumeGameruleToggle()) {
       if (this.gameruleOpen) this.closeGamerule();
       else this.openGamerule();
+    }
+    // Statistics screen toggle (271): H opens/closes the statistics panel.
+    // Read-only view: spectators may inspect it (no interaction gate).
+    if (this.input.consumeStatisticToggle()) {
+      if (this.statisticsOpen) this.closeStatistics();
+      else this.openStatistics();
     }
     // Creative menu toggle (265): E opens/closes the creative inventory.
     if (this.input.consumeCreativeToggle()) {
@@ -1837,6 +1913,11 @@ export class Game {
     // live while open (triggers may fire from play while the panel is up).
     if (this.advancementOpen) {
       this.advancementPanel.render();
+    }
+    // Statistics upkeep (271): no position to track either; keep the rows
+    // live while open (events may land while the panel is up).
+    if (this.statisticsOpen) {
+      this.statisticsPanel.render();
     }
     // Creative menu upkeep (265): no position to track either; keep the list
     // live while open (mode switches re-render through the switch path).
@@ -1993,6 +2074,25 @@ export class Game {
       this.tryEatSelected();
     }
     this.hud.setSurvival(this.survival.health, this.survival.hunger);
+    // Statistics (271): one play-tick per fixed tick (pause-safe: ticks only
+    // run unpaused) plus on-ground horizontal displacement as walk distance.
+    // Sub-meter fractions accumulate in walkRemainder (per-tick amounts
+    // would floor to zero); the baseline resets on discontinuities.
+    this.recordStatistic({ type: 'play_tick' });
+    if (this.player.onGround) {
+      const dx = this.player.position.x - this.lastStatX;
+      const dz = this.player.position.z - this.lastStatZ;
+      if (dx !== 0 || dz !== 0) {
+        this.walkRemainder += Math.hypot(dx, dz);
+        const whole = Math.floor(this.walkRemainder);
+        if (whole > 0) {
+          this.walkRemainder -= whole;
+          this.recordStatistic({ type: 'walk', distance: whole });
+        }
+      }
+    }
+    this.lastStatX = this.player.position.x;
+    this.lastStatZ = this.player.position.z;
 
     // Snapshot the post-tick eye pose tagged with its tick index so the render
     // path can blend between consecutive tick states (045).
@@ -2566,7 +2666,7 @@ export class Game {
         this.hud.show();
         this.hotbar.show();
       }
-    } else if (!this.craftingOpen && !this.furnaceOpen && !this.brewingOpen && !this.enchantingOpen && !this.gameruleOpen && !this.recipeBookOpen && !this.advancementOpen && !this.creativeOpen) {
+    } else if (!this.craftingOpen && !this.furnaceOpen && !this.brewingOpen && !this.enchantingOpen && !this.gameruleOpen && !this.recipeBookOpen && !this.advancementOpen && !this.creativeOpen && !this.statisticsOpen) {
       // Unlock caused by OPENING a container session must not stack the pause
       // overlay behind/on the open panel; the panel itself represents the
       // paused state and its owner re-shows the overlay on close (251).
@@ -2628,6 +2728,7 @@ export class Game {
     if (this.recipeBookOpen) this.closeRecipeBook();
     if (this.advancementOpen) this.closeAdvancements();
     if (this.creativeOpen) this.closeCreative();
+    if (this.statisticsOpen) this.closeStatistics();
     this.craftingOpen = true;
     this.input.releasePointerLock();
     this.hideOverlay();
@@ -2926,7 +3027,7 @@ export class Game {
    */
   private maybeDismissOverlayForControllerPlay(frame: DeviceFrame, worldReady: boolean): void {
     if (!this.overlayOpen || !worldReady) return;
-    if (this.craftingOpen || this.furnaceOpen || this.brewingOpen || this.enchantingOpen || this.contextLost || !this.errorEl.classList.contains('hidden')) return;
+    if (this.craftingOpen || this.furnaceOpen || this.brewingOpen || this.enchantingOpen || this.statisticsOpen || this.contextLost || !this.errorEl.classList.contains('hidden')) return;
     if (!this.hasControllerInput(frame)) return;
     this.hideOverlay();
     if (this.shouldShowHud()) {
@@ -2955,6 +3056,7 @@ export class Game {
       !this.recipeBookOpen &&
       !this.advancementOpen &&
       !this.creativeOpen &&
+      !this.statisticsOpen &&
       !this.contextLost &&
       this.errorEl.classList.contains('hidden')
     ) {
@@ -2983,6 +3085,8 @@ export class Game {
       : 'block';
     switch (action) {
       case 'break':
+        // Statistics (271): every committed break counts, all modes.
+        this.recordStatistic({ type: 'break_block', blockKey: name });
         if (coords) {
           this.onBlockBrokenAt(coords.x, coords.y, coords.z);
         }
@@ -3095,6 +3199,7 @@ export class Game {
     if (this.recipeBookOpen) this.closeRecipeBook();
     if (this.advancementOpen) this.closeAdvancements();
     if (this.creativeOpen) this.closeCreative();
+    if (this.statisticsOpen) this.closeStatistics();
     this.brewingOpen = true;
     this.brewingPos = { x, y, z };
     this.input.releasePointerLock();
@@ -3235,6 +3340,7 @@ export class Game {
     if (this.recipeBookOpen) this.closeRecipeBook();
     if (this.advancementOpen) this.closeAdvancements();
     if (this.creativeOpen) this.closeCreative();
+    if (this.statisticsOpen) this.closeStatistics();
     this.furnaceOpen = true;
     this.furnacePos = { x, y, z };
     this.input.releasePointerLock();
@@ -3474,6 +3580,8 @@ export class Game {
         Math.random,
       );
       this.experience.addXp(WITHER_XP_REWARD);
+      // Statistics (271): the wither kill counts exactly once with the reward.
+      this.recordStatistic({ type: 'kill_mob', mobKey: 'wither' });
       next = { ...next, hasDroppedReward: true };
       this.showToast('Wither defeated');
     }
@@ -3541,6 +3649,8 @@ export class Game {
         if (state.bossState.status === 'DEFEATED' && !state.hasDroppedReward) {
           this.itemEntities.spawnLootStacks([{ item: ItemId.NetherStar, count: 1 }], state.x, state.y, state.z, Math.random);
           this.experience.addXp(WITHER_XP_REWARD);
+          // Statistics (271): the wither kill counts exactly once with the reward.
+          this.recordStatistic({ type: 'kill_mob', mobKey: 'wither' });
           state = { ...state, hasDroppedReward: true };
           witherDirty = true;
           this.showToast('Wither defeated');
@@ -3561,6 +3671,8 @@ export class Game {
               if (res.defeated && !nw.hasDroppedReward) {
                 this.itemEntities.spawnLootStacks([{ item: ItemId.NetherStar, count: 1 }], nw.x, nw.y, nw.z, Math.random);
                 this.experience.addXp(WITHER_XP_REWARD);
+                // Statistics (271): the wither kill counts exactly once with the reward.
+                this.recordStatistic({ type: 'kill_mob', mobKey: 'wither' });
                 nw = { ...nw, hasDroppedReward: true };
                 witherDirty = true;
                 this.showToast('Wither defeated');
@@ -3764,6 +3876,7 @@ export class Game {
     if (this.recipeBookOpen) this.closeRecipeBook();
     if (this.advancementOpen) this.closeAdvancements();
     if (this.creativeOpen) this.closeCreative();
+    if (this.statisticsOpen) this.closeStatistics();
     const bookShelves = this.countBookshelves(px, py, pz);
     this.enchantingSession = createSession({
       stack: held,
@@ -3841,6 +3954,7 @@ export class Game {
     if (this.recipeBookOpen) this.closeRecipeBook();
     if (this.advancementOpen) this.closeAdvancements();
     if (this.creativeOpen) this.closeCreative();
+    if (this.statisticsOpen) this.closeStatistics();
     this.gameruleOpen = true;
     this.input.releasePointerLock();
     this.hideOverlay();
@@ -3995,6 +4109,7 @@ export class Game {
     if (this.gameruleOpen) this.closeGamerule();
     if (this.advancementOpen) this.closeAdvancements();
     if (this.creativeOpen) this.closeCreative();
+    if (this.statisticsOpen) this.closeStatistics();
     if (this.craftingOpen) this.closeCrafting();
     const before = this.recipeBook.known.length;
     const grown = unlockRecipes(
@@ -4130,6 +4245,96 @@ export class Game {
   /** Whether the advancements screen is open (E2E observability). */
   isAdvancementOpen(): boolean {
     return this.advancementOpen;
+  }
+
+  // ── Statistics screen (271) ────────────────────────────────────────────
+
+  /**
+   * Record one gameplay event against the statistic store (271). Total:
+   * an identity increment changes nothing observable (no save, no
+   * re-render). Otherwise the store replaces, the open panel re-renders,
+   * and the bounded save policy (autosave/pagehide/dispose flushes)
+   * carries the write; death callers save promptly themselves. Never throws.
+   */
+  recordStatistic(event: StatisticEvent): void {
+    const next = applyStatisticEvent(this.statistics, event);
+    if (next === this.statistics) return;
+    this.statistics = next;
+    if (this.statisticsOpen) this.statisticsPanel.render();
+  }
+
+  /** The live statistic store copy (E2E observability; the panel reads the same). */
+  getStatisticsSnapshot(): StatisticStore {
+    return { ...this.statistics };
+  }
+
+  /** The live statistics rows the panel renders (E2E observability). */
+  listStatisticRows(): StatisticRowView[] {
+    return describeStatistics(this.statistics);
+  }
+
+  /** Reset the walk-accrual baseline to the current position (discontinuities). */
+  private resetWalkBaseline(): void {
+    this.lastStatX = this.player.position.x;
+    this.lastStatZ = this.player.position.z;
+  }
+
+  /** Serialize the live store into the durable record (no-op without persistence). */
+  saveStatistics(): void {
+    const p = this.persistenceImpl;
+    if (!p || this.recoveryRequiredValue) return;
+    p.saveStatistics(serializeStatisticStore(this.statistics));
+  }
+
+  /**
+   * Open the statistics screen (271). Closes any other container first:
+   * one container at a time (251/259/260/261/262/263/265 parity). The panel
+   * is a pure view over the statistic store; the status line narrates how
+   * many statistics are non-zero.
+   */
+  private openStatistics(): void {
+    if (this.statisticsOpen) return;
+    if (this.furnaceOpen) this.closeFurnace();
+    if (this.brewingOpen) this.closeBrewing();
+    if (this.enchantingOpen) this.closeEnchanting();
+    if (this.gameruleOpen) this.closeGamerule();
+    if (this.recipeBookOpen) this.closeRecipeBook();
+    if (this.advancementOpen) this.closeAdvancements();
+    if (this.craftingOpen) this.closeCrafting();
+    if (this.creativeOpen) this.closeCreative();
+    this.statisticsOpen = true;
+    this.input.releasePointerLock();
+    this.hideOverlay();
+    this.crosshair.hide();
+    this.hud.hide();
+    this.hotbar.hide();
+    this.setBreakProgress(0);
+    this.interaction.clearTarget();
+    this.statisticsPanel.show();
+    this.statisticsPanel.render();
+    const nonZero = (Object.values(this.statistics) as number[]).filter((v) => v > 0).length;
+    this.statisticsPanel.setStatus(
+      `${Object.keys(this.statistics).length} statistics, ${nonZero} non-zero.`,
+    );
+  }
+
+  /**
+   * Close the statistics screen. The panel owns no statistics state (the
+   * store persists on the bounded save policy), so hiding it plus returning
+   * the overlay is the whole settle. Persists once so values observed in
+   * the panel can never be lost to a fast reload.
+   */
+  private closeStatistics(): void {
+    if (!this.statisticsOpen) return;
+    this.statisticsOpen = false;
+    this.statisticsPanel.hide();
+    this.saveStatistics();
+    this.showOverlay('Click to play');
+  }
+
+  /** Whether the statistics screen is open (E2E observability). */
+  isStatisticsOpen(): boolean {
+    return this.statisticsOpen;
   }
 
   // ── Game mode + creative menu (265) ────────────────────────────────────
@@ -4571,6 +4776,7 @@ export class Game {
     this.saveGameMode();
     this.saveHardcore();
     this.saveDifficulty();
+    this.saveStatistics();
     this.saveTimer = 0;
   };
 
@@ -4709,9 +4915,17 @@ export class Game {
 
   private onSurvivalEvent(event: SurvivalEvent, amount?: number): void {
     if (event === 'damage') {
+      // Statistics (271): every applied-damage outcome counts (floored by
+      // the framework; missing amounts are a silent no-op). Upstream mode
+      // gates already decided whether damage applies at all.
+      if (amount !== undefined) this.recordStatistic({ type: 'damage', amount });
       this.audio.play('damage');
       this.showToast(`Ouch! -${amount ?? 0} health`);
     } else if (event === 'death') {
+      // Statistics (271): deaths count and persist immediately (a death can
+      // precede the next autosave; the record must survive a reload).
+      this.recordStatistic({ type: 'death' });
+      this.saveStatistics();
       // Hardcore permanent death (267): route the mode through the 193 rule
       // before the unchanged position reset. Non-hardcore worlds pass the
       // mode through verbatim, so this leg is byte-for-byte the old behavior.
@@ -4762,6 +4976,7 @@ export class Game {
       this.closeCrafting();
     }
     this.player.position.copy(this.spawnPosition);
+    this.resetWalkBaseline();
     this.player.velocity.set(0, 0, 0);
     this.player.onGround = false;
     this.player.inWater = false;

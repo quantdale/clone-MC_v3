@@ -57,6 +57,8 @@ export interface WorldImportReport {
   hardcoreDataImported: boolean;
   /** Whether difficulty data was written (267). */
   difficultyDataImported: boolean;
+  /** Whether statistics data was written (271). */
+  statisticsDataImported: boolean;
 }
 
 /** Exports and imports whole-world archives over the five repositories. */
@@ -134,6 +136,8 @@ export class WorldArchiver {
     // Hardcore + difficulty raw records (267): same fail-closed contract.
     const hardcoreData = await this.metadata.getHardcoreData(worldId);
     const difficultyData = await this.metadata.getDifficultyData(worldId);
+    // Statistics raw record (271): same fail-closed contract.
+    const statisticsData = await this.metadata.getStatisticData(worldId);
 
     return {
       format: 'voxel-world',
@@ -155,6 +159,7 @@ export class WorldArchiver {
       gameModeData,
       hardcoreData,
       difficultyData,
+      statisticsData,
     };
   }
 
@@ -193,6 +198,7 @@ export class WorldArchiver {
       if (valid.gameModeData !== null && valid.gameModeData !== undefined) await put("world-metadata", { worldId: `__gamemode__:${valid.worldId}`, payload: valid.gameModeData, updatedAt: Date.now() });
       if (valid.hardcoreData !== null && valid.hardcoreData !== undefined) await put("world-metadata", { worldId: `__hardcore__:${valid.worldId}`, payload: valid.hardcoreData, updatedAt: Date.now() });
       if (valid.difficultyData !== null && valid.difficultyData !== undefined) await put("world-metadata", { worldId: `__difficulty__:${valid.worldId}`, payload: valid.difficultyData, updatedAt: Date.now() });
+      if (valid.statisticsData !== null && valid.statisticsData !== undefined) await put("world-metadata", { worldId: `__statistics__:${valid.worldId}`, payload: valid.statisticsData, updatedAt: Date.now() });
       if (valid.playerState) await put("player-state", valid.playerState);
     });
 
@@ -213,6 +219,7 @@ export class WorldArchiver {
       gameModeDataImported: valid.gameModeData !== null && valid.gameModeData !== undefined,
       hardcoreDataImported: valid.hardcoreData !== null && valid.hardcoreData !== undefined,
       difficultyDataImported: valid.difficultyData !== null && valid.difficultyData !== undefined,
+      statisticsDataImported: valid.statisticsData !== null && valid.statisticsData !== undefined,
     };
   }
 }

@@ -87,6 +87,10 @@ import {
   deserializeDifficulty,
   type DifficultyLevel,
 } from '../simulation/WorldDifficulty';
+import {
+  deserializeStatisticStore,
+  type StatisticStore,
+} from '../simulation/StatisticsFramework';
 import { coreProgressionAdvancements } from '../simulation/CoreProgressionAdvancements';
 
 /**
@@ -346,6 +350,8 @@ export class GamePersistence implements WorldEditDurability {
   private initialHardcoreValue: HardcoreState | null = null;
   /** Validated configured difficulty bulk-loaded at open() (267; null when absent or corrupt). */
   private initialDifficultyValue: DifficultyLevel | null = null;
+  /** Validated statistic store bulk-loaded at open() (271; null when absent or corrupt). */
+  private initialStatisticsValue: StatisticStore | null = null;
   private initialColumnsValue: SerializedChunkColumn[] = [];
   /** World generation baseline compatibility classification. */
   private generationBaselineValue: WorldGenerationBaseline = 'current';
@@ -757,6 +763,18 @@ export class GamePersistence implements WorldEditDurability {
         this.initialDifficultyValue = null;
         this.recordError(`load difficulty: ${errorMessage(e)}`);
       }
+      // 271 hydration: statistics payload stored via raw statistics data.
+      // Absent stays null (Game boots zero counters); corrupt payloads
+      // degrade to null with a recorded error so boot continues on defaults.
+      // Full strict validation is the 187 deserializer (version + known keys
+      // + non-negative integers, unknown keys rejected).
+      try {
+        const raw = await this.metadata.getStatisticData(this.worldIdValue);
+        if (raw !== null) this.initialStatisticsValue = deserializeStatisticStore(raw);
+      } catch (e) {
+        this.initialStatisticsValue = null;
+        this.recordError(`load statistics: ${errorMessage(e)}`);
+      }
     }
 
     // 5.5 Authoritative startup compatibility decision (257). Computed after the
@@ -838,6 +856,7 @@ export class GamePersistence implements WorldEditDurability {
       this.initialGameModeValue = null;
       this.initialHardcoreValue = null;
       this.initialDifficultyValue = null;
+      this.initialStatisticsValue = null;
       this.initialColumnsValue = [];
     }
     this.opened = true;
@@ -898,6 +917,7 @@ export class GamePersistence implements WorldEditDurability {
       gameModeData: unknown | null;
       hardcoreData: unknown | null;
       difficultyData: unknown | null;
+      statisticsData: unknown | null;
       columns: SerializedChunkColumn[];
       edits: Array<{ chunkX: number; chunkY: number; chunkZ: number; changes: Array<[number, number]> }>;
       playerState: PlayerStateRecord | null;
@@ -915,6 +935,7 @@ export class GamePersistence implements WorldEditDurability {
       const gameModeData = await this.metadata.getGameModeData(worldId);
       const hardcoreData = await this.metadata.getHardcoreData(worldId);
       const difficultyData = await this.metadata.getDifficultyData(worldId);
+      const statisticsData = await this.metadata.getStatisticData(worldId);
       const columns = await this.chunkSections.listColumns(worldId);
       const editRecords = await this.chunkEdits.listChunkEdits(worldId);
       const playerState = await this.playerStates.getPlayerState(worldId);
@@ -931,6 +952,7 @@ export class GamePersistence implements WorldEditDurability {
         gameModeData,
         hardcoreData,
         difficultyData,
+        statisticsData,
         columns: [...columns],
         edits: editRecords.map((r) => ({ chunkX: r.chunkX, chunkY: r.chunkY, chunkZ: r.chunkZ, changes: [...r.changes] })),
         playerState,
@@ -986,6 +1008,8 @@ export class GamePersistence implements WorldEditDurability {
         // 2g. Raw hardcore + difficulty records (267; separate keys in the same metadata store).
         await awaitRequest(metaStore.delete(`__hardcore__:${worldId}`));
         await awaitRequest(metaStore.delete(`__difficulty__:${worldId}`));
+        // 2h. Raw statistics record (271; separate key in the same metadata store).
+        await awaitRequest(metaStore.delete(`__statistics__:${worldId}`));
         // 3. Every chunk column for this world. Key shape: `${worldId}|${cx}|${cz}`.
         for (const column of snapshot!.columns) {
           await awaitRequest(csStore.delete(worldChunkKey(worldId, column.chunkX, column.chunkZ)));
@@ -1025,6 +1049,7 @@ export class GamePersistence implements WorldEditDurability {
         if (snapshot!.gameModeData !== null) await this.metadata.putGameModeData(worldId, snapshot!.gameModeData);
         if (snapshot!.hardcoreData !== null) await this.metadata.putHardcoreData(worldId, snapshot!.hardcoreData);
         if (snapshot!.difficultyData !== null) await this.metadata.putDifficultyData(worldId, snapshot!.difficultyData);
+        if (snapshot!.statisticsData !== null) await this.metadata.putStatisticData(worldId, snapshot!.statisticsData);
         for (const col of snapshot!.columns) await this.chunkSections.putColumn(worldId, col);
         for (const rec of snapshot!.edits) await this.chunkEdits.putChunkEdits(worldId, rec.chunkX, rec.chunkY, rec.chunkZ, rec.changes);
         if (snapshot!.playerState) await this.playerStates.putPlayerState(snapshot!.playerState);
@@ -1368,6 +1393,11 @@ export class GamePersistence implements WorldEditDurability {
     return this.initialDifficultyValue;
   }
 
+  /** Validated statistic store bulk-loaded at `open()` (271; null when absent or corrupt). */
+  get initialStatistics(): StatisticStore | null {
+    return this.initialStatisticsValue;
+  }
+
   /** Bulk-loaded persisted canonical columns for this world. */
   get initialColumns(): SerializedChunkColumn[] {
     return this.initialColumnsValue;
@@ -1420,6 +1450,12 @@ export class GamePersistence implements WorldEditDurability {
   saveDifficulty(payload: unknown): void {
     if (this.disposed || this.resetCompleted) return;
     void this.metadata.putDifficultyData(this.worldIdValue, payload).catch((e) => this.recordError(`save difficulty: ${errorMessage(e)}`));
+  }
+
+  /** Persist the statistics payload via raw statistics data (271). */
+  saveStatistics(payload: unknown): void {
+    if (this.disposed || this.resetCompleted) return;
+    void this.metadata.putStatisticData(this.worldIdValue, payload).catch((e) => this.recordError(`save statistics: ${errorMessage(e)}`));
   }
 
   /** Persist the XP-orb snapshot via raw XP-orb data (264). */
