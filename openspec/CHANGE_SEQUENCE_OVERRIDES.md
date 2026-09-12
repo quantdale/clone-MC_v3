@@ -296,3 +296,31 @@ and **266-live-adventure-spectator-integration** stand **VERIFIED**.
   gamerule-adjacent settings UI.
 - Change 258 remains recorded BLOCKED and resumable on a hardware-WebGL host;
   the 267 track does not consume, waive, or re-litigate any 258 headed task.
+
+## 268 activation alongside BLOCKED 258 — owner-authorized parallel track (2026-09-12)
+
+The product owner (Standing owner order, 2026-09-12 campaign instruction) authorized
+activating and implementing OpenSpec change **268-ci-immutable-action-pins**
+while Change **258-real-world-runtime-performance-fps-recovery** remains **BLOCKED**
+(headed hardware-WebGL certification deferred) and Changes **259-enchanting-panel-ui**,
+**260-live-brewing-stand-production-integration**, **261-gamerule-settings-ui**,
+**262-recipe-book-ui**, **263-advancement-panel-ui**,
+**264-item-xp-entity-persistence-hardening**, **265-live-creative-mode-integration**,
+**266-live-adventure-spectator-integration**, and **267-live-hardcore-mode-integration**
+stand **VERIFIED**.
+
+- Change 258 status stays **BLOCKED** at 40/100 with its existing deferral intact.
+  No headed FPS work is touched, no GPU evidence is faked, and 258 MUST NOT be
+  marked VERIFIED by the 268 track.
+- Changes 259 (18/18), 260 (19/19), 261 (16/16), 262 (14/14), 263 (15/15),
+  264 (13/13), 265 (13/13), 266 (13/13), and 267 (13/13) stand **VERIFIED** and
+  MUST NOT be reopened unless a CI regression blocks the 268 pipeline. The 268
+  track touches no `src/` or `tests/` file and changes no gameplay behavior.
+- Change 268 (`268-ci-immutable-action-pins`) is the sole **ACTIVE**
+  implementation change: pin every `actions/*@v4` step in
+  `.github/workflows/ci.yml` and `seed-visual-goldens.yml` to immutable full
+  commit SHAs (with `# v4` version comments), closing certification debt
+  **R-5**. SHAs are resolved via the GitHub API at authoring time and recorded
+  in the change `verification.md`.
+- Change 258 remains recorded BLOCKED and resumable on a hardware-WebGL host;
+  the 268 track does not consume, waive, or re-litigate any 258 headed task.
