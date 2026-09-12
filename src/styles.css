@@ -1047,6 +1047,12 @@ body {
   top: 108px;
   right: 8px;
 }
+#gamemode-select {
+  cursor: pointer;
+  pointer-events: auto;
+  top: 140px;
+  right: 8px;
+}
 .creative-search-label {
   color: rgba(255, 255, 255, 0.85);
   font-size: 12px;

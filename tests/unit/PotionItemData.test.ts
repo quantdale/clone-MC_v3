@@ -159,9 +159,11 @@ describe('component type + registry', () => {
 });
 
 describe('regression: existing registries unchanged', () => {
-  it('the component registry still contains exactly the base types plus potion', () => {
+  it('the component registry still contains exactly the base types plus potion plus adventure declarations', () => {
+    // 266 adds minecraft:can_destroy + minecraft:can_place_on (adventure
+    // CanDestroy/CanPlaceOn declarations); the base three are untouched.
     const registry = createDefaultStackComponentRegistry();
-    expect(registry.all().length).toBe(3);
+    expect(registry.all().length).toBe(5);
   });
 
   it('a real ResourceId for an effect is still formable', () => {

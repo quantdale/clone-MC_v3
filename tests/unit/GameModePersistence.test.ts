@@ -58,6 +58,22 @@ describe("GameModePersistence (265)", () => {
     expect(deserializeGameModeState(creativePayload())).toEqual({ mode: "creative" });
   });
 
+  it("all four modes round-trip field-for-field (266 adventure/spectator)", async () => {
+    // 266: the shared __gamemode__ record already carries every 192 mode; pin
+    // adventure + spectator alongside survival/creative with zero store change.
+    for (const mode of ["survival", "creative", "adventure", "spectator"] as const) {
+      const factory = createIdbFactoryMock();
+      const p = openPersistence(factory);
+      await p.open();
+      p.saveGameMode(serializeGameModeState({ mode }));
+      await settle();
+      await p.flush();
+      const reopened = openPersistence(factory);
+      await reopened.open();
+      expect(reopened.initialGameMode).toEqual({ mode });
+    }
+  });
+
   it("absent records boot null (Game boots survival)", async () => {
     const factory = createIdbFactoryMock();
     const p = openPersistence(factory);

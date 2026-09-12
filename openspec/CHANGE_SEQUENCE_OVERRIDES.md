@@ -238,3 +238,32 @@ Change **258-real-world-runtime-performance-fps-recovery** remains **BLOCKED**
   crafting gates), with survival kept default and unaffected.
 - Change 258 remains recorded BLOCKED and resumable on a hardware-WebGL host;
   the 265 track does not consume, waive, or re-litigate any 258 headed task.
+
+## 266 activation alongside BLOCKED 258 — owner-authorized parallel track (2026-09-11)
+
+The product owner (Standing owner order, 2026-09-11 campaign instruction) authorized
+activating and implementing OpenSpec change **266-live-adventure-spectator-integration**
+while Change **258-real-world-runtime-performance-fps-recovery** remains **BLOCKED**
+(headed hardware-WebGL certification deferred) and Changes **259-enchanting-panel-ui**,
+**260-live-brewing-stand-production-integration**, **261-gamerule-settings-ui**,
+**262-recipe-book-ui**, **263-advancement-panel-ui**,
+**264-item-xp-entity-persistence-hardening**, and **265-live-creative-mode-integration**
+stand **VERIFIED**.
+
+- Change 258 status stays **BLOCKED** at 40/100 with its existing deferral intact.
+  No headed FPS work is touched, no GPU evidence is faked, and 258 MUST NOT be
+  marked VERIFIED by the 266 track.
+- Changes 259 (18/18), 260 (19/19), 261 (16/16), 262 (14/14), 263 (15/15),
+  264 (13/13), and 265 (13/13) stand **VERIFIED** and MUST NOT be reopened
+  unless an adventure/spectator regression blocks the 266 player loop. The 265
+  HUD chip toggle (survival⇄creative) and text-seam semantics are preserved
+  byte-for-byte; the 266 track extends them without altering them.
+- Change 266 (`266-live-adventure-spectator-integration`) is the sole
+  **ACTIVE** implementation change: wire the verified headless `AdventureModeRules`
+  (194) and `SpectatorFramework` (195) predicates into the live Game — adventure
+  break/place gated by held-stack CanDestroy/CanPlaceOn declarations resolved via
+  `resolveBlockPermissionSet`, spectator noclip/no-collision/no-interaction/no-
+  targeting applied live, mode switching exposing adventure + spectator, and
+  world-scoped `__gamemode__` persistence covering all four modes.
+- Change 258 remains recorded BLOCKED and resumable on a hardware-WebGL host;
+  the 266 track does not consume, waive, or re-litigate any 258 headed task.

@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "status": "ACTIVE",
-  "currentChange": "265-live-creative-mode-integration",
+  "currentChange": "266-live-adventure-spectator-integration",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "265-live-creative-mode-integration",
+  "lastCompletedChange": "266-live-adventure-spectator-integration",
   "nextChange": "258-real-world-runtime-performance-fps-recovery",
   "completedTasks": 13,
   "totalTasks": 13,
@@ -14,10 +14,10 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "c3ae6d16767e36c006e544d37cfdf751f41717a6",
-  "localHead": "0416487640f5fec58c3157ae47767a10944ee69c",
-  "nextExactAction": "Publish Change 265-live-creative-mode-integration checkpoint to origin/main (265 VERIFIED 13/13; 258 BLOCKED; 259/260/261/262/263/264 VERIFIED)",
-  "lastCompletedTask": "Change 265-live-creative-mode-integration VERIFIED 13/13 (2026-09-11): 192 GameModeFramework wired live (__gamemode__ persistence with degrade-to-survival + reset/archive, setGameMode/text/HUD-toggle switching, creative no-deplete + instant-clean-break + no-stats-drain + minimal safe flight, searchable grant menu), proven via unit 53 new/extended + browser E2E journey + contrast/lifecycle; full gates green (typecheck/lint 0 errors/unit 415 files 4967+1/build 2.38s/e2e 77/77/file-audit 2738); 258 BLOCKED, 259/260/261/262/263/264 VERIFIED",
+  "sessionStartHead": "faf1a517fb897f64cf4b51f6d03828e63376a540",
+  "localHead": "faf1a517fb897f64cf4b51f6d03828e63376a540",
+  "nextExactAction": "Publish Change 266-live-adventure-spectator-integration checkpoint to origin/main (266 VERIFIED 13/13; 258 BLOCKED; 259/260/261/262/263/264/265 VERIFIED)",
+  "lastCompletedTask": "Change 266-live-adventure-spectator-integration VERIFIED 13/13 (2026-09-11): 194 AdventureModeRules + 195 SpectatorFramework wired live (adventure held-stack CanDestroy/CanPlaceOn gates, spectator noclip/no-interact/no-targeting, HUD mode select with chip toggle unchanged, __gamemode__ all-four-mode persistence), proven via unit 22 new/extended + browser E2E 3 new; full gates green (typecheck/lint 0 errors/unit 417 files 4989+1/build 2.27s/e2e 80/80/file-audit 2747); 258 BLOCKED, 259/260/261/262/263/264/265 VERIFIED",
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. 001-257 VERIFIED; game shippable with known performance-certification debt. The 259 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],

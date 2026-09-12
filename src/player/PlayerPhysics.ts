@@ -81,6 +81,13 @@ export interface PlayerPhysicsOptions {
    * and standing still work). Default: never (legacy survival physics).
    */
   isFlying?: () => boolean;
+  /**
+   * Whether the player passes through solid geometry (266, spectator via 195
+   * `noclip`). While true the velocity integrates directly with no collision
+   * resolution, no support contact, and no fall accumulation. Default: never
+   * (legacy colliding physics).
+   */
+  noclip?: () => boolean;
   /** Per-block shape overrides consulted before the full-cube default. */
   blockShapes?: BlockShapeTable;
 }
@@ -178,6 +185,20 @@ export class PlayerPhysics {
     }
     if (!flying && player.velocity.y < 0 && !onClimbable) {
       player.fallDistance += -player.velocity.y * d;
+    }
+
+    // Spectator noclip (266): free velocity integration through solid
+    // geometry. Gravity is already suppressed via `isFlying` for spectator;
+    // collision, support, and landing state are all bypassed here.
+    if (this.options.noclip?.() ?? false) {
+      player.fallDistance = 0;
+      player.position.x += player.velocity.x * d;
+      player.position.y += player.velocity.y * d;
+      player.position.z += player.velocity.z * d;
+      player.onGround = false;
+      this.landingDistance = 0;
+      this.support = { kind: 'air', blockId: BlockId.Air, friction: 1 };
+      return;
     }
 
     // Sub-step the integration so a single step's displacement cannot exceed a

@@ -77,6 +77,25 @@ export class PlayerInteraction {
    * Absent = always drop (legacy).
    */
   private readonly dropsLoot: () => boolean;
+  /**
+   * Live game-mode rules (266): whether the targeted block may be broken
+   * (adventure allow-list / spectator denial via the Game closure).
+   * Absent = always allow (legacy).
+   */
+  private readonly canBreak: (blockId: number) => boolean;
+  /**
+   * Live game-mode rules (266): whether the resolved block may be placed
+   * (adventure allow-list / spectator denial via the Game closure).
+   * Absent = always allow (legacy).
+   */
+  private readonly canPlace: (blockId: number) => boolean;
+  /**
+   * Live game-mode rules (266): whether any block/entity/item interaction is
+   * allowed at all (195 `canInteract`; false only for spectator). While false,
+   * pending break/place/use inputs are drained silently: no action, no toast.
+   * Absent = always interact (legacy).
+   */
+  private readonly canInteract: () => boolean;
 
   private readonly eyePos = new THREE.Vector3();
   private readonly dir = new THREE.Vector3();
@@ -117,6 +136,12 @@ export class PlayerInteraction {
     instantBreak?: () => boolean;
     /** Live game-mode rule: loot/XP/tool-wear on break (265; default always). */
     dropsLoot?: () => boolean;
+    /** Live game-mode rule: break permission for a numeric block id (266; default allow). */
+    canBreak?: (blockId: number) => boolean;
+    /** Live game-mode rule: place permission for a numeric block id (266; default allow). */
+    canPlace?: (blockId: number) => boolean;
+    /** Live game-mode rule: any interaction at all (266; default allow). */
+    canInteract?: () => boolean;
   }) {
     this.world = opts.world;
     this.registry = opts.registry;
@@ -139,6 +164,9 @@ export class PlayerInteraction {
     this.depletesItems = opts.depletesItems ?? (() => true);
     this.instantBreak = opts.instantBreak ?? (() => false);
     this.dropsLoot = opts.dropsLoot ?? (() => true);
+    this.canBreak = opts.canBreak ?? (() => true);
+    this.canPlace = opts.canPlace ?? (() => true);
+    this.canInteract = opts.canInteract ?? (() => true);
 
     // A centered unit-cube wireframe marks the targeted block. Keeping the
     // geometry centered and placing it at block + 0.5 avoids the classic
@@ -230,6 +258,17 @@ export class PlayerInteraction {
     }
 
     if (this.input) {
+      // Spectator no-interaction (266): drain pending inputs silently so a
+      // held button cannot queue actions for a later mode, and hide the
+      // outline. No action and no toast (holding break must not spam).
+      if (!this.canInteract()) {
+        this.input.consumeBreak();
+        this.input.consumeBreakClick?.();
+        this.input.consumePlace();
+        this.resetBreakProgress();
+        this.outline.visible = false;
+        return;
+      }
       const breakRequested = this.input.consumeBreak();
       const breakClick = this.input.consumeBreakClick?.() ?? false;
       if (breakRequested && this.elapsed >= this.lastActionTime + CONFIG.actionCooldown) {
@@ -349,6 +388,12 @@ export class PlayerInteraction {
       this.onAction?.('blocked', blockId);
       return;
     }
+    // Adventure/spectator permission gate (266): denial surfaces 'blocked'
+    // once per press; mining never starts.
+    if (!this.canBreak(blockId)) {
+      this.onAction?.('blocked', blockId);
+      return;
+    }
     // Both clicks and holds start a mining attempt (hardening 2026-08-23):
     // completion is owned by the duration-based progress, never by the press
     // style. A released click resets on the next update unless progress
@@ -364,6 +409,12 @@ export class PlayerInteraction {
     const blockId = this.world.getBlock(this.target.blockX, this.target.blockY, this.target.blockZ);
     const def = this.registry.get(blockId);
     if (!def.breakable || !Number.isFinite(def.hardness)) {
+      this.resetBreakProgress();
+      return;
+    }
+    // Adventure/spectator permission gate (266): the target may have changed
+    // mid-mine. Silent reset (beginBreak already gave feedback per press).
+    if (!this.canBreak(blockId)) {
       this.resetBreakProgress();
       return;
     }
@@ -553,6 +604,20 @@ export class PlayerInteraction {
       return false;
     }
 
+    // Adventure/spectator permission gate (266): resolve the placed block id
+    // first; unknown or denied ids refuse BEFORE any stack consume (I-3).
+    let permissionId: number;
+    try {
+      permissionId = this.registry.getByResourceId(selected.placeBlock).id;
+    } catch {
+      this.onAction?.('blocked', selectedId);
+      return false;
+    }
+    if (!this.canPlace(permissionId)) {
+      this.onAction?.('blocked', selectedId);
+      return false;
+    }
+
     // Placement cell is the targeted block offset by the face normal.
     const bx = Math.floor(this.target.blockX + this.target.nx);
     const by = Math.floor(this.target.blockY + this.target.ny);
@@ -581,7 +646,7 @@ export class PlayerInteraction {
     if (this.depletesItems() && this.selector.consumeSelected && !this.selector.consumeSelected()) {
       return false;
     }
-    const targetBlockId = this.registry.getByResourceId(selected.placeBlock).id;
+    const targetBlockId = permissionId;
     this.world.setBlock(bx, by, bz, targetBlockId);
     if (this.world.getBlock(bx, by, bz) !== targetBlockId) {
       this.selector.addItem?.(selectedId, 1);

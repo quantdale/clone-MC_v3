@@ -82,7 +82,8 @@ import type { SerializedEntity } from '../storage/EntityRecord';
 import { WorldLife } from '../world/WorldLife';
 import { createDefaultEntityRegistry } from '../data/EntityType';
 import { createDefaultBiomeRegistry } from '../data/Biome';
-import { createResourceId, resourceIdToString, type ResourceId } from '../data/ResourceId';
+import { createResourceId, parseResourceId, resourceIdToString, type ResourceId } from '../data/ResourceId';
+import type { TagRegistry } from '../data/TagRegistry';
 import {
   PassiveMobWorldAdapter,
   PassiveMobSystem,
@@ -150,7 +151,13 @@ import { FurnacePanel } from '../ui/FurnacePanel';
 import { BrewingPanel, type BrewingCursor } from '../ui/BrewingPanel';
 import { createPotionContents, POTION_CONTENTS_COMPONENT } from '../data/PotionItemData';
 import { AWKWARD_BASE } from '../inventory/BrewingRecipes';
-import { StackComponentMap, createDefaultStackComponentRegistry } from '../inventory/StackDataComponents';
+import {
+  CAN_DESTROY_COMPONENT,
+  CAN_PLACE_ON_COMPONENT,
+  StackComponentMap,
+  createDefaultStackComponentRegistry,
+  emptyStackComponents,
+} from '../inventory/StackDataComponents';
 import type { ItemStack } from '../inventory/Inventory';
 import { EnchantingPanel, formatEnchantLevel, prettifyEnchantmentKey } from '../ui/EnchantingPanel';
 import { CreativeMenuPanel } from '../ui/CreativeMenuPanel';
@@ -181,6 +188,11 @@ import {
   type GameMode,
   type GameModeState,
 } from '../simulation/GameModeFramework';
+import { canInteract, isAttackable, noclip } from '../simulation/SpectatorFramework';
+import {
+  canBreakHeld,
+  canPlaceHeld,
+} from '../simulation/AdventurePermissions';
 import {
   listCreativeItems,
   searchCreativeItems,
@@ -293,6 +305,25 @@ export function resolveGameSeed(): number {
   return CONFIG.seed;
 }
 
+/**
+ * Capitalized display label for a game mode (266 extends the 265 two-mode
+ * chip/toast label to all four modes). Total over the 192 union.
+ */
+export function displayGameMode(mode: GameMode): string {
+  switch (mode) {
+    case 'survival':
+      return 'Survival';
+    case 'creative':
+      return 'Creative';
+    case 'adventure':
+      return 'Adventure';
+    case 'spectator':
+      return 'Spectator';
+    default:
+      return mode;
+  }
+}
+
 /** Test-only render-quality overrides (245), applied only by the VITE_E2E boot seam. */
 export interface GameQualityOverrides {
   /** Integer chunk radius applied to World/Environment creation. */
@@ -379,6 +410,10 @@ export class Game {
   private creativeQuery = '';
   /** HUD game-mode toggle chip (265, null until the shell binds it). */
   private gameModeChipEl: HTMLButtonElement | null = null;
+  /** HUD game-mode select exposing all four modes (266, null until the shell binds it). */
+  private gameModeSelectEl: HTMLSelectElement | null = null;
+  /** Live block-tag registry (266 adventure resolution; built once beside HarvestRules). */
+  private readonly blockTags: TagRegistry;
   /** Registry key of the Fire block, resolved once for the doFireTick gate (261). */
   private readonly fireBlockKey: string;
   /** Monotonic simulation tick counter driving random-tick seeding. */
@@ -715,6 +750,7 @@ export class Game {
     this.enchantmentRegistry = createDefaultEnchantmentRegistry();
     const blockTags = createDefaultBlockTags(this.blockRegistry);
     const itemTags = createDefaultItemTags(this.itemRegistry);
+    this.blockTags = blockTags;
     this.harvestRules = new HarvestRules(blockTags, itemTags);
     this.atlas = new TextureAtlas();
     this.materials = new Materials(this.atlas);
@@ -959,6 +995,8 @@ export class Game {
       isSneaking: () => this.controller.isSneaking(),
       // Creative flight (265): gravity suppression follows the live mode.
       isFlying: () => canFly(this.gameMode.mode),
+      // Spectator noclip (266): free movement through solid geometry.
+      noclip: () => noclip(this.gameMode.mode),
     });
     this.itemEntities = new ItemEntityManager({ itemRegistry: this.itemRegistry, rng: Math.random });
     this.xpOrbs = new XpOrbManager({ rng: Math.random });
@@ -991,6 +1029,11 @@ export class Game {
       depletesItems: () => depletesItems(this.gameMode.mode),
       instantBreak: () => instantBlockBreak(this.gameMode.mode),
       dropsLoot: () => !instantBlockBreak(this.gameMode.mode),
+      // Adventure/spectator permissions (266): held-stack allow-lists in
+      // adventure, blanket denial in spectator, legacy allow otherwise.
+      canBreak: (blockId) => this.canBreakInMode(blockId),
+      canPlace: (blockId) => this.canPlaceInMode(blockId),
+      canInteract: () => canInteract(this.gameMode.mode),
       rng: Math.random,
       itemEntities: this.itemEntities,
       xpOrbs: this.xpOrbs,
@@ -1181,6 +1224,13 @@ export class Game {
     creativeOpenBtn?.addEventListener('click', () => this.openCreative());
     this.gameModeChipEl = document.getElementById('gamemode-toggle') as HTMLButtonElement | null;
     this.gameModeChipEl?.addEventListener('click', () => this.toggleGameMode());
+    // Mode select (266): every option is a valid 192 mode; the chip toggle
+    // above is untouched (survival⇄creative per the 265 contract).
+    this.gameModeSelectEl = document.getElementById('gamemode-select') as HTMLSelectElement | null;
+    this.gameModeSelectEl?.addEventListener('change', () => {
+      this.setGameModeFromText(this.gameModeSelectEl?.value ?? '');
+      this.updateGameModeChip();
+    });
     this.updateGameModeChip();
 
     // Fixed-tick ownership (044): the driver turns frame deltas into bounded,
@@ -1648,6 +1698,9 @@ export class Game {
         this.closeCreative();
       } else if (this.craftingOpen) {
         this.closeCrafting();
+      } else if (!canInteract(this.gameMode.mode)) {
+        // Spectators cannot open container screens (266).
+        this.showToast('Spectators cannot use containers');
       } else {
         this.openCrafting();
       }
@@ -1661,6 +1714,7 @@ export class Game {
     // Creative menu toggle (265): E opens/closes the creative inventory.
     if (this.input.consumeCreativeToggle()) {
       if (this.creativeOpen) this.closeCreative();
+      else if (!canInteract(this.gameMode.mode)) this.showToast('Spectators cannot use containers');
       else this.openCreative();
     }
     // Furnace session upkeep (251): close on destruction or walking away, and
@@ -1801,6 +1855,9 @@ export class Game {
       py,
       pz,
       (id, count) => {
+        // Spectators do not pick up drops (266): refuse everything so the
+        // advancement obtain trigger below stays silent too.
+        if (!canInteract(this.gameMode.mode)) return count;
         const left = this.inventory.addItem(id, count);
         // Advancement obtain wiring (263): items that actually entered the
         // inventory fire the obtain trigger; unknown ids skip silently.
@@ -2066,7 +2123,12 @@ export class Game {
       dt,
       this.passiveMobWorld,
       (cx, cz) => this.world.isChunkSimulating(cx, cz),
-      () => ({ x: this.player.position.x, y: this.player.position.y, z: this.player.position.z }),
+      // Spectator untargetability (266): no player target, so zombies wander.
+      // Damage stays refused via hurtPlayer regardless (265 gate).
+      () =>
+        isAttackable(this.gameMode.mode)
+          ? { x: this.player.position.x, y: this.player.position.y, z: this.player.position.z }
+          : null,
       (amount) => this.hurtPlayer(amount, 'mob'),
     );
   }
@@ -3378,7 +3440,10 @@ export class Game {
   /** Advance every live wither + skull one simulation tick and sync presentation. */
   private tickWithers(): void {
     if (this.withers.length > 0 || this.witherSkulls.length > 0) {
-      const playerAlive = this.survival.health > 0;
+      // Spectator untargetability (266): the wither, its skulls, and its
+      // melee/effect paths all treat a spectator as not-alive. Damage stays
+      // refused via hurtPlayer regardless (265 gate).
+      const playerAlive = this.survival.health > 0 && isAttackable(this.gameMode.mode);
       const candidates = playerAlive
         ? [{ id: WITHER_TARGET_PLAYER_ID, x: this.player.position.x, y: this.player.position.y, z: this.player.position.z, alive: true }]
         : [];
@@ -4007,7 +4072,7 @@ export class Game {
     this.saveGameMode();
     this.updateGameModeChip();
     if (this.creativeOpen) this.creativePanel.render();
-    this.showToast(`Game mode: ${next.mode === 'creative' ? 'Creative' : next.mode === 'survival' ? 'Survival' : next.mode}`);
+    this.showToast(`Game mode: ${displayGameMode(next.mode)}`);
     return true;
   }
 
@@ -4040,15 +4105,95 @@ export class Game {
     p.saveGameMode(serializeGameModeState(this.gameMode));
   }
 
-  /** Relabel the HUD mode chip for the current mode (null-safe pre-shell). */
+  /**
+   * Block-tag lookup adapter for adventure permission resolution (266): total
+   * function, never throws (bad parse / unknown tag / unfinalized ⇒ undefined,
+   * which 194 skips).
+   */
+  private lookupBlockTag(tagId: string): ReadonlySet<string> | undefined {
+    let id: ResourceId;
+    try {
+      id = parseResourceId(tagId);
+    } catch {
+      return undefined;
+    }
+    try {
+      return new Set([...this.blockTags.membersOf(id)].map(resourceIdToString));
+    } catch {
+      return undefined;
+    }
+  }
+
+  /**
+   * Live break permission for a numeric block id (266): the 194 table over
+   * the held stack's CanDestroy set. Unknown ids deny (fail closed).
+   */
+  private canBreakInMode(blockId: number): boolean {
+    const def = this.blockRegistry.getByLegacyId(blockId);
+    if (!def) return false;
+    return canBreakHeld(
+      this.gameMode.mode,
+      this.inventory.getSelectedStack(),
+      resourceIdToString(def.resourceId),
+      (tag) => this.lookupBlockTag(tag),
+    );
+  }
+
+  /**
+   * Live place permission for a numeric block id (266): the 194 table over
+   * the held stack's CanPlaceOn set. Unknown ids deny (fail closed).
+   */
+  private canPlaceInMode(blockId: number): boolean {
+    const def = this.blockRegistry.getByLegacyId(blockId);
+    if (!def) return false;
+    return canPlaceHeld(
+      this.gameMode.mode,
+      this.inventory.getSelectedStack(),
+      resourceIdToString(def.resourceId),
+      (tag) => this.lookupBlockTag(tag),
+    );
+  }
+
+  /**
+   * Attach adventure permission declarations to the selected stack (266,
+   * E2E/test seam for CanDestroy/CanPlaceOn). Entries are canonical block ids
+   * or `#`-prefixed block-tag references; non-string/empty entries are
+   * skipped. Returns false — with the inventory byte-identical — when no
+   * countable held stack exists. Never throws.
+   */
+  setHeldAdventurePermissions(canDestroy: readonly string[], canPlaceOn: readonly string[]): boolean {
+    const stack = this.inventory.getSelectedStack();
+    if (!stack || stack.count <= 0) return false;
+    const build = (keys: readonly string[]): Record<string, boolean> => {
+      const record: Record<string, boolean> = {};
+      for (const key of keys) {
+        if (typeof key === 'string' && key.length > 0) record[key] = true;
+      }
+      return record;
+    };
+    try {
+      const map = stack.components ?? emptyStackComponents();
+      this.inventory.setSelectedStack({
+        ...stack,
+        components: map
+          .with(CAN_DESTROY_COMPONENT, build(canDestroy))
+          .with(CAN_PLACE_ON_COMPONENT, build(canPlaceOn)),
+      });
+    } catch {
+      return false;
+    }
+    this.hotbar.render();
+    return true;
+  }
+
+  /** Relabel the HUD mode chip + sync the mode select for the current mode (null-safe pre-shell). */
   private updateGameModeChip(): void {
-    if (!this.gameModeChipEl) return;
-    const label = this.gameMode.mode === 'creative'
-      ? 'Creative'
-      : this.gameMode.mode === 'survival'
-        ? 'Survival'
-        : this.gameMode.mode;
-    this.gameModeChipEl.textContent = `Mode: ${label}`;
+    if (this.gameModeChipEl) {
+      this.gameModeChipEl.textContent = `Mode: ${displayGameMode(this.gameMode.mode)}`;
+    }
+    if (this.gameModeSelectEl && this.gameModeSelectEl.value !== this.gameMode.mode) {
+      this.gameModeSelectEl.value = this.gameMode.mode;
+    }
   }
 
   /** Whether the creative menu screen is open (E2E observability). */
@@ -4379,6 +4524,8 @@ export class Game {
    * (survival.eat returns false) consumes nothing and applies no effects.
    */
   private tryEatSelected(): void {
+    // Spectators cannot use items (266).
+    if (!canInteract(this.gameMode.mode)) return;
     const stack = this.inventory.getSelectedStack();
     if (!stack) return;
     const def = this.itemRegistry.getByLegacyId(stack.id);

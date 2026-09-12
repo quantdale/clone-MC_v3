@@ -222,9 +222,53 @@ export const enchantmentsComponentType: StackComponentType = {
   },
 };
 
+/** ResourceId of the adventure CanDestroy declaration component (266). */
+export const CAN_DESTROY_COMPONENT: ResourceId = createResourceId('minecraft', 'can_destroy');
+
+/** ResourceId of the adventure CanPlaceOn declaration component (266). */
+export const CAN_PLACE_ON_COMPONENT: ResourceId = createResourceId('minecraft', 'can_place_on');
+
+/**
+ * Adventure permission declaration value (266): a flat map of allowed block
+ * keys to `true`, fitting the flat 008 value model. Each key is a canonical
+ * block id (`minecraft:stone`) or a `#`-prefixed block-tag reference
+ * (`#minecraft:logs`); the `#` split happens in `AdventurePermissions` (266),
+ * not here. Every value MUST be `true`.
+ */
+export type BlockPermissionComponentValue = Readonly<Record<string, boolean>>;
+
+function isBlockPermissionValue(value: unknown): boolean {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
+  for (const key of Object.keys(value)) {
+    if (key.length === 0) return false;
+    if ((value as Record<string, unknown>)[key] !== true) return false;
+  }
+  return true;
+}
+
+/** Component type for adventure-mode break permissions (CanDestroy), 266. */
+export const canDestroyComponentType: StackComponentType = {
+  id: CAN_DESTROY_COMPONENT,
+  description: 'Adventure-mode blocks this stack may break (CanDestroy)',
+  validate: isBlockPermissionValue,
+};
+
+/** Component type for adventure-mode place permissions (CanPlaceOn), 266. */
+export const canPlaceOnComponentType: StackComponentType = {
+  id: CAN_PLACE_ON_COMPONENT,
+  description: 'Adventure-mode blocks this stack may place onto (CanPlaceOn)',
+  validate: isBlockPermissionValue,
+};
+
 /** Default component registry with the base component types for current tools. */
 export function createDefaultStackComponentRegistry(): StackComponentRegistry {
-  return new StackComponentRegistry([damageComponentType, enchantmentsComponentType, potionContentsComponentType]);
+  return new StackComponentRegistry([
+    damageComponentType,
+    enchantmentsComponentType,
+    potionContentsComponentType,
+    canDestroyComponentType,
+    canPlaceOnComponentType,
+  ]);
 }
 
 /** Convenience: an empty component map for a stack using the default registry. */
