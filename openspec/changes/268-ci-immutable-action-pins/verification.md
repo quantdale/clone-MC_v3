@@ -1,7 +1,7 @@
 # Verification: 268-ci-immutable-action-pins
 
 Status: IMPLEMENTED (pending CI green on the published SHA)
-Completion: 82%
+Completion: 83%
 Advancement allowed: false
 
 ## Pin provenance (resolution method)
@@ -60,6 +60,22 @@ touched: `SkyLightEngine`/`BlockLightEngine` incremental-channel suites,
 `WorldBlockAccess` delegation suite (new file), `intersectRayBoxes` + DDA
 z-step/step-cap cases, `ReconnectStateRecovery` malformed-input suite. Local
 coverage after repair: **84.2 / 90.98 / 95.63 / 84.2 — PASS** (margin +0.2).
+
+## Gating repair #2 (brewing e2e race, test-only fix)
+
+CI run `34674368235` on SHA `b2e46c8`: gate green (pins proven live), e2e
+81/82 — only `tests/e2e/brewing.spec.ts:220` failed (`brewTime` 1, then 4 on
+retry, vs expected 0 at line 322), while the identical tree is green locally
+(267's 82/82 + this session's brewing-only 2/2). Diagnosis from product code
+(`src/world/BrewingStandBlockEntity.ts` `tickOnce`): after batch 1 completes
+(ingredient 3→2, fuel 1→0-count but still burning, effect applied), leftover
+ingredient + burning fuel correctly start batch 2, so `brewTime` counts up
+again before the test's post-wait read on slow runners — a test race present
+since 260, not a product regression (266's CI run failed the same spec at the
+reload-boot wait instead). Fix is spec-only: single-redstone setup (one batch
+by construction; `count - 1` and reload/break assertions preserved) + the two
+reload-boot waits 30 s → 60 s (266-run 48.8-min-suite evidence). No `src/`
+change; hardened journey green locally in 39.4 s.
 
 ## Edge/adversarial validation
 

@@ -230,7 +230,10 @@ test.describe('live brewing journey (260)', () => {
         };
       }).__voxelGame;
       g?.inventory?.addItem(64, 1); // brewing stand
-      g?.inventory?.addItem(37, 3); // redstone
+      // Single redstone (268 hardening): exactly one batch can run, so no second
+      // batch can restart (brewTime > 0) between the completion wait and the
+      // brewTime === 0 read on slow CI runners. Exact-consumption assertions hold.
+      g?.inventory?.addItem(37, 1); // redstone
       g?.inventory?.addItem(65, 1); // blaze powder
       return g?.testGrantAwkwardBottle?.() ?? -1;
     });
@@ -348,7 +351,9 @@ test.describe('live brewing journey (260)', () => {
     await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide')));
     await page.waitForTimeout(300);
     await page.reload();
-    await page.waitForSelector('#loading', { state: 'hidden', timeout: 30_000 });
+    // 60 s (268 hardening): the 266 CI run showed a 30 s boot wait flaking on
+    // slow runners (48.8-min suite); boot completion is what matters, not speed.
+    await page.waitForSelector('#loading', { state: 'hidden', timeout: 60_000 });
 
     const restored = await brewingState(page, placeCell);
     const committed = JSON.parse(beforeReload) as BrewingStateView;
@@ -383,7 +388,7 @@ test.describe('live brewing journey (260)', () => {
     await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide')));
     await page.waitForTimeout(300);
     await page.reload();
-    await page.waitForSelector('#loading', { state: 'hidden', timeout: 30_000 });
+    await page.waitForSelector('#loading', { state: 'hidden', timeout: 60_000 });
     expect(await hostHasBrewing(page, placeCell)).toBe(false);
     expect(await brewingState(page, placeCell)).toBeNull();
   });
