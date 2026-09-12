@@ -40,7 +40,7 @@
   verification.md evidence-synced; `openspec/PROGRAM_STATE.json`/`.md`
   checkpoint (273 IMPLEMENTED 9/10 pre-publish, 258
   BLOCKED intact); `validate-state` PASS; file-audit clean.
-- [ ] 10. Publish + VERIFIED — commit, push `origin/main`, verify remote
+- [x] 10. Publish + VERIFIED — commit, push `origin/main`, verify remote
   head, record `published_head`, flip `verification.md` to VERIFIED with the
   advancement-gate computation, final session report with SHAs. Then STOP —
   do not author or activate 274+.

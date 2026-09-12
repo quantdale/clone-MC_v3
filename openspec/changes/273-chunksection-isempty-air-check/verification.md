@@ -1,8 +1,8 @@
 # Verification: 273-chunksection-isempty-air-check
 
-Status: IMPLEMENTED (awaiting publish)
-Completion: 9/10 (90%)
-Advancement allowed: false
+Status: VERIFIED
+Completion: 10/10 (100%)
+Advancement allowed: true
 
 ## Requirement evidence
 
@@ -84,4 +84,9 @@ Not applicable unless completion is 90-99.99%.
 
 ## Final decision
 
-NOT VERIFIED — package authored, awaiting implementation.
+VERIFIED — 273-chunksection-isempty-air-check 10/10 (100%). R-8 FULLY
+CLOSED (brewing half by 260, isEmpty half by 273). 258 stays BLOCKED;
+259–272 stay VERIFIED. Published as `27324b8c76e8f77f3878d4a72a3202502d11fd9d`
+(range `93de62f..27324b8`; second publication records the VERIFIED flip).
+This is the final owner-requested campaign of the current chain — STOP, no
+274+.
