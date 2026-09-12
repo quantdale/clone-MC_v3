@@ -9,7 +9,7 @@
  *
  * This change routes every current block-removal output through a loot table
  * while preserving current behavior exactly (one stack per breakable block, plus
- * the deterministic apple drop from leaves).
+ * the probabilistic apple drop from leaves: about 1/200 per break, change 270).
  */
 
 import { type ResourceId, createResourceId, resourceIdToString } from '../data/ResourceId';
@@ -25,6 +25,12 @@ export const MAX_TABLE_OUTPUT = 64;
 
 /** A caller-injected source of uniform [0, 1) values. The only randomness allowed. */
 export type RandomSource = () => number;
+
+/**
+ * Probability of the leaves apple drop per leaf break (change 270).
+ * Roughly vanilla-like rarity: about 1/200 (0.5%) chance of 1 apple.
+ */
+export const LEAF_APPLE_CHANCE = 0.005;
 
 /** Pure predicate over the evaluated context; must not mutate the context. */
 export type LootCondition = (ctx: LootContext) => boolean;
@@ -79,6 +85,13 @@ export interface LootPool {
   readonly entries: readonly LootEntry[];
   /** Optional pure predicates; the whole pool is skipped when any returns false. */
   readonly conditions?: LootCondition[];
+  /**
+   * Optional probability gate in (0, 1] (change 270). When present,
+   * evaluation draws exactly one value from the injected random source per
+   * `evaluate()` call and skips the whole pool when the draw is not
+   * strictly below `chance`. Absent means 1 (always proceeds, zero draws).
+   */
+  readonly chance?: number;
 }
 
 /** An immutable loot table identified by a unique ResourceId. */
@@ -95,7 +108,8 @@ export type LootTableErrorReason =
   | 'INVALID_WEIGHT'
   | 'INVALID_ROLLS'
   | 'INVALID_RANGE'
-  | 'INVALID_OUTPUT';
+  | 'INVALID_OUTPUT'
+  | 'INVALID_CHANCE';
 
 /** Thrown when a loot table fails validation before finalization. */
 export class LootTableError extends Error {
@@ -162,6 +176,10 @@ export function evaluate(
   const out: LootStack[] = [];
   for (const pool of table.pools) {
     if (!conditionsPass(pool.conditions, ctx)) continue;
+    // Probability gate (270): exactly one injected-rng draw per gated pool
+    // per evaluation, consumed before the pool's rolls. Strict `<` so a draw
+    // exactly equal to `chance` misses.
+    if (pool.chance !== undefined && !(rng() < pool.chance)) continue;
     for (let roll = 0; roll < pool.rolls; roll++) {
       const eligible = pool.entries.filter((entry) => conditionsPass(entry.conditions, ctx));
       if (eligible.length === 0) continue;
@@ -246,6 +264,13 @@ export class LootTableRegistry {
   private validate(table: LootTable): void {
     let maxOutput = 0;
     for (const pool of table.pools) {
+      if (pool.chance !== undefined && (!Number.isFinite(pool.chance) || pool.chance <= 0 || pool.chance > 1)) {
+        throw new LootTableError(
+          'INVALID_CHANCE',
+          resourceIdToString(table.id),
+          'pool chance must be a finite number in (0, 1]',
+        );
+      }
       if (!Number.isInteger(pool.rolls) || pool.rolls <= 0 || pool.rolls > MAX_ROLLS || !Number.isFinite(pool.rolls)) {
         throw new LootTableError(
           'INVALID_ROLLS',
@@ -297,9 +322,10 @@ export class LootTableRegistry {
 
 /**
  * Build one loot table per current breakable block, reproducing current output
- * exactly. Each breakable block yields a single fixed-quantity drop of its
- * `dropItem`; leaves additionally drop one apple, matching the current special
- * case. Tables are keyed by the block's resource id (`loot/<blockKey>`) so the
+ * exactly, except for the leaves apple (change 270: probabilistic). Each
+ * breakable block yields a single fixed-quantity drop of its `dropItem`;
+ * leaves additionally roll one apple at `LEAF_APPLE_CHANCE` (about 1/200).
+ * Tables are keyed by the block's resource id (`loot/<blockKey>`) so the
  * interaction system can resolve them from a block definition.
  */
 export function buildCurrentLootTables(
@@ -319,8 +345,11 @@ export function buildCurrentLootTables(
       },
     ];
     if (def.key === 'leaves') {
+      // Probabilistic apple (270): the leaves block always drops; the apple
+      // is gated at LEAF_APPLE_CHANCE via the injected rng in `evaluate`.
       pools.push({
         rolls: 1,
+        chance: LEAF_APPLE_CHANCE,
         entries: [{ item: appleRid, weight: 1, min: 1, max: 1 }],
       });
     } else if (def.key === 'wheat') {

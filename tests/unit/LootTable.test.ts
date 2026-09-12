@@ -5,6 +5,7 @@ import {
   evaluate,
   lootTableResourceId,
   LootTableError,
+  LEAF_APPLE_CHANCE,
   MAX_ROLLS,
   MAX_TABLE_OUTPUT,
   type LootTable,
@@ -237,30 +238,143 @@ describe('current block-output equivalence', () => {
     expect(out).toEqual([{ item: ItemId.Coal, count: 1 }]);
   });
 
-  it('reproduces leaves drop (leaves + apple)', () => {
+  it('pins the leaf-apple rarity at 1/200 (0.5%)', () => {
+    expect(LEAF_APPLE_CHANCE).toBe(0.005);
+  });
+
+  it('yields leaves + apple on a lucky leaf roll', () => {
     const out = evaluate(
       reg.get(lootTableResourceId('leaves')),
       ctx({ blockId: BlockId.Leaves }),
-      seq([]),
+      seq([0]),
       items,
     );
-    expect(out.map((s) => s.item)).toEqual([ItemId.Leaves, ItemId.Apple]);
+    expect(out).toEqual([
+      { item: ItemId.Leaves, count: 1 },
+      { item: ItemId.Apple, count: 1 },
+    ]);
   });
 
-  it('reproduces every breakable block as a single fixed drop (no extras except leaves)', () => {
+  it('yields leaves only on an unlucky leaf roll (no guaranteed apple)', () => {
+    const out = evaluate(
+      reg.get(lootTableResourceId('leaves')),
+      ctx({ blockId: BlockId.Leaves }),
+      seq([0.999]),
+      items,
+    );
+    expect(out).toEqual([{ item: ItemId.Leaves, count: 1 }]);
+  });
+
+  it('misses the apple gate on the boundary draw', () => {
+    const out = evaluate(
+      reg.get(lootTableResourceId('leaves')),
+      ctx({ blockId: BlockId.Leaves }),
+      seq([LEAF_APPLE_CHANCE]),
+      items,
+    );
+    expect(out).toEqual([{ item: ItemId.Leaves, count: 1 }]);
+  });
+
+  it('reproduces every breakable block as a single fixed drop (leaves: block always, apple only when lucky)', () => {
     for (const def of blocks.all()) {
       if (!def.breakable || def.dropItem === undefined) continue;
       const table = reg.get(lootTableResourceId(def.key));
-      const out = evaluate(table, ctx({ blockId: def.id }), seq([]), items);
       if (def.key === 'leaves') {
-        expect(out).toEqual([
+        // Lucky gate (rng 0): leaves block + exactly one apple.
+        expect(evaluate(table, ctx({ blockId: def.id }), seq([0]), items)).toEqual([
           { item: ItemId.Leaves, count: 1 },
           { item: ItemId.Apple, count: 1 },
         ]);
+        // Unlucky gate: leaves block only, never a second apple.
+        expect(evaluate(table, ctx({ blockId: def.id }), seq([0.999]), items)).toEqual([
+          { item: ItemId.Leaves, count: 1 },
+        ]);
       } else {
+        const out = evaluate(table, ctx({ blockId: def.id }), seq([]), items);
         const expectedItem = items.getByResourceId(def.dropItem).id;
         expect(out).toEqual([{ item: expectedItem, count: 1 }]);
       }
     }
+  });
+});
+
+describe('loot pool chance gates (270)', () => {
+  it('rejects non-finite and out-of-range chance at construction', () => {
+    const bad = (chance: number): LootTable => ({
+      id: rid('loot/chance'),
+      pools: [{ rolls: 1, chance, entries: [{ item: rid('stone'), weight: 1, min: 1, max: 1 }] }],
+    });
+    for (const chance of [0, -0.1, 1.5, 2, NaN, Infinity, -Infinity]) {
+      expect(() => registryOf([bad(chance)])).toThrow(LootTableError);
+      expect(() => registryOf([bad(chance)])).toThrow(/INVALID_CHANCE/);
+    }
+  });
+
+  it('treats chance 1 as always (one draw consumed)', () => {
+    const table: LootTable = {
+      id: rid('loot/always'),
+      pools: [{ rolls: 1, chance: 1, entries: [{ item: rid('stone'), weight: 1, min: 1, max: 1 }] }],
+    };
+    // Even the largest draw below 1 hits; the gate consumes exactly one draw.
+    const seen: number[] = [];
+    const counting: RandomSource = (() => {
+      let i = 0;
+      const values = [0.999, 0.111];
+      return () => {
+        seen.push(i);
+        return values[i++ % values.length]!;
+      };
+    })();
+    const out = evaluate(table, ctx(), counting, items);
+    expect(out).toEqual([{ item: ItemId.Stone, count: 1 }]);
+    expect(seen).toEqual([0]); // single-entry pool draws nothing beyond the gate
+  });
+
+  it('consumes the gate draw before roll draws, in order', () => {
+    const table: LootTable = {
+      id: rid('loot/order'),
+      pools: [
+        {
+          rolls: 1,
+          chance: 0.5,
+          entries: [{ item: rid('stone'), weight: 1, min: 1, max: 3 }],
+        },
+      ],
+    };
+    // Gate consumes 0.25 (hit); quantity consumes 0.0 -> min count 1.
+    expect(evaluate(table, ctx(), seq([0.25, 0.0]), items)).toEqual([{ item: ItemId.Stone, count: 1 }]);
+    // Gate consumes 0.75 (miss); output empty, second draw untouched.
+    const rng = seq([0.75, 0.0]);
+    expect(evaluate(table, ctx(), rng, items)).toEqual([]);
+    expect(rng()).toBe(0.0);
+  });
+
+  it('misses on the exact boundary draw (strict less-than)', () => {
+    const table: LootTable = {
+      id: rid('loot/boundary'),
+      pools: [{ rolls: 1, chance: 0.5, entries: [{ item: rid('stone'), weight: 1, min: 1, max: 1 }] }],
+    };
+    expect(evaluate(table, ctx(), seq([0.5]), items)).toEqual([]);
+    expect(evaluate(table, ctx(), seq([0.499999]), items).map((s) => s.item)).toEqual([ItemId.Stone]);
+  });
+
+  it('yields the hit fraction over a deterministic alternating sequence', () => {
+    const leaves = new LootTableRegistry(buildCurrentLootTables(createDefaultBlockRegistry(), items), items).get(
+      lootTableResourceId('leaves'),
+    );
+    let hits = 0;
+    const total = 2000;
+    for (let i = 0; i < total; i++) {
+      // Alternates hit (0.004 < 0.005) / miss (0.006 >= 0.005).
+      const out = evaluate(leaves, ctx({ blockId: BlockId.Leaves }), seq([i % 2 === 0 ? 0.004 : 0.006]), items);
+      expect(out[0]).toEqual({ item: ItemId.Leaves, count: 1 });
+      if (out.length === 2) {
+        hits++;
+        expect(out[1]).toEqual({ item: ItemId.Apple, count: 1 });
+      } else {
+        expect(out).toHaveLength(1);
+      }
+    }
+    expect(hits).toBe(total / 2);
   });
 });

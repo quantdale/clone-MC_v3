@@ -341,7 +341,8 @@ describe('createSpawnPosition', () => {
 
 describe('block-break drop routing via spawnLootStacks', () => {
   it('expands the leaves + apple drop into two entities', () => {
-    // Mirrors PlayerInteraction.finishBreak for a Leaves block.
+    // Mirrors the lucky-case PlayerInteraction.finishBreak output for a Leaves
+    // block (270: the apple is probabilistic, not guaranteed).
     const stacks: ItemStackLike[] = [{ item: idOf('leaves'), count: 1 }, { item: idOf('apple'), count: 1 }];
     const m = manager();
     const spawned = m.spawnLootStacks(stacks, 5.5, 6.5, 7.5);

@@ -485,9 +485,8 @@ export class PlayerInteraction {
         const dropRid = def.dropItem ?? def.resourceId;
         stacks.push({ item: this.itemRegistry.getByResourceId(dropRid).id, count: 1 });
       }
-      if (blockId === BlockId.Leaves) {
-        stacks.push({ item: ItemId.Apple, count: 1 });
-      }
+      // Leaf apples resolve exclusively through the leaves loot table
+      // (270: probabilistic 1/200 apple pool); no unconditional push here.
     }
 
     // Enchantment application (119): Silk Touch replaces the drops with the block
