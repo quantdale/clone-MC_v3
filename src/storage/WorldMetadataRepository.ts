@@ -229,6 +229,28 @@ export class WorldMetadataRepository {
     await promisifyRequest(tx.objectStore(this.store).put(raw));
   }
 
+  /** Raw put for the hardcore payload bypassing WorldMetadata validation (267; game-mode precedent). */
+  async putHardcoreData(worldId: string, payload: unknown): Promise<void> {
+    const raw = {
+      worldId: `__hardcore__:${worldId}`,
+      payload,
+      updatedAt: Date.now(),
+    };
+    const tx = this.requireDb().transaction(this.store, 'readwrite');
+    await promisifyRequest(tx.objectStore(this.store).put(raw));
+  }
+
+  /** Raw put for the difficulty payload bypassing WorldMetadata validation (267; hardcore precedent). */
+  async putDifficultyData(worldId: string, payload: unknown): Promise<void> {
+    const raw = {
+      worldId: `__difficulty__:${worldId}`,
+      payload,
+      updatedAt: Date.now(),
+    };
+    const tx = this.requireDb().transaction(this.store, 'readwrite');
+    await promisifyRequest(tx.objectStore(this.store).put(raw));
+  }
+
   /** Raw put for the XP-orb payload bypassing WorldMetadata validation (264; advancement precedent). */
   async putXpOrbData(worldId: string, payload: unknown): Promise<void> {
     const raw = {
@@ -280,6 +302,22 @@ export class WorldMetadataRepository {
     return (result as { payload: unknown }).payload ?? null;
   }
 
+  /** Raw get for the hardcore payload (267). Returns null when absent. */
+  async getHardcoreData(worldId: string): Promise<unknown | null> {
+    const tx = this.requireDb().transaction(this.store, 'readonly');
+    const result = await promisifyRequest(tx.objectStore(this.store).get(`__hardcore__:${worldId}`)) as { payload?: unknown } | undefined;
+    if (!result || !('payload' in (result as Record<string, unknown>))) return null;
+    return (result as { payload: unknown }).payload ?? null;
+  }
+
+  /** Raw get for the difficulty payload (267). Returns null when absent. */
+  async getDifficultyData(worldId: string): Promise<unknown | null> {
+    const tx = this.requireDb().transaction(this.store, 'readonly');
+    const result = await promisifyRequest(tx.objectStore(this.store).get(`__difficulty__:${worldId}`)) as { payload?: unknown } | undefined;
+    if (!result || !('payload' in (result as Record<string, unknown>))) return null;
+    return (result as { payload: unknown }).payload ?? null;
+  }
+
   /** Raw get for the gamerule payload (261). Returns null when absent. */
   async getGameRuleData(worldId: string): Promise<unknown | null> {
     const tx = this.requireDb().transaction(this.store, 'readonly');
@@ -316,7 +354,10 @@ export class WorldMetadataRepository {
    * (`__advancements__:<worldId>`), the item-entity record
    * (`__itementities__:<worldId>`), and the XP-orb record
    * (`__xporbs__:<worldId>`), which share this store under a reserved
-   * key namespace rather than the metadata keyPath.
+   * key namespace rather than the metadata keyPath. Also covers the
+   * game-mode record (`__gamemode__:<worldId>`), the hardcore record
+   * (`__hardcore__:<worldId>`), and the difficulty record
+   * (`__difficulty__:<worldId>`).
    */
   async deleteRaw(key: string): Promise<void> {
     const tx = this.requireDb().transaction(this.store, 'readwrite');

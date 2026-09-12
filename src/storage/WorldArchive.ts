@@ -123,6 +123,22 @@ export interface WorldArchive {
    * `deserializeGameModeState`, never trusted blindly).
    */
   gameModeData?: unknown | null;
+  /**
+   * Raw hardcore payload stored under __hardcore__:${worldId}, or null when
+   * absent (267). OPTIONAL: archives without this field validate and import
+   * as null (non-hardcore). A present value must be a plain object payload
+   * (the 193 SerializedHardcoreState shape is validated again at load by
+   * `deserializeHardcoreState`, never trusted blindly).
+   */
+  hardcoreData?: unknown | null;
+  /**
+   * Raw difficulty payload stored under __difficulty__:${worldId}, or null
+   * when absent (267). OPTIONAL: archives without this field validate and
+   * import as null (normal). A present value must be a plain object payload
+   * (the 188 SerializedDifficulty shape is validated again at load by
+   * `deserializeDifficulty`, never trusted blindly).
+   */
+  difficultyData?: unknown | null;
 }
 
 function isFiniteNumber(v: unknown): v is number {
@@ -326,6 +342,24 @@ export function validateWorldArchive(input: unknown): WorldArchive {
     gameModeData = r.gameModeData;
   }
 
+  // 267: optional in every version; missing/null reads as null. A present
+  // value must be a plain object payload (the 193 / 188 shapes are validated
+  // again at load by their deserializers, never trusted blindly).
+  let hardcoreData: unknown | null = null;
+  if (r.hardcoreData !== null && r.hardcoreData !== undefined) {
+    if (typeof r.hardcoreData !== 'object' || Array.isArray(r.hardcoreData)) {
+      throw new Error('WorldArchive: hardcoreData must be an object or null');
+    }
+    hardcoreData = r.hardcoreData;
+  }
+  let difficultyData: unknown | null = null;
+  if (r.difficultyData !== null && r.difficultyData !== undefined) {
+    if (typeof r.difficultyData !== 'object' || Array.isArray(r.difficultyData)) {
+      throw new Error('WorldArchive: difficultyData must be an object or null');
+    }
+    difficultyData = r.difficultyData;
+  }
+
   return {
     format: WORLD_ARCHIVE_FORMAT as 'voxel-world',
     version: 2 as const,
@@ -344,5 +378,7 @@ export function validateWorldArchive(input: unknown): WorldArchive {
     itemEntityData,
     xpOrbData,
     gameModeData,
+    hardcoreData,
+    difficultyData,
   };
 }

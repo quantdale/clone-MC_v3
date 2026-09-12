@@ -68,6 +68,7 @@
             <option value="adventure">Adventure</option>
             <option value="spectator">Spectator</option>
           </select>
+          <div id="hardcore-badge" class="hud-chip hidden" aria-label="Hardcore mode enabled" aria-live="polite">☠ Hardcore</div>
           <div id="selected-block-name" class="hud-chip"></div>
         </div>
         <div id="hotbar" class="ui hidden"></div>
@@ -220,6 +221,22 @@
             <div class="inventory-section">
               <div class="inventory-section-title">Rules</div>
               <div id="gamerule-rows" class="gamerule-rows" aria-label="Game rules"></div>
+            </div>
+            <div class="inventory-section">
+              <div class="inventory-section-title">World</div>
+              <div class="gamerule-row">
+                <label id="gamerule-label-hardcore" class="gamerule-label" for="hardcore-toggle">hardcore (default off) — death is permanent</label>
+                <button id="hardcore-toggle" class="gamerule-toggle" type="button" aria-pressed="false" aria-label="Hardcore mode: off. Activate to toggle.">false</button>
+              </div>
+              <div class="gamerule-row">
+                <label id="gamerule-label-difficulty" class="gamerule-label" for="difficulty-select">difficulty (default normal) — locked on hard while hardcore</label>
+                <select id="difficulty-select" class="gamerule-input" aria-label="Difficulty value">
+                  <option value="peaceful">peaceful</option>
+                  <option value="easy">easy</option>
+                  <option value="normal">normal</option>
+                  <option value="hard">hard</option>
+                </select>
+              </div>
             </div>
             <p class="crafting-hint">Toggle a rule or edit a value — press G or close this panel, then click the world to resume.</p>
           </div>

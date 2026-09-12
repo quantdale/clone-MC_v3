@@ -54,6 +54,7 @@ body {
 #advancements.hidden,
 #creative.hidden,
 #break-progress.hidden,
+#hardcore-badge.hidden,
 #toast.hidden,
 #debug-overlay.hidden {
   display: none;
@@ -1052,6 +1053,21 @@ body {
   pointer-events: auto;
   top: 140px;
   right: 8px;
+}
+/* Hardcore badge (267): HUD indicator, visible only while hardcore is on. */
+#hardcore-badge {
+  top: 172px;
+  right: 8px;
+  color: #ffb3b3;
+  font-weight: 700;
+}
+/* Difficulty select (267): gamerule-input sizing with select affordance. */
+#difficulty-select {
+  cursor: pointer;
+}
+#difficulty-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 .creative-search-label {
   color: rgba(255, 255, 255, 0.85);

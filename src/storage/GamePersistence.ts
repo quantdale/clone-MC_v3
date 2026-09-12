@@ -79,6 +79,14 @@ import {
   deserializeGameModeState,
   type GameModeState,
 } from '../simulation/GameModeFramework';
+import {
+  deserializeHardcoreState,
+  type HardcoreState,
+} from '../simulation/HardcoreFramework';
+import {
+  deserializeDifficulty,
+  type DifficultyLevel,
+} from '../simulation/WorldDifficulty';
 import { coreProgressionAdvancements } from '../simulation/CoreProgressionAdvancements';
 
 /**
@@ -334,6 +342,10 @@ export class GamePersistence implements WorldEditDurability {
   private initialXpOrbsValue: SerializedEntity[] | null = null;
   /** Validated game-mode state bulk-loaded at open() (265; null when absent or corrupt). */
   private initialGameModeValue: GameModeState | null = null;
+  /** Validated hardcore state bulk-loaded at open() (267; null when absent or corrupt). */
+  private initialHardcoreValue: HardcoreState | null = null;
+  /** Validated configured difficulty bulk-loaded at open() (267; null when absent or corrupt). */
+  private initialDifficultyValue: DifficultyLevel | null = null;
   private initialColumnsValue: SerializedChunkColumn[] = [];
   /** World generation baseline compatibility classification. */
   private generationBaselineValue: WorldGenerationBaseline = 'current';
@@ -723,6 +735,28 @@ export class GamePersistence implements WorldEditDurability {
         this.initialGameModeValue = null;
         this.recordError(`load gamemode: ${errorMessage(e)}`);
       }
+      // 267 hydration: hardcore payload stored via raw hardcore data. Absent
+      // stays null (Game boots non-hardcore); corrupt payloads degrade to
+      // null with a recorded error so boot continues on the default flag.
+      // Full strict validation is the 193 deserializer (exact-keys).
+      try {
+        const raw = await this.metadata.getHardcoreData(this.worldIdValue);
+        if (raw !== null) this.initialHardcoreValue = deserializeHardcoreState(raw);
+      } catch (e) {
+        this.initialHardcoreValue = null;
+        this.recordError(`load hardcore: ${errorMessage(e)}`);
+      }
+      // 267 hydration: difficulty payload stored via raw difficulty data.
+      // Absent stays null (Game boots normal); corrupt payloads degrade to
+      // null with a recorded error so boot continues on the default level.
+      // Full strict validation is the 188 deserializer (version + level).
+      try {
+        const raw = await this.metadata.getDifficultyData(this.worldIdValue);
+        if (raw !== null) this.initialDifficultyValue = deserializeDifficulty(raw);
+      } catch (e) {
+        this.initialDifficultyValue = null;
+        this.recordError(`load difficulty: ${errorMessage(e)}`);
+      }
     }
 
     // 5.5 Authoritative startup compatibility decision (257). Computed after the
@@ -802,6 +836,8 @@ export class GamePersistence implements WorldEditDurability {
       this.initialItemEntitiesValue = null;
       this.initialXpOrbsValue = null;
       this.initialGameModeValue = null;
+      this.initialHardcoreValue = null;
+      this.initialDifficultyValue = null;
       this.initialColumnsValue = [];
     }
     this.opened = true;
@@ -860,6 +896,8 @@ export class GamePersistence implements WorldEditDurability {
       itemEntityData: unknown | null;
       xpOrbData: unknown | null;
       gameModeData: unknown | null;
+      hardcoreData: unknown | null;
+      difficultyData: unknown | null;
       columns: SerializedChunkColumn[];
       edits: Array<{ chunkX: number; chunkY: number; chunkZ: number; changes: Array<[number, number]> }>;
       playerState: PlayerStateRecord | null;
@@ -875,6 +913,8 @@ export class GamePersistence implements WorldEditDurability {
       const itemEntityData = await this.metadata.getItemEntityData(worldId);
       const xpOrbData = await this.metadata.getXpOrbData(worldId);
       const gameModeData = await this.metadata.getGameModeData(worldId);
+      const hardcoreData = await this.metadata.getHardcoreData(worldId);
+      const difficultyData = await this.metadata.getDifficultyData(worldId);
       const columns = await this.chunkSections.listColumns(worldId);
       const editRecords = await this.chunkEdits.listChunkEdits(worldId);
       const playerState = await this.playerStates.getPlayerState(worldId);
@@ -889,6 +929,8 @@ export class GamePersistence implements WorldEditDurability {
         itemEntityData,
         xpOrbData,
         gameModeData,
+        hardcoreData,
+        difficultyData,
         columns: [...columns],
         edits: editRecords.map((r) => ({ chunkX: r.chunkX, chunkY: r.chunkY, chunkZ: r.chunkZ, changes: [...r.changes] })),
         playerState,
@@ -941,6 +983,9 @@ export class GamePersistence implements WorldEditDurability {
         await awaitRequest(metaStore.delete(`__xporbs__:${worldId}`));
         // 2f. Raw game-mode record (265; separate key in the same metadata store).
         await awaitRequest(metaStore.delete(`__gamemode__:${worldId}`));
+        // 2g. Raw hardcore + difficulty records (267; separate keys in the same metadata store).
+        await awaitRequest(metaStore.delete(`__hardcore__:${worldId}`));
+        await awaitRequest(metaStore.delete(`__difficulty__:${worldId}`));
         // 3. Every chunk column for this world. Key shape: `${worldId}|${cx}|${cz}`.
         for (const column of snapshot!.columns) {
           await awaitRequest(csStore.delete(worldChunkKey(worldId, column.chunkX, column.chunkZ)));
@@ -978,6 +1023,8 @@ export class GamePersistence implements WorldEditDurability {
         if (snapshot!.itemEntityData !== null) await this.metadata.putItemEntityData(worldId, snapshot!.itemEntityData);
         if (snapshot!.xpOrbData !== null) await this.metadata.putXpOrbData(worldId, snapshot!.xpOrbData);
         if (snapshot!.gameModeData !== null) await this.metadata.putGameModeData(worldId, snapshot!.gameModeData);
+        if (snapshot!.hardcoreData !== null) await this.metadata.putHardcoreData(worldId, snapshot!.hardcoreData);
+        if (snapshot!.difficultyData !== null) await this.metadata.putDifficultyData(worldId, snapshot!.difficultyData);
         for (const col of snapshot!.columns) await this.chunkSections.putColumn(worldId, col);
         for (const rec of snapshot!.edits) await this.chunkEdits.putChunkEdits(worldId, rec.chunkX, rec.chunkY, rec.chunkZ, rec.changes);
         if (snapshot!.playerState) await this.playerStates.putPlayerState(snapshot!.playerState);
@@ -1311,6 +1358,16 @@ export class GamePersistence implements WorldEditDurability {
     return this.initialGameModeValue;
   }
 
+  /** Validated hardcore state bulk-loaded at `open()` (267; null when absent or corrupt). */
+  get initialHardcore(): HardcoreState | null {
+    return this.initialHardcoreValue;
+  }
+
+  /** Validated configured difficulty bulk-loaded at `open()` (267; null when absent or corrupt). */
+  get initialDifficulty(): DifficultyLevel | null {
+    return this.initialDifficultyValue;
+  }
+
   /** Bulk-loaded persisted canonical columns for this world. */
   get initialColumns(): SerializedChunkColumn[] {
     return this.initialColumnsValue;
@@ -1351,6 +1408,18 @@ export class GamePersistence implements WorldEditDurability {
   saveGameMode(payload: unknown): void {
     if (this.disposed || this.resetCompleted) return;
     void this.metadata.putGameModeData(this.worldIdValue, payload).catch((e) => this.recordError(`save gamemode: ${errorMessage(e)}`));
+  }
+
+  /** Persist the hardcore payload via raw hardcore data (267). */
+  saveHardcore(payload: unknown): void {
+    if (this.disposed || this.resetCompleted) return;
+    void this.metadata.putHardcoreData(this.worldIdValue, payload).catch((e) => this.recordError(`save hardcore: ${errorMessage(e)}`));
+  }
+
+  /** Persist the difficulty payload via raw difficulty data (267). */
+  saveDifficulty(payload: unknown): void {
+    if (this.disposed || this.resetCompleted) return;
+    void this.metadata.putDifficultyData(this.worldIdValue, payload).catch((e) => this.recordError(`save difficulty: ${errorMessage(e)}`));
   }
 
   /** Persist the XP-orb snapshot via raw XP-orb data (264). */

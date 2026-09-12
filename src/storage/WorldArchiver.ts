@@ -53,6 +53,10 @@ export interface WorldImportReport {
   xpOrbDataImported: boolean;
   /** Whether game-mode data was written (265). */
   gameModeDataImported: boolean;
+  /** Whether hardcore data was written (267). */
+  hardcoreDataImported: boolean;
+  /** Whether difficulty data was written (267). */
+  difficultyDataImported: boolean;
 }
 
 /** Exports and imports whole-world archives over the five repositories. */
@@ -127,6 +131,9 @@ export class WorldArchiver {
     const xpOrbData = await this.metadata.getXpOrbData(worldId);
     // Game-mode raw record (265): same fail-closed contract.
     const gameModeData = await this.metadata.getGameModeData(worldId);
+    // Hardcore + difficulty raw records (267): same fail-closed contract.
+    const hardcoreData = await this.metadata.getHardcoreData(worldId);
+    const difficultyData = await this.metadata.getDifficultyData(worldId);
 
     return {
       format: 'voxel-world',
@@ -146,6 +153,8 @@ export class WorldArchiver {
       itemEntityData,
       xpOrbData,
       gameModeData,
+      hardcoreData,
+      difficultyData,
     };
   }
 
@@ -182,6 +191,8 @@ export class WorldArchiver {
       if (valid.itemEntityData !== null && valid.itemEntityData !== undefined) await put("world-metadata", { worldId: `__itementities__:${valid.worldId}`, payload: valid.itemEntityData, updatedAt: Date.now() });
       if (valid.xpOrbData !== null && valid.xpOrbData !== undefined) await put("world-metadata", { worldId: `__xporbs__:${valid.worldId}`, payload: valid.xpOrbData, updatedAt: Date.now() });
       if (valid.gameModeData !== null && valid.gameModeData !== undefined) await put("world-metadata", { worldId: `__gamemode__:${valid.worldId}`, payload: valid.gameModeData, updatedAt: Date.now() });
+      if (valid.hardcoreData !== null && valid.hardcoreData !== undefined) await put("world-metadata", { worldId: `__hardcore__:${valid.worldId}`, payload: valid.hardcoreData, updatedAt: Date.now() });
+      if (valid.difficultyData !== null && valid.difficultyData !== undefined) await put("world-metadata", { worldId: `__difficulty__:${valid.worldId}`, payload: valid.difficultyData, updatedAt: Date.now() });
       if (valid.playerState) await put("player-state", valid.playerState);
     });
 
@@ -200,6 +211,8 @@ export class WorldArchiver {
       itemEntityDataImported: valid.itemEntityData !== null && valid.itemEntityData !== undefined,
       xpOrbDataImported: valid.xpOrbData !== null && valid.xpOrbData !== undefined,
       gameModeDataImported: valid.gameModeData !== null && valid.gameModeData !== undefined,
+      hardcoreDataImported: valid.hardcoreData !== null && valid.hardcoreData !== undefined,
+      difficultyDataImported: valid.difficultyData !== null && valid.difficultyData !== undefined,
     };
   }
 }

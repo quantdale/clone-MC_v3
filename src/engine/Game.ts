@@ -190,6 +190,22 @@ import {
 } from '../simulation/GameModeFramework';
 import { canInteract, isAttackable, noclip } from '../simulation/SpectatorFramework';
 import {
+  createDefaultHardcoreState,
+  effectiveDifficulty,
+  forcesPermanentDeath,
+  locksDifficulty,
+  respawnModeAfterDeath,
+  serializeHardcoreState,
+  setHardcore as setHardcoreState,
+  type HardcoreState,
+} from '../simulation/HardcoreFramework';
+import {
+  DEFAULT_DIFFICULTY,
+  parseDifficultyLevel,
+  serializeDifficulty,
+  type DifficultyLevel,
+} from '../simulation/WorldDifficulty';
+import {
   canBreakHeld,
   canPlaceHeld,
 } from '../simulation/AdventurePermissions';
@@ -412,6 +428,16 @@ export class Game {
   private gameModeChipEl: HTMLButtonElement | null = null;
   /** HUD game-mode select exposing all four modes (266, null until the shell binds it). */
   private gameModeSelectEl: HTMLSelectElement | null = null;
+  /** Authoritative hardcore flag (267): validated persisted payload or off. */
+  private hardcore: HardcoreState;
+  /** Configured difficulty (267): validated persisted payload or normal. */
+  private difficulty: DifficultyLevel;
+  /** Settings hardcore toggle (267, null until the shell binds it). */
+  private hardcoreToggleEl: HTMLButtonElement | null = null;
+  /** Settings difficulty select (267, null until the shell binds it). */
+  private difficultySelectEl: HTMLSelectElement | null = null;
+  /** HUD hardcore badge (267, null until the shell binds it). */
+  private hardcoreBadgeEl: HTMLElement | null = null;
   /** Live block-tag registry (266 adventure resolution; built once beside HarvestRules). */
   private readonly blockTags: TagRegistry;
   /** Registry key of the Fire block, resolved once for the doFireTick gate (261). */
@@ -928,6 +954,27 @@ export class Game {
         }
       }).catch(() => undefined);
     }
+    // 267 hardcore + difficulty: the validated persisted payloads when
+    // present, defaults otherwise (absent or corrupt records never break
+    // boot). The self-composed path applies the late-loaded payloads when
+    // their promise settles (settings-UI parity below).
+    this.hardcore = this.persistenceImpl?.initialHardcore ?? createDefaultHardcoreState();
+    this.difficulty = this.persistenceImpl?.initialDifficulty ?? DEFAULT_DIFFICULTY;
+    if (this.selfOpenPromise !== null) {
+      void this.selfOpenPromise.then(() => {
+        if (this.disposed) return;
+        const lateHardcore = this.persistenceImpl?.initialHardcore;
+        if (lateHardcore) {
+          this.hardcore = lateHardcore;
+          this.updateWorldSettingsUI();
+        }
+        const lateDifficulty = this.persistenceImpl?.initialDifficulty;
+        if (lateDifficulty) {
+          this.difficulty = lateDifficulty;
+          this.updateWorldSettingsUI();
+        }
+      }).catch(() => undefined);
+    }
 
     this.player = new Player();
     // Startup compatibility decision (257): for an injected (already open)
@@ -1232,6 +1279,27 @@ export class Game {
       this.updateGameModeChip();
     });
     this.updateGameModeChip();
+    // World settings (267): hardcore toggle + difficulty select live inside
+    // the gamerule-adjacent settings dialog; the badge lives in the HUD.
+    this.hardcoreToggleEl = document.getElementById('hardcore-toggle') as HTMLButtonElement | null;
+    this.hardcoreToggleEl?.addEventListener('click', () => {
+      this.setHardcore(!this.hardcore.hardcore);
+    });
+    this.difficultySelectEl = document.getElementById('difficulty-select') as HTMLSelectElement | null;
+    this.difficultySelectEl?.addEventListener('change', () => {
+      const value = this.difficultySelectEl?.value ?? '';
+      if (locksDifficulty(this.hardcore)) {
+        this.showToast('Difficulty is locked while Hardcore is on.');
+        this.updateWorldSettingsUI();
+        return;
+      }
+      if (!this.setDifficultyFromText(value)) {
+        this.showToast(`Unknown difficulty: ${value || '(empty)'}.`);
+        this.updateWorldSettingsUI();
+      }
+    });
+    this.hardcoreBadgeEl = document.getElementById('hardcore-badge');
+    this.updateWorldSettingsUI();
 
     // Fixed-tick ownership (044): the driver turns frame deltas into bounded,
     // deterministic 20 TPS ticks; the tick body enforces the simulation order.
@@ -1348,6 +1416,8 @@ export class Game {
     this.saveWithers();
     this.saveItemAndXpEntities();
     this.saveGameMode();
+    this.saveHardcore();
+    this.saveDifficulty();
     this.saveTimer = 0;
     void this.persistenceImpl?.dispose().catch(() => undefined);
     if (this.unsubscribeHealth !== null) {
@@ -1549,6 +1619,8 @@ export class Game {
         this.persistenceImpl?.savePlayerState(this.buildPlayerSnapshot());
         this.saveItemAndXpEntities();
         this.saveGameMode();
+        this.saveHardcore();
+        this.saveDifficulty();
       }
     }
 
@@ -3522,7 +3594,9 @@ export class Game {
             step.state.z - this.player.position.z,
           );
           if (playerAlive && dist < 4) {
-            const durTicks = scaledWitherDuration(skull.kind, 'normal');
+            // Effective difficulty (267): identical to the old hardcoded
+            // 'normal' for default worlds, the 'hard' row under hardcore.
+            const durTicks = scaledWitherDuration(skull.kind, this.getDifficulty());
             if (durTicks > 0) {
               this.playerEffects.add(createResourceId('minecraft', 'effect/wither'), durTicks / 20, 0);
             }
@@ -4186,6 +4260,123 @@ export class Game {
     return true;
   }
 
+  // ── Hardcore + difficulty (267) ─────────────────────────────────────────
+
+  /** Whether this world has hardcore enabled (E2E observability; the rules read the same). */
+  isHardcore(): boolean {
+    return this.hardcore.hardcore;
+  }
+
+  /**
+   * Switch the hardcore flag. A different value applies immediately (persist
+   * + settings-UI sync + toast); the same value is an identity no-op
+   * returning false (no write, no toast). Enabling hardcore never changes
+   * the live mode — only death (or the mode seams) does. Never throws.
+   */
+  setHardcore(enabled: boolean): boolean {
+    const next = setHardcoreState(this.hardcore, enabled);
+    if (next === this.hardcore) return false;
+    this.hardcore = next;
+    this.saveHardcore();
+    this.updateWorldSettingsUI();
+    this.showToast(
+      enabled ? 'Hardcore mode enabled — death is permanent.' : 'Hardcore mode disabled.',
+    );
+    return true;
+  }
+
+  /**
+   * The effective difficulty: always `hard` when hardcore is enabled (the
+   * 193 lock over the configured level), the configured level otherwise.
+   * E2E observability; the wither path reads the same.
+   */
+  getDifficulty(): DifficultyLevel {
+    return effectiveDifficulty(this.hardcore, this.difficulty);
+  }
+
+  /** The configured difficulty underneath the lock (E2E observability). */
+  getConfiguredDifficulty(): DifficultyLevel {
+    return this.difficulty;
+  }
+
+  /**
+   * Set the configured difficulty. While hardcore locks the difficulty the
+   * edit is a `false` no-op (nothing mutates, nothing is written); the same
+   * level is likewise an identity no-op. Never throws.
+   */
+  setDifficulty(level: DifficultyLevel): boolean {
+    if (locksDifficulty(this.hardcore)) return false;
+    if (this.difficulty === level) return false;
+    this.difficulty = level;
+    this.saveDifficulty();
+    this.updateWorldSettingsUI();
+    this.showToast(`Difficulty: ${level.charAt(0).toUpperCase()}${level.slice(1)}.`);
+    return true;
+  }
+
+  /**
+   * Text entry for the difficulty (191 `/gamemode` parity without a chat
+   * UI): the 188 case-insensitive parse, then apply. Unknown text is a
+   * false no-op. Never throws.
+   */
+  setDifficultyFromText(text: string): boolean {
+    if (typeof text !== 'string') return false;
+    const parsed = parseDifficultyLevel(text);
+    if (parsed === null) return false;
+    return this.setDifficulty(parsed);
+  }
+
+  /** Serialize the live hardcore flag into the durable record (no-op without persistence). */
+  saveHardcore(): void {
+    const p = this.persistenceImpl;
+    if (!p || this.recoveryRequiredValue) return;
+    p.saveHardcore(serializeHardcoreState(this.hardcore));
+  }
+
+  /** Serialize the configured difficulty into the durable record (no-op without persistence). */
+  saveDifficulty(): void {
+    const p = this.persistenceImpl;
+    if (!p || this.recoveryRequiredValue) return;
+    p.saveDifficulty(serializeDifficulty(this.difficulty));
+  }
+
+  /**
+   * E2E seam (267, 245 test-hook precedent): deal lethal raw damage so
+   * browser E2E can drive deterministic deaths without gameplay races. No
+   * production path calls this; the death event still routes through the
+   * hardcore rule.
+   */
+  debugKillPlayer(): void {
+    this.survival.damage(1000, 'debug');
+  }
+
+  /** Sync the settings toggle/select + HUD badge to the live store (null-safe pre-shell). */
+  private updateWorldSettingsUI(): void {
+    const on = this.hardcore.hardcore;
+    if (this.hardcoreToggleEl) {
+      this.hardcoreToggleEl.textContent = on ? 'true' : 'false';
+      this.hardcoreToggleEl.setAttribute('aria-pressed', on ? 'true' : 'false');
+      this.hardcoreToggleEl.setAttribute(
+        'aria-label',
+        `Hardcore mode: ${on ? 'on' : 'off'}. Activate to toggle.`,
+      );
+    }
+    if (this.difficultySelectEl) {
+      if (this.difficultySelectEl.value !== this.difficulty) {
+        this.difficultySelectEl.value = this.difficulty;
+      }
+      if (locksDifficulty(this.hardcore)) {
+        this.difficultySelectEl.setAttribute('disabled', '');
+      } else {
+        this.difficultySelectEl.removeAttribute('disabled');
+      }
+    }
+    if (this.hardcoreBadgeEl) {
+      this.hardcoreBadgeEl.classList.toggle('hidden', !on);
+      if (on) this.hardcoreBadgeEl.textContent = '\u2620 Hardcore';
+    }
+  }
+
   /** Relabel the HUD mode chip + sync the mode select for the current mode (null-safe pre-shell). */
   private updateGameModeChip(): void {
     if (this.gameModeChipEl) {
@@ -4372,6 +4563,8 @@ export class Game {
     this.savePlayerStateDurable();
     this.saveItemAndXpEntities();
     this.saveGameMode();
+    this.saveHardcore();
+    this.saveDifficulty();
     this.saveTimer = 0;
   };
 
@@ -4513,7 +4706,16 @@ export class Game {
       this.audio.play('damage');
       this.showToast(`Ouch! -${amount ?? 0} health`);
     } else if (event === 'death') {
+      // Hardcore permanent death (267): route the mode through the 193 rule
+      // before the unchanged position reset. Non-hardcore worlds pass the
+      // mode through verbatim, so this leg is byte-for-byte the old behavior.
+      const hardcoreDeath = forcesPermanentDeath(this.hardcore);
+      const after = respawnModeAfterDeath(this.hardcore, this.gameMode.mode);
+      if (after !== this.gameMode.mode) this.setGameMode(after);
       this.respawnPlayer();
+      if (hardcoreDeath) {
+        this.showToast('You died. Your hardcore world lives on — now spectating.');
+      }
     }
     this.hud.setSurvival(this.survival.health, this.survival.hunger);
   }
