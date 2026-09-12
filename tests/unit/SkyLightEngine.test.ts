@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { computeSkyLight, type SkyLightWorld } from '../../src/rendering/SkyLightEngine';
+import {
+  SkyLightEngine,
+  computeSkyLight,
+  type SkyLightFieldAccess,
+  type SkyLightWorld,
+} from '../../src/rendering/SkyLightEngine';
 
 interface GridWorldOptions {
   minY: number;
@@ -112,5 +117,46 @@ describe('computeSkyLight', () => {
         }
       }
     }
+  });
+});
+
+describe('SkyLightEngine incremental channel (268 coverage uplift)', () => {
+  it('starts idle with version 0 and no pending work', () => {
+    const engine = new SkyLightEngine(airWorld(0, 2));
+    expect(engine.idle).toBe(true);
+    expect(engine.pendingCount).toBe(0);
+    expect(engine.version).toBe(0);
+  });
+
+  it('removes an invalidated cell and reseeds it from a surviving brighter neighbor', () => {
+    const world = airWorld(0, 2);
+    world.setSkyLight(0, 1, 0, 15);
+    world.setSkyLight(1, 1, 0, 15);
+    const engine: SkyLightEngine = new SkyLightEngine(world as SkyLightFieldAccess);
+    engine.invalidate(0, 1, 0);
+    expect(engine.idle).toBe(false);
+    expect(engine.pendingCount).toBe(1);
+
+    const result = engine.drain({});
+    expect(result.completed).toBe(true);
+    expect(result.opsUsed).toBeGreaterThan(0);
+    expect(engine.version).toBe(1);
+    expect(engine.idle).toBe(true);
+    // The surviving neighbor at (1,1,0) reseeds (0,1,0) one level down.
+    expect(world.getSkyLight(0, 1, 0)).toBe(14);
+    expect(world.getSkyLight(1, 1, 0)).toBe(15);
+  });
+
+  it('clearPending drops queued work without touching stored light', () => {
+    const world = airWorld(0, 2);
+    world.setSkyLight(0, 1, 0, 15);
+    const engine = new SkyLightEngine(world);
+    engine.invalidate(0, 1, 0);
+    expect(engine.pendingCount).toBe(1);
+    engine.clearPending();
+    expect(engine.pendingCount).toBe(0);
+    expect(engine.idle).toBe(true);
+    expect(engine.version).toBe(0);
+    expect(world.getSkyLight(0, 1, 0)).toBe(15);
   });
 });

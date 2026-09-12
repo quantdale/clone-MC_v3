@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { computeBlockLight, type BlockLightWorld } from '../../src/rendering/BlockLightEngine';
+import {
+  BlockLightEngine,
+  computeBlockLight,
+  type BlockLightFieldAccess,
+  type BlockLightWorld,
+} from '../../src/rendering/BlockLightEngine';
 
 interface GridWorldOptions {
   minY: number;
@@ -46,6 +51,73 @@ class GridWorld implements BlockLightWorld {
 function airWorld(opts: { luminance?: (x: number, y: number, z: number) => number } = {}): GridWorld {
   return new GridWorld({ minY: 0, maxY: 16, opaque: () => false, luminance: opts.luminance });
 }
+
+describe('BlockLightEngine incremental channel (268 coverage uplift)', () => {
+  function tinyWorld(luminance: (x: number, y: number, z: number) => number): GridWorld {
+    return new GridWorld({ minY: 0, maxY: 2, opaque: () => false, luminance });
+  }
+
+  it('starts idle with version 0 and no pending work', () => {
+    const engine = new BlockLightEngine(tinyWorld(() => 0));
+    expect(engine.idle).toBe(true);
+    expect(engine.pendingCount).toBe(0);
+    expect(engine.version).toBe(0);
+  });
+
+  it('seeds a fresh emitter on invalidate+drain and falls off with distance', () => {
+    const world = tinyWorld((x, y, z) => (x === 0 && y === 0 && z === 0 ? 14 : 0));
+    const engine: BlockLightEngine = new BlockLightEngine(world as BlockLightFieldAccess);
+    engine.invalidate(0, 0, 0);
+    expect(engine.idle).toBe(false);
+    expect(engine.pendingCount).toBe(1);
+
+    const result = engine.drain({});
+    expect(result.completed).toBe(true);
+    expect(result.opsUsed).toBeGreaterThan(0);
+    expect(engine.version).toBe(1);
+    expect(engine.idle).toBe(true);
+    expect(world.getBlockLight(0, 0, 0)).toBe(14);
+    expect(world.getBlockLight(1, 0, 0)).toBe(13);
+    expect(world.getBlockLight(0, 1, 0)).toBe(13);
+    expect(world.getBlockLight(2, 0, 0)).toBe(12);
+    // Distance 14 from the source never reaches a positive level.
+    expect(world.getBlockLight(14, 0, 0)).toBe(0);
+  });
+
+  it('clearPending drops queued work without touching stored light', () => {
+    const world = tinyWorld((x, y, z) => (x === 0 && y === 0 && z === 0 ? 14 : 0));
+    const engine = new BlockLightEngine(world);
+    engine.invalidate(0, 0, 0);
+    expect(engine.pendingCount).toBe(1);
+    engine.clearPending();
+    expect(engine.pendingCount).toBe(0);
+    expect(engine.idle).toBe(true);
+    expect(engine.version).toBe(0);
+    expect(world.getBlockLight(0, 0, 0)).toBe(0);
+  });
+
+  it('re-evaluates only invalidated cells on a later drain', () => {
+    let emitting = true;
+    const world = tinyWorld((x, y, z) => (emitting && x === 0 && y === 0 && z === 0 ? 14 : 0));
+    const engine = new BlockLightEngine(world);
+    engine.invalidate(0, 0, 0);
+    expect(engine.drain({}).completed).toBe(true);
+    expect(world.getBlockLight(1, 0, 0)).toBe(13);
+
+    // Source removed: the engine re-evaluates the invalidated cell (now dark,
+    // no emission, nothing to remove) and leaves uninvalidated cells alone.
+    emitting = false;
+    world.setBlockLight(0, 0, 0, 0);
+    engine.invalidate(0, 0, 0);
+    const result = engine.drain({});
+    expect(result.completed).toBe(true);
+    // No work was queued (dark cell, no emission), so the version is untouched.
+    expect(result.opsUsed).toBe(0);
+    expect(engine.version).toBe(1);
+    expect(world.getBlockLight(0, 0, 0)).toBe(0);
+    expect(world.getBlockLight(1, 0, 0)).toBe(13);
+  });
+});
 
 describe('computeBlockLight', () => {
   it('falls off by 1 per block from a torch source', () => {

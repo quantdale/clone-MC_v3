@@ -10,7 +10,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2760,
+  "total": 2761,
   "rows": [
     {
       "path": ".agent/EXECUTION_PROMPT.md",
@@ -44260,6 +44260,22 @@
       "status": "audited",
       "reviewLevel": "semantic",
       "reviewNotes": "auto-reviewed for 268 ci immutable action pins; 268 coverage: pin provenance + requirement evidence + gate record; no findings",
+      "findingIds": [],
+      "disposition": "",
+      "riskAreas": [],
+      "runtimeReachability": "unknown",
+      "testEvidence": [],
+      "gitBlob": null,
+      "imports": [],
+      "importedBy": []
+    },
+    {
+      "path": "tests/unit/WorldBlockAccess.test.ts",
+      "category": "test",
+      "purpose": "268 coverage for tests/unit/WorldBlockAccess.test.ts",
+      "status": "audited",
+      "reviewLevel": "semantic",
+      "reviewNotes": "auto-reviewed for 268 ci immutable action pins; 268 coverage: WorldBlockAccess delegation unit oracles (coverage uplift for the CI gate); no findings",
       "findingIds": [],
       "disposition": "",
       "riskAreas": [],

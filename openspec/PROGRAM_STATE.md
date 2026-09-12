@@ -1,5 +1,7 @@
 # Minecraft-Parity Program State
 
+> **2026-09-12 Change 268 IMPLEMENTED 9/11 (82%) — plus a tests-only coverage repair (29 new unit tests; local coverage 84.2/90.98/95.63/84.2 PASS) for the pre-existing CI coverage red (83.77 vs 84, failing since 266, unrelated to the pin diff). Prior 8/10 note below.
+>
 > **2026-09-12 Change 268 IMPLEMENTED 8/10 (80%) — local gates green (validate-state/typecheck 0 errors/lint 0 errors/unit 419 files 5018+1/build 2.28s/file-audit 2760); awaiting publish + CI green on the exact SHA before VERIFIED. Prior activation note below.
 >
 > **2026-09-12 Change 268 ACTIVATED 2/10 (20%) — ci-immutable-action-pins (Standing owner order) while 258 stays BLOCKED and 259/260/261/262/263/264/265/266/267 stay VERIFIED.** Control plane complete (268 row in `CHANGE_SEQUENCE.md`, 268 authorization in `CHANGE_SEQUENCE_OVERRIDES.md`, full OpenSpec package under `openspec/changes/268-ci-immutable-action-pins/` passing the SPEC_AUTHORING_PROTOCOL quality gate). Sole ACTIVE implementation change: pin all 11 `actions/*@v4` steps in `ci.yml` + `seed-visual-goldens.yml` to immutable full commit SHAs with `# v4` comments (SHAs resolved via GitHub API 2026-09-12 and frozen in design/verification), close certification debt R-5, prove CI green on the exact published SHA; no `src/`/`tests/` change. Session start is `9d5fdb16e70735a915c06955fc495192378da953` (fetched; local HEAD equaled remote).
@@ -120,7 +122,7 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **268-ci-immutable-action-pins — ACTIVE (8/10, owner-authorized 2026-09-12; 258 stays BLOCKED, 259/260/261/262/263/264/265/266/267 stay VERIFIED)**
+- Active implementation change: **268-ci-immutable-action-pins — ACTIVE (9/11, owner-authorized 2026-09-12; 258 stays BLOCKED, 259/260/261/262/263/264/265/266/267 stay VERIFIED)**
 - Next change: **258-real-world-runtime-performance-fps-recovery — BLOCKED; resume headed tasks on a hardware-WebGL host when available**
 - 240 advancement allowed: **no (active change not yet verified)**
 
@@ -134,7 +136,7 @@
 - Publication history: **Change 257 VERIFIED 92/92 at 96b5dc37 (F257-A..L closed, 22 new fault-injection tests, 5× proofs, import tx); Change 256 archived at `ad75b65` as `2026-08-31-256-production-readiness-hardening` (23/23).**
 - Section milestone: **PROGRAM ACTIVE — Change 258 ACTIVE 40/100; whole-frame/World-internal/governor/gate/harness/capability/fault-injection/worker-equivalence/dedupe/startup evidence landed headless-verified, headed baseline pending hardware-GPU host.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ri…
-- Next exact action: **Publish 268-ci-immutable-action-pins implementation to origin/main and watch CI green on the exact SHA (268 ACTIVE 8/10; 258 BLOCKED; 259/260/261/262/263/264/265/266/267 VERIFIED)**
+- Next exact action: **Publish 268-ci-immutable-action-pins implementation + tests-only coverage repair to origin/main and watch CI green on the exact SHA (268 ACTIVE 9/11; 258 BLOCKED; 259/260/261/262/263/264/265/266/267 VERIFIED)**
 - Release note (2026-09-11 owner deferral): **headed FPS gates (258 tasks 91–95) are deferred, not waived — 001–257 VERIFIED, production default unchanged (sync meshing, no quality retune), game shippable with known performance-certification debt**
 
 Change 250 is documentation-only: it created the consolidated evidence archive and the terminal

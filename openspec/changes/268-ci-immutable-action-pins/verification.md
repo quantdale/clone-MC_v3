@@ -1,7 +1,7 @@
 # Verification: 268-ci-immutable-action-pins
 
 Status: IMPLEMENTED (pending CI green on the published SHA)
-Completion: 80%
+Completion: 82%
 Advancement allowed: false
 
 ## Pin provenance (resolution method)
@@ -39,9 +39,27 @@ this session.
 | `npm run validate-state` | PASS | `State validation PASSED` (268 ACTIVE 8/10, 258 BLOCKED) |
 | `npm run typecheck` | PASS | 0 errors (no `src/` change) |
 | `npm run lint` | PASS | 0 errors, 85 pre-existing warnings |
-| `npm test` | PASS | 419 files: 5018 passed + 1 skipped (file-audit manifest extended 2755→2760 for the 5 new 268 files) |
+| `npm test` | PASS | 420 files: 5047 passed + 1 skipped (incl. 29 new 268 uplift tests; file-audit manifest 2761) |
 | `npm run build` | PASS | 2.28s, unchanged |
 | CI on published SHA (gate + e2e) | PENDING | authoritative live proof; run URL recorded here when green |
+| `npm run test:coverage` | PASS | 84.2 stmts / 90.98 branches / 95.63 funcs / 84.2 lines vs floors 84/90/94/84 |
+
+## Gating repair (pre-existing CI red, tests-only fix)
+
+CI run `34672590567` on the implementation SHA `05953c1` proved the pins
+resolve and execute (all pinned `checkout`/`setup-node`/`cache`/`upload-artifact`
+steps ran; validate-state/typecheck/lint/build/unit green in CI) but the gate
+job failed at `Coverage (no-regression thresholds)`: lines/stmts 83.77% vs the
+84 floor. Root cause is pre-existing `main` debt, NOT a 268 regression: the
+same step failed on the 266 commit `8ffd1a4` (run `34668149726`); 267's runs
+were cancelled before reporting; 268 touches zero `src/`/`tests/` lines in its
+pin diff. Per scope discipline (fix unrelated work only when it blocks the
+active change — CI green is in this change's Definition of Done), the repair is
+29 new unit tests plus file-audit rows, no `src/` change, no 259–267 suite
+touched: `SkyLightEngine`/`BlockLightEngine` incremental-channel suites,
+`WorldBlockAccess` delegation suite (new file), `intersectRayBoxes` + DDA
+z-step/step-cap cases, `ReconnectStateRecovery` malformed-input suite. Local
+coverage after repair: **84.2 / 90.98 / 95.63 / 84.2 — PASS** (margin +0.2).
 
 ## Edge/adversarial validation
 

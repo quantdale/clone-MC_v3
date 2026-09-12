@@ -1195,3 +1195,235 @@ describe('columnKey interop (226 keying convention)', () => {
     expect(snapshot.chunkKeys[0]).toBe(columnKey(0, 0));
   });
 });
+
+// ────────────────────────────────────────────────────────────────────────────
+// 268 coverage uplift — malformed-payload fail-closed paths (additive only;
+// every case asserts the documented deterministic throw, no behavior change).
+// ────────────────────────────────────────────────────────────────────────────
+
+describe('malformed payload rejection (268 coverage uplift)', () => {
+  function connectedManager(): ReconnectStateManager {
+    const manager = new ReconnectStateManager();
+    manager.connect('alice');
+    return manager;
+  }
+
+  function connectedClient(epoch = 1): ReconnectStateClient {
+    const client = new ReconnectStateClient();
+    client.connect('alice', epoch);
+    return client;
+  }
+
+  it('collectFullState rejects a blank profile, null input, and profile mismatch', () => {
+    const manager = connectedManager();
+    expect(() => manager.collectFullState('', makeInput())).toThrow(
+      'Reconnect: profile must be a non-empty string',
+    );
+    expect(() => manager.collectFullState('alice', null as never)).toThrow(
+      'Reconnect: input must be an object',
+    );
+    expect(() => manager.collectFullState('alice', makeInput({ profile: 'bob' }))).toThrow(
+      'Reconnect: input profile must match the requested profile',
+    );
+  });
+
+  it('collectFullState rejects bad epoch, stale epoch, bad tick, and bad position', () => {
+    const manager = connectedManager();
+    expect(() => manager.collectFullState('alice', makeInput({ epoch: 1.5 }))).toThrow(
+      'Reconnect: epoch must be a non-negative safe integer',
+    );
+    expect(() => manager.collectFullState('alice', makeInput({ epoch: 2 }))).toThrow(
+      'Reconnect: epoch is not the current session',
+    );
+    expect(() => manager.collectFullState('alice', makeInput({ tick: -1 }))).toThrow('Reconnect:');
+    expect(() => manager.collectFullState('alice', makeInput({ position: null as never }))).toThrow(
+      'Reconnect: position must be finite numbers',
+    );
+    expect(() =>
+      manager.collectFullState('alice', makeInput({ position: { x: 0, y: Number.NaN, z: 0 } })),
+    ).toThrow('Reconnect: position must be finite numbers');
+  });
+
+  it('collectFullState rejects non-array chunks/entities and duplicates', () => {
+    const manager = connectedManager();
+    expect(() =>
+      manager.collectFullState('alice', makeInput({ chunks: 'nope' as never })),
+    ).toThrow('Reconnect: input chunks must be an array');
+    expect(() =>
+      manager.collectFullState('alice', makeInput({ entities: 'nope' as never })),
+    ).toThrow('Reconnect: input entities must be an array');
+    expect(() =>
+      manager.collectFullState('alice', makeInput({ chunks: [makeChunk('0,0'), makeChunk('0,0')] })),
+    ).toThrow('Reconnect: duplicate chunk key 0,0');
+    expect(() =>
+      manager.collectFullState('alice', makeInput({ entities: [makeEntity(1), makeEntity(1)] })),
+    ).toThrow('Reconnect: duplicate entity id 1');
+  });
+
+  it('collectFullState rejects malformed chunk snapshots', () => {
+    const manager = connectedManager();
+    const bad = (chunks: unknown) => () =>
+      manager.collectFullState('alice', makeInput({ chunks: chunks as never }));
+    expect(bad([null])).toThrow('Reconnect: chunk snapshot must be an object');
+    expect(bad([{ ...makeChunk('0,0'), x: 1.5 }])).toThrow(
+      'Reconnect: chunk snapshot coordinates must be integers',
+    );
+    expect(bad([{ ...makeChunk('0,0'), key: '9,9' }])).toThrow(
+      'Reconnect: chunk snapshot key 9,9 does not match (0, 0)',
+    );
+    expect(bad([{ ...makeChunk('0,0'), tick: -1 }])).toThrow(
+      'Reconnect: chunk snapshot tick must be a non-negative safe integer',
+    );
+    expect(bad([{ ...makeChunk('0,0'), sections: [] }])).toThrow(
+      'Reconnect: chunk snapshot sections must be a non-empty array',
+    );
+    expect(bad([{ ...makeChunk('0,0'), sections: [null] }])).toThrow(
+      'Reconnect: chunk snapshot section must be an object',
+    );
+    expect(bad([{ ...makeChunk('0,0'), sections: [{ y: 'a', data: [1] }] }])).toThrow(
+      'Reconnect: chunk snapshot section y must be an integer',
+    );
+    expect(
+      bad([{ ...makeChunk('0,0'), sections: [{ y: 0, data: [1] }, { y: 0, data: [2] }] }]),
+    ).toThrow('Reconnect: chunk snapshot duplicate section y 0');
+    expect(bad([{ ...makeChunk('0,0'), sections: [{ y: 0, data: [] }] }])).toThrow(
+      'Reconnect: chunk snapshot section data must be a non-empty array',
+    );
+    expect(bad([{ ...makeChunk('0,0'), sections: [{ y: 0, data: [-1] }] }])).toThrow(
+      'Reconnect: chunk snapshot section data must be non-negative safe integers',
+    );
+  });
+
+  it('collectFullState rejects malformed entity descriptors', () => {
+    const manager = connectedManager();
+    const bad = (entities: unknown) => () =>
+      manager.collectFullState('alice', makeInput({ entities: entities as never }));
+    expect(bad([null])).toThrow('Reconnect: entity descriptor must be an object');
+    expect(bad([{ ...makeEntity(1), id: -1 }])).toThrow('Reconnect: entity id');
+    expect(bad([{ ...makeEntity(1), type: '' }])).toThrow(
+      'Reconnect: entity type must be a non-empty string',
+    );
+    expect(bad([{ ...makeEntity(1), yaw: Number.NaN }])).toThrow(
+      'Reconnect: entity yaw must be a finite number',
+    );
+    expect(bad([{ ...makeEntity(1), pitch: 'x' }])).toThrow(
+      'Reconnect: entity pitch must be a finite number',
+    );
+    expect(bad([{ ...makeEntity(1), velocity: 'x' }])).toThrow(
+      'Reconnect: entity velocity must be an object',
+    );
+    expect(bad([{ ...makeEntity(1), velocity: { vx: 1, vy: Number.NaN, vz: 0 } }])).toThrow(
+      'Reconnect: entity velocity components must be finite numbers',
+    );
+    expect(bad([{ ...makeEntity(1), trackedData: 'x' }])).toThrow(
+      'Reconnect: entity trackedData must be an array',
+    );
+    expect(bad([{ ...makeEntity(1), trackedData: [null] }])).toThrow(
+      'Reconnect: entity trackedData[0] must be an object',
+    );
+    expect(bad([{ ...makeEntity(1), trackedData: [{ id: -1, value: 0 }] }])).toThrow('Reconnect:');
+  });
+
+  it('collectFullState rejects malformed inventory windows', () => {
+    const manager = connectedManager();
+    const bad = (inventory: unknown) => () =>
+      manager.collectFullState('alice', makeInput({ inventory: inventory as never }));
+    expect(bad(null)).toThrow('Reconnect: inventory must be an object');
+    expect(bad(makeInventory(-1))).toThrow('Reconnect: inventory.stateId');
+    expect(bad({ ...makeInventory(), slots: 'x' })).toThrow(
+      'Reconnect: inventory.slots must be an array',
+    );
+    expect(bad({ ...makeInventory(), hotbar: 'x' })).toThrow(
+      'Reconnect: inventory.hotbar must be an array',
+    );
+    expect(bad({ ...makeInventory(), hotbar: emptyHotbar().slice(0, 8) })).toThrow(
+      'Reconnect: inventory.hotbar must have exactly 9 slots',
+    );
+    expect(
+      bad({ ...makeInventory(), slots: [{ id: 1, count: 1, maxCount: 0 }] }),
+    ).toThrow('Reconnect: inventory.slots[0].maxCount must be a positive safe integer');
+    expect(
+      bad({ ...makeInventory(), slots: [{ id: 1, count: 5, maxCount: 3 }] }),
+    ).toThrow('Reconnect: inventory.slots[0].count must be in [1, maxCount]');
+    expect(bad({ ...makeInventory(), slots: [{ id: -1, count: 1, maxCount: 4 }] })).toThrow(
+      'Reconnect: inventory.slots[0].id must be a non-negative safe integer',
+    );
+    expect(bad({ ...makeInventory(), cursorItem: { id: 1, count: 1, maxCount: 0 } })).toThrow(
+      'Reconnect: inventory.cursorItem.maxCount must be a positive safe integer',
+    );
+  });
+
+  it('compareSignatures rejects malformed client signatures', () => {
+    const server = serverSignature();
+    const bad = (client: unknown) => () =>
+      compareSignatures(client as never, server);
+    expect(bad(null)).toThrow('Reconnect: client signature must be an object');
+    expect(bad(clientSignature({ profile: '' }))).toThrow('Reconnect:');
+    expect(bad(clientSignature({ epoch: -1 }))).toThrow('Reconnect:');
+    expect(bad(clientSignature({ tick: 2.5 }))).toThrow('Reconnect:');
+    expect(bad(clientSignature({ position: { x: 1, y: 2, z: Number.POSITIVE_INFINITY } }))).toThrow(
+      'Reconnect:',
+    );
+    expect(bad(clientSignature({ inventoryStateId: -1 }))).toThrow('Reconnect:');
+    expect(bad(clientSignature({ interest: 'x' as never }))).toThrow('Reconnect:');
+    expect(bad(clientSignature({ interest: [''] }))).toThrow('Reconnect:');
+    expect(bad(clientSignature({ entities: 'x' as never }))).toThrow('Reconnect:');
+    expect(bad(clientSignature({ entities: [1.5] }))).toThrow('Reconnect:');
+  });
+
+  it('client setters reject non-array interest/entities', () => {
+    const client = connectedClient();
+    expect(() => client.setInterest('x' as never)).toThrow('Reconnect: interest must be an array');
+    expect(() => client.setEntities('x' as never)).toThrow('Reconnect: entities must be an array');
+    expect(() => client.setInterest(['a', 1 as never])).toThrow('Reconnect:');
+    expect(() => client.setEntities([-1])).toThrow('Reconnect: entity id');
+  });
+
+  it('applyFullState rejects malformed snapshots', () => {
+    const client = connectedClient(2);
+    const bad = (snapshot: unknown) => () => client.applyFullState(snapshot as never);
+    expect(bad(null)).toThrow('Reconnect: snapshot must be an object');
+    expect(bad(makeSnapshot({ epoch: 1 }))).toThrow(
+      'Reconnect: snapshot epoch is not the current session',
+    );
+    expect(bad(makeSnapshot({ profile: 'bob' }))).toThrow(
+      'Reconnect: snapshot profile must match the current session',
+    );
+    expect(bad(makeSnapshot({ tick: -1 }))).toThrow('Reconnect: snapshot tick');
+    expect(bad(makeSnapshot({ position: null as never }))).toThrow('Reconnect: snapshot position');
+    expect(bad(makeSnapshot({ inventory: { ...makeInventory(7), hotbar: [] } }))).toThrow(
+      'Reconnect:',
+    );
+    expect(bad(makeSnapshot({ chunkKeys: 'x' as never }))).toThrow(
+      'Reconnect: snapshot chunkKeys must be an array',
+    );
+    expect(bad(makeSnapshot({ chunkSnapshots: 'x' as never }))).toThrow(
+      'Reconnect: snapshot chunkSnapshots must be an array',
+    );
+    expect(bad(makeSnapshot({ chunkKeys: ['1,0', '0,0'] }))).toThrow(
+      'Reconnect: snapshot chunkKeys must be sorted and unique',
+    );
+    expect(
+      bad(
+        makeSnapshot({
+          chunkKeys: ['0,0'],
+          chunkSnapshots: [makeChunk('0,0', 120), makeChunk('1,0', 120)],
+        }),
+      ),
+    ).toThrow('Reconnect: snapshot chunkKeys must match chunkSnapshots');
+    expect(
+      bad(
+        makeSnapshot({
+          chunkKeys: ['0,0', '9,9'],
+          chunkSnapshots: [makeChunk('0,0', 120), makeChunk('1,0', 120)],
+        }),
+      ),
+    ).toThrow('Reconnect: snapshot chunk key 9,9 has no matching snapshot');
+    expect(bad(makeSnapshot({ entities: 'x' as never }))).toThrow(
+      'Reconnect: snapshot entities must be an array',
+    );
+    expect(bad(makeSnapshot({ entities: [makeEntity(3), makeEntity(1)] }))).toThrow(
+      'Reconnect: snapshot entity ids must be sorted and unique',
+    );
+  });
+});

@@ -39,6 +39,13 @@
 
 - [x] T8. Local gates: `validate-state` PASS, `typecheck` PASS, `lint` PASS,
   `build` PASS, unit `test` PASS (no `src/` change — proves no regression).
+- [x] T11. CI-gating repair (tests-only, blocks T10): CI coverage gate failed
+  pre-existing on `main` (83.77% lines/stmts vs 84 floor; failing since the
+  266 commit, unrelated to the pin diff) — uplift with 29 new unit tests
+  (light-engine incremental channels, WorldBlockAccess delegation,
+  intersectRayBoxes + DDA z-step/cap, Reconnect malformed-input suite) +
+  file-audit rows; local coverage now 84.2/90.98/95.63/84.2 PASS. No `src/`
+  change; 259–267 suites untouched.
 - [ ] T9. `PARITY_MATRIX.md` C268 `n/a` row + summary counts reconciled +
   post-terminal note (258 stays BLOCKED/rowless; 259–267 untouched).
 - [ ] T10. Publish `origin/main`, watch CI (gate + e2e) green on the exact
