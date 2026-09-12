@@ -65,7 +65,7 @@ export class Lighting {
     let directionChanged = false;
     if (CONFIG.dayNight.enabled && !this.frozen) {
       const anglePerSecond = (Math.PI * 2) / CONFIG.dayNight.dayLength;
-      this.sunDirection.applyAxisAngle(this.dayNightAxis, -anglePerSecond * dt);
+      this.sunDirection.applyAxisAngle(this.dayNightAxis, -anglePerSecond * effectiveDt);
       directionChanged = true;
     }
 

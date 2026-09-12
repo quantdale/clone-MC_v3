@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "status": "ACTIVE",
-  "currentChange": "271-statistics-panel-ui",
+  "currentChange": "272-lighting-clock-dt-sync",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "271-statistics-panel-ui",
+  "lastCompletedChange": "272-lighting-clock-dt-sync",
   "nextChange": "258-real-world-runtime-performance-fps-recovery",
-  "completedTasks": 14,
-  "totalTasks": 14,
+  "completedTasks": 10,
+  "totalTasks": 10,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -14,14 +14,21 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "0774975c0de2ce0402af76b61326d68765642e86",
-  "localHead": "8e7df1af2e289297b58699e324b03b7d6f855eee",
-  "nextExactAction": "Change 271-statistics-panel-ui VERIFIED 14/14 (2026-09-12): statistics panel UI over 187 live (store/events/panel/persistence/E2E); full gates green (typecheck/lint 0 errors/unit 427 files 5101+1/build 2.66s/e2e 85/85/file-audit 2787); C271 matrix row; 258 stays BLOCKED - resume headed tasks on a hardware-WebGL host when available; 259-270 stay VERIFIED.",
-  "lastCompletedTask": "Change 271-statistics-panel-ui VERIFIED 14/14 (2026-09-12): StatisticsView + StatisticsPanel + __statistics__ persistence + Game store/event hooks + KeyH/HUD panel + 35 new unit proofs + 2 new browser E2E + C271 row. Session start 0774975 (fetched; local HEAD equaled remote).",
+  "sessionStartHead": "3098d37b1ccc43c4079b6708f2a1424afddb8127",
+  "localHead": "3098d37b1ccc43c4079b6708f2a1424afddb8127",
+  "nextExactAction": "Change 272-lighting-clock-dt-sync VERIFIED 10/10 (2026-09-12): effective-dt sun rotation in Lighting.update (hitch/frozen/negative unit proofs); full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85 split 30+1+54/visual zero-churn/file-audit 2792); R-9 CLOSED; C272 matrix row; 258 stays BLOCKED - resume headed tasks on a hardware-WebGL host when available; 259-271 stay VERIFIED.",
+  "lastCompletedTask": "Change 272-lighting-clock-dt-sync VERIFIED 10/10 (2026-09-12): one-token Lighting.update fix (sun uses effectiveDt) + 6 new hitch/frozen/negative unit proofs (13/13 Lighting) + R-9 CLOSED + C272 row. Session start 3098d37 (fetched; local HEAD equaled remote).",
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. 001-257 VERIFIED; game shippable with known performance-certification debt. The 259 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
   "validationResults": [
+    {
+      "change": "272-lighting-clock-dt-sync",
+      "status": "VERIFIED",
+      "unitTests": 5107,
+      "e2eTests": 85,
+      "note": "Standing owner order 2026-09-12, implemented while 258 stays BLOCKED and 259-271 stay VERIFIED. 10/10 tasks: effective (clamped/frozen-aware) dt drives both worldSeconds and sun rotation in Lighting.update (one-token fix); hitch-sized-dt unit proofs (hitch==clamped step, hitch==50x steps, repeated-hitch totals, frozen-hitch/negative no-ops, normal-step identity; 4 failing-first pre-fix); R-9 CLOSED; C272 matrix row exact; zero visual-golden churn (60-cell matrix green). Gates: typecheck/lint 0 errors/unit 5107+1/build 2.73s PASS, e2e 85/85 PASS (split 30+1+54), file-audit 2792."
+    },
     {
       "change": "265-live-creative-mode-integration",
       "status": "VERIFIED",
