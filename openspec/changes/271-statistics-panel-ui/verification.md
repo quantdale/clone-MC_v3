@@ -67,6 +67,10 @@ completion 14/14 (100%) ≥ target; all MUST/SHALL verified; required tests pass
 
 advancement_allowed = true.
 
+## Publication
+
+Session start `0774975c0de2ce0402af76b61326d68765642e86`, VERIFIED commit `8e7df1af2e289297b58699e324b03b7d6f855eee` published to `origin/main` (range `0774975..8e7df1a`); localHead synced in the follow-up checkpoint.
+
 ## Final decision
 
 VERIFIED 14/14 — Change 271-statistics-panel-ui complete. 258 stays BLOCKED; 259–270 stay VERIFIED.

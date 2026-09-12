@@ -15,7 +15,7 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "0774975c0de2ce0402af76b61326d68765642e86",
-  "localHead": "0774975c0de2ce0402af76b61326d68765642e86",
+  "localHead": "8e7df1af2e289297b58699e324b03b7d6f855eee",
   "nextExactAction": "Change 271-statistics-panel-ui VERIFIED 14/14 (2026-09-12): statistics panel UI over 187 live (store/events/panel/persistence/E2E); full gates green (typecheck/lint 0 errors/unit 427 files 5101+1/build 2.66s/e2e 85/85/file-audit 2787); C271 matrix row; 258 stays BLOCKED - resume headed tasks on a hardware-WebGL host when available; 259-270 stay VERIFIED.",
   "lastCompletedTask": "Change 271-statistics-panel-ui VERIFIED 14/14 (2026-09-12): StatisticsView + StatisticsPanel + __statistics__ persistence + Game store/event hooks + KeyH/HUD panel + 35 new unit proofs + 2 new browser E2E + C271 row. Session start 0774975 (fetched; local HEAD equaled remote).",
   "blockers": [
