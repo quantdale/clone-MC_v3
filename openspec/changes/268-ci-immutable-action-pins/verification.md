@@ -1,8 +1,8 @@
 # Verification: 268-ci-immutable-action-pins
 
-Status: IMPLEMENTED (pending CI green on the published SHA)
-Completion: 83%
-Advancement allowed: false
+Status: VERIFIED
+Completion: 100%
+Advancement allowed: true
 
 ## Pin provenance (resolution method)
 
@@ -41,7 +41,7 @@ this session.
 | `npm run lint` | PASS | 0 errors, 85 pre-existing warnings |
 | `npm test` | PASS | 420 files: 5047 passed + 1 skipped (incl. 29 new 268 uplift tests; file-audit manifest 2761) |
 | `npm run build` | PASS | 2.28s, unchanged |
-| CI on published SHA (gate + e2e) | PENDING | authoritative live proof; run URL recorded here when green |
+| CI on published SHA (gate + e2e) | PASS | run `34676312624` SUCCESS on `2114fad` — gate job `103506687788` (validate-state/typecheck/lint/build/bundle/unit/coverage 84.2+/audits) + e2e job `103506687879` (**82 passed**, incl. hardened brewing journey in 1.4 m) |
 | `npm run test:coverage` | PASS | 84.2 stmts / 90.98 branches / 95.63 funcs / 84.2 lines vs floors 84/90/94/84 |
 
 ## Gating repair (pre-existing CI red, tests-only fix)
@@ -102,7 +102,7 @@ BLOCKED; no headed work touched.
 
 ## Incomplete tasks
 
-T8 complete (all local gates PASS). T9 (matrix row — added only at VERIFIED time so the matrix never claims VERIFIED early) and T10 (publish + CI watch) open.
+None. T9 (matrix row) and T10 (publish + CI watch) complete — see evidence above.
 
 ## Advancement Exception
 
@@ -110,7 +110,10 @@ Not applicable (target 100%; none expected).
 
 ## Final decision
 
-PENDING — decided after CI green on the exact published SHA.
+**VERIFIED 12/12.** All four requirements PASS with static + live evidence;
+R-5 CLOSED; CI green (gate + e2e 82/82) on the published SHA `2114fad`
+(run `34676312624`); no `src/` gameplay change; 258 stays BLOCKED;
+259–267 untouched and VERIFIED.
 
 Local-e2E note: no `src/`/`tests/` file is touched by this change, so a local
 `test:e2e` run would execute byte-identical bundles to the 267-verified

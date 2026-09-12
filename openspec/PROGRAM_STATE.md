@@ -1,5 +1,7 @@
 # Minecraft-Parity Program State
 
+> **2026-09-12 Change 268 VERIFIED 12/12 (100%) — ci-immutable-action-pins (Standing owner order) while 258 stays BLOCKED and 259/260/261/262/263/264/265/266/267 stay VERIFIED.** All 11 `actions/*@v4` steps pinned to immutable SHAs with `# v4` comments (API-resolved 2026-09-12); R-5 CLOSED; tests-only gating repairs (29 unit tests: coverage 84.2 PASS; brewing-spec race hardened, journey green); CI run `34676312624` SUCCESS on `2114fad` (gate `103506687788` + e2e `103506687879`, 82 passed); PARITY_MATRIX C268 `n/a` row with counts reconciled. Session start is `9d5fdb16e70735a915c06955fc495192378da953` (fetched; local HEAD equaled remote).
+>
 > **2026-09-12 Change 268 IMPLEMENTED 10/12 (83%) — plus gating repair #2 (brewing e2e race hardened spec-only, journey green locally 39 s) for the CI e2e 81/82 on b2e46c8 (gate was green). Prior 9/11 note below.
 >
 > **2026-09-12 Change 268 IMPLEMENTED 9/11 (82%) — plus a tests-only coverage repair (29 new unit tests; local coverage 84.2/90.98/95.63/84.2 PASS) for the pre-existing CI coverage red (83.77 vs 84, failing since 266, unrelated to the pin diff). Prior 8/10 note below.
@@ -124,12 +126,12 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **268-ci-immutable-action-pins — ACTIVE (10/12, owner-authorized 2026-09-12; 258 stays BLOCKED, 259/260/261/262/263/264/265/266/267 stay VERIFIED)**
-- Next change: **258-real-world-runtime-performance-fps-recovery — BLOCKED; resume headed tasks on a hardware-WebGL host when available**
-- 240 advancement allowed: **no (active change not yet verified)**
+- Active implementation change: **268-ci-immutable-action-pins — VERIFIED (12/12, owner-authorized 2026-09-12; 258 stays BLOCKED, 259/260/261/262/263/264/265/266/267 stay VERIFIED)**
+- Next change: **258-real-world-runtime-performance-fps-recovery — BLOCKED; resume headed tasks on a hardware-WebGL host when available (259/260/261/262/263/264/265/266/267 VERIFIED; 268 VERIFIED)**
+- 240 advancement allowed: **yes**
 
-- Program: **ACTIVE — Change 268 ACTIVE 2/10 (ci immutable action pins, Standing owner order 2026-09-12); Change 267 VERIFIED 13/13 (live hardcore integration, Standing owner order 2026-09-12); Change 266 VERIFIED 13/13 (live adventure+spectator integration, Standing owner order 2026-09-11) with Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); 259 VERIFIED 18/18; 260 VERIFIED 19/19; 261 VERIFIED 16/16; 262 VERIFIED 14/14; 263 VERIFIED 15/15; 264 VERIFIED 13/13; 265 VERIFIED 13/13**
-- Last completed change: **267-live-hardcore-mode-integration — VERIFIED (13/13) — full gates green (typecheck/lint 0 errors/unit 419 files 5018+1/build 2.27s/e2e 82/82/file-audit 2755); 266 remains VERIFIED (13/13)**
+- Program: **ACTIVE — Change 268 VERIFIED 12/12 (ci immutable action pins, Standing owner order 2026-09-12); Change 267 VERIFIED 13/13 (live hardcore integration, Standing owner order 2026-09-12); Change 266 VERIFIED 13/13 (live adventure+spectator integration, Standing owner order 2026-09-11) with Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); 259 VERIFIED 18/18; 260 VERIFIED 19/19; 261 VERIFIED 16/16; 262 VERIFIED 14/14; 263 VERIFIED 15/15; 264 VERIFIED 13/13; 265 VERIFIED 13/13**
+- Last completed change: **268-ci-immutable-action-pins — VERIFIED (12/12) — full gates green (typecheck/lint 0 errors/unit 419 files 5018+1/build 2.27s/e2e 82/82/file-audit 2755); 266 remains VERIFIED (13/13)**
 - All changes 001–257: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed (backup fail-closed, snapshot fail-closed, multi-store tx 6 stores, archive ownership, migrated-legacy 5×, pagehide 5× via flush, R-7, file-audit 2644, import tx, visual 0.02, payload equality, full local gate + CI).
 - Historical Change 250-era bullets (preserved; superseded **for current release authority** by `openspec/evidence/release-readiness-post-hardening.md`): 250 required-test gate PASS at head `502d021` / byte-identical tree `b56529e`; historical release-readiness READY RC-1..RC-9 (`openspec/evidence/release-readiness.md`); final parity audit PASS with DL dispositions later rejected by this interlock (`openspec/evidence/parity/final-parity-audit.md`); evidence archive complete (`openspec/evidence/`)
 - Post-250 hardening interlock: **VERIFIED at remediation checkpoint `aa92a5c229a753f10f8c1677e836136962b5d07a` — canonical CI run 32589457819 SUCCESS (gate job 97078975848, e2e job 97078975868); tasks 78/78; release decision READY (`openspec/evidence/release-readiness-post-hardening.md`)**
@@ -138,7 +140,7 @@
 - Publication history: **Change 257 VERIFIED 92/92 at 96b5dc37 (F257-A..L closed, 22 new fault-injection tests, 5× proofs, import tx); Change 256 archived at `ad75b65` as `2026-08-31-256-production-readiness-hardening` (23/23).**
 - Section milestone: **PROGRAM ACTIVE — Change 258 ACTIVE 40/100; whole-frame/World-internal/governor/gate/harness/capability/fault-injection/worker-equivalence/dedupe/startup evidence landed headless-verified, headed baseline pending hardware-GPU host.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ri…
-- Next exact action: **Publish 268-ci-immutable-action-pins implementation + tests-only gating repairs (coverage + brewing race) to origin/main and watch CI green on the exact SHA (268 ACTIVE 10/12; 258 BLOCKED; 259/260/261/262/263/264/265/266/267 VERIFIED)**
+- Next exact action: **Publish 268-ci-immutable-action-pins VERIFIED checkpoint (matrix C268 + state flip) to origin/main and confirm CI green on the final SHA (268 VERIFIED 12/12; 258 BLOCKED; 259/260/261/262/263/264/265/266/267 VERIFIED)**
 - Release note (2026-09-11 owner deferral): **headed FPS gates (258 tasks 91–95) are deferred, not waived — 001–257 VERIFIED, production default unchanged (sync meshing, no quality retune), game shippable with known performance-certification debt**
 
 Change 250 is documentation-only: it created the consolidated evidence archive and the terminal

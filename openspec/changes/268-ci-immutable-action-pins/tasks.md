@@ -53,8 +53,8 @@
   at the reload-boot wait). Hardened the spec only: single-redstone setup (one
   batch by construction, exact-consumption assertions preserved) + reload-boot
   waits 30 s → 60 s (266-run evidence); journey green locally (39 s).
-- [ ] T9. `PARITY_MATRIX.md` C268 `n/a` row + summary counts reconciled +
+- [x] T9. `PARITY_MATRIX.md` C268 `n/a` row + summary counts reconciled +
   post-terminal note (258 stays BLOCKED/rowless; 259–267 untouched).
-- [ ] T10. Publish `origin/main`, watch CI (gate + e2e) green on the exact
+- [x] T10. Publish `origin/main`, watch CI (gate + e2e) green on the exact
   published SHA, mark 268 VERIFIED 10/10 + R-5 CLOSED, final report (SHAs,
   completion, validations, blockers, next action).
