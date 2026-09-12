@@ -15,7 +15,7 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "36c63f99416c9870c7b015e600f29f216c7153e7",
-  "localHead": "36c63f99416c9870c7b015e600f29f216c7153e7",
+  "localHead": "dd18e7d08a0e4fee489377e93d1b537bfc3bf8d6",
   "nextExactAction": "Publish Change 267-live-hardcore-mode-integration checkpoint to origin/main (267 VERIFIED 13/13; 258 BLOCKED; 259/260/261/262/263/264/265/266 VERIFIED)",
   "lastCompletedTask": "Change 267-live-hardcore-mode-integration VERIFIED 13/13 (2026-09-12): 193 HardcoreFramework + 188 difficulty wired live (__hardcore__/__difficulty__ persistence, hard lock, permanent-death spectator routing, settings UI + badge), proven via unit 29 new + browser E2E 2 new; full gates green (typecheck/lint 0 errors/unit 419 files 5018+1/build 2.27s/e2e 82/82/file-audit 2755); 258 BLOCKED, 259/260/261/262/263/264/265/266 VERIFIED. Prior: Change 266-live-adventure-spectator-integration VERIFIED 13/13 (2026-09-11): 194 AdventureModeRules + 195 SpectatorFramework wired live (adventure held-stack CanDestroy/CanPlaceOn gates, spectator noclip/no-interact/no-targeting, HUD mode select with chip toggle unchanged, __gamemode__ all-four-mode persistence), proven via unit 22 new/extended + browser E2E 3 new; full gates green (typecheck/lint 0 errors/unit 417 files 4989+1/build 2.27s/e2e 80/80/file-audit 2747); 258 BLOCKED, 259/260/261/262/263/264/265 VERIFIED",
   "blockers": [
