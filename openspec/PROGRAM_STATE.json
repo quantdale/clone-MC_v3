@@ -15,7 +15,7 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "faf1a517fb897f64cf4b51f6d03828e63376a540",
-  "localHead": "faf1a517fb897f64cf4b51f6d03828e63376a540",
+  "localHead": "8ffd1a43f3a7a99bed9799d9fa779359194f9bfd",
   "nextExactAction": "Publish Change 266-live-adventure-spectator-integration checkpoint to origin/main (266 VERIFIED 13/13; 258 BLOCKED; 259/260/261/262/263/264/265 VERIFIED)",
   "lastCompletedTask": "Change 266-live-adventure-spectator-integration VERIFIED 13/13 (2026-09-11): 194 AdventureModeRules + 195 SpectatorFramework wired live (adventure held-stack CanDestroy/CanPlaceOn gates, spectator noclip/no-interact/no-targeting, HUD mode select with chip toggle unchanged, __gamemode__ all-four-mode persistence), proven via unit 22 new/extended + browser E2E 3 new; full gates green (typecheck/lint 0 errors/unit 417 files 4989+1/build 2.27s/e2e 80/80/file-audit 2747); 258 BLOCKED, 259/260/261/262/263/264/265 VERIFIED",
   "blockers": [
