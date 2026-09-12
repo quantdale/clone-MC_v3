@@ -7,6 +7,7 @@ import { BlockId, createDefaultBlockRegistry } from '../../src/world/BlockRegist
 import { createDefaultBlockStateRegistry } from '../../src/world/BlockStateRegistry';
 import { tileUV } from '../../src/rendering/TextureAtlas';
 import type { TextureAtlas } from '../../src/rendering/TextureAtlas';
+import { PackedIntegerArray } from '../../src/data/PalettedContainer';
 
 /** Count the triangles in a geometry by dividing its index count by 3. */
 function countTriangles(geometry: THREE.BufferGeometry): number {
@@ -213,6 +214,28 @@ describe('ChunkMesher', () => {
       expect(sampledY.has(319)).toBe(true);
       expect([...sampledY].every((y) => y >= 304 && y <= 319)).toBe(true);
     });
+    it('meshes a solid mono-stone section instead of taking the empty fast-path (273)', () => {
+      const stateRegistry = createDefaultBlockStateRegistry();
+      const stoneId = stateRegistry.getDefaultState(BlockId.Stone).id;
+      const section = ChunkSection.deserialize(
+        {
+          version: 1,
+          capacity: 4096,
+          bitsPerEntry: 4,
+          palette: [stoneId],
+          storage: new PackedIntegerArray(4, 4096).serialize(),
+        },
+        0,
+        stateRegistry,
+      );
+      expect(section.isEmpty()).toBe(false);
+      const mesher = new ChunkMesher({ registry, atlas: fakeAtlas });
+      const result = mesher.meshSection(0, 0, 0, section, () => stateRegistry.getDefaultState(BlockId.Air));
+      // Solid cube in air: only the 6 outer faces survive (interior culled).
+      expect(result.opaque).not.toBeNull();
+      expect(countTriangles(result.opaque!)).toBeGreaterThan(0);
+    });
+
     it('returns empty result for an all-air section without scanning', () => {
       const section = new ChunkSection(0, stateRegistry);
       const mesher = new ChunkMesher({ registry, atlas: fakeAtlas });

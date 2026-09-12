@@ -7,9 +7,11 @@ import { SECTION_VOLUME, localIndex } from '../math/SectionCoordinate';
  * One 16×16×16 vertical slice of a chunk column, storing block states in a
  * paletted container keyed by {@link BlockStateId}.
  *
- * An empty section uses a single-entry palette (all air), which the
+ * An empty section uses a single-entry palette holding only air, which the
  * {@link PalettedContainer} already encodes as a 4-bit, all-zero pack — the
- * compact empty representation. `isEmpty()` detects this without scanning.
+ * compact empty representation. `isEmpty()` detects this without scanning
+ * by checking the single palette entry is `airId` (a single-entry palette
+ * of any other block is a solid section, not an empty one).
  */
 export class ChunkSection {
   readonly index: number;
@@ -81,12 +83,19 @@ export class ChunkSection {
     this.meshVersionInternal++;
   }
 
-  /** True when every slot is air (single-entry palette). */
+  /**
+   * True iff every slot is air: a single-entry palette whose only entry is
+   * `airId`. When `paletteSize` is 1 every slot indexes ordinal 0, so
+   * `get(0)` reads the single palette entry without scanning.
+   */
   isEmpty(): boolean {
-    return this.storage.paletteSize === 1;
+    return this.storage.paletteSize === 1 && this.storage.get(0) === this.airId;
   }
 
-  /** Count of slots whose block state is not air. */
+  /**
+   * Count of slots whose block state is not air. The `isEmpty()` fast path
+   * is exact by the air-only contract above; otherwise every slot is scanned.
+   */
   nonAirCount(): number {
     if (this.isEmpty()) return 0;
     let count = 0;
