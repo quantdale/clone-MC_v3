@@ -332,6 +332,7 @@ export class World implements WorldAccess {
   private useWorkers: boolean;
   private workerPool: WorkerPool | null = null;
   private workerClient: MeshWorkerClient | null = null;
+  private disposed = false;
   /** Optional test/integration seam; production defaults to the Vite module worker below. */
   private readonly workerFactory: (() => Worker) | null;
   private workerCompletedCount = 0;
@@ -2336,6 +2337,7 @@ export class World implements WorldAccess {
    * workers cannot be used (flag off or no UV lookup for result expansion).
    */
   private ensureWorkerMeshing(): boolean {
+    if (this.disposed) return false;
     if (!this.useWorkers) return false;
     if (this.workerClient) return true;
     const size = CONFIG.budgets.workerPoolSize > 0 ? CONFIG.budgets.workerPoolSize : computeWorkerPoolSize();
@@ -2392,6 +2394,7 @@ export class World implements WorldAccess {
     versionSnapshot: SectionVersionSnapshot,
     canonical: boolean,
   ): void {
+    if (this.disposed) return;
     let workerAvailable = false;
     try {
       workerAvailable = this.ensureWorkerMeshing();
@@ -2766,6 +2769,7 @@ export class World implements WorldAccess {
     sectionZ: number,
     result: MeshSectionResultPayload,
   ): void {
+    if (this.disposed) return;
     if (this.contextLost) {
       this.cancelWorkerMeshBatch(batch.key);
       return;
@@ -3460,10 +3464,15 @@ export class World implements WorldAccess {
   }
 
   dispose(): void {
+    if (this.disposed) return;
+    this.disposed = true;
     for (const key of [...this.workerMeshBatches.keys()]) this.cancelWorkerMeshBatch(key);
     this.chunkManager.forEachChunk((chunk) => this.removeMeshesForChunk(chunk));
-    // Outstanding jobs fail through pool.dispose → onFailure, which cancels
-    // the client's pending entries; late results resolve as stale.
+    // Dispose the mesh client first: it abandons every pending job without
+    // firing callbacks and clears wall-clock timeouts. Outstanding pool jobs
+    // then fail through pool.dispose → onFailure onto already-abandoned jobs
+    // (no-ops); late results resolve as stale.
+    this.workerClient?.dispose();
     this.workerClient = null;
     if (this.workerPool) {
       this.workerPool.dispose();

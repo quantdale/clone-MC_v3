@@ -1138,8 +1138,8 @@ export class Game {
     this.recoveryStatusEl = this.requireElement('recovery-status');
     this.recoveryBackupBtn = this.requireElement('recovery-backup') as HTMLButtonElement;
     this.recoveryResetBtn = this.requireElement('recovery-reset') as HTMLButtonElement;
-    this.recoveryBackupBtn.addEventListener('click', () => { void this.onRecoveryBackup(); });
-    this.recoveryResetBtn.addEventListener('click', () => { void this.onRecoveryReset(); });
+    this.recoveryBackupBtn.addEventListener('click', () => { if (!this.disposed) void this.onRecoveryBackup(); });
+    this.recoveryResetBtn.addEventListener('click', () => { if (!this.disposed) void this.onRecoveryReset(); });
 
     const hotbarEl = document.getElementById('hotbar');
     if (!hotbarEl) {
@@ -1225,7 +1225,7 @@ export class Game {
     });
     // HUD button opens the settings for mouse/touch players (261).
     const gameruleOpenBtn = document.getElementById('gamerule-open');
-    gameruleOpenBtn?.addEventListener('click', () => this.openGamerule());
+    gameruleOpenBtn?.addEventListener('click', () => { if (!this.disposed) this.openGamerule(); });
     // Live recipe book screen (262): a pure view over the known set.
     this.recipeRegistry = createDefaultRecipeRegistry();
     this.recipeBookSystem = new CraftingSystem(this.inventory, this.recipeRegistry);
@@ -1245,7 +1245,7 @@ export class Game {
     // Recipe-book entry inside the crafting dialog (262): the crafting screen
     // closes first (one-container rule) when the book opens.
     const recipeBookOpenBtn = document.getElementById('crafting-recipebook-open');
-    recipeBookOpenBtn?.addEventListener('click', () => this.openRecipeBook());
+    recipeBookOpenBtn?.addEventListener('click', () => { if (!this.disposed) this.openRecipeBook(); });
     // Live advancements screen (263): a pure view over the progress store.
     this.advancementPanel = new AdvancementPanel(this.requireElement('advancements'), {
       listRows: () => this.getAdvancementRows(),
@@ -1254,7 +1254,7 @@ export class Game {
     // HUD button opens the advancements for mouse/touch players (263,
     // gamerule-chip precedent).
     const advancementsOpenBtn = document.getElementById('advancements-open');
-    advancementsOpenBtn?.addEventListener('click', () => this.openAdvancements());
+    advancementsOpenBtn?.addEventListener('click', () => { if (!this.disposed) this.openAdvancements(); });
     // Live creative menu screen (265): a pure view over the catalog +
     // inventory. HUD buttons open the menu and toggle survival ⇄ creative.
     this.creativePanel = new CreativeMenuPanel(this.requireElement('creative'), {
@@ -1268,13 +1268,14 @@ export class Game {
       onClose: () => this.closeCreative(),
     });
     const creativeOpenBtn = document.getElementById('creative-open');
-    creativeOpenBtn?.addEventListener('click', () => this.openCreative());
+    creativeOpenBtn?.addEventListener('click', () => { if (!this.disposed) this.openCreative(); });
     this.gameModeChipEl = document.getElementById('gamemode-toggle') as HTMLButtonElement | null;
-    this.gameModeChipEl?.addEventListener('click', () => this.toggleGameMode());
+    this.gameModeChipEl?.addEventListener('click', () => { if (!this.disposed) this.toggleGameMode(); });
     // Mode select (266): every option is a valid 192 mode; the chip toggle
     // above is untouched (survival⇄creative per the 265 contract).
     this.gameModeSelectEl = document.getElementById('gamemode-select') as HTMLSelectElement | null;
     this.gameModeSelectEl?.addEventListener('change', () => {
+      if (this.disposed) return;
       this.setGameModeFromText(this.gameModeSelectEl?.value ?? '');
       this.updateGameModeChip();
     });
@@ -1283,10 +1284,12 @@ export class Game {
     // the gamerule-adjacent settings dialog; the badge lives in the HUD.
     this.hardcoreToggleEl = document.getElementById('hardcore-toggle') as HTMLButtonElement | null;
     this.hardcoreToggleEl?.addEventListener('click', () => {
+      if (this.disposed) return;
       this.setHardcore(!this.hardcore.hardcore);
     });
     this.difficultySelectEl = document.getElementById('difficulty-select') as HTMLSelectElement | null;
     this.difficultySelectEl?.addEventListener('change', () => {
+      if (this.disposed) return;
       const value = this.difficultySelectEl?.value ?? '';
       if (locksDifficulty(this.hardcore)) {
         this.showToast('Difficulty is locked while Hardcore is on.');
@@ -1348,6 +1351,9 @@ export class Game {
 
   /** Start the game loop and show the initial UI. */
   start(): void {
+    if (this.disposed) {
+      return;
+    }
     if (this.started) {
       return;
     }

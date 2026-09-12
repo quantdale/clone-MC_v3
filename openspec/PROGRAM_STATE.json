@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "status": "ACTIVE",
-  "currentChange": "268-ci-immutable-action-pins",
+  "currentChange": "269-composed-game-dispose-worker-terminate",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "268-ci-immutable-action-pins",
+  "lastCompletedChange": "269-composed-game-dispose-worker-terminate",
   "nextChange": "258-real-world-runtime-performance-fps-recovery",
   "completedTasks": 12,
   "totalTasks": 12,
@@ -14,10 +14,10 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "9d5fdb16e70735a915c06955fc495192378da953",
-  "localHead": "3499cc43e3bfc4bcd0037dbe4c6de9fcf4b23f6c",
-  "nextExactAction": "Change 268-ci-immutable-action-pins complete (VERIFIED 12/12, R-5 CLOSED, published 3499cc4, CI 34678564229 SUCCESS); next is 258 BLOCKED — resume headed tasks on a hardware-WebGL host when available; do not activate 269 without owner authorization (258 BLOCKED; 259-267 VERIFIED)",
-  "lastCompletedTask": "Change 268-ci-immutable-action-pins VERIFIED 12/12 (2026-09-12): all 11 actions/*@v4 steps pinned to immutable SHAs (# v4 comments), R-5 CLOSED; tests-only gating repairs (29 unit tests restoring 84% coverage floor + brewing-spec second-batch race hardening); gates green locally (typecheck/lint 0 errors/unit 420 files 5047+1/build/coverage 84.2/file-audit 2761) and CI run 34676312624 SUCCESS on 2114fad (gate 103506687788 + e2e 103506687879, 82 passed); PARITY_MATRIX C268 n/a row; 258 BLOCKED, 259-267 VERIFIED. Prior activation: Change 268-ci-immutable-action-pins ACTIVATED 2/10 (2026-09-12): control plane complete (268 row in CHANGE_SEQUENCE.md, 268 authorization in CHANGE_SEQUENCE_OVERRIDES.md, full OpenSpec package under openspec/changes/268-ci-immutable-action-pins/ passing the SPEC_AUTHORING_PROTOCOL quality gate); sole ACTIVE implementation change: pin all 11 actions/*@v4 steps in ci.yml + seed-visual-goldens.yml to immutable SHAs, close R-5. Session start 9d5fdb16e70735a915c06955fc495192378da953 (fetched; local HEAD equaled remote). Prior: Change 267-live-hardcore-mode-integration VERIFIED 13/13 (2026-09-12): 193 HardcoreFramework + 188 difficulty wired live (__hardcore__/__difficulty__ persistence, hard lock, permanent-death spectator routing, settings UI + badge), proven via unit 29 new + browser E2E 2 new; full gates green (typecheck/lint 0 errors/unit 419 files 5018+1/build 2.27s/e2e 82/82/file-audit 2755); 258 BLOCKED, 259/260/261/262/263/264/265/266 VERIFIED. Prior: Change 266-live-adventure-spectator-integration VERIFIED 13/13 (2026-09-11): 194 AdventureModeRules + 195 SpectatorFramework wired live (adventure held-stack CanDestroy/CanPlaceOn gates, spectator noclip/no-interact/no-targeting, HUD mode select with chip toggle unchanged, __gamemode__ all-four-mode persistence), proven via unit 22 new/extended + browser E2E 3 new; full gates green (typecheck/lint 0 errors/unit 417 files 4989+1/build 2.27s/e2e 80/80/file-audit 2747); 258 BLOCKED, 259/260/261/262/263/264/265 VERIFIED",
+  "sessionStartHead": "9cab4d9fcb92dcc37f53b2fb13bdaf6f797d2936",
+  "localHead": "9c2c5eacf7da17c17f4e5ecb14206455c89b688d",
+  "nextExactAction": "Change 269-composed-game-dispose-worker-terminate VERIFIED 12/12 (2026-09-12): idempotent composed-Game dispose + worker terminate, R-6 CLOSED, C269 matrix row; full gates green (typecheck/lint 0 errors/unit 422 files 5054+1/build 2.74s/e2e 83/83/file-audit 2769); 258 stays BLOCKED \u2014 resume headed tasks on a hardware-WebGL host when available; 259-268 stay VERIFIED.",
+  "lastCompletedTask": "Change 269-composed-game-dispose-worker-terminate VERIFIED 12/12 (2026-09-12): MeshWorkerClient.dispose + World/Game dispose hardening + 7 new dispose unit tests + focused e2e harness green + full e2e 83/83; R-6 CLOSED. Session start 9cab4d9 (fetched; local HEAD equaled remote).",
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. 001-257 VERIFIED; game shippable with known performance-certification debt. The 259 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],

@@ -324,3 +324,33 @@ stand **VERIFIED**.
   in the change `verification.md`.
 - Change 258 remains recorded BLOCKED and resumable on a hardware-WebGL host;
   the 268 track does not consume, waive, or re-litigate any 258 headed task.
+
+## 269 activation alongside BLOCKED 258 — owner-authorized parallel track (2026-09-12)
+
+The product owner (Standing owner order, 2026-09-12 campaign instruction) authorized
+activating and implementing OpenSpec change **269-composed-game-dispose-worker-terminate**
+while Change **258-real-world-runtime-performance-fps-recovery** remains **BLOCKED**
+(headed hardware-WebGL certification deferred) and Changes **259-enchanting-panel-ui**,
+**260-live-brewing-stand-production-integration**, **261-gamerule-settings-ui**,
+**262-recipe-book-ui**, **263-advancement-panel-ui**,
+**264-item-xp-entity-persistence-hardening**, **265-live-creative-mode-integration**,
+**266-live-adventure-spectator-integration**, **267-live-hardcore-mode-integration**,
+and **268-ci-immutable-action-pins** stand **VERIFIED**.
+
+- Change 258 status stays **BLOCKED** at 40/100 with its existing deferral intact.
+  No headed FPS work is touched, no GPU evidence is faked, and 258 MUST NOT be
+  marked VERIFIED by the 269 track.
+- Changes 259 (18/18), 260 (19/19), 261 (16/16), 262 (14/14), 263 (15/15),
+  264 (13/13), 265 (13/13), 266 (13/13), 267 (13/13), and 268 (12/12) stand
+  **VERIFIED** and MUST NOT be reopened unless a dispose/worker regression
+  blocks the 269 teardown path. The 269 track changes no gameplay behavior
+  and performs no gameplay retune.
+- Change 269 (`269-composed-game-dispose-worker-terminate`) is the sole
+  **ACTIVE** implementation change: harden the composed `Game.dispose()` +
+  world/worker teardown path so dispose is idempotent and terminates/joins
+  workers (no post-dispose callbacks mutate state or leak handles; no pending
+  Game timers/rAF/listeners keep the page alive), with unit/integration tests
+  proving double-dispose safety + worker terminate, closing certification debt
+  **R-6** (composed-Game dispose/worker terminate residual).
+- Change 258 remains recorded BLOCKED and resumable on a hardware-WebGL host;
+  the 269 track does not consume, waive, or re-litigate any 258 headed task.

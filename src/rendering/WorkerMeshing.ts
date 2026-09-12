@@ -906,6 +906,7 @@ export class MeshWorkerClient {
   private readonly timeoutMs: number;
   private pool: WorkerPool | null = null;
   private generationToken = 0;
+  private disposed = false;
 
   constructor(opts: {
     pool?: WorkerPool;
@@ -940,6 +941,7 @@ export class MeshWorkerClient {
     onResult: (result: MeshSectionResultPayload) => void,
     onRejected?: () => void,
   ): string {
+    if (this.disposed) throw new Error('MeshWorkerClient.requestSection: client is disposed');
     const token = this.generationToken;
     const normalizedTransfer = payload.transferData === undefined
       ? normalizeMeshSectionTransfer(payload)
@@ -1010,6 +1012,7 @@ export class MeshWorkerClient {
    * and return the result. Stale/invalid/mismatched messages return `null` and invoke nothing.
    */
   handleMessage(input: unknown): MeshSectionResultPayload | null {
+    if (this.disposed) return null;
     const outcome: ResolvedOutcome | null = this.jobs.resolveResult(input);
     if (outcome === null) {
       // WorkerJobClient intentionally keeps generic token-mismatch jobs pending. A live mesh
@@ -1053,6 +1056,7 @@ export class MeshWorkerClient {
 
   /** Cancel a pending job (its late result becomes stale). */
   cancel(jobId: string): boolean {
+    if (this.disposed) return false;
     const poolJobId = this.poolJobs.get(jobId);
     if (poolJobId !== undefined) this.pool?.cancel(poolJobId);
     const removed = this.jobs.cancel(jobId);
@@ -1065,6 +1069,7 @@ export class MeshWorkerClient {
    * section's block/light state changes so superseded mesh results are dropped wholesale.
    */
   cancelByToken(generationToken: number): number {
+    if (this.disposed) return 0;
     let cancelled = 0;
     for (const [jobId, token] of this.tokens) {
       if (token === generationToken && this.cancel(jobId)) {
@@ -1137,6 +1142,30 @@ export class MeshWorkerClient {
     this.abandon(jobId);
     callback?.();
     return true;
+  }
+
+  /**
+   * Dispose the client: abandon every pending job without invoking any
+   * result/rejection callback, clear wall-clock timeouts, cancel owned pool
+   * jobs, and detach from the pool. Idempotent. Post-dispose, `requestSection`
+   * throws, `handleMessage` returns null, and `cancel`/`cancelByToken` report
+   * nothing cancelled — so no post-dispose callback can mutate owner state.
+   */
+  dispose(): void {
+    if (this.disposed) return;
+    this.disposed = true;
+    // Cancel owned pool jobs first: abandon() below only drops client-side
+    // bookkeeping, so without this the pool would retain orphaned in-flight
+    // jobs until its own dispose.
+    for (const poolJobId of [...this.poolJobs.values()]) this.pool?.cancel(poolJobId);
+    for (const jobId of [...this.tokens.keys()]) this.abandon(jobId);
+    this.poolJobs.clear();
+    this.callbacks.clear();
+    this.rejectionCallbacks.clear();
+    this.requests.clear();
+    this.tokens.clear();
+    this.timeoutHandles.clear();
+    this.pool = null;
   }
 
   /** Drop all per-job bookkeeping without invoking callbacks. */
