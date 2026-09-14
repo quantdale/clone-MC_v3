@@ -15,7 +15,7 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "f872c889d722f77fa3d44e823f08d901de49e56a",
-  "localHead": "d0f3d6a388c41fe8d997b05dff7023844e56223f",
+  "localHead": "75a4994de0933b372b37d12bce7da7fc6c29b253",
   "nextExactAction": "Change 277-live-ambient-audio-integration VERIFIED 6/6 \u2014 campaign 275\u2013277 complete; 258 BLOCKED; STOP no audit",
   "lastCompletedTask": "Change 277 VERIFIED 6/6",
   "blockers": [
@@ -2675,5 +2675,5 @@
     ]
   },
   "criticalRiskOpen": false,
-  "publishedTip": "d0f3d6a388c41fe8d997b05dff7023844e56223f"
+  "publishedTip": "75a4994de0933b372b37d12bce7da7fc6c29b253"
 }
