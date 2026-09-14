@@ -15,7 +15,7 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "f872c889d722f77fa3d44e823f08d901de49e56a",
-  "localHead": "860817d8b732a2fb3efd6015a1401ed21376ae3b",
+  "localHead": "7ffa199685abe4811cd5241ea05c13b7993d4f88",
   "nextExactAction": "Change 276-boss-bar-hud-parity VERIFIED 6/6 \u2014 published this session; next campaign step 277; 258 BLOCKED",
   "lastCompletedTask": "Change 276-boss-bar-hud-parity VERIFIED 6/6",
   "blockers": [
@@ -2675,5 +2675,5 @@
     ]
   },
   "criticalRiskOpen": false,
-  "publishedTip": "860817d8b732a2fb3efd6015a1401ed21376ae3b"
+  "publishedTip": "7ffa199685abe4811cd5241ea05c13b7993d4f88"
 }
