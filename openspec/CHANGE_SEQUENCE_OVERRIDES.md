@@ -539,3 +539,6 @@ Owner (Michael via Minecraft Clone Dev) authorizes Change **275-live-weather-cyc
 Authorize Change 276 as sole ACTIVE while Change 258 remains BLOCKED.
 Last completed: 275-live-weather-cycle-integration VERIFIED.
 Campaign through 277; no 1–277 audit.
+
+## 277-live-ambient-audio-integration (owner-authorized 2026-09-14)
+Authorize Change 277 as sole ACTIVE while 258 remains BLOCKED. Last completed: 276. Stop after VERIFIED publish; no 1–277 audit.

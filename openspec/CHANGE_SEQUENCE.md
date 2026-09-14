@@ -394,3 +394,5 @@ rules as the original sequence:
 | 275 | `275-live-weather-cycle-integration` | Wire verified WeatherFramework (196) + doWeatherCycle into live Game: `__weather__` persistence, fixed-tick weather advance, `/weather` command, HUD chip, presentation applyWeather; unit + E2E; 258 stays BLOCKED. |
 
 | 276 | boss-bar-hud-parity | ACTIVE | HudParity boss bars over BossFramework; migrate #wither-boss-bar; 258 BLOCKED |
+
+| 277 | live-ambient-audio-integration | ACTIVE | AmbientAudioFramework live tick + injectable backend; 258 BLOCKED |

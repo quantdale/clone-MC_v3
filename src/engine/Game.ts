@@ -223,6 +223,13 @@ import {
 import { createNamedRng, type SeedRng } from '../simulation/SeedRng';
 import type { WeatherKind } from '../simulation/CoreCommands';
 import {
+  createDefaultAmbientState,
+  tickAmbient,
+  type AmbientState,
+  type AmbientEnvironment,
+} from '../simulation/AmbientAudioFramework';
+import { SilentAmbientBackend, type AmbientSoundBackend } from '../audio/AmbientSoundBackend';
+import {
   createDefaultHardcoreState,
   effectiveDifficulty,
   forcesPermanentDeath,
@@ -504,6 +511,11 @@ export class Game {
    * The wiring owns the RNG; the framework stays pure. Drawn every fixed tick.
    */
   private readonly weatherRng: SeedRng;
+  /** Ambient scheduler state (277); ephemeral — framework has no serialize. */
+  private ambient: AmbientState;
+  private readonly ambientRng: SeedRng;
+  private ambientBackend: AmbientSoundBackend = new SilentAmbientBackend();
+  private ambientMuted = false;
   /** HUD weather indicator (275, null until the shell binds it). */
   private weatherIndicatorEl: HTMLElement | null = null;
   /** Live block-tag registry (266 adventure resolution; built once beside HarvestRules). */
@@ -780,6 +792,8 @@ export class Game {
   ) {
     this.seed = seed ?? resolveGameSeed();
     this.weatherRng = createNamedRng(this.seed, 'weather');
+    this.ambientRng = createNamedRng(this.seed, 'ambient');
+    this.ambient = createDefaultAmbientState(() => this.ambientRng.nextFloat());
     this.gameCanvas = canvas;
 
     // Persistence composition happens first (249-DL-005): it has no
@@ -2145,6 +2159,8 @@ export class Game {
     // 5.5 Weather (275): the doWeatherCycle-gated 196 advance with world-seeded
     // duration rolls; the presentation folds the new state into the environment.
     this.tickWeatherCycle();
+    // 5.6 Ambient audio (277): scheduler + injectable backend.
+    this.tickAmbientAudio();
 
     // 6. Survival + status systems.
     const headY = Math.floor(py + CONFIG.player.eyeHeight);
@@ -4718,6 +4734,55 @@ export class Game {
    * this drives the real wiring deterministically without wall-clock reliance.
    * No production path calls this.
    */
+
+  /**
+   * Advance the 201 ambient scheduler one fixed tick (277) and deliver any cue
+   * to the injectable backend unless muted.
+   */
+  private tickAmbientAudio(): void {
+    const hours = this.lighting.getTimeOfDayHours();
+    const isDay = hours >= 6 && hours < 18;
+    const environment = this.resolveAmbientEnvironment();
+    const { state, cue } = tickAmbient(this.ambient, {
+      environment,
+      weather: this.weather.weather,
+      isDay,
+      rng: () => this.ambientRng.nextFloat(),
+    });
+    this.ambient = state;
+    if (cue && !this.ambientMuted) this.ambientBackend.playAmbientCue(cue);
+  }
+
+  /** Map player Y / dimension heuristics to an ambient environment id (277). */
+  private resolveAmbientEnvironment(): AmbientEnvironment {
+    const y = this.player.position.y;
+    if (y < 40) return 'cave';
+    if (y > 90) return 'plains';
+    return 'forest';
+  }
+
+  /** Test/E2E: replace the ambient backend (silent recorder in CI). */
+  setAmbientSoundBackend(backend: AmbientSoundBackend): void {
+    this.ambientBackend = backend;
+  }
+
+  setAmbientMuted(muted: boolean): void {
+    this.ambientMuted = muted;
+  }
+
+  isAmbientMuted(): boolean {
+    return this.ambientMuted;
+  }
+
+  getAmbientState(): AmbientState {
+    return this.ambient;
+  }
+
+  /** Test seam: run N ambient ticks with optional overrides. */
+  debugTickAmbient(times = 1): void {
+    for (let i = 0; i < times; i++) this.tickAmbientAudio();
+  }
+
   debugTickWeather(): void {
     this.tickWeatherCycle();
   }
