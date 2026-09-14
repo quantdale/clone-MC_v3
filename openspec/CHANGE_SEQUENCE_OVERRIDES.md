@@ -533,3 +533,9 @@ change **274-live-sleep-bed-integration** while Change
 
 Owner (Michael via Minecraft Clone Dev) authorizes Change **275-live-weather-cycle-integration** as the sole ACTIVE implementation change while **258** remains **BLOCKED**. Changes **259–274** stand **VERIFIED** and MUST NOT be reopened unless a regression blocks 275. Campaign continues through **277** only — no Changes 1–277 audit. Session start head for 275: `f872c88` (274 published tip).
 
+
+## 276-boss-bar-hud-parity (owner-authorized 2026-09-14)
+
+Authorize Change 276 as sole ACTIVE while Change 258 remains BLOCKED.
+Last completed: 275-live-weather-cycle-integration VERIFIED.
+Campaign through 277; no 1–277 audit.

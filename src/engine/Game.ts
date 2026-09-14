@@ -280,8 +280,9 @@ import {
 import type { LootStack } from '../inventory/LootTable';
 import { createDefaultBossRegistry } from '../simulation/BossFramework';
 import type { BossDefinition } from '../simulation/BossFramework';
-import { createWither, tickWither, damageWither, serializeWithers, deserializeWithers, bossBarProgress, witherExplosionWorld, WITHER_SPAWN_EXPLOSION_STRENGTH } from '../simulation/WitherBoss';
+import { createWither, tickWither, damageWither, serializeWithers, deserializeWithers, witherExplosionWorld, WITHER_SPAWN_EXPLOSION_STRENGTH } from '../simulation/WitherBoss';
 import type { WitherState } from '../simulation/WitherBoss';
+import { projectWitherBossBars } from '../ui/WitherBossBarParity';
 import { detectWitherSummon, consumeSummonStructure } from '../simulation/WitherSummon';
 import { createWitherSkull, stepWitherSkull, scaledWitherDuration } from '../simulation/WitherSkull';
 import type { WitherSkullState } from '../simulation/WitherSkull';
@@ -3687,6 +3688,46 @@ export class Game {
     return [...this.withers];
   }
 
+  /** Apply HudParity boss-bar projection to #wither-boss-bar (276). */
+  private syncWitherBossBarHud(): void {
+    if (!this.witherBossBarEl) return;
+    const views = projectWitherBossBars(this.withers, this.witherBossDefinition);
+    const first = views[0];
+    if (first) {
+      this.witherBossBarEl.classList.add('visible');
+      const fill = this.witherBossBarEl.querySelector('#wither-boss-bar-fill') as HTMLElement | null;
+      if (fill) {
+        fill.style.width = `${Math.round(first.progress * 100)}%`;
+        if (first.color) fill.style.backgroundColor = first.color;
+      }
+    } else {
+      this.witherBossBarEl.classList.remove('visible');
+    }
+  }
+
+  /** Test/E2E seam (276): spawn one wither at (x,y,z) and refresh the boss bar. */
+  debugSpawnWither(x: number, y: number, z: number): number {
+    const wither = createWither(this.nextWitherId++, x, y, z, this.witherBossDefinition);
+    this.withers.push(wither);
+    this.saveWithers();
+    this.syncWitherBossBarHud();
+    return wither.id;
+  }
+
+  /** Test/E2E seam (276): force ACTIVE status so damage/progress exercises the bar. */
+  debugActivateWither(id: number): boolean {
+    const idx = this.withers.findIndex((w) => w.id === id);
+    if (idx === -1) return false;
+    const w = this.withers[idx]!;
+    this.withers[idx] = {
+      ...w,
+      invulnerableTicks: 0,
+      bossState: { ...w.bossState, status: 'ACTIVE' },
+    };
+    this.syncWitherBossBarHud();
+    return true;
+  }
+
   /** Apply damage to a wither by id. Returns true when damage landed. */
   damageWitherById(id: number, amount: number, isProjectile = false): boolean {
     const idx = this.withers.findIndex((w) => w.id === id);
@@ -3711,6 +3752,7 @@ export class Game {
     }
     this.withers[idx] = next;
     this.saveWithers();
+    this.syncWitherBossBarHud();
     return true;
   }
 
@@ -3918,17 +3960,8 @@ export class Game {
       this.witherGroup.add(mesh);
       this.skullMeshes.set(i, mesh);
     }
-    // Boss bar.
-    if (this.witherBossBarEl) {
-      const first = this.withers[0];
-      if (first) {
-        this.witherBossBarEl.classList.add('visible');
-        const fill = this.witherBossBarEl.querySelector('#wither-boss-bar-fill') as HTMLElement | null;
-        if (fill) fill.style.width = `${Math.round(bossBarProgress(first) * 100)}%`;
-      } else {
-        this.witherBossBarEl.classList.remove('visible');
-      }
-    }
+    // Boss bar (276): HudParity projection over BossFramework snapshots.
+    this.syncWitherBossBarHud();
   }
 
   /** Whether the selected hotbar item is bone meal (the fertilization item). */

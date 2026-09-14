@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "status": "VERIFIED",
-  "currentChange": "275-live-weather-cycle-integration",
+  "currentChange": "276-boss-bar-hud-parity",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "275-live-weather-cycle-integration",
+  "lastCompletedChange": "276-boss-bar-hud-parity",
   "nextChange": "258-real-world-runtime-performance-fps-recovery",
   "completedTasks": 9,
   "totalTasks": 9,
@@ -15,9 +15,9 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "f872c889d722f77fa3d44e823f08d901de49e56a",
-  "localHead": "aa885783be35944cb33fd7c9647f7123b00af91c",
-  "nextExactAction": "Change 275-live-weather-cycle-integration VERIFIED 9/9 (100%, 2026-09-14 owner-authorized campaign through 277; 258 stays BLOCKED; 259-274 VERIFIED) \u2014 live weather cycle over 196 WeatherFramework + 197 presentation: world-scoped WeatherState + __weather__ persistence (degrade-to-defaults, no wake-on-boot, reset/archive carry), doWeatherCycle-gated fixed-tick tickWeatherCycle with world-seeded weather RNG rolls, setWeather/setWeatherFromText seam + saveWeather at autosave/dispose/pagehide, #weather-indicator HUD + presentWeather->applyWeatherToEnvironment. Gates: typecheck/lint 0 errors/unit 431 files 5184+1/build 2.32s/weather-cycle E2E 3/3/validate-state PASS; C275 matrix row exact. Published to origin/main this session. Next campaign step: 276 activation (when a new session starts).",
-  "lastCompletedTask": "Change 275-live-weather-cycle-integration VERIFIED 9/9 (session start f872c88; publish to origin/main this session)",
+  "localHead": "860817d8b732a2fb3efd6015a1401ed21376ae3b",
+  "nextExactAction": "Change 276-boss-bar-hud-parity VERIFIED 6/6 \u2014 published this session; next campaign step 277; 258 BLOCKED",
+  "lastCompletedTask": "Change 276-boss-bar-hud-parity VERIFIED 6/6",
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. 001-257 VERIFIED; game shippable with known performance-certification debt. The 259 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
@@ -2675,5 +2675,5 @@
     ]
   },
   "criticalRiskOpen": false,
-  "publishedTip": "aa885783be35944cb33fd7c9647f7123b00af91c"
+  "publishedTip": "860817d8b732a2fb3efd6015a1401ed21376ae3b"
 }
