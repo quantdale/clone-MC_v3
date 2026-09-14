@@ -158,6 +158,14 @@ export interface WorldArchive {
    * at load by `deserializeSleepState`, never trusted blindly).
    */
   sleepData?: unknown | null;
+  /**
+   * Raw weather payload stored under __weather__:${worldId}, or null when
+   * absent (275). OPTIONAL: archives without this field validate and
+   * import as null (clear). A present value must be a plain object payload
+   * (the 196 SerializedWeatherState shape is validated again at load by
+   * `deserializeWeatherState`, never trusted blindly).
+   */
+  weatherData?: unknown | null;
 }
 
 function isFiniteNumber(v: unknown): v is number {
@@ -393,13 +401,24 @@ export function validateWorldArchive(input: unknown): WorldArchive {
    // 274: optional in every version; missing/null reads as null. A present
    // value must be a plain object payload (the 198 shape is validated again
    // at load by `deserializeSleepState`, never trusted blindly).
-   let sleepData: unknown | null = null;
-   if (r.sleepData !== null && r.sleepData !== undefined) {
-     if (typeof r.sleepData !== 'object' || Array.isArray(r.sleepData)) {
-       throw new Error('WorldArchive: sleepData must be an object or null');
-     }
-     sleepData = r.sleepData;
-   }
+    let sleepData: unknown | null = null;
+    if (r.sleepData !== null && r.sleepData !== undefined) {
+      if (typeof r.sleepData !== 'object' || Array.isArray(r.sleepData)) {
+        throw new Error('WorldArchive: sleepData must be an object or null');
+      }
+      sleepData = r.sleepData;
+    }
+
+    // 275: optional in every version; missing/null reads as null. A present
+    // value must be a plain object payload (the 196 shape is validated again
+    // at load by `deserializeWeatherState`, never trusted blindly).
+    let weatherData: unknown | null = null;
+    if (r.weatherData !== null && r.weatherData !== undefined) {
+      if (typeof r.weatherData !== 'object' || Array.isArray(r.weatherData)) {
+        throw new Error('WorldArchive: weatherData must be an object or null');
+      }
+      weatherData = r.weatherData;
+    }
 
   return {
     format: WORLD_ARCHIVE_FORMAT as 'voxel-world',
@@ -423,5 +442,6 @@ export function validateWorldArchive(input: unknown): WorldArchive {
      difficultyData,
      statisticsData,
      sleepData,
+     weatherData,
    };
 }

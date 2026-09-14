@@ -6,6 +6,7 @@ import { InputManager } from './InputManager';
 import { ResourceManager } from './ResourceManager';
 import { Lighting } from '../rendering/Lighting';
 import { Environment } from '../rendering/Environment';
+import { applyWeatherToEnvironment, presentWeather } from '../rendering/WeatherPresentation';
 import { TextureAtlas } from '../rendering/TextureAtlas';
 import { Materials } from '../rendering/Materials';
 import { BlockId, BlockRegistry, createDefaultBlockRegistry, createDefaultBlockTags } from '../world/BlockRegistry';
@@ -212,6 +213,15 @@ import {
   spawnPoint,
   type SleepState,
 } from '../simulation/SleepFramework';
+import {
+  createDefaultWeatherState,
+  setWeather as setWeatherState,
+  serializeWeatherState,
+  tickWeather,
+  type WeatherState,
+} from '../simulation/WeatherFramework';
+import { createNamedRng, type SeedRng } from '../simulation/SeedRng';
+import type { WeatherKind } from '../simulation/CoreCommands';
 import {
   createDefaultHardcoreState,
   effectiveDifficulty,
@@ -485,6 +495,16 @@ export class Game {
   private sleep: SleepState = createDefaultSleepState();
   /** HUD sleep indicator (274, null until the shell binds it). */
   private sleepIndicatorEl: HTMLElement | null = null;
+  /** World-scoped weather state (275): the 196 store the live Game owns. */
+  private weather: WeatherState = createDefaultWeatherState();
+  /**
+   * World-seeded weather RNG stream (275, 054 named streams): supplies the
+   * deterministic transition-duration rolls so `tickWeather` advances purely.
+   * The wiring owns the RNG; the framework stays pure. Drawn every fixed tick.
+   */
+  private readonly weatherRng: SeedRng;
+  /** HUD weather indicator (275, null until the shell binds it). */
+  private weatherIndicatorEl: HTMLElement | null = null;
   /** Live block-tag registry (266 adventure resolution; built once beside HarvestRules). */
   private readonly blockTags: TagRegistry;
   /** Registry key of the Fire block, resolved once for the doFireTick gate (261). */
@@ -758,6 +778,7 @@ export class Game {
     bootstrap?: { persistence?: GamePersistence },
   ) {
     this.seed = seed ?? resolveGameSeed();
+    this.weatherRng = createNamedRng(this.seed, 'weather');
     this.gameCanvas = canvas;
 
     // Persistence composition happens first (249-DL-005): it has no
@@ -1035,6 +1056,25 @@ export class Game {
         if (late) {
           this.sleep = late;
           this.updateSleepIndicator();
+        }
+      }).catch(() => undefined);
+    }
+    // 275 weather: the persisted kind/timers when present, clear defaults
+    // otherwise (absent or corrupt records never break boot; the facade
+    // already degraded them to null). Unlike sleep there is no wake-on-boot
+    // mutation — weather is left exactly as persisted. Same late-load parity
+    // (the HUD indicator + presentation re-sync when the late payload lands).
+    this.weather = this.persistenceImpl?.initialWeather ?? createDefaultWeatherState();
+    this.updateWeatherIndicator();
+    this.applyWeatherPresentation();
+    if (this.selfOpenPromise !== null) {
+      void this.selfOpenPromise.then(() => {
+        if (this.disposed) return;
+        const late = this.persistenceImpl?.initialWeather;
+        if (late) {
+          this.weather = late;
+          this.updateWeatherIndicator();
+          this.applyWeatherPresentation();
         }
       }).catch(() => undefined);
     }
@@ -1398,6 +1438,9 @@ export class Game {
     // Sleep indicator (274): the HUD chip reflects the live sleep store.
     this.sleepIndicatorEl = document.getElementById('sleep-indicator');
     this.updateSleepIndicator();
+    // Weather indicator (275): the HUD chip reflects the live weather store.
+    this.weatherIndicatorEl = document.getElementById('weather-indicator');
+    this.updateWeatherIndicator();
 
     // Fixed-tick ownership (044): the driver turns frame deltas into bounded,
     // deterministic 20 TPS ticks; the tick body enforces the simulation order.
@@ -1531,6 +1574,7 @@ export class Game {
     this.saveDifficulty();
     this.saveStatistics();
     this.saveSleep();
+    this.saveWeather();
     this.saveTimer = 0;
     void this.persistenceImpl?.dispose().catch(() => undefined);
     if (this.unsubscribeHealth !== null) {
@@ -1736,6 +1780,7 @@ export class Game {
         this.saveDifficulty();
         this.saveStatistics();
         this.saveSleep();
+        this.saveWeather();
       }
     }
 
@@ -1843,6 +1888,10 @@ export class Game {
       this.lighting.getDaylightFactor(),
       this.lighting.getSunDirection(this.skySunDirection),
     );
+    // Weather presentation (275): fold the live weather's precipitation/thunder
+    // intensities (and coherent sky/fog darkening) into the shared environment
+    // each frame so the per-frame environment.update above preserves them.
+    this.applyWeatherPresentation();
 
     // Hide the loading indicator once the spawn area is ready.
     if (this.loadingShown) {
@@ -2092,6 +2141,10 @@ export class Game {
     // 5. Random/fluid ticks (048/050/125 dispatch over simulating sections).
     this.tickRandomBlocks();
 
+    // 5.5 Weather (275): the doWeatherCycle-gated 196 advance with world-seeded
+    // duration rolls; the presentation folds the new state into the environment.
+    this.tickWeatherCycle();
+
     // 6. Survival + status systems.
     const headY = Math.floor(py + CONFIG.player.eyeHeight);
     const headSubmerged = this.world.getBlock(
@@ -2294,6 +2347,29 @@ export class Game {
           .onRandomTick?.({ x, y, z, tick: this.simTick, world: this.worldBlockAccess, seed: this.seed });
       }
     });
+  }
+
+  /**
+   * Advance the live 196 weather one fixed tick (275). The `doWeatherCycle`
+   * gamerule gates the advance (false returns the IDENTICAL state, timers
+   * frozen — no natural transition); when enabled the world-seeded `weather`
+   * RNG stream supplies the transition-duration rolls each tick so the state
+   * machine stays deterministic. The presentation is re-folded into the
+   * environment after every advance so the shared state reflects the new kind.
+   */
+  private tickWeatherCycle(): void {
+    const doWeatherCycle = this.gameRules.doWeatherCycle !== false;
+    const rolls = {
+      clearDuration: this.weatherRng.nextIntInclusive(12000, 24000),
+      rainDuration: this.weatherRng.nextIntInclusive(12000, 24000),
+      thunderDuration: this.weatherRng.nextIntInclusive(3600, 15600),
+    };
+    const next = tickWeather(this.weather, doWeatherCycle, rolls);
+    if (next !== this.weather) {
+      this.weather = next;
+      this.updateWeatherIndicator();
+      this.applyWeatherPresentation();
+    }
   }
 
   /**
@@ -4451,6 +4527,75 @@ export class Game {
   }
 
   /**
+   * Set the live weather to `kind` for `duration` ticks (275, 196 `setWeather`
+   * semantics: clear -> {clear, d, 0}, rain -> {rain, d, 0}, thunder ->
+   * {thunder, d, d}; an unknown kind or a non-integer/negative duration is an
+   * identity no-op returning false). A successful set updates the store, persists
+   * it, and refreshes the HUD indicator + presentation (I-4). Returns whether
+   * the weather actually changed (or was set).
+   */
+  setWeather(kind: WeatherKind, duration: number): boolean {
+    const next = setWeatherState(this.weather, kind, duration);
+    if (next === this.weather) {
+      // Identity no-op: same kind and (for the 196 model) the duration encodes
+      // the timers, so an equal state means nothing to persist — but a re-set
+      // to the SAME kind with a different duration still changes timers, which
+      // the 196 model captures as a new object, so reaching here means no-op.
+      return false;
+    }
+    this.weather = next;
+    this.saveWeather();
+    this.updateWeatherIndicator();
+    this.applyWeatherPresentation();
+    return true;
+  }
+
+  /**
+   * Text entry for the weather command seam (275, mirroring 266
+   * `setGameModeFromText`): parse the 191 weather token, then apply. A
+   * non-weather token is a no-op returning false; the default duration is the
+   * vanilla 12000-tick clear/rain period (thunder uses its own 3600-15600 band
+   * on natural rolls, but a manual set uses 12000 for a stable, testable period).
+   */
+  setWeatherFromText(text: string): boolean {
+    if (typeof text !== 'string') return false;
+    const kind = text.trim().toLowerCase();
+    if (kind !== 'clear' && kind !== 'rain' && kind !== 'thunder') return false;
+    return this.setWeather(kind, 12000);
+  }
+
+  /** The live world-scoped weather state (275 read-only accessor; E2E surface). */
+  getWeatherState(): WeatherState {
+    return this.weather;
+  }
+
+  /** Serialize the live weather into the durable record (275; no-op without persistence). */
+  saveWeather(): void {
+    const p = this.persistenceImpl;
+    if (!p || this.recoveryRequiredValue) return;
+    p.saveWeather(serializeWeatherState(this.weather));
+  }
+
+  /** Sync the HUD weather indicator to the live store (275, null-safe pre-shell). */
+  private updateWeatherIndicator(): void {
+    if (!this.weatherIndicatorEl) return;
+    const raining = this.weather.weather !== 'clear';
+    this.weatherIndicatorEl.classList.toggle('hidden', !raining);
+    this.weatherIndicatorEl.textContent = this.weather.weather === 'thunder' ? '⛈ Thunder' : '🌧 Rain';
+  }
+
+  /**
+   * Fold the live weather's presentation into the shared environment (275).
+   * The fixed-tick advance, a manual set, and boot hydration all call this so
+   * the sky/fog/precipitation always reflect the current weather kind; the
+   * per-frame `environment.update` preserves the intensities it does not touch.
+   */
+  private applyWeatherPresentation(): void {
+    const presentation = presentWeather(this.weather);
+    applyWeatherToEnvironment(this.environment.environment, presentation, this.environment.environment);
+  }
+
+  /**
    * Run the 198 bed rules for the bed at `(x, y, z)` (274). A same-bed use
    * while sleeping leaves (spawn kept) and is NOT time-gated — a player is
    * always able to wake. Entering a free bed runs the `canSleep` gate
@@ -4531,6 +4676,17 @@ export class Game {
    */
   debugFreezeClock(): void {
     this.lighting.freeze();
+  }
+
+  /**
+   * E2E seam (275, 245/274 test-hook precedent): run one weather fixed tick
+   * (the exact {@link tickWeatherCycle} body — the real `doWeatherCycle` gate,
+   * world-seeded rolls, and 196 advance). The headless E2E loop is paused, so
+   * this drives the real wiring deterministically without wall-clock reliance.
+   * No production path calls this.
+   */
+  debugTickWeather(): void {
+    this.tickWeatherCycle();
   }
 
   /** Sync the HUD sleep indicator to the live store (274, null-safe pre-shell). */
@@ -4927,6 +5083,7 @@ export class Game {
     this.saveDifficulty();
     this.saveStatistics();
     this.saveSleep();
+    this.saveWeather();
     this.saveTimer = 0;
   };
 

@@ -127,6 +127,7 @@ describe('WorldArchiver', () => {
       hardcoreDataImported: false,
       difficultyDataImported: false,
       statisticsDataImported: false,
+      weatherDataImported: false,
     });
     expect(await target.metadata.getMetadata(WORLD)).not.toBeNull();
     expect(await target.chunkSections.listColumns(WORLD)).toHaveLength(2);

@@ -95,6 +95,10 @@ import {
   deserializeSleepState,
   type SleepState,
 } from '../simulation/SleepFramework';
+import {
+  deserializeWeatherState,
+  type WeatherState,
+} from '../simulation/WeatherFramework';
 import { coreProgressionAdvancements } from '../simulation/CoreProgressionAdvancements';
 
 /**
@@ -358,6 +362,8 @@ export class GamePersistence implements WorldEditDurability {
   private initialStatisticsValue: StatisticStore | null = null;
   /** Validated sleep state bulk-loaded at open() (274; null when absent or corrupt). Wake-on-boot applied: sleeping forced false. */
   private initialSleepValue: SleepState | null = null;
+  /** Validated weather state bulk-loaded at open() (275; null when absent or corrupt; degrade-to-default at boot). */
+  private initialWeatherValue: WeatherState | null = null;
   private initialColumnsValue: SerializedChunkColumn[] = [];
   /** World generation baseline compatibility classification. */
   private generationBaselineValue: WorldGenerationBaseline = 'current';
@@ -797,6 +803,19 @@ export class GamePersistence implements WorldEditDurability {
         this.initialSleepValue = null;
         this.recordError(`load sleep: ${errorMessage(e)}`);
       }
+      // 275 hydration: weather payload stored via raw weather data. Absent stays
+      // null (Game boots the default clear state); corrupt payloads degrade to
+      // null with a recorded error so boot continues on defaults. Full strict
+      // validation is the 196 deserializer (version + weather + integer
+      // non-negative timers + exact key set). No wake-on-boot mutation — the
+      // persisted weather kind/timers are restored as-is (I-1/I-5).
+      try {
+        const raw = await this.metadata.getWeatherData(this.worldIdValue);
+        if (raw !== null) this.initialWeatherValue = deserializeWeatherState(raw);
+      } catch (e) {
+        this.initialWeatherValue = null;
+        this.recordError(`load weather: ${errorMessage(e)}`);
+      }
     }
 
     // 5.5 Authoritative startup compatibility decision (257). Computed after the
@@ -880,6 +899,7 @@ export class GamePersistence implements WorldEditDurability {
       this.initialDifficultyValue = null;
       this.initialStatisticsValue = null;
       this.initialSleepValue = null;
+      this.initialWeatherValue = null;
       this.initialColumnsValue = [];
     }
     this.opened = true;
@@ -942,6 +962,7 @@ export class GamePersistence implements WorldEditDurability {
       difficultyData: unknown | null;
       statisticsData: unknown | null;
       sleepData: unknown | null;
+      weatherData: unknown | null;
       columns: SerializedChunkColumn[];
       edits: Array<{ chunkX: number; chunkY: number; chunkZ: number; changes: Array<[number, number]> }>;
       playerState: PlayerStateRecord | null;
@@ -960,7 +981,8 @@ export class GamePersistence implements WorldEditDurability {
       const hardcoreData = await this.metadata.getHardcoreData(worldId);
       const difficultyData = await this.metadata.getDifficultyData(worldId);
        const statisticsData = await this.metadata.getStatisticData(worldId);
-       const sleepData = await this.metadata.getSleepData(worldId);
+        const sleepData = await this.metadata.getSleepData(worldId);
+        const weatherData = await this.metadata.getWeatherData(worldId);
        const columns = await this.chunkSections.listColumns(worldId);
       const editRecords = await this.chunkEdits.listChunkEdits(worldId);
       const playerState = await this.playerStates.getPlayerState(worldId);
@@ -979,6 +1001,7 @@ export class GamePersistence implements WorldEditDurability {
         difficultyData,
         statisticsData,
         sleepData,
+        weatherData,
         columns: [...columns],
         edits: editRecords.map((r) => ({ chunkX: r.chunkX, chunkY: r.chunkY, chunkZ: r.chunkZ, changes: [...r.changes] })),
         playerState,
@@ -1038,6 +1061,8 @@ export class GamePersistence implements WorldEditDurability {
         await awaitRequest(metaStore.delete(`__statistics__:${worldId}`));
         // 2i. Raw sleep record (274; separate key in the same metadata store).
         await awaitRequest(metaStore.delete(`__sleep__:${worldId}`));
+        // 2j. Raw weather record (275; separate key in the same metadata store).
+        await awaitRequest(metaStore.delete(`__weather__:${worldId}`));
         // 3. Every chunk column for this world. Key shape: `${worldId}|${cx}|${cz}`.
         for (const column of snapshot!.columns) {
           await awaitRequest(csStore.delete(worldChunkKey(worldId, column.chunkX, column.chunkZ)));
@@ -1079,6 +1104,7 @@ export class GamePersistence implements WorldEditDurability {
         if (snapshot!.difficultyData !== null) await this.metadata.putDifficultyData(worldId, snapshot!.difficultyData);
         if (snapshot!.statisticsData !== null) await this.metadata.putStatisticData(worldId, snapshot!.statisticsData);
         if (snapshot!.sleepData !== null) await this.metadata.putSleepData(worldId, snapshot!.sleepData);
+        if (snapshot!.weatherData !== null) await this.metadata.putWeatherData(worldId, snapshot!.weatherData);
         for (const col of snapshot!.columns) await this.chunkSections.putColumn(worldId, col);
         for (const rec of snapshot!.edits) await this.chunkEdits.putChunkEdits(worldId, rec.chunkX, rec.chunkY, rec.chunkZ, rec.changes);
         if (snapshot!.playerState) await this.playerStates.putPlayerState(snapshot!.playerState);
@@ -1432,6 +1458,11 @@ export class GamePersistence implements WorldEditDurability {
     return this.initialSleepValue;
   }
 
+  /** Validated weather state bulk-loaded at `open()` (275; null when absent or corrupt; degrade-to-default). */
+  get initialWeather(): WeatherState | null {
+    return this.initialWeatherValue;
+  }
+
   /** Bulk-loaded persisted canonical columns for this world. */
   get initialColumns(): SerializedChunkColumn[] {
     return this.initialColumnsValue;
@@ -1496,6 +1527,12 @@ export class GamePersistence implements WorldEditDurability {
   saveSleep(payload: unknown): void {
     if (this.disposed || this.resetCompleted) return;
     void this.metadata.putSleepData(this.worldIdValue, payload).catch((e) => this.recordError(`save sleep: ${errorMessage(e)}`));
+  }
+
+  /** Persist the weather payload via raw weather data (275). */
+  saveWeather(payload: unknown): void {
+    if (this.disposed || this.resetCompleted) return;
+    void this.metadata.putWeatherData(this.worldIdValue, payload).catch((e) => this.recordError(`save weather: ${errorMessage(e)}`));
   }
 
   /** Persist the XP-orb snapshot via raw XP-orb data (264). */

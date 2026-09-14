@@ -36597,7 +36597,7 @@
         "tests/unit/GameStartupPersistence.test.ts"
       ],
       "testEvidence": [
-        "Indirectly tested by every test that uses createIdbFactoryMock \u2014 the mock now matches real IDB multi-store + oncomplete timing, so the same mock can drive the multi-store reset path."
+        "Indirectly tested by every test that uses createIdbFactoryMock — the mock now matches real IDB multi-store + oncomplete timing, so the same mock can drive the multi-store reset path."
       ],
       "riskAreas": [
         "mock-vs-real-fidelity"
@@ -42389,7 +42389,7 @@
         "F257-D",
         "F257-K"
       ],
-      "disposition": "NEW \u2014 22 fault-injection tests added in the 257 reopen",
+      "disposition": "NEW — 22 fault-injection tests added in the 257 reopen",
       "reviewNotes": "Covers every read class (7 stores), every delete class (6 stores), ownership rejection (metadata + playerState), and round-trip payload equality (every field) plus foreign-world preservation.",
       "status": "audited"
     },
@@ -44987,6 +44987,134 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 274 change; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/275-live-weather-cycle-integration/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "275 live weather-cycle product proposal (196 seam live, scope, risks)",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 275 change; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/275-live-weather-cycle-integration/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "275 live weather-cycle design (current/target state, invariants I-1..I-5, sites)",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 275 change; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/275-live-weather-cycle-integration/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "275 live weather-cycle task list (persistence/tick/command+HUD/tests/gate)",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 275 change; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/275-live-weather-cycle-integration/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "275 live weather-cycle verification record (requirement evidence + gate results)",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 275 change; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/275-live-weather-cycle-integration/specs/live-weather-cycle-integration/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "275 live weather-cycle normative spec (persistence/tick/command requirements + scenarios)",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 275 change; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/WeatherPersistence.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "275 live weather-cycle unit suite (persist round-trips + corrupt-payload degrade, 19 cases)",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 275 change; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/WeatherIntegration.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "275 live weather-cycle unit suite (composition oracles I-1..I-5, 12 cases)",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 275 change; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/e2e/weather-cycle.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "275 live weather-cycle browser E2E (set/gamerule-gate/reload persistence)",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 275 change; no findings",
       "status": "audited"
     }
   ]

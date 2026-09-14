@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "status": "ACTIVE",
-  "currentChange": "274-live-sleep-bed-integration",
+  "status": "VERIFIED",
+  "currentChange": "275-live-weather-cycle-integration",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "274-live-sleep-bed-integration",
+  "lastCompletedChange": "275-live-weather-cycle-integration",
   "nextChange": "258-real-world-runtime-performance-fps-recovery",
-  "completedTasks": 13,
-  "totalTasks": 13,
+  "completedTasks": 9,
+  "totalTasks": 9,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -14,14 +14,21 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "f903fd2b655c653e9292b6c3432cd655cd7855e2",
-  "localHead": "f903fd2b655c653e9292b6c3432cd655cd7855e2",
-  "nextExactAction": "Change 274-live-sleep-bed-integration VERIFIED 13/13 + published to origin/main (2026-09-13). Live bed + sleep-spawn integration over the 198 sleep framework: bed block/item, __sleep__ persistence with wake-on-boot, useBedAt night-gated enter/leave + occupied rejection, bed-aware respawn, toasts + #sleep-indicator. Gates: typecheck/lint 0 errors/unit green/build PASS/sleep-bed E2E 4/4/259-273 split E2E regression/validate-state PASS. 258 stays BLOCKED (headed hardware-WebGL certification, owner-deferred). Campaign through 277 per 2026-09-13 owner order; 275 next on owner/shepherd start.",
-  "lastCompletedTask": "Change 273-chunksection-isempty-air-check VERIFIED 10/10 (2026-09-12): one-predicate isEmpty fix (single palette entry must be airId) + 8 new unit proofs (ChunkSection 273 block 7 + Mesher mono-stone 1) + R-8 FULLY CLOSED + C273 row. Session start 93de62f (fetched; local HEAD equaled remote).",
+  "sessionStartHead": "f872c889d722f77fa3d44e823f08d901de49e56a",
+  "localHead": "f872c889d722f77fa3d44e823f08d901de49e56a",
+  "nextExactAction": "Change 275-live-weather-cycle-integration VERIFIED 9/9 (100%, 2026-09-14 owner-authorized campaign through 277; 258 stays BLOCKED; 259-274 VERIFIED) — live weather cycle over 196 WeatherFramework + 197 presentation: world-scoped WeatherState + __weather__ persistence (degrade-to-defaults, no wake-on-boot, reset/archive carry), doWeatherCycle-gated fixed-tick tickWeatherCycle with world-seeded weather RNG rolls, setWeather/setWeatherFromText seam + saveWeather at autosave/dispose/pagehide, #weather-indicator HUD + presentWeather->applyWeatherToEnvironment. Gates: typecheck/lint 0 errors/unit 431 files 5184+1/build 2.32s/weather-cycle E2E 3/3/validate-state PASS; C275 matrix row exact. Published to origin/main this session. Next campaign step: 276 activation (when a new session starts).",
+  "lastCompletedTask": "Change 275-live-weather-cycle-integration VERIFIED 9/9 (session start f872c88; publish to origin/main this session)",
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. 001-257 VERIFIED; game shippable with known performance-certification debt. The 259 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
   "validationResults": [
+    {
+      "change": "275-live-weather-cycle-integration",
+      "status": "VERIFIED",
+      "unitTests": 5184,
+      "e2eTests": 3,
+      "note": "Owner-authorized 2026-09-14 (campaign through 277), implemented while 258 stays BLOCKED and 259-274 stay VERIFIED. 9/9 tasks: live Game owns one world-scoped WeatherState (196) hydrated from __weather__:<worldId> with no wake-on-boot mutation; versioned __weather__ persistence (degrade-to-clear-defaults, reset delete, archive export/import carry with weatherDataImported flag); doWeatherCycle-gated fixed-tick tickWeatherCycle with world-seeded 'weather'-named RNG duration rolls (OFF => identity no-op); setWeather/setWeatherFromText/getWeatherState seam + saveWeather at autosave/dispose/pagehide; #weather-indicator HUD + presentWeather->applyWeatherToEnvironment; debugTickWeather test-only seam. Gates: typecheck/lint 0 errors/unit 431 files 5184+1 (WeatherFramework 18/Presentation 5/Persistence 19/Integration 12/Archiver 6)/build 2.32s/weather-cycle E2E 3/3 (I-4/I-5, I-2, I-3)/validate-state PASS; C275 matrix row exact."
+    },
     {
       "change": "272-lighting-clock-dt-sync",
       "status": "VERIFIED",

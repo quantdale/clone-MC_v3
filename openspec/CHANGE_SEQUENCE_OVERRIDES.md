@@ -528,3 +528,8 @@ change **274-live-sleep-bed-integration** while Change
 - Change 258 remains recorded BLOCKED and resumable on a hardware-WebGL
   host; the 274 track does not consume, waive, or re-litigate any 258 headed
   task.
+
+## 275 activation (2026-09-14, 274–277 campaign; 258 BLOCKED; 275 sole ACTIVE)
+
+Owner (Michael via Minecraft Clone Dev) authorizes Change **275-live-weather-cycle-integration** as the sole ACTIVE implementation change while **258** remains **BLOCKED**. Changes **259–274** stand **VERIFIED** and MUST NOT be reopened unless a regression blocks 275. Campaign continues through **277** only — no Changes 1–277 audit. Session start head for 275: `f872c88` (274 published tip).
+

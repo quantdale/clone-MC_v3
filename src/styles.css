@@ -55,8 +55,9 @@ body {
 #statistics.hidden,
 #creative.hidden,
 #break-progress.hidden,
-#hardcore-badge.hidden,
-#sleep-indicator.hidden,
+  #hardcore-badge.hidden,
+  #sleep-indicator.hidden,
+  #weather-indicator.hidden,
 #toast.hidden,
 #debug-overlay.hidden {
   display: none;
@@ -1119,6 +1120,13 @@ body {
   top: 204px;
   right: 8px;
   color: #cfe3ff;
+  font-weight: 700;
+}
+/* Weather indicator (275): HUD chip, visible only while raining or thundering. */
+#weather-indicator {
+  top: 236px;
+  right: 8px;
+  color: #bcd8ff;
   font-weight: 700;
 }
 /* Difficulty select (267): gamerule-input sizing with select affordance. */
