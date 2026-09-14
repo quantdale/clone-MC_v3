@@ -67,6 +67,7 @@ export const enum BlockId {
   SoulSoil = 60,
   WitherSkull = 61,
   BrewingStand = 62,
+  Bed = 63,
 }
 
 /**
@@ -1293,7 +1294,26 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       hardness: 0.5,
       preferredTool: ToolKind.Pickaxe,
       miningLevel: 0,
-      dropItem: rid('brewing_stand'),
+       dropItem: rid('brewing_stand'),
+    },
+    {
+      // Live bed (274): a passable low block (non-solid) over tile 69 art.
+      // Single-state (no property schema), hand-breakable (miningLevel 0,
+      // NetherWart low-block precedent), quick to mine (0.5). The 274
+      // bed-use interaction path reads the block cell directly.
+      id: BlockId.Bed,
+      resourceId: rid('bed'),
+      key: 'bed',
+      name: 'Bed',
+      solid: false,
+      opaque: false,
+      breakable: true,
+      renderCategory: RenderCategory.Transparent,
+      topTile: 69,
+      bottomTile: 69,
+      sideTile: 69,
+      hardness: 0.5,
+      dropItem: rid('bed'),
     },
   ];
   return new BlockTypeRegistry(defs);

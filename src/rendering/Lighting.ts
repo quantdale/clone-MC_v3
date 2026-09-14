@@ -119,6 +119,26 @@ export class Lighting {
     return (12 + (this.worldSeconds / CONFIG.dayNight.dayLength) * 24) % 24;
   }
 
+  /**
+   * Test-only (274): halt clock + sun advancement WITHOUT altering the sun
+   * direction, so a night-skip lands on an exact deterministic tick. The
+   * test-only `setWorldSeconds` still sets the clock directly (bypasses this).
+   */
+  freeze(): void {
+    this.frozen = true;
+  }
+
+  /** Current elapsed seconds within the day (274: the 198-tick domain maps off this). */
+  getWorldSeconds(): number {
+    return this.worldSeconds;
+  }
+
+  /** Set the clock to an exact elapsed-second offset (274: night skip + test seam). */
+  setWorldSeconds(seconds: number): void {
+    const length = CONFIG.dayNight.dayLength;
+    this.worldSeconds = ((seconds % length) + length) % length;
+  }
+
   /** Copy the current sun direction into a caller-owned vector. */
   getSunDirection(target: THREE.Vector3): THREE.Vector3 {
     return target.copy(this.sunDirection);

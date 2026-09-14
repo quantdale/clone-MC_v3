@@ -18,6 +18,9 @@
  * item/XP sets.
  * Change 265 adds an optional `gameModeData` field (missing reads as null);
  * v1 and v2 archives without it validate and import with null (survival).
+ * Change 274 adds an optional `sleepData` field (missing reads as null);
+ * v1 and v2 archives without it validate and import with null (awake, no
+ * spawn).
  */
 import type { WorldMetadata } from './WorldMetadata';
 import { validateWorldMetadata } from './WorldMetadata';
@@ -147,6 +150,14 @@ export interface WorldArchive {
    * `deserializeStatisticStore`, never trusted blindly).
    */
   statisticsData?: unknown | null;
+  /**
+   * Raw sleep payload stored under __sleep__:${worldId}, or null when
+   * absent (274). OPTIONAL: archives without this field validate and
+   * import as null (awake, no spawn). A present value must be a plain
+   * object payload (the 198 SerializedSleepState shape is validated again
+   * at load by `deserializeSleepState`, never trusted blindly).
+   */
+  sleepData?: unknown | null;
 }
 
 function isFiniteNumber(v: unknown): v is number {
@@ -371,13 +382,24 @@ export function validateWorldArchive(input: unknown): WorldArchive {
   // 271: optional in every version; missing/null reads as null. A present
   // value must be a plain object payload (the 187 shape is validated again
   // at load by `deserializeStatisticStore`, never trusted blindly).
-  let statisticsData: unknown | null = null;
-  if (r.statisticsData !== null && r.statisticsData !== undefined) {
-    if (typeof r.statisticsData !== 'object' || Array.isArray(r.statisticsData)) {
-      throw new Error('WorldArchive: statisticsData must be an object or null');
-    }
-    statisticsData = r.statisticsData;
-  }
+   let statisticsData: unknown | null = null;
+   if (r.statisticsData !== null && r.statisticsData !== undefined) {
+     if (typeof r.statisticsData !== 'object' || Array.isArray(r.statisticsData)) {
+       throw new Error('WorldArchive: statisticsData must be an object or null');
+     }
+     statisticsData = r.statisticsData;
+   }
+
+   // 274: optional in every version; missing/null reads as null. A present
+   // value must be a plain object payload (the 198 shape is validated again
+   // at load by `deserializeSleepState`, never trusted blindly).
+   let sleepData: unknown | null = null;
+   if (r.sleepData !== null && r.sleepData !== undefined) {
+     if (typeof r.sleepData !== 'object' || Array.isArray(r.sleepData)) {
+       throw new Error('WorldArchive: sleepData must be an object or null');
+     }
+     sleepData = r.sleepData;
+   }
 
   return {
     format: WORLD_ARCHIVE_FORMAT as 'voxel-world',
@@ -398,7 +420,8 @@ export function validateWorldArchive(input: unknown): WorldArchive {
     xpOrbData,
     gameModeData,
     hardcoreData,
-    difficultyData,
-    statisticsData,
-  };
+     difficultyData,
+     statisticsData,
+     sleepData,
+   };
 }

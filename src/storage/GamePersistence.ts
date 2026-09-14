@@ -91,6 +91,10 @@ import {
   deserializeStatisticStore,
   type StatisticStore,
 } from '../simulation/StatisticsFramework';
+import {
+  deserializeSleepState,
+  type SleepState,
+} from '../simulation/SleepFramework';
 import { coreProgressionAdvancements } from '../simulation/CoreProgressionAdvancements';
 
 /**
@@ -352,6 +356,8 @@ export class GamePersistence implements WorldEditDurability {
   private initialDifficultyValue: DifficultyLevel | null = null;
   /** Validated statistic store bulk-loaded at open() (271; null when absent or corrupt). */
   private initialStatisticsValue: StatisticStore | null = null;
+  /** Validated sleep state bulk-loaded at open() (274; null when absent or corrupt). Wake-on-boot applied: sleeping forced false. */
+  private initialSleepValue: SleepState | null = null;
   private initialColumnsValue: SerializedChunkColumn[] = [];
   /** World generation baseline compatibility classification. */
   private generationBaselineValue: WorldGenerationBaseline = 'current';
@@ -775,6 +781,22 @@ export class GamePersistence implements WorldEditDurability {
         this.initialStatisticsValue = null;
         this.recordError(`load statistics: ${errorMessage(e)}`);
       }
+      // 274 hydration: sleep payload stored via raw sleep data. Absent stays
+      // null (Game boots the default awake/no-spawn state); corrupt payloads
+      // degrade to null with a recorded error so boot continues on defaults.
+      // Full strict validation is the 198 deserializer (version + booleans +
+      // 3-finite-number spawn + exact key set). Wake-on-boot: a hydrated
+      // sleeping flag is forced false — sleeping never survives a boot (I-5).
+      try {
+        const raw = await this.metadata.getSleepData(this.worldIdValue);
+        if (raw !== null) {
+          const hydrated = deserializeSleepState(raw);
+          this.initialSleepValue = { sleeping: false, spawnSet: hydrated.spawnSet, spawn: [...hydrated.spawn] };
+        }
+      } catch (e) {
+        this.initialSleepValue = null;
+        this.recordError(`load sleep: ${errorMessage(e)}`);
+      }
     }
 
     // 5.5 Authoritative startup compatibility decision (257). Computed after the
@@ -857,6 +879,7 @@ export class GamePersistence implements WorldEditDurability {
       this.initialHardcoreValue = null;
       this.initialDifficultyValue = null;
       this.initialStatisticsValue = null;
+      this.initialSleepValue = null;
       this.initialColumnsValue = [];
     }
     this.opened = true;
@@ -918,6 +941,7 @@ export class GamePersistence implements WorldEditDurability {
       hardcoreData: unknown | null;
       difficultyData: unknown | null;
       statisticsData: unknown | null;
+      sleepData: unknown | null;
       columns: SerializedChunkColumn[];
       edits: Array<{ chunkX: number; chunkY: number; chunkZ: number; changes: Array<[number, number]> }>;
       playerState: PlayerStateRecord | null;
@@ -935,8 +959,9 @@ export class GamePersistence implements WorldEditDurability {
       const gameModeData = await this.metadata.getGameModeData(worldId);
       const hardcoreData = await this.metadata.getHardcoreData(worldId);
       const difficultyData = await this.metadata.getDifficultyData(worldId);
-      const statisticsData = await this.metadata.getStatisticData(worldId);
-      const columns = await this.chunkSections.listColumns(worldId);
+       const statisticsData = await this.metadata.getStatisticData(worldId);
+       const sleepData = await this.metadata.getSleepData(worldId);
+       const columns = await this.chunkSections.listColumns(worldId);
       const editRecords = await this.chunkEdits.listChunkEdits(worldId);
       const playerState = await this.playerStates.getPlayerState(worldId);
       const blockEntityChunks = await this.blockEntities.listChunks(worldId);
@@ -953,6 +978,7 @@ export class GamePersistence implements WorldEditDurability {
         hardcoreData,
         difficultyData,
         statisticsData,
+        sleepData,
         columns: [...columns],
         edits: editRecords.map((r) => ({ chunkX: r.chunkX, chunkY: r.chunkY, chunkZ: r.chunkZ, changes: [...r.changes] })),
         playerState,
@@ -1010,6 +1036,8 @@ export class GamePersistence implements WorldEditDurability {
         await awaitRequest(metaStore.delete(`__difficulty__:${worldId}`));
         // 2h. Raw statistics record (271; separate key in the same metadata store).
         await awaitRequest(metaStore.delete(`__statistics__:${worldId}`));
+        // 2i. Raw sleep record (274; separate key in the same metadata store).
+        await awaitRequest(metaStore.delete(`__sleep__:${worldId}`));
         // 3. Every chunk column for this world. Key shape: `${worldId}|${cx}|${cz}`.
         for (const column of snapshot!.columns) {
           await awaitRequest(csStore.delete(worldChunkKey(worldId, column.chunkX, column.chunkZ)));
@@ -1050,6 +1078,7 @@ export class GamePersistence implements WorldEditDurability {
         if (snapshot!.hardcoreData !== null) await this.metadata.putHardcoreData(worldId, snapshot!.hardcoreData);
         if (snapshot!.difficultyData !== null) await this.metadata.putDifficultyData(worldId, snapshot!.difficultyData);
         if (snapshot!.statisticsData !== null) await this.metadata.putStatisticData(worldId, snapshot!.statisticsData);
+        if (snapshot!.sleepData !== null) await this.metadata.putSleepData(worldId, snapshot!.sleepData);
         for (const col of snapshot!.columns) await this.chunkSections.putColumn(worldId, col);
         for (const rec of snapshot!.edits) await this.chunkEdits.putChunkEdits(worldId, rec.chunkX, rec.chunkY, rec.chunkZ, rec.changes);
         if (snapshot!.playerState) await this.playerStates.putPlayerState(snapshot!.playerState);
@@ -1398,6 +1427,11 @@ export class GamePersistence implements WorldEditDurability {
     return this.initialStatisticsValue;
   }
 
+  /** Validated sleep state bulk-loaded at `open()` (274; null when absent or corrupt; wake-on-boot applied). */
+  get initialSleep(): SleepState | null {
+    return this.initialSleepValue;
+  }
+
   /** Bulk-loaded persisted canonical columns for this world. */
   get initialColumns(): SerializedChunkColumn[] {
     return this.initialColumnsValue;
@@ -1456,6 +1490,12 @@ export class GamePersistence implements WorldEditDurability {
   saveStatistics(payload: unknown): void {
     if (this.disposed || this.resetCompleted) return;
     void this.metadata.putStatisticData(this.worldIdValue, payload).catch((e) => this.recordError(`save statistics: ${errorMessage(e)}`));
+  }
+
+  /** Persist the sleep payload via raw sleep data (274). */
+  saveSleep(payload: unknown): void {
+    if (this.disposed || this.resetCompleted) return;
+    void this.metadata.putSleepData(this.worldIdValue, payload).catch((e) => this.recordError(`save sleep: ${errorMessage(e)}`));
   }
 
   /** Persist the XP-orb snapshot via raw XP-orb data (264). */

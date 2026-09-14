@@ -33,6 +33,7 @@ describe('block registry', () => {
       [BlockId.Farmland, 'farmland'],
       [BlockId.Fire, 'fire'],
       [BlockId.BrewingStand, 'brewing_stand'],
+      [BlockId.Bed, 'bed'],
     ];
     for (const [id, key] of required) {
       const def = registry.get(id);
@@ -42,7 +43,7 @@ describe('block registry', () => {
       expect(registry.getByKey(def.key)?.id).toBe(id);
     }
     // The ids are unique and map back to the same definitions.
-    expect(registry.all()).toHaveLength(51);
+    expect(registry.all()).toHaveLength(52);
   });
 
   it('registers the enchanting-table and bookshelf blocks (120)', () => {

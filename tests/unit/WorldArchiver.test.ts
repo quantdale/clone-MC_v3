@@ -119,6 +119,7 @@ describe('WorldArchiver', () => {
       witherDataImported: false,
       gameruleDataImported: false,
       recipeBookDataImported: false,
+      sleepDataImported: false,
       advancementDataImported: false,
       itemEntityDataImported: false,
       xpOrbDataImported: false,

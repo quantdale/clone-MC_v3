@@ -484,3 +484,47 @@ while Change **258-real-world-runtime-performance-fps-recovery** remains **BLOCK
 - This is the **final owner-requested campaign of the current chain**: after
   273 is VERIFIED and published to `origin/main`, the session MUST STOP and
   MUST NOT author or activate any 274+ change.
+
+## 274 activation alongside BLOCKED 258 — owner-authorized parallel track, 2026-09-13 campaign (274 through 277)
+
+The product owner (Standing owner order, 2026-09-13, Minecraft Clone Dev /
+Michael master directive) authorized activating and implementing OpenSpec
+change **274-live-sleep-bed-integration** while Change
+**258-real-world-runtime-performance-fps-recovery** remains **BLOCKED**
+(headed hardware-WebGL certification deferred) and Changes
+**259-enchanting-panel-ui**, **260-live-brewing-stand-production-integration**,
+**261-gamerule-settings-ui**, **262-recipe-book-ui**,
+**263-advancement-panel-ui**, **264-item-xp-entity-persistence-hardening**,
+**265-live-creative-mode-integration**, **266-live-adventure-spectator-integration**,
+**267-live-hardcore-mode-integration**, **268-ci-immutable-action-pins**,
+**269-composed-game-dispose-worker-terminate**, **270-leaf-apple-loot-probability**,
+**271-statistics-panel-ui**, **272-lighting-clock-dt-sync**, and
+**273-chunksection-isempty-air-check** stand **VERIFIED**.
+
+- This 2026-09-13 master directive **supersedes** the 273 section's
+  "final campaign / STOP / no 274+" clause: the owner re-authorized a
+  parallel track running **274 through 277**. Each change in that track
+  still gets its own activation section here as it is activated.
+- Change 258 status stays **BLOCKED** at 40/100 with its existing deferral
+  intact. No headed FPS work is touched, no GPU evidence is faked, and 258
+  MUST NOT be marked VERIFIED by the 274 track.
+- Changes 259 (18/18), 260 (19/19), 261 (16/16), 262 (14/14), 263 (15/15),
+  264 (13/13), 265 (13/13), 266 (13/13), 267 (13/13), 268 (12/12), 269 (12/12),
+  270 (12/12), 271 (14/14), 272 (10/10), and 273 (10/10) stand **VERIFIED**
+  and MUST NOT be reopened unless a sleep/bed regression blocks the 274
+  integration path. The 274 track performs no gameplay/systems retune beyond
+  the bed/sleep integration itself and changes no unrelated simulation
+  behavior.
+- Change 274 (`274-live-sleep-bed-integration`) is the sole **ACTIVE**
+  implementation change: wire the verified headless `SleepFramework` (198)
+  into the live Game — a placeable bed block + bed item, the bed use
+  interaction path running `enterBed`/`leaveBed` (occupied rejection,
+  night/storm `canSleep` gating), world-scoped `__sleep__` persistence
+  (versioned, degrade-to-defaults, reset/archive passthrough), respawn at the
+  `SleepFramework` spawn point when set (hardcore permanent death still
+  wins), minimal toast/HUD sleep feedback (original assets only), unit +
+  browser E2E (place/use bed → sleeping/spawn set → leave → reload persists
+  spawn → respawn lands at bed).
+- Change 258 remains recorded BLOCKED and resumable on a hardware-WebGL
+  host; the 274 track does not consume, waive, or re-litigate any 258 headed
+  task.

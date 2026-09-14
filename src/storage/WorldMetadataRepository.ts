@@ -262,6 +262,17 @@ export class WorldMetadataRepository {
     await promisifyRequest(tx.objectStore(this.store).put(raw));
   }
 
+  /** Raw put for the sleep payload bypassing WorldMetadata validation (274; statistics precedent). */
+  async putSleepData(worldId: string, payload: unknown): Promise<void> {
+    const raw = {
+      worldId: `__sleep__:${worldId}`,
+      payload,
+      updatedAt: Date.now(),
+    };
+    const tx = this.requireDb().transaction(this.store, 'readwrite');
+    await promisifyRequest(tx.objectStore(this.store).put(raw));
+  }
+
   /** Raw put for the XP-orb payload bypassing WorldMetadata validation (264; advancement precedent). */
   async putXpOrbData(worldId: string, payload: unknown): Promise<void> {
     const raw = {
@@ -337,6 +348,14 @@ export class WorldMetadataRepository {
     return (result as { payload: unknown }).payload ?? null;
   }
 
+  /** Raw get for the sleep payload (274). Returns null when absent. */
+  async getSleepData(worldId: string): Promise<unknown | null> {
+    const tx = this.requireDb().transaction(this.store, 'readonly');
+    const result = await promisifyRequest(tx.objectStore(this.store).get(`__sleep__:${worldId}`)) as { payload?: unknown } | undefined;
+    if (!result || !('payload' in (result as Record<string, unknown>))) return null;
+    return (result as { payload: unknown }).payload ?? null;
+  }
+
   /** Raw get for the gamerule payload (261). Returns null when absent. */
   async getGameRuleData(worldId: string): Promise<unknown | null> {
     const tx = this.requireDb().transaction(this.store, 'readonly');
@@ -371,12 +390,14 @@ export class WorldMetadataRepository {
    * record (`__gamerules__:<worldId>`), the recipe-book record
    * (`__recipebook__:<worldId>`), the advancement record
    * (`__advancements__:<worldId>`), the item-entity record
-   * (`__itementities__:<worldId>`), and the XP-orb record
-   * (`__xporbs__:<worldId>`), which share this store under a reserved
-   * key namespace rather than the metadata keyPath. Also covers the
-   * game-mode record (`__gamemode__:<worldId>`), the hardcore record
-   * (`__hardcore__:<worldId>`), and the difficulty record
-   * (`__difficulty__:<worldId>`).
+    * (`__itementities__:<worldId>`), and the XP-orb record
+    * (`__xporbs__:<worldId>`), which share this store under a reserved
+    * key namespace rather than the metadata keyPath. Also covers the
+    * game-mode record (`__gamemode__:<worldId>`), the hardcore record
+    * (`__hardcore__:<worldId>`), the difficulty record
+    * (`__difficulty__:<worldId>`), the statistics record
+    * (`__statistics__:<worldId>`), and the sleep record
+    * (`__sleep__:<worldId>`).
    */
   async deleteRaw(key: string): Promise<void> {
     const tx = this.requireDb().transaction(this.store, 'readwrite');

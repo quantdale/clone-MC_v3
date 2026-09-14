@@ -325,6 +325,16 @@ export class PlayerInteraction {
               z: this.target.blockZ,
             });
             this.lastActionTime = this.elapsed;
+          } else if (targetBlockId === BlockId.Bed) {
+            // Right-clicking a bed runs the sleep rules instead of placing
+            // (274, 260 container-use precedent); the held stack is untouched
+            // regardless of what it is.
+            this.onAction?.('use', targetBlockId, {
+              x: this.target.blockX,
+              y: this.target.blockY,
+              z: this.target.blockZ,
+            });
+            this.lastActionTime = this.elapsed;
           } else if (selectedId === ItemId.BoneMeal) {
             // Bone meal is used on the block under the crosshair instead of placing.
             this.onAction?.('use', targetBlockId);

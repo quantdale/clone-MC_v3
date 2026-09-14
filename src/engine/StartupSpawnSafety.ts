@@ -117,9 +117,14 @@ export function findSafeStartupPositionNear(
   originZ: number,
   maxAttempts = 128,
 ): { x: number; y: number; z: number } | null {
+  // Floor the origin: getMotionBlockingHeight rejects non-integers (returns
+  // minY-1), so a saved feet position like (0.5, z.5) must not poison every
+  // candidate. Match spawnPlayerSafely's integer stride from a block column.
+  const ox = Math.floor(originX);
+  const oz = Math.floor(originZ);
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const x = originX + attempt * 7;
-    const z = originZ + attempt * 11;
+    const x = ox + attempt * 7;
+    const z = oz + attempt * 11;
     const surface = world.getMotionBlockingHeight(x, z);
     if (surface < world.dimension.minY) {
       continue;

@@ -202,6 +202,17 @@ import {
 } from '../simulation/GameModeFramework';
 import { canInteract, isAttackable, noclip } from '../simulation/SpectatorFramework';
 import {
+  DAY_TICKS,
+  canSleep,
+  canSkipNight,
+  createDefaultSleepState,
+  enterBed,
+  leaveBed,
+  serializeSleepState,
+  spawnPoint,
+  type SleepState,
+} from '../simulation/SleepFramework';
+import {
   createDefaultHardcoreState,
   effectiveDifficulty,
   forcesPermanentDeath,
@@ -470,6 +481,10 @@ export class Game {
   private difficultySelectEl: HTMLSelectElement | null = null;
   /** HUD hardcore badge (267, null until the shell binds it). */
   private hardcoreBadgeEl: HTMLElement | null = null;
+  /** World-scoped sleep state (274): the 198 store the live Game owns. */
+  private sleep: SleepState = createDefaultSleepState();
+  /** HUD sleep indicator (274, null until the shell binds it). */
+  private sleepIndicatorEl: HTMLElement | null = null;
   /** Live block-tag registry (266 adventure resolution; built once beside HarvestRules). */
   private readonly blockTags: TagRegistry;
   /** Registry key of the Fire block, resolved once for the doFireTick gate (261). */
@@ -1007,6 +1022,22 @@ export class Game {
         }
       }).catch(() => undefined);
     }
+    // 274 sleep: the wake-on-boot persisted spawn when present, defaults
+    // otherwise (absent or corrupt records never break boot; the facade
+    // already forced `sleeping` false at load). Same late-load parity as
+    // above (the HUD indicator re-syncs when the late payload lands).
+    this.sleep = this.persistenceImpl?.initialSleep ?? createDefaultSleepState();
+    this.updateSleepIndicator();
+    if (this.selfOpenPromise !== null) {
+      void this.selfOpenPromise.then(() => {
+        if (this.disposed) return;
+        const late = this.persistenceImpl?.initialSleep;
+        if (late) {
+          this.sleep = late;
+          this.updateSleepIndicator();
+        }
+      }).catch(() => undefined);
+    }
     // 271 statistics: the validated persisted store when present, zero
     // counters otherwise (absent or corrupt records never break boot).
     // Same late-load parity as above (the open panel re-renders when the
@@ -1364,6 +1395,9 @@ export class Game {
     });
     this.hardcoreBadgeEl = document.getElementById('hardcore-badge');
     this.updateWorldSettingsUI();
+    // Sleep indicator (274): the HUD chip reflects the live sleep store.
+    this.sleepIndicatorEl = document.getElementById('sleep-indicator');
+    this.updateSleepIndicator();
 
     // Fixed-tick ownership (044): the driver turns frame deltas into bounded,
     // deterministic 20 TPS ticks; the tick body enforces the simulation order.
@@ -1419,9 +1453,16 @@ export class Game {
       return;
     }
     this.started = true;
-    this.loading.show();
-    this.loading.setProgress(0);
-    this.loadingShown = true;
+    // If construction already entered recovery-required, keep the recovery
+    // overlay up — re-showing #loading here races showRecoveryOverlay and
+    // leaves the spinner visible forever (world.update is frozen).
+    if (this.recoveryRequiredValue) {
+      this.showRecoveryOverlay();
+    } else {
+      this.loading.show();
+      this.loading.setProgress(0);
+      this.loadingShown = true;
+    }
     if (this.selfOpenPromise !== null) {
       // Self-composed persistence: defer the loop (and overlay) until open
       // settles so the bulk-loaded state is applied before the first frame.
@@ -1489,6 +1530,7 @@ export class Game {
     this.saveHardcore();
     this.saveDifficulty();
     this.saveStatistics();
+    this.saveSleep();
     this.saveTimer = 0;
     void this.persistenceImpl?.dispose().catch(() => undefined);
     if (this.unsubscribeHealth !== null) {
@@ -1693,6 +1735,7 @@ export class Game {
         this.saveHardcore();
         this.saveDifficulty();
         this.saveStatistics();
+        this.saveSleep();
       }
     }
 
@@ -3149,6 +3192,11 @@ export class Game {
           this.world.getBlock(coords.x, coords.y, coords.z) === BlockId.BrewingStand
         ) {
           this.openBrewing(coords.x, coords.y, coords.z);
+        } else if (
+          coords &&
+          this.world.getBlock(coords.x, coords.y, coords.z) === BlockId.Bed
+        ) {
+          this.useBedAt(coords.x, coords.y, coords.z);
         } else if (this.isBonemealSelected()) {
           this.useBonemeal();
         } else if (
@@ -4390,6 +4438,107 @@ export class Game {
     p.saveGameMode(serializeGameModeState(this.gameMode));
   }
 
+  /** Serialize the live sleep state into the durable record (274; no-op without persistence). */
+  saveSleep(): void {
+    const p = this.persistenceImpl;
+    if (!p || this.recoveryRequiredValue) return;
+    p.saveSleep(serializeSleepState(this.sleep));
+  }
+
+  /** The live world-scoped sleep state (274 read-only accessor; E2E surface). */
+  getSleepState(): SleepState {
+    return this.sleep;
+  }
+
+  /**
+   * Run the 198 bed rules for the bed at `(x, y, z)` (274). A same-bed use
+   * while sleeping leaves (spawn kept) and is NOT time-gated — a player is
+   * always able to wake. Entering a free bed runs the `canSleep` gate
+   * (night/storm; live storm false) and the occupied rejection, both refused
+   * with no mutation (I-4); a successful enter sets the spawn and skips the
+   * clock to morning (I-6); a different bed while sleeping switches via the
+   * 198 new-state path. `occupied` is a test seam (single-player default
+   * false). The 266 mode gates apply upstream in the interaction layer.
+   */
+  useBedAt(x: number, y: number, z: number, occupied = false): { ok: boolean; reason?: string } {
+    const s = this.sleep.spawn;
+    const sameBed = s[0] === x && s[1] === y && s[2] === z;
+    // Leaving the bed is always allowed (not time-gated); the spawn is kept.
+    if (this.sleep.sleeping && sameBed) {
+      this.sleep = leaveBed(this.sleep);
+      this.updateSleepIndicator();
+      this.saveSleep();
+      this.showToast('You woke up. Your spawn point is set.');
+      return { ok: true };
+    }
+    // Entering a free bed: the canSleep gate + occupied rejection (I-4).
+    if (!canSleep(this.currentDayTick(), false)) {
+      this.showToast("You can't sleep now.");
+      return { ok: false, reason: 'daytime' };
+    }
+    const result = enterBed(this.sleep, [x, y, z], occupied);
+    if (!result.ok) {
+      this.showToast('That bed is in use.');
+      return { ok: false, reason: 'occupied' };
+    }
+    this.sleep = result.state;
+    this.updateSleepIndicator();
+    this.saveSleep();
+    // Single-player night skip: everyone (the one player) is sleeping, so the
+    // clock advances to morning (I-6: deterministic, no partial-skip state).
+    if (canSkipNight(1, 1)) {
+      this.setDayTick(0);
+    }
+    this.showToast('You set your spawn point.');
+    return { ok: true };
+  }
+
+  /** The live 198 day tick (0-23999) mapped off the fixed-tick clock (274). */
+  private currentDayTick(): number {
+    const length = CONFIG.dayNight.dayLength;
+    return Math.floor((this.lighting.getWorldSeconds() / length) * DAY_TICKS) % DAY_TICKS;
+  }
+
+  /** Set the live clock to an exact 198 day tick (274: night skip). */
+  private setDayTick(tick: number): void {
+    const length = CONFIG.dayNight.dayLength;
+    this.lighting.setWorldSeconds(((tick % DAY_TICKS) + DAY_TICKS) % DAY_TICKS * (length / DAY_TICKS));
+  }
+
+  /**
+   * E2E seam (274, 245 test-hook precedent): set the clock to an exact 198
+   * day tick so browser E2E can drive deterministic night/day gating. No
+   * production path calls this.
+   */
+  debugSetTimeOfDay(tick: number): void {
+    this.setDayTick(tick);
+  }
+
+  /**
+   * E2E seam (274, 245 test-hook precedent): read the live 198 day tick so
+   * browser E2E can assert the deterministic night skip landed at 0 (morning).
+   * No production path calls this.
+   */
+  debugGetTimeOfDay(): number {
+    return this.currentDayTick();
+  }
+
+  /**
+   * E2E seam (274, 245 test-hook precedent): halt the day-night clock's
+   * advancement (without altering the sun) so a night skip lands on an exact
+   * deterministic tick. `debugSetTimeOfDay` still positions the clock. No
+   * production path calls this.
+   */
+  debugFreezeClock(): void {
+    this.lighting.freeze();
+  }
+
+  /** Sync the HUD sleep indicator to the live store (274, null-safe pre-shell). */
+  private updateSleepIndicator(): void {
+    if (!this.sleepIndicatorEl) return;
+    this.sleepIndicatorEl.classList.toggle('hidden', !this.sleep.sleeping);
+  }
+
   /**
    * Block-tag lookup adapter for adventure permission resolution (266): total
    * function, never throws (bad parse / unknown tag / unfinalized ⇒ undefined,
@@ -4777,6 +4926,7 @@ export class Game {
     this.saveHardcore();
     this.saveDifficulty();
     this.saveStatistics();
+    this.saveSleep();
     this.saveTimer = 0;
   };
 
@@ -4825,11 +4975,19 @@ export class Game {
       // Bounded nearby relocation over proven terrain before escalating.
       const relocated = findSafeStartupPositionNear(this.startupWorldView(), this.startupSolidity(), x, z, 128);
       if (relocated === null) {
-        this.enterRecoveryRequired('no-safe-spawn-support');
-        return;
+        // Sparse edit imports can leave a hollow canonical column under the
+        // saved feet (heightmap minY-1) while other columns remain playable.
+        // Prefer a fresh proven spawn over recovery-required when one exists
+        // so a single nearby setBlock cannot soft-lock boot (274 E2E).
+        if (!this.spawnPlayerSafely()) {
+          this.enterRecoveryRequired('no-safe-spawn-support');
+          return;
+        }
+        this.spawnPosition.copy(this.player.position);
+      } else {
+        this.player.position.set(relocated.x, relocated.y, relocated.z);
+        this.spawnResolutionValue = 'relocated';
       }
-      this.player.position.set(relocated.x, relocated.y, relocated.z);
-      this.spawnResolutionValue = 'relocated';
     }
     this.player.yaw = state.player.yaw;
     this.player.pitch = state.player.pitch;
@@ -4975,7 +5133,19 @@ export class Game {
     if (this.craftingOpen) {
       this.closeCrafting();
     }
-    this.player.position.copy(this.spawnPosition);
+    // Bed-aware respawn (274): the 198 spawn point when set, resolved through
+    // the existing spawn-safety path (an unsupported bed cell relocates to a
+    // provably safe nearby position); the world spawn otherwise. 267 mode
+    // routing is unchanged — the position rule is the same for everyone.
+    const bed = spawnPoint(this.sleep);
+    const bedTarget = bed !== null
+      ? findSafeStartupPositionNear(this.startupWorldView(), this.startupSolidity(), bed[0], bed[2], 128)
+      : null;
+    if (bedTarget) {
+      this.player.position.set(bedTarget.x, bedTarget.y, bedTarget.z);
+    } else {
+      this.player.position.copy(this.spawnPosition);
+    }
     this.resetWalkBaseline();
     this.player.velocity.set(0, 0, 0);
     this.player.onGround = false;

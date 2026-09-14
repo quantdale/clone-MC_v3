@@ -59,6 +59,8 @@ export interface WorldImportReport {
   difficultyDataImported: boolean;
   /** Whether statistics data was written (271). */
   statisticsDataImported: boolean;
+  /** Whether sleep data was written (274). */
+  sleepDataImported: boolean;
 }
 
 /** Exports and imports whole-world archives over the five repositories. */
@@ -138,6 +140,8 @@ export class WorldArchiver {
     const difficultyData = await this.metadata.getDifficultyData(worldId);
     // Statistics raw record (271): same fail-closed contract.
     const statisticsData = await this.metadata.getStatisticData(worldId);
+    // Sleep raw record (274): same fail-closed contract.
+    const sleepData = await this.metadata.getSleepData(worldId);
 
     return {
       format: 'voxel-world',
@@ -160,6 +164,7 @@ export class WorldArchiver {
       hardcoreData,
       difficultyData,
       statisticsData,
+      sleepData,
     };
   }
 
@@ -199,6 +204,7 @@ export class WorldArchiver {
       if (valid.hardcoreData !== null && valid.hardcoreData !== undefined) await put("world-metadata", { worldId: `__hardcore__:${valid.worldId}`, payload: valid.hardcoreData, updatedAt: Date.now() });
       if (valid.difficultyData !== null && valid.difficultyData !== undefined) await put("world-metadata", { worldId: `__difficulty__:${valid.worldId}`, payload: valid.difficultyData, updatedAt: Date.now() });
       if (valid.statisticsData !== null && valid.statisticsData !== undefined) await put("world-metadata", { worldId: `__statistics__:${valid.worldId}`, payload: valid.statisticsData, updatedAt: Date.now() });
+      if (valid.sleepData !== null && valid.sleepData !== undefined) await put("world-metadata", { worldId: `__sleep__:${valid.worldId}`, payload: valid.sleepData, updatedAt: Date.now() });
       if (valid.playerState) await put("player-state", valid.playerState);
     });
 
@@ -220,6 +226,7 @@ export class WorldArchiver {
       hardcoreDataImported: valid.hardcoreData !== null && valid.hardcoreData !== undefined,
       difficultyDataImported: valid.difficultyData !== null && valid.difficultyData !== undefined,
       statisticsDataImported: valid.statisticsData !== null && valid.statisticsData !== undefined,
+      sleepDataImported: valid.sleepData !== null && valid.sleepData !== undefined,
     };
   }
 }

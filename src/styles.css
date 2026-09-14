@@ -56,6 +56,7 @@ body {
 #creative.hidden,
 #break-progress.hidden,
 #hardcore-badge.hidden,
+#sleep-indicator.hidden,
 #toast.hidden,
 #debug-overlay.hidden {
   display: none;
@@ -1111,6 +1112,13 @@ body {
   top: 172px;
   right: 8px;
   color: #ffb3b3;
+  font-weight: 700;
+}
+/* Sleep indicator (274): HUD chip, visible only while the player is sleeping. */
+#sleep-indicator {
+  top: 204px;
+  right: 8px;
+  color: #cfe3ff;
   font-weight: 700;
 }
 /* Difficulty select (267): gamerule-input sizing with select affordance. */

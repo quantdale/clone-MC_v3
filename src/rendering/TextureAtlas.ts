@@ -50,6 +50,7 @@ export const TILE_INDEX = {
   brewingStand: 66,
   blazePowder: 67,
   potionBottle: 68,
+  bed: 69,
 } as const;
 
 export function tileUV(tile: number): { u0: number; v0: number; u1: number; v1: number } {
@@ -644,6 +645,30 @@ export class TextureAtlas {
       // Specular streak.
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(5, 6, 1, 6);
+    });
+    // 69: bed (274, original art) — a low red blanket slab over a
+    // darker wooden frame, with a pale pillow patch at the head.
+    this.drawTile(TILE_INDEX.bed, (ctx, rng) => {
+      ctx.clearRect(0, 0, TILE_SIZE, TILE_SIZE);
+      // Wooden frame fill.
+      ctx.fillStyle = '#8a5a2b';
+      ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+      ctx.fillStyle = '#6b4220';
+      for (let i = 0; i < 10; i++) {
+        ctx.fillRect(rng.nextInt(TILE_SIZE), rng.nextInt(TILE_SIZE), 2, 1);
+      }
+      // Red blanket fill.
+      ctx.fillStyle = '#a32035';
+      ctx.fillRect(2, 2, TILE_SIZE - 4, TILE_SIZE - 4);
+      for (let i = 0; i < 14; i++) {
+        ctx.fillStyle = rng.next() > 0.5 ? '#c23350' : '#7e1626';
+        ctx.fillRect(2 + rng.nextInt(TILE_SIZE - 4), 2 + rng.nextInt(TILE_SIZE - 4), 1, 1);
+      }
+      // Pale pillow patch at the head (left side).
+      ctx.fillStyle = '#e8e2d4';
+      ctx.fillRect(2, 2, 4, TILE_SIZE - 4);
+      ctx.fillStyle = '#f7f3e9';
+      ctx.fillRect(3, 3, 2, TILE_SIZE - 6);
     });
   }
 

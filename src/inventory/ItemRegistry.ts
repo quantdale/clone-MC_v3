@@ -82,6 +82,7 @@ export const enum ItemId {
   BrewingStand = 64,
   BlazePowder = 65,
   Potion = 66,
+  Bed = 67,
 }
 
 /**
@@ -829,6 +830,17 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       name: 'Potion',
       iconTile: 68,
       stackSize: 1,
+    },
+    {
+      // Live bed kit (274): the item places block 63; the 274 bed-use
+      // interaction path reads the placed block cell directly.
+      id: ItemId.Bed,
+      resourceId: rid('bed'),
+      key: 'bed',
+      name: 'Bed',
+      iconTile: 69,
+      stackSize: 64,
+      placeBlock: rid('bed'),
     },
   ];
   assertDurableItemsDoNotStack(defs);
