@@ -15,7 +15,7 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "f872c889d722f77fa3d44e823f08d901de49e56a",
-  "localHead": "1b3a06a90bb4450acacb9105479726870e5b8636",
+  "localHead": "aa885783be35944cb33fd7c9647f7123b00af91c",
   "nextExactAction": "Change 275-live-weather-cycle-integration VERIFIED 9/9 (100%, 2026-09-14 owner-authorized campaign through 277; 258 stays BLOCKED; 259-274 VERIFIED) \u2014 live weather cycle over 196 WeatherFramework + 197 presentation: world-scoped WeatherState + __weather__ persistence (degrade-to-defaults, no wake-on-boot, reset/archive carry), doWeatherCycle-gated fixed-tick tickWeatherCycle with world-seeded weather RNG rolls, setWeather/setWeatherFromText seam + saveWeather at autosave/dispose/pagehide, #weather-indicator HUD + presentWeather->applyWeatherToEnvironment. Gates: typecheck/lint 0 errors/unit 431 files 5184+1/build 2.32s/weather-cycle E2E 3/3/validate-state PASS; C275 matrix row exact. Published to origin/main this session. Next campaign step: 276 activation (when a new session starts).",
   "lastCompletedTask": "Change 275-live-weather-cycle-integration VERIFIED 9/9 (session start f872c88; publish to origin/main this session)",
   "blockers": [
@@ -2675,5 +2675,5 @@
     ]
   },
   "criticalRiskOpen": false,
-  "publishedTip": "1b3a06a90bb4450acacb9105479726870e5b8636"
+  "publishedTip": "aa885783be35944cb33fd7c9647f7123b00af91c"
 }
