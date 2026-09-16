@@ -1,5 +1,18 @@
 # Minecraft-Parity Program State
 
+## Current checkpoint — 2026-09-16 release-readiness hardening
+
+> **Change 277 remains VERIFIED 6/6.** This successor hardening campaign repaired the held-break
+> cooldown loss, stabilized adventure target refresh and chunk-streaming E2E evidence, aligned the
+> block-entity stress timeout with its documented schedule, corrected the top-right HUD stack, and
+> refreshed the 60-cell visual baselines after the 259–277 live integrations. Session start was
+> `c3da5c311e77e27eac57f9ffb6b0cd9b80cce498`; publication of the verified checkpoint is pending.
+>
+> Local validation: `validate-state`, typecheck, lint (0 errors), unit 5192 passed + 1 skipped,
+> production build, full E2E 94/94, visual 60/60, and mobile 390×844 smoke all pass. The only
+> remaining material lane is owner-deferred Change 258 headed hardware-WebGL certification; no
+> GPU evidence was fabricated and the sync-meshing production default was not retuned.
+
 > **2026-09-14 Change 275 VERIFIED 9/9 (100%) — live-weather-cycle-integration (owner-authorized campaign through 277, 2026-09-14) while 258 stays BLOCKED and 259/260/261/262/263/264/265/266/267/268/269/270/271/272/273/274 stay VERIFIED.** Sole ACTIVE implementation change complete: live Game owns one world-scoped `WeatherState` (196 framework + 197 presentation), world-scoped `__weather__:<worldId>` persistence (versioned, degrade-to-clear-defaults, no wake-on-boot mutation, reset delete, archive carry), `doWeatherCycle`-gated fixed-tick `tickWeatherCycle` with world-seeded `weather`-named RNG duration rolls, `setWeather`/`setWeatherFromText` command seam + `saveWeather` at autosave/dispose/pagehide, `#weather-indicator` HUD + `presentWeather`→`applyWeatherToEnvironment`. Proven via full gates green (typecheck/lint 0 errors/unit 431 files 5184+1/build 2.32s/weather-cycle E2E 3/3/validate-state PASS); C275 matrix row exact. Session start is `f872c889d722f77fa3d44e823f08d901de49e56a` (fetched; local HEAD equals remote).
 > **2026-09-13 Change 274 ACTIVATED 2/13 (15%) — live-sleep-bed-integration (owner-authorized parallel track through 277, 2026-09-13 master directive, Michael) while 258 stays BLOCKED and 259/260/261/262/263/264/265/266/267/268/269/270/271/272/273 stay VERIFIED.** Control plane complete (274 row in `CHANGE_SEQUENCE.md`, 274 authorization in `CHANGE_SEQUENCE_OVERRIDES.md` superseding the 273 final-campaign clause, full OpenSpec package under `openspec/changes/274-live-sleep-bed-integration/` passing the SPEC_AUTHORING_PROTOCOL quality gate, PROGRAM_STATE ACTIVE checkpoint). Sole ACTIVE implementation change: wire the verified headless `SleepFramework` (198) into the live Game — one world-scoped SleepState hydrated/serialized through GamePersistence (versioned, degrade-to-defaults wake-on-boot, reset/archive passthrough), placeable bed block + bed item, bed-use interaction path (enterBed/leaveBed with occupied rejection, canSleep night gate, spawn set on enter, spawn kept on leave), night skip on enter (clock to morning), bed-aware respawn target (hardcore permanent death still wins), toast + HUD sleep indicator (original DOM/CSS/text), unit suites for persistence + integration seams, browser E2E sleep arc. Session start is `f903fd2b655c653e9292b6c3432cd655cd7855e2` (fetched; local HEAD equals remote).
 >
@@ -87,7 +100,7 @@
 > E2E suite was not rerun — see F257-07.
 
 
-## Current checkpoint
+## Historical checkpoint (pre-259–277 campaign)
 > **254-whole-codebase-performance-optimization — VERIFIED (2026-08-26, session start `d258414`).**
 > Owner-authorized repository-wide performance campaign executed through the OpenSpec control
 > plane: behavior-preserving hot-path optimizations with measured wins — world block reads
@@ -153,25 +166,25 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **277-live-ambient-audio-integration — VERIFIED (6/6); campaign through 277 complete; 258 BLOCKED**
+- Active implementation change: **277-live-ambient-audio-integration — VERIFIED (6/6); post-verification release-readiness hardening complete; 258 BLOCKED**
 - Prior active implementation change: **274-live-sleep-bed-integration — VERIFIED (13/13, owner-authorized 2026-09-13 parallel track through 277; 258 stays BLOCKED, 259–273 stay VERIFIED)**
 - Prior prior active implementation change: **272-lighting-clock-dt-sync — VERIFIED (10/10, owner-authorized 2026-09-12; 258 stays BLOCKED, 259/260/261/262/263/264/265/266/267/268/269/270/271 stay VERIFIED)**
-- Next change: **258-real-world-runtime-performance-fps-recovery — BLOCKED; resume headed tasks on a hardware-WebGL host when available (259/260/261/262/263/264/265/266/267/268/269/270/271/272/273/274/275 VERIFIED)**
+- Next change: **258-real-world-runtime-performance-fps-recovery — BLOCKED; resume headed tasks on a hardware-WebGL host when available; local release-readiness gates are green**
 - 240 advancement allowed: **yes**
 
 - Program: **ACTIVE — Change 275 VERIFIED 9/9 (live weather cycle integration, owner-authorized 2026-09-14 campaign through 277); Change 274 VERIFIED 13/13 (live sleep/bed integration, owner-authorized 2026-09-13 parallel track through 277); Change 273 VERIFIED 10/10 (chunksection isEmpty air-check, Standing owner order 2026-09-12); Change 272 VERIFIED 10/10 (lighting clock/sun dt sync, Standing owner order 2026-09-12); Change 271 VERIFIED 14/14 (statistics panel UI, Standing owner order 2026-09-12); Change 270 VERIFIED 12/12 (leaf apple loot probability, Standing owner order 2026-09-12); Change 269 VERIFIED 12/12 (composed game dispose/worker terminate, Standing owner order 2026-09-12); Change 268 VERIFIED 12/12 (ci immutable action pins, Standing owner order 2026-09-12); Change 267 VERIFIED 13/13 (live hardcore integration, Standing owner order 2026-09-12); Change 266 VERIFIED 13/13 (live adventure+spectator integration, Standing owner order 2026-09-11) with Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); 259 VERIFIED 18/18; 260 VERIFIED 19/19; 261 VERIFIED 16/16; 262 VERIFIED 14/14; 263 VERIFIED 15/15; 264 VERIFIED 13/13; 265 VERIFIED 13/13**
-- Last completed change: **277-live-ambient-audio-integration — VERIFIED (6/6) — ambient tick+backend; 258 BLOCKED; STOP no audit**
+- Last completed change: **277-live-ambient-audio-integration — VERIFIED (6/6) — post-verification release-readiness hardening is complete; 258 BLOCKED**
 - Prior last completed change: **274-live-sleep-bed-integration — VERIFIED (13/13) — live bed + sleep-spawn over 198 SleepFramework; gates: typecheck/lint 0 errors/unit Sleep*+StartupSpawnSafety 64 + BlockRegistry pin/build/sleep-bed E2E 4/4/259–273 split E2E regression (monolithic game.spec pointer-lock environmental carve)/validate-state PASS; C274 PARITY exact; 273 remains VERIFIED (10/10); 258 stays BLOCKED**
 - Prior prior last completed change: **272-lighting-clock-dt-sync — VERIFIED (10/10) — full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85/file-audit 2792); 271 remains VERIFIED (14/14)
 - All changes 001–257: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed (backup fail-closed, snapshot fail-closed, multi-store tx 6 stores, archive ownership, migrated-legacy 5×, pagehide 5× via flush, R-7, file-audit 2644, import tx, visual 0.02, payload equality, full local gate + CI).
 - Historical Change 250-era bullets (preserved; superseded **for current release authority** by `openspec/evidence/release-readiness-post-hardening.md`): 250 required-test gate PASS at head `502d021` / byte-identical tree `b56529e`; historical release-readiness READY RC-1..RC-9 (`openspec/evidence/release-readiness.md`); final parity audit PASS with DL dispositions later rejected by this interlock (`openspec/evidence/parity/final-parity-audit.md`); evidence archive complete (`openspec/evidence/`)
 - Post-250 hardening interlock: **VERIFIED at remediation checkpoint `aa92a5c229a753f10f8c1677e836136962b5d07a` — canonical CI run 32589457819 SUCCESS (gate job 97078975848, e2e job 97078975868); tasks 78/78; release decision READY (`openspec/evidence/release-readiness-post-hardening.md`)**
 - Certification campaign: **openspec/hardening/2026-08-23-exhaustive-repository-certification — R-1..R-9 accepted debt, R-7 restored with ChunkPipeline 498-512 evidence; manifest 2644 reviewed at 96b5dc37**
-- Release authority: **Change 257 VERIFIED 92/92 at 96b5dc37 — CI 33600754305 success (gate + e2e) — local gate green (typecheck/lint/test 4632/build 2.3s/file-audit 2644/void-world 9/9/persistence 6/6)**
+- Release authority: **Change 277 VERIFIED 6/6 with post-verification hardening evidence — local gate green (typecheck/lint/test 5192+1 skipped/build/full E2E 94/94/visual 60/60); headed Change 258 remains externally blocked**
 - Publication history: **Change 257 VERIFIED 92/92 at 96b5dc37 (F257-A..L closed, 22 new fault-injection tests, 5× proofs, import tx); Change 256 archived at `ad75b65` as `2026-08-31-256-production-readiness-hardening` (23/23).**
-- Section milestone: **PROGRAM ACTIVE — Change 258 ACTIVE 40/100; whole-frame/World-internal/governor/gate/harness/capability/fault-injection/worker-equivalence/dedupe/startup evidence landed headless-verified, headed baseline pending hardware-GPU host.**
+- Section milestone: **PROGRAM VERIFIED through Change 277; Change 258 remains BLOCKED at 40/100 pending headed hardware-WebGL certification; no GPU evidence was fabricated.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ri…
-- Next exact action: **STOP after 277 VERIFIED publish — no Changes 1–277 audit; 258 BLOCKED**
+- Next exact action: **Resume Change 258 headed certification only when a hardware-WebGL host is available; no local executable release-readiness work remains**
 - Superseded next action: **Change 275-live-weather-cycle-integration ACTIVE 2/9 — implement __weather__ persistence + Game weather tick/HUD/presentation + unit/E2E + gates + PARITY C275 + VERIFIED publish; 258 BLOCKED**
 - Release note (2026-09-11 owner deferral): **headed FPS gates (258 tasks 91–95) are deferred, not waived — 001–257 VERIFIED, production default unchanged (sync meshing, no quality retune), game shippable with known performance-certification debt**
 

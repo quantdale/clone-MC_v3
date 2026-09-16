@@ -32,8 +32,7 @@ describe('AmbientAudioIntegration mute policy (277)', () => {
   it('unmuted ticks deliver the cue', () => {
     const backend = new SilentAmbientBackend();
     const rng = () => 0;
-    let state: AmbientState = { environment: 'plains', musicDelay: 1, cueDelay: 99 };
-    state = tickWithPolicy(state, backend, false, {
+    tickWithPolicy({ environment: 'plains', musicDelay: 1, cueDelay: 99 }, backend, false, {
       environment: 'plains',
       weather: 'clear',
       isDay: false,

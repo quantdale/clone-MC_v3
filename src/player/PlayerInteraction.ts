@@ -107,6 +107,8 @@ export class PlayerInteraction {
   private breaking = false;
   private breakProgress = 0;
   private breakTargetKey = '';
+  /** A held break press that arrived during the prior action cooldown. */
+  private breakPending = false;
 
   private readonly outline: THREE.LineSegments;
 
@@ -242,6 +244,7 @@ export class PlayerInteraction {
       : '';
     if (targetKey !== this.breakTargetKey) {
       this.resetBreakProgress();
+      this.breakPending = false;
       this.breakTargetKey = targetKey;
     }
 
@@ -271,8 +274,26 @@ export class PlayerInteraction {
       }
       const breakRequested = this.input.consumeBreak();
       const breakClick = this.input.consumeBreakClick?.() ?? false;
-      if (breakRequested && this.elapsed >= this.lastActionTime + CONFIG.actionCooldown) {
-        this.beginBreak(this.input.isBreakHeld());
+      const breakReady = this.elapsed >= this.lastActionTime + CONFIG.actionCooldown;
+      if (breakRequested) {
+        if (breakReady && !this.breaking) {
+          this.beginBreak(this.input.isBreakHeld());
+          this.breakPending = false;
+        } else if (this.input.isBreakHeld()) {
+          // Preserve a held press across the action cooldown. The input layer
+          // queues the initial mousedown once, so dropping it here would make
+          // a human hold begun immediately after placing a block inert.
+          this.breakPending = true;
+        }
+      }
+      if (!this.breaking && this.breakPending && this.input.isBreakHeld() && breakReady) {
+        this.beginBreak(true);
+        this.breakPending = false;
+      }
+      if (!this.input.isBreakHeld()) {
+        // A quick click released before the cooldown expires must not turn
+        // into a delayed break after the user has let go.
+        this.breakPending = false;
       }
 
       if (this.breaking) {
@@ -292,7 +313,7 @@ export class PlayerInteraction {
         }
       }
 
-      if (!breakRequested && this.elapsed >= this.lastActionTime + CONFIG.actionCooldown && this.input.consumePlace()) {
+      if (!breakRequested && !this.breakPending && breakReady && this.input.consumePlace()) {
         if (this.target) {
           const targetBlockId = this.world.getBlock(this.target.blockX, this.target.blockY, this.target.blockZ);
           const selectedId = this.selector.getSelectedItemId();
@@ -384,6 +405,7 @@ export class PlayerInteraction {
     this.target = null;
     this.outline.visible = false;
     this.breakTargetKey = '';
+    this.breakPending = false;
     this.resetBreakProgress();
   }
 

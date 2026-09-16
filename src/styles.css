@@ -1027,7 +1027,7 @@ body {
   cursor: pointer;
   /* The .ui HUD container is pointer-events:none; re-enable for the button. */
   pointer-events: auto;
-  top: 44px;
+  top: 76px;
   right: 8px;
 }
 .statistics-list {
@@ -1078,7 +1078,7 @@ body {
   cursor: pointer;
   /* The .ui HUD container is pointer-events:none; re-enable for the button. */
   pointer-events: auto;
-  top: 44px;
+  top: 108px;
   right: 8px;
 }
 /* Creative menu (265) — reuses the crafting panel chrome; original styling. */
@@ -1093,38 +1093,38 @@ body {
   cursor: pointer;
   /* The .ui HUD container is pointer-events:none; re-enable for the button. */
   pointer-events: auto;
-  top: 76px;
+  top: 140px;
   right: 8px;
 }
 #gamemode-toggle {
   cursor: pointer;
   pointer-events: auto;
-  top: 108px;
+  top: 172px;
   right: 8px;
 }
 #gamemode-select {
   cursor: pointer;
   pointer-events: auto;
-  top: 140px;
+  top: 204px;
   right: 8px;
 }
 /* Hardcore badge (267): HUD indicator, visible only while hardcore is on. */
 #hardcore-badge {
-  top: 172px;
+  top: 236px;
   right: 8px;
   color: #ffb3b3;
   font-weight: 700;
 }
 /* Sleep indicator (274): HUD chip, visible only while the player is sleeping. */
 #sleep-indicator {
-  top: 204px;
+  top: 268px;
   right: 8px;
   color: #cfe3ff;
   font-weight: 700;
 }
 /* Weather indicator (275): HUD chip, visible only while raining or thundering. */
 #weather-indicator {
-  top: 236px;
+  top: 300px;
   right: 8px;
   color: #bcd8ff;
   font-weight: 700;

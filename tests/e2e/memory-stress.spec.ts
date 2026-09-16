@@ -411,7 +411,10 @@ test.describe('long-session memory / GPU-resource leak validation (239)', () => 
   });
 
   test('block-entity live count stays at baseline across away-and-back teleport cycles', async ({ page }) => {
-    test.setTimeout(360_000);
+    // The scenario has one 60s settle plus three 90s destination settles and
+    // a final 90s return settle: the test budget must cover its own documented
+    // worst case on software WebGL, with room for sampling/teleport overhead.
+    test.setTimeout(480_000);
     await waitGameReady(page);
     await enterPointerLock(page);
     await waitSettled(page, 60_000);

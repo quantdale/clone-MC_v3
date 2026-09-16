@@ -27,6 +27,15 @@ automated by `.github/workflows/seed-visual-goldens.yml` (gated on the `[seed-vi
 message marker or manual dispatch), which uploads the fresh `linux-ci/` tree as an artifact for
 review before it is committed.
 
+## Re-pin 2026-09-16 (post-277 release-readiness campaign)
+
+Goldens were regenerated through the canonical `UPDATE_SNAPSHOTS=1` path after the
+live integrations completed through Change 277. The refreshed captures include the
+intentional HUD and world-state surfaces from Changes 259–277 (settings/actions,
+game-mode controls, sleep/weather indicators, and the current interaction UI), plus
+the corrected non-overlapping top-right HUD control stack. Verify mode was then run
+against all 60 refreshed cells.
+
 ## Re-pin 2026-08-22 (validation campaign)
 
 Goldens were regenerated via the suite's canonical `UPDATE_SNAPSHOTS=1` authoring path after two

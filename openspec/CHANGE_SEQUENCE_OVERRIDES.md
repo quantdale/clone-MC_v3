@@ -542,3 +542,11 @@ Campaign through 277; no 1–277 audit.
 
 ## 277-live-ambient-audio-integration (owner-authorized 2026-09-14)
 Authorize Change 277 as sole ACTIVE while 258 remains BLOCKED. Last completed: 276. Stop after VERIFIED publish; no 1–277 audit.
+
+## Published outcome — 2026-09-16 release-readiness hardening
+
+Changes 274–277 are VERIFIED in repository state. The post-277 release-readiness
+follow-up corrected interaction cooldown handling, stabilized browser evidence,
+fixed the HUD control stack, refreshed the 60-cell visual baselines, and passed
+the complete local validation matrix. Change 258 remains BLOCKED pending the
+owner-deferred headed hardware-WebGL certification; no GPU evidence was fabricated.

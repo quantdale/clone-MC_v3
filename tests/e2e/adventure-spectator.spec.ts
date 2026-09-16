@@ -213,6 +213,7 @@ async function waitForTargetAt(page: Page, pos: Pos, timeout = 10_000): Promise<
   await page.evaluate((p) => {
     const g = (window as unknown as {
       __voxelGame?: {
+        interaction?: { clearTarget?(): void };
         player?: {
           position: { x: number; y: number; z: number };
           eyePosition: { x: number; y: number; z: number };
@@ -226,6 +227,10 @@ async function waitForTargetAt(page: Page, pos: Pos, timeout = 10_000): Promise<
     const dx = p.x + 0.5 - player.eyePosition.x;
     const dy = p.y + 0.5 - player.eyePosition.y;
     const dz = p.z + 0.5 - player.eyePosition.z;
+    // Invalidate the previous tick's raycast result. Without this, the wait
+    // below can observe a stale target before the next fixed tick recomputes
+    // the ray for the newly assigned camera pose.
+    g?.interaction?.clearTarget?.();
     player.yaw = Math.atan2(-dx, -dz);
     player.pitch = Math.atan2(dy, Math.hypot(dx, dz));
   }, pos);

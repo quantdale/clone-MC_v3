@@ -371,26 +371,58 @@ test.describe('voxel game', () => {
     await waitForGame(page);
     await enterPointerLock(page);
     // Walk forward long enough to cross at least one chunk boundary and prove
-    // streaming actually WORKED: new generation jobs were observed and drained
-    // (hardening 2026-08-23 — `after >= before` could not fail even if
-    // streaming never loaded another chunk).
+    // streaming actually worked: a new resident chunk must appear after the
+    // boundary crossing. Queue depth is intentionally not the sole signal here;
+    // a generation job can be processed between two browser-side samples.
     const before = await page.evaluate(() => {
-      const g = (window as unknown as { __voxelGame?: { world?: { getStats(): { loadedChunks: number } } } }).__voxelGame;
-      return g?.world?.getStats().loadedChunks ?? -1;
+      const g = (window as unknown as {
+        __voxelGame?: {
+          player?: { position: { x: number; z: number } };
+          world?: { getStats(): { loadedChunks: number } };
+        };
+      }).__voxelGame;
+      const position = g?.player?.position;
+      return {
+        loadedChunks: g?.world?.getStats().loadedChunks ?? -1,
+        chunkX: position ? Math.floor(position.x / 16) : null,
+        chunkZ: position ? Math.floor(position.z / 16) : null,
+      };
     });
-    expect(before).toBeGreaterThan(0);
+    expect(before.loadedChunks).toBeGreaterThan(0);
+    expect(before.chunkX).not.toBeNull();
+    expect(before.chunkZ).not.toBeNull();
     let sawGeneration = false;
     await page.keyboard.down('KeyW');
     try {
-      // Sample queue depth while moving; software WebGL still runs fixed ticks,
-      // so crossing a ring boundary enqueues generation within ~2s of walking.
+      // Sample the resident projection while moving; software WebGL still runs
+      // fixed ticks, so crossing a ring boundary may enqueue and finish work
+      // between adjacent browser-side samples.
       const deadline = Date.now() + 6000;
       while (Date.now() < deadline) {
-        const pendingGen = await page.evaluate(() => {
-          const g = (window as unknown as { __voxelGame?: { world?: { getStats(): { pendingGeneration: number } } } }).__voxelGame;
-          return g?.world?.getStats().pendingGeneration ?? -1;
+        const sample = await page.evaluate(() => {
+          const g = (window as unknown as {
+            __voxelGame?: {
+              player?: { position: { x: number; z: number } };
+              world?: { getStats(): { pendingGeneration: number; loadedChunks: number } };
+            };
+          }).__voxelGame;
+          const stats = g?.world?.getStats();
+          const position = g?.player?.position;
+          return {
+            pendingGeneration: stats?.pendingGeneration ?? -1,
+            loadedChunks: stats?.loadedChunks ?? -1,
+            chunkX: position ? Math.floor(position.x / 16) : null,
+            chunkZ: position ? Math.floor(position.z / 16) : null,
+          };
         });
-        if (pendingGen > 0) {
+        const crossedBoundary =
+          sample.chunkX !== null &&
+          sample.chunkZ !== null &&
+          (sample.chunkX !== before.chunkX || sample.chunkZ !== before.chunkZ);
+        if (
+          crossedBoundary &&
+          (sample.pendingGeneration > 0 || sample.loadedChunks > before.loadedChunks)
+        ) {
           sawGeneration = true;
           break;
         }
@@ -404,7 +436,7 @@ test.describe('voxel game', () => {
     await page.waitForFunction((b) => {
       const g = (window as unknown as { __voxelGame?: { world?: { getStats(): { loadedChunks: number; pendingGeneration: number } } } }).__voxelGame;
       const stats = g?.world?.getStats();
-      return !!stats && stats.pendingGeneration === 0 && stats.loadedChunks >= b;
+      return !!stats && stats.pendingGeneration === 0 && stats.loadedChunks >= b.loadedChunks;
     }, before, { timeout: 15000 });
   });
 

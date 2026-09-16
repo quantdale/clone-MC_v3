@@ -14,7 +14,7 @@ describe('AmbientSoundBackend + scheduler wiring (277)', () => {
       rngCalls += 1;
       return 0; // roll minima
     };
-    let state: AmbientState = {
+    const state: AmbientState = {
       environment: 'plains',
       musicDelay: 1,
       cueDelay: 50,

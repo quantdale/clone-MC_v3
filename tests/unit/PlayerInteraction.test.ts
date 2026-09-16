@@ -43,7 +43,7 @@ function makeMutableWorld(blockId = BlockId.Stone): import('../../src/world/Worl
   };
 }
 
-function makeInput(state: { breakRequested: boolean; held: boolean }): InputState {
+function makeInput(state: { breakRequested: boolean; held: boolean; place?: boolean }): InputState {
   return {
     moveForward: false,
     moveBack: false,
@@ -59,7 +59,11 @@ function makeInput(state: { breakRequested: boolean; held: boolean }): InputStat
       return value;
     },
     isBreakHeld: () => state.held,
-    consumePlace: () => false,
+    consumePlace: () => {
+      const value = state.place ?? false;
+      state.place = false;
+      return value;
+    },
     consumeHotbarDelta: () => 0,
     consumeHotbarIndex: () => -1,
     consumeDebugToggle: () => false,
@@ -936,6 +940,46 @@ describe('player interaction game-mode rules (265)', () => {
 
     expect(world.getBlock(2, 1, 0)).toBe(BlockId.Bedrock);
     expect(actions).toContain('blocked');
+    interaction.dispose();
+  });
+
+  it('starts a held break after a prior action cooldown instead of dropping the press', () => {
+    const player = new Player({ position: new THREE.Vector3(0.5, 0, 0.5) });
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 20);
+    camera.position.copy(player.eyePosition);
+    camera.lookAt(10, player.eyePosition.y, player.eyePosition.z);
+    camera.updateMatrixWorld(true);
+    const world = makeMutableWorld();
+    const state = { breakRequested: false, held: false, place: true };
+    const interaction = new PlayerInteraction({
+      world,
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
+      selector: {
+        getSelectedItemId: () => ItemId.Dirt,
+        getSlotCount: () => 1,
+        consumeSelected: () => true,
+      },
+      player,
+      camera,
+      input: makeInput(state),
+    });
+
+    // Place against the stone first, establishing the action cooldown.
+    interaction.update(0.1);
+    expect(world.getBlock(1, 1, 0)).toBe(BlockId.Dirt);
+
+    // The left press lands before the 0.25s cooldown expires. A real held
+    // button must still begin mining once the cooldown has elapsed.
+    state.place = false;
+    state.breakRequested = true;
+    state.held = true;
+    interaction.update(0.01);
+    for (let i = 0; i < 30 && world.getBlock(2, 1, 0) !== BlockId.Air; i++) {
+      interaction.update(0.1);
+    }
+
+    expect(world.getBlock(2, 1, 0)).toBe(BlockId.Air);
     interaction.dispose();
   });
 });
