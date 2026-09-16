@@ -15,7 +15,7 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "c3da5c311e77e27eac57f9ffb6b0cd9b80cce498",
-  "localHead": "c3da5c311e77e27eac57f9ffb6b0cd9b80cce498",
+  "localHead": "94b0671ba8dc073b165b7b1eab176ad0e41ce301",
   "nextExactAction": "Release-readiness hardening after Change 277 is VERIFIED and locally complete; resume Change 258 only on a headed hardware-WebGL host",
   "lastCompletedTask": "Post-verification release-readiness hardening gates green; Change 277 remains VERIFIED 6/6",
   "blockers": [
@@ -2612,13 +2612,18 @@
       "head": "05ec693766648dc2022443e84636d0da0fc3c3bd",
       "at": "2026-08-30T20:16:00Z",
       "note": "Change 255 terminal archival: 37/37 VERIFIED, archived as 2026-08-30-255-high-performance-voxel-engine with capability spec synced; local typecheck/lint/unit 4556+1/build 195/e2e 51/51/file-audit 2608/state PASS; program COMPLETE. Free-fall report triaged as local legacy IndexedDB baseline artifact (fresh-world repro shows solid ground)."
+    },
+    {
+      "head": "94b0671ba8dc073b165b7b1eab176ad0e41ce301",
+      "at": "2026-09-16T05:02:37.7598836Z",
+      "note": "Change 277 release-readiness hardening candidate: held-break cooldown recovery, adventure target refresh, chunk-streaming E2E boundary-plus-residency evidence, memory-stress timeout alignment, HUD stack correction, canonical 60-cell visual baselines, and mobile smoke evidence. Local gates are green; this candidate is the session's normal publication handoff."
     }
   ],
   "releaseAuthority": {
     "schemaVersion": 1,
-    "authorityPackage": "openspec/changes/archive/2026-08-30-255-high-performance-voxel-engine",
-    "candidateSha": "05ec693766648dc2022443e84636d0da0fc3c3bd",
-    "note": "Program COMPLETE \u2014 Change 255 is VERIFIED and ARCHIVED as 2026-08-30-255-high-performance-voxel-engine; authorityPackage verification.md carries Overall status VERIFIED at 37/37. Candidate is the pre-archive local gate HEAD; canonical CI for this package is local (typecheck/lint/unit 4556+1/build 51/51) with hosted 253 evidence as prior terminal lineage."
+    "authorityPackage": "openspec/changes/277-live-ambient-audio-integration",
+    "candidateSha": "94b0671ba8dc073b165b7b1eab176ad0e41ce301",
+    "note": "Change 277 is VERIFIED 6/6 with the 2026-09-16 release-readiness hardening addendum. Candidate 94b0671 records the local typecheck/lint/unit/build/full-E2E/visual/mobile evidence; Change 258 headed hardware-WebGL certification remains owner-deferred and no GPU evidence is claimed."
   },
   "hardeningInterlock": {
     "role": "historical interlock record (pre-241 era); NOT the current release authority - see releaseAuthority above",
@@ -2682,5 +2687,5 @@
     ]
   },
   "criticalRiskOpen": false,
-  "publishedTip": "75a4994de0933b372b37d12bce7da7fc6c29b253"
+  "publishedTip": "94b0671ba8dc073b165b7b1eab176ad0e41ce301"
 }

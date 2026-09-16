@@ -6,7 +6,8 @@
 > cooldown loss, stabilized adventure target refresh and chunk-streaming E2E evidence, aligned the
 > block-entity stress timeout with its documented schedule, corrected the top-right HUD stack, and
 > refreshed the 60-cell visual baselines after the 259–277 live integrations. Session start was
-> `c3da5c311e77e27eac57f9ffb6b0cd9b80cce498`; publication of the verified checkpoint is pending.
+> `c3da5c311e77e27eac57f9ffb6b0cd9b80cce498`; the verified release-readiness candidate is
+> `94b0671ba8dc073b165b7b1eab176ad0e41ce301`, prepared for normal publication in this session.
 >
 > Local validation: `validate-state`, typecheck, lint (0 errors), unit 5192 passed + 1 skipped,
 > production build, full E2E 94/94, visual 60/60, and mobile 390×844 smoke all pass. The only
