@@ -17,7 +17,9 @@
   dependency audit, file-audit validation, and full E2E 94/94 including visual 60/60 all pass.
 - Focused proofs: statistics reload 5/5 and render-world visual compare 6/6; no headed GPU
   evidence is claimed.
-- Next exact action: **Push the audit candidate and state-sync checkpoint to `origin/main`, fetch, and verify the remote published head; preserve Change 258 as BLOCKED.**
+- Publication: normal push and refetch verified `origin/main` at
+  `59a48a8be7a848a794d0eab2a0810818740515f1` (candidate `6af6c6c6e4063906562aedc7bc66a3a52930d37e`).
+- Next exact action: **Resume Change 258 only on a headed hardware-WebGL host; until that external prerequisite exists, preserve its BLOCKED status and do not claim GPU evidence.**
 
 ## Current checkpoint — 2026-09-16 release-readiness hardening
 
