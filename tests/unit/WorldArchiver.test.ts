@@ -6,6 +6,7 @@ import { ChunkSectionRepository } from '../../src/storage/ChunkSectionRepository
 import { BlockEntityRepository } from '../../src/storage/BlockEntityRepository';
 import { EntityRepository } from '../../src/storage/EntityRepository';
 import { PlayerStateRepository } from '../../src/storage/PlayerStateRepository';
+import { ChunkEditRepository } from '../../src/storage/ChunkEditRepository';
 import { createIdbFactoryMock, type MockIdbFactory } from './IdbFactoryMock';
 
 const WORLD = 'world-7';
@@ -18,6 +19,7 @@ function makeDeps(factory?: MockIdbFactory): WorldArchiverDeps {
     blockEntities: new BlockEntityRepository({ factory: mock }),
     entities: new EntityRepository({ factory: mock }),
     playerStates: new PlayerStateRepository({ factory: mock }),
+    chunkEdits: new ChunkEditRepository({ factory: mock }),
   };
 }
 
@@ -38,6 +40,7 @@ async function populateWorld(deps: WorldArchiverDeps, worldId: string): Promise<
   await deps.blockEntities.open();
   await deps.entities.open();
   await deps.playerStates.open();
+  await deps.chunkEdits?.open();
 
   await deps.metadata.putMetadata({
     schemaVersion: 1,
@@ -211,5 +214,35 @@ describe('WorldArchiver', () => {
     const report = await new WorldArchiver(target).importWorld(exported);
     expect(report.playerStateImported).toBe(true);
     expect((await target.playerStates.getPlayerState(WORLD))?.worldId).toBe(WORLD);
+  });
+
+  it('replaces the target world instead of retaining records omitted by the archive', async () => {
+    const source = makeDeps();
+    const emptyArchive = await new WorldArchiver(source).exportWorld(WORLD);
+
+    const target = makeDeps();
+    await populateWorld(target, WORLD);
+    await populateWorld(target, 'other-world');
+    await target.metadata.putWitherData(WORLD, [{ id: 'stale-wither' }]);
+    await target.metadata.putGameRuleData(WORLD, { stale: true });
+    await target.metadata.putRecipeBookData(WORLD, { stale: true });
+    await target.metadata.putAdvancementData(WORLD, { stale: true });
+    await target.metadata.putItemEntityData(WORLD, [{ id: 'stale-item' }]);
+    await target.metadata.putXpOrbData(WORLD, [{ id: 'stale-xp' }]);
+    await target.metadata.putGameModeData(WORLD, { stale: true });
+    await target.metadata.putHardcoreData(WORLD, { stale: true });
+    await target.metadata.putDifficultyData(WORLD, { stale: true });
+    await target.metadata.putStatisticData(WORLD, { stale: true });
+    await target.metadata.putSleepData(WORLD, { stale: true });
+    await target.metadata.putWeatherData(WORLD, { stale: true });
+    await target.chunkEdits?.putChunkEdits(WORLD, 9, 0, 9, [[1, 2]]);
+
+    await new WorldArchiver(target).importWorld(emptyArchive);
+    const after = await new WorldArchiver(target).exportWorld(WORLD);
+
+    expect(stripExportedAt(after)).toEqual(stripExportedAt(emptyArchive));
+    expect(await target.metadata.getMetadata('other-world')).not.toBeNull();
+    expect(await target.chunkSections.listColumns('other-world')).toHaveLength(2);
+    expect(await target.entities.listChunks('other-world')).toHaveLength(1);
   });
 });

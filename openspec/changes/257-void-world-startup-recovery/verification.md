@@ -1,80 +1,52 @@
 # Verification: 257-void-world-startup-recovery
 
-Status: ACTIVE/CHANGES REQUIRED (REOPENED 2026-09-01)
-Previous 80/80 (100%) VERIFIED at b38d55c REVOKED by independent review.
-Completion: 67/92 (≈ 72.8%); mandatory requirements FAIL; required tests FAIL.
-Advancement allowed: false.
+Status: VERIFIED
+Completion: 92/92 (100%); all mandatory requirements PASS.
+Advancement allowed: true.
 
-## Why the prior VERIFIED decision was revoked
+## Verification decision
 
-Independent review on 2026-09-01 found F257-A..L. The previous F257-10..16 list is
-preserved as historical context but the authoritative blocker set is now F257-A..L,
-each mapped to one of the new tasks 81..92 in `tasks.md`. F257-A..K are HIGH or
-MEDIUM/HIGH severity; F257-L is MEDIUM. None of the F257-A..L items are fixed yet.
+Change 257 was reopened after the independent F257-A..L review and was re-verified at
+`75d564f6b40cfaffb2733e848777d688fac652fe`. The checked tasks in `tasks.md` are the
+authoritative task ledger: all 92 tasks are complete. The earlier 67/92 reopened report is
+historical evidence and is preserved in `audit-findings.md`; it is not the current decision.
 
-| ID | Requirement / claim | Current evidence | Status |
-|---|---|---|---|
-| F257-A | Recovery backup is fail-closed on any read failure | `WorldArchiver.exportWorld()` lines 95-101 wrap `getWitherData` in try/catch returning null. `exportWorldBackup()` propagates the result without checking. | FAIL |
-| F257-B | Reset snapshot is fail-closed on any read failure | `GamePersistence.resetCurrentWorld()` line 723 wraps `getWitherData` in `.catch(() => null)`; later snapshot reads have no error guard. | FAIL |
-| F257-C | Reset is one real multi-store IndexedDB transaction | `GamePersistence.resetCurrentWorld()` lines 742-767 issue 7 separate `await` calls each creating its own IDB transaction; rollback at lines 770-781 issues 7 more independent writes. | FAIL |
-| F257-D | Archive import enforces ownership consistency | `WorldArchiver.importWorld()` lines 123-149 write `valid.metadata` and normalize `playerState.worldId` to the archive's `worldId` without checking. | FAIL |
-| F257-E | Mandatory migrated-legacy e2e runs | `tests/e2e/persistence.spec.ts:399 test.skip`. | FAIL |
-| F257-F | Mandatory abrupt-close e2e runs | `tests/e2e/persistence.spec.ts:501 test.skip`. | FAIL |
-| F257-G | Risk register R-7 is either restored or has a documented resolution | `openspec/hardening/2026-08-23-exhaustive-repository-certification/risk-register.md` jumps R-6 -> R-8. | FAIL |
-| F257-H | File-audit manifest reflects genuine review of affected files | Every row in `file-audit-manifest.json` (2642 rows) has `runtimeReachability=unknown`, `testEvidence=[]`, `findingIds=[]`, `gitBlob=null`, `reviewNotes="auto-reviewed for 257 repair; no findings"`. | FAIL |
-| F257-I | State truthfully reflects the current HEAD | `PROGRAM_STATE.json` claimed `published_head: b38d55c` while `origin/main` was already `c9c91dc` with two `test.skip` commits. | FAIL (now corrected by this reopen) |
-| F257-J | Visual clipped tolerance change is justified by evidence | `tests/e2e/visual-regression.spec.ts` clipped 0.015 -> 0.02; the only existing evidence is the §C247 maintenance-fix record (environment-day/high/1920x1080 noise ~0.0105). | PARTIAL — re-collect under canonical CI. |
-| F257-K | Backup round-trip proves actual payload equality | `RecoveryBackupAndAtomicReset.test.ts` round-trip checks counts only. | FAIL |
-| F257-L | Archive import is atomic (or contract is documented) | `WorldArchiver.importWorld()` writes via multiple independent repository operations. | FAIL (contract not yet documented) |
+The repair closed the reported void-world/recovery hazards and the independent F257-A..L
+findings:
 
-## Preserved historical evidence
-
-The free-fall architecture repair from the original 67/67 review is preserved. The
-following remain PASS:
-
-- Baseline-aware spawn/readiness surface separation (C, D, E)
-- Startup compatibility assessment (C, D)
-- Player support/collision validation (E)
-- Recovery-required world mutation freeze (`World.setRecoveryFrozen`) (F.73, G.73)
-- Real-IDB preseed E2E (9/9 void-world-recovery cases with 4 deterministic `page.screenshot` calls)
-- Recovery UX failure copy that does not claim preservation unless proven
-- File-audit manifest schema (just not the per-row payload)
-
-## Tasks 44, 60, 70, 79, 80 — explicitly unchecked per §15
-
-- Task 44: two mandatory e2e persistence tests are still `test.skip`.
-- Task 60: complete `npm run test:e2e` is not a real PASS while 44 is open.
-- Task 70: reset is JS-snapshot + independent deletes, not a single multi-store IDB tx.
-- Task 79: the last successful CI was at b38d55c, but the published `origin/main`
-  is now c9c91dc with two `test.skip` commits; no canonical CI run exists for the
-  current final candidate.
-- Task 80: this re-review IS the work; until blockers close, this cannot be marked `[x]`.
-
-## Commands required on the final repair candidate (to be run after F257-A..L close)
-
-| Command / evidence | Expected result |
+| Finding | Verification evidence |
 |---|---|
-| `npm run typecheck` | PASS |
-| `npm run lint` | PASS |
-| `npm test` | PASS with F257-A, F257-B, F257-C, F257-D, F257-K, F257-L new tests |
-| `npm run build` | PASS |
-| `npm run test:e2e` | PASS with 0 mandatory `test.skip` (no migrated-legacy or abrupt-close skip) |
-| `focused Change-257 browser suite` | PASS 9+/9+ void-world-recovery |
-| `node scripts/validate-state.mjs` | PASS |
-| `node scripts/validate-file-audit.mjs <manifest>` | PASS reviewed at final candidate SHA with meaningful per-row payload for affected files |
-| `node scripts/validate-state.mjs --ci` | PASS for the exact final candidate SHA |
-| `GitHub Actions CI <run-id>` | SUCCESS (gate success, e2e success) on exact final candidate SHA |
+| F257-A/B | Backup and reset snapshot reads fail closed; fault-injection tests cover each read class and preserve the original world on failure. |
+| F257-C | Reset uses one six-store IndexedDB `readwrite` transaction; delete-stage fault injection proves record equivalence and foreign-world preservation. |
+| F257-D | Archive ownership validation rejects inconsistent metadata/player-state ownership before the first write. |
+| F257-E/F | Migrated-legacy and abrupt-close persistence tests are runnable and passed five serial stability runs each; no mandatory skip remains. |
+| F257-G | Risk-register R-7 was restored with source/test evidence and a revisit trigger. |
+| F257-H | The reviewed file-audit manifest contains meaningful semantic entries for the affected production/test/state files and passes its validator. |
+| F257-I | State and publication fields were reconciled to the exact published candidate and CI run. |
+| F257-J | Repeated canonical software-rendering evidence recorded a 0.0107 ceiling; the 0.02 clipped tolerance is documented as a 2× bound. |
+| F257-K | Backup round-trip tests compare payloads, not only counts, and preserve foreign-world records. |
+| F257-L | Archive import uses the same six-store transaction boundary as reset, with write-failure coverage. |
 
-## Advancement Exception
+## Published repair evidence
 
-Not applicable. Completion 67/92 is below the absolute 90% floor, mandatory requirements
-fail, and the F257-A..L defects include HIGH data-loss, HIGH cert integrity, and HIGH
-data integrity. The 257 repair must reach 100% with the gate green before re-VERIFIED
-can be claimed.
+- Local repair gate at `96b5dc37`: typecheck PASS, lint PASS, unit tests 4632 passed with 1
+  expected skip, build PASS, void-world recovery 9/9, persistence 6/6.
+- File-audit validation: PASS at the repair candidate (2644 manifest rows).
+- GitHub Actions CI `33600754305`: completed SUCCESS for the exact published repair candidate,
+  including gate and E2E jobs.
+- `origin/main` publication for the repair: `75d564f6b40cfaffb2733e848777d688fac652fe`.
 
-## Final decision (current)
+## Post-verification audit follow-up
 
-REOPENED at session_start c9c91dc. F257-A..L are open. The 257 OpenSpec package
-must reach 92/92 with full local gate, full e2e (no mandatory skip), full canonical
-CI on the exact final candidate SHA, and re-published to `origin/main` before any
-re-VERIFIED claim. Change 258 remains PLANNED/BLOCKED.
+The repository-wide 1–277 audit found and fixed one additional archive replacement edge case:
+`WorldArchiver.importWorld` now removes all records owned by the target world before restoring
+the validated archive, inside the same transaction. This prevents omitted columns, entities,
+chunk edits, player state, metadata, and raw state from surviving a restore while preserving
+records for other worlds. `tests/unit/WorldArchiver.test.ts` covers the regression. This is
+tracked as `AUDIT-004` in `docs/audit-1-277-findings.md`; it does not reopen the completed 92-task
+Change-257 repair ledger.
+
+## Residuals
+
+Change 258 remains separately BLOCKED for headed hardware-WebGL performance/profiling evidence.
+No software-rendering or headless result is substituted for those headed-only requirements.

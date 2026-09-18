@@ -31,6 +31,6 @@
 
 ## Checkpoint
 - [x] `verification.md` updated with real evidence; status VERIFIED.
-- [ ] `openspec/PROGRAM_STATE.json` / `.md` updated (new validationResults entry, next change pointer
+- [x] `openspec/PROGRAM_STATE.json` / `.md` updated (new validationResults entry, next change pointer
       to 145-passive-mob-baseline).
-- [ ] Committed and pushed to `origin/main`; local HEAD verified equal to `origin/main`.
+- [x] Committed and pushed to `origin/main`; local HEAD verified equal to `origin/main`.

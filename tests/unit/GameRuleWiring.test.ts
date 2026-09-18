@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { resolveRandomTickCount } from "../../src/engine/Game";
 import {
   createDefaultGameRules,
+  resolveRandomTickCount,
   setGameRule,
 } from "../../src/simulation/GameRuleFramework";
 import {

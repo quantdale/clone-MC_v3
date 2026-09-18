@@ -1,3 +1,5 @@
+import { RANDOM_TICKS_PER_SUB_CHUNK } from './RandomTickSelector';
+
 /**
  * Gamerule framework (189): the rules layer — a typed gamerule registry with boolean/integer/string
  * values, immutable per-world state, typed get/set with validation, a text parser for 191's
@@ -57,6 +59,18 @@ const RULES: readonly GameRuleDefinition[] = [
 
 /** Immutable per-world gamerule state. */
 export type GameRuleStore = Readonly<Record<GameRuleKey, GameRuleValue>>;
+
+/**
+ * Resolve the per-section random-tick selector count from the gamerule store
+ * (261). The store only ever holds kind-valid integers, but the clamp keeps
+ * the call site total against hand-built stores: negatives become 0 (silent
+ * ticks, a legal value) and the default reproduces the pre-261 call exactly.
+ */
+export function resolveRandomTickCount(store: GameRuleStore): number {
+  const raw = store.randomTickSpeed;
+  if (typeof raw !== 'number' || !Number.isInteger(raw)) return RANDOM_TICKS_PER_SUB_CHUNK;
+  return Math.max(0, raw);
+}
 
 /** All rule definitions (the registry). */
 export function gameRuleDefinitions(): readonly GameRuleDefinition[] {

@@ -2,8 +2,8 @@
  * World archive export/import (042, revised 257). `WorldArchiver` reads one world's records from ALL
  * world-owned repositories (including chunk-edits and Wither data) into a validated
  * {@link WorldArchive}, and restores a validated archive back into the stores. Export is
- * read-only; import validates the entire archive before the first write and normalizes
- * `playerState.worldId` to the archive's `worldId`.
+ * read-only; import validates the entire archive before the first write and rejects
+ * `playerState.worldId` ownership mismatches against the archive's `worldId`.
  */
 import { validateWorldArchive, type WorldArchive } from './WorldArchive';
 import { WorldMetadataRepository } from './WorldMetadataRepository';
@@ -12,8 +12,57 @@ import { BlockEntityRepository } from './BlockEntityRepository';
 import { EntityRepository } from './EntityRepository';
 import { PlayerStateRepository } from './PlayerStateRepository';
 import { ChunkEditRepository } from './ChunkEditRepository';
+import type { IdbTransactionLike } from './WorldMetadataRepository';
 
-/** The repositories the archiver reads/writes (now seven including chunk-edits and metadata raw Wither). */
+const RAW_WORLD_KEYS = [
+  '__wither__:',
+  '__gamerules__:',
+  '__recipebook__:',
+  '__advancements__:',
+  '__itementities__:',
+  '__xporbs__:',
+  '__gamemode__:',
+  '__hardcore__:',
+  '__difficulty__:',
+  '__statistics__:',
+  '__sleep__:',
+  '__weather__:',
+] as const;
+
+type RequestLike = {
+  onsuccess: ((event: unknown) => void) | null;
+  onerror: ((event: unknown) => void) | null;
+  result: unknown;
+  error: unknown;
+};
+
+function requestResult<T>(request: RequestLike, operation: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result as T);
+    request.onerror = () => reject(request.error instanceof Error ? request.error : new Error(`${operation} failed`));
+  });
+}
+
+async function deleteOwnedRecords(
+  tx: IdbTransactionLike,
+  storeName: string,
+  owns: (record: Record<string, unknown>) => boolean,
+): Promise<void> {
+  const store = tx.objectStore(storeName);
+  const records = await requestResult<unknown[]>(store.getAll(), `getAll on ${storeName}`);
+  for (const value of records ?? []) {
+    if (typeof value !== 'object' || value === null) continue;
+    const record = value as Record<string, unknown>;
+    if (!owns(record)) continue;
+    const key = record.key ?? record.worldId;
+    if (typeof key !== 'string' && typeof key !== 'number') {
+      throw new Error(`WorldArchiver: owned ${storeName} record is missing its key`);
+    }
+    await requestResult<void>(store.delete(key), `delete on ${storeName}`);
+  }
+}
+
+/** The repositories the archiver reads/writes, including all world-owned stores and raw metadata. */
 export interface WorldArchiverDeps {
   metadata: WorldMetadataRepository;
   chunkSections: ChunkSectionRepository;
@@ -65,7 +114,7 @@ export interface WorldImportReport {
   weatherDataImported: boolean;
 }
 
-/** Exports and imports whole-world archives over the five repositories. */
+/** Exports and imports whole-world archives over every world-owned repository. */
 export class WorldArchiver {
   private readonly metadata: WorldMetadataRepository;
   private readonly chunkSections: ChunkSectionRepository;
@@ -180,8 +229,11 @@ export class WorldArchiver {
    * the writes use one multi-store `readwrite` transaction spanning all 6 world-owned
    * stores (world-metadata, chunk-sections, chunk-edits, player-state, block-entities,
    * entities) via `WorldMetadataRepository.runInTransaction`, so a mid-import write
-   * failure (e.g. quota) atomically rolls back the whole import. This reuses the same
-   * transaction layer as the reset path (F257-C).
+   * failure (e.g. quota) atomically rolls back the whole import. Before writing, every
+   * record owned by the archive's world is deleted from those stores; this makes an
+   * import a replacement rather than a merge and prevents stale columns, entities,
+   * chunk edits, or raw state from surviving when the archive omits them. This reuses
+   * the same transaction layer as the reset path (F257-C).
    */
   async importWorld(archive: WorldArchive): Promise<WorldImportReport> {
     const valid = validateWorldArchive(archive);
@@ -189,11 +241,18 @@ export class WorldArchiver {
 
     const stores = ["world-metadata", "chunk-sections", "chunk-edits", "player-state", "block-entities", "entities"] as const;
     await this.metadata.runInTransaction([...stores], async (tx) => {
-      const put = (store: string, value: unknown) => new Promise<void>((resolve, reject) => {
-        const req = tx.objectStore(store).put(value) as unknown as { onsuccess: (() => void) | null; onerror: (() => void) | null; error: unknown };
-        req.onsuccess = () => resolve();
-        req.onerror = () => reject(req.error instanceof Error ? req.error : new Error(`put failed on ${store}`));
+      const put = (store: string, value: unknown) => requestResult<void>(tx.objectStore(store).put(value), `put on ${store}`);
+
+      await deleteOwnedRecords(tx, "world-metadata", (record) => {
+        const key = record.worldId;
+        return key === valid.worldId || RAW_WORLD_KEYS.some((prefix) => key === `${prefix}${valid.worldId}`);
       });
+      await deleteOwnedRecords(tx, "chunk-sections", (record) => record.worldId === valid.worldId);
+      await deleteOwnedRecords(tx, "chunk-edits", (record) => record.worldId === valid.worldId);
+      await deleteOwnedRecords(tx, "player-state", (record) => record.worldId === valid.worldId);
+      await deleteOwnedRecords(tx, "block-entities", (record) => record.worldId === valid.worldId);
+      await deleteOwnedRecords(tx, "entities", (record) => record.worldId === valid.worldId);
+
       if (valid.metadata) await put("world-metadata", valid.metadata);
       for (const c of valid.columns) await put("chunk-sections", { ...c, key: `${valid.worldId}|${c.chunkX}|${c.chunkZ}`, worldId: valid.worldId });
       for (const c of valid.blockEntityChunks) await put("block-entities", { key: `${valid.worldId}|${c.chunkX}|${c.chunkZ}`, worldId: valid.worldId, chunkX: c.chunkX, chunkZ: c.chunkZ, entities: c.entities });

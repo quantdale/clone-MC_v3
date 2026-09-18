@@ -1,5 +1,23 @@
 # Minecraft-Parity Program State
 
+## Current checkpoint — 2026-09-18 Changes 1–277 audit remediation complete
+
+> **Changes 1–277 audit remediation is complete locally; Change 277 remains VERIFIED 6/6 and Change 258 remains BLOCKED.**
+> This session started from `d4960cfda4daad461eab720d6ac087d63d976951` on `origin/main`.
+> Closed audit findings AUDIT-001 through AUDIT-007 and AUDIT-009 are recorded in
+> `docs/audit-1-277-findings.md`; AUDIT-008 remains the accepted headed hardware-WebGL blocker.
+> The remediation includes truthful historical task/state reconciliation, parity-matrix completion
+> through C277, transactional archive replacement semantics with regression coverage, the Vitest 4
+> dependency/security upgrade, and explicit product-only coverage scope with the pure gamerule helper
+> kept outside the DOM-bound `Game` aggregate.
+
+- Local evidence: `validate-state`, typecheck, lint (0 errors), 5,193 unit tests plus one
+  skipped, coverage 91.79/88.69/94.44/93.06, production build, release-bundle check,
+  dependency audit, file-audit validation, and full E2E 94/94 including visual 60/60 all pass.
+- Focused proofs: statistics reload 5/5 and render-world visual compare 6/6; no headed GPU
+  evidence is claimed.
+- Next exact action: **Commit the verified audit remediation, update the state-head checkpoint, and publish both coherent commits to `origin/main`; preserve Change 258 as BLOCKED.**
+
 ## Current checkpoint — 2026-09-16 release-readiness hardening
 
 > **Change 277 remains VERIFIED 6/6.** This successor hardening campaign repaired the held-break

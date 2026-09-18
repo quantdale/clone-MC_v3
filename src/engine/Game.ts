@@ -39,7 +39,7 @@ import { CropBlockBehavior } from '../simulation/CropBehavior';
 import { FarmlandBlockBehavior } from '../simulation/FarmlandBehavior';
 import { FireBlockBehavior } from '../simulation/FireBehavior';
 import { bonemealTarget } from '../simulation/Bonemeal';
-import { RandomTickSelector, RANDOM_TICKS_PER_SUB_CHUNK } from '../simulation/RandomTickSelector';
+import { RandomTickSelector } from '../simulation/RandomTickSelector';
 import { WorldBlockAccess } from '../simulation/WorldBlockAccess';
 import { Player } from '../player/Player';
 import { PlayerController } from '../player/PlayerController';
@@ -278,6 +278,7 @@ import {
   createDefaultGameRules,
   isValidGameRuleValue,
   parseGameRuleValue,
+  resolveRandomTickCount,
   serializeGameRules,
   setGameRule as setGameRuleValue,
   type GameRuleKey,
@@ -309,17 +310,6 @@ const WITHER_MELEE_COOLDOWN_TICKS = 10;
 /** Ticks between wither status-effect damage ticks (252). */
 const WITHER_EFFECT_PERIOD_TICKS = 40;
 
-/**
- * Resolve the per-section random-tick selector count from the gamerule store
- * (261). The store only ever holds kind-valid integers, but the clamp keeps
- * the call site total against hand-built stores: negatives become 0 (silent
- * ticks, a legal value) and the default reproduces the pre-261 call exactly.
- */
-export function resolveRandomTickCount(store: GameRuleStore): number {
-  const raw = store.randomTickSpeed;
-  if (typeof raw !== 'number' || !Number.isInteger(raw)) return RANDOM_TICKS_PER_SUB_CHUNK;
-  return Math.max(0, raw);
-}
 /** Toast notification visible duration in milliseconds. */
 const TOAST_DURATION_MS = 1500;
 /** FPS sampling window in seconds. */
@@ -4450,6 +4440,7 @@ export class Game {
   private resetWalkBaseline(): void {
     this.lastStatX = this.player.position.x;
     this.lastStatZ = this.player.position.z;
+    this.walkRemainder = 0;
   }
 
   /** Serialize the live store into the durable record (no-op without persistence). */
@@ -5244,6 +5235,12 @@ export class Game {
         this.spawnResolutionValue = 'relocated';
       }
     }
+    // The constructor establishes a baseline at the predicted spawn before
+    // durable player state is applied. Re-anchor it after restoration so the
+    // load/relocation discontinuity cannot mint walk distance on the first
+    // fixed tick. The helper also discards a pre-teleport sub-meter remainder,
+    // preserving the no-distance-across-discontinuities rule.
+    this.resetWalkBaseline();
     this.player.yaw = state.player.yaw;
     this.player.pitch = state.player.pitch;
     this.inventory.restore(

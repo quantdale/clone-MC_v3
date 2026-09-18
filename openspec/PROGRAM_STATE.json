@@ -14,10 +14,10 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "c3da5c311e77e27eac57f9ffb6b0cd9b80cce498",
-  "localHead": "94b0671ba8dc073b165b7b1eab176ad0e41ce301",
-  "nextExactAction": "Release-readiness hardening after Change 277 is VERIFIED and locally complete; resume Change 258 only on a headed hardware-WebGL host",
-  "lastCompletedTask": "Post-verification release-readiness hardening gates green; Change 277 remains VERIFIED 6/6",
+  "sessionStartHead": "d4960cfda4daad461eab720d6ac087d63d976951",
+  "localHead": "d4960cfda4daad461eab720d6ac087d63d976951",
+  "nextExactAction": "Commit the verified Changes 1–277 audit remediation, then update the state-head checkpoint and publish both coherent commits to origin/main; preserve Change 258 BLOCKED",
+  "lastCompletedTask": "Changes 1–277 audit remediation complete: focused regressions fixed, Vitest 4 coverage/build/security/file-audit gates green, and full browser matrix 94/94 green",
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. 001-257 VERIFIED; game shippable with known performance-certification debt. The 259 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
@@ -25,9 +25,9 @@
     {
       "change": "277-live-ambient-audio-integration",
       "status": "VERIFIED",
-      "unitTests": 5192,
+      "unitTests": 5193,
       "e2eTests": 94,
-      "note": "Post-verification release-readiness hardening: held-break cooldown recovery with focused unit proof; deterministic adventure target refresh; chunk-streaming E2E boundary-plus-residency invariant with 20 repeated passes; memory-stress timeout aligned to its documented software-WebGL schedule; non-overlapping HUD control stack; canonical 60-cell visual re-pin and verification; mobile 390x844 smoke check. Gates: validate-state/typecheck/lint 0 errors/npm test 434 files 5192 passed + 1 skipped/build PASS/full test:e2e 94/94 PASS. Existing lint warnings and the build chunk-size advisory remain non-failing; Change 258 headed hardware-WebGL certification remains owner-deferred."
+      "note": "Repository-wide Changes 1–277 audit remediation plus post-verification release-readiness hardening: truthful historical task/state reconciliation; C001–C277 parity-matrix reconciliation; transactional WorldArchiver replacement semantics with regression proof; Vitest 4.1.11/coverage-v8 security upgrade with explicit product-only coverage scope; gamerule helper boundary fix; statistics restoration-baseline fix; six-cell HUD golden re-pin; held-break cooldown recovery; deterministic adventure target refresh; chunk-streaming E2E boundary-plus-residency invariant with 20 repeated passes; memory-stress timeout aligned to its documented software-WebGL schedule; non-overlapping HUD control stack; canonical 60-cell visual verification; mobile smoke check. Gates: validate-state/typecheck/lint 0 errors/full unit 434 files 5193 passed + 1 skipped/coverage 91.79% statements 88.69% branches 94.44% functions 93.06% lines/build PASS/release-bundle PASS/full test:e2e 94/94 PASS including visual 60/60. Existing lint warnings and the build chunk-size advisory remain non-failing; Change 258 headed hardware-WebGL certification remains owner-deferred."
     },
     {
       "change": "275-live-weather-cycle-integration",

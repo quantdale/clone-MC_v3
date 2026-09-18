@@ -3,6 +3,13 @@
 Status: VERIFIED
 Completion: 100%
 
+## Audit reconciliation (2026-09-18)
+
+The three previously unchecked documentation/state/publication tasks are satisfied by the
+verification evidence in this package and the implementation/publication history (`b1890da`,
+`db5b0e8`). They are checked here to keep the ledger consistent with the already VERIFIED
+decision; no new implementation is being claimed.
+
 ## 1. Data model + registry
 
 - [x] **1.1** Create `src/inventory/EnchantmentRegistry.ts` with `EnchantmentTarget`,
@@ -51,13 +58,13 @@ Completion: 100%
 
 ## 6. Documentation / state
 
-- [ ] **6.1** Update `openspec/changes/118-enchantment-registry/verification.md` with real
+- [x] **6.1** Update `openspec/changes/118-enchantment-registry/verification.md` with real
       command output and per-requirement evidence.
-- [ ] **6.2** Advance `PROGRAM_STATE.json`/`.md`: currentChange = `118-enchantment-registry`
+- [x] **6.2** Advance `PROGRAM_STATE.json`/`.md`: currentChange = `118-enchantment-registry`
       VERIFIED, nextChange = `119-enchantment-application`; record completion %,
       validations, Git HEAD.
 
 ## 7. Commit + publish
 
-- [ ] **7.1** Commit implementation (impl) and update state (state-bump) as two commits;
+- [x] **7.1** Commit implementation (impl) and update state (state-bump) as two commits;
       `git push origin HEAD:main`; confirm remote `main` == local HEAD.

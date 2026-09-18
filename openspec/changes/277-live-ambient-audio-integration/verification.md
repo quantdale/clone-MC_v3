@@ -7,7 +7,7 @@ Overall status: **VERIFIED**
 
 ## Gates
 - typecheck PASS; lint 0 errors expected
-- unit: AmbientAudioFramework + AmbientSoundBackend + AmbientAudioIntegration green
+- unit: AmbientAudioFramework + AmbientSoundBackend + AmbientAudioIntegration and audit regressions green
 - e2e split: ambient-audio.spec.ts 1/1
 - validate-state PASS; file-audit PASS
 - Persistence: ephemeral (no framework serialize) — documented in design.md
@@ -15,7 +15,8 @@ Overall status: **VERIFIED**
 ## Evidence
 - Game owns AmbientState; tickAmbient each fixed tick; SilentAmbientBackend default; mute flag.
 - Original/procedural only (oscillator optional backend).
-- 258 BLOCKED; stop after publish — no 1–277 audit.
+- 258 remains BLOCKED; the repository-wide Changes 1–277 audit is tracked separately
+  in `docs/audit-1-277-findings.md` and does not alter this change's 6/6 result.
 
 VERIFIED.
 
@@ -44,11 +45,27 @@ Final local evidence:
 - `npm run validate-state` — PASS.
 - `npm run typecheck` — PASS.
 - `npm run lint` — PASS, 0 errors and 85 pre-existing explicit-`any` warnings.
-- `npm test -- --reporter=dot` — PASS, 434 files; 5192 passed, 1 skipped.
+- `npm test -- --reporter=dot` — PASS, 434 files; 5193 passed, 1 skipped.
+- `npm run test:coverage -- --reporter=dot` — PASS; 91.79% statements, 88.69% branches,
+  94.44% functions, 93.06% lines.
 - `npm run build` — PASS, Vite transformed 237 modules; the existing >500 kB
   chunk advisory remains non-failing and is not claimed as optimized.
 - `npm run test:e2e` — PASS, 94/94; visual matrix 60/60 and memory stress green.
 
+- Audit follow-up proofs — PASS: Change-271 statistics reload journey 5/5 repeated
+  runs; `render-world` visual compare 6/6 after the canonical six-cell re-pin.
+
 The only remaining material lane is the pre-existing owner-deferred Change 258
 headed hardware-WebGL certification; no GPU evidence was fabricated and the
 production sync-meshing default was left unchanged.
+
+## Repository-wide audit checkpoint — 2026-09-18
+
+This already-verified change is the active durable handoff for the repository-wide
+audit. AUDIT-001 through AUDIT-007 and AUDIT-009 through AUDIT-011 are closed in
+`docs/audit-1-277-findings.md`; AUDIT-008 is the accepted Change-258 headed-host
+blocker. The audit remediation has passed focused WorldArchiver and gamerule tests,
+full Vitest 4 coverage, typecheck, lint, production build, release-bundle validation,
+dependency audit, file-audit validation, and full 94/94 browser E2E with visual 60/60.
+The audit remediation is ready for commit and publication. No Change-258 headed-only
+claim is made.

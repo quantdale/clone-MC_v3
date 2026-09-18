@@ -1,8 +1,18 @@
 # Tasks: 246-input-accessibility-matrix
 
+Status: VERIFIED
+Completion: 100% (15/15 tasks)
+
+## Audit reconciliation (2026-09-18)
+
+Tasks 1.1 and 1.3 are evidenced by the characterization and baseline sections of
+`verification.md`; task 4.3 is evidenced by the recorded full gate and regression guards.
+The implementation/publication history is present (`411fe08`, `6b69831`). These checkboxes
+are reconciled to the existing VERIFIED decision; no new implementation is being claimed.
+
 ## 1. Baseline and characterization
 
-- [ ] 1.1 Characterize the current input wiring and record it in `design.md` under "Context/current
+- [x] 1.1 Characterize the current input wiring and record it in `design.md` under "Context/current
       state": confirm `InputManager` hard-codes WASD/Space/Shift/Digit1-9/F3/KeyC/KeyR and does not
       use 207 bindings; confirm 209/210/208 and 206 `mouseSensitivity`/`invertY`/`autoJump` are not
       wired into the live path; confirm `Game.simulationActive` is pointer-lock-gated; confirm no
@@ -10,7 +20,7 @@
 - [x] 1.2 Add characterization/failing unit tests for the planned `InputCoordinator` arbitration
       (action union/order, move/look priority, held-button merge, sticky across devices) and for
       `clearAll`/`clearDevice`, demonstrating the current absence of the coordinator.
-- [ ] 1.3 Run and record the pre-change baseline gate (`npm run typecheck`, `npm run lint`,
+- [x] 1.3 Run and record the pre-change baseline gate (`npm run typecheck`, `npm run lint`,
       `npm test`, `npm run build`, `npm run test:e2e`) as the regression baseline, noting the
       existing "clears movement when the page loses focus" e2e assertion as a regression guard.
 
@@ -54,7 +64,7 @@
 - [x] 4.2 Edge/failure tests: corrupt settings/keybindings/accessibility payloads fall back to
       defaults (REQ-5); gamepad disconnect and touch cancel zero the device (REQ-6); repeated
       `keydown` autorepeat yields one hotbar signal (REQ-7).
-- [ ] 4.3 Run the full baseline gate (`npm run typecheck`, `npm run lint`, `npm test`, `npm run
+- [x] 4.3 Run the full baseline gate (`npm run typecheck`, `npm run lint`, `npm test`, `npm run
       build`, `npm run test:e2e`); confirm the existing "clears movement when the page loses focus",
       "keeps pointer-lock failures recoverable", and the WASD/hotbar/eat/break-place e2e assertions
       remain green; update `verification.md` and, when advancing, `PROGRAM_STATE.json`/

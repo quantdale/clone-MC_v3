@@ -10,7 +10,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2830,
+  "total": 2831,
   "rows": [
     {
       "path": ".agent/EXECUTION_PROMPT.md",
@@ -890,6 +890,41 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "docs/audit-1-277-findings.md",
+      "gitBlob": null,
+      "category": "docs",
+      "purpose": "Durable audit ledger for Changes 1–277, including remediation status and the Change-258 external blocker",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "documentation-only",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "node scripts/validate-file-audit.mjs openspec/hardening/2026-08-23-exhaustive-repository-certification/file-audit-manifest.json"
+      ],
+      "riskAreas": [
+        "state truth",
+        "persistence replacement semantics",
+        "dependency security",
+        "headed-WebGL evidence boundary"
+      ],
+      "findingIds": [
+        "AUDIT-001",
+        "AUDIT-002",
+        "AUDIT-003",
+        "AUDIT-004",
+        "AUDIT-005",
+        "AUDIT-006",
+        "AUDIT-007",
+        "AUDIT-008",
+        "AUDIT-009",
+        "AUDIT-010",
+        "AUDIT-011"
+      ],
+      "disposition": "open findings remain explicitly tracked; fixed and accepted items cite their evidence",
+      "reviewNotes": "Semantic review performed for the repository-wide audit campaign; this file is the durable findings ledger and does not claim Change-258 headed evidence.",
       "status": "audited"
     },
     {
