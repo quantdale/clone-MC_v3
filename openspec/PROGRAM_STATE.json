@@ -15,9 +15,9 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d4960cfda4daad461eab720d6ac087d63d976951",
-  "localHead": "d4960cfda4daad461eab720d6ac087d63d976951",
-  "nextExactAction": "Commit the verified Changes 1–277 audit remediation, then update the state-head checkpoint and publish both coherent commits to origin/main; preserve Change 258 BLOCKED",
-  "lastCompletedTask": "Changes 1–277 audit remediation complete: focused regressions fixed, Vitest 4 coverage/build/security/file-audit gates green, and full browser matrix 94/94 green",
+  "localHead": "6af6c6c6e4063906562aedc7bc66a3a52930d37e",
+  "nextExactAction": "Push the verified audit candidate and state-sync checkpoint to origin/main, fetch, and verify the remote published head; then resume Change 258 only on a headed hardware-WebGL host while preserving BLOCKED",
+  "lastCompletedTask": "Changes 1–277 audit remediation committed at 6af6c6c6e4063906562aedc7bc66a3a52930d37e; state-sync and normal publication verification remain",
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. 001-257 VERIFIED; game shippable with known performance-certification debt. The 259 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
@@ -2617,13 +2617,18 @@
       "head": "94b0671ba8dc073b165b7b1eab176ad0e41ce301",
       "at": "2026-09-16T05:02:37.7598836Z",
       "note": "Change 277 release-readiness hardening candidate: held-break cooldown recovery, adventure target refresh, chunk-streaming E2E boundary-plus-residency evidence, memory-stress timeout alignment, HUD stack correction, canonical 60-cell visual baselines, and mobile smoke evidence. Local gates are green; this candidate is the session's normal publication handoff."
+    },
+    {
+      "head": "6af6c6c6e4063906562aedc7bc66a3a52930d37e",
+      "at": "2026-09-18T12:33:45Z",
+      "note": "Changes 1–277 audit/remediation candidate committed: findings ledger, truthful historical state/task reconciliation, C001–C277 matrix completion, WorldArchiver replacement semantics, Vitest 4.1.11 security/coverage hardening, statistics restoration fix, and canonical visual re-pin. Local validate-state/typecheck/lint/unit/coverage/build/release/file-audit and full E2E 94/94 (visual 60/60) are green; Change 258 remains BLOCKED with no headed GPU claim."
     }
   ],
   "releaseAuthority": {
     "schemaVersion": 1,
     "authorityPackage": "openspec/changes/277-live-ambient-audio-integration",
-    "candidateSha": "94b0671ba8dc073b165b7b1eab176ad0e41ce301",
-    "note": "Change 277 is VERIFIED 6/6 with the 2026-09-16 release-readiness hardening addendum. Candidate 94b0671 records the local typecheck/lint/unit/build/full-E2E/visual/mobile evidence; Change 258 headed hardware-WebGL certification remains owner-deferred and no GPU evidence is claimed."
+    "candidateSha": "6af6c6c6e4063906562aedc7bc66a3a52930d37e",
+    "note": "Changes 1–277 audit remediation is locally verified in candidate 6af6c6c6e4063906562aedc7bc66a3a52930d37e: typecheck/lint/unit/coverage/build/release/file-audit/dependency gates and full E2E 94/94 including visual 60/60 pass. Change 277 remains VERIFIED 6/6; Change 258 headed hardware-WebGL certification remains owner-deferred and no GPU evidence is claimed."
   },
   "hardeningInterlock": {
     "role": "historical interlock record (pre-241 era); NOT the current release authority - see releaseAuthority above",
@@ -2687,5 +2692,5 @@
     ]
   },
   "criticalRiskOpen": false,
-  "publishedTip": "94b0671ba8dc073b165b7b1eab176ad0e41ce301"
+  "publishedTip": "6af6c6c6e4063906562aedc7bc66a3a52930d37e"
 }

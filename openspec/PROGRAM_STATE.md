@@ -4,6 +4,7 @@
 
 > **Changes 1–277 audit remediation is complete locally; Change 277 remains VERIFIED 6/6 and Change 258 remains BLOCKED.**
 > This session started from `d4960cfda4daad461eab720d6ac087d63d976951` on `origin/main`.
+> The verified audit candidate is committed at `6af6c6c6e4063906562aedc7bc66a3a52930d37e`.
 > Closed audit findings AUDIT-001 through AUDIT-007 and AUDIT-009 are recorded in
 > `docs/audit-1-277-findings.md`; AUDIT-008 remains the accepted headed hardware-WebGL blocker.
 > The remediation includes truthful historical task/state reconciliation, parity-matrix completion
@@ -16,7 +17,7 @@
   dependency audit, file-audit validation, and full E2E 94/94 including visual 60/60 all pass.
 - Focused proofs: statistics reload 5/5 and render-world visual compare 6/6; no headed GPU
   evidence is claimed.
-- Next exact action: **Commit the verified audit remediation, update the state-head checkpoint, and publish both coherent commits to `origin/main`; preserve Change 258 as BLOCKED.**
+- Next exact action: **Push the audit candidate and state-sync checkpoint to `origin/main`, fetch, and verify the remote published head; preserve Change 258 as BLOCKED.**
 
 ## Current checkpoint — 2026-09-16 release-readiness hardening
 
