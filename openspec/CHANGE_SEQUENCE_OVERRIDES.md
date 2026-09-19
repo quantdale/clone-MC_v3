@@ -671,3 +671,18 @@ The complete 281 OpenSpec package is present under
 `openspec/changes/281-workstation-ui/` and passed the pre-implementation
 authoring review. 281 is 0/12 ACTIVE pending implementation. Change 258
 remains BLOCKED and Changes 259–280 remain VERIFIED.
+
+## 281-workstation-ui — VERIFIED publication checkpoint (2026-09-19)
+
+Change **281-workstation-ui** is VERIFIED at **12/12 (100%)** with exact
+parity status and implementation tip `cf0c2e3`. The live player-placed smoker
+uses block 64/item 72, the existing furnace state/menu and block-entity archive
+envelope, and the delegated twice-fast cooking context. Final typecheck, lint
+(0 errors/85 existing warnings), full unit (5,260 passed + 1 skipped), build
+(246 modules), focused smoker E2E (2/2), file-audit (2,873 rows), and
+validate-state passed. The exact full E2E scheduled 104 tests and passed 103;
+the sole failure is the pre-existing Linux software-WebGL `hud/high/1280x720`
+golden drift (changed fraction `0.027805989583333333`), with no 281 functional
+failure. Change 258 remains BLOCKED, Changes 259–281 remain VERIFIED, and
+`282-live-raid-feedback` is the next sequential spec-first change. No headed
+FPS/GPU evidence is claimed.

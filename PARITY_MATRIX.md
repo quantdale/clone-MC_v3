@@ -1,8 +1,8 @@
 # PARITY_MATRIX.md
 
 - **Schema version:** `v1`
-- **Generated:** 2026-09-19 Change 279 reconciliation (original matrix generated 2026-08-25; post-terminal rows and the Change-258 blocker are now included; provenance in `openspec/PROGRAM_STATE.json`)
-- **Scope:** one row per numbered change `001`–`279` (FeatureId `C<number>`), plus master-plan-only feature areas (`MP-<section>-<seq>`). Change 258 is intentionally recorded as `deferred`/`BLOCKED`, not VERIFIED.
+- **Generated:** 2026-09-19 Change 281 reconciliation (original matrix generated 2026-08-25; post-terminal rows and the Change-258 blocker are now included; provenance in `openspec/PROGRAM_STATE.json`)
+- **Scope:** one row per numbered change `001`–`281` (FeatureId `C<number>`), plus master-plan-only feature areas (`MP-<section>-<seq>`). Change 258 is intentionally recorded as `deferred`/`BLOCKED`, not VERIFIED.
 
 ## Sources of truth
 
@@ -27,7 +27,7 @@ Directory-slug note: three directories use slugs that differ from the sequence t
 
 Boundary disambiguation: `exact` vs `equivalent` — if only the internal mechanism differs but the player-visible behavior and its rules match as specified, it is still `exact`; `equivalent` is reserved for outcomes whose reference mechanism is proprietary/unavailable and was deliberately replaced by a locally-documented one. `equivalent` vs `approx` — `equivalent` rows have no behavioral shortfall, only a substituted mechanism; `approx` rows record an actual known behavioral/fidelity difference caused by a platform or legal-resource constraint. `deferred` vs `out-of-scope` — `deferred` features remain planned work; `out-of-scope` features will never be implemented because they require proprietary assets/services or non-browser capability.
 
-## Change matrix (C001–C279)
+## Change matrix (C001–C281)
 
 Narrow-outcome text is quoted from `openspec/CHANGE_SEQUENCE.md` (authoritative catalog); status is confirmed against `openspec/PROGRAM_STATE.json` (`validationResults`) and each change's `verification.md`.
 
@@ -312,6 +312,7 @@ Narrow-outcome text is quoted from `openspec/CHANGE_SEQUENCE.md` (authoritative 
 | C278 | `278-live-villager-trading-ui` | Live villager trading-post UI over the verified 150/151 trade framework: Emerald/Bread/Paper catalog entries, versioned `__trades__` persistence with per-profession quarantine and archive passthrough, atomic offer application with unlock merge/restock/full-inventory world drops, `TradingPanel` shell, HUD/KeyT lifecycle, and real browser journey/refusal coverage. | exact | `openspec/changes/278-live-villager-trading-ui/verification.md` (VERIFIED 12/12) + `specs/live-villager-trading/spec.md` | Full unit/build/E2E regression; no 258 headed work. | VERIFIED |
 | C279 | `279-shield-live-wiring` | Live shield wiring over ShieldBlocking 144: shield item and component-preserving offhand swap, held-use raise and competing-use drain, source-position-aware hostile/wither blocking with existing cooldown, one-wear durability/break behavior, HUD feedback, inventory snapshot/pagehide persistence reuse, and browser/unit coverage. | exact | `openspec/changes/279-shield-live-wiring/verification.md` (VERIFIED 12/12) + `specs/live-shield-wiring/spec.md` | Full unit/build/E2E regression; software-WebGL visual variance is baseline-retried; no 258 headed work or GPU evidence. | VERIFIED |
 | C280 | `280-death-respawn-ui` | Additive live death/respawn presentation over the existing synchronous SurvivalSystem and Hardcore/Sleep rules: safe closed-cause mapping, normal respawn and hardcore spectator outcome cards, idempotent Continue lifecycle, one-container/pointer-lock integration, no new persistence namespace, and unit/browser regression coverage. | exact | `openspec/changes/280-death-respawn-ui/verification.md` (VERIFIED 10/10) + `specs/death-respawn-ui/spec.md` | Exact full unit/build/E2E gate; visual matrix 60/60; one known software-WebGL spectator timing variance is non-blocking; no 258 headed work or GPU evidence. | VERIFIED |
+| C281 | `281-workstation-ui` | Live player-placed smoker workstation over the verified furnace state/menu/block-entity seams: stable smoker block/item identity (block 64/item 72), original procedural tile and container shape, delegated twice-fast furnace context, type-safe `smoker` payload adapter, authoritative live host placement/menu/tick/hydrate/stale/XP/removal lifecycle, station-labelled shared furnace UI and Game/interaction wiring, existing block-entity archive/reload/break path, and focused/browser coverage. | exact | `openspec/changes/281-workstation-ui/verification.md` (VERIFIED 12/12) + `specs/live-smoker-workstation/spec.md` | Exact functional outcome with original procedural art and a documented pre-existing Linux software-WebGL HUD golden drift in the monolithic E2E; no 258 headed work or GPU evidence. | VERIFIED |
 
 ## Master-plan-only features
 
@@ -349,20 +350,20 @@ Feature areas named in `MINECRAFT_PARITY_MASTER_PLAN.md` that no single numbered
 
 **Post-terminal note (2026-09-19, shield wiring):** Change 279 is VERIFIED 12/12 from its package evidence and published implementation tip `a9b7108`: the live shield item/offhand/use path, directional blocking, durability/break, axe cooldown, HUD, inventory persistence reuse, unit coverage, and full retry-enabled browser regression are green. Two unrelated software-WebGL/browser timing flakes passed on retry; no GPU evidence is claimed. Change 258 remains BLOCKED for headed hardware-WebGL evidence; 259–278 remain VERIFIED and were not reopened.
 **Post-terminal note (2026-09-19, villager trading):** Change 278 is VERIFIED 12/12 from its package evidence: the live trading UI, persistence/archive carry, atomic rules, lifecycle, and full 97-spec browser regression are green. Change 258 remains BLOCKED for headed hardware-WebGL evidence; 259–277 remain VERIFIED and were not reopened.
-**Post-terminal note (2026-09-18, audit):** Changes 253–257 and 259–277 are recorded VERIFIED from their package evidence; Change 258 remains BLOCKED for headed hardware-WebGL evidence. This matrix now covers every numbered change 001–278 and is reconciled by `docs/audit-1-277-findings.md`.
+**Post-terminal note (2026-09-19, workstation):** Change `281-workstation-ui` is VERIFIED 12/12 and exact: a player-placed smoker reuses block 64/item 72, FurnaceState/menu/block-entity archive seams, and a delegated twice-fast cooking context; focused/browser/archive evidence is green. The monolithic E2E had one unrelated existing `hud/high/1280x720` Linux software-WebGL golden drift while all 281 functional journeys passed. Change 258 remains BLOCKED and Changes 259–281 remain VERIFIED; this matrix covers every numbered change 001–281.
 
 ## Summary
 
 | Category | Rows |
 |---|---|
-| exact | 266 (265 numbered rows plus MP-19.4-1 Wither-like secondary boss via C252) |
+| exact | 267 (266 numbered rows plus MP-19.4-1 Wither-like secondary boss via C252) |
 | equivalent | 4 |
 | approx | 6 |
 | deferred | 1 (C258 — BLOCKED headed hardware-WebGL evidence) |
 | out-of-scope | 1 (MP-33-1 proprietary services/assets) |
 | n/a (documentation) | 4 (C248, C249, C250, C268) |
-| **Total rows** | **282** (280 change rows + 2 master-plan rows) |
+| **Total rows** | **283** (281 change rows + 2 master-plan rows) |
 
-Change-rows-only split: exact 265 / equivalent 4 / approx 6 / deferred 1 / n/a 4 = 280.
+Change-rows-only split: exact 266 / equivalent 4 / approx 6 / deferred 1 / n/a 4 = 281.
 
-**Coverage statement:** every numbered change 001–280 appears in exactly one row (bijective `C001`…`C280`, no duplicates, no orphan rows). Every completed change maps to a cited VERIFIED artifact; C258 is explicitly documented as BLOCKED rather than upgraded to VERIFIED. The two additional `MP-*` rows cover master-plan areas outside the numbered sequence; MP-19.4-1 is closed `exact` by C252. The matrix audit is cross-checked against the package evidence and `openspec/PROGRAM_STATE.json`; the current state validator still owns its historical 001–250 schema checks and does not treat C258 as verified.
+**Coverage statement:** every numbered change 001–281 appears in exactly one row (bijective `C001`…`C281`, no duplicates, no orphan rows). Every completed change maps to a cited VERIFIED artifact; C258 is explicitly documented as BLOCKED rather than upgraded to VERIFIED. The two additional `MP-*` rows cover master-plan areas outside the numbered sequence; MP-19.4-1 is closed `exact` by C252. The matrix audit is cross-checked against the package evidence and `openspec/PROGRAM_STATE.json`; the current state validator still owns its historical 001–250 schema checks and does not treat C258 as verified.

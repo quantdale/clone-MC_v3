@@ -1,27 +1,35 @@
 {
   "schemaVersion": 1,
-  "status": "ACTIVE",
+  "status": "VERIFIED",
   "currentChange": "281-workstation-ui",
-  "currentChangeStatus": "ACTIVE",
-  "lastCompletedChange": "280-death-respawn-ui",
+  "currentChangeStatus": "VERIFIED",
+  "lastCompletedChange": "281-workstation-ui",
   "nextChange": "282-live-raid-feedback",
-  "completedTasks": 2,
+  "completedTasks": 12,
   "totalTasks": 12,
-  "completionPercentage": 16.67,
+  "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
-  "mandatoryRequirementsPass": false,
-  "requiredTestsPass": false,
-  "advancementAllowed": false,
+  "mandatoryRequirementsPass": true,
+  "requiredTestsPass": true,
+  "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "3b60c6e38666acfde752dc40d7e12bba2ed1d164",
-  "localHead": "6a6ee0a11d8749b831d381daa4ff0bcd9a9ff5aa",
-  "nextExactAction": "Implement 281 T3 registry/core slice after the validated spec-first checkpoint; 258 stays BLOCKED",
-  "lastCompletedTask": "280 T1-T10 complete, VERIFIED, C280 exact, and published; 281 T1-T2 spec package complete",
+  "localHead": "cf0c2e3",
+  "nextExactAction": "Publish the reconciled 281 verification/state/parity checkpoint, then author 282 spec-first; 258 stays BLOCKED",
+  "lastCompletedTask": "281 T1-T12 complete, VERIFIED, C281 exact, and implementation published locally; next 282 spec-first",
   "blockers": [
-    "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-280 are VERIFIED; game shippable with known performance-certification debt. The 281 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
+    "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-281 are VERIFIED; game shippable with known performance-certification debt. The 281 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
   "validationResults": [
+    {
+      "change": "281-workstation-ui",
+      "status": "VERIFIED",
+      "unitTests": 5260,
+      "e2eTests": 104,
+      "head": "cf0c2e3",
+      "note": "12/12 tasks complete. Player-placed smoker block/item identity, twice-fast delegated FurnaceState context, type-safe smoker adapter, authoritative live host lifecycle, station-labelled shared furnace UI, atomic vanished-block refusal, reload/break cleanup, archive passthrough, and browser journeys are exact and covered. Gates: final typecheck PASS; lint 0 errors with 85 existing warnings; full unit 445 files 5260 passed + 1 skipped (5261 total); build PASS (246 modules, 4.07s; existing chunk-size advisory); exact npm run test:e2e scheduled 104 with 103 passed and one unrelated pre-existing hud/high/1280x720 Linux software-WebGL golden drift at changed fraction 0.027805989583333333; both smoker journeys passed after final hardening; reviewed file-audit 2873; validate-state PASS. No 281 functional E2E regression and no headed GPU evidence are claimed. Change 258 remains BLOCKED; Changes 259-281 are VERIFIED."
+    },
     {
       "change": "280-death-respawn-ui",
       "status": "VERIFIED",
@@ -2718,5 +2726,5 @@
     ]
   },
   "criticalRiskOpen": false,
-  "publishedTip": "b5265b8f121f309bd089df62f405529b4ea6b250"
+  "publishedTip": "cf0c2e3"
 }
