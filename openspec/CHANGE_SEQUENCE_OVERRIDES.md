@@ -610,3 +610,21 @@ complete. The full browser gate passed under the repository's configured
 `CI=1` retry policy (98 direct passes plus 2 flaky-after-retry outcomes; 60/60
 visual cells). Change 258 remains BLOCKED, Changes 259–278 remain VERIFIED,
 and `280-death-respawn-ui` is the next sequential change.
+
+## 280-death-respawn-ui activation — sequential non-GPU continuation
+
+Change **280-death-respawn-ui** is now the sole **ACTIVE** implementation
+change after published Change 279. It is authorized to add a player-visible
+death/respawn card over the existing synchronous normal respawn, bed-spawn,
+and hardcore-spectator rules. Changes **258** remains **BLOCKED** and
+**259–279** remain **VERIFIED**.
+
+- 280 MUST remain presentation-focused: carry the existing damage reason into
+  a fail-safe label, show normal respawn versus hardcore spectator outcome,
+  support an idempotent dismiss action, and preserve the existing one-container
+  and pointer/input lifecycle.
+- No death/respawn persistence namespace, new death simulation, deferred
+  respawn semantics, new hardcore/bed rule, headed FPS/GPU work, or 258 status
+  change is part of 280.
+- The next sequential slot is reserved as `281-workstation-ui` for a later
+  spec-first decision after 280 is VERIFIED.
