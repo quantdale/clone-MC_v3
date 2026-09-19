@@ -1,25 +1,25 @@
 {
   "schemaVersion": 1,
-  "status": "VERIFIED",
-  "currentChange": "281-workstation-ui",
-  "currentChangeStatus": "VERIFIED",
+  "status": "ACTIVE",
+  "currentChange": "282-live-raid-feedback",
+  "currentChangeStatus": "ACTIVE",
   "lastCompletedChange": "281-workstation-ui",
-  "nextChange": "282-live-raid-feedback",
-  "completedTasks": 12,
-  "totalTasks": 12,
-  "completionPercentage": 100,
+  "nextChange": "283-live-raid-persistence",
+  "completedTasks": 0,
+  "totalTasks": 10,
+  "completionPercentage": 0,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
-  "mandatoryRequirementsPass": true,
-  "requiredTestsPass": true,
-  "advancementAllowed": true,
+  "mandatoryRequirementsPass": false,
+  "requiredTestsPass": false,
+  "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "3b60c6e38666acfde752dc40d7e12bba2ed1d164",
-  "localHead": "cf0c2e3",
-  "nextExactAction": "Publish the reconciled 281 verification/state/parity checkpoint, then author 282 spec-first; 258 stays BLOCKED",
-  "lastCompletedTask": "281 T1-T12 complete, VERIFIED, C281 exact, and implementation published locally; next 282 spec-first",
+  "localHead": "260e5c9",
+  "nextExactAction": "Implement 282 T3 pure raid feedback projection after the validated spec-first checkpoint; 258 stays BLOCKED",
+  "lastCompletedTask": "281 T1-T12 complete, VERIFIED, C281 exact, and published; 282 T1-T2 spec package complete",
   "blockers": [
-    "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-281 are VERIFIED; game shippable with known performance-certification debt. The 281 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
+    "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-281 are VERIFIED; game shippable with known performance-certification debt. The 282 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
   "validationResults": [
     {
@@ -2726,5 +2726,5 @@
     ]
   },
   "criticalRiskOpen": false,
-  "publishedTip": "cf0c2e3"
+  "publishedTip": "260e5c9"
 }

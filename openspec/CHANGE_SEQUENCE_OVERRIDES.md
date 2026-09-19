@@ -686,3 +686,29 @@ golden drift (changed fraction `0.027805989583333333`), with no 281 functional
 failure. Change 258 remains BLOCKED, Changes 259–281 remain VERIFIED, and
 `282-live-raid-feedback` is the next sequential spec-first change. No headed
 FPS/GPU evidence is claimed.
+
+## 282-live-raid-feedback activation — sequential non-GPU continuation
+
+Change **282-live-raid-feedback** is now the sole **ACTIVE** implementation
+change after published Change 281. Its complete OpenSpec package is present at
+`openspec/changes/282-live-raid-feedback/` and is authorized to make the
+verified headless RaidStateMachine visible through one ephemeral Game-owned
+raid feedback bar.
+
+- 282 MUST remain limited to the pure feedback projection, Game fixed-tick
+  ownership, active/terminal HUD state, deterministic test seams, lifecycle
+  coverage, and exact state/parity evidence.
+- No raider entity spawning, village/settlement detection, bad-omen acquisition,
+  raid persistence/archive namespace, combat retune, headed FPS/GPU work, or
+  Change 258 status change is authorized.
+- Existing wither boss-bar, smoker, furnace, brewing, shield, trading, and
+  death/respawn behavior remains the regression boundary.
+- The next sequential slot is reserved as `283-live-raid-persistence` for a
+  separate spec-first decision after 282 is VERIFIED; it is not implemented by
+  this change.
+
+## 282-live-raid-feedback — ACTIVE control-plane checkpoint (2026-09-19)
+
+The 282 package passed the pre-implementation authoring review. 282 is 0/10
+ACTIVE pending production implementation. Change 258 remains BLOCKED and
+Changes 259–281 remain VERIFIED.

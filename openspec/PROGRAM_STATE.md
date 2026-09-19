@@ -1,15 +1,15 @@
 # Minecraft-Parity Program State
 
-## Current checkpoint — 2026-09-19 Change 281 VERIFIED; 282 next spec-first
+## Current checkpoint — 2026-09-19 Change 282 spec package active; implementation pending
 
-> **Change 281 is VERIFIED 12/12 (100%) with implementation tip `cf0c2e3`; Change 282 is next spec-first. Change 258 remains BLOCKED and 259–281 remain VERIFIED.**
+> **Change 282 is ACTIVE at 0/10 (0%): the live raid-feedback package is authored and validated; implementation is pending. Change 281 is VERIFIED with implementation tip `cf0c2e3`; Change 258 remains BLOCKED.**
 > This session started from `3b60c6e38666acfde752dc40d7e12bba2ed1d164` on `origin/main`.
-> Change 281 uses block 64/item 72, the existing FurnaceState/menu/block-entities/WorldArchiver
-> paths, and a delegated twice-fast cooking context. No headed FPS/GPU work is in scope.
+> Change 282 uses only the verified `RaidStateMachine` plus one ephemeral Game-owned
+> feedback bar; no raider entities, persistence namespace, or headed FPS/GPU work is in scope.
 
-- Local evidence: 281 focused host/context/entity/panel/archive tests 31/31 (the broader registry/shape/loot focus 81/81), smoker browser journeys 2/2, final typecheck/lint/build/unit gates green, and file-audit 2,873 rows; exact full E2E was 103/104 with one pre-existing HUD golden drift (`hud/high/1280x720`) and no 281 functional failure.
-- Focused proofs: twice-fast odd/even recipes, malformed quarantine, blocked-output pause, vanished-block atomic refusal, XP carry, reload/break cleanup, station labels, and held-item preservation all pass; no headed GPU evidence is claimed.
-- Next exact action: **Publish the reconciled 281 verification/state/parity checkpoint, then author 282 spec-first; 258 stays BLOCKED.**
+- Local evidence: 281 focused host/context/entity/panel/archive tests 31/31, smoker browser journeys 2/2, final gates green, and file-audit 2,873 rows; exact full E2E was 103/104 with one pre-existing HUD golden drift (`hud/high/1280x720`) and no 281 functional failure.
+- Focused 282 contract: bounded projection, active/terminal labels, one fixed-tick transition, pause freeze, bounded wave clear, replay replacement, missing/null/dispose hide, and reload no-resurrection.
+- Next exact action: **Implement 282 T3 pure raid feedback projection after the validated spec-first checkpoint; 258 stays BLOCKED.**
 
 ## Current checkpoint — 2026-09-16 release-readiness hardening
 
@@ -178,14 +178,14 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **281-workstation-ui — VERIFIED (12/12); 258 BLOCKED, 259–281 VERIFIED**
+- Active implementation change: **282-live-raid-feedback — ACTIVE (0/10); 258 BLOCKED, 259–281 VERIFIED**
 - Prior active implementation change: **279-shield-live-wiring — VERIFIED (12/12); 258 stays BLOCKED, 259–279 stay VERIFIED**
 - Prior prior active implementation change: **272-lighting-clock-dt-sync — VERIFIED (10/10, owner-authorized 2026-09-12; 258 stays BLOCKED, 259/260/261/262/263/264/265/266/267/268/269/270/271 stay VERIFIED)**
-- Next change: **282-live-raid-feedback — reserved next sequential non-GPU change; 258 remains BLOCKED**
-- 240 advancement allowed: **yes**
+- Next change: **283-live-raid-persistence — reserved next sequential non-GPU change; 258 remains BLOCKED**
+- 240 advancement allowed: **no (active change not yet verified)**
 
-- Program: **ACTIVE — Change 281-workstation-ui VERIFIED 12/12 (player-placed smoker workstation; C281 exact); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 259–281 VERIFIED**
-- 281 checkpoint: **proposal/design/spec/tasks/verification authored before production changes; T1–T12 are complete with final gates and publication evidence; next exact action is the 282 spec-first package**
+- Program: **ACTIVE — Change 282-live-raid-feedback ACTIVE 0/10 (live ephemeral raid feedback; spec package validated, implementation pending); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 259–281 VERIFIED**
+- 282 checkpoint: **proposal/design/spec/tasks/verification authored before production changes; T1–T2 are complete in the control plane; next exact task is T3 pure bounded feedback projection**
 - Last completed change: **281-workstation-ui — VERIFIED (12/12) — C281 exact, implementation tip `cf0c2e3`, 258 BLOCKED**
 - Prior last completed change: **274-live-sleep-bed-integration — VERIFIED (13/13) — live bed + sleep-spawn over 198 SleepFramework; gates: typecheck/lint 0 errors/unit Sleep*+StartupSpawnSafety 64 + BlockRegistry pin/build/sleep-bed E2E 4/4/259–273 split E2E regression (monolithic game.spec pointer-lock environmental carve)/validate-state PASS; C274 PARITY exact; 273 remains VERIFIED (10/10); 258 stays BLOCKED**
 - Prior prior last completed change: **272-lighting-clock-dt-sync — VERIFIED (10/10) — full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85/file-audit 2792); 271 remains VERIFIED (14/14)
@@ -195,9 +195,9 @@
 - Certification campaign: **openspec/hardening/2026-08-23-exhaustive-repository-certification — R-1..R-9 accepted debt, R-7 restored with ChunkPipeline 498-512 evidence; manifest 2644 reviewed at 96b5dc37**
 - Release authority: **Change 278 VERIFIED 12/12 — local gate green (typecheck/lint/test 5227+1 skipped/build/full E2E 97/97/visual 60/60); headed Change 258 remains externally blocked**
 - Publication history: **Change 257 VERIFIED 92/92 at 96b5dc37 (F257-A..L closed, 22 new fault-injection tests, 5× proofs, import tx); Change 256 archived at `ad75b65` as `2026-08-31-256-production-readiness-hardening` (23/23).**
-- Section milestone: **PROGRAM VERIFIED through Change 281; Change 282 is next spec-first; Change 258 remains BLOCKED at 40/100 pending headed hardware-WebGL certification; no GPU evidence was fabricated.**
+- Section milestone: **PROGRAM VERIFIED through Change 281; Change 282 is ACTIVE at 0/10; Change 258 remains BLOCKED at 40/100 pending headed hardware-WebGL certification; no GPU evidence was fabricated.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ri…
-- Next exact action: **Publish the reconciled 281 verification/state/parity checkpoint, then author 282 spec-first; 258 stays BLOCKED**
+- Next exact action: **Implement 282 T3 pure raid feedback projection after the validated spec-first checkpoint; 258 stays BLOCKED**
 - Superseded next action: **Change 275-live-weather-cycle-integration ACTIVE 2/9 — implement __weather__ persistence + Game weather tick/HUD/presentation + unit/E2E + gates + PARITY C275 + VERIFIED publish; 258 BLOCKED**
 - Release note (2026-09-11 owner deferral): **headed FPS gates (258 tasks 91–95) are deferred, not waived — 001–257 VERIFIED, production default unchanged (sync meshing, no quality retune), game shippable with known performance-certification debt**
 
