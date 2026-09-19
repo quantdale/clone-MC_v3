@@ -643,3 +643,31 @@ dedicated 259–279 browser regression had one known software-WebGL spectator
 threshold variance, while the exact full suite passed all 102 tests including
 the affected journeys. Change 258 remains BLOCKED; Changes 259–279 remain
 VERIFIED; `281-workstation-ui` is the next sequential spec-first change.
+
+## 281-workstation-ui activation — sequential non-GPU continuation
+
+Change **281-workstation-ui** is now the sole **ACTIVE** implementation change
+after published Change 280. It is authorized to add one player-placed smoker
+workstation over the verified furnace state/menu/block-entity seams while
+Change **258** remains **BLOCKED** and Changes **259–280** remain **VERIFIED**.
+
+- 281 MUST remain limited to smoker registry identity, the twice-fast
+  furnace-context wrapper, `smoker` block-entity lifecycle, shared
+  station-labelled furnace UI, save/reload/break lifecycle, tests, and exact
+  state/parity evidence.
+- Smoker records MUST reuse the existing `block-entities` envelope and schema;
+  no `__smoker__` namespace, villager workstation POI claiming, villager
+  spawning, raid wiring, or unrelated simulation retune is authorized.
+- No headed FPS/GPU work, fake GPU evidence, or Change 258 status change is
+  part of 281. Existing furnace, brewing, shield, trading, and death/respawn
+  behavior remains the regression boundary.
+- The next sequential slot is reserved as `282-live-raid-feedback` for a
+  separate spec-first decision after 281 is VERIFIED; it is not implemented by
+  this change.
+
+## 281-workstation-ui — ACTIVE control-plane checkpoint (2026-09-19)
+
+The complete 281 OpenSpec package is present under
+`openspec/changes/281-workstation-ui/` and passed the pre-implementation
+authoring review. 281 is 0/12 ACTIVE pending implementation. Change 258
+remains BLOCKED and Changes 259–280 remain VERIFIED.

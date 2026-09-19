@@ -11,7 +11,7 @@
 - Local evidence: 279 typecheck, lint (0 errors), 5,236 unit tests plus one skipped, production
   build, file-audit 2,852 rows, and CI-retry full E2E 100/100 outcomes (98 direct + 2 flaky-after-retry; visual 60/60); no headed GPU evidence is claimed.
 - Focused proofs: shield catalog, yaw/arc composition, component-preserving wear/reload, interaction drain, and live browser break/cooldown/HUD coverage all pass; 280 has no implementation evidence yet.
-- Next exact action: **Author and validate 281-workstation-ui spec-first, then activate its first unchecked task; 258 stays BLOCKED.**
+- Next exact action: **Implement 281 T3 registry/core slice after the validated spec-first checkpoint; 258 stays BLOCKED.**
 
 ## Current checkpoint — 2026-09-16 release-readiness hardening
 
@@ -180,13 +180,14 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **280-death-respawn-ui — VERIFIED (10/10); 258 BLOCKED, 259–280 VERIFIED**
+- Active implementation change: **281-workstation-ui — ACTIVE (2/12); 258 BLOCKED, 259–280 VERIFIED**
 - Prior active implementation change: **279-shield-live-wiring — VERIFIED (12/12); 258 stays BLOCKED, 259–279 stay VERIFIED**
 - Prior prior active implementation change: **272-lighting-clock-dt-sync — VERIFIED (10/10, owner-authorized 2026-09-12; 258 stays BLOCKED, 259/260/261/262/263/264/265/266/267/268/269/270/271 stay VERIFIED)**
-- Next change: **281-workstation-ui — reserved next sequential non-GPU change; 258 remains BLOCKED**
-- 240 advancement allowed: **yes**
+- Next change: **282-live-raid-feedback — reserved next sequential non-GPU change; 258 remains BLOCKED**
+- 240 advancement allowed: **no (active change not yet verified)**
 
-- Program: **ACTIVE — Change 275 VERIFIED 9/9 (live weather cycle integration, owner-authorized 2026-09-14 campaign through 277); Change 274 VERIFIED 13/13 (live sleep/bed integration, owner-authorized 2026-09-13 parallel track through 277); Change 273 VERIFIED 10/10 (chunksection isEmpty air-check, Standing owner order 2026-09-12); Change 272 VERIFIED 10/10 (lighting clock/sun dt sync, Standing owner order 2026-09-12); Change 271 VERIFIED 14/14 (statistics panel UI, Standing owner order 2026-09-12); Change 270 VERIFIED 12/12 (leaf apple loot probability, Standing owner order 2026-09-12); Change 269 VERIFIED 12/12 (composed game dispose/worker terminate, Standing owner order 2026-09-12); Change 268 VERIFIED 12/12 (ci immutable action pins, Standing owner order 2026-09-12); Change 267 VERIFIED 13/13 (live hardcore integration, Standing owner order 2026-09-12); Change 266 VERIFIED 13/13 (live adventure+spectator integration, Standing owner order 2026-09-11) with Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); 259 VERIFIED 18/18; 260 VERIFIED 19/19; 261 VERIFIED 16/16; 262 VERIFIED 14/14; 263 VERIFIED 15/15; 264 VERIFIED 13/13; 265 VERIFIED 13/13**
+- Program: **ACTIVE — Change 281-workstation-ui ACTIVE 2/12 (player-placed smoker workstation, spec package validated; implementation pending); Change 280 VERIFIED 10/10; Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 259–280 VERIFIED**
+- 281 checkpoint: **proposal/design/spec/tasks/verification authored before production changes; T1–T2 are complete in the control plane; next exact task is T3 stable smoker registry/shape/procedural tile**
 - Last completed change: **280-death-respawn-ui — VERIFIED (10/10) — exact full gates green, C280 exact, 258 BLOCKED**
 - Prior last completed change: **274-live-sleep-bed-integration — VERIFIED (13/13) — live bed + sleep-spawn over 198 SleepFramework; gates: typecheck/lint 0 errors/unit Sleep*+StartupSpawnSafety 64 + BlockRegistry pin/build/sleep-bed E2E 4/4/259–273 split E2E regression (monolithic game.spec pointer-lock environmental carve)/validate-state PASS; C274 PARITY exact; 273 remains VERIFIED (10/10); 258 stays BLOCKED**
 - Prior prior last completed change: **272-lighting-clock-dt-sync — VERIFIED (10/10) — full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85/file-audit 2792); 271 remains VERIFIED (14/14)
@@ -198,7 +199,7 @@
 - Publication history: **Change 257 VERIFIED 92/92 at 96b5dc37 (F257-A..L closed, 22 new fault-injection tests, 5× proofs, import tx); Change 256 archived at `ad75b65` as `2026-08-31-256-production-readiness-hardening` (23/23).**
 - Section milestone: **PROGRAM VERIFIED through Change 280; Change 281 is next spec-first; Change 258 remains BLOCKED at 40/100 pending headed hardware-WebGL certification; no GPU evidence was fabricated.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ri…
-- Next exact action: **Author and validate 281-workstation-ui spec-first, then activate its first unchecked task; 258 stays BLOCKED**
+- Next exact action: **Implement 281 T3 registry/core slice after the validated spec-first checkpoint; 258 stays BLOCKED**
 - Superseded next action: **Change 275-live-weather-cycle-integration ACTIVE 2/9 — implement __weather__ persistence + Game weather tick/HUD/presentation + unit/E2E + gates + PARITY C275 + VERIFIED publish; 258 BLOCKED**
 - Release note (2026-09-11 owner deferral): **headed FPS gates (258 tasks 91–95) are deferred, not waived — 001–257 VERIFIED, production default unchanged (sync meshing, no quality retune), game shippable with known performance-certification debt**
 
