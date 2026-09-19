@@ -15,7 +15,7 @@
   "advancementAllowed": false,
   "exceptionUsed": false,
   "sessionStartHead": "3b60c6e38666acfde752dc40d7e12bba2ed1d164",
-  "localHead": "1af86935a8dc799a32b4fd586b52c2b4a063eb40",
+  "localHead": "fb6e28f7fe3109004ea0c1a67cebc4b79f951e4e",
   "nextExactAction": "Implement 280-death-respawn-ui T3-T6 (reason mapper, panel, Game wiring, lifecycle), then focused units and E2E; 258 stays BLOCKED",
   "lastCompletedTask": "280 T1-T2 activation and complete OpenSpec package authored; implementation starts at T3",
   "blockers": [
