@@ -96,6 +96,8 @@ export class PlayerInteraction {
    * Absent = always interact (legacy).
    */
   private readonly canInteract: () => boolean;
+  /** Raised-shield owner of right-click use (279; default never blocks). */
+  private readonly blockUse: () => boolean;
 
   private readonly eyePos = new THREE.Vector3();
   private readonly dir = new THREE.Vector3();
@@ -144,6 +146,8 @@ export class PlayerInteraction {
     canPlace?: (blockId: number) => boolean;
     /** Live game-mode rule: any interaction at all (266; default allow). */
     canInteract?: () => boolean;
+    /** Live shield rule: drain right-click use while a shield is raised. */
+    blockUse?: () => boolean;
   }) {
     this.world = opts.world;
     this.registry = opts.registry;
@@ -169,6 +173,7 @@ export class PlayerInteraction {
     this.canBreak = opts.canBreak ?? (() => true);
     this.canPlace = opts.canPlace ?? (() => true);
     this.canInteract = opts.canInteract ?? (() => true);
+    this.blockUse = opts.blockUse ?? (() => false);
 
     // A centered unit-cube wireframe marks the targeted block. Keeping the
     // geometry centered and placing it at block + 0.5 avoids the classic
@@ -313,7 +318,12 @@ export class PlayerInteraction {
         }
       }
 
-      if (!breakRequested && !this.breakPending && breakReady && this.input.consumePlace()) {
+      // A raised shield owns right-click even when an earlier action cooldown
+      // is active. Drain the queued press immediately so it cannot become a
+      // stale placement after the shield is lowered.
+      if (this.blockUse()) {
+        this.input.consumePlace();
+      } else if (!breakRequested && !this.breakPending && breakReady && this.input.consumePlace()) {
         if (this.target) {
           const targetBlockId = this.world.getBlock(this.target.blockX, this.target.blockY, this.target.blockZ);
           const selectedId = this.selector.getSelectedItemId();

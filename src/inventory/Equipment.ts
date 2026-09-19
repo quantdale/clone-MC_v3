@@ -12,7 +12,14 @@
  * shield blocking (144), and the equipment HUD (205) consume these primitives.
  */
 
-import type { ItemStack } from './Inventory';
+import type { ItemStack, SerializedStackComponent } from './Inventory';
+import { applyDamage, getRemainingDurability } from './DurabilityRules';
+import {
+  StackComponentMap,
+  StackComponentValue,
+  createDefaultStackComponentRegistry,
+} from './StackDataComponents';
+import { parseResourceId, resourceIdToString, type ResourceId } from '../data/ResourceId';
 
 /** A single worn equipment slot. */
 export enum EquipmentSlot {
@@ -39,10 +46,97 @@ export const ARMOR_SLOTS: readonly EquipmentSlot[] = EQUIPMENT_SLOT_ORDER.slice(
 export interface EquipmentSnapshot {
   version: 1;
   /** Parallel to {@link EQUIPMENT_SLOT_ORDER}; length is always 5. */
-  slots: (ItemStack | null)[];
+  slots: (EquipmentStackSnapshot | null)[];
+}
+
+/** JSON-safe equipment stack representation; legacy in-memory component maps are also accepted. */
+export interface EquipmentStackSnapshot {
+  id: number;
+  count: number;
+  components?: SerializedStackComponent[];
+}
+
+/** Result of applying durability wear to one stored equipment stack. */
+export interface EquipmentDamageResult {
+  stack: ItemStack | null;
+  broke: boolean;
+  changed: boolean;
 }
 
 const MAX_STACK = 64;
+const EQUIPMENT_COMPONENT_REGISTRY = createDefaultStackComponentRegistry();
+
+function serializeComponents(components: StackComponentMap | undefined): SerializedStackComponent[] {
+  if (!components) return [];
+  return components.entries().map(([id, value]) => ({
+    id: resourceIdToString(id),
+    value: value as StackComponentValue,
+  }));
+}
+
+function resourceIdFromUnknown(value: unknown): ResourceId | null {
+  if (typeof value === 'string') {
+    try {
+      return parseResourceId(value);
+    } catch {
+      return null;
+    }
+  }
+  if (typeof value !== 'object' || value === null) return null;
+  const candidate = value as { namespace?: unknown; path?: unknown };
+  if (typeof candidate.namespace !== 'string' || typeof candidate.path !== 'string') return null;
+  try {
+    return parseResourceId(`${candidate.namespace}:${candidate.path}`);
+  } catch {
+    return null;
+  }
+}
+
+/** Decode the current JSON-safe form plus pre-279 in-memory/structured-clone maps. */
+function deserializeComponents(input: unknown): StackComponentMap | undefined | null {
+  if (input === undefined) return undefined;
+  if (input instanceof StackComponentMap) return input.copy();
+
+  let entries: Array<readonly [ResourceId, StackComponentValue]> | null = null;
+  if (Array.isArray(input)) {
+    entries = [];
+    for (const entry of input) {
+      if (typeof entry !== 'object' || entry === null) return null;
+      const candidate = entry as { id?: unknown; value?: unknown };
+      const id = resourceIdFromUnknown(candidate.id);
+      if (!id) return null;
+      const value = candidate.value;
+      if (value === null || typeof value === 'object') {
+        if (value === null || Array.isArray(value)) return null;
+      } else if (typeof value !== 'number' && typeof value !== 'string' && typeof value !== 'boolean') {
+        return null;
+      }
+      entries.push([id, value as StackComponentValue]);
+    }
+  } else if (typeof input === 'object' && input !== null) {
+    // IndexedDB structured-clones the old StackComponentMap as an object with
+    // its private `values` Map but without class methods. Recover that shape so
+    // existing records remain readable after the codec hardening.
+    const values = (input as { values?: unknown }).values;
+    if (!(values instanceof Map)) return null;
+    entries = [];
+    for (const stored of values.values()) {
+      if (typeof stored !== 'object' || stored === null) return null;
+      const candidate = stored as { id?: unknown; value?: unknown };
+      const id = resourceIdFromUnknown(candidate.id);
+      if (!id) return null;
+      entries.push([id, candidate.value as StackComponentValue]);
+    }
+  } else {
+    return null;
+  }
+
+  try {
+    return new StackComponentMap(EQUIPMENT_COMPONENT_REGISTRY, entries);
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Worn equipment: five `ItemStack | null` slots plus serialize / atomic restore.
@@ -86,6 +180,32 @@ export class PlayerEquipment {
     return previous;
   }
 
+  /** Remaining durability for a stored stack, or zero for an empty/non-durable slot. */
+  getEquipmentDurability(slot: EquipmentSlot, maxDurability: number): number {
+    return getRemainingDurability(maxDurability, this.getEquipment(slot) ?? undefined);
+  }
+
+  /** Apply shared durability wear to one equipment slot. */
+  damageEquipment(
+    slot: EquipmentSlot,
+    amount: number,
+    maxDurability: number,
+    unbreakingLevel = 0,
+    rng?: () => number,
+  ): EquipmentDamageResult {
+    const current = this.getEquipment(slot);
+    if (maxDurability <= 0 || !current || current.count <= 0) {
+      return { stack: current, broke: false, changed: false };
+    }
+    const result = applyDamage(maxDurability, current, amount, unbreakingLevel, rng);
+    if (result.broke) {
+      this.slots.set(slot, null);
+      return { stack: null, broke: true, changed: true };
+    }
+    this.slots.set(slot, result.stack);
+    return { stack: result.stack, broke: false, changed: result.stack !== current };
+  }
+
   /** Reset every slot to empty. */
   clear(): void {
     for (const slot of EQUIPMENT_SLOT_ORDER) {
@@ -113,7 +233,16 @@ export class PlayerEquipment {
   serialize(): EquipmentSnapshot {
     return {
       version: 1,
-      slots: EQUIPMENT_SLOT_ORDER.map((slot) => this.slots.get(slot) ?? null),
+      slots: EQUIPMENT_SLOT_ORDER.map((slot) => {
+        const stack = this.slots.get(slot);
+        if (!stack) return null;
+        const components = serializeComponents(stack.components);
+        return {
+          id: stack.id,
+          count: stack.count,
+          ...(components.length > 0 ? { components } : {}),
+        };
+      }),
     };
   }
 
@@ -140,6 +269,7 @@ export class PlayerEquipment {
       if (typeof count !== 'number' || !Number.isInteger(count) || (count as number) <= 0 || (count as number) > MAX_STACK) {
         return false;
       }
+      if (deserializeComponents(stack.components) === null) return false;
     }
     return true;
   }
@@ -151,13 +281,16 @@ export class PlayerEquipment {
   restore(data: unknown, isValidItem: (id: number) => boolean): boolean {
     if (!PlayerEquipment.validateSnapshot(data, isValidItem)) return false;
     const candidate = data as EquipmentSnapshot;
-    EQUIPMENT_SLOT_ORDER.forEach((slot, index) => {
-      const entry = candidate.slots[index] ?? null;
-      this.slots.set(
-        slot,
-        entry === null ? null : { id: entry.id, count: entry.count, ...(entry.components ? { components: entry.components } : {}) },
-      );
+    const restored = candidate.slots.map((entry) => {
+      if (entry === null) return null;
+      const components = deserializeComponents(entry.components);
+      if (components === null) return null;
+      return { id: entry.id, count: entry.count, ...(components ? { components } : {}) };
     });
+    // Validation above guarantees this cannot fail; retaining the guard keeps
+    // the mutation atomic if a future component codec changes independently.
+    if (restored.some((entry, index) => candidate.slots[index] !== null && entry === null)) return false;
+    EQUIPMENT_SLOT_ORDER.forEach((slot, index) => this.slots.set(slot, restored[index] ?? null));
     return true;
   }
 }

@@ -984,6 +984,39 @@ describe('player interaction game-mode rules (265)', () => {
   });
 });
 
+describe('player interaction shield ownership (279)', () => {
+  it('drains right-click use while a shield is raised', () => {
+    const player = new Player({ position: new THREE.Vector3(0.5, 0, 0.5) });
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 20);
+    camera.position.copy(player.eyePosition);
+    camera.lookAt(10, player.eyePosition.y, player.eyePosition.z);
+    camera.updateMatrixWorld(true);
+    const state = { breakRequested: false, held: false, place: true };
+    const actions: string[] = [];
+    const interaction = new PlayerInteraction({
+      world: makeWorld(),
+      registry: createDefaultBlockRegistry(),
+      itemRegistry: createDefaultItemRegistry(),
+      selector: {
+        getSelectedItemId: () => ItemId.Dirt,
+        getSlotCount: () => 1,
+        consumeSelected: () => true,
+      },
+      player,
+      camera,
+      input: makeInput(state),
+      onAction: (action) => actions.push(action),
+      blockUse: () => true,
+    });
+
+    interaction.update(0.016);
+
+    expect(state.place).toBe(false);
+    expect(actions).toEqual([]);
+    interaction.dispose();
+  });
+});
+
   it('does not emit use for bone meal when a non-bone-meal item is selected', () => {
     const player = new Player({ position: new THREE.Vector3(0.5, 0, 0.5) });
     const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 20);

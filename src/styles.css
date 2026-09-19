@@ -59,6 +59,7 @@ body {
   #hardcore-badge.hidden,
   #sleep-indicator.hidden,
   #weather-indicator.hidden,
+  #shield-indicator.hidden,
 #toast.hidden,
 #debug-overlay.hidden {
   display: none;
@@ -1208,6 +1209,13 @@ body {
   top: 300px;
   right: 8px;
   color: #bcd8ff;
+  font-weight: 700;
+}
+/* Shield indicator (279): hidden until a valid offhand shield is present. */
+#shield-indicator {
+  top: 332px;
+  right: 8px;
+  color: #d8e5ff;
   font-weight: 700;
 }
 /* Difficulty select (267): gamerule-input sizing with select affordance. */

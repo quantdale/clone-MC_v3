@@ -1,17 +1,17 @@
 # Minecraft-Parity Program State
 
-## Current checkpoint — 2026-09-19 Change 279 ACTIVE; Change 278 published
+## Current checkpoint — 2026-09-19 Change 279 VERIFYING; publication handoff pending
 
-> **Change 278 is VERIFIED 12/12 (100%) and published at `05203abd`; Change 279 is ACTIVE 2/12. Change 258 remains BLOCKED and 259–277 remain VERIFIED.**
+> **Change 278 is VERIFIED 12/12 (100%) and published at `05203abd`; Change 279 is VERIFYING 11/12 with implementation, regression, full gates, and C279 reconciled. Change 258 remains BLOCKED and 259–278 remain VERIFIED.**
 > This session started from `3b60c6e38666acfde752dc40d7e12bba2ed1d164` on `origin/main`.
 > Change 279 will wire the verified ShieldBlocking framework into live offhand/use input,
 > directional hostile damage, durability/break, HUD feedback, and persistence-reusing swaps.
 > No headed FPS/GPU work is in scope.
 
-- Local evidence: typecheck, lint (0 errors), 5,227 unit tests plus one skipped, production
-  build, file-audit 2,843 rows, and full E2E 97/97 including visual 60/60 all pass.
-- Focused proofs: trading journey/lifecycle/edge E2E 3/3; no headed GPU evidence is claimed.
-- Next exact action: **Implement 279-shield-live-wiring T3-T9 (shield item, offhand/use input, directional damage wiring, durability/cooldown, HUD, E2E), then gates + C279 matrix + VERIFIED publish; 258 stays BLOCKED.**
+- Local evidence: typecheck, lint (0 errors), 5,236 unit tests plus one skipped, production
+  build, file-audit 2,852 rows, and CI-retry full E2E 100/100 outcomes (98 direct + 2 flaky-after-retry; visual 60/60); no headed GPU evidence is claimed.
+- Focused proofs: shield catalog, yaw/arc composition, component-preserving wear/reload, interaction drain, and live browser break/cooldown/HUD coverage all pass.
+- Next exact action: **Commit/publish 279, verify `origin/main`, then activate 280 spec-first; 258 stays BLOCKED.**
 
 ## Current checkpoint — 2026-09-16 release-readiness hardening
 

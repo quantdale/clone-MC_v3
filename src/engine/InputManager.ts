@@ -90,6 +90,7 @@ export class InputManager implements InputState {
   private statisticToggleQueued = false;
   private tradingToggleQueued = false;
   private eatQueued = false;
+  private offhandSwapQueued = false;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -280,6 +281,13 @@ export class InputManager implements InputState {
     return value;
   }
 
+  /** Consume one queued V-key offhand swap. */
+  consumeOffhandSwap(): boolean {
+    const value = this.offhandSwapQueued;
+    this.offhandSwapQueued = false;
+    return value;
+  }
+
   consumeEat(): boolean {
     const value = this.eatQueued;
     this.eatQueued = false;
@@ -385,6 +393,9 @@ export class InputManager implements InputState {
       case 'KeyT':
         this.tradingToggleQueued = true;
         break;
+      case 'KeyV':
+        this.offhandSwapQueued = true;
+        break;
       case 'KeyR':
         this.eatQueued = true;
         break;
@@ -412,6 +423,7 @@ export class InputManager implements InputState {
       event.code === 'KeyG' ||
       event.code === 'KeyH' ||
       event.code === 'KeyT' ||
+      event.code === 'KeyV' ||
       event.code === 'KeyR'
     ) {
       event.preventDefault();
@@ -566,7 +578,9 @@ export class InputManager implements InputState {
     this.gameruleToggleQueued = false;
     this.creativeToggleQueued = false;
     this.statisticToggleQueued = false;
+    this.tradingToggleQueued = false;
     this.eatQueued = false;
+    this.offhandSwapQueued = false;
   }
 
   /** Whether a key code drives player movement (and thus requires pointer lock). */

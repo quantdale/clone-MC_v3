@@ -191,7 +191,7 @@ describe('block/item registry separation', () => {
         expect(
           item.isFood === true ||
             item.toolKind !== undefined ||
-            ['stick', 'coal', 'raw_iron', 'iron_ingot', 'bedrock', 'lapis_lazuli', 'book', 'wheat', 'bone_meal', 'nether_star', 'blaze_powder', 'potion', 'emerald', 'bread', 'paper'].includes(item.key),
+            ['stick', 'coal', 'raw_iron', 'iron_ingot', 'bedrock', 'lapis_lazuli', 'book', 'wheat', 'bone_meal', 'nether_star', 'blaze_powder', 'potion', 'emerald', 'bread', 'paper', 'shield'].includes(item.key),
         ).toBe(true);
         continue;
       }

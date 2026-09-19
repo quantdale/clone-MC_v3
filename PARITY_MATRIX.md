@@ -1,8 +1,8 @@
 # PARITY_MATRIX.md
 
 - **Schema version:** `v1`
-- **Generated:** 2026-09-18 audit reconciliation (original matrix generated 2026-08-25; post-terminal rows and the Change-258 blocker are now included; provenance in `openspec/PROGRAM_STATE.json`)
-- **Scope:** one row per numbered change `001`–`277` (FeatureId `C<number>`), plus master-plan-only feature areas (`MP-<section>-<seq>`). Change 258 is intentionally recorded as `deferred`/`BLOCKED`, not VERIFIED.
+- **Generated:** 2026-09-19 Change 279 reconciliation (original matrix generated 2026-08-25; post-terminal rows and the Change-258 blocker are now included; provenance in `openspec/PROGRAM_STATE.json`)
+- **Scope:** one row per numbered change `001`–`279` (FeatureId `C<number>`), plus master-plan-only feature areas (`MP-<section>-<seq>`). Change 258 is intentionally recorded as `deferred`/`BLOCKED`, not VERIFIED.
 
 ## Sources of truth
 
@@ -27,7 +27,7 @@ Directory-slug note: three directories use slugs that differ from the sequence t
 
 Boundary disambiguation: `exact` vs `equivalent` — if only the internal mechanism differs but the player-visible behavior and its rules match as specified, it is still `exact`; `equivalent` is reserved for outcomes whose reference mechanism is proprietary/unavailable and was deliberately replaced by a locally-documented one. `equivalent` vs `approx` — `equivalent` rows have no behavioral shortfall, only a substituted mechanism; `approx` rows record an actual known behavioral/fidelity difference caused by a platform or legal-resource constraint. `deferred` vs `out-of-scope` — `deferred` features remain planned work; `out-of-scope` features will never be implemented because they require proprietary assets/services or non-browser capability.
 
-## Change matrix (C001–C278)
+## Change matrix (C001–C279)
 
 Narrow-outcome text is quoted from `openspec/CHANGE_SEQUENCE.md` (authoritative catalog); status is confirmed against `openspec/PROGRAM_STATE.json` (`validationResults`) and each change's `verification.md`.
 
@@ -310,6 +310,7 @@ Narrow-outcome text is quoted from `openspec/CHANGE_SEQUENCE.md` (authoritative 
 | C276 | `276-boss-bar-hud-parity` | HudParity boss bars over BossFramework for the live wither: `#wither-boss-bar` fill/visibility driven by `projectWitherBossBars` (BossFramework `bossBarSnapshot` + charge-aware SPAWNING progress + HudParity clamp); unit `WitherBossBarParity` 3 + browser E2E `boss-bar.spec.ts` spawn/damage/defeat. | exact | `openspec/changes/276-boss-bar-hud-parity/verification.md` (VERIFIED 6/6) + `specs/boss-bar-hud-parity/spec.md` | E2E split playbook; no 258 headed work. | VERIFIED |
 | C277 | `277-live-ambient-audio-integration` | Live AmbientAudioFramework tick on Game with injectable AmbientSoundBackend (silent CI default), mute flag, ephemeral state (no serialize); unit + e2e cue proof. | exact | `openspec/changes/277-live-ambient-audio-integration/verification.md` (VERIFIED 6/6) | E2E split; no 258 headed work. | VERIFIED |
 | C278 | `278-live-villager-trading-ui` | Live villager trading-post UI over the verified 150/151 trade framework: Emerald/Bread/Paper catalog entries, versioned `__trades__` persistence with per-profession quarantine and archive passthrough, atomic offer application with unlock merge/restock/full-inventory world drops, `TradingPanel` shell, HUD/KeyT lifecycle, and real browser journey/refusal coverage. | exact | `openspec/changes/278-live-villager-trading-ui/verification.md` (VERIFIED 12/12) + `specs/live-villager-trading/spec.md` | Full unit/build/E2E regression; no 258 headed work. | VERIFIED |
+| C279 | `279-shield-live-wiring` | Live shield wiring over ShieldBlocking 144: shield item and component-preserving offhand swap, held-use raise and competing-use drain, source-position-aware hostile/wither blocking with existing cooldown, one-wear durability/break behavior, HUD feedback, inventory snapshot/pagehide persistence reuse, and browser/unit coverage. | exact | `openspec/changes/279-shield-live-wiring/verification.md` (VERIFIED 12/12) + `specs/live-shield-wiring/spec.md` | Full unit/build/E2E regression; software-WebGL visual variance is baseline-retried; no 258 headed work or GPU evidence. | VERIFIED |
 
 ## Master-plan-only features
 
@@ -345,6 +346,7 @@ Feature areas named in `MINECRAFT_PARITY_MASTER_PLAN.md` that no single numbered
 
 **Post-terminal note (2026-09-14, live weather cycle):** the 196 weather framework seam is player-visible/player-controllable in Change `275-live-weather-cycle-integration` (VERIFIED 9/9; live world-scoped `WeatherState` with world-seeded `weather`-named RNG duration rolls, `__weather__:<worldId>` persistence with degrade-to-defaults + no wake-on-boot mutation + archive carry, `doWeatherCycle`-gated fixed-tick advance, `setWeather`/`setWeatherFromText` command seam, `#weather-indicator` HUD + `presentWeather`→`applyWeatherToEnvironment`, browser E2E `tests/e2e/weather-cycle.spec.ts`). Row C275 added below per the C251–C274 precedent. Change 258 remains BLOCKED and 259/260/261/262/263/264/265/266/267/268/269/270/271/272/273/274 remain VERIFIED; none is touched by the 275 track (no 258 headed work).
 
+**Post-terminal note (2026-09-19, shield wiring):** Change 279 is VERIFIED 12/12 from its package evidence: the live shield item/offhand/use path, directional blocking, durability/break, axe cooldown, HUD, inventory persistence reuse, unit coverage, and full retry-enabled browser regression are green. Two unrelated software-WebGL/browser timing flakes passed on retry; no GPU evidence is claimed. Change 258 remains BLOCKED for headed hardware-WebGL evidence; 259–278 remain VERIFIED and were not reopened.
 **Post-terminal note (2026-09-19, villager trading):** Change 278 is VERIFIED 12/12 from its package evidence: the live trading UI, persistence/archive carry, atomic rules, lifecycle, and full 97-spec browser regression are green. Change 258 remains BLOCKED for headed hardware-WebGL evidence; 259–277 remain VERIFIED and were not reopened.
 **Post-terminal note (2026-09-18, audit):** Changes 253–257 and 259–277 are recorded VERIFIED from their package evidence; Change 258 remains BLOCKED for headed hardware-WebGL evidence. This matrix now covers every numbered change 001–278 and is reconciled by `docs/audit-1-277-findings.md`.
 
@@ -352,14 +354,14 @@ Feature areas named in `MINECRAFT_PARITY_MASTER_PLAN.md` that no single numbered
 
 | Category | Rows |
 |---|---|
-| exact | 264 (263 numbered rows plus MP-19.4-1 Wither-like secondary boss via C252) |
+| exact | 265 (264 numbered rows plus MP-19.4-1 Wither-like secondary boss via C252) |
 | equivalent | 4 |
 | approx | 6 |
 | deferred | 1 (C258 — BLOCKED headed hardware-WebGL evidence) |
 | out-of-scope | 1 (MP-33-1 proprietary services/assets) |
 | n/a (documentation) | 4 (C248, C249, C250, C268) |
-| **Total rows** | **280** (278 change rows + 2 master-plan rows) |
+| **Total rows** | **281** (279 change rows + 2 master-plan rows) |
 
-Change-rows-only split: exact 263 / equivalent 4 / approx 6 / deferred 1 / n/a 4 = 278.
+Change-rows-only split: exact 264 / equivalent 4 / approx 6 / deferred 1 / n/a 4 = 279.
 
-**Coverage statement:** every numbered change 001–278 appears in exactly one row (bijective `C001`…`C278`, no duplicates, no orphan rows). Every completed change maps to a cited VERIFIED artifact; C258 is explicitly documented as BLOCKED rather than upgraded to VERIFIED. The two additional `MP-*` rows cover master-plan areas outside the numbered sequence; MP-19.4-1 is closed `exact` by C252. The matrix audit is cross-checked against the package evidence and `openspec/PROGRAM_STATE.json`; the current state validator still owns its historical 001–250 schema checks and does not treat C258 as verified.
+**Coverage statement:** every numbered change 001–279 appears in exactly one row (bijective `C001`…`C279`, no duplicates, no orphan rows). Every completed change maps to a cited VERIFIED artifact; C258 is explicitly documented as BLOCKED rather than upgraded to VERIFIED. The two additional `MP-*` rows cover master-plan areas outside the numbered sequence; MP-19.4-1 is closed `exact` by C252. The matrix audit is cross-checked against the package evidence and `openspec/PROGRAM_STATE.json`; the current state validator still owns its historical 001–250 schema checks and does not treat C258 as verified.

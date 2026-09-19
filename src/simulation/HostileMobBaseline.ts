@@ -198,7 +198,7 @@ export class HostileMobSystem {
     world: HostileMobWorld,
     isChunkTicking: (cx: number, cz: number) => boolean,
     getPlayerTarget: () => PlayerTarget | null,
-    onPlayerDamaged: (amount: number) => void,
+    onPlayerDamaged: (amount: number, sourceX?: number, sourceZ?: number) => void,
     simTickIndex?: number,
   ): void {
     this.frameCounter++;
@@ -278,7 +278,7 @@ export class HostileMobSystem {
         { vx: playerTarget.vx ?? 0, vy: playerTarget.vy ?? 0, vz: playerTarget.vz ?? 0 },
       );
       if (result.applied) {
-        onPlayerDamaged(result.damage);
+        onPlayerDamaged(result.damage, current.transform.x, current.transform.z);
       }
     }
   }

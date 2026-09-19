@@ -58,6 +58,7 @@ import {
   type EnchantOffer,
 } from '../inventory/EnchantingTable';
 import { Inventory } from '../inventory/Inventory';
+import { EquipmentSlot } from '../inventory/Equipment';
 import { Hotbar } from '../inventory/Hotbar';
 import { Crosshair } from '../ui/Crosshair';
 import { HUD } from '../ui/HUD';
@@ -97,6 +98,8 @@ import {
   HostileMobSystem,
   HOSTILE_SPAWN_CYCLE_INTERVAL_TICKS,
 } from '../simulation/HostileMobBaseline';
+import { resolveShieldBlock, ShieldCooldownTracker } from '../simulation/ShieldBlocking';
+import { canRaiseShield, playerYawToShieldBearing } from '../simulation/LiveShieldWiring';
 import { HostileMobRenderer } from '../rendering/HostileMobRenderer';
 import { BreedingSystem, type BreedableSpecies } from '../simulation/AnimalBreeding';
 import {
@@ -547,6 +550,14 @@ export class Game {
   private ambientMuted = false;
   /** HUD weather indicator (275, null until the shell binds it). */
   private weatherIndicatorEl: HTMLElement | null = null;
+  /** Transient shield state (279); cooldown is simulation-tick based and not persisted. */
+  private readonly shieldCooldown = new ShieldCooldownTracker();
+  private shieldRaisedValue = false;
+  /** HUD shield indicator (279, null until the shell binds it). */
+  private shieldIndicatorEl: HTMLElement | null = null;
+  private shieldBrokenTimer: ReturnType<typeof setTimeout> | null = null;
+  private shieldBrokenValue = false;
+  private lastShieldHudSignature = '';
   /** Live block-tag registry (266 adventure resolution; built once beside HarvestRules). */
   private readonly blockTags: TagRegistry;
   /** Registry key of the Fire block, resolved once for the doFireTick gate (261). */
@@ -1263,6 +1274,9 @@ export class Game {
       canBreak: (blockId) => this.canBreakInMode(blockId),
       canPlace: (blockId) => this.canPlaceInMode(blockId),
       canInteract: () => canInteract(this.gameMode.mode),
+      // Shield use owns the right button while raised, so placement/container
+      // use cannot consume the same press (279).
+      blockUse: () => this.shieldRaisedValue,
       rng: Math.random,
       itemEntities: this.itemEntities,
       xpOrbs: this.xpOrbs,
@@ -1523,6 +1537,10 @@ export class Game {
     // Weather indicator (275): the HUD chip reflects the live weather store.
     this.weatherIndicatorEl = document.getElementById('weather-indicator');
     this.updateWeatherIndicator();
+    // Shield indicator (279): state-signature gated so fixed-tick input does
+    // not rewrite unchanged HUD DOM.
+    this.shieldIndicatorEl = document.getElementById('shield-indicator');
+    this.updateShieldIndicator();
 
     // Fixed-tick ownership (044): the driver turns frame deltas into bounded,
     // deterministic 20 TPS ticks; the tick body enforces the simulation order.
@@ -1623,6 +1641,10 @@ export class Game {
     if (this.toastTimer !== null) {
       clearTimeout(this.toastTimer);
       this.toastTimer = null;
+    }
+    if (this.shieldBrokenTimer !== null) {
+      clearTimeout(this.shieldBrokenTimer);
+      this.shieldBrokenTimer = null;
     }
     // Settle the furnace session first so its cursor/xp land in the state that
     // savePlayerStateDurable + the facade flush are about to persist (251).
@@ -1997,6 +2019,12 @@ export class Game {
     // Hotbar selection (number keys + wheel).
     this.updateHotbar();
 
+    // Offhand swap (279): a discrete V press is consumed even when it is a
+    // no-op because the game is paused or a container is active.
+    if (this.input.consumeOffhandSwap()) {
+      this.swapSelectedWithOffhand();
+    }
+
     if (this.input.consumeCraftingToggle()) {
       if (this.furnaceOpen) {
         // One container at a time: the toggle closes the furnace instead of
@@ -2196,6 +2224,9 @@ export class Game {
     if (flight.flying) this.player.fallDistance = 0;
     const eye = this.player.eyePosition;
     this.applyCameraTransform(eye.x, eye.y, eye.z);
+    // Shield raise state is derived from the current fixed-tick input and
+    // transient cooldown before interaction consumes right-click (279).
+    this.updateShieldRaised();
     this.interaction.update(dt);
 
     // 3. Item entities, then xp orbs (collection order matters: items first so
@@ -2530,7 +2561,7 @@ export class Game {
         isAttackable(this.gameMode.mode)
           ? { x: this.player.position.x, y: this.player.position.y, z: this.player.position.z }
           : null,
-      (amount) => this.hurtPlayer(amount, 'mob'),
+      (amount, sourceX, sourceZ) => this.hurtPlayer(amount, 'mob', sourceX, sourceZ),
     );
   }
 
@@ -2809,6 +2840,38 @@ export class Game {
     }
   }
 
+  /** Whether any menu or pause surface currently owns the interaction input. */
+  private shieldInteractionAvailable(): boolean {
+    return !this.overlayOpen &&
+      !this.craftingOpen &&
+      !this.furnaceOpen &&
+      !this.brewingOpen &&
+      !this.enchantingOpen &&
+      !this.gameruleOpen &&
+      !this.recipeBookOpen &&
+      !this.advancementOpen &&
+      !this.creativeOpen &&
+      !this.statisticsOpen &&
+      !this.tradingOpen;
+  }
+
+  /** Swap the selected hotbar stack and Offhand when normal gameplay owns input. */
+  private swapSelectedWithOffhand(): boolean {
+    if (!this.pointerLocked || !canInteract(this.gameMode.mode) || !this.shieldInteractionAvailable()) {
+      return false;
+    }
+    this.inventory.swapSelectedWithEquipment(EquipmentSlot.Offhand);
+    this.shieldBrokenValue = false;
+    if (this.shieldBrokenTimer !== null) {
+      clearTimeout(this.shieldBrokenTimer);
+      this.shieldBrokenTimer = null;
+    }
+    this.hotbar.render();
+    this.updateShieldRaised();
+    this.updateShieldIndicator();
+    return true;
+  }
+
   private updateFPS(dt: number): void {
     this.fpsFrames++;
     this.fpsTime += dt;
@@ -2840,6 +2903,10 @@ export class Game {
 
   private onLockChange(locked: boolean): void {
     this.pointerLocked = locked;
+    if (!locked) {
+      this.shieldRaisedValue = false;
+      this.updateShieldIndicator();
+    }
     // Recovery-required (257): gameplay is paused; pointer lock must never
     // engage over the recovery state.
     if (this.recoveryRequiredValue) {
@@ -3900,7 +3967,7 @@ export class Game {
     const d = Math.hypot(pos.x - center[0], pos.y - center[1], pos.z - center[2]);
     if (d <= strength * 2) {
       const dmg = Math.max(1, Math.floor((1 - d / (strength * 2)) * 7 * strength));
-      this.hurtPlayer(dmg, 'wither');
+      this.hurtPlayer(dmg, 'wither', center[0], center[2]);
     }
   }
 
@@ -3999,7 +4066,7 @@ export class Game {
             if (durTicks > 0) {
               this.playerEffects.add(createResourceId('minecraft', 'effect/wither'), durTicks / 20, 0);
             }
-            this.hurtPlayer(skull.kind === 'blue' ? 12 : 8, 'wither');
+            this.hurtPlayer(skull.kind === 'blue' ? 12 : 8, 'wither', step.state.x, step.state.z);
           }
           continue;
         }
@@ -4901,6 +4968,90 @@ export class Game {
     this.weatherIndicatorEl.textContent = this.weather.weather === 'thunder' ? '⛈ Thunder' : '🌧 Rain';
   }
 
+  /** Read-only live shield state for E2E and diagnostics. */
+  getShieldState(): {
+    equipped: boolean;
+    raised: boolean;
+    disabled: boolean;
+    durability: number;
+    maxDurability: number;
+  } {
+    const stack = this.inventory.equipment.getEquipment(EquipmentSlot.Offhand);
+    const definition = stack ? this.itemRegistry.getByLegacyId(stack.id) : undefined;
+    const equipped = Boolean(stack && stack.count > 0 && definition?.key === 'shield');
+    const maxDurability = equipped ? definition?.maxDurability ?? 0 : 0;
+    const durability = equipped
+      ? this.inventory.equipment.getEquipmentDurability(EquipmentSlot.Offhand, maxDurability)
+      : 0;
+    const disabled = equipped && this.shieldCooldown.isDisabled(0, this.simTick);
+    return {
+      equipped,
+      raised: equipped && this.shieldRaisedValue && !disabled,
+      disabled,
+      durability,
+      maxDurability,
+    };
+  }
+
+  /** Test-only deterministic setup seam for a pristine offhand shield. */
+  debugEquipShield(): boolean {
+    const definition = this.itemRegistry.getByKey('shield');
+    if (!definition || definition.id !== ItemId.Shield) return false;
+    this.inventory.equipment.setEquipment(EquipmentSlot.Offhand, { id: ItemId.Shield, count: 1 });
+    this.shieldCooldown.clear(0);
+    this.shieldRaisedValue = false;
+    this.shieldBrokenValue = false;
+    if (this.shieldBrokenTimer !== null) {
+      clearTimeout(this.shieldBrokenTimer);
+      this.shieldBrokenTimer = null;
+    }
+    this.updateShieldIndicator();
+    return true;
+  }
+
+  /** Test-only source-damage seam; omitted coordinates intentionally bypass blocking. */
+  debugDamageFrom(amount: number, sourceX?: number, sourceZ?: number, axe = false): void {
+    this.hurtPlayer(amount, 'debug', sourceX, sourceZ, axe);
+  }
+
+  /** Recompute the fixed-tick raise state from input, mode, menu, item, and cooldown. */
+  private updateShieldRaised(): void {
+    const stack = this.inventory.equipment.getEquipment(EquipmentSlot.Offhand);
+    const definition = stack ? this.itemRegistry.getByLegacyId(stack.id) : undefined;
+    const equipped = Boolean(stack && stack.count > 0 && definition?.key === 'shield');
+    const disabled = equipped && this.shieldCooldown.isDisabled(0, this.simTick);
+    this.shieldRaisedValue = canRaiseShield(
+      this.pointerLocked,
+      canInteract(this.gameMode.mode) && this.shieldInteractionAvailable(),
+      this.input.isUseHeld(),
+      equipped,
+      disabled,
+    );
+    this.updateShieldIndicator();
+  }
+
+  /** Update the shield HUD only when its derived accessible state changes. */
+  private updateShieldIndicator(): void {
+    if (!this.shieldIndicatorEl) return;
+    const state = this.getShieldState();
+    const visible = state.equipped || this.shieldBrokenValue;
+    const text = this.shieldBrokenValue
+      ? '🛡 Shield: broken'
+      : state.disabled
+        ? '🛡 Shield: disabled'
+        : state.raised
+          ? '🛡 Shield: raised'
+          : state.equipped
+            ? `🛡 Shield: ready (${state.durability}/${state.maxDurability})`
+            : '';
+    const signature = `${visible}|${text}`;
+    if (signature === this.lastShieldHudSignature) return;
+    this.lastShieldHudSignature = signature;
+    this.shieldIndicatorEl.classList.toggle('hidden', !visible);
+    this.shieldIndicatorEl.textContent = text;
+    this.shieldIndicatorEl.setAttribute('aria-label', text || 'Shield');
+  }
+
   /**
    * Fold the live weather's presentation into the shared environment (275).
    * The fixed-tick advance, a manual set, and boot hydration all call this so
@@ -5598,8 +5749,65 @@ export class Game {
    * status-effect ticks); damage-over-time inside `survival.update` is gated
    * separately at the tick call site.
    */
-  private hurtPlayer(amount: number, reason = 'damage'): void {
+  private hurtPlayer(
+    amount: number,
+    reason = 'damage',
+    sourceX?: number,
+    sourceZ?: number,
+    isAxeAttack = false,
+  ): void {
     if (!survivalStatsDeplete(this.gameMode.mode)) return;
+
+    // Only directed source damage can enter the shield rule. Environmental,
+    // status, and debug-lethal paths intentionally retain their old behavior.
+    const sourceValid = Number.isFinite(sourceX) && Number.isFinite(sourceZ) && Number.isFinite(amount) && amount > 0;
+    if (sourceValid) {
+      const stack = this.inventory.equipment.getEquipment(EquipmentSlot.Offhand);
+      const definition = stack ? this.itemRegistry.getByLegacyId(stack.id) : undefined;
+      const equipped = Boolean(stack && stack.count > 0 && definition?.key === 'shield');
+      if (equipped && this.shieldRaisedValue) {
+        const result = resolveShieldBlock(
+          true,
+          this.shieldCooldown.isDisabled(0, this.simTick),
+          playerYawToShieldBearing(this.player.yaw),
+          this.player.position.x,
+          this.player.position.z,
+          sourceX!,
+          sourceZ!,
+          amount,
+          isAxeAttack,
+        );
+        if (result.blocked) {
+          if (result.shouldDisable) {
+            this.shieldCooldown.disable(0, this.simTick);
+            this.shieldRaisedValue = false;
+            this.showToast('Shield disabled');
+          }
+          const wear = this.inventory.damageEquipment(
+            EquipmentSlot.Offhand,
+            result.durabilityDamage,
+            definition?.maxDurability ?? 0,
+          );
+          if (wear.broke) {
+            this.shieldRaisedValue = false;
+            this.shieldBrokenValue = true;
+            this.showToast('Shield broke');
+            if (this.shieldBrokenTimer !== null) clearTimeout(this.shieldBrokenTimer);
+            this.shieldBrokenTimer = setTimeout(() => {
+              this.shieldBrokenTimer = null;
+              this.shieldBrokenValue = false;
+              this.updateShieldIndicator();
+            }, TOAST_DURATION_MS);
+          }
+          this.hotbar.render();
+          this.updateShieldIndicator();
+          if (result.damageAfterBlock > 0) {
+            this.survival.damage(result.damageAfterBlock, reason);
+          }
+          return;
+        }
+      }
+    }
     this.survival.damage(amount, reason);
   }
 
@@ -5688,6 +5896,14 @@ export class Game {
     this.player.fallDistance = 0;
     this.player.yaw = 0;
     this.player.pitch = 0;
+    this.shieldRaisedValue = false;
+    this.shieldCooldown.clear(0);
+    this.shieldBrokenValue = false;
+    if (this.shieldBrokenTimer !== null) {
+      clearTimeout(this.shieldBrokenTimer);
+      this.shieldBrokenTimer = null;
+    }
+    this.updateShieldIndicator();
     this.survival.consumeDeath();
     this.playerEffects.clear();
     // Teleport discontinuity: never blend the camera across the respawn jump.

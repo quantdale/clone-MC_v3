@@ -10,7 +10,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2848,
+  "total": 2852,
   "rows": [
     {
       "path": ".agent/EXECUTION_PROMPT.md",
@@ -45694,6 +45694,70 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 279 package; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/LiveShieldWiring.ts",
+      "gitBlob": null,
+      "category": "source",
+      "purpose": "279 pure Player-yaw and shield-raise live adapters",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "runtime",
+      "imports": [],
+      "importedBy": ["src/engine/Game.ts"],
+      "testEvidence": ["tests/unit/LiveShieldWiring.test.ts"],
+      "riskAreas": ["gameplay"],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 279 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/e2e/shield.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "279 live shield browser journey and persistence coverage",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "test-only",
+      "imports": ["src/engine/Game.ts"],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": ["gameplay", "persistence"],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 279 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/LiveShieldWiring.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "279 yaw, raise-state, and directional resolver composition units",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "test-only",
+      "imports": ["src/simulation/LiveShieldWiring.ts", "src/simulation/ShieldBlocking.ts"],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": ["gameplay"],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 279 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/ShieldItems.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "279 durable shield registry contract units",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "test-only",
+      "imports": ["src/inventory/ItemRegistry.ts"],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": ["gameplay"],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 279 implementation; no findings",
       "status": "audited"
     }
   ]

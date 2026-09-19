@@ -1,5 +1,10 @@
 import type { BlockSelector } from './BlockSelector';
-import { PlayerEquipment, type EquipmentSnapshot } from './Equipment';
+import {
+  EquipmentSlot,
+  PlayerEquipment,
+  type EquipmentDamageResult,
+  type EquipmentSnapshot,
+} from './Equipment';
 import { ItemId, type ItemTypeRegistry, createDefaultItemRegistry } from './ItemRegistry';
 import {
   DAMAGE_COMPONENT,
@@ -394,6 +399,25 @@ export class Inventory implements BlockSelector {
   /** Replace the selected hotbar slot's stack (used after an enchanting apply). */
   setSelectedStack(stack: ItemStack): void {
     this.slots[this.selected] = stack;
+  }
+
+  /** Swap the selected hotbar stack with one equipment slot, preserving components. */
+  swapSelectedWithEquipment(slot: EquipmentSlot): void {
+    const selected = this.getSelectedStack();
+    const equipped = this.equipment.getEquipment(slot);
+    this.setSelectedStack(equipped ?? { id: ItemId.Air, count: 0 });
+    this.equipment.setEquipment(slot, selected && selected.count > 0 ? selected : null);
+  }
+
+  /** Apply shared durability wear to one equipment slot. */
+  damageEquipment(
+    slot: EquipmentSlot,
+    amount: number,
+    maxDurability: number,
+    unbreakingLevel = 0,
+    rng?: () => number,
+  ): EquipmentDamageResult {
+    return this.equipment.damageEquipment(slot, amount, maxDurability, unbreakingLevel, rng);
   }
 
   /**

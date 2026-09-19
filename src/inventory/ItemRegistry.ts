@@ -86,6 +86,7 @@ export const enum ItemId {
   Emerald = 68,
   Bread = 69,
   Paper = 70,
+  Shield = 71,
 }
 
 /**
@@ -875,6 +876,17 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       name: 'Paper',
       iconTile: 72,
       stackSize: 64,
+    },
+    {
+      // Live shield wiring (279): offhand-only combat item. Its durable state
+      // rides the existing equipment component path; it is never placeable.
+      id: ItemId.Shield,
+      resourceId: rid('shield'),
+      key: 'shield',
+      name: 'Shield',
+      iconTile: 73,
+      stackSize: 1,
+      maxDurability: 336,
     },
   ];
   assertDurableItemsDoNotStack(defs);

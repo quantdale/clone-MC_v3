@@ -117,6 +117,31 @@ describe('Equipment: set / swap', () => {
   });
 });
 
+describe('Equipment: shared durability wear', () => {
+  it('wears an offhand shield while retaining its existing components', () => {
+    const eq = new PlayerEquipment();
+    const components = new StackComponentMap(createDefaultStackComponentRegistry()).with(
+      DAMAGE_COMPONENT,
+      { damage: 7 },
+    );
+    eq.setEquipment(EquipmentSlot.Offhand, { id: 71, count: 1, components });
+    const result = eq.damageEquipment(EquipmentSlot.Offhand, 3, 336);
+    expect(result.broke).toBe(false);
+    expect(result.changed).toBe(true);
+    expect(eq.getEquipmentDurability(EquipmentSlot.Offhand, 336)).toBe(326);
+    expect(eq.getEquipment(EquipmentSlot.Offhand)?.components).toBeDefined();
+    expect(eq.getEquipment(EquipmentSlot.Offhand)?.components?.get<DamageComponentValue>(DAMAGE_COMPONENT)?.damage).toBe(10);
+  });
+
+  it('clears an offhand stack atomically when shared durability reports break', () => {
+    const eq = new PlayerEquipment();
+    eq.setEquipment(EquipmentSlot.Offhand, { id: 71, count: 1, components: new StackComponentMap(createDefaultStackComponentRegistry()).with(DAMAGE_COMPONENT, { damage: 335 }) });
+    const result = eq.damageEquipment(EquipmentSlot.Offhand, 1, 336);
+    expect(result).toEqual({ stack: null, broke: true, changed: true });
+    expect(eq.getEquipment(EquipmentSlot.Offhand)).toBeNull();
+  });
+});
+
 describe('Equipment: clear', () => {
   it('empties every slot', () => {
     const eq = new PlayerEquipment();
@@ -208,6 +233,32 @@ describe('Equipment: serialize and restore', () => {
 });
 
 describe('Inventory: equipment integration', () => {
+  it('swaps the selected stack with Offhand without changing components', () => {
+    const inv = new Inventory([20], [1]);
+    const components = new StackComponentMap(createDefaultStackComponentRegistry()).with(DAMAGE_COMPONENT, { damage: 9 });
+    inv.equipment.setEquipment(EquipmentSlot.Offhand, { id: 71, count: 1, components });
+    inv.swapSelectedWithEquipment(EquipmentSlot.Offhand);
+    expect(inv.getSelectedStack()?.id).toBe(71);
+    expect(inv.getSelectedStack()?.components?.get<DamageComponentValue>(DAMAGE_COMPONENT)?.damage).toBe(9);
+    expect(inv.equipment.getEquipment(EquipmentSlot.Offhand)?.id).toBe(20);
+    inv.swapSelectedWithEquipment(EquipmentSlot.Offhand);
+    expect(inv.getSelectedStack()?.id).toBe(20);
+    expect(inv.equipment.getEquipment(EquipmentSlot.Offhand)?.id).toBe(71);
+    expect(inv.equipment.getEquipment(EquipmentSlot.Offhand)?.components?.get<DamageComponentValue>(DAMAGE_COMPONENT)?.damage).toBe(9);
+  });
+
+  it('round-trips a damaged shield through the existing inventory snapshot', () => {
+    const inv = new Inventory();
+    inv.equipment.setEquipment(EquipmentSlot.Offhand, { id: 71, count: 1 });
+    inv.damageEquipment(EquipmentSlot.Offhand, 12, 336);
+    const restored = new Inventory();
+    expect(restored.restore(inv.snapshot(), isValid, maxDur)).toBe(true);
+    const shield = restored.equipment.getEquipment(EquipmentSlot.Offhand);
+    expect(shield?.id).toBe(71);
+    expect(restored.equipment.getEquipmentDurability(EquipmentSlot.Offhand, 336)).toBe(324);
+    expect(shield?.components?.get<DamageComponentValue>(DAMAGE_COMPONENT)?.damage).toBe(12);
+  });
+
   it('snapshot carries equipment and round-trips', () => {
     const inv = new Inventory();
     inv.equipment.setEquipment(EquipmentSlot.Head, { id: GRASS, count: 1 });
