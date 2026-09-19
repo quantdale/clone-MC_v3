@@ -599,3 +599,14 @@ published Change 278. It is authorized to wire the verified headless
   status change is part of 279.
 - 258 stays BLOCKED, and the next change after 279 is reserved as
   `280-death-respawn-ui`.
+
+## 279-shield-live-wiring — VERIFIED and published (2026-09-19)
+
+Change 279 completed all 12 tasks and is VERIFIED. The implementation tip is
+`a9b7108` (`feat: ship live shield wiring (change 279)`); the live shield
+catalog, offhand/use path, source-aware blocking, durability/break, axe
+cooldown, HUD, inventory snapshot reuse, and unit/browser evidence are
+complete. The full browser gate passed under the repository's configured
+`CI=1` retry policy (98 direct passes plus 2 flaky-after-retry outcomes; 60/60
+visual cells). Change 258 remains BLOCKED, Changes 259–278 remain VERIFIED,
+and `280-death-respawn-ui` is the next sequential change.

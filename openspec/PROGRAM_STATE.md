@@ -1,8 +1,8 @@
 # Minecraft-Parity Program State
 
-## Current checkpoint — 2026-09-19 Change 279 VERIFYING; publication handoff pending
+## Current checkpoint — 2026-09-19 Change 279 VERIFIED; Change 280 next
 
-> **Change 278 is VERIFIED 12/12 (100%) and published at `05203abd`; Change 279 is VERIFYING 11/12 with implementation, regression, full gates, and C279 reconciled. Change 258 remains BLOCKED and 259–278 remain VERIFIED.**
+> **Change 279 is VERIFIED 12/12 (100%) and published at `a9b7108`; Change 280 is next and remains spec-first. Change 258 remains BLOCKED and 259–278 remain VERIFIED.**
 > This session started from `3b60c6e38666acfde752dc40d7e12bba2ed1d164` on `origin/main`.
 > Change 279 will wire the verified ShieldBlocking framework into live offhand/use input,
 > directional hostile damage, durability/break, HUD feedback, and persistence-reusing swaps.
@@ -11,7 +11,7 @@
 - Local evidence: typecheck, lint (0 errors), 5,236 unit tests plus one skipped, production
   build, file-audit 2,852 rows, and CI-retry full E2E 100/100 outcomes (98 direct + 2 flaky-after-retry; visual 60/60); no headed GPU evidence is claimed.
 - Focused proofs: shield catalog, yaw/arc composition, component-preserving wear/reload, interaction drain, and live browser break/cooldown/HUD coverage all pass.
-- Next exact action: **Commit/publish 279, verify `origin/main`, then activate 280 spec-first; 258 stays BLOCKED.**
+- Next exact action: **Author and validate `280-death-respawn-ui` spec-first, then implement its first unchecked task; 258 stays BLOCKED.**
 
 ## Current checkpoint — 2026-09-16 release-readiness hardening
 
@@ -180,25 +180,25 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **279-shield-live-wiring — ACTIVE (2/12); live ShieldBlocking over 144; 258 BLOCKED**
-- Prior active implementation change: **278-live-villager-trading-ui — VERIFIED (12/12); 258 stays BLOCKED, 259–277 stay VERIFIED**
+- Active implementation change: **279-shield-live-wiring — VERIFIED (12/12); live ShieldBlocking over 144; 258 BLOCKED**
+- Prior active implementation change: **278-live-villager-trading-ui — VERIFIED (12/12); 258 stays BLOCKED, 259–278 stay VERIFIED**
 - Prior prior active implementation change: **272-lighting-clock-dt-sync — VERIFIED (10/10, owner-authorized 2026-09-12; 258 stays BLOCKED, 259/260/261/262/263/264/265/266/267/268/269/270/271 stay VERIFIED)**
 - Next change: **280-death-respawn-ui — reserved next sequential non-GPU change; 258 remains BLOCKED**
-- 240 advancement allowed: **no (active change not yet verified)**
+- 240 advancement allowed: **yes**
 
 - Program: **ACTIVE — Change 275 VERIFIED 9/9 (live weather cycle integration, owner-authorized 2026-09-14 campaign through 277); Change 274 VERIFIED 13/13 (live sleep/bed integration, owner-authorized 2026-09-13 parallel track through 277); Change 273 VERIFIED 10/10 (chunksection isEmpty air-check, Standing owner order 2026-09-12); Change 272 VERIFIED 10/10 (lighting clock/sun dt sync, Standing owner order 2026-09-12); Change 271 VERIFIED 14/14 (statistics panel UI, Standing owner order 2026-09-12); Change 270 VERIFIED 12/12 (leaf apple loot probability, Standing owner order 2026-09-12); Change 269 VERIFIED 12/12 (composed game dispose/worker terminate, Standing owner order 2026-09-12); Change 268 VERIFIED 12/12 (ci immutable action pins, Standing owner order 2026-09-12); Change 267 VERIFIED 13/13 (live hardcore integration, Standing owner order 2026-09-12); Change 266 VERIFIED 13/13 (live adventure+spectator integration, Standing owner order 2026-09-11) with Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); 259 VERIFIED 18/18; 260 VERIFIED 19/19; 261 VERIFIED 16/16; 262 VERIFIED 14/14; 263 VERIFIED 15/15; 264 VERIFIED 13/13; 265 VERIFIED 13/13**
-- Last completed change: **278-live-villager-trading-ui — VERIFIED (12/12) — full gates green, C278 exact, 258 BLOCKED**
+- Last completed change: **279-shield-live-wiring — VERIFIED (12/12) — full retry-enabled gates green, C279 exact, 258 BLOCKED**
 - Prior last completed change: **274-live-sleep-bed-integration — VERIFIED (13/13) — live bed + sleep-spawn over 198 SleepFramework; gates: typecheck/lint 0 errors/unit Sleep*+StartupSpawnSafety 64 + BlockRegistry pin/build/sleep-bed E2E 4/4/259–273 split E2E regression (monolithic game.spec pointer-lock environmental carve)/validate-state PASS; C274 PARITY exact; 273 remains VERIFIED (10/10); 258 stays BLOCKED**
 - Prior prior last completed change: **272-lighting-clock-dt-sync — VERIFIED (10/10) — full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85/file-audit 2792); 271 remains VERIFIED (14/14)
-- All changes 001–257 and 259–278: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed (backup fail-closed, snapshot fail-closed, multi-store tx 6 stores, archive ownership, migrated-legacy 5×, pagehide 5× via flush, R-7, file-audit 2644, import tx, visual 0.02, payload equality, full local gate + CI).
+- All changes 001–257 and 259–279: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed (backup fail-closed, snapshot fail-closed, multi-store tx 6 stores, archive ownership, migrated-legacy 5×, pagehide 5× via flush, R-7, file-audit 2644, import tx, visual 0.02, payload equality, full local gate + CI).
 - Historical Change 250-era bullets (preserved; superseded **for current release authority** by `openspec/evidence/release-readiness-post-hardening.md`): 250 required-test gate PASS at head `502d021` / byte-identical tree `b56529e`; historical release-readiness READY RC-1..RC-9 (`openspec/evidence/release-readiness.md`); final parity audit PASS with DL dispositions later rejected by this interlock (`openspec/evidence/parity/final-parity-audit.md`); evidence archive complete (`openspec/evidence/`)
 - Post-250 hardening interlock: **VERIFIED at remediation checkpoint `aa92a5c229a753f10f8c1677e836136962b5d07a` — canonical CI run 32589457819 SUCCESS (gate job 97078975848, e2e job 97078975868); tasks 78/78; release decision READY (`openspec/evidence/release-readiness-post-hardening.md`)**
 - Certification campaign: **openspec/hardening/2026-08-23-exhaustive-repository-certification — R-1..R-9 accepted debt, R-7 restored with ChunkPipeline 498-512 evidence; manifest 2644 reviewed at 96b5dc37**
 - Release authority: **Change 278 VERIFIED 12/12 — local gate green (typecheck/lint/test 5227+1 skipped/build/full E2E 97/97/visual 60/60); headed Change 258 remains externally blocked**
 - Publication history: **Change 257 VERIFIED 92/92 at 96b5dc37 (F257-A..L closed, 22 new fault-injection tests, 5× proofs, import tx); Change 256 archived at `ad75b65` as `2026-08-31-256-production-readiness-hardening` (23/23).**
-- Section milestone: **PROGRAM VERIFIED through Change 278; Change 258 remains BLOCKED at 40/100 pending headed hardware-WebGL certification; no GPU evidence was fabricated.**
+- Section milestone: **PROGRAM VERIFIED through Change 279; Change 258 remains BLOCKED at 40/100 pending headed hardware-WebGL certification; no GPU evidence was fabricated.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ri…
-- Next exact action: **Implement 279-shield-live-wiring T3-T9 (shield item, offhand/use input, directional damage wiring, durability/cooldown, HUD, E2E), then gates + C279 matrix + VERIFIED publish; 258 stays BLOCKED**
+- Next exact action: **Author and validate 280-death-respawn-ui spec-first, then implement its first unchecked task; 258 stays BLOCKED**
 - Superseded next action: **Change 275-live-weather-cycle-integration ACTIVE 2/9 — implement __weather__ persistence + Game weather tick/HUD/presentation + unit/E2E + gates + PARITY C275 + VERIFIED publish; 258 BLOCKED**
 - Release note (2026-09-11 owner deferral): **headed FPS gates (258 tasks 91–95) are deferred, not waived — 001–257 VERIFIED, production default unchanged (sync meshing, no quality retune), game shippable with known performance-certification debt**
 

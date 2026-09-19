@@ -36,5 +36,5 @@
   `validate-state`; record exact results and existing non-failing warnings.
 - [x] T11. Reconcile all artifacts against implementation; add C279 exact row,
   promote state/verification to VERIFIED only at 12/12, and preserve 258 BLOCKED.
-- [ ] T12. Commit and publish 279 to `origin/main`, verify the remote tip, and
+- [x] T12. Commit and publish 279 to `origin/main`, verify the remote tip, and
   checkpoint the next exact action as 280 spec-first.

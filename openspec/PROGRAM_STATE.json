@@ -2,26 +2,33 @@
   "schemaVersion": 1,
   "status": "ACTIVE",
   "currentChange": "279-shield-live-wiring",
-  "currentChangeStatus": "ACTIVE",
-  "lastCompletedChange": "278-live-villager-trading-ui",
+  "currentChangeStatus": "VERIFIED",
+  "lastCompletedChange": "279-shield-live-wiring",
   "nextChange": "280-death-respawn-ui",
-  "completedTasks": 11,
+  "completedTasks": 12,
   "totalTasks": 12,
-  "completionPercentage": 92,
+  "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": true,
   "requiredTestsPass": true,
-  "advancementAllowed": false,
+  "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "3b60c6e38666acfde752dc40d7e12bba2ed1d164",
-  "localHead": "05203abdce35d52b882e1d851b7f8ba1d6cdfff4",
-  "nextExactAction": "Commit and publish 279-shield-live-wiring with normal history, verify origin/main, then activate 280-death-respawn-ui spec-first; 258 stays BLOCKED",
-  "lastCompletedTask": "279 T1-T11 implemented, fully gated, regression-reviewed, and C279 reconciled; T12 publish handoff remains",
+  "localHead": "a9b71083bb6bf4645fec3d739c5cfbfadfdcad60",
+  "nextExactAction": "Author and validate 280-death-respawn-ui spec-first, then implement its first unchecked task; 258 stays BLOCKED",
+  "lastCompletedTask": "279 T1-T12 complete, VERIFIED, and published at a9b7108; 280 is next spec-first",
   "blockers": [
-    "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-278 are VERIFIED; game shippable with known performance-certification debt. The 279 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
+    "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-279 are VERIFIED; game shippable with known performance-certification debt. The 279 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
   "validationResults": [
+    {
+      "change": "279-shield-live-wiring",
+      "status": "VERIFIED",
+      "unitTests": 5236,
+      "e2eTests": 100,
+      "note": "12/12 tasks complete. Shield item 71 with max durability 336, component-preserving offhand V swap, right-hold raise/use drain, source-aware hostile/wither blocking over ShieldBlocking 144, one-wear durability/break, existing 100-tick axe disable, HUD/toast, inventory snapshot/pagehide reuse, and unit/browser coverage. Gates: typecheck PASS; lint 0 errors with 85 existing warnings; full unit 440 files 5236 passed + 1 skipped; build PASS (242 modules; existing chunk advisory); CI=1 full E2E 100 unique tests with 98 direct passes + 2 flaky-after-retry outcomes, visual 60/60; file-audit 2852; validate-state PASS. Implementation tip a9b7108. Change 258 remains BLOCKED and 259–278 remain VERIFIED."
+    },
     {
       "change": "278-live-villager-trading-ui",
       "status": "VERIFIED",
@@ -2638,9 +2645,9 @@
   ],
   "releaseAuthority": {
     "schemaVersion": 1,
-    "authorityPackage": "openspec/changes/278-live-villager-trading-ui",
-    "candidateSha": "05203abdce35d52b882e1d851b7f8ba1d6cdfff4",
-    "note": "Change 278 is VERIFIED 12/12 and published at 05203abd: live villager trading catalog, versioned __trades__ persistence, atomic trade application, panel/HUD/KeyT lifecycle, and browser coverage. Change 258 headed hardware-WebGL certification remains owner-deferred and no GPU evidence is claimed."
+    "authorityPackage": "openspec/changes/279-shield-live-wiring",
+    "candidateSha": "a9b71083bb6bf4645fec3d739c5cfbfadfdcad60",
+    "note": "Change 279 is VERIFIED 12/12 and published at a9b7108: live shield catalog/offhand/use, source-aware blocking, durability/break, axe cooldown, HUD, persistence reuse, and full retry-enabled browser evidence. Change 258 headed hardware-WebGL certification remains owner-deferred and no GPU evidence is claimed."
   },
   "hardeningInterlock": {
     "role": "historical interlock record (pre-241 era); NOT the current release authority - see releaseAuthority above",
@@ -2704,5 +2711,5 @@
     ]
   },
   "criticalRiskOpen": false,
-  "publishedTip": "05203abdce35d52b882e1d851b7f8ba1d6cdfff4"
+  "publishedTip": "a9b71083bb6bf4645fec3d739c5cfbfadfdcad60"
 }

@@ -1,8 +1,8 @@
 # Verification: 279-shield-live-wiring
 
-Status: VERIFYING
-Progress: 11/12 (92%)
-Advancement allowed: false
+Status: VERIFIED
+Progress: 12/12 (100%)
+Advancement allowed: true
 
 ## Requirement evidence
 
@@ -54,8 +54,7 @@ changed by 279.
 
 ## Incomplete tasks
 
-T12 remains incomplete pending the commit/push handoff. T1–T11 are complete
-(11/12).
+None. T1–T12 are complete (12/12).
 
 ## Advancement Exception
 
@@ -63,6 +62,5 @@ Not applicable; target completion is 100%.
 
 ## Final decision
 
-VERIFYING — implementation, requirements, regression, and gates are green;
-the final status waits for the normal-history commit/push and remote-tip
-verification required by T12.
+VERIFIED — implementation, requirements, regression, gates, normal-history
+publication, and remote-tip verification are complete.
