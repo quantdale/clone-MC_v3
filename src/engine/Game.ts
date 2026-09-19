@@ -184,6 +184,7 @@ import { GameRulePanel } from '../ui/GameRulePanel';
 import { RecipeBookPanel } from '../ui/RecipeBookPanel';
 import { AdvancementPanel } from '../ui/AdvancementPanel';
 import { StatisticsPanel } from '../ui/StatisticsPanel';
+import { DeathRespawnPanel } from '../ui/DeathRespawnPanel';
 import {
   applyTriggerToProgresses,
   createDefaultAdvancementProgresses,
@@ -196,6 +197,10 @@ import {
   type AdvancementRowView,
 } from '../simulation/AdvancementView';
 import type { AdvancementCriterion } from '../simulation/AdvancementFramework';
+import {
+  createDeathPresentation,
+  type DeathPresentation,
+} from '../simulation/DeathRespawnPresentation';
 import {
   applyStatisticEvent,
   createStatisticStore,
@@ -489,6 +494,10 @@ export class Game {
   private tradingOpen = false;
   /** DOM controller for the live trading-post screen (278). */
   private readonly tradingPanel: TradingPanel;
+  /** Whether the transient death/respawn card is visible (280). */
+  private deathScreenOpenValue = false;
+  private deathPresentation: DeathPresentation | null = null;
+  private readonly deathRespawnPanel: DeathRespawnPanel | null;
   /** Authoritative per-profession trade states (278): validated persisted map or fresh level-1 states. */
   private trades: Record<string, VillagerTradeState>;
   /** Transient selected trading profession tab (278, never persisted; defaults to farmer). */
@@ -1179,7 +1188,9 @@ export class Game {
     this.spawnPosition = this.player.position.clone();
     this.resetWalkBaseline();
     this.inventory = new Inventory();
-    this.survival = new SurvivalSystem(undefined, (event, amount) => this.onSurvivalEvent(event, amount));
+    this.survival = new SurvivalSystem(undefined, (event, amount, reason) =>
+      this.onSurvivalEvent(event, amount, reason),
+    );
     this.playerEffects = new StatusEffectManager(
       createDefaultStatusEffectRegistry(),
       createDefaultAttributeRegistry(),
@@ -1273,7 +1284,7 @@ export class Game {
       // adventure, blanket denial in spectator, legacy allow otherwise.
       canBreak: (blockId) => this.canBreakInMode(blockId),
       canPlace: (blockId) => this.canPlaceInMode(blockId),
-      canInteract: () => canInteract(this.gameMode.mode),
+      canInteract: () => canInteract(this.gameMode.mode) && !this.deathScreenOpenValue,
       // Shield use owns the right button while raised, so placement/container
       // use cannot consume the same press (279).
       blockUse: () => this.shieldRaisedValue,
@@ -1479,6 +1490,12 @@ export class Game {
       },
       onClose: () => this.closeTrading(),
     });
+    // Transient death/respawn feedback (280): the panel owns only normalized
+    // presentation; Game remains authoritative for the completed transition.
+    const deathScreen = document.getElementById('death-screen');
+    this.deathRespawnPanel = deathScreen
+      ? new DeathRespawnPanel(deathScreen, { onContinue: () => this.dismissDeathScreen() })
+      : null;
     // HUD button opens the trading post for mouse/touch players (278,
     // statistics-chip precedent).
     const tradingOpenBtn = document.getElementById('trading-open');
@@ -1646,6 +1663,7 @@ export class Game {
       clearTimeout(this.shieldBrokenTimer);
       this.shieldBrokenTimer = null;
     }
+    this.dismissDeathScreen();
     // Settle the furnace session first so its cursor/xp land in the state that
     // savePlayerStateDurable + the facade flush are about to persist (251).
     this.closeFurnace();
@@ -2843,6 +2861,7 @@ export class Game {
   /** Whether any menu or pause surface currently owns the interaction input. */
   private shieldInteractionAvailable(): boolean {
     return !this.overlayOpen &&
+      !this.deathScreenOpenValue &&
       !this.craftingOpen &&
       !this.furnaceOpen &&
       !this.brewingOpen &&
@@ -2903,6 +2922,9 @@ export class Game {
 
   private onLockChange(locked: boolean): void {
     this.pointerLocked = locked;
+    if (locked && this.deathScreenOpenValue) {
+      this.dismissDeathScreen();
+    }
     if (!locked) {
       this.shieldRaisedValue = false;
       this.updateShieldIndicator();
@@ -3022,6 +3044,7 @@ export class Game {
 
   private openCrafting(): void {
     if (this.craftingOpen) return;
+    this.dismissDeathScreen();
     if (this.gameruleOpen) this.closeGamerule();
     if (this.recipeBookOpen) this.closeRecipeBook();
     if (this.advancementOpen) this.closeAdvancements();
@@ -3496,6 +3519,7 @@ export class Game {
    */
   openBrewing(x: number, y: number, z: number): void {
     if (this.brewingOpen) return;
+    this.dismissDeathScreen();
     if (!this.blockEntityHost.hasBrewing(x, y, z)) return;
     if (this.furnaceOpen) this.closeFurnace();
     if (this.craftingOpen) this.closeCrafting();
@@ -3639,6 +3663,7 @@ export class Game {
    */
   openFurnace(x: number, y: number, z: number): void {
     if (this.furnaceOpen) return;
+    this.dismissDeathScreen();
     if (!this.blockEntityHost.has(x, y, z)) return;
     if (this.brewingOpen) this.closeBrewing();
     if (this.enchantingOpen) this.closeEnchanting();
@@ -4198,6 +4223,7 @@ export class Game {
    */
   private openEnchanting(x?: number, y?: number, z?: number): void {
     if (this.enchantingOpen) return;
+    this.dismissDeathScreen();
     const target = this.interaction.getTarget();
     const held = this.inventory.getSelectedStack();
     if (!held || held.count <= 0) return;
@@ -4287,6 +4313,7 @@ export class Game {
    */
   private openGamerule(): void {
     if (this.gameruleOpen) return;
+    this.dismissDeathScreen();
     if (this.furnaceOpen) this.closeFurnace();
     if (this.brewingOpen) this.closeBrewing();
     if (this.enchantingOpen) this.closeEnchanting();
@@ -4444,6 +4471,7 @@ export class Game {
    */
   private openRecipeBook(): void {
     if (this.recipeBookOpen) return;
+    this.dismissDeathScreen();
     if (this.furnaceOpen) this.closeFurnace();
     if (this.brewingOpen) this.closeBrewing();
     if (this.enchantingOpen) this.closeEnchanting();
@@ -4549,6 +4577,7 @@ export class Game {
    */
   private openAdvancements(): void {
     if (this.advancementOpen) return;
+    this.dismissDeathScreen();
     if (this.furnaceOpen) this.closeFurnace();
     if (this.brewingOpen) this.closeBrewing();
     if (this.enchantingOpen) this.closeEnchanting();
@@ -4639,6 +4668,7 @@ export class Game {
    */
   private openStatistics(): void {
     if (this.statisticsOpen) return;
+    this.dismissDeathScreen();
     if (this.furnaceOpen) this.closeFurnace();
     if (this.brewingOpen) this.closeBrewing();
     if (this.enchantingOpen) this.closeEnchanting();
@@ -4805,6 +4835,7 @@ export class Game {
    */
   private openTrading(): void {
     if (this.tradingOpen) return;
+    this.dismissDeathScreen();
     if (this.furnaceOpen) this.closeFurnace();
     if (this.brewingOpen) this.closeBrewing();
     if (this.enchantingOpen) this.closeEnchanting();
@@ -5383,6 +5414,35 @@ export class Game {
     this.survival.damage(1000, 'debug');
   }
 
+  /** Read-only transient death-card state for E2E and diagnostics (280). */
+  getDeathPresentationState(): {
+    open: boolean;
+    cause: string;
+    outcome: 'respawned' | 'spectating' | null;
+    actionLabel: string;
+  } {
+    return {
+      open: this.deathScreenOpenValue,
+      cause: this.deathPresentation?.causeText ?? '',
+      outcome: this.deathPresentation?.outcome ?? null,
+      actionLabel: this.deathPresentation?.actionLabel ?? '',
+    };
+  }
+
+  /** Dismiss the transient death card; repeated calls are identity no-ops. */
+  dismissDeathScreen(): boolean {
+    if (!this.deathScreenOpenValue) return false;
+    this.deathScreenOpenValue = false;
+    this.deathRespawnPanel?.hide();
+    return true;
+  }
+
+  private showDeathScreen(reason: unknown, hardcore: boolean): void {
+    this.deathPresentation = createDeathPresentation(reason, hardcore);
+    this.deathScreenOpenValue = this.deathRespawnPanel !== null;
+    this.deathRespawnPanel?.show(this.deathPresentation);
+  }
+
   /** Sync the settings toggle/select + HUD badge to the live store (null-safe pre-shell). */
   private updateWorldSettingsUI(): void {
     const on = this.hardcore.hardcore;
@@ -5467,6 +5527,7 @@ export class Game {
    */
   private openCreative(): void {
     if (this.creativeOpen) return;
+    this.dismissDeathScreen();
     if (this.furnaceOpen) this.closeFurnace();
     if (this.brewingOpen) this.closeBrewing();
     if (this.enchantingOpen) this.closeEnchanting();
@@ -5811,7 +5872,7 @@ export class Game {
     this.survival.damage(amount, reason);
   }
 
-  private onSurvivalEvent(event: SurvivalEvent, amount?: number): void {
+  private onSurvivalEvent(event: SurvivalEvent, amount?: number, reason?: string): void {
     if (event === 'damage') {
       // Statistics (271): every applied-damage outcome counts (floored by
       // the framework; missing amounts are a silent no-op). Upstream mode
@@ -5831,6 +5892,7 @@ export class Game {
       const after = respawnModeAfterDeath(this.hardcore, this.gameMode.mode);
       if (after !== this.gameMode.mode) this.setGameMode(after);
       this.respawnPlayer();
+      this.showDeathScreen(reason, hardcoreDeath);
       if (hardcoreDeath) {
         this.showToast('You died. Your hardcore world lives on — now spectating.');
       }

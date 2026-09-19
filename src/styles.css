@@ -60,6 +60,7 @@ body {
   #sleep-indicator.hidden,
   #weather-indicator.hidden,
   #shield-indicator.hidden,
+#death-screen.hidden,
 #toast.hidden,
 #debug-overlay.hidden {
   display: none;
@@ -341,6 +342,59 @@ body {
   font-size: 14px;
   opacity: 0.85;
   margin: 6px 0;
+}
+
+/* Death/respawn presentation (280): the card is informational and leaves the
+   canvas/HUD reachable; only its explicit action receives pointer events. */
+#death-screen {
+  z-index: 3;
+  pointer-events: none;
+}
+.death-panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: min(320px, 76vw);
+  max-width: min(520px, 88vw);
+  padding: 26px 30px 24px;
+  border: 1px solid rgba(255, 116, 116, 0.35);
+  border-radius: 14px;
+  color: #fff;
+  text-align: center;
+  background: linear-gradient(145deg, rgba(47, 15, 24, 0.92), rgba(18, 15, 25, 0.88));
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(12px);
+}
+.death-panel h2 {
+  margin: 0;
+  color: #ffb1b1;
+  font-size: 30px;
+}
+.death-cause,
+.death-outcome {
+  margin: 10px 0 0;
+  color: rgba(255, 255, 255, 0.86);
+}
+.death-outcome {
+  color: #ffd58a;
+  font-weight: 700;
+}
+.death-continue {
+  min-width: 150px;
+  margin-top: 18px;
+  padding: 8px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 7px;
+  color: #fff;
+  background: rgba(90, 42, 58, 0.82);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  pointer-events: auto;
+}
+.death-continue:hover {
+  background: rgba(116, 50, 70, 0.94);
 }
 .error-panel {
   border: 2px solid #e05252;

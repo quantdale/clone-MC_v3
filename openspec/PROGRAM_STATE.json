@@ -5,9 +5,9 @@
   "currentChangeStatus": "ACTIVE",
   "lastCompletedChange": "279-shield-live-wiring",
   "nextChange": "281-workstation-ui",
-  "completedTasks": 2,
-  "totalTasks": 12,
-  "completionPercentage": 20,
+  "completedTasks": 9,
+  "totalTasks": 10,
+  "completionPercentage": 90,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
   "mandatoryRequirementsPass": false,
@@ -16,8 +16,8 @@
   "exceptionUsed": false,
   "sessionStartHead": "3b60c6e38666acfde752dc40d7e12bba2ed1d164",
   "localHead": "fb6e28f7fe3109004ea0c1a67cebc4b79f951e4e",
-  "nextExactAction": "Implement 280-death-respawn-ui T3-T6 (reason mapper, panel, Game wiring, lifecycle), then focused units and E2E; 258 stays BLOCKED",
-  "lastCompletedTask": "280 T1-T2 activation and complete OpenSpec package authored; implementation starts at T3",
+  "nextExactAction": "Reconcile C280, mark 280 VERIFIED only at 10/10, commit/publish, verify origin/main, and checkpoint 281 spec-first; 258 stays BLOCKED",
+  "lastCompletedTask": "280 T1-T9 complete: implementation, focused and regression browser coverage, full 442-file unit gate, build/lint/typecheck, exact 102-test E2E, file-audit, and state validation",
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-279 are VERIFIED; game shippable with known performance-certification debt. The 280 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],

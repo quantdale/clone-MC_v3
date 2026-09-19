@@ -108,6 +108,14 @@
             <p class="overlay-controls"><strong>C</strong> crafting &nbsp;·&nbsp; <strong>R</strong> eat apple &nbsp;·&nbsp; <strong>Space in water</strong> swim up</p>
           </div>
         </div>
+        <div id="death-screen" class="ui hidden" role="dialog" aria-labelledby="death-title" aria-describedby="death-outcome">
+          <div class="death-panel">
+            <h2 id="death-title">You Died</h2>
+            <p id="death-cause" class="death-cause">Cause: Unknown damage</p>
+            <p id="death-outcome" class="death-outcome" aria-live="polite">Respawned safely</p>
+            <button id="death-continue" class="death-continue" type="button">Continue</button>
+          </div>
+        </div>
         <div id="crafting" class="ui hidden" aria-label="Crafting screen">
           <div class="crafting-panel" role="dialog" aria-modal="true" aria-labelledby="crafting-title">
             <div class="crafting-header">

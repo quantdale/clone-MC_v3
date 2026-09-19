@@ -38,6 +38,15 @@ function runFor(
 }
 
 describe('survival system', () => {
+  it('includes the lethal damage reason in the death event', () => {
+    const events: Array<{ event: string; reason?: string }> = [];
+    const survival = new SurvivalSystem(undefined, (event, _amount, reason) => {
+      events.push({ event, reason });
+    });
+    survival.damage(100, 'lava');
+    expect(events).toContainEqual({ event: 'death', reason: 'lava' });
+  });
+
   it('drains hunger faster while sprinting', () => {
     const normal = new SurvivalSystem();
     const sprinting = new SurvivalSystem();

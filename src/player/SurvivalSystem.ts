@@ -16,6 +16,7 @@ export interface SurvivalSnapshot {
 }
 
 export type SurvivalEvent = 'damage' | 'heal' | 'hunger' | 'death';
+export type SurvivalEventListener = (event: SurvivalEvent, amount?: number, reason?: string) => void;
 
 /**
  * Lightweight survival rules: health, hunger, fall damage, drowning, and
@@ -45,7 +46,7 @@ export class SurvivalSystem {
 
   constructor(
     registry: DamageTypeRegistry = createDefaultDamageTypeRegistry(),
-    private readonly onEvent?: (event: SurvivalEvent, amount?: number) => void,
+    private readonly onEvent?: SurvivalEventListener,
   ) {
     this.registry = registry;
     this.fallType = requireDamageType(registry, 'fall');
@@ -146,7 +147,7 @@ export class SurvivalSystem {
     this.onEvent?.('damage', applied);
     if (this.health <= 0) {
       this.dead = true;
-      this.onEvent?.('death');
+      this.onEvent?.('death', undefined, reason);
     }
   }
 

@@ -2,7 +2,7 @@
 
 ## Current checkpoint — 2026-09-19 Change 280 ACTIVE; package complete
 
-> **Change 279 is VERIFIED 12/12 (100%) and published at `a9b7108`; Change 280 is ACTIVE 2/10 with its complete package authored. Change 258 remains BLOCKED and 259–279 remain VERIFIED.**
+> **Change 279 is VERIFIED 12/12 (100%) and published at `a9b7108`; Change 280 is ACTIVE 9/10 with all implementation and gates green, pending C280 publication. Change 258 remains BLOCKED and 259–279 remain VERIFIED.**
 > This session started from `3b60c6e38666acfde752dc40d7e12bba2ed1d164` on `origin/main`.
 > Change 279 will wire the verified ShieldBlocking framework into live offhand/use input,
 > directional hostile damage, durability/break, HUD feedback, and persistence-reusing swaps.
@@ -11,7 +11,7 @@
 - Local evidence: 279 typecheck, lint (0 errors), 5,236 unit tests plus one skipped, production
   build, file-audit 2,852 rows, and CI-retry full E2E 100/100 outcomes (98 direct + 2 flaky-after-retry; visual 60/60); no headed GPU evidence is claimed.
 - Focused proofs: shield catalog, yaw/arc composition, component-preserving wear/reload, interaction drain, and live browser break/cooldown/HUD coverage all pass; 280 has no implementation evidence yet.
-- Next exact action: **Implement 280-death-respawn-ui T3-T6 (reason mapper, panel, Game wiring, lifecycle), then focused units and E2E; 258 stays BLOCKED.**
+- Next exact action: **Reconcile C280, mark 280 VERIFIED only at 10/10, commit/publish, verify origin/main, and checkpoint 281 spec-first; 258 stays BLOCKED.**
 
 ## Current checkpoint — 2026-09-16 release-readiness hardening
 
@@ -180,7 +180,7 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **280-death-respawn-ui — ACTIVE (2/10); transient death/respawn presentation; 258 BLOCKED**
+- Active implementation change: **280-death-respawn-ui — ACTIVE (9/10); transient death/respawn presentation; 258 BLOCKED**
 - Prior active implementation change: **279-shield-live-wiring — VERIFIED (12/12); 258 stays BLOCKED, 259–279 stay VERIFIED**
 - Prior prior active implementation change: **272-lighting-clock-dt-sync — VERIFIED (10/10, owner-authorized 2026-09-12; 258 stays BLOCKED, 259/260/261/262/263/264/265/266/267/268/269/270/271 stay VERIFIED)**
 - Next change: **281-workstation-ui — reserved next sequential non-GPU change; 258 remains BLOCKED**
@@ -198,7 +198,7 @@
 - Publication history: **Change 257 VERIFIED 92/92 at 96b5dc37 (F257-A..L closed, 22 new fault-injection tests, 5× proofs, import tx); Change 256 archived at `ad75b65` as `2026-08-31-256-production-readiness-hardening` (23/23).**
 - Section milestone: **PROGRAM VERIFIED through Change 279; Change 280 is ACTIVE; Change 258 remains BLOCKED at 40/100 pending headed hardware-WebGL certification; no GPU evidence was fabricated.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ri…
-- Next exact action: **Implement 280-death-respawn-ui T3-T6 (reason mapper, panel, Game wiring, lifecycle), then focused units and E2E; 258 stays BLOCKED**
+- Next exact action: **Reconcile C280, mark 280 VERIFIED only at 10/10, commit/publish, verify origin/main, and checkpoint 281 spec-first; 258 stays BLOCKED**
 - Superseded next action: **Change 275-live-weather-cycle-integration ACTIVE 2/9 — implement __weather__ persistence + Game weather tick/HUD/presentation + unit/E2E + gates + PARITY C275 + VERIFIED publish; 258 BLOCKED**
 - Release note (2026-09-11 owner deferral): **headed FPS gates (258 tasks 91–95) are deferred, not waived — 001–257 VERIFIED, production default unchanged (sync meshing, no quality retune), game shippable with known performance-certification debt**
 
