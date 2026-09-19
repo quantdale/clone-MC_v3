@@ -1,17 +1,17 @@
 # Minecraft-Parity Program State
 
-## Current checkpoint — 2026-09-19 Change 278 VERIFIED; Change 279 next
+## Current checkpoint — 2026-09-19 Change 279 ACTIVE; Change 278 published
 
-> **Change 278 is VERIFIED 12/12 (100%); Change 258 remains BLOCKED and 259–277 remain VERIFIED.**
+> **Change 278 is VERIFIED 12/12 (100%) and published at `05203abd`; Change 279 is ACTIVE 2/12. Change 258 remains BLOCKED and 259–277 remain VERIFIED.**
 > This session started from `3b60c6e38666acfde752dc40d7e12bba2ed1d164` on `origin/main`.
-> The live trading-post integration adds catalog items 68–70, versioned `__trades__` persistence,
-> archive carry, atomic offer rules, a real `TradingPanel`, HUD/KeyT lifecycle, and browser
-> journey/refusal coverage. No headed FPS/GPU work was introduced.
+> Change 279 will wire the verified ShieldBlocking framework into live offhand/use input,
+> directional hostile damage, durability/break, HUD feedback, and persistence-reusing swaps.
+> No headed FPS/GPU work is in scope.
 
 - Local evidence: typecheck, lint (0 errors), 5,227 unit tests plus one skipped, production
   build, file-audit 2,843 rows, and full E2E 97/97 including visual 60/60 all pass.
 - Focused proofs: trading journey/lifecycle/edge E2E 3/3; no headed GPU evidence is claimed.
-- Next exact action: **Publish 278-live-villager-trading-ui VERIFIED, then author and activate 279-shield-live-wiring spec-first; 258 stays BLOCKED.**
+- Next exact action: **Implement 279-shield-live-wiring T3-T9 (shield item, offhand/use input, directional damage wiring, durability/cooldown, HUD, E2E), then gates + C279 matrix + VERIFIED publish; 258 stays BLOCKED.**
 
 ## Current checkpoint — 2026-09-16 release-readiness hardening
 
@@ -180,11 +180,11 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **278-live-villager-trading-ui — VERIFIED (12/12); trading-post UI over 150/151; 258 BLOCKED**
-- Prior active implementation change: **277-live-ambient-audio-integration — VERIFIED (6/6); 258 stays BLOCKED, 259–276 stay VERIFIED**
+- Active implementation change: **279-shield-live-wiring — ACTIVE (2/12); live ShieldBlocking over 144; 258 BLOCKED**
+- Prior active implementation change: **278-live-villager-trading-ui — VERIFIED (12/12); 258 stays BLOCKED, 259–277 stay VERIFIED**
 - Prior prior active implementation change: **272-lighting-clock-dt-sync — VERIFIED (10/10, owner-authorized 2026-09-12; 258 stays BLOCKED, 259/260/261/262/263/264/265/266/267/268/269/270/271 stay VERIFIED)**
-- Next change: **279-shield-live-wiring — next sequential non-GPU change; author spec first while 258 remains BLOCKED**
-- 240 advancement allowed: **yes**
+- Next change: **280-death-respawn-ui — reserved next sequential non-GPU change; 258 remains BLOCKED**
+- 240 advancement allowed: **no (active change not yet verified)**
 
 - Program: **ACTIVE — Change 275 VERIFIED 9/9 (live weather cycle integration, owner-authorized 2026-09-14 campaign through 277); Change 274 VERIFIED 13/13 (live sleep/bed integration, owner-authorized 2026-09-13 parallel track through 277); Change 273 VERIFIED 10/10 (chunksection isEmpty air-check, Standing owner order 2026-09-12); Change 272 VERIFIED 10/10 (lighting clock/sun dt sync, Standing owner order 2026-09-12); Change 271 VERIFIED 14/14 (statistics panel UI, Standing owner order 2026-09-12); Change 270 VERIFIED 12/12 (leaf apple loot probability, Standing owner order 2026-09-12); Change 269 VERIFIED 12/12 (composed game dispose/worker terminate, Standing owner order 2026-09-12); Change 268 VERIFIED 12/12 (ci immutable action pins, Standing owner order 2026-09-12); Change 267 VERIFIED 13/13 (live hardcore integration, Standing owner order 2026-09-12); Change 266 VERIFIED 13/13 (live adventure+spectator integration, Standing owner order 2026-09-11) with Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); 259 VERIFIED 18/18; 260 VERIFIED 19/19; 261 VERIFIED 16/16; 262 VERIFIED 14/14; 263 VERIFIED 15/15; 264 VERIFIED 13/13; 265 VERIFIED 13/13**
 - Last completed change: **278-live-villager-trading-ui — VERIFIED (12/12) — full gates green, C278 exact, 258 BLOCKED**
@@ -198,7 +198,7 @@
 - Publication history: **Change 257 VERIFIED 92/92 at 96b5dc37 (F257-A..L closed, 22 new fault-injection tests, 5× proofs, import tx); Change 256 archived at `ad75b65` as `2026-08-31-256-production-readiness-hardening` (23/23).**
 - Section milestone: **PROGRAM VERIFIED through Change 278; Change 258 remains BLOCKED at 40/100 pending headed hardware-WebGL certification; no GPU evidence was fabricated.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ri…
-- Next exact action: **Publish 278-live-villager-trading-ui VERIFIED, then author and activate 279-shield-live-wiring spec-first; 258 stays BLOCKED**
+- Next exact action: **Implement 279-shield-live-wiring T3-T9 (shield item, offhand/use input, directional damage wiring, durability/cooldown, HUD, E2E), then gates + C279 matrix + VERIFIED publish; 258 stays BLOCKED**
 - Superseded next action: **Change 275-live-weather-cycle-integration ACTIVE 2/9 — implement __weather__ persistence + Game weather tick/HUD/presentation + unit/E2E + gates + PARITY C275 + VERIFIED publish; 258 BLOCKED**
 - Release note (2026-09-11 owner deferral): **headed FPS gates (258 tasks 91–95) are deferred, not waived — 001–257 VERIFIED, production default unchanged (sync meshing, no quality retune), game shippable with known performance-certification debt**
 

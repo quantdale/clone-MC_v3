@@ -581,3 +581,21 @@ remains **BLOCKED** (headed hardware-WebGL certification deferred) and Changes
   the 278 track does not consume, waive, or re-litigate any 258 headed task.
 - Campaign continues sequentially 279→300 per the 2026-09-19 master directive;
   each change gets its own activation section as it is activated.
+
+## 279-shield-live-wiring activation — sequential non-GPU continuation
+
+Change **279-shield-live-wiring** is the sole **ACTIVE** implementation change after
+published Change 278. It is authorized to wire the verified headless
+`ShieldBlocking` contract (144) into the live player loop while Change **258** remains
+**BLOCKED** and Changes **259–278** remain **VERIFIED**.
+
+- 279 MUST remain limited to the shield item/offhand/use path, directional blocking
+  at existing hostile and wither damage chokes, durability/break and axe-disable
+  cooldown behavior, HUD feedback, tests, and state/matrix evidence.
+- Inventory snapshots already carry equipment and durability; no new persistence
+  namespace or migration is permitted. Unknown/malformed inventory data keeps the
+  existing fail-closed restore behavior.
+- No village/workstation/raid expansion, headed FPS work, GPU evidence, or 258
+  status change is part of 279.
+- 258 stays BLOCKED, and the next change after 279 is reserved as
+  `280-death-respawn-ui`.
