@@ -63,6 +63,8 @@ export class FurnacePanel {
   private readonly arrowBar: HTMLElement;
   private readonly cursorEl: HTMLElement;
   private readonly closeButton: HTMLButtonElement | null;
+  private readonly titleEl: HTMLElement | null;
+  private readonly stationSectionEl: HTMLElement | null;
 
   /** Transient cursor stack between transactions (returned on close). */
   private cursor: MenuCursor = { item: null, count: 0 };
@@ -100,6 +102,8 @@ export class FurnacePanel {
     this.arrowBar = this.requireElement('furnace-arrow-bar');
     this.cursorEl = this.requireElement('furnace-cursor');
     this.closeButton = el.querySelector<HTMLButtonElement>('#furnace-close');
+    this.titleEl = el.querySelector<HTMLElement>('#furnace-title');
+    this.stationSectionEl = el.querySelector<HTMLElement>('#furnace-station-title');
     this.closeButton?.addEventListener('click', () => deps.onClose());
     el.addEventListener('mousemove', (e) => {
       this.mouseX = e.clientX;
@@ -121,6 +125,14 @@ export class FurnacePanel {
 
   isVisible(): boolean {
     return !this.el.classList.contains('hidden');
+  }
+
+  /** Update the shared shell's visible/accessibility station identity (281). */
+  setStationName(name: 'Furnace' | 'Smoker'): void {
+    if (this.titleEl) this.titleEl.textContent = name;
+    if (this.stationSectionEl) this.stationSectionEl.textContent = name;
+    this.el.setAttribute('aria-label', `${name} screen`);
+    this.closeButton?.setAttribute('aria-label', `Close ${name.toLowerCase()}`);
   }
 
   /**

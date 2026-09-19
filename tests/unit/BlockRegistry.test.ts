@@ -34,6 +34,7 @@ describe('block registry', () => {
       [BlockId.Fire, 'fire'],
       [BlockId.BrewingStand, 'brewing_stand'],
       [BlockId.Bed, 'bed'],
+      [BlockId.Smoker, 'smoker'],
     ];
     for (const [id, key] of required) {
       const def = registry.get(id);
@@ -43,7 +44,7 @@ describe('block registry', () => {
       expect(registry.getByKey(def.key)?.id).toBe(id);
     }
     // The ids are unique and map back to the same definitions.
-    expect(registry.all()).toHaveLength(52);
+    expect(registry.all()).toHaveLength(53);
   });
 
   it('registers the enchanting-table and bookshelf blocks (120)', () => {
@@ -60,6 +61,17 @@ describe('block registry', () => {
     expect(shelf.opaque).toBe(true);
     expect(shelf.breakable).toBe(true);
     expect(shelf.dropItem !== undefined).toBe(true);
+  });
+
+  it('registers the smoker as a breakable container with self loot (281)', () => {
+    const smoker = registry.get(BlockId.Smoker);
+    expect(smoker.resourceId).toEqual(createResourceId('minecraft', 'smoker'));
+    expect(smoker.solid).toBe(true);
+    expect(smoker.opaque).toBe(true);
+    expect(smoker.breakable).toBe(true);
+    expect(smoker.topTile).toBe(74);
+    expect(smoker.dropItem).toEqual(createResourceId('minecraft', 'smoker'));
+    expect(smoker.lootTable).toEqual(createResourceId('minecraft', 'loot/smoker'));
   });
 
   it('pins the full block-property contract per block', () => {

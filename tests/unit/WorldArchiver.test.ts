@@ -8,6 +8,7 @@ import { EntityRepository } from '../../src/storage/EntityRepository';
 import { PlayerStateRepository } from '../../src/storage/PlayerStateRepository';
 import { ChunkEditRepository } from '../../src/storage/ChunkEditRepository';
 import { createIdbFactoryMock, type MockIdbFactory } from './IdbFactoryMock';
+import { createFurnaceState, serializeFurnaceState } from '../../src/world/FurnaceBlockEntity';
 
 const WORLD = 'world-7';
 
@@ -150,6 +151,32 @@ describe('WorldArchiver', () => {
     const second = await new WorldArchiver(target).exportWorld(WORLD);
 
     expect(stripExportedAt(second)).toEqual(stripExportedAt(first));
+  });
+
+  it('carries smoker rows through the existing block-entities archive path (281)', async () => {
+    const source = makeDeps();
+    await populateWorld(source, WORLD);
+    const smoker = {
+      schemaVersion: 1,
+      typeKey: 'smoker',
+      x: 48,
+      y: 64,
+      z: 64,
+      data: serializeFurnaceState(createFurnaceState()),
+    };
+    await source.blockEntities.putChunkEntities(WORLD, 3, 4, [smoker]);
+
+    const exported = await new WorldArchiver(source).exportWorld(WORLD);
+    expect(exported.blockEntityChunks).toContainEqual({
+      chunkX: 3,
+      chunkZ: 4,
+      entities: [smoker],
+    });
+    expect(Object.keys(exported)).not.toContain('smokerData');
+
+    const target = makeDeps();
+    await new WorldArchiver(target).importWorld(exported);
+    expect(await target.blockEntities.getChunkEntities(WORLD, 3, 4)).toEqual([smoker]);
   });
 
   it('rejects malformed archives atomically (nothing written)', async () => {

@@ -229,6 +229,7 @@ export function createDefaultBlockShapeTable(): BlockShapeTable {
     // Containers: slightly inset, full height.
     .set(BlockId.Chest, { collision: containerBox, selection: containerBox })
     .set(BlockId.Furnace, { collision: containerBox, selection: containerBox })
+    .set(BlockId.Smoker, { collision: containerBox, selection: containerBox })
     // Redstone components: no collision, small selection, no occlusion.
     .set(BlockId.RedstoneWire, { collision: empty, selection: flatSelection, occlusion: empty })
     .set(BlockId.RedstoneTorch, { collision: empty, selection: ShapeBuilders.post(0.125, 0.625), occlusion: empty })

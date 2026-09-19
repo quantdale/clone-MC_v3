@@ -87,6 +87,8 @@ export const enum ItemId {
   Bread = 69,
   Paper = 70,
   Shield = 71,
+  /** Player-placed fast cooking workstation (281). */
+  Smoker = 72,
 }
 
 /**
@@ -482,6 +484,17 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       iconTile: 28,
       stackSize: 64,
       placeBlock: rid('furnace'),
+    },
+    {
+      // Live smoker workstation (281): the item places block 64 and reuses
+      // the furnace-compatible menu/state path at twice the cook speed.
+      id: ItemId.Smoker,
+      resourceId: rid('smoker'),
+      key: 'smoker',
+      name: 'Smoker',
+      iconTile: 74,
+      stackSize: 64,
+      placeBlock: rid('smoker'),
     },
     {
       id: ItemId.IronIngot,

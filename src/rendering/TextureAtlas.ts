@@ -46,6 +46,7 @@ export const TILE_INDEX = {
   rawIron: 26,
   chest: 27,
   furnace: 28,
+  smoker: 74,
   ironIngot: 29,
   brewingStand: 66,
   blazePowder: 67,
@@ -564,6 +565,29 @@ export class TextureAtlas {
       ctx.fillRect(8, 7, 2, 2);
       ctx.fillStyle = '#f2a33c';
       ctx.fillRect(6, 8, 2, 1);
+    });
+    // 74: smoker (281, original art) — a dark stone cooking face with a
+    // warm vent and a pair of smoke marks, distinct from the furnace mouth.
+    this.drawTile(TILE_INDEX.smoker, (ctx, rng) => {
+      ctx.clearRect(0, 0, TILE_SIZE, TILE_SIZE);
+      ctx.fillStyle = '#6e7277';
+      ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+      for (let i = 0; i < 14; i++) {
+        ctx.fillStyle = rng.next() > 0.5 ? '#878c91' : '#585c61';
+        ctx.fillRect(rng.nextInt(TILE_SIZE), rng.nextInt(TILE_SIZE), 1, 1);
+      }
+      ctx.fillStyle = '#30343a';
+      ctx.fillRect(3, 9, 10, 4);
+      ctx.fillStyle = '#1c1e21';
+      ctx.fillRect(4, 10, 8, 2);
+      ctx.fillStyle = '#d3541f';
+      ctx.fillRect(6, 10, 2, 1);
+      ctx.fillStyle = '#d8dde2';
+      ctx.fillRect(6, 3, 1, 3);
+      ctx.fillRect(9, 2, 1, 4);
+      ctx.fillStyle = '#9da3aa';
+      ctx.fillRect(5, 3, 1, 2);
+      ctx.fillRect(8, 2, 1, 2);
     });
     // 29: iron_ingot — a metallic ingot bar with beveled edges and a bright highlight.
     this.drawTile(TILE_INDEX.ironIngot, (ctx) => {

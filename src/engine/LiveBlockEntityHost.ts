@@ -39,6 +39,13 @@ import {
   type FurnaceState,
 } from '../world/FurnaceBlockEntity';
 import {
+  SMOKER_BLOCK_ID,
+  SMOKER_TYPE_KEY,
+  createSmokerBlockEntity,
+  readSmokerState,
+  updateSmokerState,
+} from '../world/SmokerBlockEntity';
+import {
   BREWING_STAND_BLOCK_ID,
   BREWING_STAND_TYPE_KEY,
   createBrewingStandBlockEntity,
@@ -66,6 +73,8 @@ export interface LiveBlockEntityHostDeps {
     saveBlockEntities(cx: number, cz: number, entities: SerializedBlockEntity[]): void;
   } | null;
   furnaceContext: FurnaceContext;
+  /** Smoker recipe/fuel context; omitted callers fall back to furnace rules. */
+  smokerContext?: FurnaceContext;
   /** Brewing recipe/fuel context (123 data) injected into the 123 engine. */
   brewingContext?: BrewingContext;
   onQuarantined?: (message: string) => void;
@@ -109,6 +118,7 @@ export class LiveBlockEntityHost {
   private readonly world: HostWorldView;
   private readonly persistence: LiveBlockEntityHostDeps['persistence'];
   private readonly furnaceContext: FurnaceContext;
+  private readonly smokerContext: FurnaceContext;
   private readonly brewingContext: BrewingContext | null;
   private readonly onQuarantined?: (message: string) => void;
 
@@ -116,6 +126,7 @@ export class LiveBlockEntityHost {
     this.world = deps.world;
     this.persistence = deps.persistence;
     this.furnaceContext = deps.furnaceContext;
+    this.smokerContext = deps.smokerContext ?? deps.furnaceContext;
     this.brewingContext = deps.brewingContext ?? null;
     this.onQuarantined = deps.onQuarantined;
   }
@@ -204,6 +215,95 @@ export class LiveBlockEntityHost {
       const taken = Math.floor(current.xp);
       if (!(taken > 0)) return 0;
       const next = updateFurnaceState(instance, { ...current, xp: current.xp - taken });
+      this.manager.replace(next);
+      const { cx, cz } = chunkCoords(x, z);
+      this.persistChunk(cx, cz);
+      return taken;
+    } catch {
+      return 0;
+    }
+  }
+
+  // ── Smokers (281) ─────────────────────────────────────────────────────────
+  // A smoker has the furnace state/menu shape but its own block/entity
+  // identity and context, so a replaced block can never be reinterpreted as a
+  // furnace during hydration or stale cleanup.
+
+  /** Register a freshly placed smoker. Returns false when the spot is taken. */
+  placeSmoker(x: number, y: number, z: number): boolean {
+    const added = this.manager.add(createSmokerBlockEntity(x, y, z));
+    if (added) {
+      const { cx, cz } = chunkCoords(x, z);
+      this.persistChunk(cx, cz);
+    }
+    return added;
+  }
+
+  /** Remove a smoker once and return its final furnace-shaped state. */
+  removeSmoker(x: number, y: number, z: number): FurnaceState | null {
+    const instance = this.manager.get(x, y, z);
+    if (!instance || instance.typeKey !== SMOKER_TYPE_KEY) return null;
+    let state: FurnaceState;
+    try {
+      state = readSmokerState(instance);
+    } catch {
+      state = createFurnaceState();
+    }
+    this.manager.remove(x, y, z);
+    const { cx, cz } = chunkCoords(x, z);
+    this.persistChunk(cx, cz);
+    return state;
+  }
+
+  hasSmoker(x: number, y: number, z: number): boolean {
+    const instance = this.manager.get(x, y, z);
+    return instance !== null && instance.typeKey === SMOKER_TYPE_KEY;
+  }
+
+  getSmokerState(x: number, y: number, z: number): FurnaceState | null {
+    const instance = this.manager.get(x, y, z);
+    if (!instance || instance.typeKey !== SMOKER_TYPE_KEY) return null;
+    try {
+      return readSmokerState(instance);
+    } catch {
+      return null;
+    }
+  }
+
+  /** Atomically apply the three shared furnace-menu slots to a smoker. */
+  applySmokerMenuSlots(
+    x: number,
+    y: number,
+    z: number,
+    slots: { input: FurnaceState['input']; fuel: FurnaceState['fuel']; output: FurnaceState['output'] },
+  ): FurnaceState | null {
+    const instance = this.manager.get(x, y, z);
+    if (!instance || instance.typeKey !== SMOKER_TYPE_KEY) return null;
+    // A panel transaction must fail closed if the world block vanished before
+    // the fixed-tick stale cleanup runs; the inventory-side caller then keeps
+    // its atomic no-write guarantee.
+    if (this.world.getBlock(x, y, z) !== SMOKER_BLOCK_ID) return null;
+    try {
+      const current = readSmokerState(instance);
+      const next = updateSmokerState(instance, { ...current, ...slots });
+      this.manager.replace(next);
+      const { cx, cz } = chunkCoords(x, z);
+      this.persistChunk(cx, cz);
+      return readSmokerState(next);
+    } catch {
+      return null;
+    }
+  }
+
+  /** Drain the integer floor of smoker XP and persist the carried fraction. */
+  takeSmokerExperience(x: number, y: number, z: number): number {
+    const instance = this.manager.get(x, y, z);
+    if (!instance || instance.typeKey !== SMOKER_TYPE_KEY) return 0;
+    try {
+      const current = readSmokerState(instance);
+      const taken = Math.floor(current.xp);
+      if (!(taken > 0)) return 0;
+      const next = updateSmokerState(instance, { ...current, xp: current.xp - taken });
       this.manager.replace(next);
       const { cx, cz } = chunkCoords(x, z);
       this.persistChunk(cx, cz);
@@ -363,7 +463,11 @@ export class LiveBlockEntityHost {
         this.warnQuarantine(raw, 'envelope', err);
         continue;
       }
-      if (record.typeKey !== FURNACE_TYPE_KEY && record.typeKey !== BREWING_STAND_TYPE_KEY) continue;
+      if (
+        record.typeKey !== FURNACE_TYPE_KEY &&
+        record.typeKey !== SMOKER_TYPE_KEY &&
+        record.typeKey !== BREWING_STAND_TYPE_KEY
+      ) continue;
       // Future/unknown envelope version: fail safe (campaign 251 §9). A
       // different shape could silently corrupt runtime state if trusted.
       if (record.schemaVersion !== BLOCK_ENTITY_RECORD_VERSION) {
@@ -376,6 +480,11 @@ export class LiveBlockEntityHost {
         if (record.typeKey === BREWING_STAND_TYPE_KEY) {
           const brewing = deserializeBrewingState(record.data);
           this.manager.add(createBrewingStandBlockEntity(record.x, record.y, record.z, brewing));
+        } else if (record.typeKey === SMOKER_TYPE_KEY) {
+          const smoker = readSmokerState(
+            createSmokerBlockEntity(record.x, record.y, record.z, deserializeFurnaceState(record.data)),
+          );
+          this.manager.add(createSmokerBlockEntity(record.x, record.y, record.z, smoker));
         } else {
           const state = deserializeFurnaceState(record.data);
           this.manager.add(createFurnaceBlockEntity(record.x, record.y, record.z, state));
@@ -448,6 +557,47 @@ export class LiveBlockEntityHost {
       const next = tickFurnace(current, this.furnaceContext, 1);
       if (!furnaceStateEquals(current, next)) {
         this.manager.replace(updateFurnaceState(instance, next));
+        changed++;
+        dirtyChunks.add(`${cx},${cz}`);
+      }
+    }
+    for (const key of dirtyChunks) {
+      const [cx, cz] = key.split(',').map(Number) as [number, number];
+      this.persistChunk(cx, cz);
+    }
+    return changed;
+  }
+
+  /**
+   * Advance every smoker in a simulating chunk by one canonical tick. The
+   * smoker context changes only cooking duration; state equality, persistence,
+   * stale cleanup, and corruption handling match the furnace pass.
+   */
+  tickSmokers(): number {
+    let changed = 0;
+    const dirtyChunks = new Set<string>();
+    for (const instance of this.manager.all()) {
+      if (instance.typeKey !== SMOKER_TYPE_KEY) continue;
+      const { cx, cz } = chunkCoords(instance.x, instance.z);
+      if (!this.world.isChunkSimulating(cx, cz)) continue;
+
+      if (this.world.getBlock(instance.x, instance.y, instance.z) !== SMOKER_BLOCK_ID) {
+        this.manager.remove(instance.x, instance.y, instance.z);
+        dirtyChunks.add(`${cx},${cz}`);
+        continue;
+      }
+
+      let current: FurnaceState;
+      try {
+        current = readSmokerState(instance);
+      } catch {
+        this.manager.remove(instance.x, instance.y, instance.z);
+        dirtyChunks.add(`${cx},${cz}`);
+        continue;
+      }
+      const next = tickFurnace(current, this.smokerContext, 1);
+      if (!furnaceStateEquals(current, next)) {
+        this.manager.replace(updateSmokerState(instance, next));
         changed++;
         dirtyChunks.add(`${cx},${cz}`);
       }

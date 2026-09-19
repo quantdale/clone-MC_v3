@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { VoxelShape } from '../../src/world/VoxelShape';
+import { BlockId } from '../../src/world/BlockRegistry';
+import { createDefaultBlockShapeTable, VoxelShape } from '../../src/world/VoxelShape';
 
 describe('VoxelShape', () => {
   it('provides FULL_CUBE and EMPTY constants', () => {
@@ -69,5 +70,14 @@ describe('VoxelShape', () => {
       { minX: 0.25, minY: 0.5, minZ: 0.25, maxX: 0.75, maxY: 1, maxZ: 0.75 },
     ]);
     expect(shape.maxY()).toBe(1);
+  });
+
+  it('gives the smoker the same inset container shape as the furnace (281)', () => {
+    const table = createDefaultBlockShapeTable();
+    const smoker = table.getCollisionShape(BlockId.Smoker);
+    const furnace = table.getCollisionShape(BlockId.Furnace);
+    expect(smoker.boxes).toEqual(furnace.boxes);
+    expect(smoker.contains(0.05, 0.5, 0.5)).toBe(false);
+    expect(smoker.contains(0.5, 0.5, 0.5)).toBe(true);
   });
 });

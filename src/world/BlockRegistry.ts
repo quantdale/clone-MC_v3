@@ -68,6 +68,8 @@ export const enum BlockId {
   WitherSkull = 61,
   BrewingStand = 62,
   Bed = 63,
+  /** Player-placed fast cooking workstation (281). */
+  Smoker = 64,
 }
 
 /**
@@ -761,6 +763,26 @@ export function createDefaultBlockRegistry(): BlockTypeRegistry {
       miningLevel: 1,
       dropItem: rid('furnace'),
       lootTable: rid('loot/furnace'),
+    },
+    {
+      // Live smoker workstation (281): same solid container footprint and
+      // harvest/drop contract as the furnace, with a distinct procedural tile.
+      id: BlockId.Smoker,
+      resourceId: rid('smoker'),
+      key: 'smoker',
+      name: 'Smoker',
+      solid: true,
+      opaque: true,
+      breakable: true,
+      renderCategory: RenderCategory.Opaque,
+      topTile: 74,
+      bottomTile: 74,
+      sideTile: 74,
+      hardness: 3.5,
+      preferredTool: ToolKind.Pickaxe,
+      miningLevel: 1,
+      dropItem: rid('smoker'),
+      lootTable: rid('loot/smoker'),
     },
     {
       id: BlockId.EnchantingTable,

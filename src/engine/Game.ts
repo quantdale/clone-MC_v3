@@ -145,10 +145,12 @@ import { createDefaultBlockShapeTable, VoxelShape } from '../world/VoxelShape';
 import type { SelectionShapeWorld } from '../world/ShapeRaycast';
 import { LiveBlockEntityHost } from './LiveBlockEntityHost';
 import { FURNACE_BLOCK_ID, type FurnaceContext } from '../world/FurnaceBlockEntity';
+import { SMOKER_BLOCK_ID } from '../world/SmokerBlockEntity';
 import { BREWING_STAND_BLOCK_ID, type BrewingState } from '../world/BrewingStandBlockEntity';
 import { createDefaultBrewingContext, type BrewingContext } from '../inventory/BrewingRecipes';
 import { createDefaultTypedRecipes } from '../inventory/TypedRecipe';
 import { createDefaultFuelValues, createFurnaceContext, takeFurnaceXp } from '../inventory/FurnaceRecipes';
+import { createSmokerContext } from '../inventory/SmokerRecipes';
 import { menuSlotToStack } from '../inventory/MenuSlots';
 import type { MenuSlot } from '../inventory/MenuTransaction';
 import { FurnacePanel } from '../ui/FurnacePanel';
@@ -333,6 +335,9 @@ const WITHER_MELEE_COOLDOWN_TICKS = 10;
 /** Ticks between wither status-effect damage ticks (252). */
 const WITHER_EFFECT_PERIOD_TICKS = 40;
 
+/** Shared furnace-panel station identity (281). */
+type CookingStation = 'furnace' | 'smoker';
+
 /** Toast notification visible duration in milliseconds. */
 const TOAST_DURATION_MS = 1500;
 /** FPS sampling window in seconds. */
@@ -440,12 +445,16 @@ export class Game {
   readonly blockEntityHost: LiveBlockEntityHost;
   /** Furnace recipe/fuel context (110 data) injected into the 109 engine. */
   private readonly furnaceContext: FurnaceContext;
+  /** Smoker context (281): delegates furnace rules with half cook duration. */
+  private readonly smokerContext: FurnaceContext;
   /** Brewing recipe/fuel context (123 data) injected into the 123 engine. */
   private readonly brewingContext: BrewingContext;
   /** Whether the furnace container screen is open (251). */
   private furnaceOpen = false;
   /** The open furnace's position, or null when closed. */
   private furnacePos: { x: number; y: number; z: number } | null = null;
+  /** Station identity for the shared furnace/smoker panel. */
+  private furnaceStation: CookingStation = 'furnace';
   /** DOM controller for the live furnace screen (251). */
   private readonly furnacePanel: FurnacePanel;
   /** Whether the brewing container screen is open (260). */
@@ -970,15 +979,18 @@ export class Game {
     }
 
     // 251: the live block-entity host owns every placed furnace's authoritative
-    // state. Hydration from persisted records happens at the same moment as the
-    // bulk-loaded edits (injected persistence) or when open() settles.
-    // 260 extends the same host with the brewing context (123 data).
+    // state. 281 adds the smoker as a second identity over the same validated
+    // payload/menu path. Hydration from persisted records happens at the same
+    // moment as the bulk-loaded edits (injected persistence) or when open()
+    // settles. 260 extends the same host with the brewing context (123 data).
     this.furnaceContext = createFurnaceContext(createDefaultTypedRecipes(), createDefaultFuelValues());
+    this.smokerContext = createSmokerContext(this.furnaceContext);
     this.brewingContext = createDefaultBrewingContext();
     this.blockEntityHost = new LiveBlockEntityHost({
       world: this.world,
       persistence: this.persistenceImpl,
       furnaceContext: this.furnaceContext,
+      smokerContext: this.smokerContext,
       brewingContext: this.brewingContext,
       onQuarantined: () => {
         // A quarantined record means durable data was corrupt or from a
@@ -1361,18 +1373,23 @@ export class Game {
       (recipe) => this.onCrafted(recipe),
       () => this.closeCrafting(),
     );
-    // Live furnace screen (251): a pure view over the host's authoritative state.
+    // Live furnace/smoker screen (251/281): one pure view over the host's
+    // authoritative furnace-shaped state, selected by the session station.
     this.furnacePanel = new FurnacePanel(this.requireElement('furnace'), {
       inventory: this.inventory,
       registry: this.itemRegistry,
       atlas: this.atlas,
       getState: () =>
         this.furnacePos
-          ? this.blockEntityHost.getFurnaceState(this.furnacePos.x, this.furnacePos.y, this.furnacePos.z)
+          ? this.furnaceStation === 'smoker'
+            ? this.blockEntityHost.getSmokerState(this.furnacePos.x, this.furnacePos.y, this.furnacePos.z)
+            : this.blockEntityHost.getFurnaceState(this.furnacePos.x, this.furnacePos.y, this.furnacePos.z)
           : null,
       applySlots: (slots) =>
         this.furnacePos
-          ? this.blockEntityHost.applyMenuSlots(this.furnacePos.x, this.furnacePos.y, this.furnacePos.z, slots)
+          ? this.furnaceStation === 'smoker'
+            ? this.blockEntityHost.applySmokerMenuSlots(this.furnacePos.x, this.furnacePos.y, this.furnacePos.z, slots)
+            : this.blockEntityHost.applyMenuSlots(this.furnacePos.x, this.furnacePos.y, this.furnacePos.z, slots)
           : null,
       onInventoryChanged: () => {
         this.hotbar.render();
@@ -2106,12 +2123,13 @@ export class Game {
       else if (!canInteract(this.gameMode.mode)) this.showToast('Spectators cannot use containers');
       else this.openCreative();
     }
-    // Furnace session upkeep (251): close on destruction or walking away, and
-    // keep the burn/smelt indicators live while it stays open.
+    // Furnace/smoker session upkeep (251/281): close on destruction or walking
+    // away, and keep the burn/smelt indicators live while it stays open.
     if (this.furnaceOpen && this.furnacePos) {
       const p = this.player.position;
       const pos = this.furnacePos;
-      const stillThere = this.world.getBlock(pos.x, pos.y, pos.z) === BlockId.Furnace;
+      const expectedBlock = this.furnaceStation === 'smoker' ? SMOKER_BLOCK_ID : BlockId.Furnace;
+      const stillThere = this.world.getBlock(pos.x, pos.y, pos.z) === expectedBlock;
       const distance = Math.hypot(p.x - (pos.x + 0.5), p.y - (pos.y + 0.5), p.z - (pos.z + 0.5));
       if (!stillThere || distance > FURNACE_MAX_USE_DISTANCE) {
         this.closeFurnace();
@@ -2273,6 +2291,9 @@ export class Game {
     // 3.5 Block entities (251): furnaces in simulating chunks advance one
     // canonical tick; pause/loading/non-simulating chunks stay frozen.
     this.blockEntityHost.tickFurnaces();
+    // 3.5a Smoker workstations (281): same fixed-tick discipline with the
+    // delegated twice-fast cooking context.
+    this.blockEntityHost.tickSmokers();
     // 3.5b Brewing stands (260): same canonical-tick discipline over the 123
     // engine, in the same fixed-tick slot. The two stores are independent.
     this.blockEntityHost.tickBrewingStands();
@@ -3425,6 +3446,14 @@ export class Game {
         ) {
           this.blockEntityHost.placeFurnace(coords.x, coords.y, coords.z);
         }
+        // A committed smoker placement instantiates its own block entity while
+        // sharing the furnace-shaped state/menu contract (281).
+        if (
+          coords &&
+          this.world.getBlock(coords.x, coords.y, coords.z) === SMOKER_BLOCK_ID
+        ) {
+          this.blockEntityHost.placeSmoker(coords.x, coords.y, coords.z);
+        }
         // A committed brewing-stand placement instantiates its block entity (260).
         if (
           coords &&
@@ -3469,6 +3498,11 @@ export class Game {
           this.openFurnace(coords.x, coords.y, coords.z);
         } else if (
           coords &&
+          this.world.getBlock(coords.x, coords.y, coords.z) === SMOKER_BLOCK_ID
+        ) {
+          this.openSmoker(coords.x, coords.y, coords.z);
+        } else if (
+          coords &&
           this.world.getBlock(coords.x, coords.y, coords.z) === BlockId.BrewingStand
         ) {
           this.openBrewing(coords.x, coords.y, coords.z);
@@ -3493,12 +3527,22 @@ export class Game {
 
   /** Whether the furnace container screen is open (E2E/test surface). */
   get isFurnaceOpen(): boolean {
-    return this.furnaceOpen;
+    return this.furnaceOpen && this.furnaceStation === 'furnace';
   }
 
   /** The open furnace's position, or null (E2E/test surface). */
   get furnaceSessionPosition(): { x: number; y: number; z: number } | null {
-    return this.furnacePos;
+    return this.isFurnaceOpen ? this.furnacePos : null;
+  }
+
+  /** Whether the shared cooking screen is currently a smoker session (281). */
+  get isSmokerOpen(): boolean {
+    return this.furnaceOpen && this.furnaceStation === 'smoker';
+  }
+
+  /** The open smoker's position, or null when the shared screen is another station. */
+  get smokerSessionPosition(): { x: number; y: number; z: number } | null {
+    return this.isSmokerOpen ? this.furnacePos : null;
   }
 
   /** Whether the brewing container screen is open (E2E/test surface). */
@@ -3658,13 +3702,16 @@ export class Game {
   }
 
   /**
-   * Open the live furnace screen for the furnace at `(x, y, z)`. The session is
+   * Open the shared live cooking screen for a furnace or smoker. The session is
    * authoritative-state-backed; closing returns the cursor stack to the player.
    */
-  openFurnace(x: number, y: number, z: number): void {
+  openFurnace(x: number, y: number, z: number, station: CookingStation = 'furnace'): void {
     if (this.furnaceOpen) return;
     this.dismissDeathScreen();
-    if (!this.blockEntityHost.has(x, y, z)) return;
+    const present = station === 'smoker'
+      ? this.blockEntityHost.hasSmoker(x, y, z)
+      : this.blockEntityHost.has(x, y, z);
+    if (!present) return;
     if (this.brewingOpen) this.closeBrewing();
     if (this.enchantingOpen) this.closeEnchanting();
     if (this.gameruleOpen) this.closeGamerule();
@@ -3674,6 +3721,7 @@ export class Game {
     if (this.statisticsOpen) this.closeStatistics();
     if (this.tradingOpen) this.closeTrading();
     this.furnaceOpen = true;
+    this.furnaceStation = station;
     this.furnacePos = { x, y, z };
     this.input.releasePointerLock();
     this.hideOverlay();
@@ -3682,7 +3730,13 @@ export class Game {
     this.hotbar.hide();
     this.setBreakProgress(0);
     this.interaction.clearTarget();
+    this.furnacePanel.setStationName(station === 'smoker' ? 'Smoker' : 'Furnace');
     this.furnacePanel.show();
+  }
+
+  /** Open a smoker session through the shared furnace-compatible panel. */
+  openSmoker(x: number, y: number, z: number): void {
+    this.openFurnace(x, y, z, 'smoker');
   }
 
   /**
@@ -3693,15 +3747,19 @@ export class Game {
   closeFurnace(): void {
     if (!this.furnaceOpen) return;
     const pos = this.furnacePos;
+    const station = this.furnaceStation;
     const cursor = this.furnacePanel.takeCursor();
     if (cursor) {
       this.returnStackToPlayer(cursor.item, cursor.count);
     }
     this.furnaceOpen = false;
     this.furnacePos = null;
+    this.furnaceStation = 'furnace';
     this.furnacePanel.hide();
     if (pos) {
-      const taken = this.blockEntityHost.takeExperience(pos.x, pos.y, pos.z);
+      const taken = station === 'smoker'
+        ? this.blockEntityHost.takeSmokerExperience(pos.x, pos.y, pos.z)
+        : this.blockEntityHost.takeExperience(pos.x, pos.y, pos.z);
       if (taken > 0) {
         this.experience.addXp(taken);
         this.hud.setSelectedName(`+${taken} XP`);
@@ -3759,11 +3817,15 @@ export class Game {
       this.breakBrewingStand(x, y, z);
       return;
     }
-    if (!this.blockEntityHost.has(x, y, z)) return;
+    const isSmoker = this.blockEntityHost.hasSmoker(x, y, z);
+    const isFurnace = this.blockEntityHost.has(x, y, z);
+    if (!isSmoker && !isFurnace) return;
     if (this.furnaceOpen && this.furnacePos && this.furnacePos.x === x && this.furnacePos.y === y && this.furnacePos.z === z) {
       this.closeFurnace();
     }
-    const state = this.blockEntityHost.removeFurnace(x, y, z);
+    const state = isSmoker
+      ? this.blockEntityHost.removeSmoker(x, y, z)
+      : this.blockEntityHost.removeFurnace(x, y, z);
     if (!state) return;
     const stacks: LootStack[] = [];
     for (const slot of [state.input, state.fuel, state.output] as MenuSlot[]) {

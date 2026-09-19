@@ -40,6 +40,14 @@ describe('item registry enchanting data (120)', () => {
     expect(registry.getByLegacyId(ItemId.Bookshelf)?.placeBlock).toBeDefined();
     expect(registry.getByLegacyId(ItemId.EnchantingTable)?.placeBlock).toBeDefined();
   });
+
+  it('registers the smoker item as a placeable non-durable stack', () => {
+    const smoker = registry.getByLegacyId(ItemId.Smoker);
+    expect(smoker?.key).toBe('smoker');
+    expect(smoker?.placeBlock).toBeDefined();
+    expect(smoker?.stackSize).toBe(64);
+    expect(smoker?.maxDurability ?? 0).toBe(0);
+  });
 });
 
 describe('durable items do not stack (hardening 2026-08-23)', () => {

@@ -238,6 +238,16 @@ describe('current block-output equivalence', () => {
     expect(out).toEqual([{ item: ItemId.Coal, count: 1 }]);
   });
 
+  it('reproduces the smoker self-drop through its generated loot table (281)', () => {
+    const out = evaluate(
+      reg.get(lootTableResourceId('smoker')),
+      ctx({ blockId: BlockId.Smoker }),
+      seq([]),
+      items,
+    );
+    expect(out).toEqual([{ item: ItemId.Smoker, count: 1 }]);
+  });
+
   it('pins the leaf-apple rarity at 1/200 (0.5%)', () => {
     expect(LEAF_APPLE_CHANCE).toBe(0.005);
   });

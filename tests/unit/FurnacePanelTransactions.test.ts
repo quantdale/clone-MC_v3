@@ -148,6 +148,8 @@ interface Rig {
 function makeRig(initial?: Partial<FurnaceState>): Rig {
   const root = new FakeElement('div', 'furnace');
   for (const id of [
+    'furnace-title',
+    'furnace-station-title',
     'furnace-input-slot',
     'furnace-fuel-slot',
     'furnace-output-slot',
@@ -205,6 +207,15 @@ function click(cell: FakeElement, button: 0 | 2, shiftKey = false): void {
 }
 
 describe('FurnacePanel wiring (251)', () => {
+  it('updates the shared shell with the active smoker station identity (281)', () => {
+    const rig = makeRig();
+    rig.panel.setStationName('Smoker');
+    expect(rig.root.querySelector('#furnace-title')!.textContent).toBe('Smoker');
+    expect(rig.root.querySelector('#furnace-station-title')!.textContent).toBe('Smoker');
+    expect(rig.root.attributes.get('aria-label')).toBe('Smoker screen');
+    expect(rig.root.querySelector('#furnace-close')!.attributes.get('aria-label')).toBe('Close smoker');
+  });
+
   it('builds 39 slot cells: 3 furnace + 36 player', () => {
     const rig = makeRig();
     expect(rig.cellsByMenuIndex().size).toBe(39);

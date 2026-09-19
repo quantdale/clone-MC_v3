@@ -346,6 +346,15 @@ export class PlayerInteraction {
               z: this.target.blockZ,
             });
             this.lastActionTime = this.elapsed;
+          } else if (targetBlockId === BlockId.Smoker) {
+            // Right-clicking a smoker opens the shared cooking container
+            // rather than placing (281, furnace parity).
+            this.onAction?.('use', targetBlockId, {
+              x: this.target.blockX,
+              y: this.target.blockY,
+              z: this.target.blockZ,
+            });
+            this.lastActionTime = this.elapsed;
           } else if (targetBlockId === BlockId.BrewingStand) {
             // Right-clicking a brewing stand opens its container instead of
             // placing (260, furnace parity); the held stack is untouched
