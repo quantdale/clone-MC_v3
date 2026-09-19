@@ -311,6 +311,7 @@ Narrow-outcome text is quoted from `openspec/CHANGE_SEQUENCE.md` (authoritative 
 | C277 | `277-live-ambient-audio-integration` | Live AmbientAudioFramework tick on Game with injectable AmbientSoundBackend (silent CI default), mute flag, ephemeral state (no serialize); unit + e2e cue proof. | exact | `openspec/changes/277-live-ambient-audio-integration/verification.md` (VERIFIED 6/6) | E2E split; no 258 headed work. | VERIFIED |
 | C278 | `278-live-villager-trading-ui` | Live villager trading-post UI over the verified 150/151 trade framework: Emerald/Bread/Paper catalog entries, versioned `__trades__` persistence with per-profession quarantine and archive passthrough, atomic offer application with unlock merge/restock/full-inventory world drops, `TradingPanel` shell, HUD/KeyT lifecycle, and real browser journey/refusal coverage. | exact | `openspec/changes/278-live-villager-trading-ui/verification.md` (VERIFIED 12/12) + `specs/live-villager-trading/spec.md` | Full unit/build/E2E regression; no 258 headed work. | VERIFIED |
 | C279 | `279-shield-live-wiring` | Live shield wiring over ShieldBlocking 144: shield item and component-preserving offhand swap, held-use raise and competing-use drain, source-position-aware hostile/wither blocking with existing cooldown, one-wear durability/break behavior, HUD feedback, inventory snapshot/pagehide persistence reuse, and browser/unit coverage. | exact | `openspec/changes/279-shield-live-wiring/verification.md` (VERIFIED 12/12) + `specs/live-shield-wiring/spec.md` | Full unit/build/E2E regression; software-WebGL visual variance is baseline-retried; no 258 headed work or GPU evidence. | VERIFIED |
+| C280 | `280-death-respawn-ui` | Additive live death/respawn presentation over the existing synchronous SurvivalSystem and Hardcore/Sleep rules: safe closed-cause mapping, normal respawn and hardcore spectator outcome cards, idempotent Continue lifecycle, one-container/pointer-lock integration, no new persistence namespace, and unit/browser regression coverage. | exact | `openspec/changes/280-death-respawn-ui/verification.md` (VERIFIED 10/10) + `specs/death-respawn-ui/spec.md` | Exact full unit/build/E2E gate; visual matrix 60/60; one known software-WebGL spectator timing variance is non-blocking; no 258 headed work or GPU evidence. | VERIFIED |
 
 ## Master-plan-only features
 
@@ -354,14 +355,14 @@ Feature areas named in `MINECRAFT_PARITY_MASTER_PLAN.md` that no single numbered
 
 | Category | Rows |
 |---|---|
-| exact | 265 (264 numbered rows plus MP-19.4-1 Wither-like secondary boss via C252) |
+| exact | 266 (265 numbered rows plus MP-19.4-1 Wither-like secondary boss via C252) |
 | equivalent | 4 |
 | approx | 6 |
 | deferred | 1 (C258 — BLOCKED headed hardware-WebGL evidence) |
 | out-of-scope | 1 (MP-33-1 proprietary services/assets) |
 | n/a (documentation) | 4 (C248, C249, C250, C268) |
-| **Total rows** | **281** (279 change rows + 2 master-plan rows) |
+| **Total rows** | **282** (280 change rows + 2 master-plan rows) |
 
-Change-rows-only split: exact 264 / equivalent 4 / approx 6 / deferred 1 / n/a 4 = 279.
+Change-rows-only split: exact 265 / equivalent 4 / approx 6 / deferred 1 / n/a 4 = 280.
 
-**Coverage statement:** every numbered change 001–279 appears in exactly one row (bijective `C001`…`C279`, no duplicates, no orphan rows). Every completed change maps to a cited VERIFIED artifact; C258 is explicitly documented as BLOCKED rather than upgraded to VERIFIED. The two additional `MP-*` rows cover master-plan areas outside the numbered sequence; MP-19.4-1 is closed `exact` by C252. The matrix audit is cross-checked against the package evidence and `openspec/PROGRAM_STATE.json`; the current state validator still owns its historical 001–250 schema checks and does not treat C258 as verified.
+**Coverage statement:** every numbered change 001–280 appears in exactly one row (bijective `C001`…`C280`, no duplicates, no orphan rows). Every completed change maps to a cited VERIFIED artifact; C258 is explicitly documented as BLOCKED rather than upgraded to VERIFIED. The two additional `MP-*` rows cover master-plan areas outside the numbered sequence; MP-19.4-1 is closed `exact` by C252. The matrix audit is cross-checked against the package evidence and `openspec/PROGRAM_STATE.json`; the current state validator still owns its historical 001–250 schema checks and does not treat C258 as verified.

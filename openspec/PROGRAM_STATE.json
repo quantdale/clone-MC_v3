@@ -2,26 +2,33 @@
   "schemaVersion": 1,
   "status": "ACTIVE",
   "currentChange": "280-death-respawn-ui",
-  "currentChangeStatus": "ACTIVE",
-  "lastCompletedChange": "279-shield-live-wiring",
+  "currentChangeStatus": "VERIFIED",
+  "lastCompletedChange": "280-death-respawn-ui",
   "nextChange": "281-workstation-ui",
-  "completedTasks": 9,
+  "completedTasks": 10,
   "totalTasks": 10,
-  "completionPercentage": 90,
+  "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
-  "mandatoryRequirementsPass": false,
-  "requiredTestsPass": false,
-  "advancementAllowed": false,
+  "mandatoryRequirementsPass": true,
+  "requiredTestsPass": true,
+  "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "3b60c6e38666acfde752dc40d7e12bba2ed1d164",
   "localHead": "fb6e28f7fe3109004ea0c1a67cebc4b79f951e4e",
-  "nextExactAction": "Reconcile C280, mark 280 VERIFIED only at 10/10, commit/publish, verify origin/main, and checkpoint 281 spec-first; 258 stays BLOCKED",
-  "lastCompletedTask": "280 T1-T9 complete: implementation, focused and regression browser coverage, full 442-file unit gate, build/lint/typecheck, exact 102-test E2E, file-audit, and state validation",
+  "nextExactAction": "Author and validate 281-workstation-ui spec-first, then activate its first unchecked task; 258 stays BLOCKED",
+  "lastCompletedTask": "280 T1-T10 complete, VERIFIED, C280 exact, and published; 281 is next spec-first",
   "blockers": [
-    "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-279 are VERIFIED; game shippable with known performance-certification debt. The 280 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
+    "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-280 are VERIFIED; game shippable with known performance-certification debt. The 281 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
   "validationResults": [
+    {
+      "change": "280-death-respawn-ui",
+      "status": "VERIFIED",
+      "unitTests": 5243,
+      "e2eTests": 102,
+      "note": "10/10 tasks complete. Existing synchronous death/respawn rules now carry a safe normalized cause into a transient normal/hardcore outcome card with idempotent dismissal, one-container/pointer-lock lifecycle, and no persistence change. Gates: typecheck PASS; lint 0 errors with 85 existing warnings; full unit 442 files 5243 passed + 1 skipped; build PASS (244 modules); exact full E2E 102/102 with visual matrix 60/60 and memory/resource coverage; reviewed file-audit 2862; validate-state PASS. Dedicated 259-279 regression recorded one known software-WebGL spectator threshold variance; exact full suite passed all 102. Change 258 remains BLOCKED and 259-279 remain VERIFIED. Implementation tip b5265b8."
+    },
     {
       "change": "279-shield-live-wiring",
       "status": "VERIFIED",
@@ -2645,9 +2652,9 @@
   ],
   "releaseAuthority": {
     "schemaVersion": 1,
-    "authorityPackage": "openspec/changes/279-shield-live-wiring",
-    "candidateSha": "a9b71083bb6bf4645fec3d739c5cfbfadfdcad60",
-    "note": "Change 279 is VERIFIED 12/12 and published at a9b7108: live shield catalog/offhand/use, source-aware blocking, durability/break, axe cooldown, HUD, persistence reuse, and full retry-enabled browser evidence. Change 258 headed hardware-WebGL certification remains owner-deferred and no GPU evidence is claimed."
+    "authorityPackage": "openspec/changes/280-death-respawn-ui",
+    "candidateSha": "b5265b8f121f309bd089df62f405529b4ea6b250",
+    "note": "Change 280 is VERIFIED 10/10 and published at b5265b8: live death/respawn presentation, safe cause mapping, normal/hardcore outcome card, lifecycle proof, no persistence change, and exact 102/102 browser evidence. Change 258 headed hardware-WebGL certification remains owner-deferred and no GPU evidence is claimed."
   },
   "hardeningInterlock": {
     "role": "historical interlock record (pre-241 era); NOT the current release authority - see releaseAuthority above",
@@ -2711,5 +2718,5 @@
     ]
   },
   "criticalRiskOpen": false,
-  "publishedTip": "a9b71083bb6bf4645fec3d739c5cfbfadfdcad60"
+  "publishedTip": "b5265b8f121f309bd089df62f405529b4ea6b250"
 }

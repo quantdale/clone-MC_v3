@@ -628,3 +628,18 @@ and hardcore-spectator rules. Changes **258** remains **BLOCKED** and
   change is part of 280.
 - The next sequential slot is reserved as `281-workstation-ui` for a later
   spec-first decision after 280 is VERIFIED.
+
+## 280-death-respawn-ui — VERIFIED and published (2026-09-19)
+
+Change 280 completed all 10 tasks and is VERIFIED. The implementation tip is
+`b5265b8` (`feat: ship live death respawn presentation (change 280)`): the
+existing death reason now reaches a closed safe mapper, normal and hardcore
+outcomes render through a transient DOM card, dismissal and pointer/container
+lifecycle are idempotent, and no persistence namespace was added. Full gates
+passed: typecheck, lint (0 errors/85 existing warnings), 442-file unit
+5243 passed + 1 skipped, build 244 modules, exact full E2E 102/102 with the
+60-cell visual matrix, reviewed file-audit 2862, and validate-state. The
+dedicated 259–279 browser regression had one known software-WebGL spectator
+threshold variance, while the exact full suite passed all 102 tests including
+the affected journeys. Change 258 remains BLOCKED; Changes 259–279 remain
+VERIFIED; `281-workstation-ui` is the next sequential spec-first change.
