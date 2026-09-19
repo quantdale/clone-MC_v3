@@ -396,3 +396,5 @@ rules as the original sequence:
 | 276 | boss-bar-hud-parity | VERIFIED | HudParity boss bars over BossFramework; migrate #wither-boss-bar; 258 BLOCKED |
 
 | 277 | live-ambient-audio-integration | VERIFIED | AmbientAudioFramework live tick + injectable backend; 258 BLOCKED |
+
+| 278 | `278-live-villager-trading-ui` | Standing owner order 2026-09-19 campaign through 300: live trading-post UI over verified headless `VillagerTrading` (151) + `VillagerProfession` (150) catalog — world-scoped per-profession trade states, versioned `__trades__` persistence with degrade-to-defaults and reset/archive passthrough, new `emerald`/`bread`/`paper` item defs completing the 151 catalog, inventory-atomic apply with level-up unlocks, `TradingPanel` + HUD/KeyT shell under the one-container rule, unit + browser E2E; no village generation, no villager spawning, no workstation POI live, no gossip/timers; 258 stays BLOCKED. |

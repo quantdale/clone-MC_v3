@@ -99,6 +99,7 @@ import {
   deserializeWeatherState,
   type WeatherState,
 } from '../simulation/WeatherFramework';
+import { deserializeTrades } from '../simulation/VillagerTradingPersistence';
 import { coreProgressionAdvancements } from '../simulation/CoreProgressionAdvancements';
 
 /**
@@ -364,6 +365,8 @@ export class GamePersistence implements WorldEditDurability {
   private initialSleepValue: SleepState | null = null;
   /** Validated weather state bulk-loaded at open() (275; null when absent or corrupt; degrade-to-default at boot). */
   private initialWeatherValue: WeatherState | null = null;
+  /** Validated trading map bulk-loaded at open() (278; null when absent or corrupt; degrade-to-fresh at boot). */
+  private initialTradingValue: Record<string, import('../simulation/VillagerTrading').VillagerTradeState> | null = null;
   private initialColumnsValue: SerializedChunkColumn[] = [];
   /** World generation baseline compatibility classification. */
   private generationBaselineValue: WorldGenerationBaseline = 'current';
@@ -816,6 +819,18 @@ export class GamePersistence implements WorldEditDurability {
         this.initialWeatherValue = null;
         this.recordError(`load weather: ${errorMessage(e)}`);
       }
+      // 278 hydration: trading payload stored via raw trading data. Absent
+      // stays null (Game boots fresh level-1 states); unusable roots degrade
+      // to null with a recorded error so boot continues fresh. Per-profession
+      // failures are already degraded inside `deserializeTrades` (valid
+      // siblings kept), so a non-null result is always safe to adopt.
+      try {
+        const raw = await this.metadata.getTradingData(this.worldIdValue);
+        if (raw !== null) this.initialTradingValue = deserializeTrades(raw);
+      } catch (e) {
+        this.initialTradingValue = null;
+        this.recordError(`load trading: ${errorMessage(e)}`);
+      }
     }
 
     // 5.5 Authoritative startup compatibility decision (257). Computed after the
@@ -900,6 +915,7 @@ export class GamePersistence implements WorldEditDurability {
       this.initialStatisticsValue = null;
       this.initialSleepValue = null;
       this.initialWeatherValue = null;
+      this.initialTradingValue = null;
       this.initialColumnsValue = [];
     }
     this.opened = true;
@@ -963,6 +979,7 @@ export class GamePersistence implements WorldEditDurability {
       statisticsData: unknown | null;
       sleepData: unknown | null;
       weatherData: unknown | null;
+      tradingData: unknown | null;
       columns: SerializedChunkColumn[];
       edits: Array<{ chunkX: number; chunkY: number; chunkZ: number; changes: Array<[number, number]> }>;
       playerState: PlayerStateRecord | null;
@@ -981,8 +998,9 @@ export class GamePersistence implements WorldEditDurability {
       const hardcoreData = await this.metadata.getHardcoreData(worldId);
       const difficultyData = await this.metadata.getDifficultyData(worldId);
        const statisticsData = await this.metadata.getStatisticData(worldId);
-        const sleepData = await this.metadata.getSleepData(worldId);
-        const weatherData = await this.metadata.getWeatherData(worldId);
+         const sleepData = await this.metadata.getSleepData(worldId);
+         const weatherData = await this.metadata.getWeatherData(worldId);
+         const tradingData = await this.metadata.getTradingData(worldId);
        const columns = await this.chunkSections.listColumns(worldId);
       const editRecords = await this.chunkEdits.listChunkEdits(worldId);
       const playerState = await this.playerStates.getPlayerState(worldId);
@@ -1002,6 +1020,7 @@ export class GamePersistence implements WorldEditDurability {
         statisticsData,
         sleepData,
         weatherData,
+        tradingData,
         columns: [...columns],
         edits: editRecords.map((r) => ({ chunkX: r.chunkX, chunkY: r.chunkY, chunkZ: r.chunkZ, changes: [...r.changes] })),
         playerState,
@@ -1063,6 +1082,8 @@ export class GamePersistence implements WorldEditDurability {
         await awaitRequest(metaStore.delete(`__sleep__:${worldId}`));
         // 2j. Raw weather record (275; separate key in the same metadata store).
         await awaitRequest(metaStore.delete(`__weather__:${worldId}`));
+        // 2k. Raw trading record (278; separate key in the same metadata store).
+        await awaitRequest(metaStore.delete(`__trades__:${worldId}`));
         // 3. Every chunk column for this world. Key shape: `${worldId}|${cx}|${cz}`.
         for (const column of snapshot!.columns) {
           await awaitRequest(csStore.delete(worldChunkKey(worldId, column.chunkX, column.chunkZ)));
@@ -1105,6 +1126,7 @@ export class GamePersistence implements WorldEditDurability {
         if (snapshot!.statisticsData !== null) await this.metadata.putStatisticData(worldId, snapshot!.statisticsData);
         if (snapshot!.sleepData !== null) await this.metadata.putSleepData(worldId, snapshot!.sleepData);
         if (snapshot!.weatherData !== null) await this.metadata.putWeatherData(worldId, snapshot!.weatherData);
+        if (snapshot!.tradingData !== null) await this.metadata.putTradingData(worldId, snapshot!.tradingData);
         for (const col of snapshot!.columns) await this.chunkSections.putColumn(worldId, col);
         for (const rec of snapshot!.edits) await this.chunkEdits.putChunkEdits(worldId, rec.chunkX, rec.chunkY, rec.chunkZ, rec.changes);
         if (snapshot!.playerState) await this.playerStates.putPlayerState(snapshot!.playerState);
@@ -1463,6 +1485,11 @@ export class GamePersistence implements WorldEditDurability {
     return this.initialWeatherValue;
   }
 
+  /** Validated trading map bulk-loaded at `open()` (278; null when absent or corrupt; degrade-to-fresh). */
+  get initialTrading(): Record<string, import('../simulation/VillagerTrading').VillagerTradeState> | null {
+    return this.initialTradingValue;
+  }
+
   /** Bulk-loaded persisted canonical columns for this world. */
   get initialColumns(): SerializedChunkColumn[] {
     return this.initialColumnsValue;
@@ -1533,6 +1560,12 @@ export class GamePersistence implements WorldEditDurability {
   saveWeather(payload: unknown): void {
     if (this.disposed || this.resetCompleted) return;
     void this.metadata.putWeatherData(this.worldIdValue, payload).catch((e) => this.recordError(`save weather: ${errorMessage(e)}`));
+  }
+
+  /** Persist the trading payload via raw trading data (278). */
+  saveTrading(payload: unknown): void {
+    if (this.disposed || this.resetCompleted) return;
+    void this.metadata.putTradingData(this.worldIdValue, payload).catch((e) => this.recordError(`save trading: ${errorMessage(e)}`));
   }
 
   /** Persist the XP-orb snapshot via raw XP-orb data (264). */

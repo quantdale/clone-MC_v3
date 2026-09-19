@@ -88,6 +88,7 @@ export class InputManager implements InputState {
   private creativeToggleQueued = false;
 
   private statisticToggleQueued = false;
+  private tradingToggleQueued = false;
   private eatQueued = false;
 
   constructor(
@@ -273,6 +274,12 @@ export class InputManager implements InputState {
     return value;
   }
 
+  consumeTradingToggle(): boolean {
+    const value = this.tradingToggleQueued;
+    this.tradingToggleQueued = false;
+    return value;
+  }
+
   consumeEat(): boolean {
     const value = this.eatQueued;
     this.eatQueued = false;
@@ -375,6 +382,9 @@ export class InputManager implements InputState {
       case 'KeyH':
         this.statisticToggleQueued = true;
         break;
+      case 'KeyT':
+        this.tradingToggleQueued = true;
+        break;
       case 'KeyR':
         this.eatQueued = true;
         break;
@@ -401,6 +411,7 @@ export class InputManager implements InputState {
       event.code === 'KeyE' ||
       event.code === 'KeyG' ||
       event.code === 'KeyH' ||
+      event.code === 'KeyT' ||
       event.code === 'KeyR'
     ) {
       event.preventDefault();

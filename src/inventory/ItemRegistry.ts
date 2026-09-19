@@ -83,6 +83,9 @@ export const enum ItemId {
   BlazePowder = 65,
   Potion = 66,
   Bed = 67,
+  Emerald = 68,
+  Bread = 69,
+  Paper = 70,
 }
 
 /**
@@ -841,6 +844,37 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       iconTile: 69,
       stackSize: 64,
       placeBlock: rid('bed'),
+    },
+    {
+      // Live trading kit (278): completes the 151 catalog (emerald is the
+      // villager currency; no block placement, no durability).
+      id: ItemId.Emerald,
+      resourceId: rid('emerald'),
+      key: 'emerald',
+      name: 'Emerald',
+      iconTile: 70,
+      stackSize: 64,
+    },
+    {
+      // Live trading kit (278): farmer result; vanilla-like food (5 hunger).
+      id: ItemId.Bread,
+      resourceId: rid('bread'),
+      key: 'bread',
+      name: 'Bread',
+      iconTile: 71,
+      stackSize: 64,
+      isFood: true,
+      foodHunger: 5,
+      foodSaturation: 6,
+    },
+    {
+      // Live trading kit (278): librarian input; no block placement.
+      id: ItemId.Paper,
+      resourceId: rid('paper'),
+      key: 'paper',
+      name: 'Paper',
+      iconTile: 72,
+      stackSize: 64,
     },
   ];
   assertDurableItemsDoNotStack(defs);

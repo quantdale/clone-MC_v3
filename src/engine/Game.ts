@@ -161,6 +161,21 @@ import {
 } from '../inventory/StackDataComponents';
 import type { ItemStack } from '../inventory/Inventory';
 import { EnchantingPanel, formatEnchantLevel, prettifyEnchantmentKey } from '../ui/EnchantingPanel';
+import { TradingPanel, describeTradeOffer, prettifyTradeKey } from '../ui/TradingPanel';
+import {
+  applyTrade,
+  canAcceptTrade,
+  createVillagerTradeState,
+  restock as restockTradeState,
+  type TradeItem,
+  type VillagerTradeState,
+} from '../simulation/VillagerTrading';
+import {
+  TRADING_PROFESSIONS,
+  createDefaultTradingStates,
+  serializeTrades,
+  withUnlockedOffers,
+} from '../simulation/VillagerTradingPersistence';
 import { CreativeMenuPanel } from '../ui/CreativeMenuPanel';
 import { GameRulePanel } from '../ui/GameRulePanel';
 import { RecipeBookPanel } from '../ui/RecipeBookPanel';
@@ -316,6 +331,22 @@ const TOAST_DURATION_MS = 1500;
 const FPS_SAMPLE_INTERVAL_S = 0.5;
 /** Synthetic player entity id used for wither targeting (252). */
 const WITHER_TARGET_PLAYER_ID = 9999;
+/**
+ * 151 trade-item key → live `ItemId` (278, exhaustive over today's 9 keys).
+ * Unknown keys fail closed (count 0, apply no-op); unit pins the key set so
+ * future 151 growth cannot silently drift.
+ */
+const TRADE_KEY_TO_ITEM_ID: Record<string, number> = {
+  wheat: ItemId.Wheat,
+  emerald: ItemId.Emerald,
+  bread: ItemId.Bread,
+  apple: ItemId.Apple,
+  paper: ItemId.Paper,
+  book: ItemId.Book,
+  coal: ItemId.Coal,
+  iron_ingot: ItemId.IronIngot,
+  wooden_axe: ItemId.WoodenAxe,
+};
 
 /** Whether the current session is headless/automated. */
 function isHeadlessSession(): boolean {
@@ -451,6 +482,14 @@ export class Game {
   private statisticsOpen = false;
   /** DOM controller for the live statistics screen (271). */
   private readonly statisticsPanel: StatisticsPanel;
+  /** Whether the trading-post screen is open (278). */
+  private tradingOpen = false;
+  /** DOM controller for the live trading-post screen (278). */
+  private readonly tradingPanel: TradingPanel;
+  /** Authoritative per-profession trade states (278): validated persisted map or fresh level-1 states. */
+  private trades: Record<string, VillagerTradeState>;
+  /** Transient selected trading profession tab (278, never persisted; defaults to farmer). */
+  private tradingProfession = 'farmer';
   /** Authoritative statistic store (271): validated persisted payload or zeros. */
   private statistics: StatisticStore;
   /**
@@ -1083,6 +1122,21 @@ export class Game {
         }
       }).catch(() => undefined);
     }
+    // 278 trading: the validated persisted map when present, fresh level-1
+    // states otherwise (absent or corrupt records never break boot; the
+    // codec already degraded per-profession failures). Same late-load parity
+    // as above (the open panel re-renders when the late payload lands).
+    this.trades = this.persistenceImpl?.initialTrading ?? createDefaultTradingStates();
+    if (this.selfOpenPromise !== null) {
+      void this.selfOpenPromise.then(() => {
+        if (this.disposed) return;
+        const late = this.persistenceImpl?.initialTrading;
+        if (late) {
+          this.trades = late;
+          if (this.tradingOpen) this.tradingPanel.render();
+        }
+      }).catch(() => undefined);
+    }
     // 271 statistics: the validated persisted store when present, zero
     // counters otherwise (absent or corrupt records never break boot).
     // Same late-load parity as above (the open panel re-renders when the
@@ -1392,6 +1446,29 @@ export class Game {
     // advancements-chip precedent).
     const statisticsOpenBtn = document.getElementById('statistics-open');
     statisticsOpenBtn?.addEventListener('click', () => { if (!this.disposed) this.openStatistics(); });
+    // Live trading-post screen (278): a pure view over the per-profession store.
+    this.tradingPanel = new TradingPanel(this.requireElement('trading'), {
+      listProfessions: () => [...TRADING_PROFESSIONS],
+      getProfession: () => this.tradingProfession,
+      selectProfession: (key: string) => this.selectTradingProfession(key),
+      getOffers: (professionKey: string) => this.getTradingState(professionKey)?.offers ?? [],
+      getLevel: (professionKey: string) => this.getTradingState(professionKey)?.level ?? 1,
+      getXp: (professionKey: string) => this.getTradingState(professionKey)?.xp ?? 0,
+      getInventoryCount: (itemKey: string) => {
+        const id = TRADE_KEY_TO_ITEM_ID[itemKey];
+        return id === undefined ? 0 : this.inventory.getItemCount(id);
+      },
+      describeOffer: (offer) => describeTradeOffer(offer),
+      applyOffer: (professionKey: string, index: number) => this.applyTradeOffer(professionKey, index),
+      onChanged: () => {
+        this.hotbar.render();
+      },
+      onClose: () => this.closeTrading(),
+    });
+    // HUD button opens the trading post for mouse/touch players (278,
+    // statistics-chip precedent).
+    const tradingOpenBtn = document.getElementById('trading-open');
+    tradingOpenBtn?.addEventListener('click', () => { if (!this.disposed) this.openTrading(); });
     // Live creative menu screen (265): a pure view over the catalog +
     // inventory. HUD buttons open the menu and toggle survival ⇄ creative.
     this.creativePanel = new CreativeMenuPanel(this.requireElement('creative'), {
@@ -1571,6 +1648,9 @@ export class Game {
     // The statistics panel owns no transient state either (271: pure view
     // over the already-persisted store) — close it before the persist flush.
     this.closeStatistics();
+    // The trading post owns no transient state either (278: pure view over
+    // the already-persisted map) — close it before the persist flush.
+    this.closeTrading();
     this.savePlayerStateDurable();
     this.saveWithers();
     this.saveItemAndXpEntities();
@@ -1580,6 +1660,7 @@ export class Game {
     this.saveStatistics();
     this.saveSleep();
     this.saveWeather();
+    this.saveTrading();
     this.saveTimer = 0;
     void this.persistenceImpl?.dispose().catch(() => undefined);
     if (this.unsubscribeHealth !== null) {
@@ -1786,6 +1867,7 @@ export class Game {
         this.saveStatistics();
         this.saveSleep();
         this.saveWeather();
+        this.saveTrading();
       }
     }
 
@@ -1941,6 +2023,9 @@ export class Game {
       } else if (this.statisticsOpen) {
         // Same rule for the statistics screen (271).
         this.closeStatistics();
+      } else if (this.tradingOpen) {
+        // Same rule for the trading-post screen (278).
+        this.closeTrading();
       } else if (this.craftingOpen) {
         this.closeCrafting();
       } else if (!canInteract(this.gameMode.mode)) {
@@ -1961,6 +2046,13 @@ export class Game {
     if (this.input.consumeStatisticToggle()) {
       if (this.statisticsOpen) this.closeStatistics();
       else this.openStatistics();
+    }
+    // Trading-post toggle (278): T opens/closes the trading post. Read-only
+    // browsing plus inventory-atomic trades: spectators may inspect it (no
+    // interaction gate; trades still debit inventory which spectators lack).
+    if (this.input.consumeTradingToggle()) {
+      if (this.tradingOpen) this.closeTrading();
+      else this.openTrading();
     }
     // Creative menu toggle (265): E opens/closes the creative inventory.
     if (this.input.consumeCreativeToggle()) {
@@ -2015,6 +2107,11 @@ export class Game {
     // live while open (events may land while the panel is up).
     if (this.statisticsOpen) {
       this.statisticsPanel.render();
+    }
+    // Trading-post upkeep (278): no position to track either; keep offers
+    // live while open (inventory may change under E2E grants).
+    if (this.tradingOpen) {
+      this.tradingPanel.render();
     }
     // Creative menu upkeep (265): no position to track either; keep the list
     // live while open (mode switches re-render through the switch path).
@@ -2785,6 +2882,14 @@ export class Game {
         // Same rule for the creative menu (265).
         this.closeCreative();
       }
+      if (this.statisticsOpen) {
+        // Same rule for the statistics screen (271).
+        this.closeStatistics();
+      }
+      if (this.tradingOpen) {
+        // Same rule for the trading-post screen (278).
+        this.closeTrading();
+      }
       this.hideOverlay();
       // The HUD/crosshair only appear once the world is ready (see update()).
       if (!this.loadingShown) {
@@ -2792,7 +2897,7 @@ export class Game {
         this.hud.show();
         this.hotbar.show();
       }
-    } else if (!this.craftingOpen && !this.furnaceOpen && !this.brewingOpen && !this.enchantingOpen && !this.gameruleOpen && !this.recipeBookOpen && !this.advancementOpen && !this.creativeOpen && !this.statisticsOpen) {
+    } else if (!this.craftingOpen && !this.furnaceOpen && !this.brewingOpen && !this.enchantingOpen && !this.gameruleOpen && !this.recipeBookOpen && !this.advancementOpen && !this.creativeOpen && !this.statisticsOpen && !this.tradingOpen) {
       // Unlock caused by OPENING a container session must not stack the pause
       // overlay behind/on the open panel; the panel itself represents the
       // paused state and its owner re-shows the overlay on close (251).
@@ -2855,6 +2960,7 @@ export class Game {
     if (this.advancementOpen) this.closeAdvancements();
     if (this.creativeOpen) this.closeCreative();
     if (this.statisticsOpen) this.closeStatistics();
+    if (this.tradingOpen) this.closeTrading();
     this.craftingOpen = true;
     this.input.releasePointerLock();
     this.hideOverlay();
@@ -3183,6 +3289,7 @@ export class Game {
       !this.advancementOpen &&
       !this.creativeOpen &&
       !this.statisticsOpen &&
+      !this.tradingOpen &&
       !this.contextLost &&
       this.errorEl.classList.contains('hidden')
     ) {
@@ -3331,6 +3438,7 @@ export class Game {
     if (this.advancementOpen) this.closeAdvancements();
     if (this.creativeOpen) this.closeCreative();
     if (this.statisticsOpen) this.closeStatistics();
+    if (this.tradingOpen) this.closeTrading();
     this.brewingOpen = true;
     this.brewingPos = { x, y, z };
     this.input.releasePointerLock();
@@ -3472,6 +3580,7 @@ export class Game {
     if (this.advancementOpen) this.closeAdvancements();
     if (this.creativeOpen) this.closeCreative();
     if (this.statisticsOpen) this.closeStatistics();
+    if (this.tradingOpen) this.closeTrading();
     this.furnaceOpen = true;
     this.furnacePos = { x, y, z };
     this.input.releasePointerLock();
@@ -4040,6 +4149,7 @@ export class Game {
     if (this.advancementOpen) this.closeAdvancements();
     if (this.creativeOpen) this.closeCreative();
     if (this.statisticsOpen) this.closeStatistics();
+    if (this.tradingOpen) this.closeTrading();
     const bookShelves = this.countBookshelves(px, py, pz);
     this.enchantingSession = createSession({
       stack: held,
@@ -4118,6 +4228,7 @@ export class Game {
     if (this.advancementOpen) this.closeAdvancements();
     if (this.creativeOpen) this.closeCreative();
     if (this.statisticsOpen) this.closeStatistics();
+    if (this.tradingOpen) this.closeTrading();
     this.gameruleOpen = true;
     this.input.releasePointerLock();
     this.hideOverlay();
@@ -4273,6 +4384,7 @@ export class Game {
     if (this.advancementOpen) this.closeAdvancements();
     if (this.creativeOpen) this.closeCreative();
     if (this.statisticsOpen) this.closeStatistics();
+    if (this.tradingOpen) this.closeTrading();
     if (this.craftingOpen) this.closeCrafting();
     const before = this.recipeBook.known.length;
     const grown = unlockRecipes(
@@ -4377,6 +4489,8 @@ export class Game {
     if (this.recipeBookOpen) this.closeRecipeBook();
     if (this.craftingOpen) this.closeCrafting();
     if (this.creativeOpen) this.closeCreative();
+    if (this.statisticsOpen) this.closeStatistics();
+    if (this.tradingOpen) this.closeTrading();
     this.advancementOpen = true;
     this.input.releasePointerLock();
     this.hideOverlay();
@@ -4466,6 +4580,7 @@ export class Game {
     if (this.advancementOpen) this.closeAdvancements();
     if (this.craftingOpen) this.closeCrafting();
     if (this.creativeOpen) this.closeCreative();
+    if (this.tradingOpen) this.closeTrading();
     this.statisticsOpen = true;
     this.input.releasePointerLock();
     this.hideOverlay();
@@ -4499,6 +4614,168 @@ export class Game {
   /** Whether the statistics screen is open (E2E observability). */
   isStatisticsOpen(): boolean {
     return this.statisticsOpen;
+  }
+
+  // ── Villager trading post (278) ────────────────────────────────────────
+
+  /** Live trade state for `professionKey`, or null when unknown. */
+  getTradingState(professionKey: string): VillagerTradeState | null {
+    return this.trades[professionKey] ?? null;
+  }
+
+  /** All trading-post profession keys in stable order. */
+  listTradingProfessions(): readonly string[] {
+    return [...TRADING_PROFESSIONS];
+  }
+
+  /** Currently selected trading profession tab. */
+  getTradingProfession(): string {
+    return this.tradingProfession;
+  }
+
+  /**
+   * Select a trading profession tab. Unknown keys are an identity no-op
+   * returning false (selection unchanged). Never throws.
+   */
+  selectTradingProfession(key: string): boolean {
+    if (!TRADING_PROFESSIONS.includes(key)) return false;
+    this.tradingProfession = key;
+    return true;
+  }
+
+  /** Serialize the live trading map into the durable record (no-op without persistence). */
+  saveTrading(): void {
+    const p = this.persistenceImpl;
+    if (!p || this.recoveryRequiredValue) return;
+    p.saveTrading(serializeTrades(this.trades));
+  }
+
+  /**
+   * Apply the offer at `offerIndex` for `professionKey` inventory-atomically
+   * through the 151 pure core. On success debits exact declared costs,
+   * advances the trade state (uses −1, XP/level, plus level-up unlock merge),
+   * grants the result (inventory, else world-drop on full), fires the
+   * item-obtain advancement choke, persists, and toasts. On any refusal
+   * returns `{ok:false}` with inventory and trade state unchanged. Never throws.
+   */
+  applyTradeOffer(professionKey: string, offerIndex: number): { ok: boolean; reason?: string } {
+    const state = this.trades[professionKey];
+    if (!state) return { ok: false, reason: 'unknown' };
+    const offer = state.offers[offerIndex];
+    if (!offer) return { ok: false, reason: 'unknown' };
+    if (offer.usesRemaining <= 0) return { ok: false, reason: 'exhausted' };
+    const idA = TRADE_KEY_TO_ITEM_ID[offer.inputA.item];
+    const idResult = TRADE_KEY_TO_ITEM_ID[offer.result.item];
+    const idB = offer.inputB !== null ? TRADE_KEY_TO_ITEM_ID[offer.inputB.item] : undefined;
+    if (idA === undefined || idResult === undefined || (offer.inputB !== null && idB === undefined)) {
+      return { ok: false, reason: 'unknown' };
+    }
+    if (this.inventory.getItemCount(idA) < offer.inputA.count) return { ok: false, reason: 'insufficient' };
+    if (offer.inputB !== null && this.inventory.getItemCount(idB!) < offer.inputB.count) {
+      return { ok: false, reason: 'insufficient' };
+    }
+    const offeredA: TradeItem = { item: offer.inputA.item, count: this.inventory.getItemCount(idA) };
+    const offeredB: TradeItem | null =
+      offer.inputB !== null ? { item: offer.inputB.item, count: this.inventory.getItemCount(idB!) } : null;
+    if (!canAcceptTrade(offer, offeredA, offeredB)) {
+      return { ok: false, reason: offer.usesRemaining <= 0 ? 'exhausted' : 'insufficient' };
+    }
+    const preLevel = state.level;
+    const applied = applyTrade(state, offerIndex, offeredA, offeredB);
+    if (!applied.result) return { ok: false, reason: 'insufficient' };
+    // Debit exact declared costs (never the offered surplus).
+    if (!this.inventory.removeItem(idA, applied.consumedA!.count)) return { ok: false, reason: 'insufficient' };
+    if (applied.consumedB !== null) {
+      if (!this.inventory.removeItem(idB!, applied.consumedB.count)) {
+        // Defensive: restore the first debit (count-checked above, unreachable
+        // in practice) rather than duplicating or losing items.
+        this.inventory.addItem(idA, applied.consumedA!.count);
+        return { ok: false, reason: 'insufficient' };
+      }
+    }
+    const next = withUnlockedOffers(applied.state, professionKey, preLevel);
+    this.trades = { ...this.trades, [professionKey]: next };
+    // Grant the result (component-preserving plain path; trade outputs carry
+    // no components). Full inventory drops the stack in-world (no loss).
+    const leftover = this.inventory.addItem(idResult, applied.result.count);
+    if (leftover > 0) {
+      this.itemEntities.spawnLootStacks(
+        [{ item: idResult, count: leftover }],
+        this.player.position.x,
+        this.player.position.y,
+        this.player.position.z,
+        Math.random,
+      );
+    }
+    this.noteItemObtained(idResult);
+    this.saveTrading();
+    this.hotbar.render();
+    if (this.tradingOpen) this.tradingPanel.render();
+    const leveled = next.level > preLevel ? ' — new offers unlocked!' : '';
+    this.showToast(`Traded ${describeTradeOffer(offer)} (${prettifyTradeKey(professionKey)} Lv${next.level})${leveled}`);
+    return { ok: true };
+  }
+
+  /**
+   * Restock every profession to full uses, keeping level/XP. Persists the
+   * result. Never throws.
+   */
+  restockTrades(): void {
+    const next: Record<string, VillagerTradeState> = {};
+    for (const key of TRADING_PROFESSIONS) {
+      const s = this.trades[key] ?? createVillagerTradeState(key, 1);
+      next[key] = restockTradeState(s);
+    }
+    this.trades = next;
+    this.saveTrading();
+    if (this.tradingOpen) this.tradingPanel.render();
+  }
+
+  /**
+   * Open the trading-post screen (278). Closes any other container first:
+   * one container at a time (251/259/260/261/262/263/265/271 parity). The
+   * panel is a pure view over the trade store.
+   */
+  private openTrading(): void {
+    if (this.tradingOpen) return;
+    if (this.furnaceOpen) this.closeFurnace();
+    if (this.brewingOpen) this.closeBrewing();
+    if (this.enchantingOpen) this.closeEnchanting();
+    if (this.gameruleOpen) this.closeGamerule();
+    if (this.recipeBookOpen) this.closeRecipeBook();
+    if (this.advancementOpen) this.closeAdvancements();
+    if (this.craftingOpen) this.closeCrafting();
+    if (this.creativeOpen) this.closeCreative();
+    if (this.statisticsOpen) this.closeStatistics();
+    this.tradingOpen = true;
+    this.input.releasePointerLock();
+    this.hideOverlay();
+    this.crosshair.hide();
+    this.hud.hide();
+    this.hotbar.hide();
+    this.setBreakProgress(0);
+    this.interaction.clearTarget();
+    this.tradingPanel.show();
+    this.tradingPanel.render();
+  }
+
+  /**
+   * Close the trading-post screen. The panel owns no trade state (the store
+   * persists on the bounded save policy), so hiding it plus returning the
+   * overlay is the whole settle. Persists once so uses observed in the panel
+   * can never be lost to a fast reload.
+   */
+  private closeTrading(): void {
+    if (!this.tradingOpen) return;
+    this.tradingOpen = false;
+    this.tradingPanel.hide();
+    this.saveTrading();
+    this.showOverlay('Click to play');
+  }
+
+  /** Whether the trading-post screen is open (E2E observability). */
+  isTradingOpen(): boolean {
+    return this.tradingOpen;
   }
 
   // ── Game mode + creative menu (265) ────────────────────────────────────
@@ -5046,6 +5323,8 @@ export class Game {
     if (this.gameruleOpen) this.closeGamerule();
     if (this.recipeBookOpen) this.closeRecipeBook();
     if (this.advancementOpen) this.closeAdvancements();
+    if (this.statisticsOpen) this.closeStatistics();
+    if (this.tradingOpen) this.closeTrading();
     this.creativeOpen = true;
     this.input.releasePointerLock();
     this.hideOverlay();
@@ -5173,6 +5452,7 @@ export class Game {
     this.saveStatistics();
     this.saveSleep();
     this.saveWeather();
+    this.saveTrading();
     this.saveTimer = 0;
   };
 
@@ -5382,6 +5662,8 @@ export class Game {
     this.closeRecipeBook();
     this.closeAdvancements();
     this.closeCreative();
+    this.closeStatistics();
+    this.closeTrading();
     if (this.craftingOpen) {
       this.closeCrafting();
     }

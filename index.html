@@ -61,6 +61,7 @@
           <button id="gamerule-open" class="hud-chip" type="button" aria-label="Open game rule settings">⚙ Rules</button>
           <button id="advancements-open" class="hud-chip" type="button" aria-label="Open advancements">🏆 Advancements</button>
           <button id="statistics-open" class="hud-chip" type="button" aria-label="Open statistics">📊 Stats</button>
+          <button id="trading-open" class="hud-chip" type="button" aria-label="Open villager trading post">🤝 Trade</button>
           <button id="creative-open" class="hud-chip" type="button" aria-label="Open creative inventory">🧱 Creative</button>
           <button id="gamemode-toggle" class="hud-chip" type="button" aria-label="Toggle game mode between survival and creative" aria-live="polite">Mode: Survival</button>
           <select id="gamemode-select" class="hud-chip" aria-label="Select game mode">
@@ -298,6 +299,36 @@
               <div id="statistics-list" class="statistics-list" aria-label="General statistics"></div>
             </div>
             <p class="crafting-hint">Counters accrue through play — press H or close this panel, then click the world to resume.</p>
+          </div>
+        </div>
+        <div id="trading" class="ui hidden" aria-label="Villager trading post screen">
+          <div class="crafting-panel" role="dialog" aria-modal="true" aria-labelledby="trading-title">
+            <div class="crafting-header">
+              <div>
+                <h2 id="trading-title">Trading Post</h2>
+                <p id="trading-status" class="trading-status" role="status" aria-live="polite">Select an offer, then Trade.</p>
+              </div>
+              <button id="trading-close" class="crafting-close" type="button" aria-label="Close trading post">×</button>
+            </div>
+            <div class="inventory-section">
+              <div class="inventory-section-title">Profession</div>
+              <div id="trading-professions" class="trading-professions" aria-label="Professions">
+                <button id="trading-profession-0" class="trading-profession" type="button" data-profession-index="0">Farmer</button>
+                <button id="trading-profession-1" class="trading-profession" type="button" data-profession-index="1">Librarian</button>
+                <button id="trading-profession-2" class="trading-profession" type="button" data-profession-index="2">Weaponsmith</button>
+              </div>
+              <p id="trading-meta" class="trading-meta"></p>
+              <div id="trading-offers" class="trading-offers" aria-label="Trade offers">
+                <button id="trading-offer-0" class="trading-offer" type="button" data-offer-index="0">Offer 1</button>
+                <button id="trading-offer-1" class="trading-offer" type="button" data-offer-index="1">Offer 2</button>
+                <button id="trading-offer-2" class="trading-offer" type="button" data-offer-index="2">Offer 3</button>
+                <button id="trading-offer-3" class="trading-offer" type="button" data-offer-index="3">Offer 4</button>
+                <button id="trading-offer-4" class="trading-offer" type="button" data-offer-index="4">Offer 5</button>
+                <button id="trading-offer-5" class="trading-offer" type="button" data-offer-index="5">Offer 6</button>
+              </div>
+              <button id="trading-apply" class="trading-apply" type="button">Trade</button>
+            </div>
+            <p class="crafting-hint">Select a profession and an offer, then Trade — press T or close this panel, then click the world to resume.</p>
           </div>
         </div>
         <div id="creative" class="ui hidden" aria-label="Creative inventory screen">

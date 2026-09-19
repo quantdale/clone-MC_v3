@@ -550,3 +550,34 @@ follow-up corrected interaction cooldown handling, stabilized browser evidence,
 fixed the HUD control stack, refreshed the 60-cell visual baselines, and passed
 the complete local validation matrix. Change 258 remains BLOCKED pending the
 owner-deferred headed hardware-WebGL certification; no GPU evidence was fabricated.
+
+## 278 activation alongside BLOCKED 258 — standing owner order 2026-09-19 campaign through 300
+
+The product owner (Standing owner order + Master directive 2026-09-19, clone-MC_v3
+OpenSpec development through Change 300) authorized activating and implementing OpenSpec change
+**278-live-villager-trading-ui** while Change **258-real-world-runtime-performance-fps-recovery**
+remains **BLOCKED** (headed hardware-WebGL certification deferred) and Changes
+**259–277** stand **VERIFIED**.
+
+- Change 258 status stays **BLOCKED** at 40/100 with its existing deferral intact.
+  No headed FPS work is touched, no GPU evidence is faked, and 258 MUST NOT be
+  marked VERIFIED by the 278 track.
+- Changes 259–277 stand **VERIFIED** and MUST NOT be reopened unless a trading
+  regression blocks the 278 player loop. The 278 track performs no gameplay/systems
+  retune beyond the trading-post integration itself and changes no unrelated
+  simulation behavior.
+- At activation, Change 278 (`278-live-villager-trading-ui`) was the sole
+  **ACTIVE** implementation change; it is now **VERIFIED 12/12** after wiring the
+  verified headless `VillagerTrading` (151) +
+  `VillagerProfession` (150) catalog into the live Game as a trading-post UI —
+  world-scoped per-profession trade states with versioned `__trades__` persistence
+  (degrade-to-defaults, reset/archive passthrough), new `emerald`/`bread`/`paper`
+  item defs completing the 151 catalog, inventory-atomic apply through the 151
+  pure core with level-up offer unlocks, `TradingPanel` + HUD/KeyT shell under the
+  one-container rule, unit + browser E2E (open→trade→reload-preserves + lifecycle).
+  No village generation, no villager entity spawning, no workstation POI claiming
+  live, no gossip/restock timers.
+- Change 258 remains recorded BLOCKED and resumable on a hardware-WebGL host;
+  the 278 track does not consume, waive, or re-litigate any 258 headed task.
+- Campaign continues sequentially 279→300 per the 2026-09-19 master directive;
+  each change gets its own activation section as it is activated.

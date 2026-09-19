@@ -33,6 +33,7 @@ import { validateSerializedBlockEntity } from './BlockEntityRecord';
 import type { SerializedEntity } from './EntityRecord';
 import { validateSerializedEntity } from './EntityRecord';
 import { validateChunkEditRecord } from './ChunkEditRecord';
+import { validatePersistedTrades } from '../simulation/VillagerTradingPersistence';
 
 /** Archive format identifier. */
 export const WORLD_ARCHIVE_FORMAT = 'voxel-world';
@@ -166,6 +167,14 @@ export interface WorldArchive {
    * `deserializeWeatherState`, never trusted blindly).
    */
   weatherData?: unknown | null;
+  /**
+   * Raw trading payload stored under __trades__:${worldId}, or null when
+   * absent (278). OPTIONAL: archives without this field validate and
+   * import as null (fresh). A present value must be a plain object payload
+   * (the 278 PersistedTrades shape is validated again at load by
+   * `deserializeTrades`, never trusted blindly).
+   */
+  tradingData?: unknown | null;
 }
 
 function isFiniteNumber(v: unknown): v is number {
@@ -420,6 +429,23 @@ export function validateWorldArchive(input: unknown): WorldArchive {
       weatherData = r.weatherData;
     }
 
+    // 278: optional in every version; missing/null reads as null. A present
+    // value must be a plain object payload (the 278 shape is validated again
+    // at load by `deserializeTrades`, never trusted blindly).
+    let tradingData: unknown | null = null;
+    if (r.tradingData !== null && r.tradingData !== undefined) {
+      if (typeof r.tradingData !== 'object' || Array.isArray(r.tradingData)) {
+        throw new Error('WorldArchive: tradingData must be an object or null');
+      }
+      try {
+        validatePersistedTrades(r.tradingData);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`WorldArchive: ${message}`);
+      }
+      tradingData = r.tradingData;
+    }
+
   return {
     format: WORLD_ARCHIVE_FORMAT as 'voxel-world',
     version: 2 as const,
@@ -443,5 +469,6 @@ export function validateWorldArchive(input: unknown): WorldArchive {
      statisticsData,
      sleepData,
      weatherData,
-   };
+     tradingData,
+    };
 }
