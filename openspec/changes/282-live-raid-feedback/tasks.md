@@ -2,16 +2,16 @@
 
 ## A. Control plane and specification
 
-- [ ] T1. Add the exact 282 sequence row, activate the sole change from
+- [x] T1. Add the exact 282 sequence row, activate the sole change from
   published 281, reserve 283, preserve 258 BLOCKED and 259–281 VERIFIED, and
   author the complete package.
-- [ ] T2. Pass the SPEC_AUTHORING_PROTOCOL quality gate: each MUST/SHALL has a
+- [x] T2. Pass the SPEC_AUTHORING_PROTOCOL quality gate: each MUST/SHALL has a
   scenario, invalid/duplicate/replay/stale/pause/dispose behavior is explicit,
   and no production code is changed before the package validates.
 
 ## B. Pure projection and live ownership
 
-- [ ] T3. Add the pure bounded `RaidFeedbackView` projection with active,
+- [x] T3. Add the pure bounded `RaidFeedbackView` projection with active,
   terminal, null, and invalid-boundary tests.
 - [ ] T4. Add Game-owned ephemeral raid state and deterministic start/tick/clear/
   inspect/replay seams over `RaidStateMachine`, with one transition per fixed

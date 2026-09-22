@@ -1,14 +1,14 @@
 # Verification: 282-live-raid-feedback
 
-Status: NOT VERIFIED
-Progress: 0/10 (0%)
+Status: ACTIVE
+Progress: 3/10 (30%)
 Advancement allowed: false
 
 ## Requirement evidence
 
 | Requirement | Evidence | Status |
 |---|---|---|
-| Bounded pure projection | Pending implementation | PENDING |
+| Bounded pure projection | `tests/unit/RaidFeedbackView.test.ts` PASS (9/9) | PASS |
 | Game-owned ephemeral lifecycle | Pending implementation | PENDING |
 | Fixed-tick/pause/clear semantics | Pending implementation | PENDING |
 | Accessible active/terminal DOM feedback | Pending implementation | PENDING |
@@ -18,7 +18,7 @@ Advancement allowed: false
 
 | Command | Result | Evidence/notes |
 |---|---|---|
-| `npx vitest run tests/unit/RaidFeedbackView.test.ts tests/unit/LiveRaidFeedback.test.ts` | PENDING | Implementation not started |
+| `npx vitest run tests/unit/RaidFeedbackView.test.ts tests/unit/LiveRaidFeedback.test.ts` | RaidFeedbackView PASS 9/9; LiveRaidFeedback PENDING | Implementation in progress |
 | `npx playwright test tests/e2e/raid-feedback.spec.ts` | PENDING | Implementation not started |
 
 ## Required gates
@@ -55,7 +55,7 @@ VERIFIED.
 
 ## Incomplete tasks
 
-T1–T10 are pending.
+T4–T10 are pending.
 
 ## Advancement Exception
 
@@ -63,5 +63,4 @@ Not applicable; the target is 100%.
 
 ## Final decision
 
-NOT VERIFIED — specification package only; production implementation has not
-started.
+NOT VERIFIED — T1–T3 complete (control plane + pure projection); T4–T10 pending.
