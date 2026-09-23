@@ -15,7 +15,7 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "a463e0fe8571576fc10a5bda49dead34b0eac61a",
-  "localHead": "73ad0dfde5ce1d96a2fa5cf5afe1e05a6c5252b8",
+  "localHead": "d26cd3066cbe36b9b0a226c7cb757a22c37edbf4",
   "publishedHead": "73ad0dfde5ce1d96a2fa5cf5afe1e05a6c5252b8",
   "nextExactAction": "283 VERIFIED 13/13 published at 73ad0dfde5ce1d96a2fa5cf5afe1e05a6c5252b8 (origin/main verified equal); next exact action is T1 control-plane activation of 284-raider-entity-spawning from published origin/main per CHANGE_SEQUENCE (NOT started this session; owner rule: no 284 until 283 published — now satisfied); 258 stays BLOCKED",
   "lastCompletedTask": "283 T13 complete: C283 exact/VERIFIED matrix row (Scope/Summary 001-283, total 285), verification VERIFIED 13/13, PROGRAM_STATE 13/13 100%, committed and published to origin/main; next is 284 activation (not started)",
