@@ -715,6 +715,10 @@ Changes 259–281 remain VERIFIED.
 
 ## 282-live-raid-feedback — VERIFIED publication checkpoint (2026-09-23)
 
+Published implementation + verification tip: `f0e022c798b3452a1a2a47a85cd0e493e952fe5e`
+(`origin/main`, local == remote verified after push from session start
+`3b60c6e38666acfde752dc40d7e12bba2ed1d164`).
+
 Change **282-live-raid-feedback** is VERIFIED at **10/10 (100%)** with exact
 parity status. The Game-owned ephemeral raid state drives a pure bounded
 `RaidFeedbackView` projection into one hidden-by-default accessible

@@ -15,7 +15,7 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "3b60c6e38666acfde752dc40d7e12bba2ed1d164",
-  "localHead": "722f0070a91cecc1c153caa9b703235e09ef06b1",
+  "localHead": "f0e022c798b3452a1a2a47a85cd0e493e952fe5e",
   "nextExactAction": "Activate 283-live-raid-persistence from the prepared wt/283 package in a fresh session after publication; do not implement 283 in this session; 258 stays BLOCKED",
   "lastCompletedTask": "282 T10 complete: VERIFIED 10/10, C282 exact, implementation+docs committed and published; next is 283 activation only",
   "blockers": [
