@@ -1,7 +1,7 @@
 # Verification: 283-live-raid-persistence
 
 Status: VERIFIED
-Completion: 13/13 (100%) — T1–T13 complete; all mandatory gates green with documented non-blocking E2E variance; published to `origin/main`
+Completion: 13/13 (100%) — T1–T13 complete; all mandatory gates green with documented non-blocking E2E variance; published to `origin/main` at `73ad0dfde5ce1d96a2fa5cf5afe1e05a6c5252b8`
 Advancement allowed: true
 
 Control plane is activated on `wt/283-live-raid-persistence` (T1: `CHANGE_SEQUENCE.md` row,
@@ -99,7 +99,8 @@ No 283 functional E2E regression remains; no headed GPU evidence is claimed.
 
 ## Incomplete tasks
 
-None. T13 completed: `C283` exact/VERIFIED matrix row, Scope/Summary/coverage reconciled to 001–283 (285 total rows), PROGRAM_STATE 13/13 VERIFIED, committed and published to `origin/main` per `REVIEW_HANDOFF.md`.
+None. T13 completed: `C283` exact/VERIFIED matrix row, Scope/Summary/coverage reconciled to 001–283 (285 total rows), PROGRAM_STATE 13/13 VERIFIED, committed and published to `origin/main` per `REVIEW_HANDOFF.md`, published at `73ad0dfde5ce1d96a2fa5cf5afe1e05a6c5252b8` (origin/main
+verified equal to local HEAD).
 
 ## Advancement Exception
 

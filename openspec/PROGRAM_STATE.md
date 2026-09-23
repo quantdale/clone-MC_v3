@@ -3,7 +3,7 @@
 ## Current checkpoint — 2026-09-23 Change 283 VERIFIED 13/13 (100%); published to origin/main; 284 is next (not started)
 
 > **Change 283-live-raid-persistence is VERIFIED 13/13 (100%); all baseline gates green (typecheck/lint/unit 5351+1/build/file-audit 2892/validate-state/full E2E 110 passed with both failures classified non-blocking); last completed Change 283-live-raid-persistence is VERIFIED; Changes 001–283 are VERIFIED; Change 258 remains BLOCKED; Changes 259–283 are not reopened.**
-> Session start was `a463e0fe8571576fc10a5bda49dead34b0eac61a` on `origin/main`; local HEAD after the SPEC-FIRST package commit was `56c2313609556b2b2d99215c55f26729e244baf2`; published_head is recorded in PROGRAM_STATE.json after the final push.
+> Session start was `a463e0fe8571576fc10a5bda49dead34b0eac61a` on `origin/main`; published_head is `73ad0dfde5ce1d96a2fa5cf5afe1e05a6c5252b8` (origin/main verified equal to local HEAD after push).
 > 283 added a world-scoped `__raid__` persistence seam behind the verified `RaidStateMachine`; no raider entity spawning, settlement detection, 282 HUD redesign, or headed FPS/GPU work.
 
 - Control plane: `CHANGE_SEQUENCE.md` 283 row, `CHANGE_SEQUENCE_OVERRIDES.md` 283 addendum, and `PROGRAM_STATE` 283 ACTIVE checkpoint applied; SPEC-FIRST package committed at `56c2313`; T2 quality gate PASS; T3–T8 implementation + unit green; T9+T10 E2E green (raid-persistence.spec 4 tests + raid-feedback reload rewrite + `GamePersistence.importWorldBackup`; focused raid E2E 8/8; typecheck/lint 0 errors; file-audit 2892 PASS).
