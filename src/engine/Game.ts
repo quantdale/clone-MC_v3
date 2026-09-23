@@ -322,6 +322,7 @@ import type { WitherSkullState } from '../simulation/WitherSkull';
 import { CollisionResolver, type ShapeWorld } from '../world/CollisionResolver';
 import { computeExplosion } from '../simulation/ExplosionCore';
 import { startRaid, tickRaid, recordRaiderDeath, type RaidState } from '../simulation/RaidStateMachine';
+import { deserializeRaidPayload, serializeRaidPayload } from '../simulation/RaidPersistence';
 import { projectRaidFeedback } from '../ui/RaidFeedbackView';
 
 /** Maximum eye-to-furnace distance before an open furnace screen auto-closes (251). */
@@ -1192,6 +1193,24 @@ export class Game {
       }).catch(() => undefined);
     }
 
+    // 283 raid: the validated persisted raid when present, null otherwise
+    // (absent or corrupt records never break boot; the facade already degraded
+    // them to null). No wake-like mutation — state is left exactly as
+    // persisted. Same late-load parity as above (the feedback bar re-projects
+    // when the late payload lands).
+    this.raidState = deserializeRaidPayload(this.persistenceImpl?.initialRaid);
+    this.syncRaidFeedbackHud();
+    if (this.selfOpenPromise !== null) {
+      void this.selfOpenPromise.then(() => {
+        if (this.disposed) return;
+        const late = this.persistenceImpl?.initialRaid;
+        if (late) {
+          this.raidState = deserializeRaidPayload(late);
+          this.syncRaidFeedbackHud();
+        }
+      }).catch(() => undefined);
+    }
+
     this.player = new Player();
     // Startup compatibility decision (257): for an injected (already open)
     // persistence the assessment and canonical columns are available now, so
@@ -1689,8 +1708,10 @@ export class Game {
       clearTimeout(this.shieldBrokenTimer);
       this.shieldBrokenTimer = null;
     }
-    // Live raid feedback (282): ephemeral — drop the state and re-sync so the
-    // bar hides with NONE text; no save path below sees raid data.
+    // 283: final durable save while the live state is still present, then
+    // drop the transient reference and re-sync so the 282 bar hides with NONE
+    // text (dispose-hide contract). Null state at save time clears the record.
+    this.saveRaid();
     this.raidState = null;
     this.syncRaidFeedbackHud();
     this.dismissDeathScreen();
@@ -1938,6 +1959,7 @@ export class Game {
         this.saveSleep();
         this.saveWeather();
         this.saveTrading();
+        this.saveRaid();
       }
     }
 
@@ -5069,6 +5091,17 @@ export class Game {
     p.saveWeather(serializeWeatherState(this.weather));
   }
 
+  /**
+   * Serialize the live raid into the durable record (283; no-op without
+   * persistence or while recovery-required). A null live state deletes the
+   * `__raid__` key so a cleared raid cannot resurrect.
+   */
+  saveRaid(): void {
+    const p = this.persistenceImpl;
+    if (!p || this.recoveryRequiredValue) return;
+    p.saveRaid(this.raidState === null ? null : serializeRaidPayload(this.raidState));
+  }
+
   /** Sync the HUD weather indicator to the live store (275, null-safe pre-shell). */
   private updateWeatherIndicator(): void {
     if (!this.weatherIndicatorEl) return;
@@ -5811,6 +5844,7 @@ export class Game {
     this.saveSleep();
     this.saveWeather();
     this.saveTrading();
+    this.saveRaid();
     this.saveTimer = 0;
   };
 

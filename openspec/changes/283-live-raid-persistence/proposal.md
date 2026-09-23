@@ -30,9 +30,10 @@ recovery path. The repository already has a proven raw-metadata namespace patter
 - No Change 258 headed FPS/GPU work, fake GPU evidence, or 258 status change (258 stays
   BLOCKED).
 - No multiplayer/server-owned raid authority (222–237 boundary).
-- No production `src/` or `tests/` implementation in this authoring session: this package is
-  SPEC-FIRST only and activates only after 282 is VERIFIED on `origin/main`.
 - No redesign of `RaidStateMachine` transitions, `RaidFeedbackView`, or the 282 HUD contract.
+- Spec/implementation timing: the package was authored SPEC-FIRST before activation; after
+  T1 activated the change on `origin/main` (282 VERIFIED), production edits are authorized
+  only through tasks T3–T13.
 
 ## Preconditions
 
@@ -40,7 +41,8 @@ recovery path. The repository already has a proven raw-metadata namespace patter
   codec; `deserializeRaid` already throws on malformed input).
 - Change 282 `282-live-raid-feedback` VERIFIED on `origin/main` (Game owns one ephemeral
   `RaidState`, fixed-tick progression, `#raid-feedback` bar, `getRaidState()` seam). This
-  change MUST NOT be activated while 282 is still ACTIVE.
+  change MUST NOT be activated while 282 is still ACTIVE. **Satisfied at T1 activation
+  (sessionStartHead `a463e0fe8571576fc10a5bda49dead34b0eac61a`).**
 - Changes 265–278 raw-metadata persistence pattern (put/get, degrade, reset snapshot/restore,
   optional archive field with pre-write validation) is the template.
 - Change 258 remains BLOCKED; Changes 259–281 remain VERIFIED unless a later change reopens

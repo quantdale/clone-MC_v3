@@ -7,8 +7,9 @@ import { test, expect, type Page } from '@playwright/test';
  * debugTickRaid / getRaidState and the single accessible #raid-feedback bar
  * (title, detail, fill, data-status, aria-label). Covers boot-hidden default,
  * active wave feedback, bounded clear → victory, terminal replay, invalid omen
- * refusal-without-throw, accessibility attributes, and reload with no raid
- * resurrection. No persistence key exists for raid state.
+ * refusal-without-throw, accessibility attributes, and (under 283) reload
+ * restores the active raid through the durable `__raid__` record while
+ * absent-record boot stays hidden.
  */
 
 type RaidStateView = {
@@ -242,11 +243,18 @@ test.describe('live raid feedback (282)', () => {
     expect(await page.locator('#raid-feedback').count()).toBe(1);
   });
 
-  test('reload has no raid resurrection and no stale visible bar', async ({ page }) => {
+  test('reload restores the active raid through __raid__ (283); bar re-projects', async ({
+    page,
+  }) => {
     test.setTimeout(300_000);
     await waitForGame(page);
 
-    // Make a raid visible, then pagehide + reload (weather-cycle precedent).
+    // Boot without a record: hidden NONE (absent-record path stays covered).
+    expect(await raidState(page)).toBeNull();
+    const boot = await feedback(page);
+    expect(boot.hidden).toBe(true);
+    expect(boot.status).toBe('NONE');
+
     await page.evaluate(() => {
       const g = (window as unknown as { __voxelGame?: GameHandle }).__voxelGame!;
       g.debugStartRaid(1);
@@ -254,19 +262,27 @@ test.describe('live raid feedback (282)', () => {
     const before = await feedback(page);
     expect(before.hidden).toBe(false);
     expect(before.status).toBe('ACTIVE');
+    const beforeState = await raidState(page);
+    expect(beforeState).not.toBeNull();
 
     await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide')));
     await page.waitForTimeout(2500);
     await waitForGame(page);
 
-    expect(await raidState(page)).toBeNull();
+    const restored = await raidState(page);
+    expect(restored).not.toBeNull();
+    expect(restored!.status).toBe(beforeState!.status);
+    expect(restored!.waveIndex).toBe(beforeState!.waveIndex);
+    expect(restored!.totalWaves).toBe(beforeState!.totalWaves);
+    expect(restored!.raidersRemaining).toBe(beforeState!.raidersRemaining);
+    expect(restored!.badOmenLevel).toBe(beforeState!.badOmenLevel);
+    expect(restored!.ticks).toBe(beforeState!.ticks);
+
     const after = await feedback(page);
     expect(after.present).toBe(true);
-    expect(after.hidden).toBe(true);
-    expect(after.status).toBe('NONE');
-    expect(after.title).toBe('');
-    expect(after.detail).toBe('');
-    expect(after.ariaLabel).toBe('');
+    expect(after.hidden).toBe(false);
+    expect(after.status).toBe('ACTIVE');
+    expect(after.title).toBe('Raid');
   });
 
   test('dispose hides the bar and clears the transient state', async ({ page }) => {

@@ -62,7 +62,7 @@ import {
   assessWorldStartup,
   type WorldStartupAssessment,
 } from './WorldStartupAssessment';
-import { WorldArchiver } from './WorldArchiver';
+import { WorldArchiver, type WorldImportReport } from './WorldArchiver';
 import {
   deserializeGameRules,
   type GameRuleStore,
@@ -100,6 +100,11 @@ import {
   type WeatherState,
 } from '../simulation/WeatherFramework';
 import { deserializeTrades } from '../simulation/VillagerTradingPersistence';
+import {
+  deserializeRaidPayload,
+  serializeRaidPayload,
+  type SerializedRaid,
+} from '../simulation/RaidPersistence';
 import { coreProgressionAdvancements } from '../simulation/CoreProgressionAdvancements';
 
 /**
@@ -367,6 +372,8 @@ export class GamePersistence implements WorldEditDurability {
   private initialWeatherValue: WeatherState | null = null;
   /** Validated trading map bulk-loaded at open() (278; null when absent or corrupt; degrade-to-fresh at boot). */
   private initialTradingValue: Record<string, import('../simulation/VillagerTrading').VillagerTradeState> | null = null;
+  /** Validated raid envelope bulk-loaded at open() (283; null when absent or corrupt; degrade-to-null at boot). */
+  private initialRaidValue: SerializedRaid | null = null;
   private initialColumnsValue: SerializedChunkColumn[] = [];
   /** World generation baseline compatibility classification. */
   private generationBaselineValue: WorldGenerationBaseline = 'current';
@@ -831,6 +838,28 @@ export class GamePersistence implements WorldEditDurability {
         this.initialTradingValue = null;
         this.recordError(`load trading: ${errorMessage(e)}`);
       }
+      // 283 hydration: raid payload stored via raw raid data. Absent stays
+      // null (Game boots with no raid); corrupt/stale payloads degrade to
+      // null with a recorded error so boot continues. Full strict validation
+      // is `deserializeRaid` (version + status + finite centers + integer
+      // counters + waveIndex <= totalWaves). No wake-like mutation: a valid
+      // envelope is stored as-is for Game to decode through
+      // `deserializeRaidPayload`.
+      try {
+        const raw = await this.metadata.getRaidData(this.worldIdValue);
+        if (raw !== null) {
+          const state = deserializeRaidPayload(raw);
+          if (state === null) {
+            this.initialRaidValue = null;
+            this.recordError('load raid: corrupt payload');
+          } else {
+            this.initialRaidValue = serializeRaidPayload(state);
+          }
+        }
+      } catch (e) {
+        this.initialRaidValue = null;
+        this.recordError(`load raid: ${errorMessage(e)}`);
+      }
     }
 
     // 5.5 Authoritative startup compatibility decision (257). Computed after the
@@ -916,6 +945,7 @@ export class GamePersistence implements WorldEditDurability {
       this.initialSleepValue = null;
       this.initialWeatherValue = null;
       this.initialTradingValue = null;
+      this.initialRaidValue = null;
       this.initialColumnsValue = [];
     }
     this.opened = true;
@@ -980,6 +1010,7 @@ export class GamePersistence implements WorldEditDurability {
       sleepData: unknown | null;
       weatherData: unknown | null;
       tradingData: unknown | null;
+      raidData: unknown | null;
       columns: SerializedChunkColumn[];
       edits: Array<{ chunkX: number; chunkY: number; chunkZ: number; changes: Array<[number, number]> }>;
       playerState: PlayerStateRecord | null;
@@ -1001,7 +1032,8 @@ export class GamePersistence implements WorldEditDurability {
          const sleepData = await this.metadata.getSleepData(worldId);
          const weatherData = await this.metadata.getWeatherData(worldId);
          const tradingData = await this.metadata.getTradingData(worldId);
-       const columns = await this.chunkSections.listColumns(worldId);
+         const raidData = await this.metadata.getRaidData(worldId);
+        const columns = await this.chunkSections.listColumns(worldId);
       const editRecords = await this.chunkEdits.listChunkEdits(worldId);
       const playerState = await this.playerStates.getPlayerState(worldId);
       const blockEntityChunks = await this.blockEntities.listChunks(worldId);
@@ -1021,6 +1053,7 @@ export class GamePersistence implements WorldEditDurability {
         sleepData,
         weatherData,
         tradingData,
+        raidData,
         columns: [...columns],
         edits: editRecords.map((r) => ({ chunkX: r.chunkX, chunkY: r.chunkY, chunkZ: r.chunkZ, changes: [...r.changes] })),
         playerState,
@@ -1084,6 +1117,8 @@ export class GamePersistence implements WorldEditDurability {
         await awaitRequest(metaStore.delete(`__weather__:${worldId}`));
         // 2k. Raw trading record (278; separate key in the same metadata store).
         await awaitRequest(metaStore.delete(`__trades__:${worldId}`));
+        // 2l. Raw raid record (283; separate key in the same metadata store).
+        await awaitRequest(metaStore.delete(`__raid__:${worldId}`));
         // 3. Every chunk column for this world. Key shape: `${worldId}|${cx}|${cz}`.
         for (const column of snapshot!.columns) {
           await awaitRequest(csStore.delete(worldChunkKey(worldId, column.chunkX, column.chunkZ)));
@@ -1127,6 +1162,7 @@ export class GamePersistence implements WorldEditDurability {
         if (snapshot!.sleepData !== null) await this.metadata.putSleepData(worldId, snapshot!.sleepData);
         if (snapshot!.weatherData !== null) await this.metadata.putWeatherData(worldId, snapshot!.weatherData);
         if (snapshot!.tradingData !== null) await this.metadata.putTradingData(worldId, snapshot!.tradingData);
+        if (snapshot!.raidData !== null) await this.metadata.putRaidData(worldId, snapshot!.raidData);
         for (const col of snapshot!.columns) await this.chunkSections.putColumn(worldId, col);
         for (const rec of snapshot!.edits) await this.chunkEdits.putChunkEdits(worldId, rec.chunkX, rec.chunkY, rec.chunkZ, rec.changes);
         if (snapshot!.playerState) await this.playerStates.putPlayerState(snapshot!.playerState);
@@ -1163,6 +1199,35 @@ export class GamePersistence implements WorldEditDurability {
       return { ok: true, json: JSON.stringify(archive) };
     } catch (e) {
       return { ok: false, error: `backup failed: ${e instanceof Error ? e.message : String(e)}` };
+    }
+  }
+
+  /**
+   * Import a validated world archive JSON (283 archive leg / symmetric to
+   * `exportWorldBackup`). Validation (`validateWorldArchive`, including
+   * fail-closed `raidData`) runs before the first store write; a malformed
+   * archive returns `{ ok: false }` with zero partial migration.
+   */
+  async importWorldBackup(
+    json: string,
+  ): Promise<{ ok: true; report: WorldImportReport } | { ok: false; error: string }> {
+    if (!this.opened || this.disposed) {
+      return { ok: false, error: 'import failed: persistence is not open' };
+    }
+    try {
+      const archive = JSON.parse(json) as Parameters<WorldArchiver['importWorld']>[0];
+      const archiver = new WorldArchiver({
+        metadata: this.metadata,
+        chunkSections: this.chunkSections,
+        blockEntities: this.blockEntities,
+        entities: this.entities,
+        playerStates: this.playerStates,
+        chunkEdits: this.chunkEdits,
+      });
+      const report = await archiver.importWorld(archive);
+      return { ok: true, report };
+    } catch (e) {
+      return { ok: false, error: `import failed: ${e instanceof Error ? e.message : String(e)}` };
     }
   }
 
@@ -1490,6 +1555,11 @@ export class GamePersistence implements WorldEditDurability {
     return this.initialTradingValue;
   }
 
+  /** Validated raid envelope bulk-loaded at `open()` (283; null when absent or corrupt; degrade-to-null). */
+  get initialRaid(): SerializedRaid | null {
+    return this.initialRaidValue;
+  }
+
   /** Bulk-loaded persisted canonical columns for this world. */
   get initialColumns(): SerializedChunkColumn[] {
     return this.initialColumnsValue;
@@ -1566,6 +1636,21 @@ export class GamePersistence implements WorldEditDurability {
   saveTrading(payload: unknown): void {
     if (this.disposed || this.resetCompleted) return;
     void this.metadata.putTradingData(this.worldIdValue, payload).catch((e) => this.recordError(`save trading: ${errorMessage(e)}`));
+  }
+
+  /**
+   * Persist the raid payload via raw raid data (283). A null/undefined
+   * payload deletes the single `__raid__` key so a cleared raid cannot
+   * resurrect; a non-null payload overwrites the same key (last write wins).
+   * Guarded like `saveWeather`/`saveTrading` (disposed / post-reset ⇒ no-op).
+   */
+  saveRaid(payload: unknown): void {
+    if (this.disposed || this.resetCompleted) return;
+    if (payload === null || payload === undefined) {
+      void this.metadata.deleteRaw(`__raid__:${this.worldIdValue}`).catch((e) => this.recordError(`save raid: ${errorMessage(e)}`));
+      return;
+    }
+    void this.metadata.putRaidData(this.worldIdValue, payload).catch((e) => this.recordError(`save raid: ${errorMessage(e)}`));
   }
 
   /** Persist the XP-orb snapshot via raw XP-orb data (264). */

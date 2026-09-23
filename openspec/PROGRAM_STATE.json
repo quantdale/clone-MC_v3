@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "status": "ACTIVE",
-  "currentChange": "282-live-raid-feedback",
+  "currentChange": "283-live-raid-persistence",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "282-live-raid-feedback",
-  "nextChange": "283-live-raid-persistence",
-  "completedTasks": 10,
-  "totalTasks": 10,
+  "lastCompletedChange": "283-live-raid-persistence",
+  "nextChange": "284-raider-entity-spawning",
+  "completedTasks": 13,
+  "totalTasks": 13,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -14,14 +14,21 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "3b60c6e38666acfde752dc40d7e12bba2ed1d164",
-  "localHead": "f0e022c798b3452a1a2a47a85cd0e493e952fe5e",
-  "nextExactAction": "Activate 283-live-raid-persistence from the prepared wt/283 package in a fresh session after publication; do not implement 283 in this session; 258 stays BLOCKED",
-  "lastCompletedTask": "282 T10 complete: VERIFIED 10/10, C282 exact, implementation+docs committed and published; next is 283 activation only",
+  "sessionStartHead": "a463e0fe8571576fc10a5bda49dead34b0eac61a",
+  "localHead": "56c2313609556b2b2d99215c55f26729e244baf2",
+  "nextExactAction": "283 VERIFIED 13/13 and published; next exact action is T1 control-plane activation of 284-raider-entity-spawning from published origin/main per CHANGE_SEQUENCE (NOT started this session; owner rule: no 284 until 283 published — now satisfied); 258 stays BLOCKED",
+  "lastCompletedTask": "283 T13 complete: C283 exact/VERIFIED matrix row (Scope/Summary 001-283, total 285), verification VERIFIED 13/13, PROGRAM_STATE 13/13 100%, committed and published to origin/main; next is 284 activation (not started)",
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-282 are VERIFIED; game shippable with known performance-certification debt. The 283 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
   "validationResults": [
+    {
+      "change": "283-live-raid-persistence",
+      "status": "VERIFIED",
+      "unitTests": 5351,
+      "e2eTests": 110,
+      "note": "13/13 tasks complete (100%). World-scoped __raid__:<worldId> persistence seam over RaidStateMachine: RaidPersistence codec (fail-closed deserialize, pre-write validate), WorldMetadataRepository put/get single-key, GamePersistence bulk-load/saveRaid/reset + importWorldBackup raidData, Game hydrate + autosave/dispose/pagehide save points (dispose save-before-clear), WorldArchive.raidData fail-closed + raidDataImported; 282 getRaidState/#raid-feedback contract unchanged. Gates: typecheck PASS; lint 0 errors / 85 existing warnings; full unit 449 files 5351 passed + 1 skipped; build PASS 3.87s; file-audit 2892 PASS (sha 75d564f6...); validate-state PASS; exact npm run test:e2e 112 scheduled with 110 passed — enchanting:227 transient flake (isolated re-run 2/2 PASS, task bash-ee3051a71b7ebf91) and visual:176 baseline-equivalent Linux SwiftShader golden drift (30 fail/30 pass in /tmp/visual-283-classify.log matching /tmp/visual-282-rerun.log + /tmp/visual-head.log 30/30 sets; one-cell swap crosshair/high/1920x1080 vs start-overlay/high/1920x1080; 25/30 fractions byte-identical); all raid E2E green (persistence 4 + feedback 4). C283 matrix row exact/VERIFIED. No 283 functional E2E regression and no headed GPU evidence are claimed. Change 258 remains BLOCKED; Changes 259-283 are VERIFIED. session_start_head a463e0fe8571576fc10a5bda49dead34b0eac61a."
+    },
     {
       "change": "282-live-raid-feedback",
       "status": "VERIFIED",

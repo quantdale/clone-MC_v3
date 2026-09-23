@@ -1,8 +1,8 @@
 # PARITY_MATRIX.md
 
 - **Schema version:** `v1`
-- **Generated:** 2026-09-23 Change 282 reconciliation (original matrix generated 2026-08-25; post-terminal rows and the Change-258 blocker are now included; provenance in `openspec/PROGRAM_STATE.json`)
-- **Scope:** one row per numbered change `001`–`282` (FeatureId `C<number>`), plus master-plan-only feature areas (`MP-<section>-<seq>`). Change 258 is intentionally recorded as `deferred`/`BLOCKED`, not VERIFIED.
+- **Generated:** 2026-09-23 Change 283 reconciliation (original matrix generated 2026-08-25; post-terminal rows and the Change-258 blocker are now included; provenance in `openspec/PROGRAM_STATE.json`)
+- **Scope:** one row per numbered change `001`–`283` (FeatureId `C<number>`), plus master-plan-only feature areas (`MP-<section>-<seq>`). Change 258 is intentionally recorded as `deferred`/`BLOCKED`, not VERIFIED.
 
 ## Sources of truth
 
@@ -27,7 +27,7 @@ Directory-slug note: three directories use slugs that differ from the sequence t
 
 Boundary disambiguation: `exact` vs `equivalent` — if only the internal mechanism differs but the player-visible behavior and its rules match as specified, it is still `exact`; `equivalent` is reserved for outcomes whose reference mechanism is proprietary/unavailable and was deliberately replaced by a locally-documented one. `equivalent` vs `approx` — `equivalent` rows have no behavioral shortfall, only a substituted mechanism; `approx` rows record an actual known behavioral/fidelity difference caused by a platform or legal-resource constraint. `deferred` vs `out-of-scope` — `deferred` features remain planned work; `out-of-scope` features will never be implemented because they require proprietary assets/services or non-browser capability.
 
-## Change matrix (C001–C282)
+## Change matrix (C001–C283)
 
 Narrow-outcome text is quoted from `openspec/CHANGE_SEQUENCE.md` (authoritative catalog); status is confirmed against `openspec/PROGRAM_STATE.json` (`validationResults`) and each change's `verification.md`.
 
@@ -314,6 +314,7 @@ Narrow-outcome text is quoted from `openspec/CHANGE_SEQUENCE.md` (authoritative 
 | C280 | `280-death-respawn-ui` | Additive live death/respawn presentation over the existing synchronous SurvivalSystem and Hardcore/Sleep rules: safe closed-cause mapping, normal respawn and hardcore spectator outcome cards, idempotent Continue lifecycle, one-container/pointer-lock integration, no new persistence namespace, and unit/browser regression coverage. | exact | `openspec/changes/280-death-respawn-ui/verification.md` (VERIFIED 10/10) + `specs/death-respawn-ui/spec.md` | Exact full unit/build/E2E gate; visual matrix 60/60; one known software-WebGL spectator timing variance is non-blocking; no 258 headed work or GPU evidence. | VERIFIED |
 | C281 | `281-workstation-ui` | Live player-placed smoker workstation over the verified furnace state/menu/block-entity seams: stable smoker block/item identity (block 64/item 72), original procedural tile and container shape, delegated twice-fast furnace context, type-safe `smoker` payload adapter, authoritative live host placement/menu/tick/hydrate/stale/XP/removal lifecycle, station-labelled shared furnace UI and Game/interaction wiring, existing block-entity archive/reload/break path, and focused/browser coverage. | exact | `openspec/changes/281-workstation-ui/verification.md` (VERIFIED 12/12) + `specs/live-smoker-workstation/spec.md` | Exact functional outcome with original procedural art and a documented pre-existing Linux software-WebGL HUD golden drift in the monolithic E2E; no 258 headed work or GPU evidence. | VERIFIED |
 | C282 | `282-live-raid-feedback` | Bounded live raid feedback over the verified RaidStateMachine: pure `RaidFeedbackView` projection from Game-owned ephemeral raid state, exactly one `tickRaid` per unpaused fixed tick, deterministic `debugStartRaid`/`debugClearRaidWave`/replay seams with finite omen clamping, hidden-by-default accessible `#raid-feedback` DOM bar synced from the projection with dispose/reload hide, focused unit + four browser journeys, no raider entity spawning, settlement detection, persistence namespace, or 258 headed work. | exact | `openspec/changes/282-live-raid-feedback/verification.md` (VERIFIED 10/10) + `specs/live-raid-feedback/spec.md` | Exact functional outcome; full E2E visual-matrix drift proven baseline-equivalent at pristine `722f007` (same 30 fail/30 pass cells and matching fractions, Linux SwiftShader/golden environment); no 258 headed work or GPU evidence. | VERIFIED |
+| C283 | `283-live-raid-persistence` | World-scoped `__raid__:<worldId>` persistence seam behind the verified RaidStateMachine and 282 feedback contract: `RaidPersistence` codec (`serializeRaid`/`deserializeRaid`/`validatePersistedRaid`, fail-closed null on defect, pre-write throw on malformed/stale), `WorldMetadataRepository.putRaidData`/`getRaidData` single-key overwrite, GamePersistence bulk-load/`initialRaid`/guarded `saveRaid` (null clears key)/reset snapshot-delete-restore, Game boot hydration + autosave/dispose/pagehide save points with dispose save-before-clear, optional `WorldArchive.raidData` fail-closed import + `raidDataImported`, unit + browser E2E reload/reset/corrupt/archive proofs; `getRaidState()`/`#raid-feedback` 282 contract unchanged, no raider entity spawning, settlement detection, or 258 headed work. | exact | `openspec/changes/283-live-raid-persistence/verification.md` (VERIFIED 13/13) + `specs/live-raid-persistence/spec.md` | Exact functional outcome; full E2E 110/112 with enchanting:227 transient flake (isolated re-run 2/2 PASS) and visual-matrix Linux SwiftShader drift proven baseline-equivalent (30 fail/30 pass matching two independent baselines; one-cell swap; 25/30 fractions byte-identical); no 258 headed work or GPU evidence. | VERIFIED |
 
 ## Master-plan-only features
 
@@ -353,20 +354,22 @@ Feature areas named in `MINECRAFT_PARITY_MASTER_PLAN.md` that no single numbered
 **Post-terminal note (2026-09-19, villager trading):** Change 278 is VERIFIED 12/12 from its package evidence: the live trading UI, persistence/archive carry, atomic rules, lifecycle, and full 97-spec browser regression are green. Change 258 remains BLOCKED for headed hardware-WebGL evidence; 259–277 remain VERIFIED and were not reopened.
 **Post-terminal note (2026-09-19, workstation):** Change `281-workstation-ui` is VERIFIED 12/12 and exact: a player-placed smoker reuses block 64/item 72, FurnaceState/menu/block-entity archive seams, and a delegated twice-fast cooking context; focused/browser/archive evidence is green. The monolithic E2E had one unrelated existing `hud/high/1280x720` Linux software-WebGL golden drift while all 281 functional journeys passed. Change 258 remains BLOCKED and Changes 259–281 remain VERIFIED.
 
-**Post-terminal note (2026-09-23, live raid feedback):** Change `282-live-raid-feedback` is VERIFIED 10/10 and exact: Game-owned ephemeral raid state drives a pure projection into one accessible hidden-by-default `#raid-feedback` bar with deterministic start/tick/clear/replay seams, no persistence/entity namespace, and four green browser journeys. Exact full E2E was 107/108; the sole visual-matrix failure was proven baseline-equivalent (identical 30 fail/30 pass cell set and matching changed fractions at pristine published tip `722f007` without 282 working-tree changes). Change 258 remains BLOCKED and Changes 259–282 remain VERIFIED; this matrix covers every numbered change 001–282.
+**Post-terminal note (2026-09-23, live raid feedback):** Change `282-live-raid-feedback` is VERIFIED 10/10 and exact: Game-owned ephemeral raid state drives a pure projection into one accessible hidden-by-default `#raid-feedback` bar with deterministic start/tick/clear/replay seams, no persistence/entity namespace, and four green browser journeys. Exact full E2E was 107/108; the sole visual-matrix failure was proven baseline-equivalent (identical 30 fail/30 pass cell set and matching changed fractions at pristine published tip `722f007` without 282 working-tree changes). Change 258 remains BLOCKED and Changes 259–282 remain VERIFIED.
+
+**Post-terminal note (2026-09-23, live raid persistence):** Change `283-live-raid-persistence` is VERIFIED 13/13 and exact: a world-scoped `__raid__:<worldId>` codec/repository/GamePersistence/Game lifecycle seam (hydrate at boot, save at autosave/dispose/pagehide, dispose save-before-clear, null clears, reset delete, archive `raidData` passthrough fail-closed) restores the active raid across reload while the 282 `getRaidState()`/`#raid-feedback` contract stays byte-for-byte intact. Full gates green (typecheck/lint/unit 5351+1/build/file-audit 2892/validate-state); full E2E 110/112 with the enchanting:227 failure proven a transient flake (isolated re-run 2/2 PASS) and visual:176 proven baseline-equivalent (30 fail/30 pass matching `/tmp/visual-282-rerun.log` and `/tmp/visual-head.log`, one-cell swap, 25/30 fractions byte-identical). Change 258 remains BLOCKED and Changes 259–283 remain VERIFIED; this matrix covers every numbered change 001–283.
 
 ## Summary
 
 | Category | Rows |
 |---|---|
-| exact | 268 (267 numbered rows plus MP-19.4-1 Wither-like secondary boss via C252) |
+| exact | 269 (268 numbered rows plus MP-19.4-1 Wither-like secondary boss via C252) |
 | equivalent | 4 |
 | approx | 6 |
 | deferred | 1 (C258 — BLOCKED headed hardware-WebGL evidence) |
 | out-of-scope | 1 (MP-33-1 proprietary services/assets) |
 | n/a (documentation) | 4 (C248, C249, C250, C268) |
-| **Total rows** | **284** (282 change rows + 2 master-plan rows) |
+| **Total rows** | **285** (283 change rows + 2 master-plan rows) |
 
-Change-rows-only split: exact 267 / equivalent 4 / approx 6 / deferred 1 / n/a 4 = 282.
+Change-rows-only split: exact 268 / equivalent 4 / approx 6 / deferred 1 / n/a 4 = 283.
 
-**Coverage statement:** every numbered change 001–282 appears in exactly one row (bijective `C001`…`C282`, no duplicates, no orphan rows). Every completed change maps to a cited VERIFIED artifact; C258 is explicitly documented as BLOCKED rather than upgraded to VERIFIED. The two additional `MP-*` rows cover master-plan areas outside the numbered sequence; MP-19.4-1 is closed `exact` by C252. The matrix audit is cross-checked against the package evidence and `openspec/PROGRAM_STATE.json`; the current state validator still owns its historical 001–250 schema checks and does not treat C258 as verified.
+**Coverage statement:** every numbered change 001–283 appears in exactly one row (bijective `C001`…`C283`, no duplicates, no orphan rows). Every completed change maps to a cited VERIFIED artifact; C258 is explicitly documented as BLOCKED rather than upgraded to VERIFIED. The two additional `MP-*` rows cover master-plan areas outside the numbered sequence; MP-19.4-1 is closed `exact` by C252. The matrix audit is cross-checked against the package evidence and `openspec/PROGRAM_STATE.json`; the current state validator still owns its historical 001–250 schema checks and does not treat C258 as verified.

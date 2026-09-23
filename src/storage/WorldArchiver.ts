@@ -28,6 +28,7 @@ const RAW_WORLD_KEYS = [
   '__sleep__:',
   '__weather__:',
   '__trades__:',
+  '__raid__:',
 ] as const;
 
 type RequestLike = {
@@ -115,6 +116,8 @@ export interface WorldImportReport {
   weatherDataImported: boolean;
   /** Whether trading data was written (278). */
   tradingDataImported: boolean;
+  /** Whether raid data was written (283). */
+  raidDataImported: boolean;
 }
 
 /** Exports and imports whole-world archives over every world-owned repository. */
@@ -200,6 +203,8 @@ export class WorldArchiver {
     const weatherData = await this.metadata.getWeatherData(worldId);
     // Trading raw record (278): same fail-closed contract.
     const tradingData = await this.metadata.getTradingData(worldId);
+    // Raid raw record (283): same fail-closed contract.
+    const raidData = await this.metadata.getRaidData(worldId);
 
     return {
       format: 'voxel-world',
@@ -225,6 +230,7 @@ export class WorldArchiver {
       sleepData,
       weatherData,
       tradingData,
+      raidData,
     };
   }
 
@@ -277,6 +283,7 @@ export class WorldArchiver {
       if (valid.sleepData !== null && valid.sleepData !== undefined) await put("world-metadata", { worldId: `__sleep__:${valid.worldId}`, payload: valid.sleepData, updatedAt: Date.now() });
       if (valid.weatherData !== null && valid.weatherData !== undefined) await put("world-metadata", { worldId: `__weather__:${valid.worldId}`, payload: valid.weatherData, updatedAt: Date.now() });
       if (valid.tradingData !== null && valid.tradingData !== undefined) await put("world-metadata", { worldId: `__trades__:${valid.worldId}`, payload: valid.tradingData, updatedAt: Date.now() });
+      if (valid.raidData !== null && valid.raidData !== undefined) await put("world-metadata", { worldId: `__raid__:${valid.worldId}`, payload: valid.raidData, updatedAt: Date.now() });
       if (valid.playerState) await put("player-state", valid.playerState);
     });
 
@@ -301,6 +308,7 @@ export class WorldArchiver {
       sleepDataImported: valid.sleepData !== null && valid.sleepData !== undefined,
       weatherDataImported: valid.weatherData !== null && valid.weatherData !== undefined,
       tradingDataImported: valid.tradingData !== null && valid.tradingData !== undefined,
+      raidDataImported: valid.raidData !== null && valid.raidData !== undefined,
     };
   }
 }

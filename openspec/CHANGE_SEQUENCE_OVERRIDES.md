@@ -743,3 +743,45 @@ prepared worktree exists at `/workspace/mc-worktrees/283` (branch
 NOT activate, author, or implement 283. A fresh session must activate 283 via
 its own T1 control-plane step from published VERIFIED 282. Change 258 stays
 BLOCKED.
+
+## 283-live-raid-persistence activation — sequential non-GPU continuation (after 282 VERIFIED)
+
+The product owner (Standing owner order, campaign through 300) authorizes activating
+**283-live-raid-persistence** as the sole ACTIVE implementation change after published
+Change **282-live-raid-feedback** is VERIFIED, while Change **258** remains **BLOCKED** and
+Changes **259–282** remain **VERIFIED**.
+
+- Change 258 stays BLOCKED at 40/100; no headed FPS/GPU work, no fake GPU evidence, and 258
+  MUST NOT be marked VERIFIED by the 283 track.
+- Changes 259–282 stand VERIFIED and MUST NOT be reopened unless a raid-persistence regression
+  blocks the 283 path. 282's ephemeral feedback projection and `getRaidState()` contract are
+  preserved byte-for-byte; 283 only adds the durable store behind that seam.
+- Change 283 (`283-live-raid-persistence`) is authorized to: persist Game-owned `RaidState`
+  under world-scoped `__raid__:<worldId>` via `serializeRaid`/`deserializeRaid`; hydrate and
+  save at boot/autosave/dispose/pagehide with existing persistence guards; delete on reset;
+  carry optional `raidData` through `WorldArchive`/`WorldArchiver` with fail-closed pre-write
+  validation; degrade corrupt runtime payloads to null without partial writes; and prove
+  reload/reset/archive behavior with unit + browser E2E.
+- 283 MUST NOT register or spawn raider entities, detect settlements, acquire bad omen,
+  redesign 282's HUD, or perform Change 258 headed work.
+- Package source: `openspec/changes/283-live-raid-persistence/` (authored on
+  `wt/283-live-raid-persistence` as SPEC-FIRST draft; live control-plane files are edited only
+  at activation).
+
+## 283-live-raid-persistence — VERIFIED publication checkpoint (2026-09-23)
+
+Change **283-live-raid-persistence** is VERIFIED at **13/13 (100%)** with exact C283
+parity and full local gates green: typecheck, lint (0 errors / 85 existing warnings),
+full unit 449 files 5351 passed + 1 skipped, build, file-audit 2892 rows (sha
+`75d564f6…`), validate-state, and exact `npm run test:e2e` (112 scheduled, 110 passed;
+enchanting:227 transient flake proven by isolated re-run 2/2 PASS; visual:176 proven
+baseline-equivalent Linux SwiftShader golden drift — 30 fail/30 pass matching two
+independent baselines, one-cell swap, 25/30 fractions byte-identical; all raid E2E green).
+
+- Session start: `a463e0fe8571576fc10a5bda49dead34b0eac61a`; published_head is recorded
+  in `openspec/PROGRAM_STATE.json` after the final push to `origin/main`.
+- Change 258 remains BLOCKED at 40/100 (no headed FPS/GPU work, no fake GPU evidence).
+- Changes 259–283 remain VERIFIED and are not reopened.
+- The next sequential slot is `284-raider-entity-spawning`, reserved for a separate
+  control-plane activation from published VERIFIED 283; it is NOT implemented by the
+  283 track (owner rule: no 284 until 283 published — satisfied at publication).

@@ -34,6 +34,7 @@ import type { SerializedEntity } from './EntityRecord';
 import { validateSerializedEntity } from './EntityRecord';
 import { validateChunkEditRecord } from './ChunkEditRecord';
 import { validatePersistedTrades } from '../simulation/VillagerTradingPersistence';
+import { validatePersistedRaid } from '../simulation/RaidPersistence';
 
 /** Archive format identifier. */
 export const WORLD_ARCHIVE_FORMAT = 'voxel-world';
@@ -175,6 +176,14 @@ export interface WorldArchive {
    * `deserializeTrades`, never trusted blindly).
    */
   tradingData?: unknown | null;
+  /**
+   * Raw raid payload stored under __raid__:${worldId}, or null when absent
+   * (283). OPTIONAL: archives without this field validate and import as null
+   * (no raid). A present value must be a plain object that `deserializeRaid`
+   * reconstructs — validated here with `validatePersistedRaid` before the
+   * first store write (fail-closed migration).
+   */
+  raidData?: unknown | null;
 }
 
 function isFiniteNumber(v: unknown): v is number {
@@ -446,6 +455,23 @@ export function validateWorldArchive(input: unknown): WorldArchive {
       tradingData = r.tradingData;
     }
 
+    // 283: optional in every version; missing/null reads as null. A present
+    // value must pass `validatePersistedRaid` (deserializeRaid + explicit
+    // schemaVersion) so a malformed/stale raidData throws before any write.
+    let raidData: unknown | null = null;
+    if (r.raidData !== null && r.raidData !== undefined) {
+      if (typeof r.raidData !== 'object' || Array.isArray(r.raidData)) {
+        throw new Error('WorldArchive: raidData must be an object or null');
+      }
+      try {
+        validatePersistedRaid(r.raidData);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`WorldArchive: ${message}`);
+      }
+      raidData = r.raidData;
+    }
+
   return {
     format: WORLD_ARCHIVE_FORMAT as 'voxel-world',
     version: 2 as const,
@@ -468,7 +494,8 @@ export function validateWorldArchive(input: unknown): WorldArchive {
      difficultyData,
      statisticsData,
      sleepData,
-     weatherData,
-     tradingData,
+      weatherData,
+      tradingData,
+      raidData,
     };
 }

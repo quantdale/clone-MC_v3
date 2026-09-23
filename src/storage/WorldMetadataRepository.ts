@@ -295,6 +295,17 @@ export class WorldMetadataRepository {
     await promisifyRequest(tx.objectStore(this.store).put(raw));
   }
 
+  /** Raw put for the raid payload bypassing WorldMetadata validation (283; weather precedent). Single key per world: last write wins. */
+  async putRaidData(worldId: string, payload: unknown): Promise<void> {
+    const raw = {
+      worldId: `__raid__:${worldId}`,
+      payload,
+      updatedAt: Date.now(),
+    };
+    const tx = this.requireDb().transaction(this.store, 'readwrite');
+    await promisifyRequest(tx.objectStore(this.store).put(raw));
+  }
+
   /** Raw put for the XP-orb payload bypassing WorldMetadata validation (264; advancement precedent). */
   async putXpOrbData(worldId: string, payload: unknown): Promise<void> {
     const raw = {
@@ -394,6 +405,14 @@ export class WorldMetadataRepository {
     return (result as { payload: unknown }).payload ?? null;
   }
 
+  /** Raw get for the raid payload (283). Returns null when absent. */
+  async getRaidData(worldId: string): Promise<unknown | null> {
+    const tx = this.requireDb().transaction(this.store, 'readonly');
+    const result = await promisifyRequest(tx.objectStore(this.store).get(`__raid__:${worldId}`)) as { payload?: unknown } | undefined;
+    if (!result || !('payload' in (result as Record<string, unknown>))) return null;
+    return (result as { payload: unknown }).payload ?? null;
+  }
+
   /** Raw get for the gamerule payload (261). Returns null when absent. */
   async getGameRuleData(worldId: string): Promise<unknown | null> {
     const tx = this.requireDb().transaction(this.store, 'readonly');
@@ -436,8 +455,9 @@ export class WorldMetadataRepository {
      * (`__difficulty__:<worldId>`), the statistics record
       * (`__statistics__:<worldId>`), and the sleep record
       * (`__sleep__:<worldId>`), the weather record
-      * (`__weather__:<worldId>`), and the trading record
-      * (`__trades__:<worldId>`).
+      * (`__weather__:<worldId>`), the trading record
+      * (`__trades__:<worldId>`), and the raid record
+      * (`__raid__:<worldId>`).
    */
   async deleteRaw(key: string): Promise<void> {
     const tx = this.requireDb().transaction(this.store, 'readwrite');

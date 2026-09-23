@@ -1,7 +1,7 @@
 {
   "generatedAt": "2026-09-22T09:47:53.631Z",
   "reviewedSha": "75d564f6b40cfaffb2733e848777d688fac652fe",
-  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; modified Game/index/styles/RaidFeedbackView.test re-reviewed in place",
+  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; modified Game/index/styles/RaidFeedbackView.test re-reviewed in place",
   "allowedReviewLevels": [
     "semantic",
     "mechanical",
@@ -10,7 +10,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2882,
+  "total": 2892,
   "rows": [
     {
       "path": ".agent/EXECUTION_PROMPT.md",
@@ -944,7 +944,7 @@
       "path": "docs/audit-1-277-findings.md",
       "gitBlob": null,
       "category": "docs",
-      "purpose": "Durable audit ledger for Changes 1–277, including remediation status and the Change-258 external blocker",
+      "purpose": "Durable audit ledger for Changes 1\u2013277, including remediation status and the Change-258 external blocker",
       "reviewLevel": "semantic",
       "runtimeReachability": "documentation-only",
       "imports": [],
@@ -24477,6 +24477,111 @@
       "status": "audited"
     },
     {
+      "path": "openspec/changes/283-live-raid-persistence/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "283 control-plane override draft addendum (activation snippet)",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 283 change; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/283-live-raid-persistence/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "283 live raid persistence design",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 283 change; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/283-live-raid-persistence/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "283 live raid persistence proposal",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 283 change; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/283-live-raid-persistence/specs/live-raid-persistence/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "283 normative live-raid-persistence specification with MUST/SHALL scenarios",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "ui"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 283 change; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/283-live-raid-persistence/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "283 task checklist for live raid persistence",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 283 change; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/283-live-raid-persistence/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "283 verification evidence for live raid persistence",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 283 change; no findings",
+      "status": "audited"
+    },
+    {
       "path": "openspec/changes/add-voxel-game/.openspec.yaml",
       "gitBlob": null,
       "category": "spec",
@@ -34022,6 +34127,24 @@
       "status": "audited"
     },
     {
+      "path": "src/simulation/RaidPersistence.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "283 live raid persistence codec seam (serialize/deserialize/validate over RaidStateMachine)",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 283 change; no findings",
+      "status": "audited"
+    },
+    {
       "path": "src/simulation/RaidStateMachine.ts",
       "gitBlob": null,
       "category": "production",
@@ -36953,6 +37076,22 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 282 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/e2e/raid-persistence.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "283 browser E2E raid persistence suite (reload restore, reset clear, corrupt boot)",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 283 change; no findings",
       "status": "audited"
     },
     {
@@ -40006,7 +40145,7 @@
         "tests/unit/GameStartupPersistence.test.ts"
       ],
       "testEvidence": [
-        "Indirectly tested by every test that uses createIdbFactoryMock — the mock now matches real IDB multi-store + oncomplete timing, so the same mock can drive the multi-store reset path."
+        "Indirectly tested by every test that uses createIdbFactoryMock \u2014 the mock now matches real IDB multi-store + oncomplete timing, so the same mock can drive the multi-store reset path."
       ],
       "riskAreas": [
         "mock-vs-real-fidelity"
@@ -40408,6 +40547,22 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 282 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/LiveRaidPersistence.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "283 Game composition persistence unit suite (hydrate/save/dispose order/guards)",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 283 change; no findings",
       "status": "audited"
     },
     {
@@ -41506,6 +41661,22 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/RaidPersistence.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "283 raid persistence unit suite (codec, namespace, GamePersistence, archive)",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 283 change; no findings",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/RaidStateMachine.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -41733,7 +41904,7 @@
         "F257-D",
         "F257-K"
       ],
-      "disposition": "NEW — 22 fault-injection tests added in the 257 reopen",
+      "disposition": "NEW \u2014 22 fault-injection tests added in the 257 reopen",
       "reviewNotes": "Covers every read class (7 stores), every delete class (6 stores), ownership rejection (metadata + playerState), and round-trip payload equality (every field) plus foreign-world preservation.",
       "status": "audited"
     },
