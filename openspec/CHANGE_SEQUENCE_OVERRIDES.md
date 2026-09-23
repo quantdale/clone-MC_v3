@@ -712,3 +712,30 @@ raid feedback bar.
 The 282 package passed the pre-implementation authoring review. 282 is 0/10
 ACTIVE pending production implementation. Change 258 remains BLOCKED and
 Changes 259–281 remain VERIFIED.
+
+## 282-live-raid-feedback — VERIFIED publication checkpoint (2026-09-23)
+
+Change **282-live-raid-feedback** is VERIFIED at **10/10 (100%)** with exact
+parity status. The Game-owned ephemeral raid state drives a pure bounded
+`RaidFeedbackView` projection into one hidden-by-default accessible
+`#raid-feedback` bar, with deterministic start/tick/clear/replay seams over the
+verified `RaidStateMachine` and no raider entity, settlement, persistence, or
+headed-GPU work. Final typecheck, lint (0 errors/85 existing warnings), full
+unit (447 files, 5,278 passed + 1 skipped), build (existing chunk-size advisory
+only), focused raid-feedback E2E (4/4), file-audit (2,882 rows), and
+validate-state passed. The exact full E2E scheduled 108 tests and passed 107;
+the sole failure is the Linux SwiftShader visual matrix, proven baseline-
+equivalent by a disposable worktree at pristine published tip `722f007`
+(without 282 working-tree Game/index/styles changes): identical 30 fail / 30
+pass cell set with matching changed fractions. Change 258 remains BLOCKED,
+Changes 259–282 remain VERIFIED, and `283-live-raid-persistence` is the next
+sequential spec-first change. No headed FPS/GPU evidence is claimed.
+
+## 283-live-raid-persistence — reserved checkpoint (2026-09-23)
+
+The next sequential slot remains reserved as `283-live-raid-persistence`. A
+prepared worktree exists at `/workspace/mc-worktrees/283` (branch
+`wt/283-live-raid-persistence`); it is a handoff target only. This session does
+NOT activate, author, or implement 283. A fresh session must activate 283 via
+its own T1 control-plane step from published VERIFIED 282. Change 258 stays
+BLOCKED.

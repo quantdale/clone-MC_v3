@@ -90,7 +90,7 @@ describe('projectRaidFeedback (282)', () => {
   });
 
   it('is derived from a real started raid (wave 1 of base waves)', () => {
-    let { state } = tickRaid(startRaid(1, 64, -1, 1));
+    const { state } = tickRaid(startRaid(1, 64, -1, 1));
     expect(state.status).toBe('ACTIVE');
     expect(state.waveIndex).toBe(1);
     expect(state.totalWaves).toBe(RAID_BASE_WAVES);

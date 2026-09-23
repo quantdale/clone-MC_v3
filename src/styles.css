@@ -60,6 +60,7 @@ body {
   #sleep-indicator.hidden,
   #weather-indicator.hidden,
   #shield-indicator.hidden,
+  #raid-feedback.hidden,
 #death-screen.hidden,
 #toast.hidden,
 #debug-overlay.hidden {
@@ -975,6 +976,50 @@ body {
   height: 100%;
   width: 50%;
   background: #555;
+}
+
+/* Live raid feedback bar (282) — hidden by default; one accessible bar. */
+#raid-feedback {
+  position: absolute;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 260px;
+  padding: 6px 10px;
+  background: rgba(8, 20, 33, 0.88);
+  border: 1px solid rgba(126, 231, 135, 0.35);
+  border-radius: 4px;
+  z-index: 5;
+  color: #e8f5ff;
+  font-size: 13px;
+  text-align: center;
+  pointer-events: none;
+}
+#raid-feedback-title {
+  font-weight: 700;
+}
+#raid-feedback-detail {
+  margin-top: 2px;
+  opacity: 0.9;
+}
+.raid-feedback-track {
+  margin-top: 4px;
+  height: 8px;
+  background: #222;
+  border: 1px solid #555;
+  border-radius: 2px;
+  overflow: hidden;
+}
+#raid-feedback-fill {
+  height: 100%;
+  width: 0%;
+  background: #7ee787;
+}
+#raid-feedback[data-status='VICTORY'] #raid-feedback-fill {
+  background: #7ee787;
+}
+#raid-feedback[data-status='DEFEAT'] #raid-feedback-fill {
+  background: #ff7b7b;
 }
 
 @media (max-width: 640px) {

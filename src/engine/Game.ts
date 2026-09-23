@@ -321,6 +321,8 @@ import { createWitherSkull, stepWitherSkull, scaledWitherDuration } from '../sim
 import type { WitherSkullState } from '../simulation/WitherSkull';
 import { CollisionResolver, type ShapeWorld } from '../world/CollisionResolver';
 import { computeExplosion } from '../simulation/ExplosionCore';
+import { startRaid, tickRaid, recordRaiderDeath, type RaidState } from '../simulation/RaidStateMachine';
+import { projectRaidFeedback } from '../ui/RaidFeedbackView';
 
 /** Maximum eye-to-furnace distance before an open furnace screen auto-closes (251). */
 const FURNACE_MAX_USE_DISTANCE = 8;
@@ -576,6 +578,10 @@ export class Game {
   private shieldBrokenTimer: ReturnType<typeof setTimeout> | null = null;
   private shieldBrokenValue = false;
   private lastShieldHudSignature = '';
+  /** Ephemeral live raid state (282): never persisted; null when no raid exists. */
+  private raidState: RaidState | null = null;
+  /** HUD raid feedback bar (282, null until the shell binds it). */
+  private raidFeedbackEl: HTMLElement | null = null;
   /** Live block-tag registry (266 adventure resolution; built once beside HarvestRules). */
   private readonly blockTags: TagRegistry;
   /** Registry key of the Fire block, resolved once for the doFireTick gate (261). */
@@ -1575,6 +1581,9 @@ export class Game {
     // not rewrite unchanged HUD DOM.
     this.shieldIndicatorEl = document.getElementById('shield-indicator');
     this.updateShieldIndicator();
+    // Raid feedback (282): the single accessible bar reflects the live state.
+    this.raidFeedbackEl = document.getElementById('raid-feedback');
+    this.syncRaidFeedbackHud();
 
     // Fixed-tick ownership (044): the driver turns frame deltas into bounded,
     // deterministic 20 TPS ticks; the tick body enforces the simulation order.
@@ -1680,6 +1689,10 @@ export class Game {
       clearTimeout(this.shieldBrokenTimer);
       this.shieldBrokenTimer = null;
     }
+    // Live raid feedback (282): ephemeral — drop the state and re-sync so the
+    // bar hides with NONE text; no save path below sees raid data.
+    this.raidState = null;
+    this.syncRaidFeedbackHud();
     this.dismissDeathScreen();
     // Settle the furnace session first so its cursor/xp land in the state that
     // savePlayerStateDurable + the facade flush are about to persist (251).
@@ -2318,6 +2331,9 @@ export class Game {
     this.tickWeatherCycle();
     // 5.6 Ambient audio (277): scheduler + injectable backend.
     this.tickAmbientAudio();
+    // 5.7 Live raid feedback (282): exactly one immutable tickRaid per
+    // unpaused fixed tick; paused/loading/disposed paths never enter this body.
+    this.tickRaidFeedback();
 
     // 6. Survival + status systems.
     const headY = Math.floor(py + CONFIG.player.eyeHeight);
@@ -5297,6 +5313,74 @@ export class Game {
 
   debugTickWeather(): void {
     this.tickWeatherCycle();
+  }
+
+  /** Read-only live raid state for E2E and diagnostics (282; never persisted). */
+  getRaidState(): RaidState | null {
+    return this.raidState;
+  }
+
+  /**
+   * Test-only seam (282): start one replacement raid at the player's finite
+   * position and immediately apply one `tickRaid` so wave 1 exists. Invalid
+   * omen input is clamped by `startRaid`; starting again replaces any prior
+   * active or terminal state atomically and refreshes the feedback bar.
+   */
+  debugStartRaid(badOmenLevel = 1): RaidState {
+    const { x, y, z } = this.player.position;
+    const { state } = tickRaid(startRaid(x, y, z, badOmenLevel));
+    this.raidState = state;
+    this.syncRaidFeedbackHud();
+    return state;
+  }
+
+  /** Test-only seam (282): apply exactly one fixed-tick transition; null stays null. */
+  debugTickRaid(): RaidState | null {
+    if (!this.raidState) return null;
+    this.tickRaidFeedback();
+    return this.raidState;
+  }
+
+  /**
+   * Test-only seam (282): record one death per current remaining raider
+   * (bounded by that count), then apply one `tickRaid` — never loops across
+   * future waves. Null state is an identity no-op returning null.
+   */
+  debugClearRaidWave(): RaidState | null {
+    if (!this.raidState) return null;
+    const remaining = this.raidState.raidersRemaining;
+    let state = this.raidState;
+    for (let i = 0; i < remaining; i++) {
+      state = recordRaiderDeath(state);
+    }
+    const { state: next } = tickRaid(state);
+    this.raidState = next;
+    this.syncRaidFeedbackHud();
+    return next;
+  }
+
+  /** One unpaused fixed-tick raid transition (282); no-op without a raid. */
+  private tickRaidFeedback(): void {
+    if (!this.raidState) return;
+    const { state } = tickRaid(this.raidState);
+    this.raidState = state;
+    this.syncRaidFeedbackHud();
+  }
+
+  /** Sync the single #raid-feedback bar from the pure projection (282, null-safe). */
+  private syncRaidFeedbackHud(): void {
+    const el = this.raidFeedbackEl;
+    if (!el) return;
+    const view = projectRaidFeedback(this.raidState);
+    el.classList.toggle('hidden', !view.visible);
+    el.setAttribute('data-status', view.status);
+    el.setAttribute('aria-label', view.ariaLabel);
+    const title = el.querySelector('#raid-feedback-title');
+    const detail = el.querySelector('#raid-feedback-detail');
+    const fill = el.querySelector('#raid-feedback-fill') as HTMLElement | null;
+    if (title) title.textContent = view.title;
+    if (detail) detail.textContent = view.detail;
+    if (fill) fill.style.width = `${Math.round(view.progress * 100)}%`;
   }
 
   /** Sync the HUD sleep indicator to the live store (274, null-safe pre-shell). */
