@@ -989,3 +989,57 @@ PASS; all raid E2E green including raid-bar-parity 3/3).
 - Changes 259–286 remain VERIFIED and are not reopened.
 - The next sequential slot after published VERIFIED 286 is **287** (spec-first package to
   author; no prepared package exists). It is NOT implemented by the 286 track.
+
+## 287-live-village-detection — activated from published VERIFIED 286 (2026-09-24)
+
+The product/session instruction authorizes activating OpenSpec change
+**287-live-village-detection** as the sole ACTIVE implementation change while
+Change **258** remains **BLOCKED** and Changes **259–286** remain **VERIFIED**.
+
+Session start / package base: `97c1231` (origin/main tip with 286 VERIFIED).
+
+### Dependency and activation (satisfied)
+
+- 286-live-raid-bar-parity is VERIFIED (14/14) and published.
+- 282–285 raid track seams remain the regression boundary; 287 only replaces
+  the production default `VillageQuery` (`() => null`) with live bed-scan
+  detection and keeps `setVillageQuery` override semantics.
+- One-active-change ordering: sole ACTIVE is 287.
+
+### Scope limits (binding for the 287 track)
+
+- 287 MUST remain limited to: pure `VillageDetectionRules` bed-scan,
+  Game live default wiring + bounded cache, pause/dispose/reload safety,
+  focused unit/browser evidence, exact state/parity proof.
+- 287 MUST NOT implement raider AI/combat redesign, pillager outposts/patrols,
+  Hero of the Village, villager spawning, village worldgen, new persistence/
+  archive namespace, PointOfInterest live wiring campaign, Change 258 headed
+  FPS/GPU work, or any fake GPU evidence. Change 258 MUST NOT be marked
+  VERIFIED by the 287 track.
+- Changes 259–286 stay VERIFIED and are not reopened.
+
+### Sequence row (recorded in `CHANGE_SEQUENCE.md` at this activation)
+
+| # | Change | Narrow outcome |
+|---|---|---|
+| 287 | `287-live-village-detection` | Real spatial settlement/village detection backing 285 `setVillageQuery`: Chebyshev bed-scan on resident columns, Game live default + cache, unit/E2E; no 258 headed work. |
+
+After VERIFIED publication the nextExactAction is to author a spec-first
+package for **288** (not started by the 287 track).
+
+## 287-live-village-detection — VERIFIED publication checkpoint (2026-09-24)
+
+Change **287-live-village-detection** is VERIFIED at **11/11 (100%)** with exact C287
+parity and full local gates green: typecheck, lint (0 errors / 85 existing warnings),
+full unit 457 files 5428 passed + 1 skipped, build (254 modules), file-audit 2933 rows,
+validate-state, and exact `npm run test:e2e` (119 scheduled, 117 passed;
+visual:176 proven baseline-equivalent Linux SwiftShader golden drift — 29 fail/31 pass,
+band 0.022–0.062 matching 286's 32/28 class; enchanting:227 known reload flake recurred
+on full run + focused retry; all raid E2E green including village-detection 2/2).
+
+- Session start: `97c1231b4fc751955f22e02a1948c5148e9440d9`; published_head recorded after push.
+- Change 258 remains BLOCKED at 40/100 (no headed FPS/GPU work, no fake GPU evidence).
+- Changes 259–287 remain VERIFIED and are not reopened.
+- The next sequential slot after published VERIFIED 287 is **288** (spec-first package to
+  author; no prepared package exists). It is NOT implemented by the 287 track.
+

@@ -1,5 +1,14 @@
 # Program State
 
+## Current checkpoint — 2026-09-24 Change 287-live-village-detection VERIFIED 11/11 (100%); ready to publish; 288 next (author package only)
+
+> **Change `287-live-village-detection` is VERIFIED 11/11 (100%); all baseline gates green (typecheck/lint/unit 5428+1/build/file-audit 2933/validate-state/full E2E 117 passed with visual matrix + enchanting flake classified non-blocking); last completed Change 287-live-village-detection is VERIFIED; Changes 001–287 are VERIFIED except Change 258 BLOCKED; Changes 259–287 are not reopened.**
+> Session start head: `97c1231b4fc751955f22e02a1948c5148e9440d9` (origin/main).
+> 287 ships pure Chebyshev bed-scan village detection (≥1 `BlockId.Bed` on resident columns within R=12 / Y=±5) as the production default behind the 285 `setVillageQuery` seam, with rate-limited cache and pause/dispose/reload safety; no raider AI, outposts, HOTV, villager spawn, village worldgen, new persistence, or 258 headed work.
+
+- Gates: typecheck PASS; lint 0 errors / 85 warnings; unit 457 files 5428+1; build 254 modules; file-audit 2933; full E2E 117/119 (visual:176 SwiftShader 29/31 drift baseline-equivalent class vs 286 32/28; enchanting:227 known reload flake recurred); all raid E2E green incl. village-detection 2/2.
+- Next exact action: **Author a spec-first OpenSpec package for the next highest-value non-GPU playability change (288) — do NOT implement 288 in the 287 session; 258 stays BLOCKED.**
+
 ## Current checkpoint — 2026-09-24 Change 286-live-raid-bar-parity VERIFIED 14/14 (100%); ready to publish; 287 next (author package only)
 
 > **Change `286-live-raid-bar-parity` is VERIFIED 14/14 (100%); all baseline gates green (typecheck/lint/unit 5409+1/build/file-audit 2923/validate-state/full E2E 116 passed with visual matrix classified non-blocking); last completed Change 286-live-raid-bar-parity is VERIFIED; Changes 001–286 are VERIFIED except Change 258 BLOCKED; Changes 259–286 are not reopened.**
@@ -207,15 +216,15 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **286-live-raid-bar-parity — VERIFIED (14/14); 258 BLOCKED, 259–286 VERIFIED**
+- Active implementation change: **287-live-village-detection — VERIFIED (11/11); 258 BLOCKED, 259–287 VERIFIED**
 - Prior active implementation change: **283-live-raid-persistence — VERIFIED (13/13); 258 stays BLOCKED, 259–283 stay VERIFIED**
 - Prior prior active implementation change: **282-live-raid-feedback — VERIFIED (10/10); 258 stays BLOCKED, 259–282 stay VERIFIED**
-- Next change: **287 — author spec-first package for highest-value non-GPU playability (NOT started); 258 stays BLOCKED**
+- Next change: **288 — author spec-first package after 287 VERIFIED (NOT started); 258 stays BLOCKED**
 - 240 advancement allowed: **yes**
 
 - Program: **ACTIVE — Change 284-live-raid-wave-spawning VERIFIED 12/12 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–284 VERIFIED**
 - 284 checkpoint: **VERIFIED 12/12 — implementation + gates complete; enchanting flake + visual SwiftShader drift documented non-blocking; 258 BLOCKED; 285 not started**
-- Last completed change: **286-live-raid-bar-parity — VERIFIED (14/14) — C286 exact, 258 BLOCKED**
+- Last completed change: **287-live-village-detection — VERIFIED (11/11) — C287 exact, 258 BLOCKED**
 - Prior last completed change: **281-workstation-ui — VERIFIED (12/12); 258 stays BLOCKED, 259–281 stay VERIFIED**
 - Prior prior last completed change: **272-lighting-clock-dt-sync — VERIFIED (10/10) — full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85/file-audit 2792); 271 remains VERIFIED (14/14)
 - All changes 001–257 and 259–284: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed; Change 283 is VERIFIED 13/13; Change 284 is VERIFIED 12/12 (this session).
@@ -226,7 +235,7 @@
 - Publication history: **Change 257 VERIFIED 92/92 at 96b5dc37 (F257-A..L closed, 22 new fault-injection tests, 5× proofs, import tx); Change 256 archived at `ad75b65` as `2026-08-31-256-production-readiness-hardening` (23/23).**
 - Section milestone: **PROGRAM VERIFIED through Change 284; Change 284 is VERIFIED 12/12; Change 258 remains BLOCKED at 40/100 pending headed hardware-WebGL certification; no GPU evidence was fabricated.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ri…
-- Next exact action: **Author a spec-first package for 287 (highest-value non-GPU playability) — NOT started; 258 stays BLOCKED**
+- Next exact action: **Author a spec-first package for 288 (highest-value non-GPU playability) — NOT started; 258 stays BLOCKED**
 - Superseded next action: **T8 confirm 282 feedback is unchanged (projection, pause, dispose hide, no spawning/settlement/258 work); 258 stays BLOCKED**
 - Release note (2026-09-11 owner deferral): **headed FPS gates (258 tasks 91–95) are deferred, not waived — 001–257 VERIFIED, production default unchanged (sync meshing, no quality retune), game shippable with known performance-certification debt**
 

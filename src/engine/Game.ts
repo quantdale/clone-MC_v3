@@ -335,6 +335,11 @@ import {
   type OmenTriggerDecision,
   type VillageContext,
 } from '../simulation/BadOmenRules';
+import {
+  detectVillage,
+  shouldResampleVillage,
+  type VillageBlockProbe,
+} from '../simulation/VillageDetectionRules';
 import { projectRaidBar } from '../ui/RaidBarParity';
 
 /** Maximum eye-to-furnace distance before an open furnace screen auto-closes (251). */
@@ -603,8 +608,19 @@ export class Game {
   private raidBarVillageName: string | undefined = undefined;
   /** Ephemeral Bad Omen level (285): never persisted; integer 0..5. */
   private badOmen: BadOmenState = createBadOmen();
-  /** Injected village presence query (285); default always null. */
-  private villageQuery: () => VillageContext | null = () => null;
+  /**
+   * Optional override for village presence (285/287). When null, the live
+   * bed-scan detector (287) is the production default.
+   */
+  private villageQueryOverride: (() => VillageContext | null) | null = null;
+  /** Cached live village context from the last sample (287). */
+  private villageCache: VillageContext | null = null;
+  /** simTick of the last live village sample; -1 = never sampled. */
+  private villageSampleTick = -1;
+  /** Floored player origin of the last live village sample. */
+  private villageSamplePx = 0;
+  private villageSamplePy = 0;
+  private villageSamplePz = 0;
   /** Live block-tag registry (266 adventure resolution; built once beside HarvestRules). */
   private readonly blockTags: TagRegistry;
   /** Registry key of the Fire block, resolved once for the doFireTick gate (261). */
@@ -1746,7 +1762,8 @@ export class Game {
     this.raidState = null;
     this.raidWaveController.clear('dispose');
     this.badOmen = createBadOmen();
-    this.villageQuery = () => null;
+    this.villageQueryOverride = null;
+    this.clearVillageDetectionCache();
     this.raidBarVillageName = undefined;
     this.syncRaidFeedbackHud();
     this.dismissDeathScreen();
@@ -5404,11 +5421,18 @@ export class Game {
   }
 
   /**
-   * Replace the village presence query (285). Passing null restores the
-   * default `() => null` (no village ⇒ no trigger).
+   * Replace the village presence query (285/287). Passing null restores the
+   * live bed-scan detector (production default). An explicit callback bypasses
+   * detection entirely (fixtures / forced absence via `() => null`).
    */
   setVillageQuery(query: (() => VillageContext | null) | null): void {
-    this.villageQuery = query ?? (() => null);
+    this.villageQueryOverride = query;
+    if (query === null) this.clearVillageDetectionCache();
+  }
+
+  /** Test/debug seam (287): current live village context (uses cache rules). */
+  debugDetectVillage(): VillageContext | null {
+    return this.queryLiveVillage();
   }
 
   /**
@@ -5418,12 +5442,72 @@ export class Game {
    * should not invoke this; the fixed-tick body already gates entry.
    */
   evaluateBadOmenVillageTrigger(): OmenTriggerDecision {
-    const decision = resolveVillageRaidTrigger(this.badOmen, this.villageQuery());
+    const decision = resolveVillageRaidTrigger(this.badOmen, this.resolveVillageQuery());
     if (decision.kind !== 'START_RAID') return decision;
     // Fail closed: only clear after a successful start invocation.
     this.startRaidAt(decision.centerX, decision.centerY, decision.centerZ, decision.badOmenLevel);
     this.badOmen = clearBadOmenState(this.badOmen);
     return decision;
+  }
+
+  /** Resolve override or live detector (287). */
+  private resolveVillageQuery(): VillageContext | null {
+    if (this.villageQueryOverride) {
+      try {
+        return this.villageQueryOverride();
+      } catch {
+        return null;
+      }
+    }
+    return this.queryLiveVillage();
+  }
+
+  private clearVillageDetectionCache(): void {
+    this.villageCache = null;
+    this.villageSampleTick = -1;
+    this.villageSamplePx = 0;
+    this.villageSamplePy = 0;
+    this.villageSamplePz = 0;
+  }
+
+  /**
+   * Live bed-scan village query with rate-limited / move-threshold cache (287).
+   * Fail-closed: probe errors yield null and still update the sample stamp so
+   * we do not tight-loop throws every tick.
+   */
+  private queryLiveVillage(): VillageContext | null {
+    if (this.disposed) return null;
+    const { x, y, z } = this.player.position;
+    if (
+      !shouldResampleVillage(
+        this.villageSampleTick,
+        this.simTick,
+        this.villageSamplePx,
+        this.villageSamplePy,
+        this.villageSamplePz,
+        x,
+        y,
+        z,
+      )
+    ) {
+      return this.villageCache;
+    }
+    let result: VillageContext | null = null;
+    try {
+      const probe: VillageBlockProbe = {
+        getBlock: (bx, by, bz) => this.world.getBlock(bx, by, bz),
+        hasColumn: (cx, cz) => this.world.storage.hasColumn(cx, cz),
+      };
+      result = detectVillage(x, y, z, probe, BlockId.Bed);
+    } catch {
+      result = null;
+    }
+    this.villageCache = result;
+    this.villageSampleTick = this.simTick;
+    this.villageSamplePx = Math.floor(x);
+    this.villageSamplePy = Math.floor(y);
+    this.villageSamplePz = Math.floor(z);
+    return result;
   }
 
   /**

@@ -123,8 +123,9 @@ describe('LiveBadOmen wiring (285)', () => {
     expect(g.raidState).toBe(raidAfterFirst); // no second start from this path
   });
 
-  it('default null village retains omen across ticks', () => {
+  it('absence query retains omen across ticks', () => {
     const g = new BadOmenOwner();
+    g.setVillageQuery(() => null);
     g.grantBadOmen(2);
     g.tick();
     g.tick();
@@ -186,7 +187,7 @@ describe('LiveBadOmen wiring (285)', () => {
     expect(g2.raidState).toBeNull();
   });
 
-  it('setVillageQuery(null) restores the default null query', () => {
+  it('setVillageQuery(null) on the 285 owner mock restores absence (Game 287 restores live detector)', () => {
     const g = new BadOmenOwner();
     g.setVillageQuery(() => fixtureVillage());
     g.setVillageQuery(null);
