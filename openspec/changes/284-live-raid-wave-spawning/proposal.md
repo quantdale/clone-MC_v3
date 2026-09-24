@@ -36,8 +36,13 @@ detection remain intentionally absent.
 - No raider AI/combat redesign, loot tables beyond optional identity-safe
   defaults, HUD redesign, or second feedback bar.
 - No Change 258 headed FPS/GPU work, fake GPU evidence, or 258 status change.
-- No production implementation from this package alone; implementation starts
-  only after activation rules in `OVERRIDE_DRAFT.md` / live overrides allow it.
+- No bad-omen status effect, raid-captain kill grant, or effect-runtime wiring.
+- No village/settlement boundary detection, structure generation, or raid
+  trigger beyond the existing 282 test/debug start seam.
+- No new IndexedDB namespace, archive field, or migration for raid entities or
+  raid state (283 owns persistence sequencing separately).
+- No raider AI/combat redesign, loot tables beyond optional identity-safe
+  defaults, HUD redesign, or second feedback bar.
 
 ## Preconditions
 
@@ -46,9 +51,12 @@ detection remain intentionally absent.
 - Change 282 is VERIFIED: Game owns ephemeral `raidState`, fixed-tick
   `tickRaid` (including the first-wave spawn roster), inspect/clear/replay
   seams, and `#raid-feedback` projection.
-- Change 258 remains BLOCKED; Changes 259–281 remain VERIFIED.
-- This worktree branch is documentation-only relative to `origin/main`: no
-  `src/` or main-landing test edits are part of authoring this package.
+- Change 283 is VERIFIED and published: world-scoped `__raid__` persistence
+  is the sole raid persistence authority; this change adds no new namespace.
+- Change 258 remains BLOCKED; Changes 259–283 remain VERIFIED.
+- This package is the sole ACTIVE change after live `CHANGE_SEQUENCE.md` 284
+  activation; implementation proceeds under the one-active-change contract.
+- No 285 activation until 284 is VERIFIED and published.
 
 ## Dependencies
 
@@ -127,18 +135,17 @@ repair is required because no persistent raid-entity store is added.
   duplicate, stale, reload, and failure behavior where applicable.
 - Tasks are sequenced control-plane → pure plan → backend → Game lifecycle →
   death alignment → tests → regression/audit → full gate → state/parity.
-- When later activated and implemented: focused unit + headless fake-backend
+- When activated and implemented: focused unit + headless fake-backend
   evidence green; baseline gates recorded truthfully; C284 exact; 258 still
   BLOCKED; 282 remains the feedback authority and 283 remains the persistence
   authority.
-- This authoring session changes only the 284 package (and branch commit);
-  it does not edit `src/`, main-landing tests, live `PROGRAM_STATE`, or
-  `origin/main`.
+- This session (activated): package + production implementation + main
+  publication per REVIEW_HANDOFF; no 285 work in this package.
 
 ## Advancement gate
 
 Advance only at 100% task completion with all mandatory requirements and
 tests passing under the normal AGENTS.md gate. No advancement exception is
-planned. Activation requires Change 282 VERIFIED (and, under the unchanged
-one-active-change ordering contract, no incomplete lower-numbered change —
-see `OVERRIDE_DRAFT.md`). Change 258 must remain BLOCKED.
+planned. Activation (done): Change 282 VERIFIED, Change 283 VERIFIED and
+published, sole ACTIVE is 284-live-raid-wave-spawning; Change 258 must remain
+BLOCKED.

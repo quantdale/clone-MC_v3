@@ -8,7 +8,9 @@
  * representative set of vanilla-like entities.
  *
  * 017 is additive and behavior-free: no AI/behavior is attached and no consumer is migrated; this
- * is the typed data foundation for future spawning and serialization.
+ * is the typed data foundation for future spawning and serialization. Change 284 appends four
+ * non-persistent raid-wave monsters (`pillager`/`vindicator`/`ravager`/`witch`) whose keys match
+ * the 152 wave roster `typeKey` vocabulary exactly.
  */
 
 import { type ResourceId, createResourceId, resourceIdToString } from './ResourceId';
@@ -189,5 +191,9 @@ export function createDefaultEntityRegistry(): EntityRegistry {
     def('bat', 'AMBIENT', 6, 0, true, false),
     def('villager', 'CREATURE', 20, 0, true, true),
     def('item', 'OTHER', undefined, undefined, false, false),
+    def('pillager', 'MONSTER', 24, 4, true, false),
+    def('vindicator', 'MONSTER', 24, 6, true, false),
+    def('ravager', 'MONSTER', 100, 12, true, false),
+    def('witch', 'MONSTER', 26, 0, true, false),
   ]);
 }

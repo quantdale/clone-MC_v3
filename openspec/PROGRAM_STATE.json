@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "status": "ACTIVE",
-  "currentChange": "283-live-raid-persistence",
+  "currentChange": "284-live-raid-wave-spawning",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "283-live-raid-persistence",
-  "nextChange": "284-raider-entity-spawning",
-  "completedTasks": 13,
-  "totalTasks": 13,
+  "lastCompletedChange": "284-live-raid-wave-spawning",
+  "nextChange": "285-live-bad-omen-acquisition",
+  "completedTasks": 12,
+  "totalTasks": 12,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -14,21 +14,28 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "a463e0fe8571576fc10a5bda49dead34b0eac61a",
-  "localHead": "d26cd3066cbe36b9b0a226c7cb757a22c37edbf4",
+  "sessionStartHead": "c2539dc30a470e64bbbd306e186fab80c74b485e",
+  "localHead": "PENDING_AFTER_COMMIT",
   "publishedHead": "73ad0dfde5ce1d96a2fa5cf5afe1e05a6c5252b8",
-  "nextExactAction": "283 VERIFIED 13/13 published at 73ad0dfde5ce1d96a2fa5cf5afe1e05a6c5252b8 (origin/main verified equal); next exact action is T1 control-plane activation of 284-raider-entity-spawning from published origin/main per CHANGE_SEQUENCE (NOT started this session; owner rule: no 284 until 283 published — now satisfied); 258 stays BLOCKED",
-  "lastCompletedTask": "283 T13 complete: C283 exact/VERIFIED matrix row (Scope/Summary 001-283, total 285), verification VERIFIED 13/13, PROGRAM_STATE 13/13 100%, committed and published to origin/main; next is 284 activation (not started)",
+  "nextExactAction": "284 VERIFIED 12/12; publish to origin/main then activate 285-live-bad-omen-acquisition T1 control-plane from prepared /workspace/mc-worktrees/285 (branch wt/285-live-bad-omen-acquisition) \u2014 NOT started this session; 258 stays BLOCKED",
+  "lastCompletedTask": "284 T12 complete: C284 exact/VERIFIED matrix row, verification VERIFIED 12/12, PROGRAM_STATE 12/12 100%, gates green with documented enchanting flake + visual SwiftShader drift; ready to publish",
   "blockers": [
-    "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-282 are VERIFIED; game shippable with known performance-certification debt. The 283 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
+    "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-284 are VERIFIED; game shippable with known performance-certification debt. The 284/285 tracks MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
   "validationResults": [
+    {
+      "change": "284-live-raid-wave-spawning",
+      "status": "VERIFIED",
+      "unitTests": 5383,
+      "e2eTests": 110,
+      "note": "12/12 tasks complete (100%). Live raid wave spawning: append-only pillager/vindicator/ravager/witch registry keys (non-persistent MONSTER); pure planRaidWaveSpawn; injectable RaidEntityBackend (recording fake + EntityManager adapter); RaidWaveController all-or-nothing apply with rollback, per-(generation,waveIndex) duplicate guard, terminal/clear/replace/dispose despawn; Game wiring (tickRaidFeedback/debugStart/debugClear/onRaidEntityRemoved/dispose/pagehide); exactly-once recordRaiderDeath; reload non-resurrection. Gates: typecheck PASS; lint 0 errors / 85 existing warnings; full unit 452 files 5383 passed + 1 skipped; build PASS 252 modules; file-audit 2904 PASS (sha 75d564f6...); validate-state PASS; exact npm run test:e2e 112 scheduled with 110 passed \u2014 enchanting:227 known reload flake (isolated re-runs still Expected JSON vs null; companion lifecycle PASS) and visual:176 baseline-equivalent Linux SwiftShader golden drift (31 fail/29 pass vs /tmp/visual-283-classify.log 30/30 with one extra start-overlay/high/1920x1080; 22/30 shared fractions byte-identical; band 0.020\u20130.062); all raid E2E green (feedback 4 + persistence 4). C284 matrix row exact/VERIFIED. No 284 functional E2E regression and no headed GPU evidence claimed. Change 258 remains BLOCKED; Changes 259-284 are VERIFIED. session_start_head c2539dc30a470e64bbbd306e186fab80c74b485e."
+    },
     {
       "change": "283-live-raid-persistence",
       "status": "VERIFIED",
       "unitTests": 5351,
       "e2eTests": 110,
-      "note": "13/13 tasks complete (100%). World-scoped __raid__:<worldId> persistence seam over RaidStateMachine: RaidPersistence codec (fail-closed deserialize, pre-write validate), WorldMetadataRepository put/get single-key, GamePersistence bulk-load/saveRaid/reset + importWorldBackup raidData, Game hydrate + autosave/dispose/pagehide save points (dispose save-before-clear), WorldArchive.raidData fail-closed + raidDataImported; 282 getRaidState/#raid-feedback contract unchanged. Gates: typecheck PASS; lint 0 errors / 85 existing warnings; full unit 449 files 5351 passed + 1 skipped; build PASS 3.87s; file-audit 2892 PASS (sha 75d564f6...); validate-state PASS; exact npm run test:e2e 112 scheduled with 110 passed — enchanting:227 transient flake (isolated re-run 2/2 PASS, task bash-ee3051a71b7ebf91) and visual:176 baseline-equivalent Linux SwiftShader golden drift (30 fail/30 pass in /tmp/visual-283-classify.log matching /tmp/visual-282-rerun.log + /tmp/visual-head.log 30/30 sets; one-cell swap crosshair/high/1920x1080 vs start-overlay/high/1920x1080; 25/30 fractions byte-identical); all raid E2E green (persistence 4 + feedback 4). C283 matrix row exact/VERIFIED. No 283 functional E2E regression and no headed GPU evidence are claimed. Change 258 remains BLOCKED; Changes 259-283 are VERIFIED. session_start_head a463e0fe8571576fc10a5bda49dead34b0eac61a; published_head 73ad0dfde5ce1d96a2fa5cf5afe1e05a6c5252b8 (origin/main verified equal)."
+      "note": "13/13 tasks complete (100%). World-scoped __raid__:<worldId> persistence seam over RaidStateMachine: RaidPersistence codec (fail-closed deserialize, pre-write validate), WorldMetadataRepository put/get single-key, GamePersistence bulk-load/saveRaid/reset + importWorldBackup raidData, Game hydrate + autosave/dispose/pagehide save points (dispose save-before-clear), WorldArchive.raidData fail-closed + raidDataImported; 282 getRaidState/#raid-feedback contract unchanged. Gates: typecheck PASS; lint 0 errors / 85 existing warnings; full unit 449 files 5351 passed + 1 skipped; build PASS 3.87s; file-audit 2892 PASS (sha 75d564f6...); validate-state PASS; exact npm run test:e2e 112 scheduled with 110 passed \u2014 enchanting:227 transient flake (isolated re-run 2/2 PASS, task bash-ee3051a71b7ebf91) and visual:176 baseline-equivalent Linux SwiftShader golden drift (30 fail/30 pass in /tmp/visual-283-classify.log matching /tmp/visual-282-rerun.log + /tmp/visual-head.log 30/30 sets; one-cell swap crosshair/high/1920x1080 vs start-overlay/high/1920x1080; 25/30 fractions byte-identical); all raid E2E green (persistence 4 + feedback 4). C283 matrix row exact/VERIFIED. No 283 functional E2E regression and no headed GPU evidence are claimed. Change 258 remains BLOCKED; Changes 259-283 are VERIFIED. session_start_head a463e0fe8571576fc10a5bda49dead34b0eac61a; published_head 73ad0dfde5ce1d96a2fa5cf5afe1e05a6c5252b8 (origin/main verified equal)."
     },
     {
       "change": "282-live-raid-feedback",
@@ -58,21 +65,21 @@
       "status": "VERIFIED",
       "unitTests": 5236,
       "e2eTests": 100,
-      "note": "12/12 tasks complete. Shield item 71 with max durability 336, component-preserving offhand V swap, right-hold raise/use drain, source-aware hostile/wither blocking over ShieldBlocking 144, one-wear durability/break, existing 100-tick axe disable, HUD/toast, inventory snapshot/pagehide reuse, and unit/browser coverage. Gates: typecheck PASS; lint 0 errors with 85 existing warnings; full unit 440 files 5236 passed + 1 skipped; build PASS (242 modules; existing chunk advisory); CI=1 full E2E 100 unique tests with 98 direct passes + 2 flaky-after-retry outcomes, visual 60/60; file-audit 2852; validate-state PASS. Implementation tip a9b7108. Change 258 remains BLOCKED and 259–278 remain VERIFIED."
+      "note": "12/12 tasks complete. Shield item 71 with max durability 336, component-preserving offhand V swap, right-hold raise/use drain, source-aware hostile/wither blocking over ShieldBlocking 144, one-wear durability/break, existing 100-tick axe disable, HUD/toast, inventory snapshot/pagehide reuse, and unit/browser coverage. Gates: typecheck PASS; lint 0 errors with 85 existing warnings; full unit 440 files 5236 passed + 1 skipped; build PASS (242 modules; existing chunk advisory); CI=1 full E2E 100 unique tests with 98 direct passes + 2 flaky-after-retry outcomes, visual 60/60; file-audit 2852; validate-state PASS. Implementation tip a9b7108. Change 258 remains BLOCKED and 259\u2013278 remain VERIFIED."
     },
     {
       "change": "278-live-villager-trading-ui",
       "status": "VERIFIED",
       "unitTests": 5227,
       "e2eTests": 97,
-      "note": "12/12 tasks complete. Emerald/Bread/Paper catalog, versioned __trades__ persistence with per-profession quarantine, reset and archive passthrough, atomic trade application with unlock merge/restock/full-inventory drop, TradingPanel/HUD/KeyT lifecycle, and browser journey/refusal coverage. Gates: typecheck PASS; lint 0 errors with 85 existing warnings; full unit 438 files 5227 passed + 1 skipped; build PASS (240 modules, existing chunk advisory); full E2E 97/97 including visual matrix 60/60 and memory stress; file-audit 2843; validate-state PASS. Change 258 remains BLOCKED and 259–277 remain VERIFIED."
+      "note": "12/12 tasks complete. Emerald/Bread/Paper catalog, versioned __trades__ persistence with per-profession quarantine, reset and archive passthrough, atomic trade application with unlock merge/restock/full-inventory drop, TradingPanel/HUD/KeyT lifecycle, and browser journey/refusal coverage. Gates: typecheck PASS; lint 0 errors with 85 existing warnings; full unit 438 files 5227 passed + 1 skipped; build PASS (240 modules, existing chunk advisory); full E2E 97/97 including visual matrix 60/60 and memory stress; file-audit 2843; validate-state PASS. Change 258 remains BLOCKED and 259\u2013277 remain VERIFIED."
     },
     {
       "change": "277-live-ambient-audio-integration",
       "status": "VERIFIED",
       "unitTests": 5193,
       "e2eTests": 94,
-      "note": "Repository-wide Changes 1–277 audit remediation plus post-verification release-readiness hardening: truthful historical task/state reconciliation; C001–C277 parity-matrix reconciliation; transactional WorldArchiver replacement semantics with regression proof; Vitest 4.1.11/coverage-v8 security upgrade with explicit product-only coverage scope; gamerule helper boundary fix; statistics restoration-baseline fix; six-cell HUD golden re-pin; held-break cooldown recovery; deterministic adventure target refresh; chunk-streaming E2E boundary-plus-residency invariant with 20 repeated passes; memory-stress timeout aligned to its documented software-WebGL schedule; non-overlapping HUD control stack; canonical 60-cell visual verification; mobile smoke check. Gates: validate-state/typecheck/lint 0 errors/full unit 434 files 5193 passed + 1 skipped/coverage 91.79% statements 88.69% branches 94.44% functions 93.06% lines/build PASS/release-bundle PASS/full test:e2e 94/94 PASS including visual 60/60. Existing lint warnings and the build chunk-size advisory remain non-failing; Change 258 headed hardware-WebGL certification remains owner-deferred."
+      "note": "Repository-wide Changes 1\u2013277 audit remediation plus post-verification release-readiness hardening: truthful historical task/state reconciliation; C001\u2013C277 parity-matrix reconciliation; transactional WorldArchiver replacement semantics with regression proof; Vitest 4.1.11/coverage-v8 security upgrade with explicit product-only coverage scope; gamerule helper boundary fix; statistics restoration-baseline fix; six-cell HUD golden re-pin; held-break cooldown recovery; deterministic adventure target refresh; chunk-streaming E2E boundary-plus-residency invariant with 20 repeated passes; memory-stress timeout aligned to its documented software-WebGL schedule; non-overlapping HUD control stack; canonical 60-cell visual verification; mobile smoke check. Gates: validate-state/typecheck/lint 0 errors/full unit 434 files 5193 passed + 1 skipped/coverage 91.79% statements 88.69% branches 94.44% functions 93.06% lines/build PASS/release-bundle PASS/full test:e2e 94/94 PASS including visual 60/60. Existing lint warnings and the build chunk-size advisory remain non-failing; Change 258 headed hardware-WebGL certification remains owner-deferred."
     },
     {
       "change": "275-live-weather-cycle-integration",
@@ -140,7 +147,7 @@
     {
       "change": "258-real-world-runtime-performance-fps-recovery",
       "status": "BLOCKED",
-      "note": "Owner deferral 2026-09-11 (Michael via Minecraft Clone Dev): 40/100 environment-independent tasks complete and headless-verified; headed hardware-WebGL certification (tasks 3, 6-15, 29, 34, 91-95, 97-98 strictly; 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90 profiling-gated; 99-100 closure) deferred — host is SwiftShader-only, no /dev/dri. Production default remains sync meshing; no quality retune. 001-257 VERIFIED; shippable with known performance-certification debt."
+      "note": "Owner deferral 2026-09-11 (Michael via Minecraft Clone Dev): 40/100 environment-independent tasks complete and headless-verified; headed hardware-WebGL certification (tasks 3, 6-15, 29, 34, 91-95, 97-98 strictly; 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90 profiling-gated; 99-100 closure) deferred \u2014 host is SwiftShader-only, no /dev/dri. Production default remains sync meshing; no quality retune. 001-257 VERIFIED; shippable with known performance-certification debt."
     },
     {
       "change": "253-live-world-architecture-convergence",
@@ -847,7 +854,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 2249/2249 (prior 2231 + 18 new: PistonStickyGroups 18)",
-      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged — additive/unconsumed, no Game.ts consumer)",
+      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged \u2014 additive/unconsumed, no Game.ts consumer)",
       "e2e": "PASS 22/22 (existing assertions unaffected)",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "165 slime-honey-move-groups verified; closes the piston sub-arc (163-165). Bounded BFS sticky-adjacency expansion reusing 163s classifyPistonBlock; a projection-based execution-order generalization proven safe for a non-linear group by running it through 164s real executePistonPush; sticky_piston reuses PISTON_SCHEMA unchanged (third one-schema-many-blocks reuse). No slime_block/honey_block BlockId, no Game/World wiring."
@@ -857,7 +864,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 2231/2231 (prior 2218 + 13 new: PistonExecution 13)",
-      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged — additive/unconsumed, no Game.ts consumer)",
+      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged \u2014 additive/unconsumed, no Game.ts consumer)",
       "e2e": "PASS 22/22 (existing assertions unaffected)",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "164 piston-execution verified; closes 163s plan into an effect via a generic, state-agnostic PistonExecutionWorld<TState>. Snapshot-then-apply discipline, destroy-before-move, farthest-first write order. Adds the plain (non-sticky) piston block (12 states) -- the natural point a real piston needed to exist, since something finally executes against it. pistonAffectedPositions gives a future wiring change everything needed for 156 composition without this module importing 156 directly."
@@ -867,7 +874,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 2218/2218 (prior 2205 + 13 new: PistonMovePlanner 13)",
-      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged — additive/unconsumed, no Game.ts consumer)",
+      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged \u2014 additive/unconsumed, no Game.ts consumer)",
       "e2e": "PASS 22/22 (existing assertions unaffected)",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "163 piston-move-planner verified; the first redstone-arc module reasoning about block movement rather than signal strength. classifyPistonBlock + planPistonPush behind an injected PistonWorld seam, immovable always taking precedence, bounded to PISTON_PUSH_LIMIT+1 iterations, blocksToMove ordered farthest-first. Zero BlockRegistry/ItemRegistry touch -- first redstone-arc change with no registry footprint, no Piston block yet (repeats 154s signal-model-first-block-second ordering)."
@@ -877,7 +884,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 2205/2205 (prior 2188 + 17 new: RedstoneConsumers 17)",
-      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged — additive/unconsumed, no Game.ts consumer)",
+      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged \u2014 additive/unconsumed, no Game.ts consumer)",
       "e2e": "PASS 22/22 (existing assertions unaffected)",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "162 redstone-consumer-blocks verified; the first redstone CONSUMERS (lamp/door/trapdoor), closing the producer-to-consumer loop opened by 154. Door and trapdoor share one OPEN_SCHEMA instance. Lamp has vanillas instant-on/delayed-off asymmetry via its own 047 bridge; door/trapdoor toggle immediately both ways. First redstone module with zero dependency on 154s RedstoneSignal.ts (plain boolean, not a signal strength) and no *SignalStrength export (pure sink, nothing to emit)."
@@ -887,7 +894,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 2188/2188 (prior 2176 + 12 new: RedstoneObserver 12)",
-      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged — additive/unconsumed, no Game.ts consumer)",
+      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged \u2014 additive/unconsumed, no Game.ts consumer)",
       "e2e": "PASS 22/22 (existing assertions unaffected)",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "161 observer verified; closes the 157-161 logic-component trio. First 6-way (non-horizontal-only) facing schema, reusing 154s Direction vocabulary directly. Two-phase pulse needs two independent 047 ScheduledTickQueue instances (a first among these components) since 047 dedups by position. Change-detection and re-trigger suppression deferred as documented non-goals, matching 159s precedent."
@@ -897,7 +904,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 2176/2176 (prior 2157 + 19 new: RedstoneComparator 19)",
-      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged — additive/unconsumed, no Game.ts consumer)",
+      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged \u2014 additive/unconsumed, no Game.ts consumer)",
       "e2e": "PASS 22/22 (existing assertions unaffected)",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "160 comparator verified; the first analog redstone component (output is a genuine function of two signal strengths, not just two booleans). compare/subtract modes, both inputs clamped through 154s clampSignal including non-finite inputs. Container signal reads and observer wiring deferred as documented non-goals."
@@ -928,7 +935,7 @@
       "lint": "PASS",
       "unit": "PASS 2120/2120 (prior 2099 + 21 new: RedstoneInputComponents 21)",
       "build": "PASS via tsc --noEmit && vite build (registry edits in the live graph; simulation module has no Game.ts consumer yet)",
-      "e2e": "PASS 22/22 (three new blocks/items live — confirms placement/breaking/meshing undisturbed)",
+      "e2e": "PASS 22/22 (three new blocks/items live \u2014 confirms placement/breaking/meshing undisturbed)",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "157 redstone-input-components verified; lever/button/pressure-plate as 2-state blocks plus a pure model of their differing timing (latch, self-release, occupancy) riding on 047s ScheduledTickQueue."
     },
@@ -937,7 +944,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 2099/2099 (prior 2087 + 12 new: RedstonePropagation 12)",
-      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged — additive/unconsumed, no Game.ts consumer)",
+      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged \u2014 additive/unconsumed, no Game.ts consumer)",
       "e2e": "PASS 22/22 (existing assertions unaffected)",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "156 redstone-update-order verified; deterministic bounded fixed-point propagation composing 049s queue with 155s local rule. Two defects found and fixed during implementation (silently-dropped queued work on a bound trip; a misleading settle hitLimit contract), both now pinned by tests."
@@ -948,7 +955,7 @@
       "lint": "PASS",
       "unit": "PASS 2087/2087 (prior 2063 + 24 new: RedstoneWire 24; 4 characterization tests updated for the new block/item)",
       "build": "PASS via tsc --noEmit && vite build (103 modules; registry edits are in the live graph, the new simulation module has no Game.ts consumer yet)",
-      "e2e": "PASS 22/22 (registry edits live — confirms placement/breaking/meshing undisturbed)",
+      "e2e": "PASS 22/22 (registry edits live \u2014 confirms placement/breaking/meshing undisturbed)",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "155 redstone-wire-connectivity verified; wire block with 1296 states (first multi-property block), connection-shape branch precedence with ceiling guard, local attenuation rule that provably cannot self-sustain. Wire is placeable but inert until 156 adds propagation."
     },
@@ -957,7 +964,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 2063/2063 (prior 2034 + 29 new: RedstoneSignal 29)",
-      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged from 153 — additive/unconsumed, no Game.ts consumer)",
+      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged from 153 \u2014 additive/unconsumed, no Game.ts consumer)",
       "e2e": "PASS 22/22 (nothing wired into the live game yet; existing 22 unaffected)",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "154 redstone-signal-core verified; direction vocabulary, 0-15 signal domain, injected RedstonePowerSource, direct/indirect power queries with a one-level conduction bound. Zero imports. Opens the Redstone and automation section (154-173)."
@@ -967,7 +974,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 2034/2034 (prior 2003 + 31 new: BossFramework 31)",
-      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged from 152 — additive/unconsumed, no Game.ts consumer)",
+      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged from 152 \u2014 additive/unconsumed, no Game.ts consumer)",
       "e2e": "PASS 22/22 (nothing wired into the live game yet; existing 22 unaffected)",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "153 boss-framework verified; validated boss-definition registry, immutable health/phase/arena state machine, boss-bar projection, version:1 codec. Additive/unconsumed pending 183/205. Completes the Entity framework and mobs section (129-153)."
@@ -977,7 +984,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 2003/2003 (prior 1975 + 28 new: RaidStateMachine 28)",
-      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged from 151 — additive/unconsumed, no Game.ts consumer)",
+      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged from 151 \u2014 additive/unconsumed, no Game.ts consumer)",
       "e2e": "PASS 22/22 (nothing wired into the live game yet; existing 22 unaffected)",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "152 raid-state-machine verified; bounded immutable raid lifecycle (trigger/escalating waves/win-loss) plus a strict version:1 persistence codec. Zero imports. Additive/unconsumed pending raider mob types + village-boundary detection."
@@ -987,7 +994,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 1975/1975 (prior 1952 + 23 new: VillagerTrading 23)",
-      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged from 150 — additive/unconsumed, no Game.ts consumer)",
+      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged from 150 \u2014 additive/unconsumed, no Game.ts consumer)",
       "e2e": "PASS 22/22 (nothing wired into the live game yet; existing 22 unaffected)",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "151 villager-trading verified; level-gated per-profession offers, use limits, villager XP/level progression, restock, and a 106 ContainerMenu projection. Additive/unconsumed pending village generation + 203 container-screen UI. Documented: result slot not write-protected (106 has no read-only-slot concept)."
@@ -997,7 +1004,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 1952/1952 (prior 1942 + 10 new: VillagerProfession 10)",
-      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged from 149 — additive/unconsumed, no Game.ts consumer)",
+      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged from 149 \u2014 additive/unconsumed, no Game.ts consumer)",
       "e2e": "PASS 22/22 (nothing wired into the live game yet; existing 22 unaffected)",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "150 villager-professions verified; villager entity type + profession/workstation priority-ordered claiming + schedule phases, additive/unconsumed pending village/structure generation. Required EntityType.test.ts assertion updates for the new entity (non-regression)."
@@ -1007,7 +1014,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 1942/1942 (prior 1925 + 17 new: PointOfInterest 17)",
-      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged from 148 — additive/unconsumed, no Game.ts consumer)",
+      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged from 148 \u2014 additive/unconsumed, no Game.ts consumer)",
       "e2e": "PASS 22/22 (nothing wired into the live game yet; existing 22 unaffected)",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "149 point-of-interest-system verified; chunk-scoped claimable typed block-position registry for future villager-like AI. No real IndexedDB store, no villager entity yet (non-goals)."
@@ -1017,7 +1024,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 1925/1925 (prior 1910 + 15 new: MobDropLoot 15)",
-      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged from 147 — additive/unconsumed, no Game.ts consumer)",
+      "build": "PASS via tsc --noEmit && vite build (103 modules, unchanged from 147 \u2014 additive/unconsumed, no Game.ts consumer)",
       "e2e": "PASS 22/22 (nothing wired into the live game yet; existing 22 unaffected)",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "148 mob-drop-loot verified; health tracking + death->loot/XP pipeline for pig/zombie, additive/unconsumed pending a future player->mob combat change. Required BlockItemSeparation.test.ts table update for the two new item ids (non-regression)."
@@ -1027,7 +1034,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 1910/1910 (prior 1896 + 14 new: AnimalBreeding 14)",
-      "build": "PASS via tsc --noEmit && vite build (103 modules, up from 102 — Game.ts now consumes the new module)",
+      "build": "PASS via tsc --noEmit && vite build (103 modules, up from 102 \u2014 Game.ts now consumes the new module)",
       "e2e": "PASS 22/22 (no live-game breeding trigger exists yet; existing 22 unaffected)",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "147 animal-breeding verified; love-mode/cooldown/pair-matching/child-spawn state machine operating on 145's pig population. No player feed interaction, no inventory consumption, no ageing, no visuals (non-goals)."
@@ -1037,7 +1044,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 1896/1896 (prior 1883 + 13 new: HostileMobBaseline 10, HostileMobRenderer 3)",
-      "build": "PASS via tsc --noEmit && vite build (102 modules, up from 98 — Game.ts now consumes the new modules)",
+      "build": "PASS via tsc --noEmit && vite build (102 modules, up from 98 \u2014 Game.ts now consumes the new modules)",
       "e2e": "PASS 22/22 (no natural-zombie-spawn assertion added; existing 22 unaffected)",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "146 hostile-mob-baseline verified; first real, live, target-acquiring/chasing/melee-attacking hostile mob (zombie) in Game. No player->mob combat, no mob health/death, no player knockback, no breeding/loot/despawn/persistence (non-goals)."
@@ -1047,7 +1054,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 1883/1883 (prior 1866 + 17 new: PassiveMobBaseline 14, PassiveMobRenderer 3)",
-      "build": "PASS via tsc --noEmit && vite build (98 modules, up from 83 — Game.ts now consumes the new modules)",
+      "build": "PASS via tsc --noEmit && vite build (98 modules, up from 83 \u2014 Game.ts now consumes the new modules)",
       "e2e": "PASS 22/22 (21 existing + new pig-spawn-visibility assertion)",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "145 passive-mob-baseline verified; first real, live, AI-driven, physics-collided, spawned, rendered passive mob (pig) in Game. No combat/health/breeding/despawn/persistence (non-goals)."
@@ -1057,7 +1064,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 1866/1866 (prior 1842 + 24 new: ShieldBlocking 24)",
-      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged — no consumer yet)",
+      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged \u2014 no consumer yet)",
       "e2e": "PASS 21/21",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "144 shield-blocking verified; bearing/arc geometry, durability cost, resolveShieldBlock, ShieldCooldownTracker, additive/unconsumed."
@@ -1067,7 +1074,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 1842/1842 (prior 1827 + 15 new: BowAndArrow 15)",
-      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged — no consumer yet)",
+      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged \u2014 no consumer yet)",
       "e2e": "PASS 21/21",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "143 bow-and-arrow verified; charge/fire/damage formulas + LandedArrowTracker, additive/unconsumed."
@@ -1077,7 +1084,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 1827/1827 (prior 1821 + 6 new: ProjectileCore 6)",
-      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged — no consumer yet)",
+      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged \u2014 no consumer yet)",
       "e2e": "PASS 21/21",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "142 projectile-core verified; stepProjectile motion/collision/ownership/expiration, additive/unconsumed."
@@ -1087,7 +1094,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 1821/1821 (prior 1808 + 13 new: MeleeCombat 13)",
-      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged — no consumer yet)",
+      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged \u2014 no consumer yet)",
       "e2e": "PASS 21/21 (after clearing an orphaned port-4173 process from a killed retry)",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "141 melee-combat-cooldown verified; attack cooldown/knockback/invulnerability math + resolveMeleeAttack composition, additive/unconsumed."
@@ -1097,7 +1104,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 1808/1808 (prior 1798 + 10 new: HostileTargetAI 10; confirmed clean via --testTimeout=30000 after transient environmental timeout flakes in unrelated heavy tests)",
-      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged — no consumer yet)",
+      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged \u2014 no consumer yet)",
       "e2e": "PASS 21/21",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "140 hostile-target-ai verified; TargetAcquisitionGoal + ChaseGoal concrete Goal implementations, additive/unconsumed."
@@ -1107,7 +1114,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 1798/1798 (prior 1789 + 9 new: PassiveWanderAI 9)",
-      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged — no consumer yet)",
+      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged \u2014 no consumer yet)",
       "e2e": "PASS 21/21",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "139 passive-wander-ai verified; WanderGoal + LookGoal concrete Goal implementations, additive/unconsumed."
@@ -1117,7 +1124,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 1789/1789 (prior 1782 + 7 new: MobSpawnCycle 7)",
-      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged — no consumer yet)",
+      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged \u2014 no consumer yet)",
       "e2e": "PASS 21/21",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "138 mob-spawn-cycle verified; countLiveByCategory + selectSpawnCandidate + runSpawnCycleForChunk, additive/unconsumed."
@@ -1127,7 +1134,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 1782/1782 (prior 1768 + 14 new: MobSpawnRules 14)",
-      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged — no consumer yet)",
+      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged \u2014 no consumer yet)",
       "e2e": "PASS 21/21",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "137 mob-spawn-rules verified; distance/biome/light/block predicates + canSpawn conjunction, additive/unconsumed."
@@ -1137,7 +1144,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 1768/1768 (prior 1759 + 9 new: GoalSelector 9)",
-      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged — no consumer yet)",
+      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged \u2014 no consumer yet)",
       "e2e": "PASS 21/21",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "136 mob-goal-selector verified; GoalSelector prioritized interruptible scheduler, additive/unconsumed."
@@ -1147,7 +1154,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 1759/1759 (prior 1749 + 10 new: AStarPathfinding 10)",
-      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged — no consumer yet)",
+      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged \u2014 no consumer yet)",
       "e2e": "PASS 21/21",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "135 a-star-pathfinding verified; findPath + isPathStale, additive/unconsumed."
@@ -1157,7 +1164,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 1749/1749 (prior 1736 + 13 new: NavigationGridQuery 13)",
-      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged — no consumer yet)",
+      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged \u2014 no consumer yet)",
       "e2e": "PASS 21/21",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "134 navigation-grid-query verified; classifyNode/nodeCost/isPassable/canStandAt/movementCost, additive/unconsumed."
@@ -1167,7 +1174,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 1736/1736 (prior 1724 + 12 new: EntityDataTracker 12)",
-      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged — no consumer yet)",
+      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged \u2014 no consumer yet)",
       "e2e": "PASS 21/21 (after ruling out two transient net::ERR_NETWORK_CHANGED flakes via clean rerun)",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "133 entity-data-tracker verified; DataAccessorRegistry + EntityDataTracker, additive/unconsumed. Completes 129-133 entity-framework foundation arc."
@@ -1177,7 +1184,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 1724/1724 (prior 1713 + 11 new: EntityManager.forgetChunk 3, EntityChunkTracking 8)",
-      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged — no consumer yet)",
+      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged \u2014 no consumer yet)",
       "e2e": "PASS 21/21",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "132 entity-chunk-tracking verified; forgetChunk + selectTickingEntities/deactivateChunk/activateChunk, additive/unconsumed."
@@ -1187,7 +1194,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 1713/1713 (prior 1702 + 11 new: EntityManager serializeChunk/deserializeChunk 11)",
-      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged — no consumer yet)",
+      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged \u2014 no consumer yet)",
       "e2e": "PASS 21/21",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "131 entity-persistence-runtime verified; EntityManager <-> 037 SerializedEntity bridge, additive/unconsumed."
@@ -1197,7 +1204,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 1702/1702 (prior 1694 + 8 new: EntityPhysics 8)",
-      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged — no consumer yet)",
+      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged \u2014 no consumer yet)",
       "e2e": "PASS 21/21",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "130 entity-collision-and-physics verified; gravity + shape-aware collision step + EntityManager wrapper, additive/unconsumed."
@@ -1207,7 +1214,7 @@
       "typecheck": "PASS",
       "lint": "PASS",
       "unit": "PASS 1694/1694 (prior 1674 + 20 new: EntityManager 20)",
-      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged — no consumer yet)",
+      "build": "PASS via tsc --noEmit && vite build (83 modules, unchanged \u2014 no consumer yet)",
       "e2e": "PASS 21/21",
       "productionAudit": "NOT RUN THIS SESSION",
       "notes": "129 entity-core verified; EntityInstance data shape + EntityManager (spawn/query/mutate/remove), additive/unconsumed."
@@ -1970,7 +1977,7 @@
       "build": "PASS via tsc --noEmit && vite build",
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
-      "note": "072 VERIFIED 6/6 (100%). Tint attributes: BlockModelFace.tintindex ('grass'|'foliage'|'water') strictly validated/preserved; DEFAULT_WATER_COLOR exported; new src/rendering/BiomeTint.ts (biomeTintColor/biomeTint: grass→grassColor, foliage→foliageColor, water→waterColor ?? default, rgb split; pure/deterministic); 10 new unit tests; 814 unit + 19 e2e pass, stable."
+      "note": "072 VERIFIED 6/6 (100%). Tint attributes: BlockModelFace.tintindex ('grass'|'foliage'|'water') strictly validated/preserved; DEFAULT_WATER_COLOR exported; new src/rendering/BiomeTint.ts (biomeTintColor/biomeTint: grass\u2192grassColor, foliage\u2192foliageColor, water\u2192waterColor ?? default, rgb split; pure/deterministic); 10 new unit tests; 814 unit + 19 e2e pass, stable."
     },
     {
       "head": "e445720aeb65d63ce27f8d9633d31b37b7c2d434",
@@ -2030,7 +2037,7 @@
       "build": "PASS via tsc --noEmit && vite build",
       "e2e": "PASS 19/19",
       "productionAudit": "PASS 0 vulnerabilities",
-      "note": "078 VERIFIED 4/4 (100%). Deterministic water flow: src/simulation/WaterFlowEngine.ts (stepWaterCell: downward falling-8 spawn, falling→flowing-7 at ground, horizontal spread level+1 capped at 7 with improvement + falling protection, source formation from 2+ horizontal sources, decay ladder with feeder/water-above guards, removal at 7; WATER_FLOW_INTERVAL 5; fixed neighbor order; affected reporting); 18 new unit tests; 886 unit + 19 e2e pass, stable."
+      "note": "078 VERIFIED 4/4 (100%). Deterministic water flow: src/simulation/WaterFlowEngine.ts (stepWaterCell: downward falling-8 spawn, falling\u2192flowing-7 at ground, horizontal spread level+1 capped at 7 with improvement + falling protection, source formation from 2+ horizontal sources, decay ladder with feeder/water-above guards, removal at 7; WATER_FLOW_INTERVAL 5; fixed neighbor order; affected reporting); 18 new unit tests; 886 unit + 19 e2e pass, stable."
     },
     {
       "head": "f39f9e29f3fdcdc0ba2c7108eb6fdc454729a7c6",
@@ -2553,7 +2560,7 @@
       "unitTests": 4556,
       "e2eTests": 51,
       "head": "05ec693766648dc2022443e84636d0da0fc3c3bd",
-      "note": "37/37 tasks complete (100%). Full certification — typecheck, lint, unit (376 files, 4556+1 skipped), build (195 modules), e2e (51/51 with GPU-context drift allowance 6), adversarial stale/failure/resource/save/determinism checks pass; no Critical/High open. Archived as 2026-08-30-255-high-performance-voxel-engine; capability spec synced to openspec/specs/high-performance-voxel-engine/spec.md. Candidate 05ec693."
+      "note": "37/37 tasks complete (100%). Full certification \u2014 typecheck, lint, unit (376 files, 4556+1 skipped), build (195 modules), e2e (51/51 with GPU-context drift allowance 6), adversarial stale/failure/resource/save/determinism checks pass; no Critical/High open. Archived as 2026-08-30-255-high-performance-voxel-engine; capability spec synced to openspec/specs/high-performance-voxel-engine/spec.md. Candidate 05ec693."
     },
     {
       "change": "256-production-readiness-hardening",
@@ -2569,7 +2576,7 @@
       "unitTests": 4632,
       "e2eTests": 65,
       "head": "75d564f6b40cfaffb2733e848777d688fac652fe",
-      "note": "92/92 VERIFIED at 75d564f6 — F257-A..L closed, CI 33600754305 success (gate + e2e) — published 75d564f6 — 258 activating at 75d564f6"
+      "note": "92/92 VERIFIED at 75d564f6 \u2014 F257-A..L closed, CI 33600754305 success (gate + e2e) \u2014 published 75d564f6 \u2014 258 activating at 75d564f6"
     }
   ],
   "publicationHistory": [
@@ -2596,7 +2603,7 @@
     {
       "head": "786919b3055dd8a264ba8c08c666f93ccf15e6b7",
       "at": "2026-08-29T22:18:24Z",
-      "note": "Change 255 task 9 implementation published normally to origin/main: canonical 16³ target/face-dependency and light invalidation, sibling-safe section ownership, bounded compatibility scheduling bridges, focused live-section/resource/streaming evidence, and clean full local gates."
+      "note": "Change 255 task 9 implementation published normally to origin/main: canonical 16\u00b3 target/face-dependency and light invalidation, sibling-safe section ownership, bounded compatibility scheduling bridges, focused live-section/resource/streaming evidence, and clean full local gates."
     },
     {
       "head": "80db0ce72d88efd39a55b0e226bce9b983a10eb8",
@@ -2666,7 +2673,7 @@
     {
       "head": "6af6c6c6e4063906562aedc7bc66a3a52930d37e",
       "at": "2026-09-18T12:33:45Z",
-      "note": "Changes 1–277 audit/remediation candidate committed: findings ledger, truthful historical state/task reconciliation, C001–C277 matrix completion, WorldArchiver replacement semantics, Vitest 4.1.11 security/coverage hardening, statistics restoration fix, and canonical visual re-pin. Local validate-state/typecheck/lint/unit/coverage/build/release/file-audit and full E2E 94/94 (visual 60/60) are green; Change 258 remains BLOCKED with no headed GPU claim."
+      "note": "Changes 1\u2013277 audit/remediation candidate committed: findings ledger, truthful historical state/task reconciliation, C001\u2013C277 matrix completion, WorldArchiver replacement semantics, Vitest 4.1.11 security/coverage hardening, statistics restoration fix, and canonical visual re-pin. Local validate-state/typecheck/lint/unit/coverage/build/release/file-audit and full E2E 94/94 (visual 60/60) are green; Change 258 remains BLOCKED with no headed GPU claim."
     },
     {
       "head": "59a48a8be7a848a794d0eab2a0810818740515f1",
@@ -2676,15 +2683,15 @@
   ],
   "releaseAuthority": {
     "schemaVersion": 1,
-    "authorityPackage": "openspec/changes/280-death-respawn-ui",
+    "authorityPackage": "openspec/changes/284-live-raid-wave-spawning",
     "candidateSha": "b5265b8f121f309bd089df62f405529b4ea6b250",
-    "note": "Change 280 is VERIFIED 10/10 and published at b5265b8: live death/respawn presentation, safe cause mapping, normal/hardcore outcome card, lifecycle proof, no persistence change, and exact 102/102 browser evidence. Change 258 headed hardware-WebGL certification remains owner-deferred and no GPU evidence is claimed."
+    "note": "Change 284 is VERIFIED 12/12: live raid wave spawning via injectable backend over 152/282/283 seams; gates green with documented non-blocking E2E variance; Change 258 remains BLOCKED with no GPU claim."
   },
   "hardeningInterlock": {
     "role": "historical interlock record (pre-241 era); NOT the current release authority - see releaseAuthority above",
     "package": "openspec/hardening/2026-08-17-pre-241-repository-hardening",
     "status": "VERIFIED",
-    "verification": "VERIFIED at e3ecf86c28553c558459c855a3aee3b003bcb157 (run 32320823336 #337 SUCCESS; job 96282506795 21/21 success; E2E 30 passed + 1 flaky pig retry→pass in 11.2m; all 15 hardening steps green)",
+    "verification": "VERIFIED at e3ecf86c28553c558459c855a3aee3b003bcb157 (run 32320823336 #337 SUCCESS; job 96282506795 21/21 success; E2E 30 passed + 1 flaky pig retry\u2192pass in 11.2m; all 15 hardening steps green)",
     "localGateSha": "e3ecf86c28553c558459c855a3aee3b003bcb157",
     "localGate": "validate-state PASS; typecheck/lint/build 0; unit 3574 passed/1 skipped; coverage 85.09/91.63/95.21/85.09 >=85/91/95/85; audit 0/0; e2e 31/31 local retries=0; file-audit 1974/1974; canonical run 32320823336 SUCCESS",
     "canonical": {

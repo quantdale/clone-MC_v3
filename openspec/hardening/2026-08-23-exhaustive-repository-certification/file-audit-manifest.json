@@ -1,7 +1,7 @@
 {
   "generatedAt": "2026-09-22T09:47:53.631Z",
   "reviewedSha": "75d564f6b40cfaffb2733e848777d688fac652fe",
-  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; modified Game/index/styles/RaidFeedbackView.test re-reviewed in place",
+  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284",
   "allowedReviewLevels": [
     "semantic",
     "mechanical",
@@ -10,7 +10,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2892,
+  "total": 2904,
   "rows": [
     {
       "path": ".agent/EXECUTION_PROMPT.md",
@@ -30953,16 +30953,23 @@
       "path": "src/data/EntityType.ts",
       "gitBlob": null,
       "category": "production",
-      "purpose": "257 repair coverage for src/data/EntityType.ts",
+      "purpose": "284 append-only raider registry: pillager/vindicator/ravager/witch MONSTER non-persistent summonable types; prior keys and runtime ids stable by append-only order",
       "reviewLevel": "semantic",
-      "runtimeReachability": "unknown",
+      "runtimeReachability": "reachable",
       "imports": [],
       "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
+      "testEvidence": [
+        "npx vitest run tests/unit/EntityType.test.ts: PASS",
+        "npm run typecheck: PASS",
+        "npm test: 452 files 5383 passed + 1 skipped"
+      ],
+      "riskAreas": [
+        "registry",
+        "raid"
+      ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "reviewed for 284 implementation; no findings \u2014 four keys appended after item=13; zombie and other prior definitions unchanged",
       "status": "audited"
     },
     {
@@ -31273,16 +31280,25 @@
       "path": "src/engine/Game.ts",
       "gitBlob": null,
       "category": "production",
-      "purpose": "257 repair coverage for src/engine/Game.ts",
+      "purpose": "284 Game wave-lifecycle wiring: dedicated raid EntityManager + RaidWaveController over injectable backend; tickRaidFeedback applies/clears spawned rosters; debugStartRaid/debugClearRaidWave replace/clear/terminal handling; onRaidEntityRemoved/getRaidWaveEntityIds/getLastRaidWaveApplyResult seams; dispose/pagehide clear tracking",
       "reviewLevel": "semantic",
-      "runtimeReachability": "unknown",
+      "runtimeReachability": "reachable",
       "imports": [],
       "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
+      "testEvidence": [
+        "npx vitest run tests/unit/LiveRaidWaveSpawning.test.ts: PASS",
+        "npm run typecheck: PASS",
+        "npm test: 452 files 5383 passed + 1 skipped",
+        "npm run test:e2e: 110 passed / 2 failed (documented non-blocking)"
+      ],
+      "riskAreas": [
+        "simulation",
+        "raid",
+        "lifecycle"
+      ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "reviewed for 284 implementation; no findings \u2014 additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits",
       "status": "audited"
     },
     {
@@ -39267,16 +39283,21 @@
       "path": "tests/unit/EntityType.test.ts",
       "gitBlob": null,
       "category": "test",
-      "purpose": "257 repair coverage for tests/unit/EntityType.test.ts",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
+      "purpose": "284 registry stability tests: size 14\u219218, sorted keys, append-order/runtime-id pins (item=13, pillager=14, witch=17), roster-key MONSTER, zombie stability",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "test-only",
       "imports": [],
       "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
+      "testEvidence": [
+        "npx vitest run tests/unit/EntityType.test.ts: PASS"
+      ],
+      "riskAreas": [
+        "registry",
+        "test"
+      ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "reviewed for 284 implementation; no findings",
       "status": "audited"
     },
     {
@@ -46615,6 +46636,263 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/RaidEntityBackend.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "284 injectable raid wave entity backend: recording fake + EntityManager adapter",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [
+        "src/data/EntityType.ts",
+        "src/simulation/EntityManager.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "npx vitest run tests/unit/RaidEntityBackend.test.ts: PASS"
+      ],
+      "riskAreas": [
+        "simulation",
+        "raid"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 284 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/RaidWaveController.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "284 Game-side wave apply controller: generation tracking, duplicate guard, rollback, death consumption",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [
+        "src/simulation/RaidWaveSpawnPlan.ts",
+        "src/simulation/RaidEntityBackend.ts",
+        "src/simulation/RaidStateMachine.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "npx vitest run tests/unit/LiveRaidWaveSpawning.test.ts: PASS"
+      ],
+      "riskAreas": [
+        "simulation",
+        "raid"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 284 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/RaidWaveSpawnPlan.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "284 pure deterministic fail-closed wave spawn plan (ring placement)",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [
+        "src/simulation/RaidStateMachine.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "npx vitest run tests/unit/RaidWaveSpawnPlan.test.ts: PASS"
+      ],
+      "riskAreas": [
+        "simulation",
+        "raid"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 284 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/LiveRaidWaveSpawning.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "284 Game composition oracles: wave apply, duplicate, rollback, death exactly-once, pause/reload/dispose",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "test-only",
+      "imports": [
+        "src/simulation/RaidWaveController.ts",
+        "src/simulation/RaidEntityBackend.ts",
+        "src/simulation/RaidStateMachine.ts",
+        "src/data/EntityType.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "npx vitest run tests/unit/LiveRaidWaveSpawning.test.ts: PASS"
+      ],
+      "riskAreas": [
+        "simulation",
+        "raid",
+        "test"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 284 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/RaidEntityBackend.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "284 backend contract tests: logging, idempotent despawn, unknown-key refusal, EntityManager adapter",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "test-only",
+      "imports": [
+        "src/simulation/RaidEntityBackend.ts",
+        "src/simulation/EntityManager.ts",
+        "src/data/EntityType.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "npx vitest run tests/unit/RaidEntityBackend.test.ts: PASS"
+      ],
+      "riskAreas": [
+        "simulation",
+        "raid",
+        "test"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 284 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/RaidWaveSpawnPlan.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "284 pure plan tests: determinism, ring geometry, fail-closed center/type/count, zero-count omit",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "test-only",
+      "imports": [
+        "src/simulation/RaidWaveSpawnPlan.ts"
+      ],
+      "importedBy": [],
+      "testEvidence": [
+        "npx vitest run tests/unit/RaidWaveSpawnPlan.test.ts: PASS"
+      ],
+      "riskAreas": [
+        "simulation",
+        "raid",
+        "test"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 284 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/284-live-raid-wave-spawning/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "284 control-plane override draft (superseded by live CHANGE_SEQUENCE_OVERRIDES activation section)",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "spec"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 284 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/284-live-raid-wave-spawning/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "284 design: pure plan, injectable backend, Game wave controller, failure modes",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "spec"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 284 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/284-live-raid-wave-spawning/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "284 proposal: goals/non-goals, preconditions on 152/282/283, DoD",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "spec"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 284 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/284-live-raid-wave-spawning/specs/live-raid-wave-spawning/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "284 normative capability spec: MUST/SHALL requirements and scenarios",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "spec"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 284 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/284-live-raid-wave-spawning/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "284 sequenced tasks T1-T12 across control-plane through publication",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "spec"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 284 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/284-live-raid-wave-spawning/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "284 verification evidence: gates, requirement mapping, final decision",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "spec"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 284 implementation; no findings",
       "status": "audited"
     }
   ]

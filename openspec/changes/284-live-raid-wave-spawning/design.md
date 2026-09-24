@@ -9,10 +9,10 @@ that are **not** in `createDefaultEntityRegistry()`. `EntityManager.spawn`
 requires a registered `ResourceId` and finite transform; it has no raid
 awareness.
 
-Change 282 (when VERIFIED) gives Game ephemeral `raidState`, one
+Change 282 is VERIFIED on `main`: Game owns ephemeral `raidState`, one
 `tickRaid` per unpaused fixed tick, debug start/clear/replay, and the
-feedback projection. On this authoring branch only `RaidFeedbackView` exists;
-Game raid ownership lands with 282 T4+ on `main`, not here.
+feedback projection. Change 283 is VERIFIED and published (`__raid__`
+persistence only). This session implements 284 against those live seams.
 
 `HostileMobSystem`/`PassiveMobSystem` each own a private `EntityManager` for
 ambient spawns; they are not raid authorities. `MobDropLootSystem.damageEntity`
@@ -262,8 +262,9 @@ Intended at implementation time (not edited during this authoring session):
   (depends on 282 raid state fields/methods).
 - `tests/unit/RaidWaveSpawnPlan.test.ts`, `tests/unit/RaidEntityBackend.test.ts`,
   `tests/unit/LiveRaidWaveSpawning.test.ts` (names indicative).
-- Package docs + later `CHANGE_SEQUENCE.md` / `PARITY_MATRIX.md` /
-  program-state only when activated on main.
+- Package docs + `CHANGE_SEQUENCE.md` / `PARITY_MATRIX.md` / program-state
+  are updated only for this 284 activation on main (done at T1; C284 matrix
+  row lands at T12 VERIFIED).
 
 ## Rejected alternatives
 

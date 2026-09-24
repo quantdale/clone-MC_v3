@@ -323,6 +323,9 @@ import { CollisionResolver, type ShapeWorld } from '../world/CollisionResolver';
 import { computeExplosion } from '../simulation/ExplosionCore';
 import { startRaid, tickRaid, recordRaiderDeath, type RaidState } from '../simulation/RaidStateMachine';
 import { deserializeRaidPayload, serializeRaidPayload } from '../simulation/RaidPersistence';
+import { EntityManager } from '../simulation/EntityManager';
+import { createEntityManagerRaidBackend } from '../simulation/RaidEntityBackend';
+import { RaidWaveController, type RaidWaveApplyResult } from '../simulation/RaidWaveController';
 import { projectRaidFeedback } from '../ui/RaidFeedbackView';
 
 /** Maximum eye-to-furnace distance before an open furnace screen auto-closes (251). */
@@ -581,6 +584,10 @@ export class Game {
   private lastShieldHudSignature = '';
   /** Ephemeral live raid state (282): never persisted; null when no raid exists. */
   private raidState: RaidState | null = null;
+  /** Dedicated non-persistent raider EntityManager (284); production backend store. */
+  private readonly raidEntityManager: EntityManager;
+  /** Wave spawn/despawn controller (284) over the injectable raid backend. */
+  private readonly raidWaveController: RaidWaveController;
   /** HUD raid feedback bar (282, null until the shell binds it). */
   private raidFeedbackEl: HTMLElement | null = null;
   /** Live block-tag registry (266 adventure resolution; built once beside HarvestRules). */
@@ -1019,6 +1026,15 @@ export class Game {
       biomeRegistry: createDefaultBiomeRegistry(),
     });
     const entityRegistry = createDefaultEntityRegistry();
+    this.raidEntityManager = new EntityManager(entityRegistry);
+    this.raidWaveController = new RaidWaveController({
+      backend: createEntityManagerRaidBackend({
+        manager: this.raidEntityManager,
+        registry: entityRegistry,
+        dimension: this.overworldDimension,
+      }),
+      resolveType: (typeKey) => entityRegistry.getByKey(typeKey) !== undefined,
+    });
     this.passiveMobs = new PassiveMobSystem(entityRegistry, this.seed);
     this.passiveMobRenderer = new PassiveMobRenderer(this.renderer.scene);
     this.resources.track(this.passiveMobRenderer);
@@ -1713,6 +1729,7 @@ export class Game {
     // text (dispose-hide contract). Null state at save time clears the record.
     this.saveRaid();
     this.raidState = null;
+    this.raidWaveController.clear('dispose');
     this.syncRaidFeedbackHud();
     this.dismissDeathScreen();
     // Settle the furnace session first so its cursor/xp land in the state that
@@ -5357,12 +5374,17 @@ export class Game {
    * Test-only seam (282): start one replacement raid at the player's finite
    * position and immediately apply one `tickRaid` so wave 1 exists. Invalid
    * omen input is clamped by `startRaid`; starting again replaces any prior
-   * active or terminal state atomically and refreshes the feedback bar.
+   * active or terminal state atomically (despawning prior wave entities,
+   * 284) and refreshes the feedback bar.
    */
   debugStartRaid(badOmenLevel = 1): RaidState {
+    this.raidWaveController.clear('replace');
     const { x, y, z } = this.player.position;
-    const { state } = tickRaid(startRaid(x, y, z, badOmenLevel));
+    const { state, spawned } = tickRaid(startRaid(x, y, z, badOmenLevel));
     this.raidState = state;
+    if (spawned && spawned.length > 0) {
+      this.raidWaveController.applyWave(state, spawned);
+    }
     this.syncRaidFeedbackHud();
     return state;
   }
@@ -5377,27 +5399,66 @@ export class Game {
   /**
    * Test-only seam (282): record one death per current remaining raider
    * (bounded by that count), then apply one `tickRaid` — never loops across
-   * future waves. Null state is an identity no-op returning null.
+   * future waves. Null state is an identity no-op returning null. Under 284
+   * this also despawns tracked wave entities before the next spawn event.
    */
   debugClearRaidWave(): RaidState | null {
     if (!this.raidState) return null;
+    this.raidWaveController.clear('clear');
     const remaining = this.raidState.raidersRemaining;
     let state = this.raidState;
     for (let i = 0; i < remaining; i++) {
       state = recordRaiderDeath(state);
     }
-    const { state: next } = tickRaid(state);
+    const { state: next, spawned } = tickRaid(state);
     this.raidState = next;
+    if (next.status === 'VICTORY' || next.status === 'DEFEAT') {
+      this.raidWaveController.clear('terminal');
+    } else if (spawned && spawned.length > 0) {
+      this.raidWaveController.applyWave(next, spawned);
+    }
     this.syncRaidFeedbackHud();
     return next;
   }
 
-  /** One unpaused fixed-tick raid transition (282); no-op without a raid. */
+  /**
+   * One unpaused fixed-tick raid transition (282); no-op without a raid.
+   * Under 284 a non-empty spawn roster is applied at most once per wave and
+   * terminal outcomes despawn tracked wave entities.
+   */
   private tickRaidFeedback(): void {
     if (!this.raidState) return;
-    const { state } = tickRaid(this.raidState);
+    const { state, spawned } = tickRaid(this.raidState);
     this.raidState = state;
+    if (state.status === 'VICTORY' || state.status === 'DEFEAT') {
+      this.raidWaveController.clear('terminal');
+    } else if (spawned && spawned.length > 0) {
+      this.raidWaveController.applyWave(state, spawned);
+    }
     this.syncRaidFeedbackHud();
+  }
+
+  /**
+   * Route a tracked wave-entity removal through exactly-once
+   * `recordRaiderDeath` (284). Unknown/stale/double deaths are identity
+   * no-ops returning false.
+   */
+  onRaidEntityRemoved(entityId: number): boolean {
+    if (!this.raidState) return false;
+    if (!this.raidWaveController.consumeDeath(entityId)) return false;
+    this.raidState = recordRaiderDeath(this.raidState);
+    this.syncRaidFeedbackHud();
+    return true;
+  }
+
+  /** Read-only tracked wave entity ids for the current generation (284). */
+  getRaidWaveEntityIds(): readonly number[] {
+    return this.raidWaveController.getRaidWaveEntityIds();
+  }
+
+  /** Last wave-apply structured result for tests/diagnostics (284). */
+  getLastRaidWaveApplyResult(): RaidWaveApplyResult | null {
+    return this.raidWaveController.getLastRaidWaveApplyResult();
   }
 
   /** Sync the single #raid-feedback bar from the pure projection (282, null-safe). */
@@ -5845,6 +5906,10 @@ export class Game {
     this.saveWeather();
     this.saveTrading();
     this.saveRaid();
+    // 284: wave entities are non-persistent — drop tracking on pagehide so a
+    // reload never resurrects mid-raid population (283 may still restore
+    // RaidState counters independently).
+    this.raidWaveController.clear('clear');
     this.saveTimer = 0;
   };
 

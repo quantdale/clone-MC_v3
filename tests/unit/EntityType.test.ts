@@ -17,14 +17,53 @@ function def(overrides: Partial<EntityTypeDefinition> & Pick<EntityTypeDefinitio
 }
 
 describe('entity registry validation', () => {
-  it('builds the default registry with twelve entities and finalizes', () => {
+  it('builds the default registry with eighteen entities and finalizes', () => {
     const reg = createDefaultEntityRegistry();
-    expect(reg.size).toBe(14);
+    expect(reg.size).toBe(18);
     expect(reg.finalized).toBe(true);
     expect(reg.entries().map((d) => d.key).sort()).toEqual([
       'bat', 'chicken', 'cow', 'creeper', 'item', 'pig',
-      'sheep', 'skeleton', 'spider', 'squid', 'villager', 'wither', 'wither_skull', 'zombie',
+      'pillager', 'ravager', 'sheep', 'skeleton', 'spider', 'squid',
+      'villager', 'vindicator', 'witch', 'wither', 'wither_skull', 'zombie',
     ]);
+  });
+
+  it('appends raiders without reordering prior keys or dense runtime ids', () => {
+    const reg = createDefaultEntityRegistry();
+    const order = reg.entries().map((d) => d.key);
+    const prior = ['zombie', 'skeleton', 'creeper', 'spider', 'wither', 'wither_skull',
+      'pig', 'cow', 'chicken', 'sheep', 'squid', 'bat', 'villager', 'item'];
+    expect(order.slice(0, prior.length)).toEqual(prior);
+    expect(order.slice(prior.length)).toEqual(['pillager', 'vindicator', 'ravager', 'witch']);
+    expect(reg.getByRuntimeId(0).key).toBe('zombie');
+    expect(reg.getRuntimeId(reg.getByKey('item')!.id)).toBe(13);
+    expect(reg.getRuntimeId(reg.getByKey('pillager')!.id)).toBe(14);
+    expect(reg.getRuntimeId(reg.getByKey('witch')!.id)).toBe(17);
+  });
+
+  it('registers every wave roster key as a non-persistent MONSTER', () => {
+    const reg = createDefaultEntityRegistry();
+    for (const key of ['pillager', 'vindicator', 'ravager', 'witch']) {
+      const def = reg.getByKey(key)!;
+      expect(def).toBeDefined();
+      expect(def.category).toBe('MONSTER');
+      expect(def.isPersistent).toBe(false);
+      expect(def.isSummonable).toBe(true);
+      expect(Number.isFinite(def.health!)).toBe(true);
+      expect(def.health!).toBeGreaterThan(0);
+      expect(Number.isFinite(def.attackDamage!)).toBe(true);
+      expect(def.attackDamage!).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  it('keeps zombie fields stable after raider append', () => {
+    const reg = createDefaultEntityRegistry();
+    const zombie = reg.getByKey('zombie')!;
+    expect(zombie.category).toBe('MONSTER');
+    expect(zombie.health).toBe(20);
+    expect(zombie.attackDamage).toBe(3);
+    expect(zombie.isSummonable).toBe(true);
+    expect(zombie.isPersistent).toBe(true);
   });
 
   it('rejects a non-positive health', () => {

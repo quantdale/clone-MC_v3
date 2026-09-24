@@ -782,6 +782,78 @@ independent baselines, one-cell swap, 25/30 fractions byte-identical; all raid E
   in `openspec/PROGRAM_STATE.json` after the final push to `origin/main`.
 - Change 258 remains BLOCKED at 40/100 (no headed FPS/GPU work, no fake GPU evidence).
 - Changes 259–283 remain VERIFIED and are not reopened.
-- The next sequential slot is `284-raider-entity-spawning`, reserved for a separate
-  control-plane activation from published VERIFIED 283; it is NOT implemented by the
-  283 track (owner rule: no 284 until 283 published — satisfied at publication).
+- The next sequential slot after published VERIFIED 283 is
+  `284-live-raid-wave-spawning` (this activation; the earlier placeholder id
+  `284-raider-entity-spawning` is superseded — there is no second parallel 284
+  id). It is NOT implemented by the 283 track (owner rule: no 284 until 283
+  published — satisfied at publication of 283).
+
+## 284-live-raid-wave-spawning — activated from published VERIFIED 283
+
+Change **284-live-raid-wave-spawning** is now the sole ACTIVE implementation
+change. Control-plane activation folded from the package
+`openspec/changes/284-live-raid-wave-spawning/OVERRIDE_DRAFT.md` after
+283-live-raid-persistence reached VERIFIED and was published to `origin/main`
+(`73ad0dfde5ce1d96a2fa5cf5afe1e05a6c5252b8`). Session start head for this
+activation is `c2539dc30a470e64bbbd306e186fab80c74b485e`.
+
+### Dependency and activation (satisfied)
+
+- 282-live-raid-feedback is VERIFIED (10/10); 284 consumes 282's Game-owned
+  ephemeral raid state, fixed-tick `tickRaid` (including spawn rosters), debug
+  start/clear/replay, and inspect seams.
+- 283-live-raid-persistence is VERIFIED (13/13) and published; the
+  one-active-change ordering contract is satisfied. Sole ACTIVE is 284.
+- Placeholder next-change id `284-raider-entity-spawning` is replaced by the
+  real package id `284-live-raid-wave-spawning` everywhere in PROGRAM_STATE,
+  CHANGE_SEQUENCE, and this overrides file.
+- Prepared next package (NOT activated this session): `285-live-bad-omen-acquisition`
+  at `/workspace/mc-worktrees/285` (branch `wt/285-live-bad-omen-acquisition`).
+
+### Scope limits (binding for the 284 track)
+
+- 284 MUST remain limited to: raider type registration (append-only),
+  pure wave spawn planning, injectable entity backend (headless fake +
+  production adapter), Game wave spawn/despawn lifecycle over 152
+  transitions + 282 seams, exactly-once `recordRaiderDeath` alignment, tests,
+  and exact state/parity evidence.
+- 284 MUST NOT implement bad-omen acquisition, settlement/village detection,
+  a new persistence/archive namespace (that is 283's lane), HUD redesign,
+  raider combat/AI redesign, Change 258 headed FPS/GPU work, or any fake GPU
+  evidence. Change 258 MUST NOT be marked VERIFIED by the 284 track.
+- Existing 282 feedback projection, wither boss bar, smoker/furnace/brewing/
+  shield/trading/death/respawn behavior remain the regression boundary.
+- Changes 259–283 stay VERIFIED and are not reopened.
+
+### Sequence row (recorded in `CHANGE_SEQUENCE.md` at this activation)
+
+| # | Change | Narrow outcome |
+|---|---|---|
+| 284 | `284-live-raid-wave-spawning` | Spawn/despawn live raid wave entities from `RaidStateMachine` wave transitions through an injectable entity backend (headless CI fake + production adapter), append-only raider registry keys, all-or-nothing per-wave apply with rollback, exactly-once death→`recordRaiderDeath`, terminal/clear/dispose despawn, reload non-resurrection; no bad omen, no settlement detection, no new persistence namespace, no 258 headed work. |
+
+The slot after 284 is intentionally unspecified in this activation; the next
+change (285) requires its own spec-first package and owner/sequence decision
+(prepared package `285-live-bad-omen-acquisition` exists but is NOT activated
+until 284 is published).
+
+## 284-live-raid-wave-spawning — VERIFIED publication checkpoint (2026-09-24)
+
+Change **284-live-raid-wave-spawning** is VERIFIED at **12/12 (100%)** with exact C284
+parity and full local gates green: typecheck, lint (0 errors / 85 existing warnings),
+full unit 452 files 5383 passed + 1 skipped, build (252 modules), file-audit 2904 rows (sha
+`75d564f6…`), validate-state, and exact `npm run test:e2e` (112 scheduled, 110 passed;
+enchanting:227 known reload flake — isolated re-runs still Expected JSON vs `null` after
+reload; companion lifecycle PASS; visual:176 proven baseline-equivalent Linux SwiftShader
+golden drift — 31 fail/29 pass vs `/tmp/visual-283-classify.log` 30/30 with one extra
+`start-overlay/high/1920x1080`, 22/30 shared fractions byte-identical, band 0.020–0.062;
+all raid E2E green).
+
+- Session start: `c2539dc30a470e64bbbd306e186fab80c74b485e`; published_head is recorded
+  in `openspec/PROGRAM_STATE.json` after the final push to `origin/main`.
+- Change 258 remains BLOCKED at 40/100 (no headed FPS/GPU work, no fake GPU evidence).
+- Changes 259–284 remain VERIFIED and are not reopened.
+- The next sequential slot after published VERIFIED 284 is
+  `285-live-bad-omen-acquisition` (prepared at `/workspace/mc-worktrees/285`, branch
+  `wt/285-live-bad-omen-acquisition`). It is NOT implemented by the 284 track (owner rule:
+  no 285 until 284 published).
+

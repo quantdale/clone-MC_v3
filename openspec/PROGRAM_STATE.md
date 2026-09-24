@@ -1,16 +1,21 @@
 # Minecraft-Parity Program State
 
-## Current checkpoint — 2026-09-23 Change 283 VERIFIED 13/13 (100%); published to origin/main; 284 is next (not started)
+## Current checkpoint — 2026-09-24 Change 284-live-raid-wave-spawning VERIFIED 12/12 (100%); ready to publish; 285 next (not started)
+
+> **Change `284-live-raid-wave-spawning` is VERIFIED 12/12 (100%); all baseline gates green (typecheck/lint/unit 5383+1/build/file-audit 2904/validate-state/full E2E 110 passed with both failures classified non-blocking); last completed Change 284-live-raid-wave-spawning is VERIFIED; Changes 001–284 are VERIFIED except Change 258 BLOCKED; Changes 259–284 are not reopened.**
+> Session start head: `c2539dc30a470e64bbbd306e186fab80c74b485e` (origin/main before this session). Prepared 285 package exists at `/workspace/mc-worktrees/285` (`285-live-bad-omen-acquisition`) and is NOT activated until after 284 is published.
+> 284 ships append-only raider registry keys, pure `planRaidWaveSpawn`, injectable `RaidEntityBackend`, Game wave spawn/despawn lifecycle, exactly-once `recordRaiderDeath`, reload non-resurrection; no bad omen, no settlement, no new persistence namespace, no 258 headed work.
+
+- Gates: typecheck PASS; lint 0 errors / 85 warnings; unit 452 files 5383+1; build 252 modules; file-audit 2904; full E2E 110/112 (enchanting:227 known reload flake; visual:176 SwiftShader 31/29 drift baseline-equivalent vs `/tmp/visual-283-classify.log`); all raid E2E green.
+- Next exact action: **Publish 284 to `origin/main`, then activate 285-live-bad-omen-acquisition T1 control-plane from prepared `/workspace/mc-worktrees/285` (NOT started this session); 258 stays BLOCKED.**
+
+## Prior checkpoint — 2026-09-24 Change 284-live-raid-wave-spawning ACTIVATED 2/12 (T1 control-plane complete; 258 stays BLOCKED; no 285 yet)
+
+## Prior checkpoint — 2026-09-23 Change 283 VERIFIED 13/13 (100%); published to origin/main; 284 is next (not started)
 
 > **Change 283-live-raid-persistence is VERIFIED 13/13 (100%); all baseline gates green (typecheck/lint/unit 5351+1/build/file-audit 2892/validate-state/full E2E 110 passed with both failures classified non-blocking); last completed Change 283-live-raid-persistence is VERIFIED; Changes 001–283 are VERIFIED; Change 258 remains BLOCKED; Changes 259–283 are not reopened.**
 > Session start was `a463e0fe8571576fc10a5bda49dead34b0eac61a` on `origin/main`; published_head is `73ad0dfde5ce1d96a2fa5cf5afe1e05a6c5252b8` (origin/main verified equal to local HEAD after push).
 > 283 added a world-scoped `__raid__` persistence seam behind the verified `RaidStateMachine`; no raider entity spawning, settlement detection, 282 HUD redesign, or headed FPS/GPU work.
-
-- Control plane: `CHANGE_SEQUENCE.md` 283 row, `CHANGE_SEQUENCE_OVERRIDES.md` 283 addendum, and `PROGRAM_STATE` 283 ACTIVE checkpoint applied; SPEC-FIRST package committed at `56c2313`; T2 quality gate PASS; T3–T8 implementation + unit green; T9+T10 E2E green (raid-persistence.spec 4 tests + raid-feedback reload rewrite + `GamePersistence.importWorldBackup`; focused raid E2E 8/8; typecheck/lint 0 errors; file-audit 2892 PASS).
-- T11 regression: `git diff origin/main` outside openspec = only additive 283 seams + `.gitignore` fix (`NO_OUT_OF_SCOPE_FILES`); no spawning/settlement/258 code; 282+283 unit regression 149/149 (7 files); focused raid E2E (incl. all four raid-feedback journeys) 8/8; 258 BLOCKED / 259–282 VERIFIED intact; validators PASS.
-- T12 gates: typecheck exit 0; lint 0 errors / 85 warnings; unit 449 files 5351+1; build 3.87s; file-audit 2892 PASS; validate-state PASS; full `npm run test:e2e` 110 passed / 2 failed — enchanting:227 proven flake (isolated re-run 2/2 PASS, task `bash-ee3051a71b7ebf91`), visual:176 proven baseline-equivalent (30 fail/30 pass in `/tmp/visual-283-classify.log` matching `/tmp/visual-282-rerun.log` + `/tmp/visual-head.log` 30/30 sets; one-cell swap `crosshair/high/1920x1080` ↔ `start-overlay/high/1920x1080`; 25/30 fractions byte-identical). No 283 functional E2E regression.
-- T13 complete: `C283` exact/VERIFIED matrix row + Scope/Summary/coverage 001–283 (285 rows, exact 269); `verification.md` VERIFIED 13/13; PROGRAM_STATE 13/13 100% with `mandatoryRequirementsPass`/`requiredTestsPass`/`advancementAllowed: true`; committed and published to `origin/main` per `REVIEW_HANDOFF.md`.
-- Next exact action: **Activate `284-raider-entity-spawning` via T1 control-plane from published `origin/main` (NOT started this session — owner rule “No 284 until 283 published” is now satisfied); 258 stays BLOCKED.**
 
 ## Current checkpoint — 2026-09-16 release-readiness hardening
 
@@ -179,26 +184,26 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **283-live-raid-persistence — VERIFIED (13/13, 100%); 258 BLOCKED, 259–283 VERIFIED**
-- Prior active implementation change: **282-live-raid-feedback — VERIFIED (10/10); 258 stays BLOCKED, 259–282 stay VERIFIED**
-- Prior prior active implementation change: **279-shield-live-wiring — VERIFIED (12/12); 258 stays BLOCKED, 259–279 stay VERIFIED**
-- Next change: **284-raider-entity-spawning — next sequential non-GPU change after VERIFIED 283; 258 remains BLOCKED**
+- Active implementation change: **284-live-raid-wave-spawning — VERIFIED (12/12); 258 BLOCKED, 259–284 VERIFIED**
+- Prior active implementation change: **283-live-raid-persistence — VERIFIED (13/13); 258 stays BLOCKED, 259–283 stay VERIFIED**
+- Prior prior active implementation change: **282-live-raid-feedback — VERIFIED (10/10); 258 stays BLOCKED, 259–282 stay VERIFIED**
+- Next change: **285-live-bad-omen-acquisition — prepared package at /workspace/mc-worktrees/285; NOT activated until after 284 published; 258 remains BLOCKED**
 - 240 advancement allowed: **yes**
 
-- Program: **ACTIVE — Change 283-live-raid-persistence VERIFIED 13/13 (T1–T13 complete, all gates green, published); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 259–283 VERIFIED**
-- 283 checkpoint: **VERIFIED 13/13 (100%) — T12 full gates green (typecheck/lint/unit 5351+1/build/file-audit 2892/validate-state PASS; full E2E 110/112, enchanting flake + visual baseline drift both classified non-blocking); T13 C283 matrix row + publish complete; 284 activation is next (not started)**
-- Last completed change: **283-live-raid-persistence — VERIFIED (13/13) — C283 exact, 258 BLOCKED**
+- Program: **ACTIVE — Change 284-live-raid-wave-spawning VERIFIED 12/12 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–284 VERIFIED**
+- 284 checkpoint: **VERIFIED 12/12 — implementation + gates complete; enchanting flake + visual SwiftShader drift documented non-blocking; 258 BLOCKED; 285 not started**
+- Last completed change: **284-live-raid-wave-spawning — VERIFIED (12/12) — C284 exact, 258 BLOCKED**
 - Prior last completed change: **281-workstation-ui — VERIFIED (12/12); 258 stays BLOCKED, 259–281 stay VERIFIED**
 - Prior prior last completed change: **272-lighting-clock-dt-sync — VERIFIED (10/10) — full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85/file-audit 2792); 271 remains VERIFIED (14/14)
-- All changes 001–257 and 259–283: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed (backup fail-closed, snapshot fail-closed, multi-store tx 6 stores, archive ownership, migrated-legacy 5×, pagehide 5× via flush, R-7, file-audit 2644, import tx, visual 0.02, payload equality, full local gate + CI); Change 283 is VERIFIED 13/13 (published this session).
+- All changes 001–257 and 259–284: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed; Change 283 is VERIFIED 13/13; Change 284 is VERIFIED 12/12 (this session).
 - Historical Change 250-era bullets (preserved; superseded **for current release authority** by `openspec/evidence/release-readiness-post-hardening.md`): 250 required-test gate PASS at head `502d021` / byte-identical tree `b56529e`; historical release-readiness READY RC-1..RC-9 (`openspec/evidence/release-readiness.md`); final parity audit PASS with DL dispositions later rejected by this interlock (`openspec/evidence/parity/final-parity-audit.md`); evidence archive complete (`openspec/evidence/`)
 - Post-250 hardening interlock: **VERIFIED at remediation checkpoint `aa92a5c229a753f10f8c1677e836136962b5d07a` — canonical CI run 32589457819 SUCCESS (gate job 97078975848, e2e job 97078975868); tasks 78/78; release decision READY (`openspec/evidence/release-readiness-post-hardening.md`)**
 - Certification campaign: **openspec/hardening/2026-08-23-exhaustive-repository-certification — R-1..R-9 accepted debt, R-7 restored with ChunkPipeline 498-512 evidence; manifest 2644 reviewed at 96b5dc37**
  - Release authority: **Change 282 VERIFIED 10/10 — local gate green (typecheck/lint/test 5278+1 skipped/build/full E2E 107/108 with baseline-proven visual variance); headed Change 258 remains externally blocked**
 - Publication history: **Change 257 VERIFIED 92/92 at 96b5dc37 (F257-A..L closed, 22 new fault-injection tests, 5× proofs, import tx); Change 256 archived at `ad75b65` as `2026-08-31-256-production-readiness-hardening` (23/23).**
-- Section milestone: **PROGRAM VERIFIED through Change 283; Change 283 is VERIFIED 13/13 and published; Change 258 remains BLOCKED at 40/100 pending headed hardware-WebGL certification; no GPU evidence was fabricated.**
+- Section milestone: **PROGRAM VERIFIED through Change 284; Change 284 is VERIFIED 12/12; Change 258 remains BLOCKED at 40/100 pending headed hardware-WebGL certification; no GPU evidence was fabricated.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ri…
-- Next exact action: **Activate `284-raider-entity-spawning` via T1 control-plane from published `origin/main` (NOT started this session; owner rule “No 284 until 283 published” satisfied); 258 stays BLOCKED**
+- Next exact action: **Publish 284 to origin/main, then activate 285-live-bad-omen-acquisition T1 control-plane from prepared /workspace/mc-worktrees/285 (NOT started); 258 stays BLOCKED**
 - Superseded next action: **T8 confirm 282 feedback is unchanged (projection, pause, dispose hide, no spawning/settlement/258 work); 258 stays BLOCKED**
 - Release note (2026-09-11 owner deferral): **headed FPS gates (258 tasks 91–95) are deferred, not waived — 001–257 VERIFIED, production default unchanged (sync meshing, no quality retune), game shippable with known performance-certification debt**
 
