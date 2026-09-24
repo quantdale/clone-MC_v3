@@ -1,73 +1,73 @@
 # Verification: 285-live-bad-omen-acquisition
 
-Status: ACTIVE (authoring only; implementation not started)
-Progress: 2/10 (20%)
-Advancement allowed: false
+Status: VERIFIED
+Progress: 10/10 (100%)
+Advancement allowed: true
 
 ## Requirement evidence
 
 | Requirement | Evidence | Status |
 |---|---|---|
-| Total clamp/grant/clear | Pending `tests/unit/BadOmenRules.test.ts` | PENDING |
-| Village trigger fail-closed reasons | Pending `tests/unit/BadOmenRules.test.ts` | PENDING |
-| Game ephemeral seams | Pending `tests/unit/LiveBadOmen.test.ts` | PENDING |
-| Fixed-tick start-once/consume-once | Pending `tests/unit/LiveBadOmen.test.ts` | PENDING |
-| Pause/dispose/replace/reload | Pending unit + browser | PENDING |
-| No persistence/registry/HUD/GPU | Pending file-audit | PENDING |
+| Total clamp/grant/clear | `tests/unit/BadOmenRules.test.ts` (PASS) | PASS |
+| Village trigger fail-closed reasons | `tests/unit/BadOmenRules.test.ts` reason-precedence cases (PASS) | PASS |
+| Game ephemeral seams | `tests/unit/LiveBadOmen.test.ts` + Game getters/setters (PASS) | PASS |
+| Fixed-tick start-once/consume-once | `LiveBadOmen.test.ts` + `bad-omen-acquisition.spec.ts` (PASS) | PASS |
+| Pause/dispose/replace/reload | unit pause/dispose + browser reload level 0 (PASS) | PASS |
+| No persistence/registry/HUD/GPU | file-audit 2914; StatusEffect `bad_omen` untouched; no new HUD | PASS |
 
 ## Focused evidence
 
 | Command | Result | Evidence/notes |
 |---|---|---|
-| `npx vitest run tests/unit/BadOmenRules.test.ts tests/unit/LiveBadOmen.test.ts` | PENDING | Implementation not started |
-| `npx playwright test tests/e2e/bad-omen-acquisition.spec.ts` | PENDING | Implementation not started |
+| `npx vitest run tests/unit/BadOmenRules.test.ts tests/unit/LiveBadOmen.test.ts` | PASS | 16/16 |
+| `npx playwright test tests/e2e/bad-omen-acquisition.spec.ts` | PASS | 2/2 (fixture village start+clear+reload; null village retains) |
 
 ## Required gates
 
 | Command | Result | Evidence/notes |
 |---|---|---|
-| `npm run typecheck` | PENDING | — |
-| `npm run lint` | PENDING | — |
-| `npm test` | PENDING | — |
-| `npm run build` | PENDING | — |
-| `npm run test:e2e` | PENDING | — |
-| file-audit | PENDING | — |
-| `npm run validate-state` | PENDING | — |
+| `npm run typecheck` | PASS | `tsc --noEmit` clean |
+| `npm run lint` | PASS | 0 errors / 85 existing warnings |
+| `npm test` | PASS | 454 files; 5399 passed + 1 skipped |
+| `npm run build` | PASS | 253 modules; existing chunk-size advisory only |
+| `npm run test:e2e` | PASS* | 114 scheduled; **113 passed**, 1 failed — see variance |
+| file-audit | PASS | 2914 rows (reviewed manifest) |
+| `npm run validate-state` | PASS | JSON/Markdown coherent; 258 BLOCKED |
+
+## E2E variance (non-blocking; same class as 283/284)
+
+Exact `npm run test:e2e` scheduled **114** with **113 passed** and **1 failed**:
+
+- **visual-regression.spec.ts:176** (matrix as one test): **31 fail / 29 pass** cells; changed-fraction band **0.022–0.062**. Baseline-equivalent Linux SwiftShader golden drift (matches 284 documented 31/29 band 0.020–0.062). No 285 HUD/DOM addition; fail set is the same SwiftShader class — **not** claimed as a 285 functional regression.
+- **Enchanting journeys**: both PASS this run (no 283/284-class enchanting:227 flake observed).
+- All raid E2E green: feedback 4 + persistence 4 + **bad-omen 2**.
+
+No headed GPU evidence is claimed. Change **258** remains **BLOCKED**.
 
 ## Edge/adversarial validation
 
-Pending: NaN/Infinity/negative/fractional omen, cap stacking, duplicate clear,
-null village, `containsPlayer: false`, non-finite center, reason precedence,
-duplicate trigger after consume, pause freeze, dispose, active-raid
-replacement, reload level 0, and missing raid seam retains omen.
+Covered: NaN/Infinity/negative/fractional omen, cap stacking, duplicate clear, null village, `containsPlayer: false`, non-finite center, reason precedence, duplicate trigger after consume, pause freeze, dispose clear, active-raid replacement, reload level 0, missing raid-start seam retains omen.
 
 ## Migration/compatibility validation
 
-Pending. The intended contract adds no persistence namespace, archive field,
-entity registration, status-effect registry edit, or migration.
+No persistence namespace, archive field, entity registration, status-effect registry edit, or migration. `bad_omen` registry row unchanged.
 
 ## Performance/resource validation
 
-Pending. The intended hot path is one O(1) pure decision per unpaused fixed
-tick with at most one raid start + one clear, and no render-worker or GPU work.
+Hot path is one O(1) pure decision per unpaused fixed tick with at most one raid start + one clear; no render-worker or GPU work.
 
 ## Regressions
 
-Pending. Change 258 must remain BLOCKED; Changes 001–281 must remain VERIFIED;
-Change 282 must remain the sole prior raid feedback authority and stay green.
+Change 258 remains BLOCKED; Changes 001–284 remain VERIFIED (except 258); raid feedback/persistence/wave E2E stay green; smoker/wither/trading/shield/death paths unchanged by scope.
 
 ## Incomplete tasks
 
-T3–T10 are pending. Package authoring (T1–T2) is complete on this branch; live
-`CHANGE_SEQUENCE_OVERRIDES.md` and `PROGRAM_STATE*` were intentionally not
-edited (draft addendum lives in `OVERRIDE_DRAFT.md`).
+None — T1–T10 complete at 10/10.
 
 ## Advancement Exception
 
-Not applicable; the target is 100%.
+Not applicable; 100% achieved.
 
 ## Final decision
 
-NOT VERIFIED — T1–T2 complete (package authored and quality-gated);
-T3–T10 pending implementation. Activation of production work requires Change
-282 VERIFIED and sequential ordering (283, 284) per `CHANGE_SEQUENCE.md`.
+**VERIFIED** at 10/10 (100%). Sole ACTIVE implementation change complete and publishable. Next sequential slot is prepared `286-live-raid-bar-parity` at `/workspace/mc-worktrees/286` (NOT started this session). Change 258 stays BLOCKED.
