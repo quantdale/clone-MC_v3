@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-24T06:30:55Z",
+  "generatedAt": "2026-09-24T07:15:31Z",
   "reviewedSha": "3d0fd2d5aee39ae1706b7210ad27e675450f521c",
-  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests",
+  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288",
   "allowedReviewLevels": [
     "semantic",
     "mechanical",
@@ -10,7 +10,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2933,
+  "total": 2943,
   "rows": [
     {
       "path": ".agent/EXECUTION_PROMPT.md",
@@ -31632,11 +31632,12 @@
       "riskAreas": [
         "simulation",
         "raid",
-        "lifecycle"
+        "lifecycle",
+        "combat"
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 284 implementation; no findings \u2014 additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits | 285 ephemeral badOmen + villageQuery + fixed-tick evaluate through 282 start seam",
+      "reviewNotes": "reviewed for 284 implementation; no findings \u2014 additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits | 285 ephemeral badOmen + villageQuery + fixed-tick evaluate through 282 start seam; re-reviewed for 288 raider combat wiring",
       "status": "audited"
     },
     {
@@ -47461,6 +47462,196 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 287 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/288-raider-combat-behavior/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "288 draft override addendum (applied at T1)",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "combat"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 288 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/288-raider-combat-behavior/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "288 design for raider combat behavior",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "combat"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 288 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/288-raider-combat-behavior/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "288 proposal for raider combat behavior",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "combat"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 288 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/288-raider-combat-behavior/specs/raider-combat-behavior/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "288 normative raider-combat-behavior capability spec",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "combat"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 288 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/288-raider-combat-behavior/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "288 task checklist",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "combat"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 288 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/288-raider-combat-behavior/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "288 verification evidence",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "combat"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 288 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/RaiderCombatBehavior.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "288 raider combat system over HostileTargetAI/MeleeCombat/ProjectileCore",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "runtime",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "combat"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 288 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/e2e/raider-combat.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "288 browser e2e: damage + VICTORY + DEFEAT",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "combat"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 288 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/LiveRaiderCombat.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "288 live seam oracle with RaidWaveController",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "combat"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 288 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/RaiderCombatBehavior.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "288 pure + system unit coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "combat"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 288 implementation; no findings",
       "status": "audited"
     }
   ]

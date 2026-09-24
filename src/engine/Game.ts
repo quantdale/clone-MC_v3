@@ -322,6 +322,10 @@ import type { WitherSkullState } from '../simulation/WitherSkull';
 import { CollisionResolver, type ShapeWorld } from '../world/CollisionResolver';
 import { computeExplosion } from '../simulation/ExplosionCore';
 import { startRaid, tickRaid, recordRaiderDeath, type RaidState } from '../simulation/RaidStateMachine';
+import {
+  RaiderCombatSystem,
+  forceRaidDefeat,
+} from '../simulation/RaiderCombatBehavior';
 import { deserializeRaidPayload, serializeRaidPayload } from '../simulation/RaidPersistence';
 import { EntityManager } from '../simulation/EntityManager';
 import { createEntityManagerRaidBackend } from '../simulation/RaidEntityBackend';
@@ -602,6 +606,8 @@ export class Game {
   private readonly raidEntityManager: EntityManager;
   /** Wave spawn/despawn controller (284) over the injectable raid backend. */
   private readonly raidWaveController: RaidWaveController;
+  /** Raider combat AI over raidEntityManager (288). */
+  private readonly raiderCombat: RaiderCombatSystem;
   /** HUD raid feedback bar (282, null until the shell binds it). */
   private raidFeedbackEl: HTMLElement | null = null;
   /** Optional presentation-only village name for 286 raid bar (never invents). */
@@ -1065,6 +1071,10 @@ export class Game {
         dimension: this.overworldDimension,
       }),
       resolveType: (typeKey) => entityRegistry.getByKey(typeKey) !== undefined,
+    });
+    this.raiderCombat = new RaiderCombatSystem({
+      manager: this.raidEntityManager,
+      registry: entityRegistry,
     });
     this.passiveMobs = new PassiveMobSystem(entityRegistry, this.seed);
     this.passiveMobRenderer = new PassiveMobRenderer(this.renderer.scene);
@@ -1761,6 +1771,7 @@ export class Game {
     this.saveRaid();
     this.raidState = null;
     this.raidWaveController.clear('dispose');
+    this.raiderCombat.clear();
     this.badOmen = createBadOmen();
     this.villageQueryOverride = null;
     this.clearVillageDetectionCache();
@@ -5516,6 +5527,7 @@ export class Game {
    */
   private startRaidAt(x: number, y: number, z: number, badOmenLevel: number): RaidState {
     this.raidWaveController.clear('replace');
+    this.raiderCombat.clear();
     const { state, spawned } = tickRaid(startRaid(x, y, z, badOmenLevel));
     this.raidState = state;
     if (spawned && spawned.length > 0) {
@@ -5558,6 +5570,7 @@ export class Game {
   debugClearRaidWave(): RaidState | null {
     if (!this.raidState) return null;
     this.raidWaveController.clear('clear');
+    this.raiderCombat.clear();
     const remaining = this.raidState.raidersRemaining;
     let state = this.raidState;
     for (let i = 0; i < remaining; i++) {
@@ -5567,6 +5580,7 @@ export class Game {
     this.raidState = next;
     if (next.status === 'VICTORY' || next.status === 'DEFEAT') {
       this.raidWaveController.clear('terminal');
+      this.raiderCombat.clear();
     } else if (spawned && spawned.length > 0) {
       this.raidWaveController.applyWave(next, spawned);
     }
@@ -5585,10 +5599,57 @@ export class Game {
     this.raidState = state;
     if (state.status === 'VICTORY' || state.status === 'DEFEAT') {
       this.raidWaveController.clear('terminal');
+      this.raiderCombat.clear();
     } else if (spawned && spawned.length > 0) {
       this.raidWaveController.applyWave(state, spawned);
     }
     this.syncRaidFeedbackHud();
+    this.tickRaiderCombat();
+  }
+
+  /**
+   * Advance raider combat for tracked wave entities (288). No-op when there is
+   * no ACTIVE raid or no tracked entities. Player damage routes through
+   * hurtPlayer (279 shield choke).
+   */
+  private tickRaiderCombat(): void {
+    if (!this.raidState || this.raidState.status !== 'ACTIVE') return;
+    const ids = this.raidWaveController.getRaidWaveEntityIds();
+    if (ids.length === 0 && this.raiderCombat.getProjectileCount() === 0) return;
+    const shapeWorld: ShapeWorld = {
+      getCollisionShape: (x: number, y: number, z: number) => {
+        if (!this.world.isSolid(x, y, z)) return VoxelShape.EMPTY;
+        return this.blockShapes.getCollisionShape(this.world.getBlock(x, y, z));
+      },
+    };
+    const playerAlive = this.survival.health > 0 && isAttackable(this.gameMode.mode);
+    this.raiderCombat.tick({
+      dt: 1 / 20,
+      simTick: this.simTick,
+      paused: false,
+      center: {
+        x: this.raidState.centerX,
+        y: this.raidState.centerY,
+        z: this.raidState.centerZ,
+      },
+      trackedIds: ids,
+      getPlayerTarget: () =>
+        playerAlive
+          ? {
+              x: this.player.position.x,
+              y: this.player.position.y,
+              z: this.player.position.z,
+            }
+          : null,
+      world: shapeWorld,
+      resolver: this.collisionResolver,
+      onPlayerDamaged: (amount, sx, sz, reason) => this.hurtPlayer(amount, reason, sx, sz),
+      onRaiderDied: (entityId) => {
+        this.onRaidEntityRemoved(entityId);
+      },
+      playerMeleeRequested:
+        playerAlive && this.pointerLocked && this.input.isBreakHeld(),
+    });
   }
 
   /**
@@ -5603,6 +5664,18 @@ export class Game {
     this.syncRaidFeedbackHud();
     return true;
   }
+
+  /**
+   * Test/harness seam (288): apply damage to a tracked raid entity. Death
+   * routes through {@link onRaidEntityRemoved}. Returns whether the entity died.
+   */
+  debugDamageRaidEntity(entityId: number, amount: number): boolean {
+    const result = this.raiderCombat.damageRaider(entityId, amount, (id) => {
+      this.onRaidEntityRemoved(id);
+    });
+    return result.died;
+  }
+
 
   /** Read-only tracked wave entity ids for the current generation (284). */
   getRaidWaveEntityIds(): readonly number[] {
@@ -6100,6 +6173,7 @@ export class Game {
     // reload never resurrects mid-raid population (283 may still restore
     // RaidState counters independently).
     this.raidWaveController.clear('clear');
+    this.raiderCombat.clear();
     this.saveTimer = 0;
   };
 
@@ -6316,6 +6390,14 @@ export class Game {
       this.audio.play('damage');
       this.showToast(`Ouch! -${amount ?? 0} health`);
     } else if (event === 'death') {
+      // 288: dying during an ACTIVE raid forces DEFEAT (LOSS path alongside timeout).
+      if (this.raidState && this.raidState.status === 'ACTIVE') {
+        this.raidState = forceRaidDefeat(this.raidState);
+        this.raidWaveController.clear('terminal');
+        this.raiderCombat.clear();
+        this.syncRaidFeedbackHud();
+        this.saveRaid();
+      }
       // Statistics (271): deaths count and persist immediately (a death can
       // precede the next autosave; the record must survive a reload).
       this.recordStatistic({ type: 'death' });

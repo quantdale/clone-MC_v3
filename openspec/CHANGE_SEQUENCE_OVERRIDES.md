@@ -1043,3 +1043,46 @@ on full run + focused retry; all raid E2E green including village-detection 2/2)
 - The next sequential slot after published VERIFIED 287 is **288** (spec-first package to
   author; no prepared package exists). It is NOT implemented by the 287 track.
 
+## 288-raider-combat-behavior — activated from published VERIFIED 287 (2026-09-24)
+
+The product/session instruction authorizes activating OpenSpec change
+**288-raider-combat-behavior** as the sole ACTIVE implementation change while
+Change **258** remains **BLOCKED** and Changes **259–287** remain **VERIFIED**.
+
+- **Activation dependency (satisfied):** Change **287-live-village-detection** is
+  VERIFIED 11/11 and published; tip base `3b26e2a` (origin/main).
+- **Scope:** live raider combat behavior over verified wave entities — target
+  player / home to raid center, per-type melee/ranged using existing AI and
+  projectile/melee systems, deaths through exactly-once `recordRaiderDeath`,
+  player death/timeout → `DEFEAT`, pause/dispose/reload safety, unit + browser E2E.
+- **Out of scope:** new AI framework; villager entities; Hero of the Village;
+  patrols/outposts; captain/banner; new persistence namespace; full witch potion
+  entity system (documented fallback only); Change 258 headed FPS/GPU work or
+  status change; Change 289 implementation.
+- Change **258** stays **BLOCKED**; Changes **259–287** stay **VERIFIED** and
+  are not reopened.
+
+### Sequence row (recorded in `CHANGE_SEQUENCE.md` at this activation)
+
+| # | Change | Narrow outcome |
+|---|---|---|
+| 288 | `288-raider-combat-behavior` | Raiders fight via existing AI/melee/projectile/health seams; deaths → recordRaiderDeath; LOSS via death/timeout; no 258 headed work. |
+
+After VERIFIED publication the nextExactAction is to author a spec-first
+package for **289** (not started by the 288 track).
+
+## 288-raider-combat-behavior — VERIFIED publication checkpoint (2026-09-24)
+
+Change **288-raider-combat-behavior** is VERIFIED at **11/11 (100%)** with exact C288
+parity and full local gates green: typecheck, lint (0 errors / 85 existing warnings),
+full unit 459 files 5444 passed + 1 skipped, build (257 modules), file-audit 2943 rows,
+validate-state, and exact `npm run test:e2e` (121 scheduled, 119 passed;
+visual:176 proven baseline-equivalent Linux SwiftShader golden drift — 28 fail/32 pass,
+band 0.022–0.062 matching 287's 29/31 class; enchanting:227 known reload flake recurred;
+all raid E2E green including raider-combat 2/2).
+
+- Session start: `3b26e2a7c13e920cc1a82019b53b95f2fb70e592`.
+- Change 258 remains BLOCKED at 40/100 (no headed FPS/GPU work, no fake GPU evidence).
+- Changes 259–288 remain VERIFIED and are not reopened.
+- The next sequential slot after published VERIFIED 288 is **289** (spec-first package to
+  author; no prepared package exists). It is NOT implemented by the 288 track.
