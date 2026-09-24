@@ -984,7 +984,7 @@ visual:176 proven baseline-equivalent Linux SwiftShader golden drift — 32 fail
 band 0.021–0.062 matching 285’s 31/29 class with +1 fail-cell jitter; enchanting journeys
 PASS; all raid E2E green including raid-bar-parity 3/3).
 
-- Session start: `1136184eca77dbc213f367c81bb562db33d55428`; published_head pending push.
+- Session start: `1136184eca77dbc213f367c81bb562db33d55428`; published_head is `3d0fd2d5aee39ae1706b7210ad27e675450f521c` in `openspec/PROGRAM_STATE.json` (origin/main verified equal).
 - Change 258 remains BLOCKED at 40/100 (no headed FPS/GPU work, no fake GPU evidence).
 - Changes 259–286 remain VERIFIED and are not reopened.
 - The next sequential slot after published VERIFIED 286 is **287** (spec-first package to

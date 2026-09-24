@@ -1,6 +1,6 @@
 {
   "generatedAt": "2026-09-24T05:50:38Z",
-  "reviewedSha": "67bb9f512a3985dfc94124d0a434bf3e5c9cd492",
+  "reviewedSha": "3d0fd2d5aee39ae1706b7210ad27e675450f521c",
   "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284",
   "allowedReviewLevels": [
     "semantic",
