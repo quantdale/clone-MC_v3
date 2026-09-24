@@ -15,7 +15,7 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "1136184eca77dbc213f367c81bb562db33d55428",
-  "localHead": "3d0fd2d5aee39ae1706b7210ad27e675450f521c",
+  "localHead": "9ff435b5519e520cc84970944f191077cd88aa7e",
   "publishedHead": "3d0fd2d5aee39ae1706b7210ad27e675450f521c",
   "nextExactAction": "286 VERIFIED 14/14 published at 3d0fd2d5aee39ae1706b7210ad27e675450f521c (origin/main verified equal); next exact action is author a spec-first OpenSpec package for 287 (highest-value non-GPU playability) \u2014 NOT started this session; 258 stays BLOCKED",
   "lastCompletedTask": "286 T14 complete: C286 exact/VERIFIED, verification 14/14, published to origin/main at 3d0fd2d5aee39ae1706b7210ad27e675450f521c; next is author 287 package (not started)",
