@@ -1,13 +1,13 @@
 # Minecraft-Parity Program State
 
-## Current checkpoint — 2026-09-24 Change 284-live-raid-wave-spawning VERIFIED 12/12 (100%); ready to publish; 285 next (not started)
+## Current checkpoint — 2026-09-24 Change 284-live-raid-wave-spawning VERIFIED 12/12 (100%); published to origin/main; 285 next (not started)
 
 > **Change `284-live-raid-wave-spawning` is VERIFIED 12/12 (100%); all baseline gates green (typecheck/lint/unit 5383+1/build/file-audit 2904/validate-state/full E2E 110 passed with both failures classified non-blocking); last completed Change 284-live-raid-wave-spawning is VERIFIED; Changes 001–284 are VERIFIED except Change 258 BLOCKED; Changes 259–284 are not reopened.**
 > Session start head: `c2539dc30a470e64bbbd306e186fab80c74b485e` (origin/main before this session). Prepared 285 package exists at `/workspace/mc-worktrees/285` (`285-live-bad-omen-acquisition`) and is NOT activated until after 284 is published.
 > 284 ships append-only raider registry keys, pure `planRaidWaveSpawn`, injectable `RaidEntityBackend`, Game wave spawn/despawn lifecycle, exactly-once `recordRaiderDeath`, reload non-resurrection; no bad omen, no settlement, no new persistence namespace, no 258 headed work.
 
 - Gates: typecheck PASS; lint 0 errors / 85 warnings; unit 452 files 5383+1; build 252 modules; file-audit 2904; full E2E 110/112 (enchanting:227 known reload flake; visual:176 SwiftShader 31/29 drift baseline-equivalent vs `/tmp/visual-283-classify.log`); all raid E2E green.
-- Next exact action: **Publish 284 to `origin/main`, then activate 285-live-bad-omen-acquisition T1 control-plane from prepared `/workspace/mc-worktrees/285` (NOT started this session); 258 stays BLOCKED.**
+- Next exact action: **Activate 285-live-bad-omen-acquisition T1 control-plane from prepared `/workspace/mc-worktrees/285` (NOT started this session); 258 stays BLOCKED.** Published tip: `63f9de40c34445d5ec1812acb91413fa58a8d38c`.
 
 ## Prior checkpoint — 2026-09-24 Change 284-live-raid-wave-spawning ACTIVATED 2/12 (T1 control-plane complete; 258 stays BLOCKED; no 285 yet)
 
@@ -203,7 +203,7 @@
 - Publication history: **Change 257 VERIFIED 92/92 at 96b5dc37 (F257-A..L closed, 22 new fault-injection tests, 5× proofs, import tx); Change 256 archived at `ad75b65` as `2026-08-31-256-production-readiness-hardening` (23/23).**
 - Section milestone: **PROGRAM VERIFIED through Change 284; Change 284 is VERIFIED 12/12; Change 258 remains BLOCKED at 40/100 pending headed hardware-WebGL certification; no GPU evidence was fabricated.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ri…
-- Next exact action: **Publish 284 to origin/main, then activate 285-live-bad-omen-acquisition T1 control-plane from prepared /workspace/mc-worktrees/285 (NOT started); 258 stays BLOCKED**
+- Next exact action: **Activate 285-live-bad-omen-acquisition T1 control-plane from prepared /workspace/mc-worktrees/285 (branch wt/285-live-bad-omen-acquisition) — NOT started; 258 stays BLOCKED**
 - Superseded next action: **T8 confirm 282 feedback is unchanged (projection, pause, dispose hide, no spawning/settlement/258 work); 258 stays BLOCKED**
 - Release note (2026-09-11 owner deferral): **headed FPS gates (258 tasks 91–95) are deferred, not waived — 001–257 VERIFIED, production default unchanged (sync meshing, no quality retune), game shippable with known performance-certification debt**
 

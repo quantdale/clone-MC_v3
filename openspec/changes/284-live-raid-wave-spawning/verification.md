@@ -1,7 +1,7 @@
 # Verification: 284-live-raid-wave-spawning
 
 Status: VERIFIED
-Completion: 12/12 (100%) — T1–T12 complete; all mandatory gates green with documented non-blocking E2E variance; ready for `origin/main` publication
+Completion: 12/12 (100%) — T1–T12 complete; all mandatory gates green with documented non-blocking E2E variance; published to `origin/main` at `63f9de40c34445d5ec1812acb91413fa58a8d38c`
 Advancement allowed: true
 
 Control plane activated on `wt/284-live-raid-wave-spawning` (T1: `CHANGE_SEQUENCE.md` row,
@@ -96,8 +96,8 @@ No 284 functional E2E regression remains; no headed GPU evidence is claimed.
 ## Incomplete tasks
 
 None. T12 completed: `C284` exact/VERIFIED matrix row, PROGRAM_STATE 12/12 VERIFIED,
-committed and published to `origin/main` per `REVIEW_HANDOFF.md` (published_head recorded
-after push).
+committed and published to `origin/main` per `REVIEW_HANDOFF.md` at
+`63f9de40c34445d5ec1812acb91413fa58a8d38c` (origin/main verified equal to local HEAD).
 
 ## Advancement Exception
 

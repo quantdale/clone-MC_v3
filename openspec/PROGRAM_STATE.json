@@ -15,10 +15,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "c2539dc30a470e64bbbd306e186fab80c74b485e",
-  "localHead": "PENDING_AFTER_COMMIT",
-  "publishedHead": "73ad0dfde5ce1d96a2fa5cf5afe1e05a6c5252b8",
-  "nextExactAction": "284 VERIFIED 12/12; publish to origin/main then activate 285-live-bad-omen-acquisition T1 control-plane from prepared /workspace/mc-worktrees/285 (branch wt/285-live-bad-omen-acquisition) \u2014 NOT started this session; 258 stays BLOCKED",
-  "lastCompletedTask": "284 T12 complete: C284 exact/VERIFIED matrix row, verification VERIFIED 12/12, PROGRAM_STATE 12/12 100%, gates green with documented enchanting flake + visual SwiftShader drift; ready to publish",
+  "localHead": "63f9de40c34445d5ec1812acb91413fa58a8d38c",
+  "publishedHead": "63f9de40c34445d5ec1812acb91413fa58a8d38c",
+  "nextExactAction": "284 VERIFIED 12/12 published at 63f9de40c34445d5ec1812acb91413fa58a8d38c (origin/main verified equal); next exact action is T1 control-plane activation of 285-live-bad-omen-acquisition from prepared /workspace/mc-worktrees/285 (branch wt/285-live-bad-omen-acquisition) per CHANGE_SEQUENCE \u2014 NOT started this session; 258 stays BLOCKED",
+  "lastCompletedTask": "284 T12 complete: C284 exact/VERIFIED, verification 12/12, published to origin/main at 63f9de40c34445d5ec1812acb91413fa58a8d38c; next is 285 activation (not started)",
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-284 are VERIFIED; game shippable with known performance-certification debt. The 284/285 tracks MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
@@ -28,7 +28,8 @@
       "status": "VERIFIED",
       "unitTests": 5383,
       "e2eTests": 110,
-      "note": "12/12 tasks complete (100%). Live raid wave spawning: append-only pillager/vindicator/ravager/witch registry keys (non-persistent MONSTER); pure planRaidWaveSpawn; injectable RaidEntityBackend (recording fake + EntityManager adapter); RaidWaveController all-or-nothing apply with rollback, per-(generation,waveIndex) duplicate guard, terminal/clear/replace/dispose despawn; Game wiring (tickRaidFeedback/debugStart/debugClear/onRaidEntityRemoved/dispose/pagehide); exactly-once recordRaiderDeath; reload non-resurrection. Gates: typecheck PASS; lint 0 errors / 85 existing warnings; full unit 452 files 5383 passed + 1 skipped; build PASS 252 modules; file-audit 2904 PASS (sha 75d564f6...); validate-state PASS; exact npm run test:e2e 112 scheduled with 110 passed \u2014 enchanting:227 known reload flake (isolated re-runs still Expected JSON vs null; companion lifecycle PASS) and visual:176 baseline-equivalent Linux SwiftShader golden drift (31 fail/29 pass vs /tmp/visual-283-classify.log 30/30 with one extra start-overlay/high/1920x1080; 22/30 shared fractions byte-identical; band 0.020\u20130.062); all raid E2E green (feedback 4 + persistence 4). C284 matrix row exact/VERIFIED. No 284 functional E2E regression and no headed GPU evidence claimed. Change 258 remains BLOCKED; Changes 259-284 are VERIFIED. session_start_head c2539dc30a470e64bbbd306e186fab80c74b485e."
+      "note": "12/12 tasks complete (100%). Live raid wave spawning: append-only pillager/vindicator/ravager/witch registry keys (non-persistent MONSTER); pure planRaidWaveSpawn; injectable RaidEntityBackend (recording fake + EntityManager adapter); RaidWaveController all-or-nothing apply with rollback, per-(generation,waveIndex) duplicate guard, terminal/clear/replace/dispose despawn; Game wiring (tickRaidFeedback/debugStart/debugClear/onRaidEntityRemoved/dispose/pagehide); exactly-once recordRaiderDeath; reload non-resurrection. Gates: typecheck PASS; lint 0 errors / 85 existing warnings; full unit 452 files 5383 passed + 1 skipped; build PASS 252 modules; file-audit 2904 PASS (sha 75d564f6...); validate-state PASS; exact npm run test:e2e 112 scheduled with 110 passed \u2014 enchanting:227 known reload flake (isolated re-runs still Expected JSON vs null; companion lifecycle PASS) and visual:176 baseline-equivalent Linux SwiftShader golden drift (31 fail/29 pass vs /tmp/visual-283-classify.log 30/30 with one extra start-overlay/high/1920x1080; 22/30 shared fractions byte-identical; band 0.020\u20130.062); all raid E2E green (feedback 4 + persistence 4). C284 matrix row exact/VERIFIED. No 284 functional E2E regression and no headed GPU evidence claimed. Change 258 remains BLOCKED; Changes 259-284 are VERIFIED. session_start_head c2539dc30a470e64bbbd306e186fab80c74b485e; published_head 63f9de40c34445d5ec1812acb91413fa58a8d38c.",
+      "head": "63f9de40c34445d5ec1812acb91413fa58a8d38c"
     },
     {
       "change": "283-live-raid-persistence",
@@ -2684,8 +2685,8 @@
   "releaseAuthority": {
     "schemaVersion": 1,
     "authorityPackage": "openspec/changes/284-live-raid-wave-spawning",
-    "candidateSha": "b5265b8f121f309bd089df62f405529b4ea6b250",
-    "note": "Change 284 is VERIFIED 12/12: live raid wave spawning via injectable backend over 152/282/283 seams; gates green with documented non-blocking E2E variance; Change 258 remains BLOCKED with no GPU claim."
+    "candidateSha": "63f9de40c34445d5ec1812acb91413fa58a8d38c",
+    "note": "Change 284 is VERIFIED 12/12 and published at 63f9de4: live raid wave spawning via injectable backend over 152/282/283 seams; gates green with documented non-blocking E2E variance; Change 258 remains BLOCKED with no GPU claim."
   },
   "hardeningInterlock": {
     "role": "historical interlock record (pre-241 era); NOT the current release authority - see releaseAuthority above",
@@ -2749,5 +2750,5 @@
     ]
   },
   "criticalRiskOpen": false,
-  "publishedTip": "260e5c9"
+  "publishedTip": "63f9de4"
 }
