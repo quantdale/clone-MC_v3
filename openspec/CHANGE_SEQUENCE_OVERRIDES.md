@@ -778,8 +778,8 @@ enchanting:227 transient flake proven by isolated re-run 2/2 PASS; visual:176 pr
 baseline-equivalent Linux SwiftShader golden drift — 30 fail/30 pass matching two
 independent baselines, one-cell swap, 25/30 fractions byte-identical; all raid E2E green).
 
-- Session start: `a463e0fe8571576fc10a5bda49dead34b0eac61a`; published_head is recorded
-  in `openspec/PROGRAM_STATE.json` after the final push to `origin/main`.
+- Session start: `a463e0fe8571576fc10a5bda49dead34b0eac61a`; published_head is `291e94a3aba804dfc1abb1122071ef4ac15aee6f`
+  in `openspec/PROGRAM_STATE.json` (origin/main verified equal).
 - Change 258 remains BLOCKED at 40/100 (no headed FPS/GPU work, no fake GPU evidence).
 - Changes 259–283 remain VERIFIED and are not reopened.
 - The next sequential slot after published VERIFIED 283 is
@@ -848,8 +848,8 @@ golden drift — 31 fail/29 pass vs `/tmp/visual-283-classify.log` 30/30 with on
 `start-overlay/high/1920x1080`, 22/30 shared fractions byte-identical, band 0.020–0.062;
 all raid E2E green).
 
-- Session start: `c2539dc30a470e64bbbd306e186fab80c74b485e`; published_head is recorded
-  in `openspec/PROGRAM_STATE.json` after the final push to `origin/main`.
+- Session start: `c2539dc30a470e64bbbd306e186fab80c74b485e`; published_head is `291e94a3aba804dfc1abb1122071ef4ac15aee6f`
+  in `openspec/PROGRAM_STATE.json` (origin/main verified equal).
 - Change 258 remains BLOCKED at 40/100 (no headed FPS/GPU work, no fake GPU evidence).
 - Changes 259–284 remain VERIFIED and are not reopened.
 - The next sequential slot after published VERIFIED 284 is
@@ -914,8 +914,8 @@ visual:176 proven baseline-equivalent Linux SwiftShader golden drift — 31 fail
 band 0.022–0.062 matching 284’s 31/29 class; enchanting journeys PASS; all raid E2E green
 including bad-omen 2/2).
 
-- Session start: `c26350d16b007577fd6d64ae70ab4dae85439ddc`; published_head is recorded
-  in `openspec/PROGRAM_STATE.json` after the final push to `origin/main`.
+- Session start: `c26350d16b007577fd6d64ae70ab4dae85439ddc`; published_head is `291e94a3aba804dfc1abb1122071ef4ac15aee6f`
+  in `openspec/PROGRAM_STATE.json` (origin/main verified equal).
 - Change 258 remains BLOCKED at 40/100 (no headed FPS/GPU work, no fake GPU evidence).
 - Changes 259–285 remain VERIFIED and are not reopened.
 - The next sequential slot after published VERIFIED 285 is

@@ -3,11 +3,11 @@
 ## Current checkpoint — 2026-09-24 Change 285-live-bad-omen-acquisition VERIFIED 10/10 (100%); ready to publish; 286 next (not started)
 
 > **Change `285-live-bad-omen-acquisition` is VERIFIED 10/10 (100%); all baseline gates green (typecheck/lint/unit 5399+1/build/file-audit 2914/validate-state/full E2E 113 passed with visual matrix classified non-blocking); last completed Change 285-live-bad-omen-acquisition is VERIFIED; Changes 001–285 are VERIFIED except Change 258 BLOCKED; Changes 259–285 are not reopened.**
-> Session start head: `c26350d16b007577fd6d64ae70ab4dae85439ddc` (origin/main). Published tip will be recorded after `git push origin main`.
+> Session start head: `c26350d16b007577fd6d64ae70ab4dae85439ddc` (origin/main). Published tip: `291e94a3aba804dfc1abb1122071ef4ac15aee6f`.
 > 285 ships ephemeral Bad Omen + fail-closed village-omen trigger through the 282 raid-start seam; injectable VillageQuery default null; no raider spawn, no settlement detector, no persistence/HUD/registry/GPU, no 258 work.
 
 - Gates: typecheck PASS; lint 0 errors / 85 warnings; unit 454 files 5399+1; build 253 modules; file-audit 2914; full E2E 113/114 (visual:176 SwiftShader 31/29 drift baseline-equivalent vs 284); all raid E2E green incl. bad-omen 2/2; enchanting PASS.
-- Next exact action: **Publish 285, then activate 286-live-raid-bar-parity T1 from prepared `/workspace/mc-worktrees/286` (NOT started this session); 258 stays BLOCKED.**
+- Next exact action: **Activate 286-live-raid-bar-parity T1 control-plane from prepared `/workspace/mc-worktrees/286` (NOT started this session); 258 stays BLOCKED. Published tip: `291e94a3aba804dfc1abb1122071ef4ac15aee6f`.**
 
 
 # Minecraft-Parity Program State

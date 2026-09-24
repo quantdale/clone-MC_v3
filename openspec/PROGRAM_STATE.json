@@ -15,10 +15,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "c26350d16b007577fd6d64ae70ab4dae85439ddc",
-  "localHead": "c26350d16b007577fd6d64ae70ab4dae85439ddc",
-  "publishedHead": "63f9de40c34445d5ec1812acb91413fa58a8d38c",
-  "nextExactAction": "285 VERIFIED 10/10; publish to origin/main then activate 286-live-raid-bar-parity T1 control-plane from prepared /workspace/mc-worktrees/286 (branch wt/286-live-raid-bar-parity) \u2014 NOT started this session; 258 stays BLOCKED",
-  "lastCompletedTask": "285 T10 complete: C285 exact/VERIFIED 10/10; gates green with documented non-blocking visual SwiftShader variance; ready to publish; next is 286 activation (not started)",
+  "localHead": "291e94a3aba804dfc1abb1122071ef4ac15aee6f",
+  "publishedHead": "291e94a3aba804dfc1abb1122071ef4ac15aee6f",
+  "nextExactAction": "285 VERIFIED 10/10 published at 291e94a3aba804dfc1abb1122071ef4ac15aee6f (origin/main verified equal); next exact action is T1 control-plane activation of 286-live-raid-bar-parity from prepared /workspace/mc-worktrees/286 (branch wt/286-live-raid-bar-parity) per CHANGE_SEQUENCE \u2014 NOT started this session; 258 stays BLOCKED",
+  "lastCompletedTask": "285 T10 complete: C285 exact/VERIFIED, verification 10/10, published to origin/main at 291e94a3aba804dfc1abb1122071ef4ac15aee6f; next is 286 activation (not started)",
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-285 are VERIFIED; game shippable with known performance-certification debt. The 286 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
@@ -28,7 +28,8 @@
       "status": "VERIFIED",
       "unitTests": 5399,
       "e2eTests": 113,
-      "note": "10/10 tasks complete (100%). Live bad omen acquisition: pure BadOmenRules clamp/grant/clear + fail-closed resolveVillageRaidTrigger; Game ephemeral badOmen + VillageQuery injection (default null); fixed-tick evaluate through 282 startRaidAt then clear-once; unit 16 focused + LiveBadOmen wiring; browser 2/2. Gates: typecheck PASS; lint 0 errors / 85 existing warnings; full unit 454 files 5399 passed + 1 skipped; build PASS 253 modules; file-audit 2914 PASS; validate-state PASS; exact npm run test:e2e 114 scheduled with 113 passed \u2014 visual:176 baseline-equivalent Linux SwiftShader golden drift (31 fail/29 pass; band 0.022\u20130.062); enchanting journeys PASS; all raid E2E green (feedback 4 + persistence 4 + bad-omen 2). C285 matrix row exact/VERIFIED. No 285 functional E2E regression and no headed GPU evidence claimed. Change 258 remains BLOCKED; Changes 259-285 are VERIFIED. session_start_head c26350d16b007577fd6d64ae70ab4dae85439ddc; published_head pending push."
+      "note": "10/10 tasks complete (100%). Live bad omen acquisition: pure BadOmenRules clamp/grant/clear + fail-closed resolveVillageRaidTrigger; Game ephemeral badOmen + VillageQuery injection (default null); fixed-tick evaluate through 282 startRaidAt then clear-once; unit 16 focused + LiveBadOmen wiring; browser 2/2. Gates: typecheck PASS; lint 0 errors / 85 existing warnings; full unit 454 files 5399 passed + 1 skipped; build PASS 253 modules; file-audit 2914 PASS; validate-state PASS; exact npm run test:e2e 114 scheduled with 113 passed \u2014 visual:176 baseline-equivalent Linux SwiftShader golden drift (31 fail/29 pass; band 0.022\u20130.062); enchanting journeys PASS; all raid E2E green (feedback 4 + persistence 4 + bad-omen 2). C285 matrix row exact/VERIFIED. No 285 functional E2E regression and no headed GPU evidence claimed. Change 258 remains BLOCKED; Changes 259-285 are VERIFIED. session_start_head c26350d16b007577fd6d64ae70ab4dae85439ddc; published_head 291e94a3aba804dfc1abb1122071ef4ac15aee6f.",
+      "head": "291e94a3aba804dfc1abb1122071ef4ac15aee6f"
     },
     {
       "change": "284-live-raid-wave-spawning",
@@ -2691,9 +2692,9 @@
   ],
   "releaseAuthority": {
     "schemaVersion": 1,
-    "authorityPackage": "openspec/changes/284-live-raid-wave-spawning",
-    "candidateSha": "63f9de40c34445d5ec1812acb91413fa58a8d38c",
-    "note": "Change 284 is VERIFIED 12/12 and published at 63f9de4: live raid wave spawning via injectable backend over 152/282/283 seams; gates green with documented non-blocking E2E variance; Change 258 remains BLOCKED with no GPU claim."
+    "authorityPackage": "openspec/changes/285-live-bad-omen-acquisition",
+    "candidateSha": "291e94a3aba804dfc1abb1122071ef4ac15aee6f",
+    "note": "Change 285 is VERIFIED 10/10 and published at 291e94a: ephemeral Bad Omen + fail-closed village-omen trigger over 282/283/284 seams; gates green with documented non-blocking visual SwiftShader variance; Change 258 remains BLOCKED with no GPU claim."
   },
   "hardeningInterlock": {
     "role": "historical interlock record (pre-241 era); NOT the current release authority - see releaseAuthority above",
@@ -2757,5 +2758,5 @@
     ]
   },
   "criticalRiskOpen": false,
-  "publishedTip": "63f9de4"
+  "publishedTip": "291e94a"
 }
