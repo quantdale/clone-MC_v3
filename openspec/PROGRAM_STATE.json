@@ -15,10 +15,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "97c1231b4fc751955f22e02a1948c5148e9440d9",
-  "localHead": "97c1231b4fc751955f22e02a1948c5148e9440d9",
-  "publishedHead": "3d0fd2d5aee39ae1706b7210ad27e675450f521c",
-  "nextExactAction": "287 VERIFIED 11/11 \u2014 publish to origin/main then author a spec-first OpenSpec package for 288 (highest-value non-GPU playability) \u2014 NOT started this session; 258 stays BLOCKED",
-  "lastCompletedTask": "T11 VERIFIED 11/11; C287 exact; ready to publish",
+  "localHead": "4da97fbadfc4529614280c12d58e31666795ef5a",
+  "publishedHead": "4da97fbadfc4529614280c12d58e31666795ef5a",
+  "nextExactAction": "287 VERIFIED 11/11 published at 4da97fbadfc4529614280c12d58e31666795ef5a (origin/main verified equal); next exact action is author a spec-first OpenSpec package for 288 (highest-value non-GPU playability) \u2014 NOT started this session; 258 stays BLOCKED",
+  "lastCompletedTask": "287 T11 complete: C287 exact/VERIFIED, verification 11/11, published to origin/main at 4da97fbadfc4529614280c12d58e31666795ef5a; next is author 288 package (not started)",
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-286 are VERIFIED; game shippable with known performance-certification debt. The 287 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
@@ -2768,5 +2768,5 @@
     ]
   },
   "criticalRiskOpen": false,
-  "publishedTip": "3d0fd2d"
+  "publishedTip": "4da97fb"
 }

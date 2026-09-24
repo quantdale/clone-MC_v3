@@ -1037,7 +1037,7 @@ visual:176 proven baseline-equivalent Linux SwiftShader golden drift — 29 fail
 band 0.022–0.062 matching 286's 32/28 class; enchanting:227 known reload flake recurred
 on full run + focused retry; all raid E2E green including village-detection 2/2).
 
-- Session start: `97c1231b4fc751955f22e02a1948c5148e9440d9`; published_head recorded after push.
+- Session start: `97c1231b4fc751955f22e02a1948c5148e9440d9`; published_head is `4da97fbadfc4529614280c12d58e31666795ef5a` (origin/main verified equal).
 - Change 258 remains BLOCKED at 40/100 (no headed FPS/GPU work, no fake GPU evidence).
 - Changes 259–287 remain VERIFIED and are not reopened.
 - The next sequential slot after published VERIFIED 287 is **288** (spec-first package to
