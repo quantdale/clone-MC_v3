@@ -1127,3 +1127,40 @@ real flush await. Before enchanting:227 **3/20 fail**; after **0/20**. Full E2E 
 - The next sequential slot after published VERIFIED 289 is **290** (spec-first package to
   author; no prepared package exists). It is NOT implemented by the 289 track.
 
+
+## 290-hero-of-the-village-reward — activated from published VERIFIED 289 (2026-09-24)
+
+The product/session instruction authorizes activating OpenSpec change
+**290-hero-of-the-village-reward** as the sole ACTIVE implementation change while
+Change **258** remains **BLOCKED** and Changes **259–289** remain **VERIFIED**.
+
+- **Activation dependency (satisfied):** Change **289-enchantment-persistence-reload-integrity** is
+  VERIFIED 12/12 and published; tip base `0fb15f6` (origin/main).
+- **Scope:** reward raid VICTORY with Hero of the Village via existing status-effect
+  runtime; vanilla-like level/duration from Bad Omen; emerald trading discount
+  (floor 1) shown in trading UI; exactly-once grant; DEFEAT grants nothing;
+  pause/dispose/reload safety; unit + browser E2E.
+- **Out of scope:** villager entities; gift-throwing; patrols/outposts; new raid
+  mechanics; HUD redesign; new persistence namespace (effects remain ephemeral —
+  documented); Change 258 headed FPS/GPU work or status change; Change 291
+  implementation.
+- Change **258** stays **BLOCKED**; Changes **259–289** stay **VERIFIED** and
+  are not reopened.
+
+### Sequence row (authoritative with CHANGE_SEQUENCE.md)
+
+| 290 | `290-hero-of-the-village-reward` | HOTV reward on VICTORY: effect + emerald trade discount; no 258 headed work. |
+
+
+## 290-hero-of-the-village-reward — VERIFIED publication checkpoint (2026-09-24)
+
+Change **290-hero-of-the-village-reward** is VERIFIED at **11/11 (100%)** with exact C290
+matrix row. HOTV grant on exactly-once VICTORY transition; emerald trading discount
+floor 1; ephemeral effects; DEFEAT/reload-safe. Full E2E 122/123 (visual:176 SwiftShader
+29/31 drift baseline-equivalent class vs 289 31/29; enchanting green).
+
+- Session start: `0fb15f6b9a1bc3d09aed5ee3d3c9d88ff88803a7`.
+- Change 258 remains BLOCKED at 40/100 (no headed FPS/GPU work, no fake GPU evidence).
+- Changes 259–290 remain VERIFIED and are not reopened.
+- The next sequential slot after published VERIFIED 290 is **291** (spec-first package to
+  author; no prepared package exists). It is NOT implemented by the 290 track.

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-24T08:13:20Z",
+  "generatedAt": "2026-09-24T09:08:32Z",
   "reviewedSha": "3d0fd2d5aee39ae1706b7210ad27e675450f521c",
-  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288; +6 rows for 289 enchantment-persistence-reload-integrity package/implementation/tests; DirtySaveQueue.ts/Game.ts/enchanting.spec.ts/DirtySaveQueue.test.ts/InventoryComponentPersistence.test.ts re-reviewed in place for 289",
+  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288; +6 rows for 289 enchantment-persistence-reload-integrity package/implementation/tests; DirtySaveQueue.ts/Game.ts/enchanting.spec.ts/DirtySaveQueue.test.ts/InventoryComponentPersistence.test.ts re-reviewed in place for 289; +10 rows for 290 hero-of-the-village-reward package/implementation/tests; Game.ts/StatusEffect.ts re-reviewed in place for 290",
   "allowedReviewLevels": [
     "semantic",
     "mechanical",
@@ -10,7 +10,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2949,
+  "total": 2959,
   "rows": [
     {
       "path": ".agent/EXECUTION_PROMPT.md",
@@ -31510,10 +31510,12 @@
       "imports": [],
       "importedBy": [],
       "testEvidence": [],
-      "riskAreas": [],
+      "riskAreas": [
+        "status-effect"
+      ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings; re-reviewed for 290 hero_of_the_village registry bounds",
       "status": "audited"
     },
     {
@@ -31630,15 +31632,17 @@
         "npx playwright test tests/e2e/bad-omen-acquisition.spec.ts"
       ],
       "riskAreas": [
-        "simulation",
-        "raid",
-        "lifecycle",
         "combat",
-        "persistence"
+        "lifecycle",
+        "persistence",
+        "raid",
+        "simulation",
+        "status-effect",
+        "trading"
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 284 implementation; no findings \u2014 additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits | 285 ephemeral badOmen + villageQuery + fixed-tick evaluate through 282 start seam; re-reviewed for 288 raider combat wiring; re-reviewed for 289 concurrent-drain / enchant persist integrity",
+      "reviewNotes": "reviewed for 284 implementation; no findings \u2014 additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits | 285 ephemeral badOmen + villageQuery + fixed-tick evaluate through 282 start seam; re-reviewed for 288 raider combat wiring; re-reviewed for 289 concurrent-drain / enchant persist integrity; re-reviewed for 290 HOTV grant + emerald trade discount wiring",
       "status": "audited"
     },
     {
@@ -47775,6 +47779,198 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 289 enchantment-persistence-reload-integrity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/290-hero-of-the-village-reward/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "290 OpenSpec artifact OVERRIDE_DRAFT.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "trading"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/290-hero-of-the-village-reward/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "290 OpenSpec artifact design.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "trading"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/290-hero-of-the-village-reward/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "290 OpenSpec artifact proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "trading"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/290-hero-of-the-village-reward/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "290 OpenSpec artifact tasks.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "trading"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/290-hero-of-the-village-reward/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "290 OpenSpec artifact verification.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "trading"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/290-hero-of-the-village-reward/specs/hero-of-the-village-reward/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "290 capability spec hero-of-the-village-reward",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "trading",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/HeroOfTheVillage.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "290 pure HOTV grant/discount helpers",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "trading",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/HeroOfTheVillage.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "290 unit tests for HOTV pure helpers",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "trading"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/LiveHeroOfTheVillage.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "290 live seam composition tests for HOTV grant/discount",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "trading"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/e2e/hero-of-the-village.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "290 browser E2E journey for HOTV grant and trading discount",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "trading"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
       "status": "audited"
     }
   ]

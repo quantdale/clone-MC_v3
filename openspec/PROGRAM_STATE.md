@@ -1,5 +1,23 @@
 # Program State
 
+## Current checkpoint — 2026-09-24 Change 290-hero-of-the-village-reward VERIFIED 11/11 (100%); ready to publish; 291 next (author package only)
+
+> **Change `290-hero-of-the-village-reward` is VERIFIED 11/11 (100%)**; all baseline gates green (typecheck/lint/unit 5458+1/build/file-audit 2959/validate-state/full E2E 122 passed with visual matrix classified non-blocking; HOTV 2/2; enchanting:227 green); last completed Change 290-hero-of-the-village-reward is VERIFIED; Changes 001–290 are VERIFIED except Change 258 BLOCKED; Changes 259–290 are not reopened.
+> Session start head: `0fb15f6b9a1bc3d09aed5ee3d3c9d88ff88803a7` (origin/main).
+> 290 ships exactly-once VICTORY → Hero of the Village (amp = omen−1 capped 0..4, duration 2400s), emerald trade discount `max(1, base−floor(base×(0.3+0.0625×amp)))` shown in trading UI, DEFEAT grants nothing, ephemeral effects (no new namespace). No villagers/gifts/patrols/HUD redesign; no 258 headed work.
+
+- Gates: typecheck PASS; lint 0 errors / 85 warnings; unit 461 files 5458+1; build 258 modules; file-audit 2959; full E2E 122/123 (visual:176 SwiftShader 29/31 drift baseline-equivalent class vs 289 31/29; band 0.022–0.062; enchanting green).
+- Next exact action: **Author a spec-first OpenSpec package for 291 — do NOT implement 291 in the 290 session; candidates: (1) minimal villager entities that panic/work during raids; (2) throwable potion entities to replace the witch fallback; (3) pillager outposts/patrols as a Bad Omen source; (4) durable saves on other inventory mutation seams (trading/brewing/anvil); (5) gift-throwing / reputation beyond HOTV discount. 258 stays BLOCKED.**
+
+## Current checkpoint — 2026-09-24 Change 290-hero-of-the-village-reward ACTIVE 2/11 (package authored; implementation next; 258 stays BLOCKED)
+
+> **Change `290-hero-of-the-village-reward` is ACTIVE 2/11**; T1–T2 control-plane complete (OpenSpec package + sequence/overrides + sole ACTIVE). Implementation of HOTV grant + emerald trading discount not started. Last completed Change 289-enchantment-persistence-reload-integrity is VERIFIED; Changes 001–289 are VERIFIED except Change 258 BLOCKED; Changes 259–289 are not reopened.
+> Session start head: `0fb15f6b9a1bc3d09aed5ee3d3c9d88ff88803a7` (origin/main).
+> Scope: exactly-once VICTORY → Hero of the Village (amp from Bad Omen, 2400s); emerald trade discount floor 1; ephemeral effects (no new namespace); no villagers/gifts/patrols/HUD redesign; no 258 headed work.
+
+- Next exact action: **Implement T3 pure helpers + registry bounds, then T4–T11 through VERIFIED publication.**
+- Change 258 remains BLOCKED at 40/100.
+
 ## Current checkpoint — 2026-09-24 Change 289-enchantment-persistence-reload-integrity VERIFIED 12/12 (100%); ready to publish; 290 next (author package only)
 
 > **Change `289-enchantment-persistence-reload-integrity` is VERIFIED 12/12 (100%); all baseline gates green (typecheck/lint/unit 5446+1/build/file-audit 2949/validate-state/full E2E 120 passed with visual matrix classified non-blocking; enchanting:227 cured 20/20); last completed Change 289-enchantment-persistence-reload-integrity is VERIFIED; Changes 001–289 are VERIFIED except Change 258 BLOCKED; Changes 259–289 are not reopened.**
@@ -234,15 +252,15 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **289-enchantment-persistence-reload-integrity — VERIFIED (12/12); 258 BLOCKED, 259–289 VERIFIED**
+- Active implementation change: **290-hero-of-the-village-reward — VERIFIED (11/11); 258 BLOCKED, 259–290 VERIFIED**
 - Prior active implementation change: **283-live-raid-persistence — VERIFIED (13/13); 258 stays BLOCKED, 259–283 stay VERIFIED**
 - Prior prior active implementation change: **282-live-raid-feedback — VERIFIED (10/10); 258 stays BLOCKED, 259–282 stay VERIFIED**
-- Next change: **290 — author spec-first package after 289 VERIFIED (NOT started); 258 stays BLOCKED**
+- Next change: **291 — author spec-first package after 290 VERIFIED (NOT started); 258 stays BLOCKED**
 - 240 advancement allowed: **yes**
 
 - Program: **ACTIVE — Change 284-live-raid-wave-spawning VERIFIED 12/12 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–284 VERIFIED**
 - 284 checkpoint: **VERIFIED 12/12 — implementation + gates complete; enchanting flake + visual SwiftShader drift documented non-blocking; 258 BLOCKED; 285 not started**
-- Last completed change: **289-enchantment-persistence-reload-integrity — VERIFIED (12/12) — C289 exact, 258 BLOCKED**
+- Last completed change: **290-hero-of-the-village-reward — VERIFIED (11/11) — C290 exact, 258 BLOCKED**
 - Prior last completed change: **281-workstation-ui — VERIFIED (12/12); 258 stays BLOCKED, 259–281 stay VERIFIED**
 - Prior prior last completed change: **272-lighting-clock-dt-sync — VERIFIED (10/10) — full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85/file-audit 2792); 271 remains VERIFIED (14/14)
 - All changes 001–257 and 259–284: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed; Change 283 is VERIFIED 13/13; Change 284 is VERIFIED 12/12 (this session).
@@ -253,7 +271,7 @@
 - Publication history: **Change 257 VERIFIED 92/92 at 96b5dc37 (F257-A..L closed, 22 new fault-injection tests, 5× proofs, import tx); Change 256 archived at `ad75b65` as `2026-08-31-256-production-readiness-hardening` (23/23).**
 - Section milestone: **PROGRAM VERIFIED through Change 284; Change 284 is VERIFIED 12/12; Change 258 remains BLOCKED at 40/100 pending headed hardware-WebGL certification; no GPU evidence was fabricated.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ri…
-- Next exact action: **Author a spec-first package for 290 (highest-value non-GPU playability) — NOT started; 258 stays BLOCKED**
+- Next exact action: **Author a spec-first OpenSpec package for 291 (NOT started); candidates: villager entities; throwable potions; outposts/patrols; durable save on trading/brewing/anvil; 258 stays BLOCKED**
 - Superseded next action: **T8 confirm 282 feedback is unchanged (projection, pause, dispose hide, no spawning/settlement/258 work); 258 stays BLOCKED**
 - Release note (2026-09-11 owner deferral): **headed FPS gates (258 tasks 91–95) are deferred, not waived — 001–257 VERIFIED, production default unchanged (sync meshing, no quality retune), game shippable with known performance-certification debt**
 

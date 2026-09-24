@@ -27,7 +27,7 @@ Directory-slug note: three directories use slugs that differ from the sequence t
 
 Boundary disambiguation: `exact` vs `equivalent` — if only the internal mechanism differs but the player-visible behavior and its rules match as specified, it is still `exact`; `equivalent` is reserved for outcomes whose reference mechanism is proprietary/unavailable and was deliberately replaced by a locally-documented one. `equivalent` vs `approx` — `equivalent` rows have no behavioral shortfall, only a substituted mechanism; `approx` rows record an actual known behavioral/fidelity difference caused by a platform or legal-resource constraint. `deferred` vs `out-of-scope` — `deferred` features remain planned work; `out-of-scope` features will never be implemented because they require proprietary assets/services or non-browser capability.
 
-## Change matrix (C001–C289)
+## Change matrix (C001–C290)
 
 Narrow-outcome text is quoted from `openspec/CHANGE_SEQUENCE.md` (authoritative catalog); status is confirmed against `openspec/PROGRAM_STATE.json` (`validationResults`) and each change's `verification.md`.
 
@@ -321,6 +321,7 @@ Narrow-outcome text is quoted from `openspec/CHANGE_SEQUENCE.md` (authoritative 
 | C287 | `287-live-village-detection` | Real spatial settlement/village detection backing the 285 `setVillageQuery` seam: pure Chebyshev bed-scan on resident columns (≥1 `BlockId.Bed` within R=12 / Y=±5), deterministic center + containsPlayer, Game live default query with rate-limited cache, pause/dispose/reload safety, unit + browser E2E; no raider AI, outposts, HOTV, villager spawn, village worldgen, new persistence, or 258 headed work. | exact | `openspec/changes/287-live-village-detection/verification.md` (VERIFIED 11/11) + `specs/live-village-detection/spec.md` | Exact functional outcome; full E2E 117/119 with visual-matrix Linux SwiftShader drift (29 fail/31 pass; band 0.022–0.062; baseline-equivalent class to 286 32/28); enchanting:227 flake recurred; all raid E2E green incl. village-detection 2/2; no 258 headed work or GPU evidence. | VERIFIED |
 | C288 | `288-raider-combat-behavior` | Live raider combat over 284 wave entities using existing HostileTargetAI / MeleeCombat / ProjectileCore / BowAndArrow / MobHealthTracker seams: target player or home to raid center; pillager ranged, vindicator/ravager melee, witch ranged fallback (no potion entity); deaths through exactly-once `recordRaiderDeath`; player death/timeout → DEFEAT; pause/dispose/reload safety; unit + browser E2E; no new AI framework, villagers, HOTV, patrols/outposts, persistence namespace, or 258 headed work. | exact | `openspec/changes/288-raider-combat-behavior/verification.md` (VERIFIED 11/11) + `specs/raider-combat-behavior/spec.md` | Exact functional outcome; full E2E 119/121 with visual-matrix Linux SwiftShader drift (28 fail/32 pass; band 0.022–0.062; baseline-equivalent class to 287 29/31); enchanting:227 known reload flake recurred; all raid E2E green incl. raider-combat 2/2; no 258 headed work or GPU evidence. | VERIFIED |
 | C289 | `289-enchantment-persistence-reload-integrity` | Find/fix root cause of enchantments null after pagehide+reload: DirtySaveQueue concurrent-drain single-flight+epoch latest-wins, inventory default component codec proofs, apply-time `savePlayerStateDurable`, e2e await real flush signal; before 3/20 fail → after 0/20; no storage redesign, no new namespace, no enchanting UI, no 258 headed work. | exact | `openspec/changes/289-enchantment-persistence-reload-integrity/verification.md` (VERIFIED 12/12) + `specs/enchantment-persistence-reload-integrity/spec.md` | Exact functional outcome; full E2E 120/121 with visual-matrix Linux SwiftShader drift (31 fail/29 pass; band 0.020–0.062; baseline-equivalent class to 288 28/32); enchanting:227 green (20/20 repeats + full suite); no 258 headed work or GPU evidence. | VERIFIED |
+| C290 | `290-hero-of-the-village-reward` | Reward raid VICTORY with Hero of the Village via existing status-effect runtime: Bad Omen→amplifier 0..4, duration 2400s (40 min @20 TPS), emerald trade discount `max(1, base-floor(base*(0.3+0.0625*amp)))` shown in trading UI, exactly-once grant, DEFEAT none, ephemeral effects (no new namespace), unit+browser E2E; no villagers/gifts/patrols/HUD redesign; no 258 headed work. | exact | `openspec/changes/290-hero-of-the-village-reward/verification.md` (VERIFIED 11/11) + `specs/hero-of-the-village-reward/spec.md` | Exact functional outcome; full E2E 122/123 with visual-matrix Linux SwiftShader drift (29 fail/31 pass; band 0.022–0.062; baseline-equivalent class to 289 31/29); HOTV 2/2 + enchanting:227 green; no 258 headed work or GPU evidence. | VERIFIED |
 
 ## Master-plan-only features
 
@@ -368,18 +369,20 @@ Feature areas named in `MINECRAFT_PARITY_MASTER_PLAN.md` that no single numbered
 
 **Post-terminal note (2026-09-24, live raid bar parity):** Change `286-live-raid-bar-parity` is VERIFIED 14/14 and exact: pure `projectRaidBar` + accessible `#raid-feedback` presentation (village fallback, Bad Omen badge, `data-raid-bar`) isolated from wither boss bar; 282 projection module unchanged. Full gates green (typecheck/lint/unit 5409+1/build/file-audit 2923/validate-state); full E2E 116/117 with visual:176 baseline-equivalent SwiftShader drift (32 fail/28 pass). Change 258 remains BLOCKED and Changes 259–286 remain VERIFIED; this matrix covers every numbered change 001–286.
 
+**Post-terminal note (2026-09-24, hero of the village):** Change `290-hero-of-the-village-reward` is VERIFIED 11/11 and exact: exactly-once VICTORY→HOTV grant (amp from Bad Omen, 2400s), emerald trading discount floor 1 visible in trading UI, DEFEAT/reload-safe, ephemeral effects. Full gates green (typecheck/lint/unit 5458+1/build/file-audit 2959/validate-state); full E2E 122/123 with visual:176 baseline-equivalent SwiftShader drift (29 fail/31 pass). Change 258 remains BLOCKED and Changes 259–290 remain VERIFIED; this matrix covers every numbered change 001–290.
+
 ## Summary
 
 | Category | Rows |
 |---|---|
-| exact | 275 (274 numbered rows plus MP-19.4-1 Wither-like secondary boss via C252) |
+| exact | 276 (275 numbered rows plus MP-19.4-1 Wither-like secondary boss via C252) |
 | equivalent | 4 |
 | approx | 6 |
 | deferred | 1 (C258 — BLOCKED headed hardware-WebGL evidence) |
 | out-of-scope | 1 (MP-33-1 proprietary services/assets) |
 | n/a (documentation) | 4 (C248, C249, C250, C268) |
-| **Total rows** | **291** (289 change rows + 2 master-plan rows) |
+| **Total rows** | **292** (290 change rows + 2 master-plan rows) |
 
-Change-rows-only split: exact 274 / equivalent 4 / approx 6 / deferred 1 / n/a 4 = 289.
+Change-rows-only split: exact 275 / equivalent 4 / approx 6 / deferred 1 / n/a 4 = 290.
 
-**Coverage statement:** every numbered change 001–289 appears in exactly one row (bijective `C001`…`C289`, no duplicates, no orphan rows). Every completed change maps to a cited VERIFIED artifact; C258 is explicitly documented as BLOCKED rather than upgraded to VERIFIED. The two additional `MP-*` rows cover master-plan areas outside the numbered sequence; MP-19.4-1 is closed `exact` by C252. The matrix audit is cross-checked against the package evidence and `openspec/PROGRAM_STATE.json`; the current state validator still owns its historical 001–250 schema checks and does not treat C258 as verified.
+**Coverage statement:** every numbered change 001–290 appears in exactly one row (bijective `C001`…`C290`, no duplicates, no orphan rows). Every completed change maps to a cited VERIFIED artifact; C258 is explicitly documented as BLOCKED rather than upgraded to VERIFIED. The two additional `MP-*` rows cover master-plan areas outside the numbered sequence; MP-19.4-1 is closed `exact` by C252. The matrix audit is cross-checked against the package evidence and `openspec/PROGRAM_STATE.json`; the current state validator still owns its historical 001–250 schema checks and does not treat C258 as verified.

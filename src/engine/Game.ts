@@ -173,6 +173,7 @@ import {
   createVillagerTradeState,
   restock as restockTradeState,
   type TradeItem,
+  type TradeOffer,
   type VillagerTradeState,
 } from '../simulation/VillagerTrading';
 import {
@@ -322,6 +323,12 @@ import type { WitherSkullState } from '../simulation/WitherSkull';
 import { CollisionResolver, type ShapeWorld } from '../world/CollisionResolver';
 import { computeExplosion } from '../simulation/ExplosionCore';
 import { startRaid, tickRaid, recordRaiderDeath, type RaidState } from '../simulation/RaidStateMachine';
+import {
+  applyHeroTradeDiscount,
+  heroAmplifierFromBadOmen,
+  heroDurationSeconds,
+  shouldGrantHeroOfTheVillage,
+} from '../simulation/HeroOfTheVillage';
 import {
   RaiderCombatSystem,
   forceRaidDefeat,
@@ -1575,7 +1582,7 @@ export class Game {
       listProfessions: () => [...TRADING_PROFESSIONS],
       getProfession: () => this.tradingProfession,
       selectProfession: (key: string) => this.selectTradingProfession(key),
-      getOffers: (professionKey: string) => this.getTradingState(professionKey)?.offers ?? [],
+      getOffers: (professionKey: string) => this.getDiscountedTradingOffers(professionKey),
       getLevel: (professionKey: string) => this.getTradingState(professionKey)?.level ?? 1,
       getXp: (professionKey: string) => this.getTradingState(professionKey)?.xp ?? 0,
       getInventoryCount: (itemKey: string) => {
@@ -4925,9 +4932,11 @@ export class Game {
   applyTradeOffer(professionKey: string, offerIndex: number): { ok: boolean; reason?: string } {
     const state = this.trades[professionKey];
     if (!state) return { ok: false, reason: 'unknown' };
-    const offer = state.offers[offerIndex];
-    if (!offer) return { ok: false, reason: 'unknown' };
-    if (offer.usesRemaining <= 0) return { ok: false, reason: 'exhausted' };
+    const catalogOffer = state.offers[offerIndex];
+    if (!catalogOffer) return { ok: false, reason: 'unknown' };
+    if (catalogOffer.usesRemaining <= 0) return { ok: false, reason: 'exhausted' };
+    // Live HOTV discount applies to emerald costs only (290); catalog stays intact.
+    const offer = applyHeroTradeDiscount(catalogOffer, this.getHeroOfTheVillageAmplifier());
     const idA = TRADE_KEY_TO_ITEM_ID[offer.inputA.item];
     const idResult = TRADE_KEY_TO_ITEM_ID[offer.result.item];
     const idB = offer.inputB !== null ? TRADE_KEY_TO_ITEM_ID[offer.inputB.item] : undefined;
@@ -4941,19 +4950,34 @@ export class Game {
     const offeredA: TradeItem = { item: offer.inputA.item, count: this.inventory.getItemCount(idA) };
     const offeredB: TradeItem | null =
       offer.inputB !== null ? { item: offer.inputB.item, count: this.inventory.getItemCount(idB!) } : null;
+    // Accept against the discounted offer; progression still mutates catalog state via index.
     if (!canAcceptTrade(offer, offeredA, offeredB)) {
-      return { ok: false, reason: offer.usesRemaining <= 0 ? 'exhausted' : 'insufficient' };
+      return { ok: false, reason: catalogOffer.usesRemaining <= 0 ? 'exhausted' : 'insufficient' };
     }
     const preLevel = state.level;
-    const applied = applyTrade(state, offerIndex, offeredA, offeredB);
+    // applyTrade validates against catalog offer counts — feed inventory counts that satisfy
+    // the catalog when HOTV made the live price cheaper by synthesizing sufficient offered*.
+    const catalogOfferedA: TradeItem = {
+      item: catalogOffer.inputA.item,
+      count: Math.max(this.inventory.getItemCount(idA), catalogOffer.inputA.count),
+    };
+    const catalogOfferedB: TradeItem | null =
+      catalogOffer.inputB !== null
+        ? {
+            item: catalogOffer.inputB.item,
+            count: Math.max(
+              this.inventory.getItemCount(TRADE_KEY_TO_ITEM_ID[catalogOffer.inputB.item]!),
+              catalogOffer.inputB.count,
+            ),
+          }
+        : null;
+    const applied = applyTrade(state, offerIndex, catalogOfferedA, catalogOfferedB);
     if (!applied.result) return { ok: false, reason: 'insufficient' };
-    // Debit exact declared costs (never the offered surplus).
-    if (!this.inventory.removeItem(idA, applied.consumedA!.count)) return { ok: false, reason: 'insufficient' };
-    if (applied.consumedB !== null) {
-      if (!this.inventory.removeItem(idB!, applied.consumedB.count)) {
-        // Defensive: restore the first debit (count-checked above, unreachable
-        // in practice) rather than duplicating or losing items.
-        this.inventory.addItem(idA, applied.consumedA!.count);
+    // Debit the discounted live costs (never the catalog surplus while HOTV is active).
+    if (!this.inventory.removeItem(idA, offer.inputA.count)) return { ok: false, reason: 'insufficient' };
+    if (offer.inputB !== null) {
+      if (!this.inventory.removeItem(idB!, offer.inputB.count)) {
+        this.inventory.addItem(idA, offer.inputA.count);
         return { ok: false, reason: 'insufficient' };
       }
     }
@@ -5537,6 +5561,70 @@ export class Game {
     return state;
   }
 
+  /** Active HOTV amplifier, or null when the effect is absent/expired (290). */
+  getHeroOfTheVillageAmplifier(): number | null {
+    const inst = this.playerEffects.get(createResourceId('minecraft', 'effect/hero_of_the_village'));
+    if (!inst || inst.expired) return null;
+    return inst.amplifier;
+  }
+
+  /** Catalog offers projected through the live HOTV emerald discount (290). */
+  getDiscountedTradingOffers(professionKey: string): readonly TradeOffer[] {
+    const state = this.trades[professionKey];
+    if (!state) return [];
+    const amp = this.getHeroOfTheVillageAmplifier();
+    if (amp === null) return state.offers;
+    return state.offers.map((o) => applyHeroTradeDiscount(o, amp));
+  }
+
+  /**
+   * Exactly-once HOTV grant on non-VICTORY → VICTORY (290). DEFEAT and
+   * already-VICTORY assignments are no-ops. Never throws.
+   */
+  private maybeGrantHeroOfTheVillage(prevStatus: RaidState['status'] | null | undefined, next: RaidState): void {
+    if (this.disposed) return;
+    if (!shouldGrantHeroOfTheVillage(prevStatus, next.status)) return;
+    const amp = heroAmplifierFromBadOmen(next.badOmenLevel);
+    const duration = heroDurationSeconds();
+    try {
+      this.playerEffects.add(
+        createResourceId('minecraft', 'effect/hero_of_the_village'),
+        duration,
+        amp,
+      );
+      const levelRoman = ['I', 'II', 'III', 'IV', 'V'][amp] ?? String(amp + 1);
+      this.showToast(`Hero of the Village ${levelRoman}! Trading discounts unlocked.`);
+      if (this.tradingOpen) this.tradingPanel.render();
+    } catch {
+      // Registry/boot faults must not break the raid tick path.
+    }
+  }
+
+  /** Test seam (290): remove HOTV so E2E can prove price restore without waiting 2400s. */
+  debugClearHeroOfTheVillage(): boolean {
+    if (this.disposed) return false;
+    const removed = this.playerEffects.remove(createResourceId('minecraft', 'effect/hero_of_the_village'));
+    if (removed && this.tradingOpen) this.tradingPanel.render();
+    return removed;
+  }
+
+  /**
+   * Test seam (290): replace a profession's trade state with a fresh catalog at
+   * `level` so E2E can observe emerald discounts without grinding XP.
+   */
+  debugSetTradingLevel(professionKey: string, level: number): boolean {
+    if (this.disposed) return false;
+    if (!TRADING_PROFESSIONS.includes(professionKey)) return false;
+    const clamped = Math.max(1, Math.min(5, Math.floor(Number.isFinite(level) ? level : 1)));
+    this.trades = {
+      ...this.trades,
+      [professionKey]: createVillagerTradeState(professionKey, clamped),
+    };
+    this.saveTrading();
+    if (this.tradingOpen) this.tradingPanel.render();
+    return true;
+  }
+
   /** Read-only live raid state for E2E and diagnostics (282; never persisted). */
   getRaidState(): RaidState | null {
     return this.raidState;
@@ -5573,11 +5661,13 @@ export class Game {
     this.raiderCombat.clear();
     const remaining = this.raidState.raidersRemaining;
     let state = this.raidState;
+    const prevStatus = state.status;
     for (let i = 0; i < remaining; i++) {
       state = recordRaiderDeath(state);
     }
     const { state: next, spawned } = tickRaid(state);
     this.raidState = next;
+    this.maybeGrantHeroOfTheVillage(prevStatus, next);
     if (next.status === 'VICTORY' || next.status === 'DEFEAT') {
       this.raidWaveController.clear('terminal');
       this.raiderCombat.clear();
@@ -5595,8 +5685,10 @@ export class Game {
    */
   private tickRaidFeedback(): void {
     if (!this.raidState) return;
+    const prevStatus = this.raidState.status;
     const { state, spawned } = tickRaid(this.raidState);
     this.raidState = state;
+    this.maybeGrantHeroOfTheVillage(prevStatus, state);
     if (state.status === 'VICTORY' || state.status === 'DEFEAT') {
       this.raidWaveController.clear('terminal');
       this.raiderCombat.clear();
