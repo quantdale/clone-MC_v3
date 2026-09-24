@@ -857,3 +857,68 @@ all raid E2E green).
   `wt/285-live-bad-omen-acquisition`). It is NOT implemented by the 284 track (owner rule:
   no 285 until 284 published).
 
+
+## 285-live-bad-omen-acquisition — activated from published VERIFIED 284
+
+Change **285-live-bad-omen-acquisition** is now the sole ACTIVE implementation
+change. Control-plane activation folded from the package
+`openspec/changes/285-live-bad-omen-acquisition/OVERRIDE_DRAFT.md` after
+284-live-raid-wave-spawning reached VERIFIED and was published to `origin/main`
+(`63f9de40c34445d5ec1812acb91413fa58a8d38c`). Session start head for this
+activation is `c26350d16b007577fd6d64ae70ab4dae85439ddc`.
+
+### Dependency and activation (satisfied)
+
+- 282-live-raid-feedback is VERIFIED (10/10); 285 consumes 282's Game-owned
+  ephemeral raid state, fixed-tick `tickRaid`, debug start/clear/replay, and
+  `#raid-feedback` projection.
+- 283-live-raid-persistence is VERIFIED (13/13) and published.
+- 284-live-raid-wave-spawning is VERIFIED (12/12) and published; the
+  one-active-change ordering contract is satisfied. Sole ACTIVE is 285.
+- Prepared next package (NOT activated this session): `286-live-raid-bar-parity`
+  at `/workspace/mc-worktrees/286` (branch `wt/286-live-raid-bar-parity`).
+
+### Scope limits (binding for the 285 track)
+
+- 285 MUST remain limited to pure Bad Omen clamp/grant/clear helpers, the
+  fail-closed village-omen trigger decision, Game ephemeral ownership and
+  fixed-tick wiring through the 282 raid start seam, focused unit/browser
+  evidence, and exact state/parity proof.
+- 285 MUST NOT implement raider entity spawning, village/spatial detection
+  algorithm, a persistence/archive namespace, status-effect registry edit, new
+  HUD element, combat retune, Change 258 headed FPS/GPU work, or any fake GPU
+  evidence. Change 258 MUST NOT be marked VERIFIED by the 285 track.
+- Existing 282 feedback projection, 283 persistence, 284 wave spawning, wither
+  boss bar, smoker/furnace/brewing/shield/trading/death/respawn behavior remain
+  the regression boundary.
+- Changes 259–284 stay VERIFIED and are not reopened.
+
+### Sequence row (recorded in `CHANGE_SEQUENCE.md` at this activation)
+
+| # | Change | Narrow outcome |
+|---|---|---|
+| 285 | `285-live-bad-omen-acquisition` | Own one ephemeral Game Bad Omen level with total clamp/grant/clear pure helpers, fail-closed village-omen trigger decision, injectable VillageQuery defaulting to null, fixed-tick evaluate through the 282 raid-start seam then clear-once on success; no raider spawn, no settlement detector, no persistence/HUD/registry/GPU work, 258 stays BLOCKED. |
+
+The slot after 285 is intentionally unspecified in this activation; the next
+change (286) requires its own spec-first package and owner/sequence decision
+(prepared package `286-live-raid-bar-parity` exists but is NOT activated until
+285 is published).
+
+## 285-live-bad-omen-acquisition — VERIFIED publication checkpoint (2026-09-24)
+
+Change **285-live-bad-omen-acquisition** is VERIFIED at **10/10 (100%)** with exact C285
+parity and full local gates green: typecheck, lint (0 errors / 85 existing warnings),
+full unit 454 files 5399 passed + 1 skipped, build (253 modules), file-audit 2914 rows,
+validate-state, and exact `npm run test:e2e` (114 scheduled, 113 passed;
+visual:176 proven baseline-equivalent Linux SwiftShader golden drift — 31 fail/29 pass,
+band 0.022–0.062 matching 284’s 31/29 class; enchanting journeys PASS; all raid E2E green
+including bad-omen 2/2).
+
+- Session start: `c26350d16b007577fd6d64ae70ab4dae85439ddc`; published_head is recorded
+  in `openspec/PROGRAM_STATE.json` after the final push to `origin/main`.
+- Change 258 remains BLOCKED at 40/100 (no headed FPS/GPU work, no fake GPU evidence).
+- Changes 259–285 remain VERIFIED and are not reopened.
+- The next sequential slot after published VERIFIED 285 is
+  `286-live-raid-bar-parity` (prepared at `/workspace/mc-worktrees/286`, branch
+  `wt/286-live-raid-bar-parity`). It is NOT implemented by the 285 track (owner rule:
+  no 286 until 285 published).

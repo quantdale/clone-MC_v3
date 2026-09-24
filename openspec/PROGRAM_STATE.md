@@ -1,3 +1,15 @@
+# Program State
+
+## Current checkpoint — 2026-09-24 Change 285-live-bad-omen-acquisition VERIFIED 10/10 (100%); ready to publish; 286 next (not started)
+
+> **Change `285-live-bad-omen-acquisition` is VERIFIED 10/10 (100%); all baseline gates green (typecheck/lint/unit 5399+1/build/file-audit 2914/validate-state/full E2E 113 passed with visual matrix classified non-blocking); last completed Change 285-live-bad-omen-acquisition is VERIFIED; Changes 001–285 are VERIFIED except Change 258 BLOCKED; Changes 259–285 are not reopened.**
+> Session start head: `c26350d16b007577fd6d64ae70ab4dae85439ddc` (origin/main). Published tip will be recorded after `git push origin main`.
+> 285 ships ephemeral Bad Omen + fail-closed village-omen trigger through the 282 raid-start seam; injectable VillageQuery default null; no raider spawn, no settlement detector, no persistence/HUD/registry/GPU, no 258 work.
+
+- Gates: typecheck PASS; lint 0 errors / 85 warnings; unit 454 files 5399+1; build 253 modules; file-audit 2914; full E2E 113/114 (visual:176 SwiftShader 31/29 drift baseline-equivalent vs 284); all raid E2E green incl. bad-omen 2/2; enchanting PASS.
+- Next exact action: **Publish 285, then activate 286-live-raid-bar-parity T1 from prepared `/workspace/mc-worktrees/286` (NOT started this session); 258 stays BLOCKED.**
+
+
 # Minecraft-Parity Program State
 
 ## Current checkpoint — 2026-09-24 Change 284-live-raid-wave-spawning VERIFIED 12/12 (100%); published to origin/main; 285 next (not started)
@@ -184,15 +196,15 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **284-live-raid-wave-spawning — VERIFIED (12/12); 258 BLOCKED, 259–284 VERIFIED**
+- Active implementation change: **285-live-bad-omen-acquisition — VERIFIED (10/10); 258 BLOCKED, 259–285 VERIFIED**
 - Prior active implementation change: **283-live-raid-persistence — VERIFIED (13/13); 258 stays BLOCKED, 259–283 stay VERIFIED**
 - Prior prior active implementation change: **282-live-raid-feedback — VERIFIED (10/10); 258 stays BLOCKED, 259–282 stay VERIFIED**
-- Next change: **285-live-bad-omen-acquisition — prepared package at /workspace/mc-worktrees/285; NOT activated until after 284 published; 258 remains BLOCKED**
+- Next change: **286-live-raid-bar-parity — prepared package at /workspace/mc-worktrees/286; NOT activated until after 285 published; 258 remains BLOCKED**
 - 240 advancement allowed: **yes**
 
 - Program: **ACTIVE — Change 284-live-raid-wave-spawning VERIFIED 12/12 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–284 VERIFIED**
 - 284 checkpoint: **VERIFIED 12/12 — implementation + gates complete; enchanting flake + visual SwiftShader drift documented non-blocking; 258 BLOCKED; 285 not started**
-- Last completed change: **284-live-raid-wave-spawning — VERIFIED (12/12) — C284 exact, 258 BLOCKED**
+- Last completed change: **285-live-bad-omen-acquisition — VERIFIED (10/10) — C285 exact, 258 BLOCKED**
 - Prior last completed change: **281-workstation-ui — VERIFIED (12/12); 258 stays BLOCKED, 259–281 stay VERIFIED**
 - Prior prior last completed change: **272-lighting-clock-dt-sync — VERIFIED (10/10) — full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85/file-audit 2792); 271 remains VERIFIED (14/14)
 - All changes 001–257 and 259–284: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed; Change 283 is VERIFIED 13/13; Change 284 is VERIFIED 12/12 (this session).

@@ -326,6 +326,15 @@ import { deserializeRaidPayload, serializeRaidPayload } from '../simulation/Raid
 import { EntityManager } from '../simulation/EntityManager';
 import { createEntityManagerRaidBackend } from '../simulation/RaidEntityBackend';
 import { RaidWaveController, type RaidWaveApplyResult } from '../simulation/RaidWaveController';
+import {
+  clearBadOmen as clearBadOmenState,
+  createBadOmen,
+  grantBadOmen as grantBadOmenState,
+  resolveVillageRaidTrigger,
+  type BadOmenState,
+  type OmenTriggerDecision,
+  type VillageContext,
+} from '../simulation/BadOmenRules';
 import { projectRaidFeedback } from '../ui/RaidFeedbackView';
 
 /** Maximum eye-to-furnace distance before an open furnace screen auto-closes (251). */
@@ -590,6 +599,10 @@ export class Game {
   private readonly raidWaveController: RaidWaveController;
   /** HUD raid feedback bar (282, null until the shell binds it). */
   private raidFeedbackEl: HTMLElement | null = null;
+  /** Ephemeral Bad Omen level (285): never persisted; integer 0..5. */
+  private badOmen: BadOmenState = createBadOmen();
+  /** Injected village presence query (285); default always null. */
+  private villageQuery: () => VillageContext | null = () => null;
   /** Live block-tag registry (266 adventure resolution; built once beside HarvestRules). */
   private readonly blockTags: TagRegistry;
   /** Registry key of the Fire block, resolved once for the doFireTick gate (261). */
@@ -1730,6 +1743,8 @@ export class Game {
     this.saveRaid();
     this.raidState = null;
     this.raidWaveController.clear('dispose');
+    this.badOmen = createBadOmen();
+    this.villageQuery = () => null;
     this.syncRaidFeedbackHud();
     this.dismissDeathScreen();
     // Settle the furnace session first so its cursor/xp land in the state that
@@ -2373,6 +2388,10 @@ export class Game {
     // 5.7 Live raid feedback (282): exactly one immutable tickRaid per
     // unpaused fixed tick; paused/loading/disposed paths never enter this body.
     this.tickRaidFeedback();
+    // 5.8 Bad Omen village trigger (285): at most one evaluate per unpaused
+    // fixed tick after the raid tick; START_RAID goes through the 282 start
+    // seam then clears omen exactly once.
+    this.evaluateBadOmenVillageTrigger();
 
     // 6. Survival + status systems.
     const headY = Math.floor(py + CONFIG.player.eyeHeight);
@@ -5365,6 +5384,60 @@ export class Game {
     this.tickWeatherCycle();
   }
 
+
+  /** Read-only Bad Omen level for E2E and diagnostics (285; never persisted). */
+  getBadOmenLevel(): number {
+    return this.badOmen.level;
+  }
+
+  /** Grant Bad Omen toward the cap (285); invalid amounts are no-ops via pure helpers. */
+  grantBadOmen(amount?: number): void {
+    this.badOmen = grantBadOmenState(this.badOmen, amount);
+  }
+
+  /** Clear Bad Omen to level 0 (285). */
+  clearBadOmen(): void {
+    this.badOmen = clearBadOmenState(this.badOmen);
+  }
+
+  /**
+   * Replace the village presence query (285). Passing null restores the
+   * default `() => null` (no village ⇒ no trigger).
+   */
+  setVillageQuery(query: (() => VillageContext | null) | null): void {
+    this.villageQuery = query ?? (() => null);
+  }
+
+  /**
+   * Internal/test seam (285): evaluate omen × village once. On START_RAID,
+   * invoke the 282 start path at the village center then clear omen exactly
+   * once. Failures retain the prior level. Paused/loading/disposed callers
+   * should not invoke this; the fixed-tick body already gates entry.
+   */
+  evaluateBadOmenVillageTrigger(): OmenTriggerDecision {
+    const decision = resolveVillageRaidTrigger(this.badOmen, this.villageQuery());
+    if (decision.kind !== 'START_RAID') return decision;
+    // Fail closed: only clear after a successful start invocation.
+    this.startRaidAt(decision.centerX, decision.centerY, decision.centerZ, decision.badOmenLevel);
+    this.badOmen = clearBadOmenState(this.badOmen);
+    return decision;
+  }
+
+  /**
+   * Shared 282 start composition at an explicit center (used by debugStartRaid
+   * and the 285 omen trigger). Replaces any prior active/terminal raid.
+   */
+  private startRaidAt(x: number, y: number, z: number, badOmenLevel: number): RaidState {
+    this.raidWaveController.clear('replace');
+    const { state, spawned } = tickRaid(startRaid(x, y, z, badOmenLevel));
+    this.raidState = state;
+    if (spawned && spawned.length > 0) {
+      this.raidWaveController.applyWave(state, spawned);
+    }
+    this.syncRaidFeedbackHud();
+    return state;
+  }
+
   /** Read-only live raid state for E2E and diagnostics (282; never persisted). */
   getRaidState(): RaidState | null {
     return this.raidState;
@@ -5378,15 +5451,8 @@ export class Game {
    * 284) and refreshes the feedback bar.
    */
   debugStartRaid(badOmenLevel = 1): RaidState {
-    this.raidWaveController.clear('replace');
     const { x, y, z } = this.player.position;
-    const { state, spawned } = tickRaid(startRaid(x, y, z, badOmenLevel));
-    this.raidState = state;
-    if (spawned && spawned.length > 0) {
-      this.raidWaveController.applyWave(state, spawned);
-    }
-    this.syncRaidFeedbackHud();
-    return state;
+    return this.startRaidAt(x, y, z, badOmenLevel);
   }
 
   /** Test-only seam (282): apply exactly one fixed-tick transition; null stays null. */

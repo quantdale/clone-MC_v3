@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "status": "ACTIVE",
-  "currentChange": "284-live-raid-wave-spawning",
+  "currentChange": "285-live-bad-omen-acquisition",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "284-live-raid-wave-spawning",
-  "nextChange": "285-live-bad-omen-acquisition",
-  "completedTasks": 12,
-  "totalTasks": 12,
+  "lastCompletedChange": "285-live-bad-omen-acquisition",
+  "nextChange": "286-live-raid-bar-parity",
+  "completedTasks": 10,
+  "totalTasks": 10,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -14,15 +14,22 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "c2539dc30a470e64bbbd306e186fab80c74b485e",
-  "localHead": "17887d1ce602a68b82818b4beb38f3a670ee7f73",
+  "sessionStartHead": "c26350d16b007577fd6d64ae70ab4dae85439ddc",
+  "localHead": "c26350d16b007577fd6d64ae70ab4dae85439ddc",
   "publishedHead": "63f9de40c34445d5ec1812acb91413fa58a8d38c",
-  "nextExactAction": "284 VERIFIED 12/12 published at 63f9de40c34445d5ec1812acb91413fa58a8d38c (origin/main verified equal); next exact action is T1 control-plane activation of 285-live-bad-omen-acquisition from prepared /workspace/mc-worktrees/285 (branch wt/285-live-bad-omen-acquisition) per CHANGE_SEQUENCE \u2014 NOT started this session; 258 stays BLOCKED",
-  "lastCompletedTask": "284 T12 complete: C284 exact/VERIFIED, verification 12/12, published to origin/main at 63f9de40c34445d5ec1812acb91413fa58a8d38c; next is 285 activation (not started)",
+  "nextExactAction": "285 VERIFIED 10/10; publish to origin/main then activate 286-live-raid-bar-parity T1 control-plane from prepared /workspace/mc-worktrees/286 (branch wt/286-live-raid-bar-parity) \u2014 NOT started this session; 258 stays BLOCKED",
+  "lastCompletedTask": "285 T10 complete: C285 exact/VERIFIED 10/10; gates green with documented non-blocking visual SwiftShader variance; ready to publish; next is 286 activation (not started)",
   "blockers": [
-    "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-284 are VERIFIED; game shippable with known performance-certification debt. The 284/285 tracks MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
+    "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-285 are VERIFIED; game shippable with known performance-certification debt. The 286 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
   "validationResults": [
+    {
+      "change": "285-live-bad-omen-acquisition",
+      "status": "VERIFIED",
+      "unitTests": 5399,
+      "e2eTests": 113,
+      "note": "10/10 tasks complete (100%). Live bad omen acquisition: pure BadOmenRules clamp/grant/clear + fail-closed resolveVillageRaidTrigger; Game ephemeral badOmen + VillageQuery injection (default null); fixed-tick evaluate through 282 startRaidAt then clear-once; unit 16 focused + LiveBadOmen wiring; browser 2/2. Gates: typecheck PASS; lint 0 errors / 85 existing warnings; full unit 454 files 5399 passed + 1 skipped; build PASS 253 modules; file-audit 2914 PASS; validate-state PASS; exact npm run test:e2e 114 scheduled with 113 passed \u2014 visual:176 baseline-equivalent Linux SwiftShader golden drift (31 fail/29 pass; band 0.022\u20130.062); enchanting journeys PASS; all raid E2E green (feedback 4 + persistence 4 + bad-omen 2). C285 matrix row exact/VERIFIED. No 285 functional E2E regression and no headed GPU evidence claimed. Change 258 remains BLOCKED; Changes 259-285 are VERIFIED. session_start_head c26350d16b007577fd6d64ae70ab4dae85439ddc; published_head pending push."
+    },
     {
       "change": "284-live-raid-wave-spawning",
       "status": "VERIFIED",
