@@ -15,10 +15,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "0fb15f6b9a1bc3d09aed5ee3d3c9d88ff88803a7",
-  "localHead": "0fb15f6b9a1bc3d09aed5ee3d3c9d88ff88803a7",
-  "publishedHead": "0fb15f6b9a1bc3d09aed5ee3d3c9d88ff88803a7",
-  "nextExactAction": "290 VERIFIED 11/11; next exact action is author a spec-first OpenSpec package for 291 (NOT started this session); candidate topics: (1) minimal villager entities that panic/work during raids; (2) throwable potion entities to replace the witch fallback; (3) pillager outposts/patrols as a Bad Omen source; (4) durable saves on other inventory mutation seams such as trading/brewing/anvil; (5) gift-throwing / reputation beyond HOTV discount. 258 stays BLOCKED",
-  "lastCompletedTask": "T11 VERIFIED 11/11 C290 exact; publish pending",
+  "localHead": "5169bdf4f24ab1dbcb2660c282c34855bc89c72b",
+  "publishedHead": "5169bdf4f24ab1dbcb2660c282c34855bc89c72b",
+  "nextExactAction": "290 VERIFIED 11/11 published at 5169bdf4f24ab1dbcb2660c282c34855bc89c72b (origin/main verified equal); next exact action is author a spec-first OpenSpec package for 291 (NOT started this session); candidate topics: (1) minimal villager entities that panic/work during raids; (2) throwable potion entities to replace the witch fallback; (3) pillager outposts/patrols as a Bad Omen source; (4) durable saves on other inventory mutation seams such as trading/brewing/anvil; (5) gift-throwing / reputation beyond HOTV discount. 258 stays BLOCKED",
+  "lastCompletedTask": "T11 complete: C290 exact/VERIFIED, verification 11/11, published to origin/main at 5169bdf4f24ab1dbcb2660c282c34855bc89c72b; next is author 291 package (not started)",
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-290 are VERIFIED; game shippable with known performance-certification debt. The 290/291 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
