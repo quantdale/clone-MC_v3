@@ -15,10 +15,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "e1ecc819ee27301d13bcf05bf5ae96ece4b685dd",
-  "localHead": "e1ecc819ee27301d13bcf05bf5ae96ece4b685dd",
-  "publishedHead": "e1ecc819ee27301d13bcf05bf5ae96ece4b685dd",
-  "nextExactAction": "289 VERIFIED 12/12 published (SHA pending push); next exact action is author a spec-first OpenSpec package for 290 (highest-value non-GPU playability) \u2014 NOT started this session; candidate topics: (1) Hero of the Village rewards after raid VICTORY; (2) minimal villager entities that panic/work during raids; (3) throwable potion entities to replace the witch fallback; (4) pillager outposts or patrols as a Bad Omen source; (5) inventory component durable-save on other mutation seams beyond enchant (optional hardening). 258 stays BLOCKED",
-  "lastCompletedTask": "289 T12 complete: C289 exact/VERIFIED, verification 12/12; publishing to origin/main",
+  "localHead": "51af34574c17e05c1cb4dd82ca70cc578e9e4467",
+  "publishedHead": "51af34574c17e05c1cb4dd82ca70cc578e9e4467",
+  "nextExactAction": "289 VERIFIED 12/12 published at 51af34574c17e05c1cb4dd82ca70cc578e9e4467 (origin/main verified equal); next exact action is author a spec-first OpenSpec package for 290 (highest-value non-GPU playability) \u2014 NOT started this session; candidate topics: (1) Hero of the Village rewards after raid VICTORY; (2) minimal villager entities that panic/work during raids; (3) throwable potion entities to replace the witch fallback; (4) pillager outposts or patrols as a Bad Omen source; (5) broaden durable player-state save to other inventory mutation seams beyond enchant. 258 stays BLOCKED",
+  "lastCompletedTask": "289 T12 complete: C289 exact/VERIFIED, verification 12/12, published to origin/main at 51af34574c17e05c1cb4dd82ca70cc578e9e4467; next is author 290 package (not started)",
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-286 are VERIFIED; game shippable with known performance-certification debt. The 287 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
@@ -2779,5 +2779,5 @@
     ]
   },
   "criticalRiskOpen": false,
-  "publishedTip": "e1ecc819ee27301d13bcf05bf5ae96ece4b685dd"
+  "publishedTip": "51af34574c17e05c1cb4dd82ca70cc578e9e4467"
 }
