@@ -15,7 +15,7 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "c2539dc30a470e64bbbd306e186fab80c74b485e",
-  "localHead": "63f9de40c34445d5ec1812acb91413fa58a8d38c",
+  "localHead": "17887d1ce602a68b82818b4beb38f3a670ee7f73",
   "publishedHead": "63f9de40c34445d5ec1812acb91413fa58a8d38c",
   "nextExactAction": "284 VERIFIED 12/12 published at 63f9de40c34445d5ec1812acb91413fa58a8d38c (origin/main verified equal); next exact action is T1 control-plane activation of 285-live-bad-omen-acquisition from prepared /workspace/mc-worktrees/285 (branch wt/285-live-bad-omen-acquisition) per CHANGE_SEQUENCE \u2014 NOT started this session; 258 stays BLOCKED",
   "lastCompletedTask": "284 T12 complete: C284 exact/VERIFIED, verification 12/12, published to origin/main at 63f9de40c34445d5ec1812acb91413fa58a8d38c; next is 285 activation (not started)",
