@@ -15,7 +15,7 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "c26350d16b007577fd6d64ae70ab4dae85439ddc",
-  "localHead": "291e94a3aba804dfc1abb1122071ef4ac15aee6f",
+  "localHead": "a917ffccdcfd9eb94cbc98295cf26842ad46a742",
   "publishedHead": "291e94a3aba804dfc1abb1122071ef4ac15aee6f",
   "nextExactAction": "285 VERIFIED 10/10 published at 291e94a3aba804dfc1abb1122071ef4ac15aee6f (origin/main verified equal); next exact action is T1 control-plane activation of 286-live-raid-bar-parity from prepared /workspace/mc-worktrees/286 (branch wt/286-live-raid-bar-parity) per CHANGE_SEQUENCE \u2014 NOT started this session; 258 stays BLOCKED",
   "lastCompletedTask": "285 T10 complete: C285 exact/VERIFIED, verification 10/10, published to origin/main at 291e94a3aba804dfc1abb1122071ef4ac15aee6f; next is 286 activation (not started)",
