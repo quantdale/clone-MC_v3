@@ -300,9 +300,32 @@ test.describe('live enchanting journey (259)', () => {
     await expect(page.locator('#enchanting')).toBeHidden();
     await expect(page.locator('#overlay')).toBeVisible();
 
-    // ── Durable persistence across a real page reload ───────────────────
+    // ── Durable persistence across a real page reload (289) ─────────────
+    // Await a real persist signal rather than a bare sleep: pagehide starts
+    // flush(es); we then explicitly flush and require pendingCount === 0 so
+    // the post-apply inventory components are durable before reload.
     await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide')));
-    await page.waitForTimeout(300);
+    const flushResult = await page.evaluate(async () => {
+      const g = (window as unknown as {
+        __voxelGame?: {
+          persistence?: {
+            flush(): Promise<{ committed: number; failed: number }>;
+            pendingCount: number;
+          };
+        };
+      }).__voxelGame;
+      if (!g?.persistence) return { ok: false as const, pending: -1, committed: -1, failed: -1 };
+      const r = await g.persistence.flush();
+      return {
+        ok: true as const,
+        pending: g.persistence.pendingCount,
+        committed: r.committed,
+        failed: r.failed,
+      };
+    });
+    expect(flushResult.ok).toBe(true);
+    expect(flushResult.pending).toBe(0);
+    expect(flushResult.failed).toBe(0);
     await page.reload();
     await page.waitForSelector('#loading', { state: 'hidden', timeout: 30_000 });
     await selectSlotWithItem(page, PICKAXE_ITEM);

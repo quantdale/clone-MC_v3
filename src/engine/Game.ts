@@ -6099,6 +6099,10 @@ export class Game {
       // still-held stack (same inputs, new level) so the open panel keeps
       // showing live offers instead of dead ones (259).
       this.rebuildEnchantingSession();
+      // 289: enchant apply mutates inventory components + XP/lapis — persist
+      // promptly (death→statistics class) so a fast tab close cannot lose the
+      // enchanted stack while the cost stays spent in a later partial write.
+      this.savePlayerStateDurable();
     }
     return result;
   }

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-24T07:15:31Z",
+  "generatedAt": "2026-09-24T08:13:20Z",
   "reviewedSha": "3d0fd2d5aee39ae1706b7210ad27e675450f521c",
-  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288",
+  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288; +6 rows for 289 enchantment-persistence-reload-integrity package/implementation/tests; DirtySaveQueue.ts/Game.ts/enchanting.spec.ts/DirtySaveQueue.test.ts/InventoryComponentPersistence.test.ts re-reviewed in place for 289",
   "allowedReviewLevels": [
     "semantic",
     "mechanical",
@@ -10,7 +10,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2943,
+  "total": 2949,
   "rows": [
     {
       "path": ".agent/EXECUTION_PROMPT.md",
@@ -31633,11 +31633,12 @@
         "simulation",
         "raid",
         "lifecycle",
-        "combat"
+        "combat",
+        "persistence"
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 284 implementation; no findings \u2014 additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits | 285 ephemeral badOmen + villageQuery + fixed-tick evaluate through 282 start seam; re-reviewed for 288 raider combat wiring",
+      "reviewNotes": "reviewed for 284 implementation; no findings \u2014 additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits | 285 ephemeral badOmen + villageQuery + fixed-tick evaluate through 282 start seam; re-reviewed for 288 raider combat wiring; re-reviewed for 289 concurrent-drain / enchant persist integrity",
       "status": "audited"
     },
     {
@@ -35450,10 +35451,12 @@
       "imports": [],
       "importedBy": [],
       "testEvidence": [],
-      "riskAreas": [],
+      "riskAreas": [
+        "persistence"
+      ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings; re-reviewed for 289 concurrent-drain / enchant persist integrity",
       "status": "audited"
     },
     {
@@ -37378,10 +37381,12 @@
       "imports": [],
       "importedBy": [],
       "testEvidence": [],
-      "riskAreas": [],
+      "riskAreas": [
+        "persistence"
+      ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 259 enchanting panel UI; browser journey place-open-reselect-apply-reload-close plus walk-away/focus lifecycle (R-3 closure); no findings",
+      "reviewNotes": "auto-reviewed for 259 enchanting panel UI; browser journey place-open-reselect-apply-reload-close plus walk-away/focus lifecycle (R-3 closure); no findings; re-reviewed for 289 concurrent-drain / enchant persist integrity",
       "status": "audited"
     },
     {
@@ -39436,10 +39441,12 @@
       "imports": [],
       "importedBy": [],
       "testEvidence": [],
-      "riskAreas": [],
+      "riskAreas": [
+        "persistence"
+      ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings; re-reviewed for 289 concurrent-drain / enchant persist integrity",
       "status": "audited"
     },
     {
@@ -40751,10 +40758,12 @@
       "imports": [],
       "importedBy": [],
       "testEvidence": [],
-      "riskAreas": [],
+      "riskAreas": [
+        "persistence"
+      ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings; re-reviewed for 289 concurrent-drain / enchant persist integrity",
       "status": "audited"
     },
     {
@@ -47652,6 +47661,120 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 288 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/289-enchantment-persistence-reload-integrity/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "289 OpenSpec artifact OVERRIDE_DRAFT.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "inventory"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 289 enchantment-persistence-reload-integrity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/289-enchantment-persistence-reload-integrity/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "289 OpenSpec artifact design.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "inventory"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 289 enchantment-persistence-reload-integrity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/289-enchantment-persistence-reload-integrity/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "289 OpenSpec artifact proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "inventory"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 289 enchantment-persistence-reload-integrity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/289-enchantment-persistence-reload-integrity/specs/enchantment-persistence-reload-integrity/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "289 OpenSpec artifact spec.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "inventory"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 289 enchantment-persistence-reload-integrity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/289-enchantment-persistence-reload-integrity/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "289 OpenSpec artifact tasks.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "inventory"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 289 enchantment-persistence-reload-integrity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/289-enchantment-persistence-reload-integrity/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "289 OpenSpec artifact verification.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "inventory"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 289 enchantment-persistence-reload-integrity; no findings",
       "status": "audited"
     }
   ]

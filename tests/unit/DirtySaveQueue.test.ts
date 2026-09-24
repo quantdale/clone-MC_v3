@@ -250,3 +250,50 @@ describe('RepositorySaveSink integration (in-memory mocks)', () => {
     expect(q.size).toBe(1);
   });
 });
+
+describe('DirtySaveQueue concurrent drain integrity (289)', () => {
+  it('concurrent drains must not leave a superseded payload as last durable write', async () => {
+    const q = new DirtySaveQueue();
+    q.markDirty(unit({ key: 'k', payload: 'v1' }));
+
+    let releaseV1!: () => void;
+    const v1Gate = new Promise<void>((r) => {
+      releaseV1 = r;
+    });
+    let signalV1Started!: () => void;
+    const v1Started = new Promise<void>((r) => {
+      signalV1Started = r;
+    });
+
+    const durable: unknown[] = [];
+    const sink: SaveSink = {
+      async write(u: SaveUnit): Promise<void> {
+        if (u.payload === 'v1') {
+          signalV1Started();
+          await v1Gate;
+        }
+        // Artificial microtask gap so a concurrent drain can finish first.
+        await Promise.resolve();
+        durable.push(u.payload);
+      },
+    };
+
+    const first = q.drain(sink, 10);
+    await v1Started;
+    // Newer snapshot lands while the stale write is in flight.
+    q.markDirty(unit({ key: 'k', payload: 'v2' }));
+    const second = q.drain(sink, 10);
+
+    // Allow the second drain to run (and, without single-flight, finish) before
+    // releasing the stale write — the classic pagehide double-flush race.
+    await new Promise((r) => setTimeout(r, 20));
+    releaseV1();
+    await Promise.all([first, second]);
+    // One more drain in case the newer unit is still pending under single-flight.
+    await q.drain(sink, 10);
+
+    expect(durable.length).toBeGreaterThan(0);
+    expect(durable[durable.length - 1]).toBe('v2');
+    expect(q.size).toBe(0);
+  });
+});

@@ -7,7 +7,11 @@ import {
 import {
   DAMAGE_COMPONENT,
   ENCHANTMENTS_COMPONENT,
+  emptyStackComponents,
+  CAN_DESTROY_COMPONENT,
+  CAN_PLACE_ON_COMPONENT,
 } from '../../src/inventory/StackDataComponents';
+import { POTION_CONTENTS_COMPONENT, createPotionContents } from '../../src/data/PotionItemData';
 import { setStackEnchantments } from '../../src/inventory/EnchantmentApplication';
 import { createDefaultEnchantmentRegistry, type EnchantmentRegistry } from '../../src/inventory/EnchantmentRegistry';
 import { createResourceId } from '../../src/data/ResourceId';
@@ -154,5 +158,58 @@ describe('inventory snapshots preserve stack components', () => {
     expect(restored.restore(tampered, () => true, () => 59)).toBe(true);
     expect(restored.getSlotCount(0)).toBe(0);
     expect(restored.slots[0]?.components).toBeUndefined();
+  });
+});
+
+
+describe('inventory snapshots preserve every default stack component (289)', () => {
+  const registry = createDefaultItemRegistry();
+
+  it('round-trips potion_contents, can_destroy, and can_place_on on hotbar + storage', () => {
+    const potionValue = createPotionContents({
+      kind: 'SPLASH',
+      base: 'minecraft:swiftness',
+      customEffects: [{ typeId: 'minecraft:effect/speed', duration: 20, amplifier: 0 }],
+    });
+    const canDestroy = { 'minecraft:stone': true, 'minecraft:dirt': true };
+    const canPlaceOn = { 'minecraft:grass_block': true };
+
+    const hotbarStack = {
+      id: ItemId.WoodenPickaxe,
+      count: 1,
+      components: emptyStackComponents()
+        .with(POTION_CONTENTS_COMPONENT, potionValue as never)
+        .with(CAN_DESTROY_COMPONENT, canDestroy)
+        .with(CAN_PLACE_ON_COMPONENT, canPlaceOn),
+    };
+    const storageStack = {
+      id: ItemId.WoodenPickaxe,
+      count: 1,
+      components: emptyStackComponents()
+        .with(CAN_DESTROY_COMPONENT, canDestroy)
+        .with(POTION_CONTENTS_COMPONENT, potionValue as never),
+    };
+
+    const source = new Inventory(
+      [ItemId.Grass, ItemId.Grass, ItemId.Grass, ItemId.Grass, ItemId.Grass, ItemId.Grass, ItemId.Grass, ItemId.Grass, ItemId.Grass],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [storageStack],
+      registry,
+    );
+    source.addItem(ItemId.WoodenPickaxe, 1);
+    source.select(0);
+    source.setSelectedStack(hotbarStack);
+
+    const snapshot = source.snapshot();
+    const restored = new Inventory([], [], [], registry);
+    expect(restored.restore(snapshot, (id) => registry.has(id), () => 59)).toBe(true);
+
+    const afterHotbar = restored.getSelectedStack()!;
+    expect(afterHotbar.components?.get(POTION_CONTENTS_COMPONENT)).toEqual(potionValue);
+    expect(afterHotbar.components?.get(CAN_DESTROY_COMPONENT)).toEqual(canDestroy);
+    expect(afterHotbar.components?.get(CAN_PLACE_ON_COMPONENT)).toEqual(canPlaceOn);
+
+    expect(restored.storage[0]?.components?.get(POTION_CONTENTS_COMPONENT)).toEqual(potionValue);
+    expect(restored.storage[0]?.components?.get(CAN_DESTROY_COMPONENT)).toEqual(canDestroy);
   });
 });

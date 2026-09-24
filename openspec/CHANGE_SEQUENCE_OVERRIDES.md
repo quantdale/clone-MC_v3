@@ -1086,3 +1086,44 @@ all raid E2E green including raider-combat 2/2).
 - Changes 259–288 remain VERIFIED and are not reopened.
 - The next sequential slot after published VERIFIED 288 is **289** (spec-first package to
   author; no prepared package exists). It is NOT implemented by the 288 track.
+
+## 289-enchantment-persistence-reload-integrity — activated from published VERIFIED 288 (2026-09-24)
+
+The product/session instruction authorizes activating OpenSpec change
+**289-enchantment-persistence-reload-integrity** as the sole ACTIVE
+implementation change while Change **258** remains **BLOCKED** and Changes
+**259–288** remain **VERIFIED**.
+
+- **Activation dependency (satisfied):** Change **288-raider-combat-behavior** is
+  VERIFIED 11/11 and published; tip base `e1ecc81` (origin/main).
+- **Scope:** root-cause fix for enchantments null after pagehide+reload —
+  DirtySaveQueue concurrent-drain latest-wins, inventory component round-trips,
+  apply-time `savePlayerStateDurable`, e2e real flush signal, before/after
+  repeat-each rates; unit + browser E2E.
+- **Out of scope:** storage-layer redesign; new persistence namespace (unless
+  proven missing); enchanting UI redesign; Change 258 headed FPS/GPU work or
+  status change; Change 290 implementation.
+- Change **258** stays **BLOCKED**; Changes **259–288** stay **VERIFIED** and
+  are not reopened.
+
+### Sequence row (authoritative with CHANGE_SEQUENCE.md)
+
+| 289 | `289-enchantment-persistence-reload-integrity` | Enchantment/component persist+reload integrity: concurrent-drain fix + codec proofs + apply-time save + e2e; no 258 headed work. |
+
+After VERIFIED publication, `nextExactAction` is to author a spec-first
+package for **290** (not started by the 289 track).
+
+## 289-enchantment-persistence-reload-integrity — VERIFIED publication checkpoint (2026-09-24)
+
+Change **289-enchantment-persistence-reload-integrity** is VERIFIED at **12/12 (100%)** with exact C289
+matrix row. Root cause: DirtySaveQueue concurrent-drain clobber on pagehide double-flush;
+fix: drain single-flight mutex + per-key epoch + apply-time `savePlayerStateDurable` + e2e
+real flush await. Before enchanting:227 **3/20 fail**; after **0/20**. Full E2E 120/121
+(visual:176 SwiftShader 31/29 drift baseline-equivalent class vs 288 28/32; enchanting green).
+
+- Session start: `e1ecc819ee27301d13bcf05bf5ae96ece4b685dd`.
+- Change 258 remains BLOCKED at 40/100 (no headed FPS/GPU work, no fake GPU evidence).
+- Changes 259–289 remain VERIFIED and are not reopened.
+- The next sequential slot after published VERIFIED 289 is **290** (spec-first package to
+  author; no prepared package exists). It is NOT implemented by the 289 track.
+

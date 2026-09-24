@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "status": "ACTIVE",
-  "currentChange": "288-raider-combat-behavior",
+  "currentChange": "289-enchantment-persistence-reload-integrity",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "288-raider-combat-behavior",
-  "nextChange": "289",
-  "completedTasks": 11,
-  "totalTasks": 11,
+  "lastCompletedChange": "289-enchantment-persistence-reload-integrity",
+  "nextChange": "290",
+  "completedTasks": 12,
+  "totalTasks": 12,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -14,11 +14,11 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "3b26e2a7c13e920cc1a82019b53b95f2fb70e592",
-  "localHead": "e3ab1918f2257e4a17f969dce4be4c9a22b96642",
-  "publishedHead": "e3ab1918f2257e4a17f969dce4be4c9a22b96642",
-  "nextExactAction": "288 VERIFIED 11/11 published at e3ab1918f2257e4a17f969dce4be4c9a22b96642 (origin/main verified equal); next exact action is author a spec-first OpenSpec package for 289 (highest-value non-GPU playability) \u2014 NOT started this session; 258 stays BLOCKED",
-  "lastCompletedTask": "288 T11 complete: C288 exact/VERIFIED, verification 11/11, published to origin/main at e3ab1918f2257e4a17f969dce4be4c9a22b96642; next is author 289 package (not started)",
+  "sessionStartHead": "e1ecc819ee27301d13bcf05bf5ae96ece4b685dd",
+  "localHead": "e1ecc819ee27301d13bcf05bf5ae96ece4b685dd",
+  "publishedHead": "e1ecc819ee27301d13bcf05bf5ae96ece4b685dd",
+  "nextExactAction": "289 VERIFIED 12/12 published (SHA pending push); next exact action is author a spec-first OpenSpec package for 290 (highest-value non-GPU playability) \u2014 NOT started this session; candidate topics: (1) Hero of the Village rewards after raid VICTORY; (2) minimal villager entities that panic/work during raids; (3) throwable potion entities to replace the witch fallback; (4) pillager outposts or patrols as a Bad Omen source; (5) inventory component durable-save on other mutation seams beyond enchant (optional hardening). 258 stays BLOCKED",
+  "lastCompletedTask": "289 T12 complete: C289 exact/VERIFIED, verification 12/12; publishing to origin/main",
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-286 are VERIFIED; game shippable with known performance-certification debt. The 287 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
@@ -2601,6 +2601,12 @@
       "e2eTests": 65,
       "head": "75d564f6b40cfaffb2733e848777d688fac652fe",
       "note": "92/92 VERIFIED at 75d564f6 \u2014 F257-A..L closed, CI 33600754305 success (gate + e2e) \u2014 published 75d564f6 \u2014 258 activating at 75d564f6"
+    },
+    {
+      "change": "289-enchantment-persistence-reload-integrity",
+      "status": "VERIFIED",
+      "completedTasks": "12/12",
+      "notes": "DirtySaveQueue concurrent-drain fix; enchant persist; before 3/20 after 0/20; e2e 120/121 visual drift documented"
     }
   ],
   "publicationHistory": [
@@ -2773,5 +2779,5 @@
     ]
   },
   "criticalRiskOpen": false,
-  "publishedTip": "4da97fb"
+  "publishedTip": "e1ecc819ee27301d13bcf05bf5ae96ece4b685dd"
 }

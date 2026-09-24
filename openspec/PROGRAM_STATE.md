@@ -1,5 +1,14 @@
 # Program State
 
+## Current checkpoint — 2026-09-24 Change 289-enchantment-persistence-reload-integrity VERIFIED 12/12 (100%); ready to publish; 290 next (author package only)
+
+> **Change `289-enchantment-persistence-reload-integrity` is VERIFIED 12/12 (100%); all baseline gates green (typecheck/lint/unit 5446+1/build/file-audit 2949/validate-state/full E2E 120 passed with visual matrix classified non-blocking; enchanting:227 cured 20/20); last completed Change 289-enchantment-persistence-reload-integrity is VERIFIED; Changes 001–289 are VERIFIED except Change 258 BLOCKED; Changes 259–289 are not reopened.**
+> Session start head: `e1ecc819ee27301d13bcf05bf5ae96ece4b685dd` (origin/main).
+> 289 fixes DirtySaveQueue concurrent-drain clobber (pagehide double-flush) + apply-time player-state durable save so inventory stack components (enchantments and siblings) survive reload; e2e awaits real flush signal. Real players were affected. Before 3/20 fail → after 0/20. No storage redesign, no new namespace, no enchanting UI, no 258 headed work.
+
+- Gates: typecheck PASS; lint 0 errors / 85 warnings; unit 459 files 5446+1; build 257 modules; file-audit 2949; full E2E 120/121 (visual:176 SwiftShader 31/29 drift baseline-equivalent class vs 288 28/32; enchanting:227 green); 258 stays BLOCKED.
+- Next exact action: **Author a spec-first OpenSpec package for the next highest-value non-GPU playability change (290) — do NOT implement 290 in the 289 session; candidates: HOTV rewards after VICTORY; minimal villager entities; throwable potion entities; pillager outposts/patrols as Bad Omen source; 258 stays BLOCKED.**
+
 ## Current checkpoint — 2026-09-24 Change 288-raider-combat-behavior VERIFIED 11/11 (100%); ready to publish; 289 next (author package only)
 
 > **Change `288-raider-combat-behavior` is VERIFIED 11/11 (100%); all baseline gates green (typecheck/lint/unit 5444+1/build/file-audit 2943/validate-state/full E2E 119 passed with visual matrix + enchanting flake classified non-blocking); last completed Change 288-raider-combat-behavior is VERIFIED; Changes 001–288 are VERIFIED except Change 258 BLOCKED; Changes 259–288 are not reopened.**
@@ -225,15 +234,15 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **288-raider-combat-behavior — VERIFIED (11/11); 258 BLOCKED, 259–288 VERIFIED**
+- Active implementation change: **289-enchantment-persistence-reload-integrity — VERIFIED (12/12); 258 BLOCKED, 259–289 VERIFIED**
 - Prior active implementation change: **283-live-raid-persistence — VERIFIED (13/13); 258 stays BLOCKED, 259–283 stay VERIFIED**
 - Prior prior active implementation change: **282-live-raid-feedback — VERIFIED (10/10); 258 stays BLOCKED, 259–282 stay VERIFIED**
-- Next change: **289 — author spec-first package after 288 VERIFIED (NOT started); 258 stays BLOCKED**
+- Next change: **290 — author spec-first package after 289 VERIFIED (NOT started); 258 stays BLOCKED**
 - 240 advancement allowed: **yes**
 
 - Program: **ACTIVE — Change 284-live-raid-wave-spawning VERIFIED 12/12 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–284 VERIFIED**
 - 284 checkpoint: **VERIFIED 12/12 — implementation + gates complete; enchanting flake + visual SwiftShader drift documented non-blocking; 258 BLOCKED; 285 not started**
-- Last completed change: **288-raider-combat-behavior — VERIFIED (11/11) — C288 exact, 258 BLOCKED**
+- Last completed change: **289-enchantment-persistence-reload-integrity — VERIFIED (12/12) — C289 exact, 258 BLOCKED**
 - Prior last completed change: **281-workstation-ui — VERIFIED (12/12); 258 stays BLOCKED, 259–281 stay VERIFIED**
 - Prior prior last completed change: **272-lighting-clock-dt-sync — VERIFIED (10/10) — full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85/file-audit 2792); 271 remains VERIFIED (14/14)
 - All changes 001–257 and 259–284: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed; Change 283 is VERIFIED 13/13; Change 284 is VERIFIED 12/12 (this session).
@@ -244,7 +253,7 @@
 - Publication history: **Change 257 VERIFIED 92/92 at 96b5dc37 (F257-A..L closed, 22 new fault-injection tests, 5× proofs, import tx); Change 256 archived at `ad75b65` as `2026-08-31-256-production-readiness-hardening` (23/23).**
 - Section milestone: **PROGRAM VERIFIED through Change 284; Change 284 is VERIFIED 12/12; Change 258 remains BLOCKED at 40/100 pending headed hardware-WebGL certification; no GPU evidence was fabricated.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ri…
-- Next exact action: **Author a spec-first package for 289 (highest-value non-GPU playability) — NOT started; 258 stays BLOCKED**
+- Next exact action: **Author a spec-first package for 290 (highest-value non-GPU playability) — NOT started; 258 stays BLOCKED**
 - Superseded next action: **T8 confirm 282 feedback is unchanged (projection, pause, dispose hide, no spawning/settlement/258 work); 258 stays BLOCKED**
 - Release note (2026-09-11 owner deferral): **headed FPS gates (258 tasks 91–95) are deferred, not waived — 001–257 VERIFIED, production default unchanged (sync meshing, no quality retune), game shippable with known performance-certification debt**
 
