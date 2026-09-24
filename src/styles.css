@@ -1021,6 +1021,31 @@ body {
 #raid-feedback[data-status='DEFEAT'] #raid-feedback-fill {
   background: #ff7b7b;
 }
+/* Raid bar parity (286): village + omen lines; no required animation. */
+#raid-bar-village.raid-bar-village:empty,
+.raid-bar-village:empty {
+  display: none;
+}
+.raid-bar-village {
+  margin-top: 2px;
+  font-size: 12px;
+  opacity: 0.85;
+}
+.raid-bar-omen {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #c9a0ff;
+}
+.raid-bar-omen[hidden] {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  #raid-feedback,
+  #raid-feedback-fill {
+    transition: none;
+  }
+}
+
 
 @media (max-width: 640px) {
   .hotbar-slot {

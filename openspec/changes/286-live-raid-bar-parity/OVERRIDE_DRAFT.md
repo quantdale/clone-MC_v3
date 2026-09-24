@@ -1,10 +1,10 @@
 # OVERRIDE_DRAFT — Change 286 (do not apply to live file yet)
 
-**Status:** DRAFT ONLY. This file is intentionally stored inside the change
-package so it does **not** fight `openspec/CHANGE_SEQUENCE_OVERRIDES.md` on
-`origin/main` while Change 282 is still finishing. When 282 is VERIFIED and a
-later session is authorized to activate 286, copy the ADDENDUM below into the
-live overrides file as part of that activation's control-plane task (T4).
+**Status:** APPLIED at T1 activation (2026-09-24). Live addendum is in
+`openspec/CHANGE_SEQUENCE_OVERRIDES.md` under
+`## 286-live-raid-bar-parity — activated from published VERIFIED 285`.
+Historical draft text retained below for audit; activation dependency on 282
+was satisfied (282–285 all VERIFIED/published before this activation).
 
 ## ADDENDUM (paste target: `openspec/CHANGE_SEQUENCE_OVERRIDES.md`)
 
@@ -17,10 +17,9 @@ OpenSpec change **286-live-raid-bar-parity** on worktree branch
 the package, and without implementing production `src/` code in the draft
 session.
 
-- **Activation dependency:** Change **286 MUST NOT become ACTIVE** until
-  Change **282-live-raid-feedback is VERIFIED** (and advancement gates allow
-  the next sequential non-GPU change). Until then 286 remains a PLANNED
-  package only.
+- **Activation dependency (satisfied):** Change **286** activated only after
+  Changes **282–285** were VERIFIED and published; 285 tip `291e94a` /
+  synced `1136184`. One-active-change ordering preserved.
 - **Scope when activated:** HUD raid bar parity distinct from the wither
   boss bar — wave progress, optional village/settlement name presentation
   with a fixed fallback (no settlement detection), Bad Omen level
@@ -30,8 +29,8 @@ session.
   spawning; village detection; bad-omen acquisition; raid persistence
   namespace; combat retune; implementing production code during the draft
   session.
-- **Change 258** stays **BLOCKED**; Changes **259–282** (and earlier verified
-  set) stay **VERIFIED** and are not reopened by preparing 286.
+- **Change 258** stays **BLOCKED**; Changes **259–285** stay **VERIFIED** and
+  are not reopened by activating 286.
 - The live `CHANGE_SEQUENCE.md` row for 286 (if/when added at activation) MUST
   match the package name `286-live-raid-bar-parity` and the narrow outcome in
   this package's proposal.

@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "status": "ACTIVE",
-  "currentChange": "285-live-bad-omen-acquisition",
+  "currentChange": "286-live-raid-bar-parity",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "285-live-bad-omen-acquisition",
-  "nextChange": "286-live-raid-bar-parity",
-  "completedTasks": 10,
-  "totalTasks": 10,
+  "lastCompletedChange": "286-live-raid-bar-parity",
+  "nextChange": "287",
+  "completedTasks": 14,
+  "totalTasks": 14,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -14,13 +14,13 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "c26350d16b007577fd6d64ae70ab4dae85439ddc",
-  "localHead": "a917ffccdcfd9eb94cbc98295cf26842ad46a742",
+  "sessionStartHead": "1136184eca77dbc213f367c81bb562db33d55428",
+  "localHead": "1136184eca77dbc213f367c81bb562db33d55428",
   "publishedHead": "291e94a3aba804dfc1abb1122071ef4ac15aee6f",
-  "nextExactAction": "285 VERIFIED 10/10 published at 291e94a3aba804dfc1abb1122071ef4ac15aee6f (origin/main verified equal); next exact action is T1 control-plane activation of 286-live-raid-bar-parity from prepared /workspace/mc-worktrees/286 (branch wt/286-live-raid-bar-parity) per CHANGE_SEQUENCE \u2014 NOT started this session; 258 stays BLOCKED",
-  "lastCompletedTask": "285 T10 complete: C285 exact/VERIFIED, verification 10/10, published to origin/main at 291e94a3aba804dfc1abb1122071ef4ac15aee6f; next is 286 activation (not started)",
+  "nextExactAction": "286 VERIFIED 14/14; next exact action is author a spec-first OpenSpec package for 287 (highest-value non-GPU playability) \u2014 NOT started this session; 258 stays BLOCKED",
+  "lastCompletedTask": "286 T14 complete: C286 exact/VERIFIED 14/14; gates green; visual:176 documented non-blocking; ready to publish",
   "blockers": [
-    "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-285 are VERIFIED; game shippable with known performance-certification debt. The 286 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
+    "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-286 are VERIFIED; game shippable with known performance-certification debt. The 286 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
   "validationResults": [
     {
@@ -2692,9 +2692,9 @@
   ],
   "releaseAuthority": {
     "schemaVersion": 1,
-    "authorityPackage": "openspec/changes/285-live-bad-omen-acquisition",
-    "candidateSha": "291e94a3aba804dfc1abb1122071ef4ac15aee6f",
-    "note": "Change 285 is VERIFIED 10/10 and published at 291e94a: ephemeral Bad Omen + fail-closed village-omen trigger over 282/283/284 seams; gates green with documented non-blocking visual SwiftShader variance; Change 258 remains BLOCKED with no GPU claim."
+    "authorityPackage": "openspec/changes/286-live-raid-bar-parity",
+    "candidateSha": null,
+    "note": "Change 286 is VERIFIED 14/14: projectRaidBar + raid-bar HUD parity over 282\u2013285 seams; gates green; visual SwiftShader drift documented; 258 remains BLOCKED."
   },
   "hardeningInterlock": {
     "role": "historical interlock record (pre-241 era); NOT the current release authority - see releaseAuthority above",

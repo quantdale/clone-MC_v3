@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-22T09:47:53.631Z",
+  "generatedAt": "2026-09-24T05:50:38Z",
   "reviewedSha": "67bb9f512a3985dfc94124d0a434bf3e5c9cd492",
   "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284",
   "allowedReviewLevels": [
@@ -10,7 +10,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2914,
+  "total": 2923,
   "rows": [
     {
       "path": ".agent/EXECUTION_PROMPT.md",
@@ -24804,6 +24804,120 @@
       "status": "audited"
     },
     {
+      "path": "openspec/changes/286-live-raid-bar-parity/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "286 draft override addendum (applied at T1)",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "hud"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 286 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/286-live-raid-bar-parity/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "286 design for live raid bar parity",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "hud"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 286 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/286-live-raid-bar-parity/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "286 proposal for live raid bar parity",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "hud"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 286 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/286-live-raid-bar-parity/specs/live-raid-bar-parity/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "286 normative live-raid-bar-parity capability spec",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "hud"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 286 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/286-live-raid-bar-parity/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "286 task checklist",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "hud"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 286 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/286-live-raid-bar-parity/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "286 verification evidence",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "hud"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 286 implementation; no findings",
+      "status": "audited"
+    },
+    {
       "path": "openspec/changes/add-voxel-game/.openspec.yaml",
       "gitBlob": null,
       "category": "spec",
@@ -35887,6 +36001,26 @@
       "status": "audited"
     },
     {
+      "path": "src/ui/RaidBarParity.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "286 pure projectRaidBar parity projection",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "hud",
+        "ui"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 286 implementation; no findings",
+      "status": "audited"
+    },
+    {
       "path": "src/ui/RaidFeedbackView.ts",
       "gitBlob": null,
       "category": "production",
@@ -37407,6 +37541,25 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/e2e/raid-bar-parity.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "286 browser journeys for raid bar parity",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "hud"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 286 implementation; no findings",
       "status": "audited"
     },
     {
@@ -42068,6 +42221,25 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/RaidBarParity.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "286 unit coverage for projectRaidBar",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "hud"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 286 implementation; no findings",
       "status": "audited"
     },
     {

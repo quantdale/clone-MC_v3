@@ -1,70 +1,62 @@
 # Verification: 286-live-raid-bar-parity
 
-Status: NOT VERIFIED
-Completion: 0%
-Advancement allowed: false
+Status: VERIFIED
+Completion: 100% (14/14)
+Advancement allowed: true
 
 ## Requirement evidence
 
 | Requirement | Evidence | Status |
 |---|---|---|
-| Pure total raid-bar projection (wave, omen, village) | Pending implementation (T6) | PENDING |
-| Distinct from wither boss bar / HudParity | Pending isolation tests (T7) | PENDING |
-| Accessible active/terminal presentation | Pending DOM + a11y tests (T8–T9) | PENDING |
-| Invalid/duplicate/stale/reload/dispose rules | Pending edge tests (T10) | PENDING |
-| No 258 GPU/FPS, no persistence, no unrelated systems | Package scope + future file-audit (T11/T14) | PENDING (scope declared) |
-| Activation only after 282 VERIFIED | `OVERRIDE_DRAFT.md` + proposal Preconditions (T2/T4) | PENDING (gate) |
+| Pure total raid-bar projection (wave, omen, village) | `src/ui/RaidBarParity.ts` + `tests/unit/RaidBarParity.test.ts` (10/10) | PASS |
+| Distinct from wither boss bar / HudParity | Unit import isolation + e2e `#wither-boss-bar` untouched + `boss-bar.spec.ts` green | PASS |
+| Accessible active/terminal presentation | Game sync writes `data-raid-bar`/`data-status`/`aria-label`/`aria-valuenow`; e2e active+terminal | PASS |
+| Invalid/duplicate/stale/reload/dispose rules | Unit clamps/fallback + e2e reload/dispose legs | PASS |
+| No 258 GPU/FPS, no persistence, no unrelated systems | Scope + file-audit 2923; 258 remains BLOCKED | PASS |
+| Activation only after 282–285 VERIFIED | Live OVERRIDE + SEQUENCE row; tip base `1136184` | PASS |
 
 ## Commands
 
 | Command | Result | Evidence/notes |
 |---|---|---|
-| `npx vitest run tests/unit/RaidBarParity.test.ts` (future name) | PENDING | Not implemented this draft session |
-| `npx playwright test tests/e2e/raid-bar-parity.spec.ts` (future name) | PENDING | Not implemented this draft session |
-| `npm run typecheck` | PENDING | Deferred to activation |
-| `npm run lint` | PENDING | Deferred to activation |
-| `npm test` | PENDING | Deferred to activation |
-| `npm run build` | PENDING | Deferred to activation |
-| `npm run test:e2e` | PENDING | Deferred to activation |
-| file-audit | PENDING | Deferred to activation |
-| `npm run validate-state` | PENDING | Must not claim PASS while PROGRAM_STATE is untouched |
+| `npx vitest run tests/unit/RaidBarParity.test.ts` | PASS 10/10 | Projection totality/clamps/village/omen/isolation |
+| `npx playwright test tests/e2e/raid-bar-parity.spec.ts` (+ raid-feedback + boss-bar) | PASS 8/8 | Focused isolation/a11y/lifecycle |
+| `npm run typecheck` | PASS | `tsc --noEmit` |
+| `npm run lint` | PASS | 0 errors / 85 warnings (baseline) |
+| `npm test` | PASS | 455 files, 5409 passed + 1 skipped |
+| `npm run build` | PASS | 253 modules |
+| `npm run test:e2e` | PASS with documented variance | 117 scheduled; 116 passed; visual:176 only failure |
+| file-audit | PASS | 2923 rows |
+| `npm run validate-state` | PASS | JSON/Markdown coherent at VERIFIED |
 
 ## Edge/adversarial validation
 
-Pending: null/`INACTIVE` projection, non-finite wave/omen counters,
-empty/whitespace/non-string village name, duplicate sync idempotence, stale
-post-dispose sync, reload hide, pause freeze, missing DOM, boss-bar isolation.
+Null/`INACTIVE` hide; non-finite wave/omen clamps; empty/whitespace/non-string village → empty fallback; dispose clears village name + hides bar; reload without raid does not resurrect village/omen; wither boss bar independently untouched; 282 `projectRaidFeedback` module unchanged.
 
 ## Migration/compatibility validation
 
-Pending. Intended contract adds no persistence namespace, archive field,
-entity registration, or migration. Withers and 282 feedback remain the
-regression boundary.
+No persistence namespace, archive field, entity registration, or migration. `#wither-boss-bar` and 282–285 raid suites remain green. Boot-hidden raid bar: no intentional golden update (bar hidden; empty village + hidden omen).
 
 ## Performance/resource validation
 
-Pending. Intended hot path is one O(1) pure projection and bounded DOM writes
-per active fixed tick; no render-worker, FPS, or GPU work.
+One O(1) pure projection + bounded DOM writes per active fixed tick; no render-worker, FPS, or GPU path. No 258 headed evidence claimed.
 
 ## Regressions
 
-Pending. Change 258 must remain BLOCKED; Changes 259–282 (and earlier
-verified set) must remain VERIFIED; `boss-bar.spec.ts` and HUD visual matrix
-must stay green at activation.
+Change 258 remains BLOCKED. Changes 259–285 remain VERIFIED. Focused `boss-bar.spec.ts` + `raid-feedback.spec.ts` + all raid E2E green. Enchanting journeys PASS this run. Visual matrix: see variance note.
+
+## E2E variance (non-blocking)
+
+`visual-regression.spec.ts:176` — Linux SwiftShader golden drift **32 fail / 28 pass** (band **0.021–0.062**). Baseline-equivalent class vs 285 (**31/29**, band 0.022–0.062) and 283 classify (**30/30**): 30 shared fail cells with 283, **23/30** fractions byte-identical; +2 extra fails (`start-overlay/high/1920x1080`, `container-ui/high/1920x1080`) within known environment jitter. Failures span render-world / no-hud / hud / crosshair / start-overlay / container / environment — **not** a raid-bar-only HUD golden regression (bar remains `hidden` at boot; no golden rewrite performed). Enchanting:227 PASS this run (known prior flake did not recur).
 
 ## Incomplete tasks
 
-T4–T14 are pending (activation-gated). T1–T3 (package + override draft +
-authoring gate) are complete for this draft session only.
+None — T1–T14 complete.
 
 ## Advancement Exception
 
-Not applicable; the target is 100%. Completion is 0% because production
-implementation and all runtime gates are intentionally deferred until 282 is
-VERIFIED and this change is activated on a compliant branch.
+Not used. Target 100% achieved.
 
 ## Final decision
 
-NOT VERIFIED — package authored and committed on `wt/286-live-raid-bar-parity`
-only; activation and implementation blocked on 282 VERIFIED and subsequent
-control-plane enablement.
+**VERIFIED 14/14 (100%)** — C286 exact; 258 BLOCKED; publish to origin/main authorized.

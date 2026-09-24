@@ -335,7 +335,7 @@ import {
   type OmenTriggerDecision,
   type VillageContext,
 } from '../simulation/BadOmenRules';
-import { projectRaidFeedback } from '../ui/RaidFeedbackView';
+import { projectRaidBar } from '../ui/RaidBarParity';
 
 /** Maximum eye-to-furnace distance before an open furnace screen auto-closes (251). */
 const FURNACE_MAX_USE_DISTANCE = 8;
@@ -599,6 +599,8 @@ export class Game {
   private readonly raidWaveController: RaidWaveController;
   /** HUD raid feedback bar (282, null until the shell binds it). */
   private raidFeedbackEl: HTMLElement | null = null;
+  /** Optional presentation-only village name for 286 raid bar (never invents). */
+  private raidBarVillageName: string | undefined = undefined;
   /** Ephemeral Bad Omen level (285): never persisted; integer 0..5. */
   private badOmen: BadOmenState = createBadOmen();
   /** Injected village presence query (285); default always null. */
@@ -1745,6 +1747,7 @@ export class Game {
     this.raidWaveController.clear('dispose');
     this.badOmen = createBadOmen();
     this.villageQuery = () => null;
+    this.raidBarVillageName = undefined;
     this.syncRaidFeedbackHud();
     this.dismissDeathScreen();
     // Settle the furnace session first so its cursor/xp land in the state that
@@ -5527,20 +5530,57 @@ export class Game {
     return this.raidWaveController.getLastRaidWaveApplyResult();
   }
 
-  /** Sync the single #raid-feedback bar from the pure projection (282, null-safe). */
+  /** Sync the single #raid-feedback bar from the 286 raid-bar parity projection (null-safe). */
   private syncRaidFeedbackHud(): void {
     const el = this.raidFeedbackEl;
     if (!el) return;
-    const view = projectRaidFeedback(this.raidState);
+    const view = projectRaidBar(
+      this.raidState,
+      this.raidBarVillageName !== undefined
+        ? { villageName: this.raidBarVillageName }
+        : undefined,
+    );
     el.classList.toggle('hidden', !view.visible);
+    el.setAttribute('data-raid-bar', 'true');
     el.setAttribute('data-status', view.status);
     el.setAttribute('aria-label', view.ariaLabel);
     const title = el.querySelector('#raid-feedback-title');
     const detail = el.querySelector('#raid-feedback-detail');
+    const village = el.querySelector('#raid-bar-village');
+    const omen = el.querySelector('#raid-bar-omen') as HTMLElement | null;
     const fill = el.querySelector('#raid-feedback-fill') as HTMLElement | null;
     if (title) title.textContent = view.title;
     if (detail) detail.textContent = view.detail;
-    if (fill) fill.style.width = `${Math.round(view.progress * 100)}%`;
+    if (village) village.textContent = view.villageName;
+    if (omen) {
+      if (view.visible && view.badOmenLevel >= 1) {
+        omen.hidden = false;
+        omen.textContent = `Bad Omen ${view.badOmenLevel}`;
+      } else {
+        omen.hidden = true;
+        omen.textContent = '';
+      }
+    }
+    if (fill) {
+      const pct = Math.round(view.progress * 100);
+      fill.style.width = `${pct}%`;
+      fill.setAttribute('aria-valuenow', String(pct));
+    }
+  }
+
+  /**
+   * Presentation-only village name for the raid bar (286). Empty / null clears
+   * to the documented fallback. Never invents settlement data from coordinates.
+   */
+  setRaidBarVillageName(name: string | null | undefined): void {
+    if (name == null) {
+      this.raidBarVillageName = undefined;
+    } else if (typeof name === 'string') {
+      this.raidBarVillageName = name;
+    } else {
+      this.raidBarVillageName = undefined;
+    }
+    this.syncRaidFeedbackHud();
   }
 
   /** Sync the HUD sleep indicator to the live store (274, null-safe pre-shell). */

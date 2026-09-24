@@ -74,10 +74,12 @@
           <div id="sleep-indicator" class="hud-chip hidden" aria-label="Sleeping in bed" aria-live="polite">🛏 Sleeping</div>
           <div id="weather-indicator" class="hud-chip hidden" aria-label="Weather" aria-live="polite">🌧 Rain</div>
           <div id="shield-indicator" class="hud-chip hidden" aria-label="Shield" aria-live="polite"></div>
-          <div id="raid-feedback" class="hidden" data-status="NONE" aria-live="polite" aria-label="">
+          <div id="raid-feedback" class="hidden" data-raid-bar="true" data-status="NONE" aria-live="polite" aria-label="">
             <div id="raid-feedback-title"></div>
             <div id="raid-feedback-detail"></div>
-            <div class="raid-feedback-track"><div id="raid-feedback-fill"></div></div>
+            <div id="raid-bar-village" class="raid-bar-village"></div>
+            <div id="raid-bar-omen" class="raid-bar-omen" hidden></div>
+            <div class="raid-feedback-track"><div id="raid-feedback-fill" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div></div>
           </div>
           <div id="selected-block-name" class="hud-chip"></div>
         </div>

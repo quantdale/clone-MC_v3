@@ -36,11 +36,12 @@ smuggled into 282 or conflated with Change 276 boss-bar parity.
 
 - Change 152's `RaidStateMachine` remains the sole raid lifecycle authority.
 - Change 282 (`282-live-raid-feedback`) is VERIFIED with Game-owned ephemeral
-  raid state and a single `#raid-feedback` lifecycle (or is at least complete
-  enough that 286's projection can sit on top without re-specifying 282).
+  raid state and a single `#raid-feedback` lifecycle.
+- Changes 283 (`__raid__` persistence), 284 (wave spawning), and 285 (Bad Omen
+  acquisition) are VERIFIED/published; 286 presents `RaidState.badOmenLevel`
+  only and does not reopen those seams.
 - Change 276's wither boss-bar path remains the independent regression boundary.
-- Change 258 remains BLOCKED; Changes 259–282 (and any earlier verified
-  changes) remain VERIFIED.
+- Change 258 remains BLOCKED; Changes 259–285 remain VERIFIED.
 
 ## Dependencies
 

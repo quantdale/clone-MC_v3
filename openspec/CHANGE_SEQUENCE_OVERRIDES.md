@@ -922,3 +922,70 @@ including bad-omen 2/2).
   `286-live-raid-bar-parity` (prepared at `/workspace/mc-worktrees/286`, branch
   `wt/286-live-raid-bar-parity`). It is NOT implemented by the 285 track (owner rule:
   no 286 until 285 published).
+
+
+## 286-live-raid-bar-parity — activated from published VERIFIED 285
+
+Change **286-live-raid-bar-parity** is now the sole ACTIVE implementation
+change. Control-plane activation folded from the package
+`openspec/changes/286-live-raid-bar-parity/OVERRIDE_DRAFT.md` after
+285-live-bad-omen-acquisition reached VERIFIED and was published to `origin/main`
+(`291e94a3aba804dfc1abb1122071ef4ac15aee6f`; local tip synced at
+`1136184eca77dbc213f367c81bb562db33d55428`). Session start head for this
+activation is `1136184eca77dbc213f367c81bb562db33d55428`.
+
+### Dependency and activation (satisfied)
+
+- 282-live-raid-feedback is VERIFIED (10/10); 286 deepens the `#raid-feedback`
+  presentation with a richer pure `projectRaidBar` (282 `projectRaidFeedback`
+  remains byte-stable).
+- 283-live-raid-persistence is VERIFIED (13/13) and published.
+- 284-live-raid-wave-spawning is VERIFIED (12/12) and published.
+- 285-live-bad-omen-acquisition is VERIFIED (10/10) and published; Bad Omen
+  lives on `RaidState.badOmenLevel` and Game ephemeral omen — 286 only presents
+  the clamped level, it does not re-implement acquisition.
+- The one-active-change ordering contract is satisfied. Sole ACTIVE is 286.
+- No prepared next package exists after 286; after VERIFIED publication the
+  nextExactAction is to author a spec-first package for 287 (not started here).
+
+### Scope limits (binding for the 286 track)
+
+- 286 MUST remain limited to: pure `projectRaidBar` (wave progress, clamped
+  omen, optional village name + fixed empty fallback), distinct raid-bar DOM
+  hooks (`data-raid-bar`) additive on the 282 bar, accessibility observables,
+  isolation from `#wither-boss-bar` / `BossFramework` / `HudParity` boss bars,
+  focused unit/browser evidence, and exact state/parity proof.
+- 286 MUST NOT implement settlement/village detection, raider AI/combat retune,
+  new persistence/archive namespace, status-effect registry edit, wither
+  boss-bar redesign, Change 258 headed FPS/GPU work, or any fake GPU evidence.
+  Change 258 MUST NOT be marked VERIFIED by the 286 track.
+- Existing 282 feedback projection contract, 283 persistence, 284 wave
+  spawning, 285 bad-omen acquisition, wither boss bar, smoker/furnace/brewing/
+  shield/trading/death/respawn behavior remain the regression boundary.
+- Changes 259–285 stay VERIFIED and are not reopened.
+
+### Sequence row (recorded in `CHANGE_SEQUENCE.md` at this activation)
+
+| # | Change | Narrow outcome |
+|---|---|---|
+| 286 | `286-live-raid-bar-parity` | HUD raid bar parity over verified RaidState + 282 `#raid-feedback`: pure `projectRaidBar` with wave progress, optional village/settlement name + fixed fallback (no settlement detection), Bad Omen level from `RaidState.badOmenLevel`, accessibility/`data-*` observables, isolation from `#wither-boss-bar` / HudParity / BossFramework; no raider spawn redesign, no persistence namespace, no 258 headed work. |
+
+The slot after 286 is intentionally unspecified in this activation; 287 requires
+its own spec-first package after 286 is published (no prepared package exists yet).
+
+
+## 286-live-raid-bar-parity — VERIFIED publication checkpoint (2026-09-24)
+
+Change **286-live-raid-bar-parity** is VERIFIED at **14/14 (100%)** with exact C286
+parity and full local gates green: typecheck, lint (0 errors / 85 existing warnings),
+full unit 455 files 5409 passed + 1 skipped, build (253 modules), file-audit 2923 rows,
+validate-state, and exact `npm run test:e2e` (117 scheduled, 116 passed;
+visual:176 proven baseline-equivalent Linux SwiftShader golden drift — 32 fail/28 pass,
+band 0.021–0.062 matching 285’s 31/29 class with +1 fail-cell jitter; enchanting journeys
+PASS; all raid E2E green including raid-bar-parity 3/3).
+
+- Session start: `1136184eca77dbc213f367c81bb562db33d55428`; published_head pending push.
+- Change 258 remains BLOCKED at 40/100 (no headed FPS/GPU work, no fake GPU evidence).
+- Changes 259–286 remain VERIFIED and are not reopened.
+- The next sequential slot after published VERIFIED 286 is **287** (spec-first package to
+  author; no prepared package exists). It is NOT implemented by the 286 track.
