@@ -1,9 +1,9 @@
 # Program State
 
-## Current checkpoint — 2026-09-27 Change 296-periodic-status-effect-ticks VERIFIED 12/12 (100%); ready to publish; 297 next (author package only)
+## Current checkpoint — 2026-09-27 Change 296-periodic-status-effect-ticks VERIFIED 12/12 (100%); published at `998fef9`; 297 next (author package only)
 
 > **Change `296-periodic-status-effect-ticks` is VERIFIED 12/12 (100%)**; all baseline gates green (typecheck/lint/unit 5669+1/build/file-audit 3020/validate-state/full E2E 135 passed with visual matrix classified non-blocking; periodic-status-effects 2/2; enchanting:227 green); last completed Change 296-periodic-status-effect-ticks is VERIFIED; Changes 001–296 are VERIFIED except Change 258 BLOCKED; Changes 259–296 are not reopened.
-> Session start head: `218aabdb65af6a421bd594142d4bb01b1a5f9c12` (origin/main).
+> Session start head: `218aabdb65af6a421bd594142d4bb01b1a5f9c12` (origin/main); published head `998fef9d03868fdd49f98ac8619db3585fd37596` (origin/main verified equal).
 > 296 makes the player's poison (25 >> amp, magic damage, never below 1 HP), regeneration (50 >> amp, capped at max) and wither (40 >> amp, can kill → death screen) effects tick on the vanilla schedule in the unpaused fixed tick; creative/spectator refused; magic damage bypasses armor; the tickWithers global-tick stand-in is retired; persisted effects keep ticking; hunger effect not registered (skipped); no 258 headed work.
 
 - Gates: typecheck PASS; lint 0 errors / 85 warnings; unit 473 files 5669+1; build 265 modules; file-audit 3020; full E2E 135/136 (visual:176 SwiftShader 30 fail/30 pass drift, band 0.0202–0.0619; high/1920x1080 flips vs 295 reproduced as run-order variance in isolated 296 and origin/main reruns; enchanting green).

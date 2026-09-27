@@ -7,6 +7,8 @@ Advancement allowed: true
 Base: `origin/main` `218aabd` (295 VERIFIED). Worktree
 `/workspace/mc-worktrees/296`, branch `wt/296-periodic-status-effect-ticks`.
 Package commit `b606011` precedes all implementation.
+Published by fast-forward (no force) to `origin/main` at `998fef9`
+(feature commit; origin/main verified equal).
 
 ## Requirement evidence
 
