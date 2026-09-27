@@ -137,6 +137,9 @@ default. The Game holds `badOmen: BadOmenState` and replaces it immutably.
 - Starting a new raid while one is already active or terminal replaces state
   atomically via the existing 282 contract; 285 does not special-case prior
   raids beyond calling that path once per successful decision.
+  *Superseded by 294 (`294-bad-omen-raid-escalation-and-death-parity`): an
+  ACTIVE raid within 96 blocks of the triggering village now absorbs the omen
+  (escalation in place); only terminal or far raids are replaced.*
 - Duplicate grants stack up to 5; duplicate clear is a no-op; a decision that
   does not start consumes nothing, so the next tick can retry.
 

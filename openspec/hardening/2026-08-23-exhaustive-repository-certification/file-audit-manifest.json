@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-27T03:25:03Z",
+  "generatedAt": "2026-09-27T04:10:37Z",
   "reviewedSha": "3d0fd2d5aee39ae1706b7210ad27e675450f521c",
-  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288; +6 rows for 289 enchantment-persistence-reload-integrity package/implementation/tests; DirtySaveQueue.ts/Game.ts/enchanting.spec.ts/DirtySaveQueue.test.ts/InventoryComponentPersistence.test.ts re-reviewed in place for 289; +10 rows for 290 hero-of-the-village-reward package/implementation/tests; Game.ts/StatusEffect.ts re-reviewed in place for 290; +10 rows for 291 pillager-patrol-bad-omen package/implementation/tests; Game.ts re-reviewed in place for 291; +10 rows for 292 player-status-effect-persistence package/implementation/tests; Game.ts, PlayerStateRecord.ts, GamePersistence.ts and 5 tests re-reviewed in place for 292; +9 rows for 293 raider-and-patrol-rendering package/implementation/tests; Game.ts re-reviewed in place for 293",
+  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288; +6 rows for 289 enchantment-persistence-reload-integrity package/implementation/tests; DirtySaveQueue.ts/Game.ts/enchanting.spec.ts/DirtySaveQueue.test.ts/InventoryComponentPersistence.test.ts re-reviewed in place for 289; +10 rows for 290 hero-of-the-village-reward package/implementation/tests; Game.ts/StatusEffect.ts re-reviewed in place for 290; +10 rows for 291 pillager-patrol-bad-omen package/implementation/tests; Game.ts re-reviewed in place for 291; +10 rows for 292 player-status-effect-persistence package/implementation/tests; Game.ts, PlayerStateRecord.ts, GamePersistence.ts and 5 tests re-reviewed in place for 292; +9 rows for 293 raider-and-patrol-rendering package/implementation/tests; Game.ts re-reviewed in place for 293; +10 rows for 294 bad-omen-raid-escalation-and-death-parity package/implementation/tests; Game.ts, 2 unit tests and the 285/291/292 design notes re-reviewed in place for 294",
   "allowedReviewLevels": [
     "semantic",
     "mechanical",
@@ -10,7 +10,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2988,
+  "total": 2998,
   "rows": [
     {
       "path": ".agent/EXECUTION_PROMPT.md",
@@ -24719,12 +24719,12 @@
       "importedBy": [],
       "testEvidence": [],
       "riskAreas": [
-        "simulation",
-        "raid"
+        "raid",
+        "simulation"
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 285 implementation; no findings",
+      "reviewNotes": "reviewed for 285 implementation; no findings; 294 superseded annotation (ACTIVE village raid escalates instead of replacement)",
       "status": "audited"
     },
     {
@@ -31644,7 +31644,7 @@
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 284 implementation; no findings \u2014 additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits | 285 ephemeral badOmen + villageQuery + fixed-tick evaluate through 282 start seam; re-reviewed for 288 raider combat wiring; re-reviewed for 289 concurrent-drain / enchant persist integrity; re-reviewed for 290 HOTV grant + emerald trade discount wiring; re-reviewed for 291 pillager patrol tick/captain Bad Omen/raid-start dismissal/seams; re-reviewed for 292 status-effect/Bad Omen persistence (snapshot payload, restore, omen duration tick, durable save points, dispose ordering, seams); re-reviewed for 293 raider renderer wiring (tracked resource, per-frame sync in render from raid/patrol managers, render-state/visibility seams)",
+      "reviewNotes": "reviewed for 284 implementation; no findings \u2014 additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits | 285 ephemeral badOmen + villageQuery + fixed-tick evaluate through 282 start seam; re-reviewed for 288 raider combat wiring; re-reviewed for 289 concurrent-drain / enchant persist integrity; re-reviewed for 290 HOTV grant + emerald trade discount wiring; re-reviewed for 291 pillager patrol tick/captain Bad Omen/raid-start dismissal/seams; re-reviewed for 292 status-effect/Bad Omen persistence (snapshot payload, restore, omen duration tick, durable save points, dispose ordering, seams); re-reviewed for 293 raider renderer wiring (tracked resource, per-frame sync in render from raid/patrol managers, render-state/visibility seams); re-reviewed for 294 omen trigger ESCALATE_RAID branch (in-place escalation, patrol dismissal, one durable save) and Bad Omen clear on death in respawnPlayer",
       "status": "audited"
     },
     {
@@ -41033,12 +41033,12 @@
         "npx vitest run tests/unit/LiveBadOmen.test.ts: PASS"
       ],
       "riskAreas": [
-        "simulation",
-        "raid"
+        "raid",
+        "simulation"
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 285 implementation; no findings",
+      "reviewNotes": "reviewed for 285 implementation; no findings; re-reviewed for 294 mirror now escalates an ACTIVE village raid (was replacement) + finished-raid restart case",
       "status": "audited"
     },
     {
@@ -48016,7 +48016,7 @@
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
+      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings; 294 annotation (escalation also dismisses patrols)",
       "status": "audited"
     },
     {
@@ -48212,7 +48212,7 @@
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
+      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings; 294 resolved annotations (restored omen escalates ACTIVE raid; death clears Bad Omen)",
       "status": "audited"
     },
     {
@@ -48351,7 +48351,7 @@
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
+      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings; re-reviewed for 294 mirror escalation branch, widened trigger signature guard and respawn omen-clear guard",
       "status": "audited"
     },
     {
@@ -48546,6 +48546,200 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/294-bad-omen-raid-escalation-and-death-parity/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "294 OpenSpec artifact OVERRIDE_DRAFT.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/294-bad-omen-raid-escalation-and-death-parity/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "294 OpenSpec artifact design.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/294-bad-omen-raid-escalation-and-death-parity/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "294 OpenSpec artifact proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/294-bad-omen-raid-escalation-and-death-parity/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "294 OpenSpec artifact tasks.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/294-bad-omen-raid-escalation-and-death-parity/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "294 OpenSpec artifact verification.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/294-bad-omen-raid-escalation-and-death-parity/specs/bad-omen-raid-escalation-and-death-parity/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "294 capability spec bad-omen-raid-escalation-and-death-parity",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/RaidEscalation.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "294 pure Bad Omen raid escalation rules: wave table, in-place escalateRaid (cap 5, waves never reduced), 96-block village match, ESCALATE_RAID/START_RAID/NONE action resolver",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/RaidEscalation.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "294 unit tests for wave table, escalation math/cap/no-shrink/unchanged progress, terminal/invalid no-op, village radius, action precedence, escalated victory HOTV",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/LiveRaidEscalation.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "294 composition oracle (escalation + patrol dismissal + one-flush persistence, escalated HOTV, cap consumption, far/finished raid restart, death clears omen durably) + Game source guards",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/e2e/bad-omen-raid-escalation.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "294 browser E2E: omen during an ACTIVE raid escalates in place (same wave, patrol dismissed, bar badge, reload, escalated HOTV III), cap consumption + finished-raid restart, death clears omen across reload",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
       "status": "audited"
     }
   ]

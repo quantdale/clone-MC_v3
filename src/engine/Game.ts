@@ -354,11 +354,10 @@ import {
   clearBadOmen as clearBadOmenState,
   createBadOmen,
   grantBadOmen as grantBadOmenState,
-  resolveVillageRaidTrigger,
   type BadOmenState,
-  type OmenTriggerDecision,
   type VillageContext,
 } from '../simulation/BadOmenRules';
+import { escalateRaid, resolveVillageOmenAction, type VillageOmenAction } from '../simulation/RaidEscalation';
 import {
   parsePlayerEffects,
   refreshBadOmenDuration,
@@ -2487,7 +2486,8 @@ export class Game {
     this.tickRaidFeedback();
     // 5.8 Bad Omen village trigger (285): at most one evaluate per unpaused
     // fixed tick after the raid tick; START_RAID goes through the 282 start
-    // seam then clears omen exactly once.
+    // seam, ESCALATE_RAID (ACTIVE raid in the village, 294) raises that raid
+    // in place; either clears omen exactly once.
     this.evaluateBadOmenVillageTrigger();
     // 5.9 Pillager patrols (291): one patrol tick per unpaused fixed tick after
     // the omen evaluate (cooldown → rate-limited attempt → despawn → combat).
@@ -5601,13 +5601,34 @@ export class Game {
   }
 
   /**
-   * Internal/test seam (285): evaluate omen × village once. On START_RAID,
-   * invoke the 282 start path at the village center then clear omen exactly
-   * once. Failures retain the prior level. Paused/loading/disposed callers
-   * should not invoke this; the fixed-tick body already gates entry.
+   * Internal/test seam (285/294): evaluate omen × village × raid once. With an
+   * ACTIVE raid in the triggering village the raid absorbs the omen in place
+   * (294 ESCALATE_RAID, vanilla); otherwise START_RAID invokes the 282 start
+   * path at the village center. Either way the omen is cleared exactly once
+   * on success; failures retain the prior level. Paused/loading/disposed
+   * callers should not invoke this; the fixed-tick body already gates entry.
    */
-  evaluateBadOmenVillageTrigger(): OmenTriggerDecision {
-    const decision = resolveVillageRaidTrigger(this.badOmen, this.resolveVillageQuery());
+  evaluateBadOmenVillageTrigger(): VillageOmenAction {
+    const decision = resolveVillageOmenAction(this.badOmen, this.resolveVillageQuery(), this.raidState);
+    if (decision.kind === 'ESCALATE_RAID') {
+      if (!this.raidState) return decision;
+      const result = escalateRaid(this.raidState, decision.badOmenLevel);
+      // Fail closed: a non-applied escalation keeps the omen.
+      if (!result.applied) return decision;
+      // 291 rule, same as a raid start: no patrol may coexist with an ACTIVE
+      // raid. The running wave (entities, combat, progress) is untouched.
+      this.pillagerPatrol.clear('raid-start');
+      this.raidState = result.state;
+      this.badOmen = clearBadOmenState(this.badOmen);
+      this.badOmenRemainingSeconds = 0;
+      this.syncRaidFeedbackHud();
+      this.showToast(`The raid grows stronger — Bad Omen ${result.levelAfter}`);
+      // 294: the escalated raid and the consumed omen land in one durable
+      // flush so a reload can neither replay the omen nor lose the escalation.
+      this.saveRaid();
+      this.savePlayerStateDurable();
+      return decision;
+    }
     if (decision.kind !== 'START_RAID') return decision;
     // Fail closed: only clear after a successful start invocation.
     this.startRaidAt(decision.centerX, decision.centerY, decision.centerZ, decision.badOmenLevel);
@@ -5682,7 +5703,9 @@ export class Game {
 
   /**
    * Shared 282 start composition at an explicit center (used by debugStartRaid
-   * and the 285 omen trigger). Replaces any prior active/terminal raid.
+   * and the 285 omen trigger). Replaces any prior active/terminal raid; the
+   * omen trigger only reaches it when no ACTIVE raid is in the village (an
+   * ACTIVE raid there is escalated instead, 294).
    */
   private startRaidAt(x: number, y: number, z: number, badOmenLevel: number): RaidState {
     // 291: a raid start dismisses any live patrol (no omen) so no patrol
@@ -6926,8 +6949,12 @@ export class Game {
     this.updateShieldIndicator();
     this.survival.consumeDeath();
     this.playerEffects.clear();
+    // 294: vanilla clears every effect on death, Bad Omen included (supersedes
+    // the 285 keep-on-death rule).
+    this.badOmen = createBadOmen();
+    this.badOmenRemainingSeconds = 0;
     // 292: effects are persisted — make the death clear durable right away so a
-    // reload cannot resurrect them (Bad Omen is retained on death, per 285).
+    // reload cannot resurrect them (effects and Bad Omen alike).
     this.savePlayerStateDurable();
     // Teleport discontinuity: never blend the camera across the respawn jump.
     this.playerInterpolator.notifyTeleport();

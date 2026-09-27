@@ -1321,3 +1321,19 @@ while Change **258** remains **BLOCKED** and Changes **259–293** remain
 ### Sequence row (authoritative with CHANGE_SEQUENCE.md)
 
 | 294 | `294-bad-omen-raid-escalation-and-death-parity` | Bad Omen escalates an ACTIVE village raid in place (cap 5, waves never reduced, patrols dismissed, one durable save); death clears Bad Omen durably; no 258 headed work. |
+
+
+## 294-bad-omen-raid-escalation-and-death-parity — VERIFIED publication checkpoint (2026-09-27)
+
+Change **294-bad-omen-raid-escalation-and-death-parity** is VERIFIED at **12/12 (100%)** with exact C294
+matrix row. Bad Omen inside a village with an ACTIVE raid escalates that raid in
+place (cap 5, waves never reduced, patrols dismissed, omen consumed with one
+durable save; escalated victory grants HOTV at the escalated level); every death
+clears Bad Omen durably. Full E2E 130/131 (visual:176 SwiftShader 30/30 drift;
+enchanting green).
+
+- Session start: `6d9931e90825e0b32a5af620314ba36d91b00f8e`.
+- Change 258 remains BLOCKED at 40/100 (no headed FPS/GPU work, no fake GPU evidence).
+- Changes 259–294 remain VERIFIED and are not reopened.
+- The next sequential slot after published VERIFIED 294 is **295** (spec-first package to
+  author). It is NOT implemented by the 294 track.

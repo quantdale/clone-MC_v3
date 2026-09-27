@@ -18,7 +18,8 @@ On `origin/main` `e024126` (291 VERIFIED):
   `savePlayerStateDurable()`.
 - `evaluateBadOmenVillageTrigger()` runs each unpaused fixed tick (5.8): omen
   ≥ 1 inside a detected village → `startRaidAt` (replaces any prior raid;
-  291 clears the patrol) → omen cleared.
+  291 clears the patrol) → omen cleared. *(294: an ACTIVE raid in the village
+  is escalated in place instead.)*
 - Player-state persistence (040/289): `buildPlayerSnapshot()` →
   `GamePersistence.savePlayerState()` → `validatePlayerStateRecord()` (which
   rebuilds the object with known fields only) → DirtySaveQueue unit
@@ -187,7 +188,9 @@ All are no-ops without persistence or while recovery-required (existing
 - A restored omen with a restored ACTIVE raid behaves identically to the same
   state before the reload (285 replacement rule unchanged). Vanilla instead
   escalates the running raid's omen level; that divergence is pre-existing and
-  documented as a future candidate, not changed here.
+  documented as a future candidate, not changed here. *Resolved by 294: the
+  restored omen now escalates a restored ACTIVE raid in the village in place,
+  saved durably with the consumed omen.*
 - Patrols are not restored (291), so a restored omen can only come from a
   save; no patrol-derived double grant is possible across reload.
 
@@ -196,7 +199,9 @@ All are no-ops without persistence or while recovery-required (existing
 Respawn keeps its pre-292 semantics: `playerEffects.clear()` (HOTV removed)
 and Bad Omen retained (285). 292 adds a durable save after the clear so a
 reload right after death cannot resurrect cleared effects. Vanilla clears
-Bad Omen on death; documented divergence, unchanged.
+Bad Omen on death; documented divergence, unchanged. *Resolved by 294:
+`respawnPlayer()` now also clears Bad Omen (level + remaining) inside the same
+durable save, so a reload after death shows omen 0.*
 
 ## Failure modes
 

@@ -9,11 +9,10 @@ import {
   clearBadOmen,
   createBadOmen,
   grantBadOmen,
-  resolveVillageRaidTrigger,
   type BadOmenState,
-  type OmenTriggerDecision,
   type VillageContext,
 } from '../../src/simulation/BadOmenRules';
+import { escalateRaid, resolveVillageOmenAction, type VillageOmenAction } from '../../src/simulation/RaidEscalation';
 import {
   heroAmplifierFromBadOmen,
   heroDurationSeconds,
@@ -106,8 +105,20 @@ class Owner {
     this.patrolAlive = false; // 291: raid start dismisses the patrol, grants nothing
     this.raidState = tickRaid(startRaid(v.centerX, v.centerY, v.centerZ, omen)).state;
   }
-  evaluateBadOmenVillageTrigger(): OmenTriggerDecision {
-    const decision = resolveVillageRaidTrigger(this.badOmen, this.village);
+  evaluateBadOmenVillageTrigger(): VillageOmenAction {
+    const decision = resolveVillageOmenAction(this.badOmen, this.village, this.raidState);
+    if (decision.kind === 'ESCALATE_RAID') {
+      // 294: an ACTIVE raid in the village absorbs the omen in place.
+      const r = escalateRaid(this.raidState!, decision.badOmenLevel);
+      if (!r.applied) return decision;
+      this.patrolAlive = false;
+      this.raidState = r.state;
+      this.badOmen = clearBadOmen(this.badOmen);
+      this.badOmenRemaining = 0;
+      this.saveRaid();
+      this.savePlayerStateDurable();
+      return decision;
+    }
     if (decision.kind !== 'START_RAID') return decision;
     this.startRaidAt(this.village!, decision.badOmenLevel);
     this.badOmen = clearBadOmen(this.badOmen);
@@ -327,7 +338,7 @@ describe('Game source guards (292)', () => {
   });
 
   it('omen consumption at raid start is saved with the raid record', () => {
-    inOrder(methodBody('evaluateBadOmenVillageTrigger(): OmenTriggerDecision {'), [
+    inOrder(methodBody('evaluateBadOmenVillageTrigger(): VillageOmenAction {'), [
       'this.startRaidAt(',
       'this.badOmen = clearBadOmenState(this.badOmen);',
       'this.badOmenRemainingSeconds = 0;',
@@ -349,7 +360,13 @@ describe('Game source guards (292)', () => {
     inOrder(methodBody('grantBadOmen(amount?: number): void {'), ['refreshBadOmenDuration(', 'this.savePlayerStateDurable();']);
     expect(methodBody('clearBadOmen(): void {')).toMatch(/if \(changed\) this\.savePlayerStateDurable\(\);/);
     inOrder(methodBody('private tickBadOmenDuration(dt: number): void'), ['tickBadOmen(', 'this.savePlayerStateDurable();']);
-    inOrder(methodBody('private respawnPlayer(): void'), ['this.playerEffects.clear();', 'this.savePlayerStateDurable();']);
+    // 294: death clears Bad Omen too, inside the same durable save.
+    inOrder(methodBody('private respawnPlayer(): void'), [
+      'this.playerEffects.clear();',
+      'this.badOmen = createBadOmen();',
+      'this.badOmenRemainingSeconds = 0;',
+      'this.savePlayerStateDurable();',
+    ]);
     expect(methodBody('debugClearHeroOfTheVillage(): boolean')).toMatch(/if \(removed\) this\.savePlayerStateDurable\(\);/);
   });
 

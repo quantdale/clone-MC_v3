@@ -1,5 +1,14 @@
 # Program State
 
+## Current checkpoint — 2026-09-27 Change 294-bad-omen-raid-escalation-and-death-parity VERIFIED 12/12 (100%); ready to publish; 295 next (author package only)
+
+> **Change `294-bad-omen-raid-escalation-and-death-parity` is VERIFIED 12/12 (100%)**; all baseline gates green (typecheck/lint/unit 5592+1/build/file-audit 2998/validate-state/full E2E 130 passed with visual matrix classified non-blocking; bad-omen-raid-escalation 3/3; enchanting:227 green); last completed Change 294-bad-omen-raid-escalation-and-death-parity is VERIFIED; Changes 001–294 are VERIFIED except Change 258 BLOCKED; Changes 259–294 are not reopened.
+> Session start head: `6d9931e90825e0b32a5af620314ba36d91b00f8e` (origin/main).
+> 294 makes Bad Omen inside a village with an ACTIVE raid escalate that raid in place (cap 5, waves per the 152 table and never reduced, patrols dismissed, omen consumed, one durable save; escalated victory → HOTV at the escalated level) and clears Bad Omen on every death durably; supersedes 285 replace-on-omen and 285/292 omen-kept-on-death; no schema change; no 258 headed work.
+
+- Gates: typecheck PASS; lint 0 errors / 85 warnings; unit 468 files 5592+1; build 262 modules; file-audit 2998; full E2E 130/131 (visual:176 SwiftShader 30/30 drift, band 0.022–0.062; enchanting green).
+- Next exact action: **Author a spec-first OpenSpec package for 295 — do NOT implement 295 in the 294 session; candidates: (1) throwable potion entities to replace the witch fixed-damage fallback; (2) minimal villager entities that panic/flee during raids; (3) raider walk/attack animation with simulation-side yaw updates and smoothed rendering between ticks; (4) concurrent raids per village (the single raid slot still replaces a raid 96+ blocks away); (5) raid celebration/cooldown phase after VICTORY/DEFEAT. 258 stays BLOCKED.**
+
 ## Current checkpoint — 2026-09-27 Change 294-bad-omen-raid-escalation-and-death-parity ACTIVE 2/12 (package authored; implementation next; 258 stays BLOCKED)
 
 > **Change `294-bad-omen-raid-escalation-and-death-parity` is ACTIVE 2/12**; T1–T2 control-plane complete (OpenSpec package + sequence/overrides + sole ACTIVE). Last completed Change 293-raider-and-patrol-rendering is VERIFIED; Changes 001–293 are VERIFIED except Change 258 BLOCKED; Changes 259–293 are not reopened.
@@ -315,15 +324,15 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **294-bad-omen-raid-escalation-and-death-parity — ACTIVE (2/12); 258 BLOCKED, 259–293 VERIFIED**
+- Active implementation change: **294-bad-omen-raid-escalation-and-death-parity — VERIFIED (12/12); 258 BLOCKED, 259–294 VERIFIED**
 - Prior active implementation change: **283-live-raid-persistence — VERIFIED (13/13); 258 stays BLOCKED, 259–283 stay VERIFIED**
 - Prior prior active implementation change: **282-live-raid-feedback — VERIFIED (10/10); 258 stays BLOCKED, 259–282 stay VERIFIED**
-- Next change: **295 — reserved next sequential slot after 294 VERIFIED (NOT started); 258 stays BLOCKED**
-- 240 advancement allowed: **no (active change not yet verified)**
+- Next change: **295 — author spec-first package after 294 VERIFIED (NOT started); 258 stays BLOCKED**
+- 240 advancement allowed: **yes**
 
 - Program: **ACTIVE — Change 284-live-raid-wave-spawning VERIFIED 12/12 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–284 VERIFIED**
 - 284 checkpoint: **VERIFIED 12/12 — implementation + gates complete; enchanting flake + visual SwiftShader drift documented non-blocking; 258 BLOCKED; 285 not started**
-- Last completed change: **293-raider-and-patrol-rendering — VERIFIED (10/10) — C293 exact, 258 BLOCKED**
+- Last completed change: **294-bad-omen-raid-escalation-and-death-parity — VERIFIED (12/12) — C294 exact, 258 BLOCKED**
 - Prior last completed change: **281-workstation-ui — VERIFIED (12/12); 258 stays BLOCKED, 259–281 stay VERIFIED**
 - Prior prior last completed change: **272-lighting-clock-dt-sync — VERIFIED (10/10) — full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85/file-audit 2792); 271 remains VERIFIED (14/14)
 - All changes 001–257 and 259–284: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed; Change 283 is VERIFIED 13/13; Change 284 is VERIFIED 12/12 (this session).
@@ -334,7 +343,7 @@
 - Publication history: **Change 257 VERIFIED 92/92 at 96b5dc37 (F257-A..L closed, 22 new fault-injection tests, 5× proofs, import tx); Change 256 archived at `ad75b65` as `2026-08-31-256-production-readiness-hardening` (23/23).**
 - Section milestone: **PROGRAM VERIFIED through Change 284; Change 284 is VERIFIED 12/12; Change 258 remains BLOCKED at 40/100 pending headed hardware-WebGL certification; no GPU evidence was fabricated.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ri…
-- Next exact action: **Implement 294 T3 RaidEscalation pure rules, then T4–T12 through VERIFIED publication; 258 stays BLOCKED**
+- Next exact action: **Author a spec-first OpenSpec package for 295 (NOT started); candidates: throwable potions; villagers that panic during raids; raider animation/yaw + smoothed rendering; concurrent raids; raid celebration phase; 258 stays BLOCKED**
 - Superseded next action: **T8 confirm 282 feedback is unchanged (projection, pause, dispose hide, no spawning/settlement/258 work); 258 stays BLOCKED**
 - Release note (2026-09-11 owner deferral): **headed FPS gates (258 tasks 91–95) are deferred, not waived — 001–257 VERIFIED, production default unchanged (sync meshing, no quality retune), game shippable with known performance-certification debt**
 

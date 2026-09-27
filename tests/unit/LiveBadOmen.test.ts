@@ -3,11 +3,10 @@ import {
   clearBadOmen,
   createBadOmen,
   grantBadOmen,
-  resolveVillageRaidTrigger,
   type BadOmenState,
-  type OmenTriggerDecision,
   type VillageContext,
 } from '../../src/simulation/BadOmenRules';
+import { escalateRaid, resolveVillageOmenAction, type VillageOmenAction } from '../../src/simulation/RaidEscalation';
 import {
   startRaid,
   tickRaid,
@@ -17,7 +16,8 @@ import {
 /**
  * Wiring oracles for live Bad Omen acquisition (285): exact composition of
  * Game.grantBadOmen / clearBadOmen / evaluateBadOmenVillageTrigger /
- * setVillageQuery over BadOmenRules + the 282 startRaid+tickRaid seam.
+ * setVillageQuery over BadOmenRules + the 282 startRaid+tickRaid seam, with
+ * the 294 escalation of an ACTIVE raid in the village (RaidEscalation).
  * Game is DOM-bound (282/275 precedent), so routing is covered here at the
  * seam and in browser E2E.
  */
@@ -58,11 +58,18 @@ class BadOmenOwner {
     return state;
   }
 
-  evaluateBadOmenVillageTrigger(): OmenTriggerDecision {
+  evaluateBadOmenVillageTrigger(): VillageOmenAction {
     if (this.disposed || this.paused) {
       return { kind: 'NONE', reason: 'NO_OMEN' };
     }
-    const decision = resolveVillageRaidTrigger(this.badOmen, this.villageQuery());
+    const decision = resolveVillageOmenAction(this.badOmen, this.villageQuery(), this.raidState);
+    if (decision.kind === 'ESCALATE_RAID') {
+      const r = escalateRaid(this.raidState!, decision.badOmenLevel);
+      if (!r.applied) return decision; // retain omen (fail closed)
+      this.raidState = r.state;
+      this.badOmen = clearBadOmen(this.badOmen);
+      return decision;
+    }
     if (decision.kind !== 'START_RAID') return decision;
     const started = this.startRaidAt(
       decision.centerX,
@@ -157,16 +164,35 @@ describe('LiveBadOmen wiring (285)', () => {
     expect(g.raidState?.status).toBe('ACTIVE');
   });
 
-  it('active-raid replacement via a new omen trigger uses the 282 start path', () => {
+  it('a new omen trigger during an ACTIVE raid in the village escalates it in place (294, was replacement)', () => {
     const g = new BadOmenOwner();
     g.setVillageQuery(() => fixtureVillage());
     g.grantBadOmen(1);
     g.tick();
     const first = g.raidState!;
+    expect(first.totalWaves).toBe(3);
     g.grantBadOmen(2);
-    g.tick();
+    const decision = g.evaluateBadOmenVillageTrigger();
+    expect(decision.kind).toBe('ESCALATE_RAID');
     expect(g.raidState).not.toBe(first);
+    expect(g.raidState!.badOmenLevel).toBe(3);
+    expect(g.raidState!.totalWaves).toBe(5);
+    // Same raid: progress, remaining raiders and clock carry over.
+    expect(g.raidState!.waveIndex).toBe(first.waveIndex);
+    expect(g.raidState!.raidersRemaining).toBe(first.raidersRemaining);
+    expect(g.raidState!.ticks).toBe(first.ticks);
+    expect(g.getBadOmenLevel()).toBe(0);
+  });
+
+  it('a finished raid is replaced by a fresh START_RAID (285 path unchanged)', () => {
+    const g = new BadOmenOwner();
+    g.setVillageQuery(() => fixtureVillage());
+    g.raidState = { ...tickRaid(startRaid(8, 64, 8, 1)).state, status: 'VICTORY' };
+    g.grantBadOmen(2);
+    expect(g.evaluateBadOmenVillageTrigger().kind).toBe('START_RAID');
+    expect(g.raidState!.status).toBe('ACTIVE');
     expect(g.raidState!.badOmenLevel).toBe(2);
+    expect(g.raidState!.waveIndex).toBe(1);
     expect(g.getBadOmenLevel()).toBe(0);
   });
 

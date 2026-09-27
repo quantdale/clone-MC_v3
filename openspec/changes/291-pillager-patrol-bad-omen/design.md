@@ -9,7 +9,9 @@ On `origin/main` `bc777e1` (290 VERIFIED):
   (cap `BAD_OMEN_MAX_LEVEL = 5`). No gameplay path calls it.
 - The 285 fixed-tick `evaluateBadOmenVillageTrigger` starts a raid (via
   `startRaidAt`, which replaces any prior raid) when omen ≥ 1 and the player is
-  inside a detected village (287 bed-scan, R=12).
+  inside a detected village (287 bed-scan, R=12). *294: an ACTIVE raid in that
+  village is escalated in place instead; the escalation also dismisses the
+  patrol, keeping this change's raid-start rule.*
 - Raid waves spawn through `RaidWaveController` → `RaidEntityBackend`
   (`createEntityManagerRaidBackend`) into `Game.raidEntityManager`; 288
   `RaiderCombatSystem` drives pillager ranged / melee AI; deaths route through
