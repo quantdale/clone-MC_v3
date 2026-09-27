@@ -89,6 +89,8 @@ export const enum ItemId {
   Shield = 71,
   /** Player-placed fast cooking workstation (281). */
   Smoker = 72,
+  /** Creeper/witch drop and splash-brewing ingredient (297). */
+  Gunpowder = 73,
 }
 
 /**
@@ -900,6 +902,16 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       iconTile: 73,
       stackSize: 1,
       maxDurability: 336,
+    },
+    {
+      // Gunpowder (297): dropped by raid witches (vanilla witch table) and
+      // brewed into a potion to make its splash variant. Not placeable.
+      id: ItemId.Gunpowder,
+      resourceId: rid('gunpowder'),
+      key: 'gunpowder',
+      name: 'Gunpowder',
+      iconTile: 75,
+      stackSize: 64,
     },
   ];
   assertDurableItemsDoNotStack(defs);

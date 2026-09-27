@@ -182,7 +182,8 @@ export interface RaiderCombatTickInput {
     sourceZ: number,
     reason: string,
   ) => void;
-  readonly onRaiderDied: (entityId: number) => void;
+  /** Death sink; `death` (297) carries the type key and last position for loot drops. */
+  readonly onRaiderDied: (entityId: number, death: RaiderDeathInfo) => void;
   readonly playerMeleeRequested: boolean;
   /**
    * Witch potion sink (295). Returns whether the throw was accepted (the
@@ -200,6 +201,15 @@ export interface RaiderCombatTickResult {
   readonly raiderDeaths: number;
   readonly projectiles: number;
   readonly potionsThrown: number;
+}
+
+/** What a raider was and where it stood when it died (297, captured before removal). */
+export interface RaiderDeathInfo {
+  /** Entity-type key, e.g. `'witch'`; `''` when the type is unregistered. */
+  readonly typeKey: string;
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
 }
 
 export interface RaiderDamageResult {
@@ -250,14 +260,14 @@ export class RaiderCombatSystem {
   }
 
   /**
-   * Apply damage to a tracked raider. On death: remove entity, clear tracking,
-   * invoke `onDied`. Non-finite/non-positive amounts and missing entities are
-   * no-ops.
+   * Apply damage to a tracked raider. On death: capture {@link RaiderDeathInfo}
+   * (297), remove entity, clear tracking, invoke `onDied`. Non-finite/non-positive
+   * amounts and missing entities are no-ops.
    */
   damageRaider(
     entityId: number,
     amount: number,
-    onDied: (entityId: number) => void,
+    onDied: (entityId: number, death: RaiderDeathInfo) => void,
   ): RaiderDamageResult {
     const entity = this.manager.get(entityId);
     if (!entity || entity.state !== 'ACTIVE') {
@@ -272,10 +282,16 @@ export class RaiderCombatSystem {
     if (!died) {
       return { applied: true, died: false, health };
     }
+    const death: RaiderDeathInfo = {
+      typeKey: def?.key ?? '',
+      x: entity.transform.x,
+      y: entity.transform.y,
+      z: entity.transform.z,
+    };
     this.health.remove(entityId);
     this.bundles.delete(entityId);
     this.manager.remove(entityId);
-    onDied(entityId);
+    onDied(entityId, death);
     return { applied: true, died: true, health: 0 };
   }
 
@@ -475,8 +491,8 @@ export class RaiderCombatSystem {
         }
       }
       if (bestId !== null) {
-        const result = this.damageRaider(bestId, PLAYER_RAID_MELEE_DAMAGE, (id) => {
-          input.onRaiderDied(id);
+        const result = this.damageRaider(bestId, PLAYER_RAID_MELEE_DAMAGE, (id, death) => {
+          input.onRaiderDied(id, death);
           raiderDeaths++;
         });
         if (result.applied) {

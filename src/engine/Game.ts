@@ -320,7 +320,8 @@ import {
   type GameRuleStore,
   type GameRuleValue,
 } from '../simulation/GameRuleFramework';
-import type { LootStack } from '../inventory/LootTable';
+import type { LootStack, RandomSource } from '../inventory/LootTable';
+import { createScriptedRandom, resolveMobGunpowderDrops } from '../simulation/GunpowderMobDrops';
 import { createDefaultBossRegistry } from '../simulation/BossFramework';
 import type { BossDefinition } from '../simulation/BossFramework';
 import { createWither, tickWither, damageWither, serializeWithers, deserializeWithers, witherExplosionWorld, WITHER_SPAWN_EXPLOSION_STRENGTH } from '../simulation/WitherBoss';
@@ -341,6 +342,7 @@ import {
 import {
   RaiderCombatSystem,
   forceRaidDefeat,
+  type RaiderDeathInfo,
   type WitchPotionThrow,
 } from '../simulation/RaiderCombatBehavior';
 import {
@@ -669,6 +671,10 @@ export class Game {
   private witchPotionThrowLog: { ownerId: number; choice: WitchPotionChoice; accepted: boolean }[] = [];
   /** Extra patrol combat ticks advanced by `debugTickPatrols` (291 test seam only). */
   private patrolDebugTickBias = 0;
+  /** Mob drop RNG (297): Math.random unless a test scripts it via `debugSetMobDropRandomSequence`. */
+  private mobDropRandom: RandomSource = Math.random;
+  /** Last resolved mob drop (297 observability/tests). */
+  private lastMobDrops: { typeKey: string; x: number; y: number; z: number; stacks: LootStack[] } | null = null;
   /** HUD raid feedback bar (282, null until the shell binds it). */
   private raidFeedbackEl: HTMLElement | null = null;
   /** Optional presentation-only village name for 286 raid bar (never invents). */
@@ -6178,8 +6184,8 @@ export class Game {
       world: shapeWorld,
       resolver: this.collisionResolver,
       onPlayerDamaged: (amount, sx, sz, reason) => this.hurtPlayer(amount, reason, sx, sz),
-      onRaiderDied: (entityId) => {
-        this.onRaidEntityRemoved(entityId);
+      onRaiderDied: (entityId, death) => {
+        if (this.onRaidEntityRemoved(entityId)) this.dropRaiderLoot(death);
       },
       playerMeleeRequested:
         playerAlive && this.pointerLocked && this.input.isBreakHeld(),
@@ -6303,8 +6309,8 @@ export class Game {
         if (application.damage > 0) this.hurtPlayer(application.damage, 'magic');
         this.hud.setSurvival(this.survival.health, this.survival.hunger);
       } else if (application.damage > 0 && target.kind === 'raid') {
-        this.raiderCombat.damageRaider(target.entityId, application.damage, (id) => {
-          this.onRaidEntityRemoved(id);
+        this.raiderCombat.damageRaider(target.entityId, application.damage, (id, death) => {
+          if (this.onRaidEntityRemoved(id)) this.dropRaiderLoot(death);
         });
       } else if (application.damage > 0 && target.kind === 'patrol') {
         this.pillagerPatrol.damageMember(target.entityId, application.damage, () => this.onPatrolCaptainKilled());
@@ -6317,8 +6323,10 @@ export class Game {
   /**
    * Test-only setup seam (295): put one SPLASH potion (single effect
    * `minecraft:effect/<effectKey>`) into the first empty hotbar slot (else the
-   * last hotbar slot, overwritten) and select it. Stands in for splash
-   * acquisition (no gunpowder / splash brewing exists). Returns the slot or −1.
+   * last hotbar slot, overwritten) and select it. Test-only: survival players
+   * obtain splash potions by brewing a potion with gunpowder (297: raid witches
+   * drop gunpowder); the seam stays for deterministic effect/duration setup and
+   * is never reachable from gameplay. Returns the slot or −1.
    */
   testGrantSplashPotion(effectKey: string, durationSeconds = 45, amplifier = 0): number {
     if (this.disposed || typeof effectKey !== 'string' || effectKey.length === 0) return -1;
@@ -6430,10 +6438,49 @@ export class Game {
    * routes through {@link onRaidEntityRemoved}. Returns whether the entity died.
    */
   debugDamageRaidEntity(entityId: number, amount: number): boolean {
-    const result = this.raiderCombat.damageRaider(entityId, amount, (id) => {
-      this.onRaidEntityRemoved(id);
+    const result = this.raiderCombat.damageRaider(entityId, amount, (id, death) => {
+      if (this.onRaidEntityRemoved(id)) this.dropRaiderLoot(death);
     });
     return result.died;
+  }
+
+  /**
+   * Raider death loot (297): a raid witch drops the vanilla witch table
+   * (gunpowder, redstone, stick; missing items discarded) as real item entities
+   * at its last position. Called once per consumed death from every
+   * `damageRaider` path (melee, splash harming, debug damage). Other raiders
+   * drop nothing (out of scope). Looting does not exist, so level 0.
+   */
+  private dropRaiderLoot(death: RaiderDeathInfo): void {
+    if (death.typeKey !== 'witch') return;
+    const result = resolveMobGunpowderDrops(death.typeKey, this.itemRegistry, this.mobDropRandom, 0);
+    const stacks = result.stacks.map((s) => ({ item: s.item, count: s.count }));
+    this.lastMobDrops = { typeKey: death.typeKey, x: death.x, y: death.y, z: death.z, stacks };
+    if (stacks.length > 0) {
+      this.itemEntities.spawnLootStacks(stacks, death.x, death.y + 0.5, death.z, Math.random);
+    }
+  }
+
+  /**
+   * Test/debug seam (297): script the mob drop RNG with a cycling sequence of
+   * values in [0, 1); `null` restores Math.random. Invalid sequences are
+   * refused (returns false, RNG unchanged).
+   */
+  debugSetMobDropRandomSequence(values: readonly number[] | null): boolean {
+    if (values === null) {
+      this.mobDropRandom = Math.random;
+      return true;
+    }
+    const scripted = createScriptedRandom(values);
+    if (!scripted) return false;
+    this.mobDropRandom = scripted;
+    return true;
+  }
+
+  /** Observability seam (297): the last resolved mob drop, or null. */
+  getLastMobDrops(): { typeKey: string; x: number; y: number; z: number; stacks: { item: number; count: number }[] } | null {
+    if (!this.lastMobDrops) return null;
+    return { ...this.lastMobDrops, stacks: this.lastMobDrops.stacks.map((s) => ({ ...s })) };
   }
 
 

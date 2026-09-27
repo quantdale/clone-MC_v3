@@ -11,13 +11,15 @@
  * State machine (per tick, in order):
  *
  * 1. Read the bottle's 122 `potion_contents` via `readBottleContents` -> `{ base, contents } | null`.
- *    `canBrew` = a valid bottle potion AND an ingredient item AND a non-null `match(base, ingredient)`.
+ *    `canBrew` = a valid bottle potion AND an ingredient item AND a non-null
+ *    `match(base, ingredient, kind)` (297: the bottle kind is passed so gunpowder can gate on NORMAL).
  * 2. Light fuel when not currently burning, a real fuel is present, and `canBrew`: consume one fuel
  *    and set `fuelBurnTime = fuelBurnTimeTotal = fuelBurnTicks(fuel)`.
  * 3. Any active fuel always burns down one tick (even while paused), mirroring furnace fuel behavior
  *    and satisfying the safe-pause requirement.
  * 4. While burning and `canBrew`: advance `brewTime` toward `brewTicks()`; on reaching the total,
- *    apply the recipe into the bottle's `potion_contents`, consume one ingredient, and reset the
+ *    apply the recipe into the bottle's `potion_contents` (297: the bottle kind is preserved unless
+ *    the output sets one), consume one ingredient, and reset the
  *    brew timers. If the recipe cannot produce a valid potion, the brew pauses (no write, no
  *    consumption) so the tick never throws for valid inputs.
  *
@@ -218,8 +220,11 @@ function applyMatch(
 ): PotionContents | null {
   const base = match.base ?? bottleState.base;
   const customEffects = match.customEffects ?? bottleState.contents.customEffects;
+  // 297: the bottle's kind survives every recipe (vanilla: a splash potion brews into a splash
+  // potion); only a kind-changing output (gunpowder -> SPLASH) replaces it.
+  const kind = match.kind ?? bottleState.contents.kind;
   try {
-    return createPotionContents({ base, customEffects });
+    return createPotionContents({ base, kind, customEffects });
   } catch {
     return null;
   }
@@ -254,7 +259,7 @@ function tickOnce(state: BrewingState, ctx: BrewingContext): BrewingState {
   const bottleState = readBottleContents(bottle);
   const ingredientItem = ingredient.item;
   const match =
-    bottleState !== null && ingredientItem !== null ? ctx.match(bottleState.base, ingredientItem) : null;
+    bottleState !== null && ingredientItem !== null ? ctx.match(bottleState.base, ingredientItem, bottleState.contents.kind) : null;
   const canBrew = bottleState !== null && ingredientItem !== null && match !== null;
 
   let fuelBurnTime = state.fuelBurnTime;

@@ -12,7 +12,7 @@
  * what a `(base, ingredient)` pair should become.
  */
 
-import { type PotionEffectData } from '../data/PotionItemData';
+import { type PotionEffectData, type PotionKind } from '../data/PotionItemData';
 
 /** Resource-id string of the blaze-powder fuel item (live-registry shape, 260). */
 export const BLAZE_POWDER_ITEM = 'minecraft:blaze_powder';
@@ -36,6 +36,12 @@ export const SPEED_REAGENT_ITEM = 'minecraft:speed_reagent';
 export const STRENGTH_REAGENT_ITEM = 'minecraft:strength_reagent';
 export const HEALING_REAGENT_ITEM = 'minecraft:healing_reagent';
 
+/**
+ * Gunpowder (297): brewed into any NORMAL potion it yields the SPLASH variant with the same base
+ * and effects (vanilla). It never matches an already SPLASH/LINGERING bottle.
+ */
+export const GUNPOWDER_ITEM = 'minecraft:gunpowder';
+
 /** Blaze-powder burn ticks (vanilla: 20 brews). */
 export const BLAZE_POWDER_BURN_TICKS = 1200;
 
@@ -48,6 +54,8 @@ export interface BrewingRecipeOutput {
   readonly base?: string;
   /** New effect list; replaces the bottle effects on apply. */
   readonly customEffects?: readonly PotionEffectData[];
+  /** New potion kind (297); absent keeps the bottle's kind. */
+  readonly kind?: PotionKind;
 }
 
 /**
@@ -55,8 +63,11 @@ export interface BrewingRecipeOutput {
  * pair; `fuelBurnTicks` reports burn ticks (0 = not a fuel); `brewTicks` reports ticks per cycle.
  */
 export interface BrewingContext {
-  /** The recipe output for a known `(base, ingredient)` pair, or null when unknown. */
-  match(base: string | undefined, ingredient: string): BrewingRecipeOutput | null;
+  /**
+   * The recipe output for a known `(base, ingredient)` pair, or null when unknown. `kind` is the
+   * bottle's current potion kind (297; absent = NORMAL) so kind-changing recipes can gate on it.
+   */
+  match(base: string | undefined, ingredient: string, kind?: PotionKind): BrewingRecipeOutput | null;
   /** Burn ticks the given item provides as fuel; 0 means not a fuel. */
   fuelBurnTicks(item: string): number;
   /** Ticks required to complete one brew cycle. */
@@ -91,13 +102,20 @@ function normalizeBase(base: string | undefined): string {
   return base === undefined ? '' : base;
 }
 
+/** The frozen gunpowder recipe output: kind only, so base/effects are preserved on apply. */
+const SPLASH_OUTPUT: BrewingRecipeOutput = Object.freeze({ kind: 'SPLASH' as const });
+
 /**
  * Build the default 123 `BrewingContext` from the starter recipe table and blaze-powder fuel.
  * The table is fully enumerable and deterministic; unknown `(base, ingredient)` pairs return null.
+ * Gunpowder (297) is checked first and applies to any base: NORMAL -> SPLASH, otherwise no match.
  */
 export function createDefaultBrewingContext(): BrewingContext {
   return {
-    match: (base, ingredient) => {
+    match: (base, ingredient, kind) => {
+      if (ingredient === GUNPOWDER_ITEM) {
+        return (kind ?? 'NORMAL') === 'NORMAL' ? SPLASH_OUTPUT : null;
+      }
       const entries = STARTER_RECIPES.get(normalizeBase(base));
       if (entries === undefined) return null;
       for (const entry of entries) {

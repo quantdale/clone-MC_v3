@@ -43,6 +43,10 @@ Splash potions are Potion items whose `potion_contents` kind is `SPLASH`
 (122 data). No gunpowder item exists (last ItemId `Smoker = 72`), so no
 splash brewing recipe was added; availability is the test/debug seam
 `testGrantSplashPotion(effectKey, seconds, amp)` plus any stored SPLASH stack.
+**Superseded by 297** (`297-gunpowder-and-splash-brewing`): raid witches drop
+gunpowder (vanilla witch table) and brewing a potion with gunpowder yields its
+SPLASH variant, so splash potions are obtainable in survival; the seam stays
+test-only.
 
 ## Commands
 | Command | Result | Evidence/notes |
@@ -95,4 +99,5 @@ Goldens untouched. Change 258 stays BLOCKED.
   harming's `magic` damage now bypasses armor (vanilla).
 - Splash potions are obtainable only via the test/debug seam (no gunpowder,
   no splash brewing, no creative menu); lingering potions not throwable.
+  (Closed by 297: witch gunpowder + splash brewing; lingering still absent.)
 - No shatter particle or sound; in-flight potions are not persisted.

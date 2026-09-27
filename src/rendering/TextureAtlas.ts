@@ -52,6 +52,7 @@ export const TILE_INDEX = {
   blazePowder: 67,
   potionBottle: 68,
   bed: 69,
+  gunpowder: 75,
 } as const;
 
 export function tileUV(tile: number): { u0: number; v0: number; u1: number; v1: number } {
@@ -693,6 +694,24 @@ export class TextureAtlas {
       ctx.fillRect(2, 2, 4, TILE_SIZE - 4);
       ctx.fillStyle = '#f7f3e9';
       ctx.fillRect(3, 3, 2, TILE_SIZE - 6);
+    });
+    // 75: gunpowder (297, original art) — a grey powder mound with dark and
+    // light specks. Painted into a previously unused cell with its own
+    // per-tile PRNG, so no existing tile's pixels change.
+    this.drawTile(TILE_INDEX.gunpowder, (ctx, rng) => {
+      ctx.clearRect(0, 0, TILE_SIZE, TILE_SIZE);
+      ctx.fillStyle = '#5a5a5a';
+      ctx.fillRect(3, 10, 10, 3);
+      ctx.fillStyle = '#6e6e6e';
+      ctx.fillRect(4, 8, 8, 2);
+      ctx.fillStyle = '#808080';
+      ctx.fillRect(6, 6, 4, 2);
+      ctx.fillStyle = '#4a4a4a';
+      ctx.fillRect(2, 13, 12, 1);
+      for (let i = 0; i < 16; i++) {
+        ctx.fillStyle = rng.next() > 0.5 ? '#a8a8a8' : '#2e2e2e';
+        ctx.fillRect(3 + rng.nextInt(10), 6 + rng.nextInt(7), 1, 1);
+      }
     });
   }
 

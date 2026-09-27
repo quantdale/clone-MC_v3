@@ -50,7 +50,9 @@ slowness and weakness chosen by the target's distance, health and effects.
 - Item availability: splash potions are Potion items whose `potion_contents`
   kind is `SPLASH`. No gunpowder item exists, so no splash brewing recipe is
   added; availability is a test/debug seam (`testGrantSplashPotion`) plus
-  any stored SPLASH stack (spec'd).
+  any stored SPLASH stack (spec'd). **Superseded by 297**
+  (`297-gunpowder-and-splash-brewing`): witch gunpowder + splash brewing make
+  splash potions obtainable in survival; the seam stays test-only.
 - Unit tests (trajectory, block/entity hit, radius falloff, instant vs
   duration, witch selection, consume rules, source guards) and browser E2E
   (player throw applies an effect to self; creative keeps the potion; a raid

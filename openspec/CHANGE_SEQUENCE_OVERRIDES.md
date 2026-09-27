@@ -1452,3 +1452,22 @@ while Change **258** remains **BLOCKED** and Changes **259–296** remain
   drops, glass/water bottles, drinkable and lingering potions; Change 258
   headed FPS/GPU work or status change; Change 298.
 - Change **258** stays **BLOCKED**; Changes **259–296** stay **VERIFIED**.
+
+
+## 297-gunpowder-and-splash-brewing — VERIFIED publication checkpoint (2026-09-27)
+
+Change **297-gunpowder-and-splash-brewing** is VERIFIED at **12/12 (100%)** with exact C297
+matrix row. Gunpowder is a real item (id 73, unused atlas tile 75); pure
+vanilla creeper (0–2 + looting) and witch (1–3 weighted rolls, missing items
+discarded) drop tables; live raid witches drop their table as item entities
+exactly once on every death path; brewing a NORMAL potion with gunpowder
+yields its SPLASH variant with base/effects preserved and every other recipe
+keeps the bottle kind (persisted). `testGrantSplashPotion` stays test-only;
+the TNT recipe is deferred (golden-captured crafting panel). Full E2E
+136/137 (visual:176 SwiftShader 30 fail/30 pass drift; enchanting green).
+
+- Session start: `fdba42d738ebf0972ffecb5a6b38cddf3663fd54`.
+- Change 258 remains BLOCKED at 40/100 (no headed FPS/GPU work, no fake GPU evidence).
+- Changes 259–297 remain VERIFIED and are not reopened.
+- The next sequential slot after published VERIFIED 297 is **298** (spec-first package to
+  author). It is NOT implemented by the 297 track.
