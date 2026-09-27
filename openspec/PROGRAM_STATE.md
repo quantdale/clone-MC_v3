@@ -1,9 +1,9 @@
 # Program State
 
-## Current checkpoint — 2026-09-27 Change 293-raider-and-patrol-rendering VERIFIED 10/10 (100%); ready to publish; 294 next (author package only)
+## Current checkpoint — 2026-09-27 Change 293-raider-and-patrol-rendering VERIFIED 10/10 (100%); published at `044ba8a`; 294 next (author package only)
 
 > **Change `293-raider-and-patrol-rendering` is VERIFIED 10/10 (100%)**; all baseline gates green (typecheck/lint/unit 5565+1/build/file-audit 2988/validate-state/full E2E 127 passed with visual matrix classified non-blocking; raider-rendering 1/1; enchanting:227 green); last completed Change 293-raider-and-patrol-rendering is VERIFIED; Changes 001–293 are VERIFIED except Change 258 BLOCKED; Changes 259–293 are not reopened.
-> Session start head: `cef8f32d1fbfdfae3796474b234212012e868a77` (origin/main).
+> Session start head: `cef8f32d1fbfdfae3796474b234212012e868a77` (origin/main); published head `044ba8aca067c37f22565deb7e95167533dc93c2` (origin/main verified equal).
 > 293 draws ACTIVE raid-wave raiders (pillager/vindicator/ravager/witch) and patrol pillagers as box-mesh groups synced every rendered frame from the raid/patrol entity managers: per-kind silhouettes (ravager larger), banner-marked patrol captain, velocity/spawn-yaw facing, removal on death/despawn/patrol clear/raid end/dispose over 14 shared geometries + 12 materials; no shared scene setup changes; no 258 headed work.
 
 - Gates: typecheck PASS; lint 0 errors / 85 warnings; unit 466 files 5565+1; build 261 modules; file-audit 2988; full E2E 127/128 (visual:176 SwiftShader 30/30 drift, same failing cell set as 292; band 0.020–0.062; enchanting green).
