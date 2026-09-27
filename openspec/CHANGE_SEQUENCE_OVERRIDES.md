@@ -1294,3 +1294,30 @@ cell set to 292; enchanting green).
 - Changes 259–293 remain VERIFIED and are not reopened.
 - The next sequential slot after published VERIFIED 293 is **294** (spec-first package to
   author). It is NOT implemented by the 293 track.
+
+
+## 294-bad-omen-raid-escalation-and-death-parity — activated from published VERIFIED 293 (2026-09-27)
+
+The product/session instruction authorizes activating OpenSpec change
+**294-bad-omen-raid-escalation-and-death-parity** as the sole ACTIVE implementation change
+while Change **258** remains **BLOCKED** and Changes **259–293** remain
+**VERIFIED**.
+
+- **Activation dependency (satisfied):** Change
+  **293-raider-and-patrol-rendering** is VERIFIED 10/10 and published;
+  tip base `6d9931e` (origin/main).
+- **Scope:** Bad Omen inside a village with an ACTIVE raid escalates that raid
+  in place (level + player level, cap 5; waves per the 152 table, never
+  reduced), dismisses patrols and consumes the omen with one durable save;
+  death clears Bad Omen durably; legacy tests/docs and C292 PARITY
+  divergence notes updated; unit + browser E2E.
+- **Out of scope:** concurrent raids; Raid Omen (1.20.5+); omen items; wave
+  table/timeout/schema changes; HOTV math; rendering/HUD redesign; Change 258
+  headed FPS/GPU work or status change; Change 295.
+- Change **258** stays **BLOCKED**; Changes **259–293** stay **VERIFIED** and
+  are not reopened (285 replace-on-omen and 285/292 omen-kept-on-death are
+  superseded by 294).
+
+### Sequence row (authoritative with CHANGE_SEQUENCE.md)
+
+| 294 | `294-bad-omen-raid-escalation-and-death-parity` | Bad Omen escalates an ACTIVE village raid in place (cap 5, waves never reduced, patrols dismissed, one durable save); death clears Bad Omen durably; no 258 headed work. |
