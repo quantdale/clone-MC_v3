@@ -1,5 +1,14 @@
 # Program State
 
+## Current checkpoint — 2026-09-27 Change 292-player-status-effect-persistence VERIFIED 11/11 (100%); ready to publish; 293 next (author package only)
+
+> **Change `292-player-status-effect-persistence` is VERIFIED 11/11 (100%)**; all baseline gates green (typecheck/lint/unit 5546+1/build/file-audit 2979/validate-state/full E2E 126 passed with visual matrix classified non-blocking; status-effect-persistence 2/2; enchanting:227 green); last completed Change 292-player-status-effect-persistence is VERIFIED; Changes 001–292 are VERIFIED except Change 258 BLOCKED; Changes 259–292 are not reopened.
+> Session start head: `e024126e49aeb17f38d37bb1d59f840e529e96be` (origin/main).
+> 292 persists active status effects (incl. Hero of the Village amplifier + remaining duration) and Bad Omen (level + new vanilla 6000 s remaining duration) as an optional versioned payload in the existing player-state record through the 289 durable path; durations resume (no reset/farming); pre-292 saves load as no effects; restored omen in a village raids on the next unpaused tick, raid start dismisses patrols and durably consumes omen. No new namespace/HUD/rendering; no 258 headed work.
+
+- Gates: typecheck PASS; lint 0 errors / 85 warnings; unit 465 files 5546+1; build 260 modules; file-audit 2979; full E2E 126/127 (visual:176 SwiftShader 30/30 drift baseline-equivalent class vs 291 30/30; band 0.022–0.062; enchanting green).
+- Next exact action: **Author a spec-first OpenSpec package for 293 — do NOT implement 293 in the 292 session; candidates: (1) render raid-wave raiders and patrol pillagers on screen (box-mesh renderer over raidEntityManager/patrolEntityManager, patrol captain marked) - owner-planned 293; (2) raid-level escalation instead of replacement when Bad Omen triggers during an ACTIVE raid (vanilla); (3) clear Bad Omen on death like vanilla; (4) throwable potion entities to replace the witch fixed-damage fallback; (5) minimal villager entities that panic during raids. 258 stays BLOCKED.**
+
 ## Current checkpoint — 2026-09-27 Change 292-player-status-effect-persistence ACTIVE 2/11 (package authored; implementation next; 258 stays BLOCKED)
 
 > **Change `292-player-status-effect-persistence` is ACTIVE 2/11**; T1–T2 control-plane complete (OpenSpec package + sequence/overrides + sole ACTIVE). Last completed Change 291-pillager-patrol-bad-omen is VERIFIED; Changes 001–291 are VERIFIED except Change 258 BLOCKED; Changes 259–291 are not reopened.
@@ -279,15 +288,15 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **292-player-status-effect-persistence — ACTIVE (2/11); 258 BLOCKED, 259–291 VERIFIED**
+- Active implementation change: **292-player-status-effect-persistence — VERIFIED (11/11); 258 BLOCKED, 259–292 VERIFIED**
 - Prior active implementation change: **283-live-raid-persistence — VERIFIED (13/13); 258 stays BLOCKED, 259–283 stay VERIFIED**
 - Prior prior active implementation change: **282-live-raid-feedback — VERIFIED (10/10); 258 stays BLOCKED, 259–282 stay VERIFIED**
-- Next change: **293 — reserved next sequential slot after 292 VERIFIED (NOT started); 258 stays BLOCKED**
-- 240 advancement allowed: **no (active change not yet verified)**
+- Next change: **293 — author spec-first package after 292 VERIFIED (NOT started); 258 stays BLOCKED**
+- 240 advancement allowed: **yes**
 
 - Program: **ACTIVE — Change 284-live-raid-wave-spawning VERIFIED 12/12 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–284 VERIFIED**
 - 284 checkpoint: **VERIFIED 12/12 — implementation + gates complete; enchanting flake + visual SwiftShader drift documented non-blocking; 258 BLOCKED; 285 not started**
-- Last completed change: **291-pillager-patrol-bad-omen — VERIFIED (11/11) — C291 exact, 258 BLOCKED**
+- Last completed change: **292-player-status-effect-persistence — VERIFIED (11/11) — C292 exact, 258 BLOCKED**
 - Prior last completed change: **281-workstation-ui — VERIFIED (12/12); 258 stays BLOCKED, 259–281 stay VERIFIED**
 - Prior prior last completed change: **272-lighting-clock-dt-sync — VERIFIED (10/10) — full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85/file-audit 2792); 271 remains VERIFIED (14/14)
 - All changes 001–257 and 259–284: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed; Change 283 is VERIFIED 13/13; Change 284 is VERIFIED 12/12 (this session).
@@ -298,7 +307,7 @@
 - Publication history: **Change 257 VERIFIED 92/92 at 96b5dc37 (F257-A..L closed, 22 new fault-injection tests, 5× proofs, import tx); Change 256 archived at `ad75b65` as `2026-08-31-256-production-readiness-hardening` (23/23).**
 - Section milestone: **PROGRAM VERIFIED through Change 284; Change 284 is VERIFIED 12/12; Change 258 remains BLOCKED at 40/100 pending headed hardware-WebGL certification; no GPU evidence was fabricated.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ri…
-- Next exact action: **Implement 292 T3 PlayerEffectsPersistence codec, then T4–T11 through VERIFIED publication; 258 stays BLOCKED**
+- Next exact action: **Author a spec-first OpenSpec package for 293 (NOT started); candidates: render raiders/patrols (owner plan); raid escalation on omen during ACTIVE raid; clear Bad Omen on death; throwable potions; villager entities; 258 stays BLOCKED**
 - Superseded next action: **T8 confirm 282 feedback is unchanged (projection, pause, dispose hide, no spawning/settlement/258 work); 258 stays BLOCKED**
 - Release note (2026-09-11 owner deferral): **headed FPS gates (258 tasks 91–95) are deferred, not waived — 001–257 VERIFIED, production default unchanged (sync meshing, no quality retune), game shippable with known performance-certification debt**
 

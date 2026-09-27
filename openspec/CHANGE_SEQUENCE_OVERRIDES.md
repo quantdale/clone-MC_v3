@@ -1233,3 +1233,20 @@ change while Change **258** remains **BLOCKED** and Changes **259–291** remain
 ### Sequence row (authoritative with CHANGE_SEQUENCE.md)
 
 | 292 | `292-player-status-effect-persistence` | Persist status effects + Bad Omen (level/remaining) via 289 durable path; resume durations; old saves → none; restored omen in village raids next tick; no 258 headed work. |
+
+
+## 292-player-status-effect-persistence — VERIFIED publication checkpoint (2026-09-27)
+
+Change **292-player-status-effect-persistence** is VERIFIED at **11/11 (100%)** with exact C292
+matrix row. Active status effects (incl. Hero of the Village amplifier + remaining duration)
+and Bad Omen (level + new 6000 s remaining duration) persist in the existing player-state
+record via the 289 durable path; durations resume; pre-292 saves load as no effects;
+restored omen in a village raids on the next unpaused tick (raid start dismisses patrols,
+omen consumed durably). Full E2E 126/127 (visual:176 SwiftShader 30/30 drift
+baseline-equivalent class vs 291 30/30; enchanting green).
+
+- Session start: `e024126e49aeb17f38d37bb1d59f840e529e96be`.
+- Change 258 remains BLOCKED at 40/100 (no headed FPS/GPU work, no fake GPU evidence).
+- Changes 259–292 remain VERIFIED and are not reopened.
+- The next sequential slot after published VERIFIED 292 is **293** (spec-first package to
+  author; owner plan: render raiders and patrols). It is NOT implemented by the 292 track.

@@ -150,6 +150,8 @@ export interface GamePlayerSnapshot {
   inventory: unknown;
   survival: unknown;
   experience: unknown;
+  /** Optional status-effect + Bad Omen payload (292); absent on pre-292 saves. */
+  effects?: unknown;
 }
 
 /** Result of {@link GamePersistence.open}. */
@@ -1418,6 +1420,7 @@ export class GamePersistence implements WorldEditDurability {
       inventory: snapshot.inventory,
       survival: snapshot.survival,
       experience: snapshot.experience,
+      effects: snapshot.effects,
     });
     this.coordinator.markDirty({
       key: `player-state|${this.worldIdValue}`,
@@ -1757,7 +1760,7 @@ export class GamePersistence implements WorldEditDurability {
 
 /** Convert a stored `PlayerStateRecord` into the game-level snapshot shape. */
 function playerRecordToSnapshot(record: PlayerStateRecord): GamePlayerSnapshot {
-  return {
+  const snapshot: GamePlayerSnapshot = {
     version: 1,
     seed: record.seed,
     player: { position: record.position, yaw: record.yaw, pitch: record.pitch },
@@ -1765,6 +1768,9 @@ function playerRecordToSnapshot(record: PlayerStateRecord): GamePlayerSnapshot {
     survival: record.survival,
     experience: record.experience,
   };
+  // 292: optional effects payload; absent on pre-292 records (→ no effects on restore).
+  if (record.effects !== undefined) snapshot.effects = record.effects;
+  return snapshot;
 }
 
 function errorMessage(e: unknown): string {

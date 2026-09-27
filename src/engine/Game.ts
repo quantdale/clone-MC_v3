@@ -354,6 +354,13 @@ import {
   type VillageContext,
 } from '../simulation/BadOmenRules';
 import {
+  parsePlayerEffects,
+  refreshBadOmenDuration,
+  serializePlayerEffects,
+  tickBadOmen,
+  type PlayerEffectsRestoreStatus,
+} from '../simulation/PlayerEffectsPersistence';
+import {
   detectVillage,
   shouldResampleVillage,
   type VillageBlockProbe,
@@ -632,8 +639,25 @@ export class Game {
   private raidFeedbackEl: HTMLElement | null = null;
   /** Optional presentation-only village name for 286 raid bar (never invents). */
   private raidBarVillageName: string | undefined = undefined;
-  /** Ephemeral Bad Omen level (285): never persisted; integer 0..5. */
+  /**
+   * Bad Omen level (285; integer 0..5). Persisted with the player state since
+   * 292 together with `badOmenRemainingSeconds`.
+   */
   private badOmen: BadOmenState = createBadOmen();
+  /**
+   * Remaining Bad Omen seconds (292): refreshed to 6000 on a valid grant,
+   * ticked in the unpaused fixed tick, 0 whenever the level is 0.
+   */
+  private badOmenRemainingSeconds = 0;
+  /** Status-effect type registry shared by playerEffects and the 292 restore codec. */
+  private readonly statusEffectRegistry = createDefaultStatusEffectRegistry();
+  /** Outcome of the last 292 effects restore (observability/E2E). */
+  private statusEffectRestoreReport: {
+    status: PlayerEffectsRestoreStatus | 'not-run';
+    dropped: number;
+    effects: number;
+    badOmenLevel: number;
+  } = { status: 'not-run', dropped: 0, effects: 0, badOmenLevel: 0 };
   /**
    * Optional override for village presence (285/287). When null, the live
    * bed-scan detector (287) is the production default.
@@ -1313,7 +1337,7 @@ export class Game {
       this.onSurvivalEvent(event, amount, reason),
     );
     this.playerEffects = new StatusEffectManager(
-      createDefaultStatusEffectRegistry(),
+      this.statusEffectRegistry,
       createDefaultAttributeRegistry(),
     );
     // Experience must exist before persisted player state is applied below —
@@ -1800,7 +1824,8 @@ export class Game {
     this.raidWaveController.clear('dispose');
     this.raiderCombat.clear();
     this.pillagerPatrol.clear('dispose');
-    this.badOmen = createBadOmen();
+    // 292: Bad Omen is persisted with the player state, so its reset happens
+    // after the final savePlayerStateDurable below (never write a zeroed omen).
     this.villageQueryOverride = null;
     this.clearVillageDetectionCache();
     this.raidBarVillageName = undefined;
@@ -1843,6 +1868,9 @@ export class Game {
     this.saveSleep();
     this.saveWeather();
     this.saveTrading();
+    // 292: the final durable snapshot above captured the live omen; now drop it.
+    this.badOmen = createBadOmen();
+    this.badOmenRemainingSeconds = 0;
     this.saveTimer = 0;
     void this.persistenceImpl?.dispose().catch(() => undefined);
     if (this.unsubscribeHealth !== null) {
@@ -2476,6 +2504,8 @@ export class Game {
       this.physics.consumeLandingDistance();
     }
     this.playerEffects.tick(dt);
+    // 292: Bad Omen duration counts down with the other status effects.
+    this.tickBadOmenDuration(dt);
     if (this.input.consumeEat()) {
       this.tryEatSelected();
     }
@@ -5464,19 +5494,70 @@ export class Game {
   }
 
 
-  /** Read-only Bad Omen level for E2E and diagnostics (285; never persisted). */
+  /** Read-only Bad Omen level for E2E and diagnostics (285; persisted since 292). */
   getBadOmenLevel(): number {
     return this.badOmen.level;
   }
 
-  /** Grant Bad Omen toward the cap (285); invalid amounts are no-ops via pure helpers. */
-  grantBadOmen(amount?: number): void {
-    this.badOmen = grantBadOmenState(this.badOmen, amount);
+  /** Remaining Bad Omen seconds (292); 0 whenever the level is 0. */
+  getBadOmenRemainingSeconds(): number {
+    return this.badOmenRemainingSeconds;
   }
 
-  /** Clear Bad Omen to level 0 (285). */
+  /**
+   * Grant Bad Omen toward the cap (285); invalid amounts are no-ops via pure
+   * helpers. A valid grant refreshes the duration to 6000 s (also at the cap,
+   * vanilla re-application) and is written durably (292).
+   */
+  grantBadOmen(amount?: number): void {
+    const add = amount === undefined ? 1 : amount;
+    if (!Number.isFinite(add) || Math.floor(add) < 1) return;
+    this.badOmen = grantBadOmenState(this.badOmen, amount);
+    this.badOmenRemainingSeconds = refreshBadOmenDuration(this.badOmen.level).remainingSeconds;
+    this.savePlayerStateDurable();
+  }
+
+  /** Clear Bad Omen to level 0 (285); written durably when it changed (292). */
   clearBadOmen(): void {
+    const changed = this.badOmen.level !== 0 || this.badOmenRemainingSeconds !== 0;
     this.badOmen = clearBadOmenState(this.badOmen);
+    this.badOmenRemainingSeconds = 0;
+    if (changed) this.savePlayerStateDurable();
+  }
+
+  /**
+   * One fixed-tick omen countdown (292). Expiry clears the level and is saved
+   * durably so a reload cannot resurrect an expired omen.
+   */
+  private tickBadOmenDuration(dt: number): void {
+    if (this.badOmen.level <= 0) return;
+    const next = tickBadOmen({ level: this.badOmen.level, remainingSeconds: this.badOmenRemainingSeconds }, dt);
+    this.badOmenRemainingSeconds = next.remainingSeconds;
+    if (next.level <= 0) {
+      this.badOmen = clearBadOmenState(this.badOmen);
+      this.savePlayerStateDurable();
+    }
+  }
+
+  /**
+   * Test seam (292): advance status effects and Bad Omen by `seconds` exactly
+   * as unpaused fixed ticks would, so E2E can prove duration resume without
+   * waiting minutes. Non-finite/non-positive input is a no-op.
+   */
+  debugTickStatusEffects(seconds: number): void {
+    if (this.disposed || !Number.isFinite(seconds) || seconds <= 0) return;
+    this.playerEffects.tick(seconds);
+    this.tickBadOmenDuration(seconds);
+  }
+
+  /** Outcome of the last status-effect restore (292 observability). */
+  getStatusEffectRestoreReport(): {
+    status: PlayerEffectsRestoreStatus | 'not-run';
+    dropped: number;
+    effects: number;
+    badOmenLevel: number;
+  } {
+    return { ...this.statusEffectRestoreReport };
   }
 
   /**
@@ -5506,6 +5587,11 @@ export class Game {
     // Fail closed: only clear after a successful start invocation.
     this.startRaidAt(decision.centerX, decision.centerY, decision.centerZ, decision.badOmenLevel);
     this.badOmen = clearBadOmenState(this.badOmen);
+    this.badOmenRemainingSeconds = 0;
+    // 292: the consumed omen and the raid it started land in one durable
+    // flush so a reload can never replay the omen (no raid farming).
+    this.saveRaid();
+    this.savePlayerStateDurable();
     return decision;
   }
 
@@ -5761,6 +5847,11 @@ export class Game {
       const levelRoman = ['I', 'II', 'III', 'IV', 'V'][amp] ?? String(amp + 1);
       this.showToast(`Hero of the Village ${levelRoman}! Trading discounts unlocked.`);
       if (this.tradingOpen) this.tradingPanel.render();
+      // 292: persist the VICTORY raid (callers assign raidState = next before
+      // calling) and the new HOTV together so a reload restores both and can
+      // never re-grant from a stale ACTIVE raid record.
+      this.saveRaid();
+      this.savePlayerStateDurable();
     } catch {
       // Registry/boot faults must not break the raid tick path.
     }
@@ -5771,6 +5862,7 @@ export class Game {
     if (this.disposed) return false;
     const removed = this.playerEffects.remove(createResourceId('minecraft', 'effect/hero_of_the_village'));
     if (removed && this.tradingOpen) this.tradingPanel.render();
+    if (removed) this.savePlayerStateDurable(); // 292: removal is durable too
     return removed;
   }
 
@@ -6515,6 +6607,7 @@ export class Game {
     );
     this.survival.restore(state.survival);
     this.experience.restore(state.experience);
+    this.restorePlayerEffects(state.effects);
     // Restored stacks must reach the hotbar visuals immediately when this runs
     // after construction (the async self-composed persistence path); the
     // injected path restores during construction, where the Hotbar is built
@@ -6538,7 +6631,37 @@ export class Game {
       inventory: this.inventory.snapshot(),
       survival: this.survival.snapshot(),
       experience: this.experience.snapshot(),
+      // 292: active status effects (remaining seconds) + Bad Omen level/remaining.
+      effects: serializePlayerEffects(this.playerEffects.serialize(), {
+        level: this.badOmen.level,
+        remainingSeconds: this.badOmenRemainingSeconds,
+      }),
     };
+  }
+
+  /**
+   * Restore persisted status effects + Bad Omen (292). Tolerant: a pre-292
+   * record (no payload) or a malformed payload restores nothing; bad entries
+   * are dropped individually; values clamp to registry/omen bounds. Stored
+   * remaining durations are resumed exactly (never reset to full) and nothing
+   * here grants HOTV — the 290 VICTORY transition stays the only grant path.
+   */
+  private restorePlayerEffects(payload: unknown): void {
+    const parsed = parsePlayerEffects(payload, this.statusEffectRegistry);
+    try {
+      this.playerEffects.deserialize(parsed.effects);
+    } catch {
+      this.playerEffects.clear();
+    }
+    this.badOmen = createBadOmen(parsed.badOmen.level);
+    this.badOmenRemainingSeconds = this.badOmen.level > 0 ? parsed.badOmen.remainingSeconds : 0;
+    this.statusEffectRestoreReport = {
+      status: parsed.status,
+      dropped: parsed.dropped,
+      effects: this.playerEffects.serialize().length,
+      badOmenLevel: this.badOmen.level,
+    };
+    if (this.fullyConstructed && this.tradingOpen) this.tradingPanel.render();
   }
 
   /**
@@ -6749,6 +6872,9 @@ export class Game {
     this.updateShieldIndicator();
     this.survival.consumeDeath();
     this.playerEffects.clear();
+    // 292: effects are persisted — make the death clear durable right away so a
+    // reload cannot resurrect them (Bad Omen is retained on death, per 285).
+    this.savePlayerStateDurable();
     // Teleport discontinuity: never blend the camera across the respawn jump.
     this.playerInterpolator.notifyTeleport();
     this.interaction.clearTarget();

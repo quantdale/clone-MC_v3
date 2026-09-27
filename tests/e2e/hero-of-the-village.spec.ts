@@ -4,7 +4,8 @@ import { test, expect, type Page } from '@playwright/test';
  * Hero of the Village (290): win a raid via debug seams, observe HOTV on
  * playerEffects, see discounted emerald prices in the trading UI, clear the
  * effect to restore catalog prices, and prove reload of VICTORY does not
- * double-grant.
+ * double-grant. Since 292 HOTV persists: reload restores the same amplifier
+ * with a resumed (never refreshed) remaining duration.
  */
 
 type RaidStateView = {
@@ -151,13 +152,16 @@ test.describe('hero of the village (290)', () => {
     await winRaid(page, 2);
     const beforeReload = await page.evaluate(() => {
       const g = (window as unknown as { __voxelGame?: GameHandle }).__voxelGame!;
+      const effects = g.playerEffects.serialize();
       return {
         status: g.getRaidState()?.status,
         amp: g.getHeroOfTheVillageAmplifier(),
+        duration: effects.find((e) => e.typeId.includes('hero_of_the_village'))?.duration ?? -1,
       };
     });
     expect(beforeReload.status).toBe('VICTORY');
     expect(beforeReload.amp).toBe(1); // omen 2 → amp 1
+    expect(beforeReload.duration).toBeGreaterThan(0);
 
     await page.evaluate(async () => {
       const g = (window as unknown as { __voxelGame?: GameHandle }).__voxelGame!;
@@ -182,9 +186,13 @@ test.describe('hero of the village (290)', () => {
         hero: effects.find((e) => e.typeId.includes('hero_of_the_village')),
       };
     });
-    // Raid terminal state may persist; HOTV must not be re-granted on hydrate.
+    // Raid terminal state persists (283); HOTV persists (292) with the same
+    // amplifier and a resumed duration — never re-granted, doubled or refreshed.
     expect(afterReload.status).toBe('VICTORY');
-    expect(afterReload.amp).toBeNull();
-    expect(afterReload.hero).toBeUndefined();
+    expect(afterReload.amp).toBe(1);
+    expect(afterReload.hero).toBeDefined();
+    expect(afterReload.hero!.amplifier).toBe(1);
+    expect(afterReload.hero!.duration).toBeGreaterThan(0);
+    expect(afterReload.hero!.duration).toBeLessThanOrEqual(beforeReload.duration);
   });
 });

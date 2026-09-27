@@ -5,7 +5,7 @@ import { test, expect, type Page } from '@playwright/test';
  * a forced patrol has 2–4 pillagers with exactly one captain and fights the
  * player; only the captain's death grants Bad Omen (+1, cap 5) and never
  * touches raid state; raid wave kills never grant omen; reload clears the
- * transient patrol and the ephemeral (285) Bad Omen.
+ * transient patrol while the captain-granted Bad Omen persists (292).
  */
 
 type Decision = { kind: string; reason?: string; members?: Array<{ captain: boolean }> };
@@ -183,7 +183,7 @@ test.describe('pillager patrol → Bad Omen (291)', () => {
     expect(raid.omen).toBe(0);
   });
 
-  test('reload clears the transient patrol and ephemeral Bad Omen', async ({ page }) => {
+  test('reload clears the transient patrol; captain-granted Bad Omen persists (292)', async ({ page }) => {
     test.setTimeout(300_000);
     await page.goto('/');
     await waitForGame(page);
@@ -215,6 +215,8 @@ test.describe('pillager patrol → Bad Omen (291)', () => {
     });
     expect(after.patrol.memberIds).toEqual([]);
     expect(after.patrol.captainId).toBeNull();
-    expect(after.omen).toBe(0);
+    // 292: Bad Omen is persisted with the player state (fresh world: no
+    // village, so the restored omen does not start a raid).
+    expect(after.omen).toBe(1);
   });
 });

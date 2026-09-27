@@ -538,6 +538,45 @@ describe("GamePersistence", () => {
     await p2.dispose();
   });
 
+  it("292: status-effect payload round-trips through savePlayerState → IndexedDB → initialPlayerState", async () => {
+    const factory = createIdbFactoryMock();
+    const p = makeFacade(factory);
+    await p.open();
+    const effects = {
+      version: 1,
+      effects: [{ typeId: "minecraft:effect/hero_of_the_village", duration: 2299.75, amplifier: 1 }],
+      badOmen: { level: 3, remainingSeconds: 4321.5 },
+    };
+    const snap = makePlayerSnapshot({ effects });
+    p.savePlayerState(snap);
+    const flush = await p.flush();
+    expect(flush.committed).toBe(1);
+
+    const p2 = makeFacade(factory);
+    const result = await p2.open();
+    expect(result.initialPlayerState).toEqual(snap);
+    expect(result.initialPlayerState?.effects).toEqual(effects);
+
+    await p.dispose();
+    await p2.dispose();
+  });
+
+  it("292: a snapshot without effects (pre-292 shape) reloads with no effects key", async () => {
+    const factory = createIdbFactoryMock();
+    const p = makeFacade(factory);
+    await p.open();
+    p.savePlayerState(makePlayerSnapshot());
+    await p.flush();
+
+    const p2 = makeFacade(factory);
+    const result = await p2.open();
+    expect(result.initialPlayerState).not.toBeNull();
+    expect("effects" in (result.initialPlayerState as object)).toBe(false);
+
+    await p.dispose();
+    await p2.dispose();
+  });
+
   it("quota fault injection: failed>0, ok→degraded→failed transitions, units retained, recovery clears", async () => {
     const factory = new FaultIdbFactory();
     const p = makeFacade(factory);

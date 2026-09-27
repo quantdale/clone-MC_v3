@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-27T00:22:19Z",
+  "generatedAt": "2026-09-27T01:08:13Z",
   "reviewedSha": "3d0fd2d5aee39ae1706b7210ad27e675450f521c",
-  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288; +6 rows for 289 enchantment-persistence-reload-integrity package/implementation/tests; DirtySaveQueue.ts/Game.ts/enchanting.spec.ts/DirtySaveQueue.test.ts/InventoryComponentPersistence.test.ts re-reviewed in place for 289; +10 rows for 290 hero-of-the-village-reward package/implementation/tests; Game.ts/StatusEffect.ts re-reviewed in place for 290; +10 rows for 291 pillager-patrol-bad-omen package/implementation/tests; Game.ts re-reviewed in place for 291",
+  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288; +6 rows for 289 enchantment-persistence-reload-integrity package/implementation/tests; DirtySaveQueue.ts/Game.ts/enchanting.spec.ts/DirtySaveQueue.test.ts/InventoryComponentPersistence.test.ts re-reviewed in place for 289; +10 rows for 290 hero-of-the-village-reward package/implementation/tests; Game.ts/StatusEffect.ts re-reviewed in place for 290; +10 rows for 291 pillager-patrol-bad-omen package/implementation/tests; Game.ts re-reviewed in place for 291; +10 rows for 292 player-status-effect-persistence package/implementation/tests; Game.ts, PlayerStateRecord.ts, GamePersistence.ts and 5 tests re-reviewed in place for 292",
   "allowedReviewLevels": [
     "semantic",
     "mechanical",
@@ -10,7 +10,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2969,
+  "total": 2979,
   "rows": [
     {
       "path": ".agent/EXECUTION_PROMPT.md",
@@ -31643,7 +31643,7 @@
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 284 implementation; no findings \u2014 additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits | 285 ephemeral badOmen + villageQuery + fixed-tick evaluate through 282 start seam; re-reviewed for 288 raider combat wiring; re-reviewed for 289 concurrent-drain / enchant persist integrity; re-reviewed for 290 HOTV grant + emerald trade discount wiring; re-reviewed for 291 pillager patrol tick/captain Bad Omen/raid-start dismissal/seams",
+      "reviewNotes": "reviewed for 284 implementation; no findings \u2014 additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits | 285 ephemeral badOmen + villageQuery + fixed-tick evaluate through 282 start seam; re-reviewed for 288 raider combat wiring; re-reviewed for 289 concurrent-drain / enchant persist integrity; re-reviewed for 290 HOTV grant + emerald trade discount wiring; re-reviewed for 291 pillager patrol tick/captain Bad Omen/raid-start dismissal/seams; re-reviewed for 292 status-effect/Bad Omen persistence (snapshot payload, restore, omen duration tick, durable save points, dispose ordering, seams)",
       "status": "audited"
     },
     {
@@ -35531,6 +35531,7 @@
         "tests/unit/GameStartupPersistence.test.ts"
       ],
       "riskAreas": [
+        "compatibility",
         "data-loss",
         "persistence-recovery",
         "write-atomicity"
@@ -35541,7 +35542,7 @@
         "F257-C"
       ],
       "disposition": "resetCurrentWorld rewritten to multi-store IDB readwrite; exportWorldBackup fail-closed; new test coverage in RecoveryBackupF257AtoL.test.ts",
-      "reviewNotes": "257 reopen: 22 new fault-injection tests prove snapshot read failure across 7 store classes aborts before any delete; 6 delete stages fault-injected in multi-store tx; world byte/record-equivalent after abort; foreign world preserved; isResetCompleted stays false; retry succeeds.",
+      "reviewNotes": "257 reopen: 22 new fault-injection tests prove snapshot read failure across 7 store classes aborts before any delete; 6 delete stages fault-injected in multi-store tx; world byte/record-equivalent after abort; foreign world preserved; isResetCompleted stays false; retry succeeds.; re-reviewed for 292 GamePlayerSnapshot.effects passthrough in savePlayerState/playerRecordToSnapshot",
       "status": "audited"
     },
     {
@@ -35570,10 +35571,13 @@
       "imports": [],
       "importedBy": [],
       "testEvidence": [],
-      "riskAreas": [],
+      "riskAreas": [
+        "compatibility",
+        "persistence"
+      ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings; re-reviewed for 292 optional effects passthrough (absent stays absent)",
       "status": "audited"
     },
     {
@@ -37299,12 +37303,13 @@
         "npx playwright test tests/e2e/bad-omen-acquisition.spec.ts"
       ],
       "riskAreas": [
-        "simulation",
-        "raid"
+        "persistence",
+        "raid",
+        "simulation"
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 285 implementation; no findings",
+      "reviewNotes": "reviewed for 285 implementation; no findings; re-reviewed for 292 consumed omen stays 0 across reload",
       "status": "audited"
     },
     {
@@ -40256,7 +40261,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings; re-reviewed for 292 effects payload IndexedDB round trip tests",
       "status": "audited"
     },
     {
@@ -42107,7 +42112,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings; re-reviewed for 292 effects passthrough/absence tests",
       "status": "audited"
     },
     {
@@ -47966,12 +47971,13 @@
       "importedBy": [],
       "testEvidence": [],
       "riskAreas": [
+        "persistence",
         "raid",
         "trading"
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
+      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings; re-reviewed for 292 reload now expects persisted HOTV (same amplifier, resumed duration)",
       "status": "audited"
     },
     {
@@ -48161,12 +48167,210 @@
       "importedBy": [],
       "testEvidence": [],
       "riskAreas": [
+        "persistence",
         "raid",
         "spawning"
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
+      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings; re-reviewed for 292 reload now expects persisted captain Bad Omen",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/292-player-status-effect-persistence/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "292 OpenSpec artifact OVERRIDE_DRAFT.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/292-player-status-effect-persistence/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "292 OpenSpec artifact design.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/292-player-status-effect-persistence/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "292 OpenSpec artifact proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/292-player-status-effect-persistence/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "292 OpenSpec artifact tasks.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/292-player-status-effect-persistence/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "292 OpenSpec artifact verification.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/292-player-status-effect-persistence/specs/player-status-effect-persistence/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "292 capability spec player-status-effect-persistence",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "compatibility",
+        "persistence",
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/PlayerEffectsPersistence.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "292 pure codec for persisted player status effects + Bad Omen level/remaining (tolerant parse, registry clamps, omen duration helpers)",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "compatibility",
+        "persistence",
+        "security",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/PlayerEffectsPersistence.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "292 unit tests for effects codec round trip, resume, caps, backward compat, malformed input, omen duration",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "compatibility",
+        "persistence",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/LiveStatusEffectPersistence.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "292 composition oracle (save/reload, restored omen x 285 trigger x 291 patrol) + Game source guards for durable save points and dispose ordering",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/e2e/status-effect-persistence.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "292 browser E2E: HOTV + Bad Omen survive pagehide/reload with resumed durations; restored omen in village raids, dismisses patrol, stays consumed",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
       "status": "audited"
     }
   ]

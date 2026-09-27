@@ -5,7 +5,8 @@ import { test, expect, type Page } from '@playwright/test';
  *
  * Injects a fixture VillageQuery, grants omen, evaluates the village trigger,
  * observes #raid-feedback active + getBadOmenLevel() === 0, then proves reload
- * restores level 0 with no omen/raid resurrection from 285 (ephemeral).
+ * restores level 0: since 292 omen persists, and its consumption at raid start
+ * is saved durably with the raid, so the consumed omen is never resurrected.
  */
 
 type RaidStateView = {
@@ -114,7 +115,8 @@ test.describe('live bad omen acquisition (285)', () => {
     expect(second.decision).toEqual({ kind: 'NONE', reason: 'NO_OMEN' });
     expect(second.omen).toBe(0);
 
-    // Reload: ephemeral omen must be 0; 285 writes no omen record.
+    // Reload: the consumed omen must stay 0 (292 persists omen; consumption
+    // was written durably together with the raid record).
     await page.reload();
     await waitForGame(page);
     const afterReload = await page.evaluate(() => {

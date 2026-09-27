@@ -166,7 +166,10 @@ raid record.
 
 - **GIVEN** a reload restored omen level 1 and a live patrol was spawned
 - **WHEN** a village query containing the player is installed and one
-  unpaused fixed tick runs
+  unpaused fixed tick runs (while paused nothing is consumed; the headless E2E
+  sits on the pause overlay, so it invokes the tick's exact 5.8 step
+  `evaluateBadOmenVillageTrigger()` directly — the unit oracle covers the tick
+  composition)
 - **THEN** a raid is ACTIVE with omen level 1, the patrol has 0 members, omen
   is 0
 - **AND** after another pagehide + reload omen is still 0 and the raid is

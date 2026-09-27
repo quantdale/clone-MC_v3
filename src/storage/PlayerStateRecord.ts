@@ -25,6 +25,11 @@ export interface PlayerStateRecord {
   survival: unknown;
   /** Opaque experience snapshot payload (restored/validated by the game). */
   experience: unknown;
+  /**
+   * Optional opaque status-effect + Bad Omen payload (292; parsed tolerantly by the game via
+   * `parsePlayerEffects`). Absent on pre-292 records, which load as "no effects".
+   */
+  effects?: unknown;
 }
 
 function isFiniteNumber(v: unknown): v is number {
@@ -74,7 +79,7 @@ export function validatePlayerStateRecord(input: unknown): PlayerStateRecord {
     throw new Error('PlayerStateRecord: experience must be present');
   }
 
-  return {
+  const record: PlayerStateRecord = {
     key: typeof r.key === 'string' && r.key.length > 0 ? (r.key as string) : (r.worldId as string),
     worldId: r.worldId as string,
     seed: r.seed as number,
@@ -85,4 +90,8 @@ export function validatePlayerStateRecord(input: unknown): PlayerStateRecord {
     survival: r.survival,
     experience: r.experience,
   };
+  // 292: pass the optional effects payload through untouched; absent stays absent so pre-292
+  // records (and equality checks over them) are unaffected.
+  if (r.effects !== undefined) record.effects = r.effects;
+  return record;
 }
