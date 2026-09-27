@@ -1,9 +1,9 @@
 # Program State
 
-## Current checkpoint — 2026-09-27 Change 292-player-status-effect-persistence VERIFIED 11/11 (100%); ready to publish; 293 next (author package only)
+## Current checkpoint — 2026-09-27 Change 292-player-status-effect-persistence VERIFIED 11/11 (100%); published at `1482226`; 293 next (author package only)
 
 > **Change `292-player-status-effect-persistence` is VERIFIED 11/11 (100%)**; all baseline gates green (typecheck/lint/unit 5546+1/build/file-audit 2979/validate-state/full E2E 126 passed with visual matrix classified non-blocking; status-effect-persistence 2/2; enchanting:227 green); last completed Change 292-player-status-effect-persistence is VERIFIED; Changes 001–292 are VERIFIED except Change 258 BLOCKED; Changes 259–292 are not reopened.
-> Session start head: `e024126e49aeb17f38d37bb1d59f840e529e96be` (origin/main).
+> Session start head: `e024126e49aeb17f38d37bb1d59f840e529e96be` (origin/main); published head `148222646e547a7a6c241c3041525ce12475780f` (origin/main verified equal).
 > 292 persists active status effects (incl. Hero of the Village amplifier + remaining duration) and Bad Omen (level + new vanilla 6000 s remaining duration) as an optional versioned payload in the existing player-state record through the 289 durable path; durations resume (no reset/farming); pre-292 saves load as no effects; restored omen in a village raids on the next unpaused tick, raid start dismisses patrols and durably consumes omen. No new namespace/HUD/rendering; no 258 headed work.
 
 - Gates: typecheck PASS; lint 0 errors / 85 warnings; unit 465 files 5546+1; build 260 modules; file-audit 2979; full E2E 126/127 (visual:176 SwiftShader 30/30 drift baseline-equivalent class vs 291 30/30; band 0.022–0.062; enchanting green).
