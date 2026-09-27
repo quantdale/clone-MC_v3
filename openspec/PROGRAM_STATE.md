@@ -1,5 +1,14 @@
 # Program State
 
+## Current checkpoint — 2026-09-27 Change 293-raider-and-patrol-rendering ACTIVE 2/10 (package authored; implementation next; 258 stays BLOCKED)
+
+> **Change `293-raider-and-patrol-rendering` is ACTIVE 2/10**; T1–T2 control-plane complete (OpenSpec package + sequence/overrides + sole ACTIVE). Last completed Change 292-player-status-effect-persistence is VERIFIED; Changes 001–292 are VERIFIED except Change 258 BLOCKED; Changes 259–292 are not reopened.
+> Session start head: `cef8f32d1fbfdfae3796474b234212012e868a77` (origin/main).
+> Scope: box-mesh rendering of raid-wave raiders (pillager/vindicator/ravager/witch) and patrol pillagers with per-kind silhouettes, banner-marked captain, correct facing, leak-free removal; no shared scene setup changes; no simulation changes; no 258 headed work.
+
+- Next exact action: **Implement 293 T3 RaiderRenderer, then T4–T10 through VERIFIED publication.**
+- Change 258 remains BLOCKED at 40/100.
+
 ## Current checkpoint — 2026-09-27 Change 292-player-status-effect-persistence VERIFIED 11/11 (100%); published at `1482226`; 293 next (author package only)
 
 > **Change `292-player-status-effect-persistence` is VERIFIED 11/11 (100%)**; all baseline gates green (typecheck/lint/unit 5546+1/build/file-audit 2979/validate-state/full E2E 126 passed with visual matrix classified non-blocking; status-effect-persistence 2/2; enchanting:227 green); last completed Change 292-player-status-effect-persistence is VERIFIED; Changes 001–292 are VERIFIED except Change 258 BLOCKED; Changes 259–292 are not reopened.
@@ -288,11 +297,11 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **292-player-status-effect-persistence — VERIFIED (11/11); 258 BLOCKED, 259–292 VERIFIED**
+- Active implementation change: **293-raider-and-patrol-rendering — ACTIVE (2/10); 258 BLOCKED, 259–292 VERIFIED**
 - Prior active implementation change: **283-live-raid-persistence — VERIFIED (13/13); 258 stays BLOCKED, 259–283 stay VERIFIED**
 - Prior prior active implementation change: **282-live-raid-feedback — VERIFIED (10/10); 258 stays BLOCKED, 259–282 stay VERIFIED**
-- Next change: **293 — author spec-first package after 292 VERIFIED (NOT started); 258 stays BLOCKED**
-- 240 advancement allowed: **yes**
+- Next change: **294 — reserved next sequential slot after 293 VERIFIED (NOT started); 258 stays BLOCKED**
+- 240 advancement allowed: **no (active change not yet verified)**
 
 - Program: **ACTIVE — Change 284-live-raid-wave-spawning VERIFIED 12/12 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–284 VERIFIED**
 - 284 checkpoint: **VERIFIED 12/12 — implementation + gates complete; enchanting flake + visual SwiftShader drift documented non-blocking; 258 BLOCKED; 285 not started**
@@ -307,7 +316,7 @@
 - Publication history: **Change 257 VERIFIED 92/92 at 96b5dc37 (F257-A..L closed, 22 new fault-injection tests, 5× proofs, import tx); Change 256 archived at `ad75b65` as `2026-08-31-256-production-readiness-hardening` (23/23).**
 - Section milestone: **PROGRAM VERIFIED through Change 284; Change 284 is VERIFIED 12/12; Change 258 remains BLOCKED at 40/100 pending headed hardware-WebGL certification; no GPU evidence was fabricated.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ri…
-- Next exact action: **Author a spec-first OpenSpec package for 293 (NOT started); candidates: render raiders/patrols (owner plan); raid escalation on omen during ACTIVE raid; clear Bad Omen on death; throwable potions; villager entities; 258 stays BLOCKED**
+- Next exact action: **Implement 293 T3 RaiderRenderer, then T4–T10 through VERIFIED publication; 258 stays BLOCKED**
 - Superseded next action: **T8 confirm 282 feedback is unchanged (projection, pause, dispose hide, no spawning/settlement/258 work); 258 stays BLOCKED**
 - Release note (2026-09-11 owner deferral): **headed FPS gates (258 tasks 91–95) are deferred, not waived — 001–257 VERIFIED, production default unchanged (sync meshing, no quality retune), game shippable with known performance-certification debt**
 

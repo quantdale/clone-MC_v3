@@ -1250,3 +1250,30 @@ baseline-equivalent class vs 291 30/30; enchanting green).
 - Changes 259–292 remain VERIFIED and are not reopened.
 - The next sequential slot after published VERIFIED 292 is **293** (spec-first package to
   author; owner plan: render raiders and patrols). It is NOT implemented by the 292 track.
+
+
+## 293-raider-and-patrol-rendering — activated from published VERIFIED 292 (2026-09-27)
+
+The product/session instruction authorizes activating OpenSpec change
+**293-raider-and-patrol-rendering** as the sole ACTIVE implementation change
+while Change **258** remains **BLOCKED** and Changes **259–292** remain
+**VERIFIED**.
+
+- **Activation dependency (satisfied):** Change
+  **292-player-status-effect-persistence** is VERIFIED 11/11 and published;
+  tip base `cef8f32` (origin/main).
+- **Scope:** box-mesh rendering of ACTIVE raid-wave raiders (pillager,
+  vindicator, ravager, witch) and patrol pillagers from `raidEntityManager` /
+  `patrolEntityManager` (current overworld dimension) with per-kind
+  silhouettes, a banner-marked patrol captain, movement/stored-yaw facing,
+  derived removal on death/despawn/clear/raid end, leak-free disposal, no
+  shared scene setup changes; unit + browser E2E.
+- **Out of scope:** animation/textures/skins; simulation or yaw changes;
+  other entity renderers; instancing/LOD; goldens; Change 258 headed FPS/GPU
+  work or status change; Change 294.
+- Change **258** stays **BLOCKED**; Changes **259–292** stay **VERIFIED** and
+  are not reopened.
+
+### Sequence row (authoritative with CHANGE_SEQUENCE.md)
+
+| 293 | `293-raider-and-patrol-rendering` | Box-mesh raider + patrol rendering (per-kind shapes, banner captain, facing, leak-free removal); no scene setup changes; no 258 headed work. |
