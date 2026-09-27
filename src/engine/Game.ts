@@ -101,6 +101,12 @@ import {
 import { resolveShieldBlock, ShieldCooldownTracker } from '../simulation/ShieldBlocking';
 import { canRaiseShield, playerYawToShieldBearing } from '../simulation/LiveShieldWiring';
 import { HostileMobRenderer } from '../rendering/HostileMobRenderer';
+import {
+  RaiderRenderer,
+  projectRaiderRenderEntries,
+  type RaiderMeshView,
+  type RaiderRenderEntry,
+} from '../rendering/RaiderRenderer';
 import { BreedingSystem, type BreedableSpecies } from '../simulation/AnimalBreeding';
 import {
   clearAll,
@@ -633,6 +639,8 @@ export class Game {
   private readonly patrolEntityManager: EntityManager;
   /** Seeded rate-limited pillager patrols (291) reusing the 284 backend + 288 combat. */
   private readonly pillagerPatrol: PillagerPatrolSystem;
+  /** Raider + patrol box-mesh renderer (293), synced every frame in render(). */
+  private readonly raiderRenderer: RaiderRenderer;
   /** Extra patrol combat ticks advanced by `debugTickPatrols` (291 test seam only). */
   private patrolDebugTickBias = 0;
   /** HUD raid feedback bar (282, null until the shell binds it). */
@@ -1127,6 +1135,8 @@ export class Game {
       dimension: this.overworldDimension,
       rng: createNamedRng(this.seed, 'pillager-patrol'),
     });
+    this.raiderRenderer = new RaiderRenderer(this.renderer.scene);
+    this.resources.track(this.raiderRenderer);
     this.passiveMobs = new PassiveMobSystem(entityRegistry, this.seed);
     this.passiveMobRenderer = new PassiveMobRenderer(this.renderer.scene);
     this.resources.track(this.passiveMobRenderer);
@@ -2543,6 +2553,20 @@ export class Game {
     this.renderer.camera.rotateX(this.player.pitch);
   }
 
+  /** Raider rendering (293): project both managers' ACTIVE overworld raiders. */
+  private projectRaiderEntries(): RaiderRenderEntry[] {
+    return projectRaiderRenderEntries(
+      this.raidEntityManager.getInDimension(this.overworldDimension),
+      this.patrolEntityManager.getInDimension(this.overworldDimension),
+      this.pillagerPatrol.getCaptainId(),
+    ).entries;
+  }
+
+  /** Raider rendering (293): derive the raider mesh set from live entities (every frame, even paused). */
+  private syncRaiderRenderer(): void {
+    this.raiderRenderer.sync(this.projectRaiderEntries());
+  }
+
   private render(): void {
     if (this.disposed) {
       return;
@@ -2550,6 +2574,7 @@ export class Game {
     // Observability (audit 05): bracket the frame and feed renderer.info after
     // the draw; World feeds queue depths/upload bytes via `worldMonitor`.
     this.perfMonitor.beginFrame();
+    this.syncRaiderRenderer();
     this.phaseTimer.begin('renderSubmit');
     this.renderer.render();
     this.phaseTimer.end();
@@ -5804,6 +5829,35 @@ export class Game {
       this.pillagerPatrol.tickCombat(this.patrolCombatInput());
     }
     return this.pillagerPatrol.snapshot();
+  }
+
+  /**
+   * Test seam (293): raider renderer state — the projected (expected) entries,
+   * the live mesh groups, the scene's `raider-*` group count and the camera.
+   * After dispose, every list is empty and counts are 0.
+   */
+  getRaiderRenderState(): {
+    visible: boolean;
+    expected: RaiderRenderEntry[];
+    meshes: RaiderMeshView[];
+    sceneRaiderGroups: number;
+    camera: { x: number; y: number; z: number };
+  } {
+    const cam = this.renderer.camera.position;
+    const sceneRaiderGroups = this.renderer.scene.children.filter((c) => c.name.startsWith('raider-')).length;
+    return {
+      visible: this.raiderRenderer.isVisible,
+      expected: this.disposed ? [] : this.projectRaiderEntries(),
+      meshes: this.raiderRenderer.getMeshes(),
+      sceneRaiderGroups,
+      camera: { x: cam.x, y: cam.y, z: cam.z },
+    };
+  }
+
+  /** Test seam (293): show/hide every raider mesh group (screenshot sanity check). */
+  debugSetRaiderMeshesVisible(visible: boolean): void {
+    if (this.disposed) return;
+    this.raiderRenderer.setVisible(visible);
   }
 
   /** Test seam (291): live patrol member position (null when absent). */

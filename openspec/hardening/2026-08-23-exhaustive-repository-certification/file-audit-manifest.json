@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-27T01:08:13Z",
+  "generatedAt": "2026-09-27T03:25:03Z",
   "reviewedSha": "3d0fd2d5aee39ae1706b7210ad27e675450f521c",
-  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288; +6 rows for 289 enchantment-persistence-reload-integrity package/implementation/tests; DirtySaveQueue.ts/Game.ts/enchanting.spec.ts/DirtySaveQueue.test.ts/InventoryComponentPersistence.test.ts re-reviewed in place for 289; +10 rows for 290 hero-of-the-village-reward package/implementation/tests; Game.ts/StatusEffect.ts re-reviewed in place for 290; +10 rows for 291 pillager-patrol-bad-omen package/implementation/tests; Game.ts re-reviewed in place for 291; +10 rows for 292 player-status-effect-persistence package/implementation/tests; Game.ts, PlayerStateRecord.ts, GamePersistence.ts and 5 tests re-reviewed in place for 292",
+  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288; +6 rows for 289 enchantment-persistence-reload-integrity package/implementation/tests; DirtySaveQueue.ts/Game.ts/enchanting.spec.ts/DirtySaveQueue.test.ts/InventoryComponentPersistence.test.ts re-reviewed in place for 289; +10 rows for 290 hero-of-the-village-reward package/implementation/tests; Game.ts/StatusEffect.ts re-reviewed in place for 290; +10 rows for 291 pillager-patrol-bad-omen package/implementation/tests; Game.ts re-reviewed in place for 291; +10 rows for 292 player-status-effect-persistence package/implementation/tests; Game.ts, PlayerStateRecord.ts, GamePersistence.ts and 5 tests re-reviewed in place for 292; +9 rows for 293 raider-and-patrol-rendering package/implementation/tests; Game.ts re-reviewed in place for 293",
   "allowedReviewLevels": [
     "semantic",
     "mechanical",
@@ -10,7 +10,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2979,
+  "total": 2988,
   "rows": [
     {
       "path": ".agent/EXECUTION_PROMPT.md",
@@ -31636,6 +31636,7 @@
         "lifecycle",
         "persistence",
         "raid",
+        "rendering",
         "simulation",
         "spawning",
         "status-effect",
@@ -31643,7 +31644,7 @@
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 284 implementation; no findings \u2014 additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits | 285 ephemeral badOmen + villageQuery + fixed-tick evaluate through 282 start seam; re-reviewed for 288 raider combat wiring; re-reviewed for 289 concurrent-drain / enchant persist integrity; re-reviewed for 290 HOTV grant + emerald trade discount wiring; re-reviewed for 291 pillager patrol tick/captain Bad Omen/raid-start dismissal/seams; re-reviewed for 292 status-effect/Bad Omen persistence (snapshot payload, restore, omen duration tick, durable save points, dispose ordering, seams)",
+      "reviewNotes": "reviewed for 284 implementation; no findings \u2014 additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits | 285 ephemeral badOmen + villageQuery + fixed-tick evaluate through 282 start seam; re-reviewed for 288 raider combat wiring; re-reviewed for 289 concurrent-drain / enchant persist integrity; re-reviewed for 290 HOTV grant + emerald trade discount wiring; re-reviewed for 291 pillager patrol tick/captain Bad Omen/raid-start dismissal/seams; re-reviewed for 292 status-effect/Bad Omen persistence (snapshot payload, restore, omen duration tick, durable save points, dispose ordering, seams); re-reviewed for 293 raider renderer wiring (tracked resource, per-frame sync in render from raid/patrol managers, render-state/visibility seams)",
       "status": "audited"
     },
     {
@@ -48371,6 +48372,180 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/293-raider-and-patrol-rendering/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "293 OpenSpec artifact OVERRIDE_DRAFT.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "rendering"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/293-raider-and-patrol-rendering/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "293 OpenSpec artifact design.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "rendering"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/293-raider-and-patrol-rendering/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "293 OpenSpec artifact proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "rendering"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/293-raider-and-patrol-rendering/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "293 OpenSpec artifact tasks.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "rendering"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/293-raider-and-patrol-rendering/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "293 OpenSpec artifact verification.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "rendering"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/293-raider-and-patrol-rendering/specs/raider-and-patrol-rendering/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "293 capability spec raider-and-patrol-rendering",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "lifecycle",
+        "raid",
+        "rendering"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "src/rendering/RaiderRenderer.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "293 box-mesh raider/patrol renderer: projection from raid/patrol managers, per-kind silhouettes, captain banner, facing, shared constructor-time geometry/materials, leak-free sync/dispose",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "lifecycle",
+        "raid",
+        "rendering"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/RaiderRenderer.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "293 unit tests for projection, sync add/update/rebuild/remove, part counts, captain marker, facing, visibility, fixed resources, exactly-once disposal + module/Game source guards",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "lifecycle",
+        "raid",
+        "rendering"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/e2e/raider-rendering.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "293 browser E2E: scene raider groups mirror raid wave + patrol (kinds, captain, facing) through death, patrol dismissal, raid victory and dispose; non-golden screenshot sanity check",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "rendering"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
       "status": "audited"
     }
   ]

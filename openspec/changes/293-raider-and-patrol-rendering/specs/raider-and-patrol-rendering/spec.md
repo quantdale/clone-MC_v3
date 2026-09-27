@@ -64,7 +64,7 @@ groups for absent keys.
 ### Requirement: Distinct silhouettes and captain marker
 
 Each kind MUST use its own part set/colour (pillager 6 parts with crossbow,
-vindicator 6 with axe, witch 7 with hat, ravager 9 and larger than an
+vindicator 6 with axe, witch 7 with hat, ravager 8 and larger than an
 illager), and the captain MUST carry 2 extra banner parts.
 
 #### Scenario: Ravager larger
@@ -132,7 +132,7 @@ dispose and double dispose are no-ops.
 
 ## Performance and resource bounds
 
-≈ 17 geometries / 12 materials per renderer; ≤ 9 meshes per entity; O(n)
+14 geometries / 12 materials per renderer; ≤ 8 meshes per entity; O(n)
 per-frame sync.
 
 ## Compatibility and migration

@@ -98,12 +98,12 @@ Groups: `name = 'raider-<kind>'` (+ `'-captain'` suffix for the captain),
 | pillager | body 0.6×0.9×0.35 @1.2, head 0.44³ @1.87, 2 legs 0.18×0.75×0.18 @0.375, crossed arms 0.62×0.2×0.26 @(0,1.3,0.22), crossbow 0.08×0.1×0.55 @(0.3,1.25,0.3) (6) | robe `0x5a4632`, skin `0x8f9488`, legs `0x2c2c30`, wood `0x6b4a2b` |
 | vindicator | as pillager but axe 0.08×0.55×0.08 @(0.36,1.05,0.1) instead of crossbow (6) | coat `0x2f3540`, skin, legs, steel `0x9aa0a6` |
 | witch | body + head + 2 legs + arms, hat brim 0.62×0.06×0.62 @2.12, hat crown 0.32×0.34×0.32 @2.32 (7) | robe `0x4a2a5a`, skin, legs, hat `0x2b1f33` |
-| ravager | body 1.3×1.1×2.0 @1.35, head 0.8×0.8×0.9 @(0,1.5,1.35), 4 legs 0.4×0.8×0.4 @0.4 (±0.42, ±0.65), 2 horns 0.14×0.35×0.14 @(±0.3,2.0,1.35) (9) | hide `0x4a4038`, horn `0xd9cfa9` |
+| ravager | body 1.3×1.1×2.0 @1.35, head 0.8×0.8×0.9 @(0,1.5,1.35), 4 legs 0.4×0.8×0.4 @0.4 (±0.42, ±0.65), 2 horns 0.14×0.35×0.14 @(±0.3,2.0,1.35) (8) | hide `0x4a4038`, horn `0xd9cfa9` |
 | captain add-on | banner panel 0.5×0.72×0.06 @(0,1.3,−0.24), emblem 0.2×0.3×0.02 @(0,1.35,−0.28) (+2) | banner `0xefefef`, emblem `0x3a3a3a` |
 
 Shared resources: one `BoxGeometry` per distinct part size and one
-`MeshLambertMaterial` per colour, created once (≈ 17 geometries, 12
-materials). `resourceCounts()` reports them for leak tests.
+`MeshLambertMaterial` per colour, created once (exactly 14 geometries, 12
+materials as implemented). `resourceCounts()` reports them for leak tests.
 
 ## Control/data flow
 
@@ -157,8 +157,8 @@ Presentation only; no persistence; no simulation change.
 
 ## Performance/resource constraints
 
-Fixed ~17 geometries / 12 materials; ≤ 9 meshes per entity; realistic peak
-≈ 30 entities → ≤ 270 draw calls worst case (ravagers), typically < 100.
+Fixed 14 geometries / 12 materials; ≤ 8 meshes per entity; realistic peak
+≈ 30 entities → ≤ 240 draw calls worst case, typically < 100.
 Per-frame projection is O(entities) with small arrays; no GPU uploads after
 the first frame of each new group (shared geometry already uploaded).
 

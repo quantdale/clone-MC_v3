@@ -1277,3 +1277,20 @@ while Change **258** remains **BLOCKED** and Changes **259–292** remain
 ### Sequence row (authoritative with CHANGE_SEQUENCE.md)
 
 | 293 | `293-raider-and-patrol-rendering` | Box-mesh raider + patrol rendering (per-kind shapes, banner captain, facing, leak-free removal); no scene setup changes; no 258 headed work. |
+
+
+## 293-raider-and-patrol-rendering — VERIFIED publication checkpoint (2026-09-27)
+
+Change **293-raider-and-patrol-rendering** is VERIFIED at **10/10 (100%)** with exact C293
+matrix row. ACTIVE raid-wave raiders (pillager/vindicator/ravager/witch) and patrol
+pillagers render as box-mesh groups synced every frame from the raid/patrol entity
+managers (per-kind silhouettes, banner-marked captain, velocity/spawn-yaw facing,
+leak-free removal and disposal over fixed shared resources); no shared scene setup
+changes. Full E2E 127/128 (visual:176 SwiftShader 30/30 drift with the identical failing
+cell set to 292; enchanting green).
+
+- Session start: `cef8f32d1fbfdfae3796474b234212012e868a77`.
+- Change 258 remains BLOCKED at 40/100 (no headed FPS/GPU work, no fake GPU evidence).
+- Changes 259–293 remain VERIFIED and are not reopened.
+- The next sequential slot after published VERIFIED 293 is **294** (spec-first package to
+  author). It is NOT implemented by the 293 track.
