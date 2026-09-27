@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-27T06:01:20Z",
+  "generatedAt": "2026-09-27T06:10:23Z",
   "reviewedSha": "3d0fd2d5aee39ae1706b7210ad27e675450f521c",
-  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288; +6 rows for 289 enchantment-persistence-reload-integrity package/implementation/tests; DirtySaveQueue.ts/Game.ts/enchanting.spec.ts/DirtySaveQueue.test.ts/InventoryComponentPersistence.test.ts re-reviewed in place for 289; +10 rows for 290 hero-of-the-village-reward package/implementation/tests; Game.ts/StatusEffect.ts re-reviewed in place for 290; +10 rows for 291 pillager-patrol-bad-omen package/implementation/tests; Game.ts re-reviewed in place for 291; +10 rows for 292 player-status-effect-persistence package/implementation/tests; Game.ts, PlayerStateRecord.ts, GamePersistence.ts and 5 tests re-reviewed in place for 292; +9 rows for 293 raider-and-patrol-rendering package/implementation/tests; Game.ts re-reviewed in place for 293; +10 rows for 294 bad-omen-raid-escalation-and-death-parity package/implementation/tests; Game.ts, 2 unit tests and the 285/291/292 design notes re-reviewed in place for 294; +12 rows for 295 throwable-splash-potion-entities package/implementation/tests; Game.ts, PlayerInteraction.ts, RaiderCombatBehavior.ts, its unit test and the 288 docs re-reviewed in place for 295",
+  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288; +6 rows for 289 enchantment-persistence-reload-integrity package/implementation/tests; DirtySaveQueue.ts/Game.ts/enchanting.spec.ts/DirtySaveQueue.test.ts/InventoryComponentPersistence.test.ts re-reviewed in place for 289; +10 rows for 290 hero-of-the-village-reward package/implementation/tests; Game.ts/StatusEffect.ts re-reviewed in place for 290; +10 rows for 291 pillager-patrol-bad-omen package/implementation/tests; Game.ts re-reviewed in place for 291; +10 rows for 292 player-status-effect-persistence package/implementation/tests; Game.ts, PlayerStateRecord.ts, GamePersistence.ts and 5 tests re-reviewed in place for 292; +9 rows for 293 raider-and-patrol-rendering package/implementation/tests; Game.ts re-reviewed in place for 293; +10 rows for 294 bad-omen-raid-escalation-and-death-parity package/implementation/tests; Game.ts, 2 unit tests and the 285/291/292 design notes re-reviewed in place for 294; +12 rows for 295 throwable-splash-potion-entities package/implementation/tests; Game.ts, PlayerInteraction.ts, RaiderCombatBehavior.ts, its unit test and the 288 docs re-reviewed in place for 295; +10 rows for 296 periodic-status-effect-ticks package/implementation/tests; Game.ts, DamageType.ts, SurvivalSystem.ts, DeathRespawnPresentation.ts, 2 unit tests and the 295 docs re-reviewed in place for 296",
   "allowedReviewLevels": [
     "semantic",
     "mechanical",
@@ -10,7 +10,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 3010,
+  "total": 3020,
   "rows": [
     {
       "path": ".agent/EXECUTION_PROMPT.md",
@@ -31199,10 +31199,13 @@
       "imports": [],
       "importedBy": [],
       "testEvidence": [],
-      "riskAreas": [],
+      "riskAreas": [
+        "gameplay",
+        "status-effect"
+      ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings; re-reviewed for 296 magic damage type (BYPASS_ARMOR)",
       "status": "audited"
     },
     {
@@ -31645,7 +31648,7 @@
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 284 implementation; no findings \u2014 additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits | 285 ephemeral badOmen + villageQuery + fixed-tick evaluate through 282 start seam; re-reviewed for 288 raider combat wiring; re-reviewed for 289 concurrent-drain / enchant persist integrity; re-reviewed for 290 HOTV grant + emerald trade discount wiring; re-reviewed for 291 pillager patrol tick/captain Bad Omen/raid-start dismissal/seams; re-reviewed for 292 status-effect/Bad Omen persistence (snapshot payload, restore, omen duration tick, durable save points, dispose ordering, seams); re-reviewed for 293 raider renderer wiring (tracked resource, per-frame sync in render from raid/patrol managers, render-state/visibility seams); re-reviewed for 294 omen trigger ESCALATE_RAID branch (in-place escalation, patrol dismissal, one durable save) and Bad Omen clear on death in respawnPlayer; re-reviewed for 295 splash potion wiring (use-item throw with consume rules, tick 5.10 potion step, shatter application to player/raid/patrol, witch potion sink, renderer sync, transient clears, test seams)",
+      "reviewNotes": "reviewed for 284 implementation; no findings \u2014 additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits | 285 ephemeral badOmen + villageQuery + fixed-tick evaluate through 282 start seam; re-reviewed for 288 raider combat wiring; re-reviewed for 289 concurrent-drain / enchant persist integrity; re-reviewed for 290 HOTV grant + emerald trade discount wiring; re-reviewed for 291 pillager patrol tick/captain Bad Omen/raid-start dismissal/seams; re-reviewed for 292 status-effect/Bad Omen persistence (snapshot payload, restore, omen duration tick, durable save points, dispose ordering, seams); re-reviewed for 293 raider renderer wiring (tracked resource, per-frame sync in render from raid/patrol managers, render-state/visibility seams); re-reviewed for 294 omen trigger ESCALATE_RAID branch (in-place escalation, patrol dismissal, one durable save) and Bad Omen clear on death in respawnPlayer; re-reviewed for 295 splash potion wiring (use-item throw with consume rules, tick 5.10 potion step, shatter application to player/raid/patrol, witch potion sink, renderer sync, transient clears, test seams); re-reviewed for 296 periodic status-effect pass (step 6 before duration count-down, hurtPlayer/survival.heal routing, tickWithers global-tick wither stand-in retired, debugAddPlayerEffect/debugTickPeriodicStatusEffects seams)",
       "status": "audited"
     },
     {
@@ -32472,10 +32475,13 @@
       "imports": [],
       "importedBy": [],
       "testEvidence": [],
-      "riskAreas": [],
+      "riskAreas": [
+        "gameplay",
+        "status-effect"
+      ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings; re-reviewed for 296 PLAYER_MAX_HEALTH export and tickInvulnerability extraction (identical arithmetic)",
       "status": "audited"
     },
     {
@@ -33623,7 +33629,7 @@
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 280 implementation; no findings",
+      "reviewNotes": "reviewed for 280 implementation; no findings; re-reviewed for 296 magic death cause",
       "status": "audited"
     },
     {
@@ -39253,10 +39259,13 @@
       "imports": [],
       "importedBy": [],
       "testEvidence": [],
-      "riskAreas": [],
+      "riskAreas": [
+        "gameplay",
+        "status-effect"
+      ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings; re-reviewed for 296 magic registry entry",
       "status": "audited"
     },
     {
@@ -39330,7 +39339,7 @@
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 280 implementation; no findings",
+      "reviewNotes": "reviewed for 280 implementation; no findings; re-reviewed for 296 magic cause",
       "status": "audited"
     },
     {
@@ -48782,7 +48791,7 @@
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings",
+      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings; re-reviewed for 296 downstream note",
       "status": "audited"
     },
     {
@@ -48802,7 +48811,7 @@
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings",
+      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings; re-reviewed for 296 poison-ticks supersession note",
       "status": "audited"
     },
     {
@@ -48842,7 +48851,7 @@
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings",
+      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings; re-reviewed for 296 closed poison-marker divergence",
       "status": "audited"
     },
     {
@@ -48980,6 +48989,196 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/296-periodic-status-effect-ticks/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "296 OpenSpec artifact OVERRIDE_DRAFT.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/296-periodic-status-effect-ticks/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "296 OpenSpec artifact design.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/296-periodic-status-effect-ticks/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "296 OpenSpec artifact proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/296-periodic-status-effect-ticks/specs/periodic-status-effect-ticks/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "296 OpenSpec artifact spec.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/296-periodic-status-effect-ticks/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "296 OpenSpec artifact tasks.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/296-periodic-status-effect-ticks/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "296 OpenSpec artifact verification.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/PeriodicStatusEffects.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "296 pure periodic status effects: vanilla poison/regeneration/wither intervals (base >> amplifier, min 1), remaining-tick rounding, schedule predicate, poison 1-HP floor / wither lethal / regeneration cap decisions, ordered live fixed-tick pass",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/PeriodicStatusEffects.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "296 unit tests: interval table per amplifier and clamps, rounding, schedule, hit counts, poison floor, wither kill, regen cap, order, death mid-pass skip, determinism",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/LivePeriodicStatusEffects.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "296 composition tests: real StatusEffectManager + SurvivalSystem + armor + mode gate + respawn + FixedTickDriver (poison floor, armor bypass, regen cap, wither death, creative/spectator, pause, reload cadence) and Game source guards",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/e2e/periodic-status-effects.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "296 browser E2E: splash poison lowers health over ticks and stops at 1 HP, paused game unchanged, regeneration heals to max, wither kills with death screen, creative immune",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
       "status": "audited"
     }
   ]

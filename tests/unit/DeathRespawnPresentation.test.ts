@@ -12,6 +12,10 @@ describe('DeathRespawnPresentation (280)', () => {
     expect(normalizeDeathCause('lava')).toBe('lava');
     expect(normalizeDeathCause('starvation')).toBe('starvation');
     expect(normalizeDeathCause('wither')).toBe('wither');
+    // 296: poison / instant harming deaths are magic damage.
+    expect(normalizeDeathCause('magic')).toBe('magic');
+    expect(formatDeathCause('magic')).toBe('Magic');
+    expect(formatDeathCause('wither')).toBe('Wither');
     expect(normalizeDeathCause('debug')).toBe('debug');
     expect(normalizeDeathCause('damage')).toBe('damage');
     expect(normalizeDeathCause('raw attacker payload')).toBe('unknown');

@@ -88,8 +88,11 @@ Goldens untouched. Change 258 stays BLOCKED.
 - Duration effects and healing do not apply to mobs (no per-mob effect
   managers); witch potions neither hit nor affect raiders (vanilla witches
   heal raiders instead, not modelled); zombies/pigs are not splash targets.
-- Poison is still a marker effect (no poison damage ticks), so a witch's
-  poison has no HP effect yet.
+- ~~Poison is still a marker effect (no poison damage ticks), so a witch's
+  poison has no HP effect yet.~~ **Closed by 296**
+  (`296-periodic-status-effect-ticks`): poison deals 1 magic damage every
+  `25 >> amp` ticks (never below 1 HP), so witch and self poison cost HP;
+  harming's `magic` damage now bypasses armor (vanilla).
 - Splash potions are obtainable only via the test/debug seam (no gunpowder,
   no splash brewing, no creative menu); lingering potions not throwable.
 - No shatter particle or sound; in-flight potions are not persisted.

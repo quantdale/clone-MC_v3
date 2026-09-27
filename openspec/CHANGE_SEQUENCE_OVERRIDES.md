@@ -1410,3 +1410,21 @@ while Change **258** remains **BLOCKED** and Changes **259–295** remain
 - Change **258** stays **BLOCKED**; Changes **259–295** stay **VERIFIED**.
   The 295 "poison costs no HP" divergence is closed by 296 without reopening
   295.
+
+
+## 296-periodic-status-effect-ticks — VERIFIED publication checkpoint (2026-09-27)
+
+Change **296-periodic-status-effect-ticks** is VERIFIED at **12/12 (100%)** with exact C296
+matrix row. The player's poison, regeneration and wither effects tick on the
+vanilla `base >> amplifier` schedule (evaluated on the remaining duration
+before the count-down) in the unpaused fixed tick: poison never below 1 HP,
+regeneration capped at max health, wither can kill (real death + death
+screen); creative/spectator refused; `magic` damage bypasses armor; the 252
+global-tick wither stand-in is retired. Full E2E 135/136
+(visual:176 SwiftShader 30 fail/30 pass drift; enchanting green).
+
+- Session start: `218aabdb65af6a421bd594142d4bb01b1a5f9c12`.
+- Change 258 remains BLOCKED at 40/100 (no headed FPS/GPU work, no fake GPU evidence).
+- Changes 259–296 remain VERIFIED and are not reopened.
+- The next sequential slot after published VERIFIED 296 is **297** (spec-first package to
+  author; owner plans gunpowder + splash brewing). It is NOT implemented by the 296 track.

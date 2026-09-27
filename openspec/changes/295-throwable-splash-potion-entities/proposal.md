@@ -66,7 +66,10 @@ slowness and weakness chosen by the target's distance, health and effects.
   apply to mobs; undead inversion is not modelled (no undead target in
   scope).
 - No poison/regeneration damage ticks (poison is still a marker effect in the
-  effect system; separate change).
+  effect system; separate change). **Superseded by 296**
+  (`296-periodic-status-effect-ticks`): poison, regeneration and wither now
+  tick on the vanilla schedule, so a witch's poison costs HP (never below
+  1 HP).
 - No witch self-drinking, witch healing of raiders, splash on zombies/pigs,
   thrower velocity inheritance or random inaccuracy.
 - No persistence of in-flight potions (transient like 288 arrows).
@@ -108,6 +111,9 @@ only SPLASH-kind stacks gain a use action. Raid saves are unaffected (combat
 and projectiles were never persisted). Behaviour change: witches no longer do
 a flat 5 damage; they apply potion effects (poison is a marker effect until
 a poison-tick change lands, so witch damage now comes from harming only).
+*296 update:* poison now deals 1 magic damage every 25 ticks (never below
+1 HP) and `magic` damage (poison and harming) bypasses armor, so witch
+poison costs HP.
 
 ## Risks
 

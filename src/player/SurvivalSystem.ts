@@ -15,6 +15,9 @@ export interface SurvivalSnapshot {
   saturation: number;
 }
 
+/** Player max health (half-hearts); `heal` and 296 regeneration cap here. */
+export const PLAYER_MAX_HEALTH = 20;
+
 export type SurvivalEvent = 'damage' | 'heal' | 'hunger' | 'death';
 export type SurvivalEventListener = (event: SurvivalEvent, amount?: number, reason?: string) => void;
 
@@ -72,7 +75,7 @@ export class SurvivalSystem {
   ): void {
     if (this.dead) return;
     const d = Math.max(0, Math.min(dt, CONFIG.maxDeltaTime));
-    this.invulnerability = Math.max(0, this.invulnerability - d);
+    this.tickInvulnerability(d);
 
     if (options.landingDistance > this.fallType.fallThreshold!) {
       this.damage(
@@ -132,6 +135,16 @@ export class SurvivalSystem {
     }
   }
 
+  /**
+   * Count the post-hit invulnerability window down by `dt` seconds (296:
+   * extracted from `update` with identical arithmetic so status-only test
+   * ticks advance i-frames exactly like the survival tick).
+   */
+  tickInvulnerability(dt: number): void {
+    if (!Number.isFinite(dt) || dt <= 0) return;
+    this.invulnerability = Math.max(0, this.invulnerability - dt);
+  }
+
   damage(amount: number, reason = 'damage'): void {
     if (this.dead || this.invulnerability > 0) return;
     let appliedAmount = amount;
@@ -152,7 +165,7 @@ export class SurvivalSystem {
   }
 
   heal(amount: number): void {
-    const applied = Math.max(0, Math.min(20 - this.health, Math.ceil(amount)));
+    const applied = Math.max(0, Math.min(PLAYER_MAX_HEALTH - this.health, Math.ceil(amount)));
     if (applied === 0) return;
     this.health += applied;
     this.onEvent?.('heal', applied);

@@ -11,41 +11,41 @@
 
 ## B. Pure rules
 
-- [ ] T3. Implement `src/simulation/PeriodicStatusEffects.ts`: intervals,
+- [x] T3. Implement `src/simulation/PeriodicStatusEffects.ts`: intervals,
   remaining-tick rounding, schedule predicate, per-kind decision, ordered
   live pass.
-- [ ] T4. Unit tests `tests/unit/PeriodicStatusEffects.test.ts`: interval
+- [x] T4. Unit tests `tests/unit/PeriodicStatusEffects.test.ts`: interval
   table per amplifier (incl. defensive clamp), rounding, schedule, poison
   floor, regen cap, wither lethal action, order, death mid-pass skip, guards.
 
 ## C. Damage/death plumbing
 
-- [ ] T5. `magic` damage type (BYPASS_ARMOR) + `magic` death cause; legacy
+- [x] T5. `magic` damage type (BYPASS_ARMOR) + `magic` death cause; legacy
   DamageType / death presentation tests updated.
-- [ ] T6. `SurvivalSystem.tickInvulnerability(dt)` extracted from `update`
+- [x] T6. `SurvivalSystem.tickInvulnerability(dt)` extracted from `update`
   (identical arithmetic).
 
 ## D. Game wiring
 
-- [ ] T7. `runFixedTick` step 6: pass before `playerEffects.tick(dt)` with
+- [x] T7. `runFixedTick` step 6: pass before `playerEffects.tick(dt)` with
   target → `hurtPlayer` / `survival.heal`; retire the `tickWithers`
   `WITHER_EFFECT_PERIOD_TICKS` block; seams `debugAddPlayerEffect`,
   `debugTickPeriodicStatusEffects`, `getPlayerHealth`.
-- [ ] T8. Composition tests `tests/unit/LivePeriodicStatusEffects.test.ts`
+- [x] T8. Composition tests `tests/unit/LivePeriodicStatusEffects.test.ts`
   (real StatusEffectManager + SurvivalSystem + armor): poison 1-HP floor over
   a full splash, armor ignored, regen cap, wither kill → one death + effects
   cleared, creative refusal, no step = no change (pause), reload continuity,
   Game source guards.
-- [ ] T9. Browser E2E `tests/e2e/periodic-status-effects.spec.ts`: player
+- [x] T9. Browser E2E `tests/e2e/periodic-status-effects.spec.ts`: player
   splash poison lowers health over ticks and stops at 1 HP; regeneration
   heals; wither kills → death screen "Wither"; paused game unchanged.
 
 ## E. Docs + closure
 
-- [ ] T10. Update 295 notes (witch poison now costs HP), PARITY C295 note +
+- [x] T10. Update 295 notes (witch poison now costs HP), PARITY C295 note +
   C296 row, file-audit manifest.
-- [ ] T11. Full gates: typecheck, lint, unit, build, file-audit,
+- [x] T11. Full gates: typecheck, lint, unit, build, file-audit,
   validate-state, full E2E (visual:176 cell-by-cell vs 295 baseline with
   isolation reruns for flips; enchanting:227 green).
-- [ ] T12. verification.md VERIFIED N/N, control plane VERIFIED, fast-forward
+- [x] T12. verification.md VERIFIED N/N, control plane VERIFIED, fast-forward
   publish (no force), docs sync.

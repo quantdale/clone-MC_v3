@@ -27,13 +27,16 @@ function player(): Player {
 }
 
 describe('damage type registry validation', () => {
-  it('builds the default registry with the four current types and finalizes', () => {
+  it('builds the default registry with the current types (296 adds magic) and finalizes', () => {
     const reg = createDefaultDamageTypeRegistry();
-    expect(reg.size).toBe(5);
+    expect(reg.size).toBe(6);
     expect(reg.finalized).toBe(true);
     expect(reg.has(createResourceId('minecraft', 'damage/fall'))).toBe(true);
     const keys = reg.entries().map((d) => d.key).sort();
-    expect(keys).toEqual(['drowning', 'fall', 'lava', 'starvation', 'wither']);
+    expect(keys).toEqual(['drowning', 'fall', 'lava', 'magic', 'starvation', 'wither']);
+    // 296: vanilla magic damage (poison, instant harming) ignores armor.
+    const magic = reg.entries().find((d) => d.key === 'magic');
+    expect(magic?.flags).toContain('BYPASS_ARMOR');
   });
 
   it('rejects a non-finite amount', () => {

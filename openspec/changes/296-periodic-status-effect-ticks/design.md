@@ -88,7 +88,8 @@ interval 1.25, flags `BYPASS_ARMOR`). `DeathCause` gains `magic` → "Magic".
 Game seams: `debugAddPlayerEffect(key, seconds, amplifier): boolean`,
 `debugTickPeriodicStatusEffects(ticks): number` (runs `ticks` status-only
 fixed ticks: i-frame countdown for depleting modes, the pass, effect and Bad
-Omen count-down), `getPlayerHealth(): number`.
+Omen count-down); health is read from the existing public `survival.health`
+(no extra getter needed).
 
 ## Control/data flow
 

@@ -10,6 +10,7 @@ export type DeathCause =
   | 'lava'
   | 'starvation'
   | 'wither'
+  | 'magic'
   | 'debug'
   | 'damage'
   | 'unknown';
@@ -30,6 +31,7 @@ const CAUSE_TEXT: Readonly<Record<DeathCause, string>> = {
   lava: 'Lava',
   starvation: 'Starvation',
   wither: 'Wither',
+  magic: 'Magic',
   debug: 'Debug damage',
   damage: 'Damage',
   unknown: 'Unknown damage',
@@ -44,6 +46,7 @@ export function normalizeDeathCause(reason: unknown): DeathCause {
   if (normalized === 'lava') return 'lava';
   if (normalized === 'starvation') return 'starvation';
   if (normalized === 'wither') return 'wither';
+  if (normalized === 'magic') return 'magic';
   if (normalized === 'debug') return 'debug';
   if (normalized === 'damage') return 'damage';
   return 'unknown';

@@ -67,7 +67,7 @@ import { LoadingIndicator } from '../ui/LoadingIndicator';
 import { DebugOverlay, formatPerfLine } from '../ui/DebugOverlay';
 import { CraftingPanel } from '../ui/CraftingPanel';
 import type { CraftingRecipe } from '../inventory/Crafting';
-import { SurvivalSystem } from '../player/SurvivalSystem';
+import { PLAYER_MAX_HEALTH, SurvivalSystem } from '../player/SurvivalSystem';
 import type { SurvivalEvent } from '../player/SurvivalSystem';
 import { resolveFoodConsume, applyConsumeEffects } from '../player/FoodComponentRuntime';
 import { StatusEffectManager } from '../data/StatusEffectManager';
@@ -353,6 +353,7 @@ import {
   type SplashTarget,
   type WitchPotionChoice,
 } from '../simulation/SplashPotion';
+import { tickPeriodicStatusEffects } from '../simulation/PeriodicStatusEffects';
 import {
   SplashPotionRenderer,
   splashPotionTint,
@@ -402,8 +403,6 @@ const WITHER_XP_REWARD = 50;
 const WITHER_SKULL_CAP = 12;
 /** Ticks between wither melee attempts when in range (252). */
 const WITHER_MELEE_COOLDOWN_TICKS = 10;
-/** Ticks between wither status-effect damage ticks (252). */
-const WITHER_EFFECT_PERIOD_TICKS = 40;
 
 /** Shared furnace-panel station identity (281). */
 type CookingStation = 'furnace' | 'smoker';
@@ -2550,6 +2549,9 @@ export class Game {
     } else {
       this.physics.consumeLandingDistance();
     }
+    // 296: periodic poison/regeneration/wither ticks on the vanilla schedule,
+    // evaluated on the remaining duration BEFORE the count-down below.
+    this.tickPeriodicStatusEffects();
     this.playerEffects.tick(dt);
     // 292: Bad Omen duration counts down with the other status effects.
     this.tickBadOmenDuration(dt);
@@ -4404,13 +4406,9 @@ export class Game {
         surviving.push(step.state);
       }
       this.witherSkulls = surviving;
-
-      // Wither status effect periodic damage (1 HP per 2 s while active).
-      if (playerAlive && this.simTick % WITHER_EFFECT_PERIOD_TICKS === 0) {
-        if (this.playerEffects.get(createResourceId('minecraft', 'effect/wither'))) {
-          this.hurtPlayer(1, 'wither');
-        }
-      }
+      // Wither status-effect damage is applied by the 296 periodic pass in
+      // runFixedTick step 6 (vanilla 40 >> amp schedule on remaining
+      // duration), not here: the 252 global-tick stand-in is retired.
     }
     this.syncWitherPresentation();
   }
@@ -5626,6 +5624,62 @@ export class Game {
     if (this.disposed || !Number.isFinite(seconds) || seconds <= 0) return;
     this.playerEffects.tick(seconds);
     this.tickBadOmenDuration(seconds);
+  }
+
+  /**
+   * Periodic status effects (296): one vanilla pass (poison → regeneration →
+   * wither) per unpaused fixed tick. Damage goes through `hurtPlayer`
+   * (creative/spectator refused by the 265 gate; `magic`/`wither` bypass
+   * armor; a lethal wither hit is the normal death path with the 280 death
+   * screen), healing through `survival.heal` (capped at max health).
+   */
+  private tickPeriodicStatusEffects(): void {
+    const survival = this.survival;
+    tickPeriodicStatusEffects(this.playerEffects, {
+      get health() {
+        return survival.health;
+      },
+      maxHealth: PLAYER_MAX_HEALTH,
+      damage: (amount, reason) => this.hurtPlayer(amount, reason),
+      heal: (amount) => survival.heal(amount),
+    });
+  }
+
+  /**
+   * Test seam (296): add a registered player status effect by key (e.g.
+   * `poison`) for `seconds` at `amplifier`. Invalid input → false, no change.
+   */
+  debugAddPlayerEffect(key: string, seconds: number, amplifier = 0): boolean {
+    if (this.disposed || typeof key !== 'string' || !/^[a-z_]+$/.test(key)) return false;
+    if (!Number.isFinite(seconds) || seconds <= 0 || !Number.isFinite(amplifier) || amplifier < 0) return false;
+    const id = createResourceId('minecraft', `effect/${key}`);
+    try {
+      this.playerEffects.add(id, seconds, Math.floor(amplifier));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Test seam (296): run `ticks` status-only fixed ticks exactly as step 6
+   * does for them — i-frame countdown for stat-depleting modes (what
+   * `survival.update` does), the periodic pass, then effect and Bad Omen
+   * count-down — without hunger/natural regeneration, so E2E can observe
+   * vanilla cadence deterministically. Capped at 20 000; returns ticks run.
+   */
+  debugTickPeriodicStatusEffects(ticks: number): number {
+    if (this.disposed || !Number.isFinite(ticks) || ticks <= 0) return 0;
+    const n = Math.min(20_000, Math.floor(ticks));
+    const dt = 1 / TICK_RATE;
+    for (let i = 0; i < n; i++) {
+      if (survivalStatsDeplete(this.gameMode.mode)) this.survival.tickInvulnerability(dt);
+      this.tickPeriodicStatusEffects();
+      this.playerEffects.tick(dt);
+      this.tickBadOmenDuration(dt);
+    }
+    this.hud.setSurvival(this.survival.health, this.survival.hunger);
+    return n;
   }
 
   /** Outcome of the last status-effect restore (292 observability). */

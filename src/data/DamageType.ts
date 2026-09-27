@@ -222,6 +222,17 @@ export function createDefaultDamageTypeRegistry(): DamageTypeRegistry {
       amount: 1,
       interval: 2,
     },
+    {
+      // 296: magic damage (poison ticks, 295 instant harming). Vanilla magic
+      // damage ignores armor; amount/interval mirror Poison I (1 HP / 25 ticks).
+      id: rid('magic'),
+      key: 'magic',
+      name: 'Magic',
+      flags: ['BYPASS_ARMOR'],
+      kind: 'periodic',
+      amount: 1,
+      interval: 1.25,
+    },
   ]);
 }
 
