@@ -1,5 +1,14 @@
 # Program State
 
+## Current checkpoint — 2026-09-27 Change 296-periodic-status-effect-ticks ACTIVE 2/12 (package authored; implementation next; 258 stays BLOCKED)
+
+> **Change `296-periodic-status-effect-ticks` is ACTIVE 2/12**; T1–T2 control-plane complete (OpenSpec package + sequence/overrides + sole ACTIVE). Last completed Change 295-throwable-splash-potion-entities is VERIFIED; Changes 001–295 are VERIFIED except Change 258 BLOCKED; Changes 259–295 are not reopened.
+> Session start head: `218aabdb65af6a421bd594142d4bb01b1a5f9c12` (origin/main).
+> Scope: vanilla periodic player status effects (poison 25>>amp magic damage never below 1 HP, regeneration 50>>amp heal capped at max, wither 40>>amp damage that can kill) on the unpaused fixed tick, creative/spectator refused, armor bypassed; tickWithers global-tick stand-in retired; 292 persisted effects keep ticking; hunger effect not registered (skipped); no 258 headed work.
+
+- Next exact action: **Implement 296 T3 PeriodicStatusEffects pure rules, then T4–T12 through VERIFIED publication.**
+- Change 258 remains BLOCKED at 40/100.
+
 ## Current checkpoint — 2026-09-27 Change 295-throwable-splash-potion-entities VERIFIED 12/12 (100%); published at `e55aaba`; 296 next (author package only)
 
 > **Change `295-throwable-splash-potion-entities` is VERIFIED 12/12 (100%)**; all baseline gates green (typecheck/lint/unit 5637+1/build/file-audit 3010/validate-state/full E2E 133 passed with visual matrix classified non-blocking; splash-potion 3/3; enchanting:227 green); last completed Change 295-throwable-splash-potion-entities is VERIFIED; Changes 001–295 are VERIFIED except Change 258 BLOCKED; Changes 259–295 are not reopened.
@@ -342,11 +351,11 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **295-throwable-splash-potion-entities — VERIFIED (12/12); 258 BLOCKED, 259–295 VERIFIED**
+- Active implementation change: **296-periodic-status-effect-ticks — ACTIVE (2/12); 258 BLOCKED, 259–295 VERIFIED**
 - Prior active implementation change: **283-live-raid-persistence — VERIFIED (13/13); 258 stays BLOCKED, 259–283 stay VERIFIED**
 - Prior prior active implementation change: **282-live-raid-feedback — VERIFIED (10/10); 258 stays BLOCKED, 259–282 stay VERIFIED**
-- Next change: **296 — author spec-first package after 295 VERIFIED (NOT started); 258 stays BLOCKED**
-- 240 advancement allowed: **yes**
+- Next change: **297 — reserved next sequential slot after 296 VERIFIED (NOT started); 258 stays BLOCKED**
+- 240 advancement allowed: **no (active change not yet verified)**
 
 - Program: **ACTIVE — Change 284-live-raid-wave-spawning VERIFIED 12/12 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–284 VERIFIED**
 - 284 checkpoint: **VERIFIED 12/12 — implementation + gates complete; enchanting flake + visual SwiftShader drift documented non-blocking; 258 BLOCKED; 285 not started**
@@ -361,7 +370,7 @@
 - Publication history: **Change 257 VERIFIED 92/92 at 96b5dc37 (F257-A..L closed, 22 new fault-injection tests, 5× proofs, import tx); Change 256 archived at `ad75b65` as `2026-08-31-256-production-readiness-hardening` (23/23).**
 - Section milestone: **PROGRAM VERIFIED through Change 284; Change 284 is VERIFIED 12/12; Change 258 remains BLOCKED at 40/100 pending headed hardware-WebGL certification; no GPU evidence was fabricated.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ri…
-- Next exact action: **Author a spec-first OpenSpec package for 296 (NOT started); candidates: villagers that panic during raids; raider animation/yaw + smoothed rendering; concurrent raids; raid celebration phase; poison/regeneration ticks; gunpowder + splash brewing; lingering clouds; drinkable potions; 258 stays BLOCKED**
+- Next exact action: **Implement 296 T3 PeriodicStatusEffects pure rules, then T4–T12 through VERIFIED publication; 258 stays BLOCKED**
 - Superseded next action: **T8 confirm 282 feedback is unchanged (projection, pause, dispose hide, no spawning/settlement/258 work); 258 stays BLOCKED**
 - Release note (2026-09-11 owner deferral): **headed FPS gates (258 tasks 91–95) are deferred, not waived — 001–257 VERIFIED, production default unchanged (sync meshing, no quality retune), game shippable with known performance-certification debt**
 
