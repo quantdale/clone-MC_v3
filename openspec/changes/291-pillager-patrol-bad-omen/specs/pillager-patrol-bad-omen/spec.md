@@ -124,7 +124,8 @@ member plans.
 
 The cooldown MUST be drawn as `6000 + nextInt(600)` at construction and after
 every natural attempt (any outcome). A natural attempt MUST run only when the
-cooldown reaches 0 during `tick`. At most one patrol MUST be live
+cooldown reaches 0 during `tick` (the `debugRunPatrolAttempt` test seam may
+run one on demand and still redraws the cooldown). At most one patrol MUST be live
 (`PATROL_ALIVE`). Forced spawns MUST NOT alter the cooldown.
 
 #### Scenario: Bounded attempts over time
@@ -145,7 +146,8 @@ already-spawned member (roster empty, no omen).
 #### Scenario: Patrol pillagers damage the player
 
 - **GIVEN** a spawned patrol and a player within ranged reach
-- **WHEN** the system ticks with a player target for 80 ticks
+- **WHEN** the system runs combat ticks with a player target 8 blocks from the
+  captain for 120 ticks
 - **THEN** the player damage callback fired at least once with reason `pillager`
 
 #### Scenario: Partial spawn failure rolls back

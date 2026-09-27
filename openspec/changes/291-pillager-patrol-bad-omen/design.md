@@ -109,7 +109,10 @@ export class PillagerPatrolSystem {
   runAttempt(ctx: PatrolAttemptContext): PatrolAttemptDecision; // natural attempt now
   forceSpawn(ctx: PatrolAttemptContext): PatrolAttemptDecision; // debug: bypass gates
   damageMember(id: number, amount: number, onCaptainKilled: () => void): boolean;
-  clear(reason: 'dispose' | 'pagehide' | 'raid-start' | 'replace'): void;
+  consumeDeath(id: number): { member: boolean; captain: boolean }; // exactly once
+  tickCombat(input: Omit<PatrolTickInput, 'context'>): void;     // combat only (debug)
+  clear(reason: 'dispose' | 'pagehide' | 'raid-start' | 'replace' | 'despawn'): void;
+  isAlive(): boolean;
   snapshot(): PatrolSnapshot;
 }
 ```
@@ -256,12 +259,18 @@ Additive only. No schema, archive or namespace change. Old saves load.
   (failure injection).
 - Game seams: `getPatrolState()`, `debugRunPatrolAttempt()`,
   `debugSpawnPatrol()`, `debugDamagePatrolEntity(id, amount)`,
-  `debugTickPatrols(n)`.
+  `debugTickPatrols(n)` (combat only, n ≤ 2000; advances a patrol-only combat
+  clock bias, never the global `simTick` that seeds random ticks), and
+  `debugGetPatrolEntityPosition(id)`.
+- Structural guards: a unit test extracts `Game.onRaidEntityRemoved` /
+  `onPatrolCaptainKilled` / `startRaidAt` bodies and asserts the isolation
+  wiring (no omen in the raid death choke, no raid state in the captain
+  handler, raid start dismisses patrols).
 
 ## Observability/debugging
 
 - `PatrolSnapshot { generation, memberIds, captainId, anchor, cooldownTicks,
-  lastDecision }` via `getPatrolState()`.
+  attempts, lastDecision, lastApplyOk }` via `getPatrolState()`.
 - Toast on captain kill (`Bad Omen <level>`).
 - `getBadOmenLevel()` (285) and `getRaidState()` (282) for isolation checks.
 

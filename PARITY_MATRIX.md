@@ -27,7 +27,7 @@ Directory-slug note: three directories use slugs that differ from the sequence t
 
 Boundary disambiguation: `exact` vs `equivalent` — if only the internal mechanism differs but the player-visible behavior and its rules match as specified, it is still `exact`; `equivalent` is reserved for outcomes whose reference mechanism is proprietary/unavailable and was deliberately replaced by a locally-documented one. `equivalent` vs `approx` — `equivalent` rows have no behavioral shortfall, only a substituted mechanism; `approx` rows record an actual known behavioral/fidelity difference caused by a platform or legal-resource constraint. `deferred` vs `out-of-scope` — `deferred` features remain planned work; `out-of-scope` features will never be implemented because they require proprietary assets/services or non-browser capability.
 
-## Change matrix (C001–C290)
+## Change matrix (C001–C291)
 
 Narrow-outcome text is quoted from `openspec/CHANGE_SEQUENCE.md` (authoritative catalog); status is confirmed against `openspec/PROGRAM_STATE.json` (`validationResults`) and each change's `verification.md`.
 
@@ -322,6 +322,7 @@ Narrow-outcome text is quoted from `openspec/CHANGE_SEQUENCE.md` (authoritative 
 | C288 | `288-raider-combat-behavior` | Live raider combat over 284 wave entities using existing HostileTargetAI / MeleeCombat / ProjectileCore / BowAndArrow / MobHealthTracker seams: target player or home to raid center; pillager ranged, vindicator/ravager melee, witch ranged fallback (no potion entity); deaths through exactly-once `recordRaiderDeath`; player death/timeout → DEFEAT; pause/dispose/reload safety; unit + browser E2E; no new AI framework, villagers, HOTV, patrols/outposts, persistence namespace, or 258 headed work. | exact | `openspec/changes/288-raider-combat-behavior/verification.md` (VERIFIED 11/11) + `specs/raider-combat-behavior/spec.md` | Exact functional outcome; full E2E 119/121 with visual-matrix Linux SwiftShader drift (28 fail/32 pass; band 0.022–0.062; baseline-equivalent class to 287 29/31); enchanting:227 known reload flake recurred; all raid E2E green incl. raider-combat 2/2; no 258 headed work or GPU evidence. | VERIFIED |
 | C289 | `289-enchantment-persistence-reload-integrity` | Find/fix root cause of enchantments null after pagehide+reload: DirtySaveQueue concurrent-drain single-flight+epoch latest-wins, inventory default component codec proofs, apply-time `savePlayerStateDurable`, e2e await real flush signal; before 3/20 fail → after 0/20; no storage redesign, no new namespace, no enchanting UI, no 258 headed work. | exact | `openspec/changes/289-enchantment-persistence-reload-integrity/verification.md` (VERIFIED 12/12) + `specs/enchantment-persistence-reload-integrity/spec.md` | Exact functional outcome; full E2E 120/121 with visual-matrix Linux SwiftShader drift (31 fail/29 pass; band 0.020–0.062; baseline-equivalent class to 288 28/32); enchanting:227 green (20/20 repeats + full suite); no 258 headed work or GPU evidence. | VERIFIED |
 | C290 | `290-hero-of-the-village-reward` | Reward raid VICTORY with Hero of the Village via existing status-effect runtime: Bad Omen→amplifier 0..4, duration 2400s (40 min @20 TPS), emerald trade discount `max(1, base-floor(base*(0.3+0.0625*amp)))` shown in trading UI, exactly-once grant, DEFEAT none, ephemeral effects (no new namespace), unit+browser E2E; no villagers/gifts/patrols/HUD redesign; no 258 headed work. | exact | `openspec/changes/290-hero-of-the-village-reward/verification.md` (VERIFIED 11/11) + `specs/hero-of-the-village-reward/spec.md` | Exact functional outcome; full E2E 122/123 with visual-matrix Linux SwiftShader drift (29 fail/31 pass; band 0.022–0.062; baseline-equivalent class to 289 31/29); HOTV 2/2 + enchanting:227 green; no 258 headed work or GPU evidence. | VERIFIED |
+| C291 | `291-pillager-patrol-bad-omen` | Seeded, rate-limited pillager patrols near the player (≥60000 persisted play ticks, daytime, loaded sky-exposed surface 24–47 blocks out per axis, not near a village or during an ACTIVE raid, one live patrol, 6000–6599 tick cooldown, 1-in-5 roll, 2–4 pillagers with exactly one captain) over reused 284 backend + 288 pillager combat; captain kill grants Bad Omen +1 (cap 5) via the 285 seam; raid start dismisses patrols; strict raid isolation; transient (no new persistence); unit + browser E2E; no outposts/banners/villagers/rendering; no 258 headed work. | exact | `openspec/changes/291-pillager-patrol-bad-omen/verification.md` (VERIFIED 11/11) + `specs/pillager-patrol-bad-omen/spec.md` | Exact functional outcome; patrol entities share the raid-wave limitation of being simulated but not rendered; Bad Omen remains ephemeral (285). Full E2E 124/125 with visual-matrix Linux SwiftShader drift (30 fail/30 pass; band 0.022–0.062; baseline-equivalent class to 290 29/31); pillager-patrol 2/2 + enchanting:227 green; no 258 headed work or GPU evidence. | VERIFIED |
 
 ## Master-plan-only features
 
@@ -371,18 +372,20 @@ Feature areas named in `MINECRAFT_PARITY_MASTER_PLAN.md` that no single numbered
 
 **Post-terminal note (2026-09-24, hero of the village):** Change `290-hero-of-the-village-reward` is VERIFIED 11/11 and exact: exactly-once VICTORY→HOTV grant (amp from Bad Omen, 2400s), emerald trading discount floor 1 visible in trading UI, DEFEAT/reload-safe, ephemeral effects. Full gates green (typecheck/lint/unit 5458+1/build/file-audit 2959/validate-state); full E2E 122/123 with visual:176 baseline-equivalent SwiftShader drift (29 fail/31 pass). Change 258 remains BLOCKED and Changes 259–290 remain VERIFIED; this matrix covers every numbered change 001–290.
 
+**Post-terminal note (2026-09-27, pillager patrols):** Change `291-pillager-patrol-bad-omen` is VERIFIED 11/11 and exact: seeded rate-limited patrols (2–4 pillagers, exactly one captain) over the reused 284 backend + 288 combat; captain kill → Bad Omen +1 (cap 5); raid-isolated; transient. Full gates green (typecheck/lint/unit 5504+1/build/file-audit 2969/validate-state); full E2E 124/125 with visual:176 baseline-equivalent SwiftShader drift (30 fail/30 pass). Change 258 remains BLOCKED and Changes 259–291 remain VERIFIED; this matrix covers every numbered change 001–291.
+
 ## Summary
 
 | Category | Rows |
 |---|---|
-| exact | 276 (275 numbered rows plus MP-19.4-1 Wither-like secondary boss via C252) |
+| exact | 277 (276 numbered rows plus MP-19.4-1 Wither-like secondary boss via C252) |
 | equivalent | 4 |
 | approx | 6 |
 | deferred | 1 (C258 — BLOCKED headed hardware-WebGL evidence) |
 | out-of-scope | 1 (MP-33-1 proprietary services/assets) |
 | n/a (documentation) | 4 (C248, C249, C250, C268) |
-| **Total rows** | **292** (290 change rows + 2 master-plan rows) |
+| **Total rows** | **293** (291 change rows + 2 master-plan rows) |
 
-Change-rows-only split: exact 275 / equivalent 4 / approx 6 / deferred 1 / n/a 4 = 290.
+Change-rows-only split: exact 276 / equivalent 4 / approx 6 / deferred 1 / n/a 4 = 291.
 
-**Coverage statement:** every numbered change 001–290 appears in exactly one row (bijective `C001`…`C290`, no duplicates, no orphan rows). Every completed change maps to a cited VERIFIED artifact; C258 is explicitly documented as BLOCKED rather than upgraded to VERIFIED. The two additional `MP-*` rows cover master-plan areas outside the numbered sequence; MP-19.4-1 is closed `exact` by C252. The matrix audit is cross-checked against the package evidence and `openspec/PROGRAM_STATE.json`; the current state validator still owns its historical 001–250 schema checks and does not treat C258 as verified.
+**Coverage statement:** every numbered change 001–291 appears in exactly one row (bijective `C001`…`C291`, no duplicates, no orphan rows). Every completed change maps to a cited VERIFIED artifact; C258 is explicitly documented as BLOCKED rather than upgraded to VERIFIED. The two additional `MP-*` rows cover master-plan areas outside the numbered sequence; MP-19.4-1 is closed `exact` by C252. The matrix audit is cross-checked against the package evidence and `openspec/PROGRAM_STATE.json`; the current state validator still owns its historical 001–250 schema checks and does not treat C258 as verified.

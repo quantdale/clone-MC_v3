@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-24T09:08:32Z",
+  "generatedAt": "2026-09-27T00:22:19Z",
   "reviewedSha": "3d0fd2d5aee39ae1706b7210ad27e675450f521c",
-  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288; +6 rows for 289 enchantment-persistence-reload-integrity package/implementation/tests; DirtySaveQueue.ts/Game.ts/enchanting.spec.ts/DirtySaveQueue.test.ts/InventoryComponentPersistence.test.ts re-reviewed in place for 289; +10 rows for 290 hero-of-the-village-reward package/implementation/tests; Game.ts/StatusEffect.ts re-reviewed in place for 290",
+  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288; +6 rows for 289 enchantment-persistence-reload-integrity package/implementation/tests; DirtySaveQueue.ts/Game.ts/enchanting.spec.ts/DirtySaveQueue.test.ts/InventoryComponentPersistence.test.ts re-reviewed in place for 289; +10 rows for 290 hero-of-the-village-reward package/implementation/tests; Game.ts/StatusEffect.ts re-reviewed in place for 290; +10 rows for 291 pillager-patrol-bad-omen package/implementation/tests; Game.ts re-reviewed in place for 291",
   "allowedReviewLevels": [
     "semantic",
     "mechanical",
@@ -10,7 +10,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 2959,
+  "total": 2969,
   "rows": [
     {
       "path": ".agent/EXECUTION_PROMPT.md",
@@ -31637,12 +31637,13 @@
         "persistence",
         "raid",
         "simulation",
+        "spawning",
         "status-effect",
         "trading"
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 284 implementation; no findings \u2014 additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits | 285 ephemeral badOmen + villageQuery + fixed-tick evaluate through 282 start seam; re-reviewed for 288 raider combat wiring; re-reviewed for 289 concurrent-drain / enchant persist integrity; re-reviewed for 290 HOTV grant + emerald trade discount wiring",
+      "reviewNotes": "reviewed for 284 implementation; no findings \u2014 additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits | 285 ephemeral badOmen + villageQuery + fixed-tick evaluate through 282 start seam; re-reviewed for 288 raider combat wiring; re-reviewed for 289 concurrent-drain / enchant persist integrity; re-reviewed for 290 HOTV grant + emerald trade discount wiring; re-reviewed for 291 pillager patrol tick/captain Bad Omen/raid-start dismissal/seams",
       "status": "audited"
     },
     {
@@ -47971,6 +47972,201 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/291-pillager-patrol-bad-omen/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "291 OpenSpec artifact OVERRIDE_DRAFT.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "spawning"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/291-pillager-patrol-bad-omen/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "291 OpenSpec artifact design.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "spawning"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/291-pillager-patrol-bad-omen/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "291 OpenSpec artifact proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "spawning"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/291-pillager-patrol-bad-omen/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "291 OpenSpec artifact tasks.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "spawning"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/291-pillager-patrol-bad-omen/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "291 OpenSpec artifact verification.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "spawning"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/291-pillager-patrol-bad-omen/specs/pillager-patrol-bad-omen/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "291 capability spec pillager-patrol-bad-omen",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "spawning",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/PillagerPatrol.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "291 seeded rate-limited pillager patrol planner + PillagerPatrolSystem (reuses 284 backend / 288 combat)",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "combat",
+        "determinism",
+        "raid",
+        "spawning"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/PillagerPatrol.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "291 unit tests for patrol gates, determinism, rate limit, captain uniqueness, rollback, despawn, combat",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "spawning",
+        "determinism"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/LivePillagerPatrol.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "291 integration oracle + Game source guards for captain Bad Omen grant/cap and raid isolation",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "spawning",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/e2e/pillager-patrol.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "291 browser E2E journey for patrol rules, captain Bad Omen, cap, raid isolation, reload",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "spawning"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
       "status": "audited"
     }
   ]

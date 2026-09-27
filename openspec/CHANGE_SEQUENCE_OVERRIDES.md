@@ -1191,3 +1191,18 @@ session starts fresh from `origin/main`.
 ### Sequence row (authoritative with CHANGE_SEQUENCE.md)
 
 | 291 | `291-pillager-patrol-bad-omen` | Seeded rate-limited pillager patrols; captain kill → Bad Omen +1 (cap 5); raid-isolated; no 258 headed work. |
+
+
+## 291-pillager-patrol-bad-omen — VERIFIED publication checkpoint (2026-09-27)
+
+Change **291-pillager-patrol-bad-omen** is VERIFIED at **11/11 (100%)** with exact C291
+matrix row. Seeded rate-limited pillager patrols (2–4 pillagers, exactly one captain)
+over the reused 284 backend + 288 combat; captain kill → Bad Omen +1 (cap 5) via the
+285 seam; raid-isolated; transient. Full E2E 124/125 (visual:176 SwiftShader 30/30
+drift baseline-equivalent class vs 290 29/31; enchanting green).
+
+- Session start: `bc777e1a7467a95dacefa77659b97e607a1efde2`.
+- Change 258 remains BLOCKED at 40/100 (no headed FPS/GPU work, no fake GPU evidence).
+- Changes 259–291 remain VERIFIED and are not reopened.
+- The next sequential slot after published VERIFIED 291 is **292** (spec-first package to
+  author; no prepared package exists). It is NOT implemented by the 291 track.

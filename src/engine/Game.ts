@@ -338,6 +338,13 @@ import { EntityManager } from '../simulation/EntityManager';
 import { createEntityManagerRaidBackend } from '../simulation/RaidEntityBackend';
 import { RaidWaveController, type RaidWaveApplyResult } from '../simulation/RaidWaveController';
 import {
+  BAD_OMEN_PER_CAPTAIN,
+  PillagerPatrolSystem,
+  type PatrolAttemptContext,
+  type PatrolAttemptDecision,
+  type PatrolSnapshot,
+} from '../simulation/PillagerPatrol';
+import {
   clearBadOmen as clearBadOmenState,
   createBadOmen,
   grantBadOmen as grantBadOmenState,
@@ -615,6 +622,12 @@ export class Game {
   private readonly raidWaveController: RaidWaveController;
   /** Raider combat AI over raidEntityManager (288). */
   private readonly raiderCombat: RaiderCombatSystem;
+  /** Dedicated non-persistent patrol EntityManager (291); isolated from raid waves. */
+  private readonly patrolEntityManager: EntityManager;
+  /** Seeded rate-limited pillager patrols (291) reusing the 284 backend + 288 combat. */
+  private readonly pillagerPatrol: PillagerPatrolSystem;
+  /** Extra patrol combat ticks advanced by `debugTickPatrols` (291 test seam only). */
+  private patrolDebugTickBias = 0;
   /** HUD raid feedback bar (282, null until the shell binds it). */
   private raidFeedbackEl: HTMLElement | null = null;
   /** Optional presentation-only village name for 286 raid bar (never invents). */
@@ -1082,6 +1095,13 @@ export class Game {
     this.raiderCombat = new RaiderCombatSystem({
       manager: this.raidEntityManager,
       registry: entityRegistry,
+    });
+    this.patrolEntityManager = new EntityManager(entityRegistry);
+    this.pillagerPatrol = new PillagerPatrolSystem({
+      manager: this.patrolEntityManager,
+      registry: entityRegistry,
+      dimension: this.overworldDimension,
+      rng: createNamedRng(this.seed, 'pillager-patrol'),
     });
     this.passiveMobs = new PassiveMobSystem(entityRegistry, this.seed);
     this.passiveMobRenderer = new PassiveMobRenderer(this.renderer.scene);
@@ -1779,6 +1799,7 @@ export class Game {
     this.raidState = null;
     this.raidWaveController.clear('dispose');
     this.raiderCombat.clear();
+    this.pillagerPatrol.clear('dispose');
     this.badOmen = createBadOmen();
     this.villageQueryOverride = null;
     this.clearVillageDetectionCache();
@@ -2430,6 +2451,9 @@ export class Game {
     // fixed tick after the raid tick; START_RAID goes through the 282 start
     // seam then clears omen exactly once.
     this.evaluateBadOmenVillageTrigger();
+    // 5.9 Pillager patrols (291): one patrol tick per unpaused fixed tick after
+    // the omen evaluate (cooldown → rate-limited attempt → despawn → combat).
+    this.tickPillagerPatrol();
 
     // 6. Survival + status systems.
     const headY = Math.floor(py + CONFIG.player.eyeHeight);
@@ -5550,6 +5574,9 @@ export class Game {
    * and the 285 omen trigger). Replaces any prior active/terminal raid.
    */
   private startRaidAt(x: number, y: number, z: number, badOmenLevel: number): RaidState {
+    // 291: a raid start dismisses any live patrol (no omen) so no patrol
+    // captain can exist during an ACTIVE raid.
+    this.pillagerPatrol.clear('raid-start');
     this.raidWaveController.clear('replace');
     this.raiderCombat.clear();
     const { state, spawned } = tickRaid(startRaid(x, y, z, badOmenLevel));
@@ -5559,6 +5586,145 @@ export class Game {
     }
     this.syncRaidFeedbackHud();
     return state;
+  }
+
+  /**
+   * Loaded, sky-exposed patrol spawn surface (291): feet Y above the column's
+   * top motion-blocking block when that block is solid ground (not air/water/
+   * lava) and the two cells above are neither solid nor fluid; else null.
+   * Only canonical (loaded) columns qualify.
+   */
+  private patrolSurfaceY(x: number, z: number): number | null {
+    const h = this.world.getCanonicalMotionBlockingHeight(x, z);
+    if (h === null || h < this.world.dimension.minY) return null;
+    const ground = this.world.getBlock(x, h, z);
+    if (ground === BlockId.Air || ground === BlockId.Water || ground === BlockId.Lava) return null;
+    for (const y of [h + 1, h + 2]) {
+      const id = this.world.getBlock(x, y, z);
+      if (id === BlockId.Water || id === BlockId.Lava) return null;
+      if (this.world.isSolid(x, y, z)) return null;
+    }
+    return h + 1;
+  }
+
+  /** Build the 291 attempt context from live Game state (only when an attempt is due). */
+  private buildPatrolContext(): PatrolAttemptContext {
+    const { x, y, z } = this.player.position;
+    return {
+      doMobSpawning: this.gameRules.doMobSpawning !== false,
+      difficulty: this.difficulty,
+      spectator: this.gameMode.mode === 'spectator',
+      worldTicks: this.statistics.time_played,
+      dayTick: this.currentDayTick(),
+      raidActive: this.raidState?.status === 'ACTIVE',
+      patrolAlive: this.pillagerPatrol.isAlive(),
+      nearVillage: this.resolveVillageQuery() !== null,
+      playerX: x,
+      playerY: y,
+      playerZ: z,
+      surfaceY: (sx, sz) => this.patrolSurfaceY(sx, sz),
+    };
+  }
+
+  private patrolShapeWorld(): ShapeWorld {
+    return {
+      getCollisionShape: (x: number, y: number, z: number) => {
+        if (!this.world.isSolid(x, y, z)) return VoxelShape.EMPTY;
+        return this.blockShapes.getCollisionShape(this.world.getBlock(x, y, z));
+      },
+    };
+  }
+
+  /** Shared per-tick patrol input minus the lazy context (291). */
+  private patrolCombatInput(): Omit<Parameters<PillagerPatrolSystem['tick']>[0], 'context'> {
+    const playerAlive = this.survival.health > 0 && isAttackable(this.gameMode.mode);
+    const raidActive = this.raidState?.status === 'ACTIVE';
+    return {
+      simTick: this.simTick + this.patrolDebugTickBias,
+      dt: 1 / 20,
+      playerX: this.player.position.x,
+      playerZ: this.player.position.z,
+      getPlayerTarget: () =>
+        playerAlive
+          ? { x: this.player.position.x, y: this.player.position.y, z: this.player.position.z }
+          : null,
+      world: this.patrolShapeWorld(),
+      resolver: this.collisionResolver,
+      onPlayerDamaged: (amount, sx, sz, reason) => this.hurtPlayer(amount, reason, sx, sz),
+      // Raid combat owns player melee while a raid is ACTIVE (no double hit).
+      playerMeleeRequested:
+        !raidActive && playerAlive && this.pointerLocked && this.input.isBreakHeld(),
+      onCaptainKilled: () => this.onPatrolCaptainKilled(),
+    };
+  }
+
+  /** One unpaused fixed-tick patrol step (291). Never touches raid state. */
+  private tickPillagerPatrol(): void {
+    if (this.disposed) return;
+    this.pillagerPatrol.tick({
+      ...this.patrolCombatInput(),
+      context: () => this.buildPatrolContext(),
+    });
+  }
+
+  /**
+   * Patrol captain killed (291): grant Bad Omen through the 285 seam (+1,
+   * capped at 5). Raid state is never read or written here.
+   */
+  private onPatrolCaptainKilled(): void {
+    if (this.disposed) return;
+    this.grantBadOmen(BAD_OMEN_PER_CAPTAIN);
+    this.showToast(`Patrol captain defeated — Bad Omen ${this.badOmen.level}`);
+  }
+
+  /** Read-only patrol snapshot for E2E and diagnostics (291; never persisted). */
+  getPatrolState(): PatrolSnapshot {
+    return this.pillagerPatrol.snapshot();
+  }
+
+  /**
+   * Test seam (291): run one natural attempt now with every gate (world age,
+   * daytime, village, raid, chance, surface) and redraw the cooldown.
+   */
+  debugRunPatrolAttempt(): PatrolAttemptDecision | null {
+    if (this.disposed) return null;
+    return this.pillagerPatrol.runAttempt(this.buildPatrolContext());
+  }
+
+  /**
+   * Test seam (291): force a patrol near the player bypassing the age/night/
+   * village/raid/chance gates and the cooldown (surface rules still apply).
+   */
+  debugSpawnPatrol(): PatrolSnapshot | null {
+    if (this.disposed) return null;
+    this.pillagerPatrol.forceSpawn(this.buildPatrolContext());
+    return this.pillagerPatrol.snapshot();
+  }
+
+  /** Test seam (291): damage a patrol member; captain death grants Bad Omen. */
+  debugDamagePatrolEntity(entityId: number, amount: number): boolean {
+    if (this.disposed) return false;
+    return this.pillagerPatrol.damageMember(entityId, amount, () => this.onPatrolCaptainKilled());
+  }
+
+  /** Test seam (291): run `n` patrol combat ticks (no spawn attempts). */
+  debugTickPatrols(n = 1): PatrolSnapshot | null {
+    if (this.disposed) return null;
+    const count = Math.max(0, Math.min(2000, Math.floor(Number.isFinite(n) ? n : 0)));
+    for (let i = 0; i < count; i++) {
+      // Advance only the patrol combat clock (attack cooldowns); the global
+      // simTick that seeds random ticks is left untouched.
+      this.patrolDebugTickBias++;
+      this.pillagerPatrol.tickCombat(this.patrolCombatInput());
+    }
+    return this.pillagerPatrol.snapshot();
+  }
+
+  /** Test seam (291): live patrol member position (null when absent). */
+  debugGetPatrolEntityPosition(entityId: number): { x: number; y: number; z: number } | null {
+    const e = this.patrolEntityManager.get(entityId);
+    if (!e || e.state !== 'ACTIVE') return null;
+    return { x: e.transform.x, y: e.transform.y, z: e.transform.z };
   }
 
   /** Active HOTV amplifier, or null when the effect is absent/expired (290). */
@@ -6270,6 +6436,8 @@ export class Game {
     // RaidState counters independently).
     this.raidWaveController.clear('clear');
     this.raiderCombat.clear();
+    // 291: patrols are transient like wave entities — never resurrected on reload.
+    this.pillagerPatrol.clear('pagehide');
     this.saveTimer = 0;
   };
 
