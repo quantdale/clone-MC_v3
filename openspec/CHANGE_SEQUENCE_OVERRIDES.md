@@ -1367,3 +1367,20 @@ while Change **258** remains **BLOCKED** and Changes **259–294** remain
 ### Sequence row (authoritative with CHANGE_SEQUENCE.md)
 
 | 295 | `295-throwable-splash-potion-entities` | Throwable splash potions (player + raid witches) over ProjectileCore with vanilla radius falloff and instant/duration effects; witch fixed-damage fallback retired; in-flight renderer; no 258 headed work. |
+
+
+## 295-throwable-splash-potion-entities — VERIFIED publication checkpoint (2026-09-27)
+
+Change **295-throwable-splash-potion-entities** is VERIFIED at **12/12 (100%)** with exact C295
+matrix row. Splash potions are throwable by the player (use action; creative
+keeps the potion) and by raid witches (vanilla harming/poison/slowness/weakness
+choice), fly over ProjectileCore, shatter on block/entity contact and apply
+vanilla distance-scaled instant/duration effects; the 288 witch fixed-damage
+fallback is retired; in-flight potions render. Full E2E 133/134
+(visual:176 SwiftShader 32 fail/28 pass drift, documented; enchanting green).
+
+- Session start: `b25dbc16325bf8b5189104a33fefc260fe20e0ee`.
+- Change 258 remains BLOCKED at 40/100 (no headed FPS/GPU work, no fake GPU evidence).
+- Changes 259–295 remain VERIFIED and are not reopened.
+- The next sequential slot after published VERIFIED 295 is **296** (spec-first package to
+  author). It is NOT implemented by the 295 track.

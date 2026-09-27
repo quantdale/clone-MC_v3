@@ -1,5 +1,7 @@
 # Spec: raider-combat-behavior
 
+> **Superseded in part by 295 (`295-throwable-splash-potion-entities`):** the witch fixed-damage fallback (`WITCH_RANGED_FALLBACK_DAMAGE = 5`) is retired. Raid witches now throw real splash potions (harming / poison / slowness / weakness by the vanilla choice table) through the 295 `SplashPotionSystem`; witch `baseDamage` is 0 and a witch without the potion sink never attacks. 288 is not reopened; the fallback text below is historical.
+
 ## Contract
 
 Live raid-wave entities spawned by Change 284 MUST fight using existing
@@ -14,9 +16,9 @@ persistence, village detection, and HUD contracts remain 282–287.
 - **Attackable player target**: the live player position when the mode allows
   attack (`isAttackable`) and health > 0; otherwise absent.
 - **Home**: the active `RaidState` center `(centerX, centerY, centerZ)`.
-- **Witch fallback**: ranged projectile damage using
+- **Witch fallback** *(retired by 295)*: ranged projectile damage using
   `WITCH_RANGED_FALLBACK_DAMAGE` because no throwable potion entity stepper
-  exists in-tree.
+  existed in-tree. Since 295 the witch throws splash potions instead.
 
 ## Invariants
 
@@ -42,7 +44,7 @@ The system MUST assign combat roles as follows:
 | `pillager` | RANGED | arrow damage formula over projectile impact speed |
 | `vindicator` | MELEE | registry `attackDamage` (6) via `resolveMeleeAttack` |
 | `ravager` | MELEE | registry `attackDamage` (12) via `resolveMeleeAttack` |
-| `witch` | RANGED | `WITCH_RANGED_FALLBACK_DAMAGE` (5) via projectile hit |
+| `witch` | RANGED | ~~`WITCH_RANGED_FALLBACK_DAMAGE` (5) via projectile hit~~ — since 295: splash potions (base damage 0) |
 
 Unknown keys MUST be treated as MELEE with damage `max(0, registryDamage ?? 3)`
 and MUST NOT throw on the tick path.
@@ -53,6 +55,7 @@ and MUST NOT throw on the tick path.
 - **WHEN** `raiderCombatRole` / `raiderCombatProfile` are evaluated
 - **THEN** pillager and witch are RANGED and vindicator and ravager are MELEE
 - **AND** witch profile baseDamage equals `WITCH_RANGED_FALLBACK_DAMAGE`
+  *(295: now 0 — witches harm only through thrown splash potions)*
 
 ### Requirement: Target player or home to raid center
 
@@ -108,7 +111,7 @@ hard live-projectile cap. Hits on the player MUST call `onPlayerDamaged`.
 - **THEN** the player receives damage > 0 through `onPlayerDamaged`
 - **AND** live projectiles never exceed the documented cap
 
-#### Scenario: Witch uses fallback damage
+#### Scenario: Witch uses fallback damage *(superseded by 295: witch throws a vanilla-chosen splash potion; see `openspec/changes/295-throwable-splash-potion-entities/specs/throwable-splash-potion-entities/spec.md`)*
 
 - **GIVEN** a witch projectile that hits the player
 - **WHEN** damage is computed

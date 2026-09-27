@@ -71,6 +71,7 @@ export const POTION_SPAWN_EYE_DROP = 0.1;
 export const WITCH_POTION_THROW_SPEED = 0.75;
 export const WITCH_EYE_HEIGHT = 1.62;
 export const PLAYER_POTION_EYE_HEIGHT = 1.62;
+export const SPLASH_POTION_HIT_MARGIN = 0.3;   // vanilla projectile pick margin
 export const SPLASH_VERTICAL_REACH = 2;
 export const INSTANT_DAMAGE_BASE = 6;
 export const INSTANT_HEALTH_BASE = 4;
@@ -98,6 +99,8 @@ chooseWitchPotion({ horizontalDistance, targetHealth, hasEffect, roll }): WitchP
 witchPotionRoll(entityId, simTick): number in [0,1)
 witchPotionContents(choice): PotionContents   // kind SPLASH
 isThrowableSplash(contents): boolean          // kind === 'SPLASH'
+splashThrowDecision({ canInteract, deathScreenOpen, depletesItems, stackCount,
+  isPotionItem, contents }): { throw: true; consume } | { throw: false; reason }
 class SplashPotionSystem {
   spawn(p: Omit<LiveSplashPotion,'id'>): LiveSplashPotion | null   // null past cap
   tick(world, resolver, targets): SplashShatter[]
@@ -168,7 +171,10 @@ Inaccuracy (vanilla 8.0 / 1.0 gaussian spread) and velocity lead are omitted
 
 Each step builds an indexed candidate list; candidate `i` becomes a
 ProjectileCore target with id `i`, centre at `y + height/2`, radius
-`height/2` (player 1.8, raiders 1.95, ravager 2.2). The owner's candidate
+`height/2 + 0.3` (player 1.8, raiders 1.95, ravager 2.2; the 0.3 is vanilla's
+projectile pick margin). Vanilla aim geometry means very close witches
+(≤ ~3 blocks) can lob over the target on flat ground (vanilla behaviour);
+the splash radius still catches near misses. The owner's candidate
 index is passed as `ownerId` (5-tick immunity). Witch-thrown potions only
 see the player candidate (I9).
 
@@ -207,7 +213,8 @@ fallback damage path.
 
 ### Consume rules
 
-`tryThrowSelectedSplashPotion()` returns false (nothing consumed) when:
+`tryThrowSelectedSplashPotion()` evaluates the pure `splashThrowDecision`
+and returns false (nothing consumed) when:
 not `canInteract(mode)`, death screen open, no selected stack / count 0,
 item is not `potion`, no `potion_contents`, kind ≠ SPLASH, or the system
 cap refuses. On success: consume iff `depletesItems(mode)`

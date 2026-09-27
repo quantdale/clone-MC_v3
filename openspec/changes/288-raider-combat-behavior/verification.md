@@ -1,5 +1,7 @@
 # Verification: 288-raider-combat-behavior
 
+> **Superseded in part by 295 (`295-throwable-splash-potion-entities`):** the witch fixed-damage fallback (`WITCH_RANGED_FALLBACK_DAMAGE = 5`) is retired. Raid witches now throw real splash potions (harming / poison / slowness / weakness by the vanilla choice table) through the 295 `SplashPotionSystem`; witch `baseDamage` is 0 and a witch without the potion sink never attacks. 288 is not reopened; the fallback text below is historical.
+
 Status: VERIFIED
 Completion: 100% (11/11)
 Advancement allowed: true

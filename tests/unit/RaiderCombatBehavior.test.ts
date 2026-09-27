@@ -9,7 +9,8 @@ import {
   raiderCombatProfile,
   raiderCombatRole,
   RaiderCombatSystem,
-  WITCH_RANGED_FALLBACK_DAMAGE,
+  WITCH_RANGED_COOLDOWN_TICKS,
+  type WitchPotionThrow,
   RAIDER_PROJECTILE_CAP,
   PLAYER_RAID_MELEE_DAMAGE,
 } from '../../src/simulation/RaiderCombatBehavior';
@@ -17,6 +18,10 @@ import { startRaid, type RaidState } from '../../src/simulation/RaidStateMachine
 
 const emptyWorld: ShapeWorld = {
   getCollisionShape: () => VoxelShape.EMPTY,
+};
+/** Solid ground below y = 64 so raiders stand still (295 witch cadence tests). */
+const floorWorld: ShapeWorld = {
+  getCollisionShape: (_x: number, y: number) => (y < 64 ? VoxelShape.FULL_CUBE : VoxelShape.EMPTY),
 };
 
 describe('RaiderCombatBehavior pure helpers', () => {
@@ -28,8 +33,9 @@ describe('RaiderCombatBehavior pure helpers', () => {
     expect(raiderCombatRole('unknown')).toBe('MELEE');
   });
 
-  it('pins witch fallback damage and registry melee damages', () => {
-    expect(raiderCombatProfile('witch', 0).baseDamage).toBe(WITCH_RANGED_FALLBACK_DAMAGE);
+  it('witch has no direct damage (295: potions only) and registry melee damages pin', () => {
+    expect(raiderCombatProfile('witch', 0).baseDamage).toBe(0);
+    expect(raiderCombatProfile('witch', 99).baseDamage).toBe(0);
     expect(raiderCombatProfile('witch', 0).role).toBe('RANGED');
     expect(raiderCombatProfile('vindicator', 6).baseDamage).toBe(6);
     expect(raiderCombatProfile('ravager', 12).baseDamage).toBe(12);
@@ -213,26 +219,97 @@ describe('RaiderCombatSystem', () => {
     expect(hits[0]).toBeGreaterThan(0);
   });
 
-  it('witch projectile uses fallback damage', () => {
+  function witchTick(
+    system: RaiderCombatSystem,
+    id: number,
+    simTick: number,
+    player: { x: number; y: number; z: number },
+    extra: {
+      hits?: number[];
+      sink?: (t: WitchPotionThrow) => boolean;
+      status?: { health: number; hasEffect: (k: string) => boolean };
+    },
+  ) {
+    return system.tick({
+      dt: 0.05,
+      simTick,
+      paused: false,
+      center: { x: 0, y: 64, z: 0 },
+      trackedIds: [id],
+      getPlayerTarget: () => player,
+      world: floorWorld,
+      resolver,
+      onPlayerDamaged: (amount) => extra.hits?.push(amount),
+      onRaiderDied: () => undefined,
+      playerMeleeRequested: false,
+      ...(extra.sink ? { throwWitchPotion: extra.sink } : {}),
+      ...(extra.status ? { getPlayerPotionStatus: () => extra.status! } : {}),
+    });
+  }
+
+  it('witch never deals fixed damage: no sink means no attack (295 retires the 288 fallback)', () => {
     const { system, entity } = spawn('witch', 0, 64, 0);
     const hits: number[] = [];
-    for (let t = 1; t <= 100; t++) {
-      system.tick({
-        dt: 0.05,
-        simTick: t,
-        paused: false,
-        center: { x: 0, y: 64, z: 0 },
-        trackedIds: [entity.id],
-        getPlayerTarget: () => ({ x: 3, y: 64, z: 0 }),
-        world: emptyWorld,
-        resolver,
-        onPlayerDamaged: (amount) => hits.push(amount),
-        onRaiderDied: () => undefined,
-        playerMeleeRequested: false,
+    for (let t = 1; t <= 100; t++) witchTick(system, entity.id, t, { x: 3, y: 64, z: 0 }, { hits });
+    expect(hits).toEqual([]);
+    expect(system.getProjectileCount()).toBe(0);
+  });
+
+  it('witch throws a vanilla-chosen splash potion through the sink on its cooldown', () => {
+    const { system, entity } = spawn('witch', 0, 64, 0);
+    const throws: WitchPotionThrow[] = [];
+    const hits: number[] = [];
+    let total = 0;
+    for (let t = 1; t <= 130; t++) {
+      const r = witchTick(system, entity.id, t, { x: 3, y: 64, z: 0 }, {
+        hits,
+        sink: (th) => {
+          throws.push(th);
+          return true;
+        },
+        status: { health: 20, hasEffect: () => false },
       });
+      total += r.potionsThrown;
     }
-    expect(hits.length).toBeGreaterThan(0);
-    expect(hits[0]).toBe(WITCH_RANGED_FALLBACK_DAMAGE);
+    expect(hits).toEqual([]);
+    expect(system.getProjectileCount()).toBe(0);
+    // First throw on the first tick, then every WITCH_RANGED_COOLDOWN_TICKS.
+    expect(throws.length).toBe(1 + Math.floor((130 - 1) / WITCH_RANGED_COOLDOWN_TICKS));
+    expect(total).toBe(throws.length);
+    const first = throws[0]!;
+    expect(first.ownerId).toBe(entity.id);
+    expect(first.choice).toBe('poison');
+    expect(first.contents.kind).toBe('SPLASH');
+    expect(first.contents.customEffects[0]!.typeId).toBe('minecraft:effect/poison');
+    expect(first.vx).toBeGreaterThan(0);
+    expect(Math.hypot(first.vx, first.vy, first.vz)).toBeCloseTo(0.75, 6);
+    expect(first.y).toBeCloseTo(64 + 1.62 - 0.1, 6);
+  });
+
+  it('witch choice reads the player status (slowness far, harming when poisoned and low)', () => {
+    const far = spawn('witch', 0, 64, 0);
+    const got: WitchPotionThrow[] = [];
+    witchTick(far.system, far.entity.id, 1, { x: 10, y: 64, z: 0 }, {
+      sink: (th) => (got.push(th), true),
+      status: { health: 20, hasEffect: () => false },
+    });
+    expect(got[0]?.choice).toBe('slowness');
+    const low = spawn('witch', 0, 64, 0);
+    const got2: WitchPotionThrow[] = [];
+    witchTick(low.system, low.entity.id, 1, { x: 5, y: 64, z: 0 }, {
+      sink: (th) => (got2.push(th), true),
+      status: { health: 6, hasEffect: (k) => k === 'poison' },
+    });
+    expect(got2[0]?.choice).toBe('harming');
+  });
+
+  it('a refused witch throw does not start the cooldown', () => {
+    const { system, entity } = spawn('witch', 0, 64, 0);
+    let calls = 0;
+    for (let t = 1; t <= 3; t++) {
+      witchTick(system, entity.id, t, { x: 3, y: 64, z: 0 }, { sink: () => (calls++, false) });
+    }
+    expect(calls).toBe(3);
   });
 
   it('clear drops projectiles and health tracking', () => {

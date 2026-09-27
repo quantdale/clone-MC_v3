@@ -1,8 +1,9 @@
 /**
  * Raider combat behavior (288): makes 284 wave entities fight using existing
  * HostileTargetAI / MeleeCombat / ProjectileCore / BowAndArrow / MobHealthTracker
- * seams. No new AI framework. Witch uses a documented ranged-projectile
- * fallback (no throwable potion entity stepper exists).
+ * seams. No new AI framework. Witches throw real splash potions (295) through
+ * the `throwWitchPotion` sink using the vanilla choice table; the 288
+ * fixed-damage witch fallback is retired.
  */
 import type { ShapeWorld } from '../world/CollisionResolver';
 import { CollisionResolver } from '../world/CollisionResolver';
@@ -22,6 +23,15 @@ import { computeFireVelocity, computeArrowDamage } from './BowAndArrow';
 import { MobHealthTracker } from './MobDropLoot';
 import { tickEntityPhysics, type EntityPhysicsBox } from './EntityPhysics';
 import type { RaidState } from './RaidStateMachine';
+import {
+  chooseWitchPotion,
+  witchPotionContents,
+  witchPotionRoll,
+  witchPotionSpawn,
+  witchPotionThrowVelocity,
+  type WitchPotionChoice,
+} from './SplashPotion';
+import type { PotionContents } from '../data/PotionItemData';
 import {
   HOSTILE_ATTACK_TICKS_SINCE_LAST,
   HOSTILE_ATTACKS_PER_SECOND,
@@ -45,8 +55,6 @@ export const RAIDER_HOME_STOP = 1.5;
 export const RAIDER_MELEE_COOLDOWN_TICKS = 20;
 export const PILLAGER_RANGED_COOLDOWN_TICKS = 40;
 export const WITCH_RANGED_COOLDOWN_TICKS = 60;
-/** Documented witch fallback: no potion-entity stepper in-tree. */
-export const WITCH_RANGED_FALLBACK_DAMAGE = 5;
 export const DEFAULT_RAIDER_MELEE_DAMAGE = 3;
 export const RAIDER_PROJECTILE_CAP = 32;
 export const PLAYER_RAID_MELEE_RANGE = 3.5;
@@ -79,10 +87,9 @@ export function raiderCombatProfile(
 ): RaiderCombatProfile {
   const role = raiderCombatRole(typeKey);
   if (role === 'RANGED') {
+    // Witches deal no direct damage (295): their harm comes from thrown potions.
     const base =
-      typeKey === 'witch'
-        ? WITCH_RANGED_FALLBACK_DAMAGE
-        : Math.max(0, registryDamage ?? DEFAULT_RAIDER_MELEE_DAMAGE);
+      typeKey === 'witch' ? 0 : Math.max(0, registryDamage ?? DEFAULT_RAIDER_MELEE_DAMAGE);
     return {
       role,
       meleeRange: RAIDER_MELEE_RANGE,
@@ -141,6 +148,25 @@ interface LiveProjectile {
   damage: number;
 }
 
+/** One witch splash-potion throw handed to the Game-owned potion system (295). */
+export interface WitchPotionThrow {
+  readonly ownerId: number;
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+  readonly vx: number;
+  readonly vy: number;
+  readonly vz: number;
+  readonly choice: WitchPotionChoice;
+  readonly contents: PotionContents;
+}
+
+/** Target facts the vanilla witch choice reads (295). */
+export interface PlayerPotionStatus {
+  readonly health: number;
+  hasEffect(key: string): boolean;
+}
+
 export interface RaiderCombatTickInput {
   readonly dt: number;
   readonly simTick: number;
@@ -158,6 +184,14 @@ export interface RaiderCombatTickInput {
   ) => void;
   readonly onRaiderDied: (entityId: number) => void;
   readonly playerMeleeRequested: boolean;
+  /**
+   * Witch potion sink (295). Returns whether the throw was accepted (the
+   * witch cooldown starts only then). Without a sink witches never attack —
+   * there is no fixed-damage fallback.
+   */
+  readonly throwWitchPotion?: (throwInfo: WitchPotionThrow) => boolean;
+  /** Player health/effects for the witch choice (295); absent = 20 HP, no effects. */
+  readonly getPlayerPotionStatus?: () => PlayerPotionStatus;
 }
 
 export interface RaiderCombatTickResult {
@@ -165,6 +199,7 @@ export interface RaiderCombatTickResult {
   readonly playerHits: number;
   readonly raiderDeaths: number;
   readonly projectiles: number;
+  readonly potionsThrown: number;
 }
 
 export interface RaiderDamageResult {
@@ -246,7 +281,7 @@ export class RaiderCombatSystem {
 
   tick(input: RaiderCombatTickInput): RaiderCombatTickResult {
     if (input.paused) {
-      return { ticked: 0, playerHits: 0, raiderDeaths: 0, projectiles: this.projectiles.length };
+      return { ticked: 0, playerHits: 0, raiderDeaths: 0, projectiles: this.projectiles.length, potionsThrown: 0 };
     }
 
     const tracked = new Set(input.trackedIds);
@@ -257,6 +292,7 @@ export class RaiderCombatSystem {
     let playerHits = 0;
     let raiderDeaths = 0;
     let ticked = 0;
+    let potionsThrown = 0;
     this.playerTargetGetter = input.getPlayerTarget;
     const player = this.playerTargetGetter();
     const resolver = input.resolver ?? this.defaultResolver;
@@ -315,6 +351,42 @@ export class RaiderCombatSystem {
             }
           }
         }
+      } else if (typeKey === 'witch' && player && acquired) {
+        // 295: vanilla witch splash potions through the Game sink.
+        const dist = horizontalDistance(current.transform.x, current.transform.z, player.x, player.z);
+        if (
+          input.throwWitchPotion &&
+          dist <= profile.rangedMax &&
+          input.simTick - bundle.lastAttackTick >= profile.attackCooldownTicks
+        ) {
+          const status = input.getPlayerPotionStatus?.() ?? { health: 20, hasEffect: () => false };
+          const choice = chooseWitchPotion({
+            horizontalDistance: dist,
+            targetHealth: status.health,
+            hasEffect: (key) => status.hasEffect(key),
+            roll: witchPotionRoll(entityId, input.simTick),
+          });
+          const from = { x: current.transform.x, y: current.transform.y, z: current.transform.z };
+          const vel = witchPotionThrowVelocity(from, player);
+          if (vel) {
+            const spawn = witchPotionSpawn(from.x, from.y, from.z);
+            const accepted = input.throwWitchPotion({
+              ownerId: entityId,
+              x: spawn.x,
+              y: spawn.y,
+              z: spawn.z,
+              vx: vel.vx,
+              vy: vel.vy,
+              vz: vel.vz,
+              choice,
+              contents: witchPotionContents(choice),
+            });
+            if (accepted) {
+              bundle.lastAttackTick = input.simTick;
+              potionsThrown++;
+            }
+          }
+        }
       } else if (profile.role === 'RANGED' && player && acquired) {
         const dist = horizontalDistance(current.transform.x, current.transform.z, player.x, player.z);
         if (
@@ -329,10 +401,7 @@ export class RaiderCombatSystem {
           // sample can still intersect the player hit sphere at typical standoff.
           const vel = computeFireVelocity(dirX, dirY, dirZ, 0.55);
           const speed = Math.hypot(vel.vx, vel.vy, vel.vz);
-          const damage =
-            typeKey === 'witch'
-              ? WITCH_RANGED_FALLBACK_DAMAGE
-              : Math.max(profile.baseDamage, computeArrowDamage(speed));
+          const damage = Math.max(profile.baseDamage, computeArrowDamage(speed));
           this.projectiles.push({
             state: {
               x: current.transform.x,
@@ -421,6 +490,7 @@ export class RaiderCombatSystem {
       playerHits,
       raiderDeaths,
       projectiles: this.projectiles.length,
+      potionsThrown,
     };
   }
 

@@ -84,7 +84,7 @@ import type { SerializedEntity } from '../storage/EntityRecord';
 import { WorldLife } from '../world/WorldLife';
 import { createDefaultEntityRegistry } from '../data/EntityType';
 import { createDefaultBiomeRegistry } from '../data/Biome';
-import { createResourceId, parseResourceId, resourceIdToString, type ResourceId } from '../data/ResourceId';
+import { createResourceId, parseResourceId, resourceIdToString, tryParseResourceId, type ResourceId } from '../data/ResourceId';
 import type { TagRegistry } from '../data/TagRegistry';
 import {
   PassiveMobWorldAdapter,
@@ -97,6 +97,7 @@ import { PassiveMobRenderer } from '../rendering/PassiveMobRenderer';
 import {
   HostileMobSystem,
   HOSTILE_SPAWN_CYCLE_INTERVAL_TICKS,
+  PLAYER_SENTINEL_ID,
 } from '../simulation/HostileMobBaseline';
 import { resolveShieldBlock, ShieldCooldownTracker } from '../simulation/ShieldBlocking';
 import { canRaiseShield, playerYawToShieldBearing } from '../simulation/LiveShieldWiring';
@@ -104,10 +105,12 @@ import { HostileMobRenderer } from '../rendering/HostileMobRenderer';
 import {
   RaiderRenderer,
   projectRaiderRenderEntries,
+  raiderKindOf,
   type RaiderMeshView,
   type RaiderRenderEntry,
 } from '../rendering/RaiderRenderer';
 import { BreedingSystem, type BreedableSpecies } from '../simulation/AnimalBreeding';
+import type { EntityInstance } from '../world/Entity';
 import {
   clearAll,
   resolveFrame,
@@ -161,7 +164,7 @@ import { menuSlotToStack } from '../inventory/MenuSlots';
 import type { MenuSlot } from '../inventory/MenuTransaction';
 import { FurnacePanel } from '../ui/FurnacePanel';
 import { BrewingPanel, type BrewingCursor } from '../ui/BrewingPanel';
-import { createPotionContents, POTION_CONTENTS_COMPONENT } from '../data/PotionItemData';
+import { createPotionContents, POTION_CONTENTS_COMPONENT, type PotionContents } from '../data/PotionItemData';
 import { AWKWARD_BASE } from '../inventory/BrewingRecipes';
 import {
   CAN_DESTROY_COMPONENT,
@@ -338,7 +341,24 @@ import {
 import {
   RaiderCombatSystem,
   forceRaidDefeat,
+  type WitchPotionThrow,
 } from '../simulation/RaiderCombatBehavior';
+import {
+  SPLASH_HISTORY_LIMIT,
+  SplashPotionSystem,
+  playerPotionSpawn,
+  playerPotionThrowVelocity,
+  splashThrowDecision,
+  type SplashShatter,
+  type SplashTarget,
+  type WitchPotionChoice,
+} from '../simulation/SplashPotion';
+import {
+  SplashPotionRenderer,
+  splashPotionTint,
+  type SplashPotionMeshView,
+  type SplashPotionRenderEntry,
+} from '../rendering/SplashPotionRenderer';
 import { deserializeRaidPayload, serializeRaidPayload } from '../simulation/RaidPersistence';
 import { EntityManager } from '../simulation/EntityManager';
 import { createEntityManagerRaidBackend } from '../simulation/RaidEntityBackend';
@@ -640,6 +660,14 @@ export class Game {
   private readonly pillagerPatrol: PillagerPatrolSystem;
   /** Raider + patrol box-mesh renderer (293), synced every frame in render(). */
   private readonly raiderRenderer: RaiderRenderer;
+  /** Live thrown splash potions (295): player throws + raid witch throws. */
+  private readonly splashPotions = new SplashPotionSystem();
+  /** In-flight splash potion bottles (295), synced every frame in render(). */
+  private readonly splashPotionRenderer: SplashPotionRenderer;
+  /** Bounded shatter history (295 observability/tests). */
+  private splashShatterLog: SplashShatter[] = [];
+  /** Bounded witch throw history (295 observability/tests). */
+  private witchPotionThrowLog: { ownerId: number; choice: WitchPotionChoice; accepted: boolean }[] = [];
   /** Extra patrol combat ticks advanced by `debugTickPatrols` (291 test seam only). */
   private patrolDebugTickBias = 0;
   /** HUD raid feedback bar (282, null until the shell binds it). */
@@ -1136,6 +1164,8 @@ export class Game {
     });
     this.raiderRenderer = new RaiderRenderer(this.renderer.scene);
     this.resources.track(this.raiderRenderer);
+    this.splashPotionRenderer = new SplashPotionRenderer(this.renderer.scene);
+    this.resources.track(this.splashPotionRenderer);
     this.passiveMobs = new PassiveMobSystem(entityRegistry, this.seed);
     this.passiveMobRenderer = new PassiveMobRenderer(this.renderer.scene);
     this.resources.track(this.passiveMobRenderer);
@@ -1442,6 +1472,8 @@ export class Game {
       // Shield use owns the right button while raised, so placement/container
       // use cannot consume the same press (279).
       blockUse: () => this.shieldRaisedValue,
+      // Held-item use (295): right-click throws a held splash potion.
+      onUseItem: () => this.tryThrowSelectedSplashPotion(),
       rng: Math.random,
       itemEntities: this.itemEntities,
       xpOrbs: this.xpOrbs,
@@ -1833,6 +1865,8 @@ export class Game {
     this.raidWaveController.clear('dispose');
     this.raiderCombat.clear();
     this.pillagerPatrol.clear('dispose');
+    // 295: in-flight potions are transient.
+    this.splashPotions.clear();
     // 292: Bad Omen is persisted with the player state, so its reset happens
     // after the final savePlayerStateDurable below (never write a zeroed omen).
     this.villageQueryOverride = null;
@@ -2492,6 +2526,9 @@ export class Game {
     // 5.9 Pillager patrols (291): one patrol tick per unpaused fixed tick after
     // the omen evaluate (cooldown → rate-limited attempt → despawn → combat).
     this.tickPillagerPatrol();
+    // 5.10 Splash potions (295): step every live potion once after the raid
+    // (witch throws) and patrol ticks; shatters apply to player and raiders.
+    this.tickSplashPotions();
 
     // 6. Survival + status systems.
     const headY = Math.floor(py + CONFIG.player.eyeHeight);
@@ -2562,6 +2599,21 @@ export class Game {
     ).entries;
   }
 
+  /** Splash potion rendering (295): one bottle per live potion (every frame, even paused). */
+  private syncSplashPotionRenderer(): void {
+    this.splashPotionRenderer.sync(this.projectSplashPotionEntries());
+  }
+
+  private projectSplashPotionEntries(): SplashPotionRenderEntry[] {
+    return this.splashPotions.getPotions().map((p) => ({
+      key: `potion:${p.id}`,
+      x: p.state.x,
+      y: p.state.y,
+      z: p.state.z,
+      tint: splashPotionTint(p.contents),
+    }));
+  }
+
   /** Raider rendering (293): derive the raider mesh set from live entities (every frame, even paused). */
   private syncRaiderRenderer(): void {
     this.raiderRenderer.sync(this.projectRaiderEntries());
@@ -2575,6 +2627,7 @@ export class Game {
     // the draw; World feeds queue depths/upload bytes via `worldMonitor`.
     this.perfMonitor.beginFrame();
     this.syncRaiderRenderer();
+    this.syncSplashPotionRenderer();
     this.phaseTimer.begin('renderSubmit');
     this.renderer.render();
     this.phaseTimer.end();
@@ -6076,7 +6129,233 @@ export class Game {
       },
       playerMeleeRequested:
         playerAlive && this.pointerLocked && this.input.isBreakHeld(),
+      // 295: witches throw real splash potions (the 288 fallback is retired).
+      throwWitchPotion: (t) => this.spawnWitchPotion(t),
+      getPlayerPotionStatus: () => ({
+        health: this.survival.health,
+        hasEffect: (key: string) => this.playerEffects.get(createResourceId('minecraft', `effect/${key}`)) !== undefined,
+      }),
     });
+  }
+
+  /** Witch potion sink (295): spawn into the shared potion system; false past the cap. */
+  private spawnWitchPotion(t: WitchPotionThrow): boolean {
+    const spawned = this.splashPotions.spawn({
+      x: t.x,
+      y: t.y,
+      z: t.z,
+      velocity: { vx: t.vx, vy: t.vy, vz: t.vz },
+      contents: t.contents,
+      thrower: 'witch',
+      owner: { kind: 'raid', entityId: t.ownerId },
+    });
+    this.witchPotionThrowLog.push({ ownerId: t.ownerId, choice: t.choice, accepted: spawned !== null });
+    if (this.witchPotionThrowLog.length > SPLASH_HISTORY_LIMIT) this.witchPotionThrowLog.shift();
+    return spawned !== null;
+  }
+
+  /**
+   * Player use action (295): throw the selected SPLASH potion from the eye
+   * along the look direction (vanilla −20° lift). Survival/adventure consume
+   * one (265 `depletesItems`); creative keeps it; spectators, the death
+   * screen, non-potions, NORMAL/LINGERING potions and a full potion cap are
+   * refused without consuming. Returns whether a potion was thrown.
+   */
+  tryThrowSelectedSplashPotion(): boolean {
+    if (this.disposed) return false;
+    const stack = this.inventory.getSelectedStack();
+    const potionDef = this.itemRegistry.getByKey('potion');
+    const contents = stack?.components?.get<PotionContents>(POTION_CONTENTS_COMPONENT);
+    const decision = splashThrowDecision({
+      canInteract: canInteract(this.gameMode.mode),
+      deathScreenOpen: this.deathScreenOpenValue,
+      depletesItems: depletesItems(this.gameMode.mode),
+      stackCount: stack?.count ?? 0,
+      isPotionItem: !!stack && !!potionDef && stack.id === potionDef.id,
+      contents,
+    });
+    if (!decision.throw || !contents) return false;
+    const velocity = playerPotionThrowVelocity(this.player.yaw, this.player.pitch);
+    if (!velocity) return false;
+    const { x, y, z } = this.player.position;
+    const spawn = playerPotionSpawn(x, y, z);
+    const spawned = this.splashPotions.spawn({
+      ...spawn,
+      velocity,
+      contents,
+      thrower: 'player',
+      owner: { kind: 'player', entityId: PLAYER_SENTINEL_ID },
+    });
+    if (!spawned) return false;
+    // Creative no-deplete (265): the potion flies, the stack stays.
+    if (decision.consume) this.inventory.consumeSelected();
+    this.hotbar.render();
+    return true;
+  }
+
+  /** Living splash candidates (295): player (not spectator), raid wave raiders, patrol members. */
+  private splashTargets(): SplashTarget[] {
+    const targets: SplashTarget[] = [];
+    if (this.survival.health > 0 && canInteract(this.gameMode.mode)) {
+      const { x, y, z } = this.player.position;
+      targets.push({ kind: 'player', entityId: PLAYER_SENTINEL_ID, x, y, z, height: 1.8 });
+    }
+    const add = (kind: 'raid' | 'patrol', e: EntityInstance | undefined): void => {
+      if (!e || e.state !== 'ACTIVE') return;
+      const raiderKind = raiderKindOf(e.typeId);
+      if (!raiderKind) return;
+      const { x, y, z } = e.transform;
+      targets.push({ kind, entityId: e.id, x, y, z, height: raiderKind === 'ravager' ? 2.2 : 1.95 });
+    };
+    for (const id of this.raidWaveController.getRaidWaveEntityIds()) add('raid', this.raidEntityManager.get(id));
+    for (const e of this.patrolEntityManager.getInDimension(this.overworldDimension)) add('patrol', e);
+    return targets;
+  }
+
+  /** One fixed-tick potion step (295); applies every shatter produced. */
+  private tickSplashPotions(): void {
+    if (this.disposed || this.splashPotions.count === 0) return;
+    const shapeWorld: ShapeWorld = {
+      getCollisionShape: (x: number, y: number, z: number) => {
+        if (!this.world.isSolid(x, y, z)) return VoxelShape.EMPTY;
+        return this.blockShapes.getCollisionShape(this.world.getBlock(x, y, z));
+      },
+    };
+    const shatters = this.splashPotions.tick(shapeWorld, this.collisionResolver, this.splashTargets());
+    for (const shatter of shatters) this.applySplashShatter(shatter);
+  }
+
+  /**
+   * Apply one shatter (295). Player: harming through `hurtPlayer` without a
+   * source (potions bypass the 279 shield rule; 265 creative exemption kept),
+   * healing through `survival.heal`, duration effects into `playerEffects`
+   * (unregistered ids skipped). Raiders: harming only, through the 288/291
+   * damage seams so deaths stay exactly-once.
+   */
+  private applySplashShatter(shatter: SplashShatter): void {
+    for (const hit of shatter.affected) {
+      const { target, application } = hit;
+      if (target.kind === 'player') {
+        for (const effect of application.effects) {
+          const id = tryParseResourceId(effect.typeId);
+          if (!id) continue;
+          try {
+            this.playerEffects.add(id, effect.durationSeconds, effect.amplifier);
+          } catch {
+            // Unregistered effect type: skipped (same rule as consume effects).
+          }
+        }
+        if (application.heal > 0) this.survival.heal(application.heal);
+        if (application.damage > 0) this.hurtPlayer(application.damage, 'magic');
+        this.hud.setSurvival(this.survival.health, this.survival.hunger);
+      } else if (application.damage > 0 && target.kind === 'raid') {
+        this.raiderCombat.damageRaider(target.entityId, application.damage, (id) => {
+          this.onRaidEntityRemoved(id);
+        });
+      } else if (application.damage > 0 && target.kind === 'patrol') {
+        this.pillagerPatrol.damageMember(target.entityId, application.damage, () => this.onPatrolCaptainKilled());
+      }
+    }
+    this.splashShatterLog.push(shatter);
+    if (this.splashShatterLog.length > SPLASH_HISTORY_LIMIT) this.splashShatterLog.shift();
+  }
+
+  /**
+   * Test-only setup seam (295): put one SPLASH potion (single effect
+   * `minecraft:effect/<effectKey>`) into the first empty hotbar slot (else the
+   * last hotbar slot, overwritten) and select it. Stands in for splash
+   * acquisition (no gunpowder / splash brewing exists). Returns the slot or −1.
+   */
+  testGrantSplashPotion(effectKey: string, durationSeconds = 45, amplifier = 0): number {
+    if (this.disposed || typeof effectKey !== 'string' || effectKey.length === 0) return -1;
+    const def = this.itemRegistry.getByKey('potion');
+    if (!def) return -1;
+    let contents: PotionContents;
+    try {
+      contents = createPotionContents({
+        kind: 'SPLASH',
+        customEffects: [{ typeId: `minecraft:effect/${effectKey}`, duration: durationSeconds, amplifier }],
+      });
+    } catch {
+      return -1;
+    }
+    const map = new StackComponentMap(createDefaultStackComponentRegistry()).with(
+      POTION_CONTENTS_COMPONENT,
+      contents as never,
+    );
+    const slots = this.inventory.slots;
+    if (slots.length === 0) return -1;
+    let index = slots.findIndex((st) => !st || st.count <= 0 || st.id === ItemId.Air);
+    if (index < 0) index = slots.length - 1;
+    slots[index] = { id: def.id, count: 1, components: map };
+    this.inventory.select(index);
+    this.hotbar.render();
+    return index;
+  }
+
+  /** Test seam (295): optionally set yaw/pitch, then run the real throw path. */
+  debugThrowSplashPotion(yaw?: number, pitch?: number): boolean {
+    if (this.disposed) return false;
+    if (typeof yaw === 'number' && Number.isFinite(yaw)) this.player.yaw = yaw;
+    if (typeof pitch === 'number' && Number.isFinite(pitch)) this.player.pitch = pitch;
+    return this.tryThrowSelectedSplashPotion();
+  }
+
+  /** Test seam (295): run `n` potion steps (clamped 0..2000); returns the live count. */
+  debugTickSplashPotions(n = 1): number {
+    if (this.disposed) return 0;
+    const count = Math.max(0, Math.min(2000, Math.floor(Number.isFinite(n) ? n : 0)));
+    for (let i = 0; i < count && this.splashPotions.count > 0; i++) this.tickSplashPotions();
+    return this.splashPotions.count;
+  }
+
+  /** Test seam (295): live potions, recent shatters/witch throws and renderer meshes. */
+  getSplashPotionState(): {
+    potions: { id: number; thrower: string; x: number; y: number; z: number; vx: number; vy: number; vz: number; ageTicks: number; effects: string[] }[];
+    shatters: { potionId: number; thrower: string; cause: string; x: number; y: number; z: number; affected: { kind: string; entityId: number; intensity: number; direct: boolean; damage: number; heal: number; effects: { typeId: string; durationSeconds: number; amplifier: number }[] }[] }[];
+    witchThrows: { ownerId: number; choice: WitchPotionChoice; accepted: boolean }[];
+    meshes: SplashPotionMeshView[];
+  } {
+    return {
+      potions: this.splashPotions.getPotions().map((p) => ({
+        id: p.id,
+        thrower: p.thrower,
+        x: p.state.x,
+        y: p.state.y,
+        z: p.state.z,
+        vx: p.state.vx,
+        vy: p.state.vy,
+        vz: p.state.vz,
+        ageTicks: p.state.ageTicks,
+        effects: p.contents.customEffects.map((e) => e.typeId),
+      })),
+      shatters: this.splashShatterLog.map((s) => ({
+        potionId: s.potionId,
+        thrower: s.thrower,
+        cause: s.cause,
+        x: s.x,
+        y: s.y,
+        z: s.z,
+        affected: s.affected.map((a) => ({
+          kind: a.target.kind,
+          entityId: a.target.entityId,
+          intensity: a.intensity,
+          direct: a.direct,
+          damage: a.application.damage,
+          heal: a.application.heal,
+          effects: a.application.effects.map((e) => ({ ...e })),
+        })),
+      })),
+      witchThrows: this.witchPotionThrowLog.map((t) => ({ ...t })),
+      meshes: this.splashPotionRenderer.getMeshes(),
+    };
+  }
+
+  /** Test seam (295): one player effect by key (`poison`), or null when absent. */
+  getPlayerEffect(key: string): { duration: number; amplifier: number } | null {
+    if (typeof key !== 'string' || key.length === 0) return null;
+    const inst = this.playerEffects.get(createResourceId('minecraft', `effect/${key}`));
+    return inst ? { duration: inst.duration, amplifier: inst.amplifier } : null;
   }
 
   /**
@@ -6607,6 +6886,8 @@ export class Game {
     this.raiderCombat.clear();
     // 291: patrols are transient like wave entities — never resurrected on reload.
     this.pillagerPatrol.clear('pagehide');
+    // 295: in-flight splash potions are transient too (never persisted).
+    this.splashPotions.clear();
     this.saveTimer = 0;
   };
 

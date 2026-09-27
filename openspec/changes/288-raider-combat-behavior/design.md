@@ -1,5 +1,7 @@
 # Design: 288-raider-combat-behavior
 
+> **Superseded in part by 295 (`295-throwable-splash-potion-entities`):** the witch fixed-damage fallback (`WITCH_RANGED_FALLBACK_DAMAGE = 5`) is retired. Raid witches now throw real splash potions (harming / poison / slowness / weakness by the vanilla choice table) through the 295 `SplashPotionSystem`; witch `baseDamage` is 0 and a witch without the potion sink never attacks. 288 is not reopened; the fallback text below is historical.
+
 ## Context/current state
 
 Raid track 282–287 is VERIFIED on `origin/main` (`3b26e2a`):
@@ -155,7 +157,7 @@ Pinned constants (unit-tested):
   - witch: `WITCH_RANGED_FALLBACK_DAMAGE`.
 - Block hit / expire: drop projectile. Cap live projectiles (e.g. 32).
 
-### Witch fallback rationale
+### Witch fallback rationale *(retired by 295 — splash potion entities now exist)*
 `PotionItemData` / brewing expand catalogs but there is no throwable potion
 entity stepper analogous to WitherSkull. Building one is out of scope.
 Witch therefore reuses the projectile core with a fixed damage constant and

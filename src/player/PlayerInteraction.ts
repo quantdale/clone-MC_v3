@@ -49,6 +49,7 @@ export class PlayerInteraction {
   private readonly camera: THREE.Camera;
   private readonly input?: InputState;
   private readonly onAction?: (action: InteractionAction, blockId?: number, coords?: InteractionCoords) => void;
+  private readonly onUseItem?: () => boolean;
   private readonly onBreakProgress?: (progress: number) => void;
   private readonly onToolBreak?: () => void;
   private readonly lootTables?: LootTableRegistry;
@@ -148,6 +149,12 @@ export class PlayerInteraction {
     canInteract?: () => boolean;
     /** Live shield rule: drain right-click use while a shield is raised. */
     blockUse?: () => boolean;
+    /**
+     * Held-item use (295, splash potions): called for a right-click with no
+     * block target, or on a non-container/non-bone-meal target before
+     * placement. Returns true when the item was used (placement is skipped).
+     */
+    onUseItem?: () => boolean;
   }) {
     this.world = opts.world;
     this.registry = opts.registry;
@@ -157,6 +164,7 @@ export class PlayerInteraction {
     this.camera = opts.camera;
     this.input = opts.input;
     this.onAction = opts.onAction;
+    this.onUseItem = opts.onUseItem;
     this.onBreakProgress = opts.onBreakProgress;
     this.onToolBreak = opts.onToolBreak;
     this.lootTables = opts.lootTables;
@@ -379,9 +387,15 @@ export class PlayerInteraction {
             // Bone meal is used on the block under the crosshair instead of placing.
             this.onAction?.('use', targetBlockId);
             this.lastActionTime = this.elapsed;
+          } else if (this.onUseItem?.()) {
+            // Held-item use (295): a thrown splash potion never places.
+            this.lastActionTime = this.elapsed;
           } else if (this.placeBlock()) {
             this.lastActionTime = this.elapsed;
           }
+        } else if (this.onUseItem?.()) {
+          // Right-click in the air (295): only item use applies.
+          this.lastActionTime = this.elapsed;
         }
       }
     }
