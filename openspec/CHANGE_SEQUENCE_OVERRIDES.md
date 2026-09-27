@@ -1471,3 +1471,39 @@ the TNT recipe is deferred (golden-captured crafting panel). Full E2E
 - Changes 259–297 remain VERIFIED and are not reopened.
 - The next sequential slot after published VERIFIED 297 is **298** (spec-first package to
   author). It is NOT implemented by the 297 track.
+
+## 298-glass-bottles-and-drinkable-potions — activated from published VERIFIED 297 (2026-09-27)
+
+The product/session instruction authorizes activating OpenSpec change
+**298-glass-bottles-and-drinkable-potions** as the sole ACTIVE implementation
+change while Change **258** remains **BLOCKED** and Changes **259–297** remain
+**VERIFIED**.
+
+- **Activation dependency (satisfied):** Change
+  **297-gunpowder-and-splash-brewing** is VERIFIED 12/12 and published at tip
+  base `2ecf781` (origin/main).
+- **Scope:**
+  - `glass_bottle` item (id 74, unused atlas tile 76).
+  - The crafting recipe is gated by a controlled `container-ui` golden
+    experiment. Only those 6 cells may be re-pinned, and only if the diff is
+    solely the new recipe row; otherwise there is no recipe.
+  - Raid witches drop bottles from the existing vanilla table.
+  - Filling a bottle at water in reach produces a water bottle. Survival
+    consumes one bottle; creative keeps it (no duplicate); the save is durable.
+  - Base-only `potion_contents` are accepted, so water + nether wart →
+    awkward completes in a real stand.
+  - Drinking a NORMAL potion over 32 ticks: cancel on release, full effects
+    with instant effects applied immediately, an empty bottle back in
+    survival/adventure, creative keeps the potion, spectators refused, a
+    water bottle has no effect; the mainhand drink takes priority over the
+    shield; the save is durable.
+  - Unit + browser E2E.
+- **Out of scope:** milk/buckets (absent), lingering potions, glowstone
+  dust/fermented spider eye, a survival nether wart source (no Nether), drink
+  slowdown/particles, TNT, live creepers; Change 258 headed FPS/GPU work or
+  status change; Change 299.
+- Change **258** stays **BLOCKED**; Changes **259–297** stay **VERIFIED**.
+
+### Sequence row (authoritative with CHANGE_SEQUENCE.md)
+
+| 298 | `298-glass-bottles-and-drinkable-potions` | Glass bottles (witch drops; recipe only if golden-isolated), water-bottle filling, base-only potions (water -> awkward brews), drinkable NORMAL potions (32 ticks, cancel, bottle return, creative keeps); durable saves; no 258 headed work. |
