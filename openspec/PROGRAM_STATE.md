@@ -1,9 +1,9 @@
 # Program State
 
-## Current checkpoint — 2026-09-27 Change 294-bad-omen-raid-escalation-and-death-parity VERIFIED 12/12 (100%); ready to publish; 295 next (author package only)
+## Current checkpoint — 2026-09-27 Change 294-bad-omen-raid-escalation-and-death-parity VERIFIED 12/12 (100%); published at `fdaaddd`; 295 next (author package only)
 
 > **Change `294-bad-omen-raid-escalation-and-death-parity` is VERIFIED 12/12 (100%)**; all baseline gates green (typecheck/lint/unit 5592+1/build/file-audit 2998/validate-state/full E2E 130 passed with visual matrix classified non-blocking; bad-omen-raid-escalation 3/3; enchanting:227 green); last completed Change 294-bad-omen-raid-escalation-and-death-parity is VERIFIED; Changes 001–294 are VERIFIED except Change 258 BLOCKED; Changes 259–294 are not reopened.
-> Session start head: `6d9931e90825e0b32a5af620314ba36d91b00f8e` (origin/main).
+> Session start head: `6d9931e90825e0b32a5af620314ba36d91b00f8e` (origin/main); published head `fdaaddd19503cd9d6dc3cab193f54e522100576b` (origin/main verified equal).
 > 294 makes Bad Omen inside a village with an ACTIVE raid escalate that raid in place (cap 5, waves per the 152 table and never reduced, patrols dismissed, omen consumed, one durable save; escalated victory → HOTV at the escalated level) and clears Bad Omen on every death durably; supersedes 285 replace-on-omen and 285/292 omen-kept-on-death; no schema change; no 258 headed work.
 
 - Gates: typecheck PASS; lint 0 errors / 85 warnings; unit 468 files 5592+1; build 262 modules; file-audit 2998; full E2E 130/131 (visual:176 SwiftShader 30/30 drift, band 0.022–0.062; enchanting green).
