@@ -7,6 +7,8 @@ Advancement allowed: true
 Base: `origin/main` `fdba42d` (296 VERIFIED). Worktree
 `/workspace/mc-worktrees/297`, branch `wt/297-gunpowder-and-splash-brewing`.
 Package commit `09f7bfb` precedes all implementation.
+Published by fast-forward (no force) to `origin/main` at `9dfc9c7`
+(feature commit; origin/main verified equal).
 
 ## Requirement evidence
 

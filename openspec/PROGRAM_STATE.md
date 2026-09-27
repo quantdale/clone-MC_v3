@@ -1,9 +1,9 @@
 # Program State
 
-## Current checkpoint — 2026-09-27 Change 297-gunpowder-and-splash-brewing VERIFIED 12/12 (100%); ready to publish; 298 next (author package only)
+## Current checkpoint — 2026-09-27 Change 297-gunpowder-and-splash-brewing VERIFIED 12/12 (100%); published at `9dfc9c7`; 298 next (author package only)
 
 > **Change `297-gunpowder-and-splash-brewing` is VERIFIED 12/12 (100%)**; all baseline gates green (typecheck/lint/unit 5713+1/build/file-audit 3031/validate-state/full E2E 136 passed with visual matrix classified non-blocking; gunpowder-splash-brewing 1/1; enchanting:227 green); last completed Change 297-gunpowder-and-splash-brewing is VERIFIED; Changes 001–297 are VERIFIED except Change 258 BLOCKED; Changes 259–297 are not reopened.
-> Session start head: `fdba42d738ebf0972ffecb5a6b38cddf3663fd54` (origin/main).
+> Session start head: `fdba42d738ebf0972ffecb5a6b38cddf3663fd54` (origin/main); published head `9dfc9c7fb4eeedd92468abccbe1ecc3659b3d8dc` (origin/main verified equal).
 > 297 adds the gunpowder item (atlas tile 75, no golden shift), vanilla creeper/witch gunpowder drop tables, live raid-witch death drops (item entities, exactly once), and splash brewing (potion + gunpowder → SPLASH with effects preserved; every other recipe keeps the bottle kind; persisted); testGrantSplashPotion stays test-only; TNT recipe deferred (golden-captured crafting panel); normal potions still not drinkable; no 258 headed work.
 
 - Gates: typecheck PASS; lint 0 errors / 85 warnings; unit 476 files 5713+1; build 266 modules; file-audit 3031; full E2E 136/137 (visual:176 SwiftShader 30 fail/30 pass drift, classified cell-by-cell with isolation reruns; enchanting green).
