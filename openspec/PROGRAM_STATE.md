@@ -1,9 +1,9 @@
 # Program State
 
-## Current checkpoint — 2026-09-27 Change 291-pillager-patrol-bad-omen VERIFIED 11/11 (100%); ready to publish; 292 next (author package only)
+## Current checkpoint — 2026-09-27 Change 291-pillager-patrol-bad-omen VERIFIED 11/11 (100%); published at `75fe9fc`; 292 next (author package only)
 
 > **Change `291-pillager-patrol-bad-omen` is VERIFIED 11/11 (100%)**; all baseline gates green (typecheck/lint/unit 5504+1/build/file-audit 2969/validate-state/full E2E 124 passed with visual matrix classified non-blocking; pillager-patrol 2/2; enchanting:227 green); last completed Change 291-pillager-patrol-bad-omen is VERIFIED; Changes 001–291 are VERIFIED except Change 258 BLOCKED; Changes 259–291 are not reopened.
-> Session start head: `bc777e1a7467a95dacefa77659b97e607a1efde2` (origin/main).
+> Session start head: `bc777e1a7467a95dacefa77659b97e607a1efde2` (origin/main); published head `75fe9fc86a707d8df78bcb6b5b9340d6eed3d325` (origin/main verified equal).
 > 291 ships seeded, rate-limited pillager patrols (≥60000 persisted play ticks, daytime, loaded sky-exposed surface 24–47 blocks out per axis, not near a village or during an ACTIVE raid, one live patrol, 6000–6599 tick cooldown, 1-in-5 roll, 2–4 pillagers with exactly one captain) over the reused 284 backend + 288 pillager combat; captain kill → Bad Omen +1 (cap 5) via the 285 seam; raid start dismisses patrols; patrols/Bad Omen transient (reload drops omen to 0). No outposts/banners/villagers/rendering/new persistence; no 258 headed work.
 
 - Gates: typecheck PASS; lint 0 errors / 85 warnings; unit 463 files 5504+1; build 259 modules; file-audit 2969; full E2E 124/125 (visual:176 SwiftShader 30/30 drift baseline-equivalent class vs 290 29/31; band 0.022–0.062; enchanting green).
