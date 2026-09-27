@@ -1,9 +1,9 @@
 # Program State
 
-## Current checkpoint — 2026-09-27 Change 295-throwable-splash-potion-entities VERIFIED 12/12 (100%); ready to publish; 296 next (author package only)
+## Current checkpoint — 2026-09-27 Change 295-throwable-splash-potion-entities VERIFIED 12/12 (100%); published at `e55aaba`; 296 next (author package only)
 
 > **Change `295-throwable-splash-potion-entities` is VERIFIED 12/12 (100%)**; all baseline gates green (typecheck/lint/unit 5637+1/build/file-audit 3010/validate-state/full E2E 133 passed with visual matrix classified non-blocking; splash-potion 3/3; enchanting:227 green); last completed Change 295-throwable-splash-potion-entities is VERIFIED; Changes 001–295 are VERIFIED except Change 258 BLOCKED; Changes 259–295 are not reopened.
-> Session start head: `b25dbc16325bf8b5189104a33fefc260fe20e0ee` (origin/main).
+> Session start head: `b25dbc16325bf8b5189104a33fefc260fe20e0ee` (origin/main); published head `e55aaba972cacd108ff6f918e3968a07c8fbc723` (origin/main verified equal).
 > 295 adds throwable splash potion entities (player use action with creative no-consume; raid witches with the vanilla potion choice) over ProjectileCore with vanilla splash falloff and instant/duration effects, retires the 288 witch fixed-damage fallback, and renders in-flight potions; no lingering/brewing/per-mob effects; no 258 headed work.
 
 - Gates: typecheck PASS; lint 0 errors / 85 warnings; unit 471 files 5637+1; build 264 modules; file-audit 3010; full E2E 133/134 (visual:176 SwiftShader 32 fail/28 pass drift, band 0.0219–0.0619; 2 high/1920x1080 flips are run-order variance; enchanting green).
