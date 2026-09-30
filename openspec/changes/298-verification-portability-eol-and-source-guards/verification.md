@@ -35,7 +35,7 @@ run for this change; CI remains authoritative for the coverage gate.
 | `file src/engine/Game.ts` | `... with CRLF line terminators` |
 | CRLF count in `src/engine/Game.ts` | 7381 |
 | bare-LF count in `src/engine/Game.ts` | 0 |
-| tracked text files CRLF in working tree | 2651 of 2934 |
+| tracked text files CRLF in working tree | 2661 of 2939 |
 
 ### E3 — The two failures (reproduced in isolation)
 

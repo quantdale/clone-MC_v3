@@ -19,12 +19,13 @@ anything about focus.
 
 ## Inspection findings (base `6212822`)
 
-**The eleven dialogs** (`src/index.html`, `aria-modal="true"`):
-
-```
-advancements, brewing, crafting, creative, enchanting, furnace,
-gamerule, recipebook, recovery, statistics, trading
-```
+**The eleven `aria-modal="true"` surfaces.** Ten are unnamed shared panel dialogs
+(`<div class="crafting-panel" role="dialog" aria-modal="true">`) nested inside the
+outer containers `crafting`, `furnace`, `brewing`, `enchanting`, `gamerule`,
+`recipebook`, `advancements`, `statistics`, `trading`, `creative`; the eleventh is
+`<div id="recovery" role="alertdialog" aria-modal="true">`. The panel dialogs carry
+no element id of their own — the outer container ids are what the UI classes
+address. `death-screen` declares `role="dialog"` but omits `aria-modal`.
 
 **No focus management anywhere.** The entire UI codebase contains exactly one
 `focus()` call, and it is unrelated to dialogs:
@@ -66,8 +67,9 @@ $ grep -rn "Escape" src --include='*.ts' | grep -v escapeHtml
 
 Panels close via `KeyC` only (`src/engine/InputManager.ts:381,421`).
 
-**Inconsistent modal semantics.** `death-screen` declares `role="dialog"` but
-**omits** `aria-modal="true"`, unlike the other eleven:
+**Inconsistent modal semantics.** `death-screen` is the only `role="dialog"`
+element and it declares **no** `aria-modal`, unlike the ten panel dialogs and the
+recovery alertdialog:
 
 ```html
 <div id="death-screen" class="ui hidden" role="dialog"

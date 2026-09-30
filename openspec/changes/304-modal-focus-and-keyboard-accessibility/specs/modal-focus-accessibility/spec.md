@@ -14,10 +14,13 @@ on one dismiss path with identical effects.
 
 ## Definitions
 
-- **Modal surface**: an element declaring `role="dialog"` and
-  `aria-modal="true"`. There are eleven at the base commit: `advancements`,
-  `brewing`, `crafting`, `creative`, `enchanting`, `furnace`, `gamerule`,
-  `recipebook`, `recovery`, `statistics`, `trading`.
+- **Modal surface**: an element declaring `aria-modal="true"`. There are eleven
+  at the base commit: ten unnamed shared panel dialogs (outer containers
+  `crafting`, `furnace`, `brewing`, `enchanting`, `gamerule`, `recipebook`,
+  `advancements`, `statistics`, `trading`, `creative`) plus `#recovery`
+  (`role="alertdialog"`). `death-screen` is a `role="dialog"` element without
+  `aria-modal` and is brought into scope by the consistent-semantics
+  requirement below.
 - **Focusable control**: a descendant matching
   `a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])`, in document order.
 - **Opener**: the element that had focus immediately before the modal opened.

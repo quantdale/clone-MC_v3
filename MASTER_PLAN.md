@@ -50,17 +50,18 @@ size. It is not a project that needs rescuing.
    hardcoded credentials, no `TODO`/`FIXME`/`HACK` markers, no `@ts-ignore`,
    no empty `catch` blocks anywhere under `src/`.
 
-### Major weaknesses — and they are concentrated in one theme
+### Major weaknesses — two themes, one dominant
 
-**The repository writes excellent gates and then does not run them reliably.**
+**Theme 1 (dominant): the repository writes excellent gates and then does not run
+them reliably.**
 
-Every finding in this audit falls into one of four classes, all of them
-verification/tooling integrity rather than product correctness:
+Six of the eight findings fall into this class:
 
 1. **The mandatory local unit gate is red on the maintainer's own platform.**
    Two tests fail deterministically because they assert on byte-exact source text
    that embeds `\n`, and the repository declares no line-ending convention
-   (no `.gitattributes`) while the host uses `core.autocrlf=true`.
+   (no `.gitattributes`) while the host uses `core.autocrlf=true`. Three more
+   such anchors are latent and pass only by accident.
 2. **The installed toolchain does not match the lockfile**, so the coverage gate
    — whose thresholds were explicitly calibrated for a specific provider
    version — cannot be validated locally at all.
@@ -72,9 +73,23 @@ verification/tooling integrity rather than product correctness:
    multiplayer throughput/wall-clock budget, and six of eight shipped
    verification scripts including the file-audit manifest integrity gate and a
    security preflight.
+5. **Game wiring is "verified" by regex over source text**, so tests are coupled
+   to comments and formatting rather than to behaviour.
+6. **One core lifecycle class has no unit coverage at all**
+   (`src/engine/Renderer.ts`), including its no-WebGL and GPU-context-restore
+   paths.
 
-The product code, by contrast, is in good shape. The 2 failing unit tests are a
-*test-infrastructure* defect, not a product defect.
+**Theme 2: one genuine product-quality defect, in accessibility.**
+
+7. **Eleven surfaces declare `aria-modal="true"` but none behaves like a modal.**
+   Focus is never moved into a dialog, never contained, the background is never
+   made unavailable, and there is no Escape dismissal — with zero focus
+   assertions in the whole test suite. This was found on the audit's second
+   pass, after accessibility had been covered only structurally the first time.
+
+Beyond these, the product code is in good shape: the 2 failing unit tests are a
+*test-infrastructure* defect, not a product defect, and the security review found
+no exploitable surface.
 
 ### Recommended end state
 
@@ -381,8 +396,8 @@ environment is not.
 | Field | Detail |
 |---|---|
 | **Category** | Accessibility / UX correctness |
-| **Affected** | `index.html` (11 dialogs); `src/ui/*.ts` (10 panel classes); `src/engine/Game.ts:3021`; `src/engine/InputManager.ts:381,421` |
-| **Evidence** | Eleven surfaces declare `role="dialog"` + `aria-modal="true"` (`advancements, brewing, crafting, creative, enchanting, furnace, gamerule, recipebook, recovery, statistics, trading`). The entire UI contains exactly **one** `focus()` call and it is unrelated (`Game.ts:3021` `recoveryBackupBtn.focus()`). Every panel's `show()`/`hide()` is a bare class toggle — **zero** focus calls across all ten panel classes. `grep -c 'inert' index.html` = **0**; no `tabIndex` anywhere in `src/`; **zero** Escape handling in `src/` (all `ESC` hits are `RAID_ESCALATION`/`ESCALATE_RAID`). `grep -rn "toBeFocused\|activeElement" tests/` returns **nothing**. `death-screen` has `role="dialog"` but no `aria-modal`. |
+| **Affected** | `index.html` (11 `aria-modal` surfaces); `src/ui/*.ts` (10 panel classes); `src/engine/Game.ts:3021`; `src/engine/InputManager.ts:381,421` |
+| **Evidence** | `grep -c 'aria-modal="true"' index.html` = **11**. Ten are unnamed shared panel dialogs (`<div class="crafting-panel" role="dialog" aria-modal="true" aria-labelledby="<x>-title">`) nested inside the outer containers `crafting`, `furnace`, `brewing`, `enchanting`, `gamerule`, `recipebook`, `advancements`, `statistics`, `trading`, `creative`; the eleventh is `<div id="recovery" role="alertdialog" aria-modal="true">`. The panel dialogs carry no id of their own — the outer container ids are what the UI classes address. The entire UI contains exactly **one** `focus()` call and it is unrelated (`Game.ts:3021` `recoveryBackupBtn.focus()`). Every panel's `show()`/`hide()` is a bare class toggle — **zero** focus calls across all ten panel classes. `grep -c 'inert' index.html` = **0**; no `tabIndex` anywhere in `src/`; **zero** Escape handling in `src/` (all `ESC` hits are `RAID_ESCALATION`/`ESCALATE_RAID`). `grep -rn "toBeFocused\|activeElement" tests/` returns **nothing**. `death-screen` is the only `role="dialog"` element and it omits `aria-modal`. |
 | **Why it matters** | `aria-modal="true"` promises assistive technology that the rest of the page is unavailable, while the real keyboard focus stays outside the dialog and `Tab` walks through the HUD buttons and hotbar *behind* the overlay. Assistive tech and the actual focus ring disagree — the exact mismatch `aria-modal` exists to prevent. Changes 208 and 246 are recorded VERIFIED, so accessibility is treated as covered; focus management never was, and no test asserts focus, which is why the gap is invisible to the suite. |
 | **Root cause** | Panel lifecycle predates the ARIA semantics and was never updated when the markup was made accessible. |
 | **Recommendation** | Change **304** — first-party `ModalFocus` helper; focus in on open, contained while open, background `inert`, focus returned to opener on close, Escape routed through the existing dismiss path; `death-screen` aligned. |
@@ -573,6 +588,27 @@ lowered.
 
 *Depends on:* 299 (a coverage number under a drifted provider is not evidence).
 
+### Phase 7 — Accessibility: make the modals real (P1)
+
+**Change 304 — `304-modal-focus-and-keyboard-accessibility`**
+
+*Objective:* make the eleven `aria-modal="true"` surfaces behave like modals.
+
+*Key actions:* first-party `ModalFocus` helper (pure `nextFocusIndex` /
+`focusableOrder` unit-testable in node, plus open / contain / inert / close /
+Escape wiring); additive per-panel `show()`/`hide()` integration with no
+signature or `KeyC` change; `aria-modal` added to `death-screen`; no rendering
+change and no new dependency.
+
+*Exit criterion:* browser assertions observe focus moving into a dialog on open,
+Tab not escaping it, background `inert` while open, focus returning to the opener
+on close, and Escape dismissing exactly once.
+
+*Depends on:* nothing blocking. It is the only change in the plan that alters
+user-facing runtime behaviour, which is why it is sequenced after the
+verification foundation (298–301) — the evidence those changes establish is what
+makes a behaviour change reviewable.
+
 ---
 
 ## 7. Parallel Workstreams and Sequencing
@@ -606,12 +642,15 @@ additive-only edits to the same files.
  │       │                           │
  │       ├──► 300  (P1, visual)      ├──► 301 (P1, gate wiring) ──► 302 (P1, perf)
  │       │                           │        │
- │       └──► 303  (P2, coverage)    │        └──► 302
+ │       ├──► 303  (P2, coverage)    │        └──► 302
+ │       │                           │
+ │       └──► 304  (P1, accessibility, behaviour change)
  │                                   │
  └───────────────────────────────────┘
 
-Parallel-safe pairs: (298 ∥ anything), (300 ∥ 302 ∥ 303 once 299 is in)
+Parallel-safe pairs: (298 ∥ anything), (300 ∥ 302 ∥ 303 ∥ 304 once 299 is in)
 Single-writer surfaces: package.json scripts + ci.yml  → 301, then 300/302 additive
+Product-behaviour change: 304 only  →  sequence after 298-301 so its evidence base is trustworthy
 ```
 
 ### 7.4 Staged rollout considerations
@@ -673,6 +712,19 @@ The repository may be considered to have a trustworthy verification baseline whe
 16. `npm audit --omit=dev` and `npm audit --audit-level=high` PASS.
 17. Every GitHub Action step is pinned to an immutable commit SHA (already true).
 18. The add-on security preflight runs in CI and PASSES.
+
+### 8.6 Accessibility
+
+18a. Every surface declaring `aria-modal="true"` moves keyboard focus into itself
+     on open, contains Tab and Shift+Tab within itself while open, marks the
+     background unavailable, and restores focus to the opener on close.
+18b. Every element declaring `role="dialog"` also declares `aria-modal="true"`
+     (currently only `death-screen` does not).
+18c. Escape, the close control, and `KeyC` all dismiss an open modal through one
+     implementation, and Escape has no effect when no modal is open.
+18d. The above is proven by browser tests that assert the document's active
+     element; a passing unit suite alone is not accepted as evidence.
+18e. No DOM-emulation dependency was added to satisfy these criteria.
 
 ### 8.6 Operations and release readiness
 
@@ -810,6 +862,7 @@ area.
 | Security surfaces | **exhaustive negative sweep** | No `innerHTML`/`outerHTML`/`insertAdjacentHTML`/`document.write`, no `eval`/`new Function`, no hardcoded secrets, no `TODO`/`FIXME`/`HACK`, no `@ts-ignore`, no empty `catch`, no `unsafe` shell execution. `localStorage` use confined to the legacy-migration path. E2E hook correctly build-gated by `VITE_E2E` and asserted by `check-release-bundle.mjs`. No findings raised — correctly, because no credible attack path exists in a client-only game with no auth or network surface. |
 | Dependencies | **exhaustive**: every declared dependency compared declared vs locked vs installed | Produces F-002. |
 | Coverage configuration | **deep** | `vitest.config.ts` thresholds, provider-specific caveats, the stale Renderer note. |
+| Accessibility / keyboard / focus | **deep (second pass)** | First pass covered this only *structurally* and wrongly reported the repository as specification-exhausted. The second pass read the full `index.html` ARIA surface (11 `aria-modal="true"` elements, 12 `role="dialog"`/`alertdialog` elements, 41 interactive controls, 22 with `aria-label`, all unlabeled ones having visible text as their accessible name) and swept `src/` for `focus()`, `inert`, `tabIndex`, focus traps and `Escape`. Produced F-008 / change 304. Lesson recorded: "structurally inspected" is not "inspected". |
 
 ### Areas explicitly not inspected line-by-line, with justification
 
@@ -864,7 +917,10 @@ three fabricated figures, and surfaced one material finding the first pass had
 missed:
 
 * **F-001 corrected** — "1796 tracked text files are CRLF" was an artefact of a
-  truncated file scan. Truth: **2651 of 2934** tracked text files are CRLF.
+  truncated file scan. Truth, by byte scan over `git ls-files`: **2661 of 2939**
+  tracked text files are CRLF, `src/engine/Game.ts` among them. (The exact total
+  varies by one or two files with the extension filter used; the material fact is
+  that the overwhelming majority are CRLF and that `Game.ts` is one of them.)
 * **F-006 corrected** — "524 newline-bearing anchors" was counted with an
   over-broad regex that was not scoped to assertions. Truth: **7 CRLF-fragile
   anchors (15 newline occurrences)** — 4 that fail today (each coupling a call to

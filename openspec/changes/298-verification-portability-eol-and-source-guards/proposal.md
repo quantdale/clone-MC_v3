@@ -27,8 +27,8 @@ Result:
 ## Inspection findings (base `2ecf781`)
 
 - `.gitattributes` does not exist. `git config core.autocrlf` is `true` on the
-  authoring host. **2651 of the 2934** tracked `*.ts|js|mjs|json|md|html|css|yml|yaml`
-  files are CRLF in the working tree; `src/engine/Game.ts` has 7381 CRLF sequences
+  authoring host. **2661 of 2939** tracked `*.ts|js|mjs|json|md|html|css|yml|yaml`
+  files are CRLF in the working tree (byte scan over `git ls-files`); `src/engine/Game.ts` has 7381 CRLF sequences
   and **0** bare LF sequences.
 - Confirmed failures (`npm test`, and reproduced in isolation with
   `npx vitest run tests/unit/LiveSplashPotion.test.ts tests/unit/LiveStatusEffectPersistence.test.ts`):

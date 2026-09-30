@@ -1,7 +1,11 @@
 # Tasks: 304-modal-focus-and-keyboard-accessibility
 
 - [x] **T1.** Record the finding evidence. Attach to `verification.md`: the
-  eleven `aria-modal="true"` element ids; `grep -rn "focus()" src/ui/*.ts
+  the exact `aria-modal="true"` element structure (ten unnamed shared panel
+  dialogs under outer containers crafting/furnace/brewing/enchanting/gamerule/
+  recipebook/advancements/statistics/trading/creative, plus the `recovery`
+  alertdialog), distinguishing the unnamed panel divs from the outer container ids;
+  `grep -rn "focus()" src/ui/*.ts
   src/engine/Game.ts` returning only `src/engine/Game.ts:3021`
   (`recoveryBackupBtn.focus()`); `show()`/`hide()` in all ten panel classes
   containing zero focus calls; `grep -rn "inert\|focusTrap\|trapFocus\|tabIndex"`

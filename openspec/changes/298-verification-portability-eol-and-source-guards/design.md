@@ -11,7 +11,7 @@ loop documented in `AGENTS.md` requires an implementing agent to run
 Two facts break that loop on the authoring platform:
 
 1. **There is no `.gitattributes`.** The authoring host runs
-   `core.autocrlf=true`, so 2651 of the 2934 tracked text files are checked out CRLF.
+   `core.autocrlf=true`, so 2661 of 2939 tracked text files are checked out CRLF.
    CI checks out LF. The repository therefore has two different byte sequences
    for the same commit depending on who runs the gate.
 2. **Eight unit suites read production source as text and assert on anchors

@@ -16,14 +16,21 @@ management — produced this finding, which the first pass had missed.
 
 ### E1 — Eleven surfaces declare themselves modal
 
-`grep -B2 'aria-modal' index.html` yields exactly these eleven ids:
+`index.html` contains exactly eleven elements carrying `aria-modal="true"`
+(`grep -c 'aria-modal="true"' index.html` = `11`). They are:
 
-```
-advancements, brewing, crafting, creative, enchanting, furnace,
-gamerule, recipebook, recovery, statistics, trading
-```
+* **Ten shared panel dialogs**, each an unnamed `<div class="crafting-panel"
+  role="dialog" aria-modal="true" aria-labelledby="<x>-title">`, nested inside an
+  outer container: `crafting`, `furnace`, `brewing`, `enchanting`, `gamerule`,
+  `recipebook`, `advancements`, `statistics`, `trading`, `creative`.
+* **One recovery alertdialog**: `<div id="recovery" class="ui hidden"
+  role="alertdialog" aria-modal="true" aria-labelledby="recovery-title">`.
 
-`grep -c 'aria-modal="true"' index.html` = `11`.
+Note the distinction that an earlier draft of this file got wrong: the ten panel
+dialogs are unnamed inner divs; the outer container ids listed above are the
+elements the UI classes address, not the `aria-modal` elements themselves. The
+count of eleven is unaffected. `death-screen` is the only `role="dialog"`
+element and is counted separately in E5.
 
 ### E2 — Focus is never moved into a dialog
 
@@ -88,7 +95,9 @@ and `:421` (`event.code === 'KeyC' …`).
      aria-labelledby="death-title" aria-describedby="death-outcome">
 ```
 
-`role="dialog"` is present but `aria-modal` is absent, unlike the other eleven.
+`role="dialog"` is present but `aria-modal` is absent. It is the only
+`role="dialog"` element that omits `aria-modal`; the ten panel dialogs and the
+recovery alertdialog all declare it.
 
 ### E6 — Nothing tests focus behaviour
 

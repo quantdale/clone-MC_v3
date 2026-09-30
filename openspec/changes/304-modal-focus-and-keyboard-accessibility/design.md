@@ -4,16 +4,21 @@
 
 ### What the markup promises
 
-Eleven elements in `index.html` declare themselves modal dialogs:
+Eleven elements in `index.html` carry `aria-modal="true"`:
 
-```
-advancements, brewing, crafting, creative, enchanting, furnace,
-gamerule, recipebook, recovery, statistics, trading
-```
+* **Ten unnamed shared panel dialogs** — `<div class="crafting-panel"
+  role="dialog" aria-modal="true" aria-labelledby="<x>-title">` — nested inside
+  the outer containers `crafting`, `furnace`, `brewing`, `enchanting`,
+  `gamerule`, `recipebook`, `advancements`, `statistics`, `trading`, `creative`.
+* **One recovery alertdialog** — `<div id="recovery" class="ui hidden"
+  role="alertdialog" aria-modal="true" aria-labelledby="recovery-title">`.
 
-each carrying `role="dialog"` and `aria-modal="true"`, with labelling and
-descriptive elements referenced. `death-screen` carries `role="dialog"` with
-`aria-labelledby` and `aria-describedby` but **no** `aria-modal`.
+The ten panel dialogs carry no element id of their own; the outer container ids
+listed above are what the UI classes address (e.g.
+`src/ui/CraftingPanel.ts:165` resolves `#<id>` from within its container).
+`death-screen` carries `role="dialog"` with `aria-labelledby` and
+`aria-describedby` but **no** `aria-modal`, making it the only `role="dialog"`
+element that omits it.
 
 That is good, deliberate markup. The defect is entirely in the runtime.
 
