@@ -264,7 +264,7 @@ environment is not.
 ### 3.5 Problematic / defective
 
 * Two unit tests fail deterministically on any CRLF checkout (F-001, P0).
-* The `linux-ci` visual baseline cannot match the current build for 18 cells
+* The `linux-ci` visual baseline cannot match the current build for 12 cells
   because of a HUD element added one day after the pin (F-003, P1).
 * The installed `node_modules` does not match `package-lock.json`; the coverage
   gate is therefore unmeasurable locally (F-002, P1).
@@ -318,7 +318,7 @@ environment is not.
 |---|---|
 | **Category** | Testing / release readiness / operability |
 | **Affected** | `tests/visual-golden/linux-ci/`, `tests/visual-golden/win32-local/`, `tests/e2e/visual-regression.spec.ts`, `tests/visual/matrix.ts` |
-| **Evidence (stale)** | Goldens pinned `6af6c6c` (2026-09-18). `#trading-open` added `05203ab` (2026-09-19, change 278) with `class="hud-chip"` and **no** `hidden`, so it renders in the `hud`, `render-world` and `start-overlay` families → **3 × 3 × 2 = 18 cells cannot match**. |
+| **Evidence (stale)** | Goldens pinned `6af6c6c` (2026-09-18). `#trading-open` added `05203ab` (2026-09-19, change 278) with `class="hud-chip"` and **no** `hidden`, so it renders in the `hud`, `render-world` and `start-overlay` families → **12 cells cannot match** (2 screens – 3 qualities – 2 resolutions). |
 | **Evidence (unstable)** | Six-run dossier: 30/30, 29/31, 31/29, 30/30, 30/30, 30/30 fail/pass with band **0.0202–0.0708** against `maxChangedFraction 0.02`. All 40 low/default cells byte-identical; every flip is `high/1920x1080`. |
 | **Evidence (cost)** | 16 `verification.md` files carry the "baseline-equivalent / SwiftShader drift" narrative; last full E2E of record is 136/137 with the visual matrix as the single failure. |
 | **Why it matters** | A gate whose noise floor equals its threshold detects nothing. Roughly half the matrix is permanently red, so a real regression in a currently-passing cell is camouflaged, and every session re-pays a manual triage cost. |
@@ -358,7 +358,7 @@ environment is not.
 |---|---|
 | **Category** | Architecture / test design |
 | **Affected** | `src/engine/Game.ts` (7,381 lines, ~278 methods); 8 `tests/unit/Live*.test.ts` + `*Renderer.test.ts` suites |
-| **Evidence** | Eight suites read production files as text and hold **524** literal-`\n` string literals inside match/contain/indexOf assertions. Anchors encode **comment markers**: `// 5.8`, `// 5.10`, `// 6. Survival`, `// 292`. |
+| **Evidence** | Eight suites read production files as text; **seven assertions carry CRLF-fragile anchors** (15 `\n` occurrences). Four fail today because they couple a call to the comment that follows it (`// 5.8`, `// 5.10`, `// 6. Survival`, `// 292`); three more extract a method body via `indexOf('\n  }\n')`, which is equally CRLF-fragile but currently passes by accident. |
 | **Why it matters** | These are formatting assertions masquerading as behavioural verification. Editing a comment, renaming a section, or reordering two tick calls breaks a "wiring" test even when behaviour is unchanged — and they already break on a line-ending change (F-001). |
 | **Root cause** | `Game.ts` is a DOM/Three-bound aggregate with no headless harness, so wiring cannot be exercised behaviourally; the source-text approach was a reasonable stopgap that was never hardened. |
 | **Recommendation** | Immediate fix in change **298** (normalise + `methodBody`-scoped structural anchors). Follow-on: extract headless composition seams so wiring becomes behaviourally testable; treat the god-object itself as a separate, larger gated change. |
@@ -375,6 +375,19 @@ environment is not.
 | **Why it matters** | Context-restore behaviour is exactly the kind of defect that produces a black screen after a GPU reset, and the change record shows this area repeatedly destabilising the browser gate (e.g. change 254's recorded "GPU-context restore drift 5 vs 4"). |
 | **Recommendation** | Change **303** — one defaulted `static webglFactory` construction seam plus a deterministic headless test suite. |
 | **Validation** | Measured Renderer.ts coverage greater than 0% under the locked toolchain, with no threshold lowered. |
+
+### F-008 — Modal dialogs declare `aria-modal` but never behave like modals (P1)
+
+| Field | Detail |
+|---|---|
+| **Category** | Accessibility / UX correctness |
+| **Affected** | `index.html` (11 dialogs); `src/ui/*.ts` (10 panel classes); `src/engine/Game.ts:3021`; `src/engine/InputManager.ts:381,421` |
+| **Evidence** | Eleven surfaces declare `role="dialog"` + `aria-modal="true"` (`advancements, brewing, crafting, creative, enchanting, furnace, gamerule, recipebook, recovery, statistics, trading`). The entire UI contains exactly **one** `focus()` call and it is unrelated (`Game.ts:3021` `recoveryBackupBtn.focus()`). Every panel's `show()`/`hide()` is a bare class toggle — **zero** focus calls across all ten panel classes. `grep -c 'inert' index.html` = **0**; no `tabIndex` anywhere in `src/`; **zero** Escape handling in `src/` (all `ESC` hits are `RAID_ESCALATION`/`ESCALATE_RAID`). `grep -rn "toBeFocused\|activeElement" tests/` returns **nothing**. `death-screen` has `role="dialog"` but no `aria-modal`. |
+| **Why it matters** | `aria-modal="true"` promises assistive technology that the rest of the page is unavailable, while the real keyboard focus stays outside the dialog and `Tab` walks through the HUD buttons and hotbar *behind* the overlay. Assistive tech and the actual focus ring disagree — the exact mismatch `aria-modal` exists to prevent. Changes 208 and 246 are recorded VERIFIED, so accessibility is treated as covered; focus management never was, and no test asserts focus, which is why the gap is invisible to the suite. |
+| **Root cause** | Panel lifecycle predates the ARIA semantics and was never updated when the markup was made accessible. |
+| **Recommendation** | Change **304** — first-party `ModalFocus` helper; focus in on open, contained while open, background `inert`, focus returned to opener on close, Escape routed through the existing dismiss path; `death-screen` aligned. |
+| **Constraint** | `vitest.config.ts` sets `environment: 'node'` and neither `jsdom` nor `happy-dom` is installed, so the pure helpers are unit-tested in node and the DOM behaviour must be proven in the browser suite. No DOM-emulation dependency is to be added. |
+| **Validation** | Browser assertions on `document.activeElement` after open / tab / close / Escape; `git diff --numstat -- tests/visual-golden/` empty. |
 
 ### Considered and deliberately not raised as findings
 
@@ -836,11 +849,40 @@ area.
 | F-005 Multiplayer budget never executed | P1 | `302-multiplayer-performance-gate-enforcement` | Authored, `openspec validate --strict` PASS |
 | F-006 Wiring verified by source-text assertions | P1 | Immediate fix in `298`; structural follow-on noted | Partially addressed |
 | F-007 `Renderer.ts` 0% unit coverage | P2 | `303-renderer-lifecycle-unit-coverage` | Authored, `openspec validate --strict` PASS |
+| F-008 Modal dialogs never manage focus | **P1** | `304-modal-focus-and-keyboard-accessibility` | Authored, `openspec validate --strict` PASS |
 
-**Total: 7 findings — 1 P0, 5 P1, 1 P2 — mapped to 6 implementation-ready
-OpenSpec changes: 91 tasks total, of which 12 are pre-implementation evidence
+**Total: 8 findings — 1 P0, 6 P1, 1 P2 — mapped to 7 implementation-ready
+OpenSpec changes: 109 tasks total, of which 14 are pre-implementation evidence
 capture tasks already performed by the audit (and are checked only because their
 evidence genuinely exists, recorded verbatim in each `verification.md`), leaving
-79 implementation tasks outstanding.**
+95 implementation tasks outstanding.**
+
+### Re-review (second pass) — corrections and one new finding
+
+A subsequent adversarial re-review of this audit's own work found and corrected
+three fabricated figures, and surfaced one material finding the first pass had
+missed:
+
+* **F-001 corrected** — "1796 tracked text files are CRLF" was an artefact of a
+  truncated file scan. Truth: **2651 of 2934** tracked text files are CRLF.
+* **F-006 corrected** — "524 newline-bearing anchors" was counted with an
+  over-broad regex that was not scoped to assertions. Truth: **7 CRLF-fragile
+  anchors (15 newline occurrences)** — 4 that fail today (each coupling a call to
+  the comment that follows it) and 3 latent ones that extract a method body via
+  a brace-and-newline search and currently pass only by accident.
+* **F-003 corrected** — "18 cells" was wrong because the reveal/hide block is an
+  exclusive `if/else if` chain: only `render-world` and `hud` ever show `#hud`
+  (`start-overlay` shows `#overlay`, `container-ui` shows `#crafting`). Truth:
+  **12 cells**.
+* **F-008 added** — accessibility, keyboard navigation and focus management had
+  been covered only structurally in the first pass. Re-reading them against the
+  markup showed eleven surfaces declaring `aria-modal="true"` while the runtime
+  never moves focus into them, never contains it, never marks the background
+  unavailable, and offers no Escape dismissal, with zero focus assertions
+  anywhere in the test suite. That is a material defect and became change 304.
+
+The lesson is recorded deliberately: "structurally inspected" is not the same as
+"inspected", and a numeric claim is not evidence until it has been re-derived by a
+second, independent method.
 
 **Planning is complete; implementation has not begun.**

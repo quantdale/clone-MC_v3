@@ -45,8 +45,10 @@ Measured from `index.html` at `2ecf781`:
 const hideHudFamily = ['render-world-no-hud', 'environment-day', 'environment-night'];
 ```
 
-Therefore the visible `#trading-open` chip is present in **3 screen families × 3
-qualities × 2 resolutions = 18 cells** whose committed golden predates it. Those
+The reveal/hide block is an exclusive `if/else if` chain, so only `render-world`
+and `hud` ever show `#hud`; `start-overlay` shows `#overlay` and `container-ui`
+shows `#crafting`. Therefore the visible `#trading-open` chip is present in **2 screens × 3
+qualities × 2 resolutions = 12 cells** whose committed golden predates it. Those
 cells cannot match the current build.
 
 ### E3 — The `high/1920x1080` column is structurally unstable
@@ -96,7 +98,7 @@ of which touch the goldens.
 
 | Requirement | Evidence | Status |
 |---|---|---|
-| Baseline matches the current build | E1/E2 prove 18 HUD-bearing cells cannot match. T4/T11/T12 unimplemented. | NOT VERIFIED |
+| Baseline matches the current build | E1/E2 prove 12 HUD-bearing cells cannot match. T4/T11/T12 unimplemented. | NOT VERIFIED |
 | Golden staleness is detected | E5 shows no such check exists. T5/T6/T7 unimplemented. | NOT VERIFIED |
 | Failures are actionable | E3 shows ~50% of the matrix is permanently red with the bound inside the noise floor. T8/T9/T10/T12 unimplemented. | NOT VERIFIED |
 | One canonical baseline policy | E1 shows two sets (`linux-ci` pinned 09-18, `win32-local` pinned 09-16) with no enforced refresh. T13 unimplemented. | NOT VERIFIED |

@@ -27,8 +27,8 @@ Result:
 ## Inspection findings (base `2ecf781`)
 
 - `.gitattributes` does not exist. `git config core.autocrlf` is `true` on the
-  authoring host. Every one of **1796** tracked `*.ts|js|mjs|json|md|html|css|yml|yaml`
-  files is CRLF in the working tree; `src/engine/Game.ts` has 7381 CRLF sequences
+  authoring host. **2651 of the 2934** tracked `*.ts|js|mjs|json|md|html|css|yml|yaml`
+  files are CRLF in the working tree; `src/engine/Game.ts` has 7381 CRLF sequences
   and **0** bare LF sequences.
 - Confirmed failures (`npm test`, and reproduced in isolation with
   `npx vitest run tests/unit/LiveSplashPotion.test.ts tests/unit/LiveStatusEffectPersistence.test.ts`):
@@ -36,19 +36,26 @@ Result:
     The test does `game.indexOf('    this.tickRaidFeedback();\n    // 5.8')`; the search returns `-1` because the file contains `...;\r\n    // 5.8`.
   - `tests/unit/LiveStatusEffectPersistence.test.ts` → *"Game source guards (292) > fixed tick counts the omen down beside the status-effect tick"* —
     `AssertionError: expected 'import * as THREE from \'three\';\r\n…' to match /this\.playerEffects\.tick\(dt\);\n\s*\/\/ 292[^\n]*\n\s*this\.tickBadOmenDuration\(dt\);/`.
-- Eight suites read production source as text and hold **524** literal-`\n`
-  string literals inside match/contain/indexOf assertions:
+- Eight suites read production source as text. Of those, **seven assertions carry
+  CRLF-fragile anchors** (15 `\n` occurrences) inside match/contain/indexOf calls:
 
-  | Test file | Reader line | Literal `\n` strings |
-  |---|---|---|
-  | `tests/unit/LiveSplashPotion.test.ts` | 233–235 | 81 |
-  | `tests/unit/RaiderRenderer.test.ts` | 298–299 | 94 |
-  | `tests/unit/LiveStatusEffectPersistence.test.ts` | 287 | 74 |
-  | `tests/unit/LiveRaidEscalation.test.ts` | 275 | 70 |
-  | `tests/unit/LivePeriodicStatusEffects.test.ts` | 238 | 62 |
-  | `tests/unit/LivePillagerPatrol.test.ts` | 206 | 49 |
-  | `tests/unit/LiveWitchGunpowderDrops.test.ts` | 216 | 49 |
-  | `tests/unit/SplashPotionRenderer.test.ts` | 102–103 | 45 |
+  | Test file | Line | Fragile anchor | Status |
+  |---|---|---|---|
+  | `tests/unit/LiveSplashPotion.test.ts` | 243 | `indexOf('    this.tickRaidFeedback();\n    // 5.8')` | **fails** |
+  | `tests/unit/LiveSplashPotion.test.ts` | 244 | `indexOf('    this.tickPillagerPatrol();\n    // 5.10')` | **fails** |
+  | `tests/unit/LiveSplashPotion.test.ts` | 245 | `indexOf('    this.tickSplashPotions();\n\n    // 6. Survival')` | **fails** |
+  | `tests/unit/LiveStatusEffectPersistence.test.ts` | 374 | `toMatch(/...tick(dt);\n...// 292...\n...this.tickBadOmenDuration(dt);/)` | **fails** |
+  | `tests/unit/LivePeriodicStatusEffects.test.ts` | 242 | `src.indexOf('\n  }\n', start)` | latent |
+  | `tests/unit/RaiderRenderer.test.ts` | 314 | `render.indexOf('\n  }\n')` | latent |
+  | `tests/unit/SplashPotionRenderer.test.ts` | 118 | `render.indexOf('\n  }\n')` | latent |
+
+  Two distinct patterns are present. The four failing anchors couple a call to
+  the **comment that follows it** (`// 5.8`, `// 5.10`, `// 6. Survival`,
+  `// 292`), so they break on a comment edit as well as on line endings. The
+  three latent anchors extract a method body by searching for `\n  }\n`,
+  which cannot match under CRLF either; they happen not to fail today only
+  because the resulting over-long slice still satisfies their assertions, so
+  they will break as soon as the surrounding assertions tighten.
 
 - Proof of the minimal fix (evaluated outside the repository, no product file
   changed): normalising the read text with `raw.replace(/\r\n/g, '\n')` makes
@@ -117,7 +124,7 @@ committed goldens, and its source-text tests are all LF-oriented, and it makes
 the tree *more* reproducible rather than less. The binary declarations preserve
 the 12 committed golden PNGs byte-for-byte.
 
-The 1796 already-checked-out files will be renormalised by a subsequent
+The CRLF files will be renormalised by a subsequent
 `git add --renormalize .`; that commit is expected to show a large
 line-ending-only diff and must be reviewed as such (no content change).
 

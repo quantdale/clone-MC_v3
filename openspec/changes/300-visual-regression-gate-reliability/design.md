@@ -54,7 +54,7 @@ const hideHudFamily = ['render-world-no-hud', 'environment-day', 'environment-ni
 ```
 
 So `#trading-open` — a visible chip introduced one day after the baseline was
-pinned — appears in 3 of 10 screen families × 3 qualities × 2 resolutions = **18
+pinned — appears in the only **2 of 10 screens that show `#hud`** (`render-world`, `hud`) × 3 qualities × 2 resolutions = **12
 cells that cannot match the committed baseline**. This is arithmetic, not
 rendering theory.
 

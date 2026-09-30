@@ -5,7 +5,7 @@
   `git log -S` for `trading-open` (`05203ab`, change 278), `shield-indicator`
   (`a9b7108`, change 279), `raid-feedback` (`f0e022c`, change 282); the measured
   `class` attribute of each element showing `trading-open` has no `hidden`;
-  and the `hideHudFamily` list proving 3 of 10 screen families capture the HUD
+  and the exclusive reveal/hide chain proving only 2 of 10 screens (`render-world`, `hud`) capture the HUD
   with chips visible. **Evidence already captured at base `2ecf781`.**
 
 - [x] **T2.** Record the instability evidence: the six-run table from the 297

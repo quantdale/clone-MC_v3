@@ -15,7 +15,7 @@ Three compounding problems:
    1 through 277"). On 2026-09-19 Change 278 added a **new, always-visible**
    `#trading-open` HUD chip to `index.html` (`class="hud-chip"`, no `hidden`),
    and Change 279 / 282 added `#shield-indicator` / `#raid-feedback` inside
-   `#hud`. The `hud`, `render-world` and `start-overlay` golden cells capture
+   `#hud`. The `hud`, `render-world` and `hud` golden cells capture
    `#hud` with these children visible, so the committed goldens can no longer
    match the current build. This is objective git evidence, not a rendering
    theory.
@@ -46,7 +46,9 @@ proving the failures are "baseline-equivalent", and it has been recorded as
 - `tests/e2e/visual-regression.spec.ts` shows the HUD for the `hud`,
   `render-world` and `start-overlay` screens and hides it only for
   `render-world-no-hud` / `environment-day` / `environment-night`. Therefore
-  `trading-open` is visible in 3 of the 10 screen families.
+  `trading-open` is visible in 2 of the 10 screens (`render-world`, `hud`):
+  `start-overlay` shows `#overlay` and `container-ui` shows `#crafting`, so
+  neither contains it.
 - The 297 verification dossier (`openspec/changes/297-.../verification.md`
   §"visual:176 SwiftShader drift") shows, across six independent runs (296 full,
   296 rerun, origin/main `218aabd`, 297 full, 297 rerun, origin/main `fdba42d`),
