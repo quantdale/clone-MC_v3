@@ -148,7 +148,10 @@ internally and `takeCursor` returns components alongside.
 - `testGrantAwkwardBottle()`: builds `{id: Potion, count: 1, components:
   potion_contents(awkward + zeroed placeholder effect)}` via
   `createPotionContents` (the 123 unit-test pattern) and inserts
-  merge-or-empty-slot; returns leftover count. E2E setup only.
+  merge-or-empty-slot; returns leftover count. E2E setup only. (298: base-only
+  potion contents are now valid and survival players brew awkward potions from
+  filled water bottles; the seam keeps its placeholder contents for the
+  existing E2E setups.)
 
 ## Failure modes
 

@@ -206,7 +206,7 @@ describe('live witch drops (297)', () => {
       o.start(3);
       for (const id of o.idsOf('witch')) o.combat.damageRaider(id, 10_000, o.sink);
       for (const d of o.drops) {
-        for (const s of d.stacks) expect([ItemId.Gunpowder, ItemId.Redstone, ItemId.Stick]).toContain(s.item);
+        for (const s of d.stacks) expect([ItemId.Gunpowder, ItemId.Redstone, ItemId.Stick, ItemId.GlassBottle]).toContain(s.item);
       }
     }
   });

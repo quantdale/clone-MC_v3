@@ -93,7 +93,9 @@ Extend the live Game exactly the way 251 wired the furnace:
    `tickBrewingStands()` beside `tickFurnaces()`; destruction handling with
    component-preserving drops; container exclusivity, walk-away/destroy gates,
    simulation gate, focus/relock/toggle/death/dispose parity; a test-only
-   `testGrantAwkwardBottle()` setup seam (E2E stand-in for bottle acquisition).
+   `testGrantAwkwardBottle()` setup seam (E2E stand-in for bottle acquisition;
+   298 adds survival acquisition via glass bottle → water bottle → nether wart,
+   and the seam stays test-only).
 5. **Shell**: `#brewing` block in `index.html`, `brewing-*` styles in
    `src/styles.css`, no binaries.
 6. **Tests**: host/panel/menu/slots/integration unit suites; fingerprint

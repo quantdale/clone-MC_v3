@@ -254,12 +254,20 @@ describe('brewing ticks (260)', () => {
       fuel: slot('test:fuel', 1),
       ingredient: slot('test:reagent', 2),
     });
-    // brewTicks()=3 with an empty-effects output: the engine pauses at
-    // completion (123 pinned rule), so timers advance but nothing consumes.
+    // brewTicks()=3 with an empty-effects output. Until 298 the engine paused
+    // at completion (123 rule: effects must be non-empty); base-only contents
+    // are now valid (vanilla water/awkward), so the bottle keeps its base and
+    // the brew completes, consuming exactly one reagent.
     expect(rig.host.tickBrewingStands()).toBe(1);
     const mid = rig.host.getBrewingState(X, Y, Z)!;
     expect(mid.brewTime).toBe(1);
     expect(mid.ingredient).toEqual(slot('test:reagent', 2));
+    rig.host.tickBrewingStands();
+    rig.host.tickBrewingStands();
+    const done = rig.host.getBrewingState(X, Y, Z)!;
+    expect(done.ingredient).toEqual(slot('test:reagent', 1));
+    expect(done.brewTime).toBe(0);
+    expect(done.bottle.components?.[POTION_CONTENTS_KEY]).toEqual({ base: 'test:awkward', kind: 'NORMAL', customEffects: [] });
   });
 
   it('completes the real awkward+redstone brew in 400 ticks', () => {

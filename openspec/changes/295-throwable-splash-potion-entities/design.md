@@ -284,4 +284,6 @@ intensity and application; witch throw records include choice.
 
 296+ may add lingering clouds, drinkable potions, gunpowder/splash brewing,
 poison/regeneration ticks, per-mob effects, witch self-healing.
-(Poison/regeneration/wither ticks landed in 296; gunpowder + splash brewing landed in 297.)
+(Poison/regeneration/wither ticks landed in 296; gunpowder + splash brewing landed in 297;
+drinkable NORMAL potions and water bottles landed in 298 — right-click now
+dispatches fill → drink → splash throw.)

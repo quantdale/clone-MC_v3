@@ -120,7 +120,8 @@ This stays a test-only seam. Its doc is updated: splash potions are now
 obtainable in survival (witch gunpowder → brewing), and the seam remains for
 deterministic effect/duration setup in tests. The seam is specified in
 spec.md. The awkward-bottle seam is still needed because glass/water bottles
-do not exist (260 limitation, documented).
+do not exist (260 limitation, documented). (298: glass/water bottles and the
+water → awkward brew now exist; the seam stays test-only.)
 
 ## D7. E2E
 

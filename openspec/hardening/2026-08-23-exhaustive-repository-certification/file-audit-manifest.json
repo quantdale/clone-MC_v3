@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-27T07:17:48Z",
+  "generatedAt": "2026-09-27T08:32:34Z",
   "reviewedSha": "3d0fd2d5aee39ae1706b7210ad27e675450f521c",
-  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288; +6 rows for 289 enchantment-persistence-reload-integrity package/implementation/tests; DirtySaveQueue.ts/Game.ts/enchanting.spec.ts/DirtySaveQueue.test.ts/InventoryComponentPersistence.test.ts re-reviewed in place for 289; +10 rows for 290 hero-of-the-village-reward package/implementation/tests; Game.ts/StatusEffect.ts re-reviewed in place for 290; +10 rows for 291 pillager-patrol-bad-omen package/implementation/tests; Game.ts re-reviewed in place for 291; +10 rows for 292 player-status-effect-persistence package/implementation/tests; Game.ts, PlayerStateRecord.ts, GamePersistence.ts and 5 tests re-reviewed in place for 292; +9 rows for 293 raider-and-patrol-rendering package/implementation/tests; Game.ts re-reviewed in place for 293; +10 rows for 294 bad-omen-raid-escalation-and-death-parity package/implementation/tests; Game.ts, 2 unit tests and the 285/291/292 design notes re-reviewed in place for 294; +12 rows for 295 throwable-splash-potion-entities package/implementation/tests; Game.ts, PlayerInteraction.ts, RaiderCombatBehavior.ts, its unit test and the 288 docs re-reviewed in place for 295; +10 rows for 296 periodic-status-effect-ticks package/implementation/tests; Game.ts, DamageType.ts, SurvivalSystem.ts, DeathRespawnPresentation.ts, 2 unit tests and the 295 docs re-reviewed in place for 296; +11 rows for 297 gunpowder-and-splash-brewing package/implementation/tests; ItemRegistry.ts, TextureAtlas.ts, BrewingRecipes.ts, BrewingStandBlockEntity.ts, RaiderCombatBehavior.ts, Game.ts, BlockItemSeparation.test.ts and the 295 docs re-reviewed in place for 297",
+  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288; +6 rows for 289 enchantment-persistence-reload-integrity package/implementation/tests; DirtySaveQueue.ts/Game.ts/enchanting.spec.ts/DirtySaveQueue.test.ts/InventoryComponentPersistence.test.ts re-reviewed in place for 289; +10 rows for 290 hero-of-the-village-reward package/implementation/tests; Game.ts/StatusEffect.ts re-reviewed in place for 290; +10 rows for 291 pillager-patrol-bad-omen package/implementation/tests; Game.ts re-reviewed in place for 291; +10 rows for 292 player-status-effect-persistence package/implementation/tests; Game.ts, PlayerStateRecord.ts, GamePersistence.ts and 5 tests re-reviewed in place for 292; +9 rows for 293 raider-and-patrol-rendering package/implementation/tests; Game.ts re-reviewed in place for 293; +10 rows for 294 bad-omen-raid-escalation-and-death-parity package/implementation/tests; Game.ts, 2 unit tests and the 285/291/292 design notes re-reviewed in place for 294; +12 rows for 295 throwable-splash-potion-entities package/implementation/tests; Game.ts, PlayerInteraction.ts, RaiderCombatBehavior.ts, its unit test and the 288 docs re-reviewed in place for 295; +10 rows for 296 periodic-status-effect-ticks package/implementation/tests; Game.ts, DamageType.ts, SurvivalSystem.ts, DeathRespawnPresentation.ts, 2 unit tests and the 295 docs re-reviewed in place for 296; +11 rows for 297 gunpowder-and-splash-brewing package/implementation/tests; ItemRegistry.ts, TextureAtlas.ts, BrewingRecipes.ts, BrewingStandBlockEntity.ts, RaiderCombatBehavior.ts, Game.ts, BlockItemSeparation.test.ts and the 295 docs re-reviewed in place for 297; +15 rows for 298 glass-bottles-and-drinkable-potions package/evidence/implementation/tests; Game.ts, PotionItemData.ts, ItemRegistry.ts, TextureAtlas.ts, GunpowderMobDrops.ts, three 297/separation tests, LiveBrewingHost.test.ts and 260/295/297 docs re-reviewed in place for 298",
   "allowedReviewLevels": [
     "semantic",
     "mechanical",
@@ -10,7 +10,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 3031,
+  "total": 3046,
   "rows": [
     {
       "path": ".agent/EXECUTION_PROMPT.md",
@@ -857,7 +857,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings; C298 row + C297 note",
       "status": "audited"
     },
     {
@@ -1212,7 +1212,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings; 298 row",
       "status": "audited"
     },
     {
@@ -1228,7 +1228,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings; 298 addendum",
       "status": "audited"
     },
     {
@@ -1244,7 +1244,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings; 298 state",
       "status": "audited"
     },
     {
@@ -1260,7 +1260,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings; 298 checkpoints",
       "status": "audited"
     },
     {
@@ -22592,7 +22592,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 260 live brewing production integration; 14/14 protocol sections incl. component-carry prerequisite and overflow-detach debt; no findings",
+      "reviewNotes": "auto-reviewed for 260 live brewing production integration; 14/14 protocol sections incl. component-carry prerequisite and overflow-detach debt; no findings; 298 note (survival awkward path, seam test-only)",
       "status": "audited"
     },
     {
@@ -22608,7 +22608,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 260 live brewing production integration; 11/11 protocol sections, no normative placeholders; no findings",
+      "reviewNotes": "auto-reviewed for 260 live brewing production integration; 11/11 protocol sections, no normative placeholders; no findings; 298 note (survival bottle acquisition)",
       "status": "audited"
     },
     {
@@ -31385,10 +31385,14 @@
       "imports": [],
       "importedBy": [],
       "testEvidence": [],
-      "riskAreas": [],
+      "riskAreas": [
+        "gameplay",
+        "inventory",
+        "status-effect"
+      ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings; re-reviewed for 298 (base-only potion contents: empty customEffects valid iff base is a non-empty string, factory and read guard)",
       "status": "audited"
     },
     {
@@ -31637,6 +31641,7 @@
       "riskAreas": [
         "combat",
         "gameplay",
+        "inventory",
         "lifecycle",
         "persistence",
         "raid",
@@ -31648,7 +31653,7 @@
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 284 implementation; no findings — additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits | 285 ephemeral badOmen + villageQuery + fixed-tick evaluate through 282 start seam; re-reviewed for 288 raider combat wiring; re-reviewed for 289 concurrent-drain / enchant persist integrity; re-reviewed for 290 HOTV grant + emerald trade discount wiring; re-reviewed for 291 pillager patrol tick/captain Bad Omen/raid-start dismissal/seams; re-reviewed for 292 status-effect/Bad Omen persistence (snapshot payload, restore, omen duration tick, durable save points, dispose ordering, seams); re-reviewed for 293 raider renderer wiring (tracked resource, per-frame sync in render from raid/patrol managers, render-state/visibility seams); re-reviewed for 294 omen trigger ESCALATE_RAID branch (in-place escalation, patrol dismissal, one durable save) and Bad Omen clear on death in respawnPlayer; re-reviewed for 295 splash potion wiring (use-item throw with consume rules, tick 5.10 potion step, shatter application to player/raid/patrol, witch potion sink, renderer sync, transient clears, test seams); re-reviewed for 296 periodic status-effect pass (step 6 before duration count-down, hurtPlayer/survival.heal routing, tickWithers global-tick wither stand-in retired, debugAddPlayerEffect/debugTickPeriodicStatusEffects seams); re-reviewed for 297 (witch death loot on all three consumed-death sites, injectable drop rng + debugSetMobDropRandomSequence/getLastMobDrops seams, testGrantSplashPotion doc test-only); no findings",
+      "reviewNotes": "reviewed for 284 implementation; no findings — additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits | 285 ephemeral badOmen + villageQuery + fixed-tick evaluate through 282 start seam; re-reviewed for 288 raider combat wiring; re-reviewed for 289 concurrent-drain / enchant persist integrity; re-reviewed for 290 HOTV grant + emerald trade discount wiring; re-reviewed for 291 pillager patrol tick/captain Bad Omen/raid-start dismissal/seams; re-reviewed for 292 status-effect/Bad Omen persistence (snapshot payload, restore, omen duration tick, durable save points, dispose ordering, seams); re-reviewed for 293 raider renderer wiring (tracked resource, per-frame sync in render from raid/patrol managers, render-state/visibility seams); re-reviewed for 294 omen trigger ESCALATE_RAID branch (in-place escalation, patrol dismissal, one durable save) and Bad Omen clear on death in respawnPlayer; re-reviewed for 295 splash potion wiring (use-item throw with consume rules, tick 5.10 potion step, shatter application to player/raid/patrol, witch potion sink, renderer sync, transient clears, test seams); re-reviewed for 296 periodic status-effect pass (step 6 before duration count-down, hurtPlayer/survival.heal routing, tickWithers global-tick wither stand-in retired, debugAddPlayerEffect/debugTickPeriodicStatusEffects seams); re-reviewed for 297 (witch death loot on all three consumed-death sites, injectable drop rng + debugSetMobDropRandomSequence/getLastMobDrops seams, testGrantSplashPotion doc test-only); no findings; re-reviewed for 298 (use dispatcher fill -> drink -> throw, fluid-raycast bottle fill with durable save, fixed-tick drink step with cancel rules, finishDrinking effects/bottle return/durable save, drinkable mainhand over shield, respawn drink reset, testGrantPotion/getDrinkState/getLastDrinkOutcome/getLastBottleFill seams, witch loot doc)",
       "status": "audited"
     },
     {
@@ -32093,10 +32098,12 @@
       "imports": [],
       "importedBy": [],
       "testEvidence": [],
-      "riskAreas": [],
+      "riskAreas": [
+        "inventory"
+      ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings; re-reviewed for 297 (gunpowder item (id 73, stack 64, icon tile 75, not placeable)); no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings; re-reviewed for 297 (gunpowder item (id 73, stack 64, icon tile 75, not placeable)); no findings; re-reviewed for 298 (ItemId.GlassBottle = 74 definition)",
       "status": "audited"
     },
     {
@@ -33038,10 +33045,12 @@
       "imports": [],
       "importedBy": [],
       "testEvidence": [],
-      "riskAreas": [],
+      "riskAreas": [
+        "rendering"
+      ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings; re-reviewed for 297 (TILE_INDEX.gunpowder = 75 painted into an unused cell with its per-tile PRNG (no other tile changes)); no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings; re-reviewed for 297 (TILE_INDEX.gunpowder = 75 painted into an unused cell with its per-tile PRNG (no other tile changes)); no findings; re-reviewed for 298 (glassBottle tile 76 original art in an unused cell)",
       "status": "audited"
     },
     {
@@ -38382,7 +38391,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings; re-reviewed for 297 (gunpowder added to the non-placeable raw-material allow-list); no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings; re-reviewed for 297 (gunpowder added to the non-placeable raw-material allow-list); no findings; re-reviewed for 298 (glass_bottle non-placeable allow-list)",
       "status": "audited"
     },
     {
@@ -41082,7 +41091,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 260 host oracles (place/remove/apply/tick/hydrate/quarantine/hostile); no findings",
+      "reviewNotes": "auto-reviewed for 260 host oracles (place/remove/apply/tick/hydrate/quarantine/hostile); no findings; re-reviewed for 298 (fast brew now completes with base-only output instead of pausing)",
       "status": "audited"
     },
     {
@@ -48791,7 +48800,7 @@
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings; re-reviewed for 296 downstream note; re-reviewed for 297 (downstream note: gunpowder + splash brewing landed in 297); no findings",
+      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings; re-reviewed for 296 downstream note; re-reviewed for 297 (downstream note: gunpowder + splash brewing landed in 297); no findings; 298 note (drinking + dispatcher)",
       "status": "audited"
     },
     {
@@ -49212,13 +49221,13 @@
       "importedBy": [],
       "testEvidence": [],
       "riskAreas": [
-        "gameplay",
         "brewing",
+        "gameplay",
         "loot"
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
+      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings; 298 note (bottles exist, seam test-only)",
       "status": "audited"
     },
     {
@@ -49292,13 +49301,13 @@
       "importedBy": [],
       "testEvidence": [],
       "riskAreas": [
-        "gameplay",
         "brewing",
+        "gameplay",
         "loot"
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
+      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings; 298 superseded notes (potion bases, drinking)",
       "status": "audited"
     },
     {
@@ -49312,13 +49321,13 @@
       "importedBy": [],
       "testEvidence": [],
       "riskAreas": [
-        "gameplay",
         "brewing",
+        "gameplay",
         "loot"
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
+      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings; re-reviewed for 298 (doc: glass bottle now a present witch-table item)",
       "status": "audited"
     },
     {
@@ -49332,13 +49341,13 @@
       "importedBy": [],
       "testEvidence": [],
       "riskAreas": [
-        "gameplay",
         "brewing",
+        "gameplay",
         "loot"
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
+      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings; re-reviewed for 298 (glass_bottle present; bottle roll drops real bottles)",
       "status": "audited"
     },
     {
@@ -49372,13 +49381,13 @@
       "importedBy": [],
       "testEvidence": [],
       "riskAreas": [
-        "gameplay",
         "brewing",
+        "gameplay",
         "loot"
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
+      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings; re-reviewed for 298 (glass bottles in the allowed witch drop set)",
       "status": "audited"
     },
     {
@@ -49399,6 +49408,304 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/298-glass-bottles-and-drinkable-potions/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "298 OpenSpec artifact OVERRIDE_DRAFT.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "inventory",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 298 glass-bottles-and-drinkable-potions; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/298-glass-bottles-and-drinkable-potions/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "298 OpenSpec artifact design.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "inventory",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 298 glass-bottles-and-drinkable-potions; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/298-glass-bottles-and-drinkable-potions/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "298 OpenSpec artifact proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "inventory",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 298 glass-bottles-and-drinkable-potions; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/298-glass-bottles-and-drinkable-potions/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "298 OpenSpec artifact tasks.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "inventory",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 298 glass-bottles-and-drinkable-potions; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/298-glass-bottles-and-drinkable-potions/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "298 OpenSpec artifact verification.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "inventory",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 298 glass-bottles-and-drinkable-potions; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/298-glass-bottles-and-drinkable-potions/specs/glass-bottles-and-drinkable-potions/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "298 capability spec glass-bottles-and-drinkable-potions",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "inventory",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 298 glass-bottles-and-drinkable-potions; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/298-glass-bottles-and-drinkable-potions/evidence/container-ui-recipe-experiment.png",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "298 golden-isolation evidence: container-ui default/1280x720 before | after (temporary glass-bottle recipe) | diff mask; the summary line wraps and every row shifts, so the recipe was not added",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "visual"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 298 glass-bottles-and-drinkable-potions; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/BottleFilling.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "298 pure glass-bottle filling: first-non-air fluid raycast over the DDA (water = source), water-bottle contents, vanilla createFilledResult decision (survival consume / lone-bottle replace / creative no-duplicate / no-room refusal)",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "inventory",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 298 glass-bottles-and-drinkable-potions; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/PotionDrinking.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "298 pure potion drinking: 32-tick vanilla use duration, start decision (NORMAL only, spectator/death refused), per-tick cancel rules, finishUsingItem outcome (instant 4<<amp heal / 6<<amp damage, full-duration effects, bottle return outside creative)",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "inventory",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 298 glass-bottles-and-drinkable-potions; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/BottleFilling.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "298 unit tests: fluid raycast hits/blocks/reach/invalid input, water-bottle contents, fill decision matrix",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "inventory",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 298 glass-bottles-and-drinkable-potions; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/PotionDrinking.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "298 unit tests: start decision, 32-tick finish, cancel reasons, immutability, stack keys, drink outcomes (duration, instant, creative, water/awkward, placeholder, mixed)",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "inventory",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 298 glass-bottles-and-drinkable-potions; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/GlassBottleItem.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "298 unit tests: glass bottle registry entry, isolated tile 76, unchanged ids, no crafting recipe (golden rule), witch bottle drops",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "inventory",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 298 glass-bottles-and-drinkable-potions; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/BasePotionContents.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "298 unit tests: base-only potion contents rule, seamless water -> awkward -> speed -> splash brewing chain, splash water, mid-brew round trip, inventory snapshot persistence of water/glass bottles",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "inventory",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 298 glass-bottles-and-drinkable-potions; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/GlassBottlesGameWiring.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "298 Game source guards: use dispatcher order, fixed-tick drink step, mainhand-over-shield priority, fill/drink durable saves, respawn reset, awkward seam doc",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "inventory",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 298 glass-bottles-and-drinkable-potions; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/e2e/glass-bottles-drinkable-potions.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "298 browser E2E: witch bottle drop pickup, real water fill, water+wart -> awkward -> speed in a real stand, hold-to-drink with effect + bottle, mid-drink cancel, reload persistence, water drink; harming, creative keep/no duplicate fill, spectator refusal",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "inventory",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 298 glass-bottles-and-drinkable-potions; no findings",
       "status": "audited"
     }
   ]

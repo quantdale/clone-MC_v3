@@ -1507,3 +1507,25 @@ change while Change **258** remains **BLOCKED** and Changes **259–297** remain
 ### Sequence row (authoritative with CHANGE_SEQUENCE.md)
 
 | 298 | `298-glass-bottles-and-drinkable-potions` | Glass bottles (witch drops; recipe only if golden-isolated), water-bottle filling, base-only potions (water -> awkward brews), drinkable NORMAL potions (32 ticks, cancel, bottle return, creative keeps); durable saves; no 258 headed work. |
+
+
+## 298-glass-bottles-and-drinkable-potions — VERIFIED publication checkpoint (2026-09-27)
+
+Change **298-glass-bottles-and-drinkable-potions** is VERIFIED at **12/12 (100%)** with exact C298
+matrix row. The glass bottle is a real item (id 74, unused atlas tile 76).
+The crafting recipe was **not** added: the controlled `container-ui`
+experiment showed the diff is not solely the new recipe row (the ingredient
+summary line gains "Glass: 0", wraps, and shifts the inventory grid and every
+row), so no golden was re-pinned (evidence under the package `evidence/`).
+Raid witches drop bottles from the vanilla table; filling at water yields a
+water bottle (durable); base-only potion contents make water + nether wart →
+awkward brew in a real stand; NORMAL potions are drunk over 32 ticks with
+cancel on release, full effects, bottle return (creative keeps) and a durable
+save. Milk is absent. Full E2E 138/139 (visual:176 SwiftShader
+31 fail/29 pass drift; enchanting green).
+
+- Session start: `2ecf7811ea110a7ce3ed025d4d87b3dc705d76f4`.
+- Change 258 remains BLOCKED at 40/100 (no headed FPS/GPU work, no fake GPU evidence).
+- Changes 259–298 remain VERIFIED and are not reopened.
+- The next sequential slot after published VERIFIED 298 is **299** (spec-first package to
+  author). It is NOT implemented by the 298 track.

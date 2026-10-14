@@ -357,6 +357,24 @@ import {
 } from '../simulation/SplashPotion';
 import { tickPeriodicStatusEffects } from '../simulation/PeriodicStatusEffects';
 import {
+  bottleFillDecision,
+  createWaterBottleContents,
+  fluidRaycast,
+  type BottleFillRefusal,
+} from '../simulation/BottleFilling';
+import {
+  DRINK_DURATION_TICKS,
+  drinkStartDecision,
+  isDrinkablePotion,
+  potionStackKey,
+  resolveDrinkOutcome,
+  startDrink,
+  tickDrink,
+  type DrinkCancelReason,
+  type DrinkOutcome,
+  type DrinkState,
+} from '../simulation/PotionDrinking';
+import {
   SplashPotionRenderer,
   splashPotionTint,
   type SplashPotionMeshView,
@@ -667,6 +685,14 @@ export class Game {
   private readonly splashPotionRenderer: SplashPotionRenderer;
   /** Bounded shatter history (295 observability/tests). */
   private splashShatterLog: SplashShatter[] = [];
+  /** In-progress potion drink (298); transient, never persisted (vanilla use progress). */
+  private drinkState: DrinkState | null = null;
+  /** Last completed drink (298, read-only observability). */
+  private lastDrinkOutcomeValue: (DrinkOutcome & { readonly creative: boolean }) | null = null;
+  /** Last cancelled drink reason (298, read-only observability). */
+  private lastDrinkCancelValue: DrinkCancelReason | null = null;
+  /** Last bottle fill attempt (298, read-only observability). */
+  private lastBottleFillValue: { readonly filled: boolean; readonly reason: BottleFillRefusal | null } | null = null;
   /** Bounded witch throw history (295 observability/tests). */
   private witchPotionThrowLog: { ownerId: number; choice: WitchPotionChoice; accepted: boolean }[] = [];
   /** Extra patrol combat ticks advanced by `debugTickPatrols` (291 test seam only). */
@@ -1477,8 +1503,9 @@ export class Game {
       // Shield use owns the right button while raised, so placement/container
       // use cannot consume the same press (279).
       blockUse: () => this.shieldRaisedValue,
-      // Held-item use (295): right-click throws a held splash potion.
-      onUseItem: () => this.tryThrowSelectedSplashPotion(),
+      // Held-item use (295/298): fill a held glass bottle at water, start
+      // drinking a held NORMAL potion, else throw a held splash potion.
+      onUseItem: () => this.useSelectedItem(),
       rng: Math.random,
       itemEntities: this.itemEntities,
       xpOrbs: this.xpOrbs,
@@ -2466,6 +2493,9 @@ export class Game {
     // transient cooldown before interaction consumes right-click (279).
     this.updateShieldRaised();
     this.interaction.update(dt);
+    // 2.1 Potion drinking (298): advance an in-progress drink once per
+    // unpaused fixed tick after interaction may have started it.
+    this.tickDrinking();
 
     // 3. Item entities, then xp orbs (collection order matters: items first so
     // xp pickup reads post-collection inventory state exactly as before).
@@ -3935,9 +3965,12 @@ export class Game {
   /**
    * Test-only setup seam (260, E2E-covered): grant one awkward potion bottle
    * (awkward base + zeroed placeholder effect, the 123 unit-test pattern)
-   * into the player inventory. Stands in for bottle acquisition (water
-   * bottles / creative menu are future work); the brewed loop itself runs on
-   * real ticks, real transactions, and real persistence. Returns leftover.
+   * into the player inventory. Test-only: since 298 a survival player gets an
+   * awkward potion by filling a glass bottle at water and brewing it with
+   * nether wart (base-only potions are valid); the seam stays for
+   * deterministic setup and is never reachable from gameplay. The brewed loop
+   * itself runs on real ticks, real transactions, and real persistence.
+   * Returns leftover.
    */
   testGrantAwkwardBottle(): number {
     const contents = createPotionContents({
@@ -5389,9 +5422,11 @@ export class Game {
     const definition = stack ? this.itemRegistry.getByLegacyId(stack.id) : undefined;
     const equipped = Boolean(stack && stack.count > 0 && definition?.key === 'shield');
     const disabled = equipped && this.shieldCooldown.isDisabled(0, this.simTick);
+    // 298: a drinkable potion in the mainhand (or a drink in progress) owns
+    // right-click before the offhand shield, as vanilla tries the mainhand first.
     this.shieldRaisedValue = canRaiseShield(
       this.pointerLocked,
-      canInteract(this.gameMode.mode) && this.shieldInteractionAvailable(),
+      canInteract(this.gameMode.mode) && this.shieldInteractionAvailable() && !this.mainhandDrinkOwnsUse(),
       this.input.isUseHeld(),
       equipped,
       disabled,
@@ -6215,6 +6250,238 @@ export class Game {
   }
 
   /**
+   * Held-item use dispatcher (298), in vanilla mainhand order: a glass bottle
+   * aimed at water fills, a NORMAL potion starts drinking, a SPLASH potion is
+   * thrown (295). Returns whether any use happened (never places a block).
+   */
+  private useSelectedItem(): boolean {
+    if (this.disposed) return false;
+    return this.tryFillSelectedBottle() || this.tryStartDrinkingSelected() || this.tryThrowSelectedSplashPotion();
+  }
+
+  /** The water-bottle stack produced by filling (298): `potion` + base-water contents. */
+  private createWaterBottleStack(): ItemStack | null {
+    const def = this.itemRegistry.getByKey('potion');
+    if (!def) return null;
+    const map = new StackComponentMap(createDefaultStackComponentRegistry()).with(
+      POTION_CONTENTS_COMPONENT,
+      createWaterBottleContents() as never,
+    );
+    return { id: def.id, count: 1, components: map };
+  }
+
+  /** Whether an inventory stack is component-identical to `stack` (298, creative duplicate rule). */
+  private inventoryHoldsStack(stack: ItemStack): boolean {
+    const same = (s: ItemStack): boolean =>
+      s.id === stack.id && s.count > 0 && !!s.components && !!stack.components && s.components.equals(stack.components);
+    return this.inventory.slots.some(same) || this.inventory.storage.some(same);
+  }
+
+  /** Whether a (component-carrying) stack of one fits into an empty slot or a matching stack. */
+  private canInsertStack(stack: ItemStack): boolean {
+    const max = this.itemRegistry.get(stack.id).stackSize;
+    const fits = (s: ItemStack): boolean =>
+      s.id === stack.id && s.count < max && !!s.components && !!stack.components && s.components.equals(stack.components);
+    if (this.inventory.slots.some((s) => (s.count ?? 0) <= 0 || fits(s))) return true;
+    return this.inventory.storage.some(fits) || this.inventory.storage.length < 27;
+  }
+
+  /**
+   * Glass bottle fill (298): with a glass bottle selected and water as the
+   * first non-air cell along the view ray within reach (vanilla SOURCE_ONLY;
+   * every live water block is a source), produce a water bottle. Survival/
+   * adventure consume one bottle (a lone bottle turns into the water bottle in
+   * place); creative keeps the bottle and never duplicates a held water
+   * bottle; no room while bottles remain refuses (components cannot ride item
+   * entities). Saved durably (289). Returns whether the bottle was filled.
+   */
+  tryFillSelectedBottle(): boolean {
+    if (this.disposed) return false;
+    const stack = this.inventory.getSelectedStack();
+    const bottleDef = this.itemRegistry.getByKey('glass_bottle');
+    const isGlassBottle = !!stack && !!bottleDef && stack.id === bottleDef.id;
+    if (!isGlassBottle) return false;
+    const water = this.createWaterBottleStack();
+    if (!water) return false;
+    const eye = this.player.eyePosition;
+    const dir = this.renderer.camera.getWorldDirection(new THREE.Vector3());
+    const hit = fluidRaycast(
+      (x, y, z) => this.world.getBlock(x, y, z),
+      { air: BlockId.Air, water: BlockId.Water },
+      eye,
+      dir,
+      CONFIG.reach,
+    );
+    const decision = bottleFillDecision({
+      canInteract: canInteract(this.gameMode.mode),
+      deathScreenOpen: this.deathScreenOpenValue,
+      depletesItems: depletesItems(this.gameMode.mode),
+      stackCount: stack?.count ?? 0,
+      isGlassBottle,
+      hitWater: !!hit && hit.water,
+      canInsertWaterBottle: this.canInsertStack(water),
+      hasWaterBottle: this.inventoryHoldsStack(water),
+    });
+    if (!decision.fill) {
+      this.lastBottleFillValue = { filled: false, reason: decision.reason };
+      return false;
+    }
+    if (decision.replaceSlot) {
+      this.inventory.setSelectedStack(water);
+    } else {
+      if (decision.consumeBottle) this.inventory.consumeSelected();
+      this.insertBrewingStackPreservingComponents(water);
+    }
+    this.lastBottleFillValue = { filled: true, reason: null };
+    this.hotbar.render();
+    this.audio.play('place');
+    this.savePlayerStateDurable();
+    return true;
+  }
+
+  /** Whether the mainhand holds a drinkable NORMAL potion or a drink is in progress (298). */
+  private mainhandDrinkOwnsUse(): boolean {
+    if (this.drinkState) return true;
+    const stack = this.inventory.getSelectedStack();
+    const potionDef = this.itemRegistry.getByKey('potion');
+    if (!stack || stack.count <= 0 || !potionDef || stack.id !== potionDef.id) return false;
+    return isDrinkablePotion(stack.components?.get<PotionContents>(POTION_CONTENTS_COMPONENT));
+  }
+
+  /** The {@link potionStackKey} of the selected stack, or null when empty. */
+  private selectedPotionStackKey(): string | null {
+    const stack = this.inventory.getSelectedStack();
+    if (!stack || stack.count <= 0) return null;
+    return potionStackKey(stack.id, stack.components?.get<PotionContents>(POTION_CONTENTS_COMPONENT));
+  }
+
+  /**
+   * Start drinking the selected NORMAL potion (298). Spectators, the death
+   * screen, non-potions and SPLASH/LINGERING potions are refused (splash
+   * falls through to the 295 throw). Returns whether a drink started.
+   */
+  tryStartDrinkingSelected(): boolean {
+    if (this.disposed || this.drinkState) return false;
+    const stack = this.inventory.getSelectedStack();
+    const potionDef = this.itemRegistry.getByKey('potion');
+    const contents = stack?.components?.get<PotionContents>(POTION_CONTENTS_COMPONENT);
+    const decision = drinkStartDecision({
+      canInteract: canInteract(this.gameMode.mode),
+      deathScreenOpen: this.deathScreenOpenValue,
+      depletesItems: depletesItems(this.gameMode.mode),
+      stackCount: stack?.count ?? 0,
+      isPotionItem: !!stack && !!potionDef && stack.id === potionDef.id,
+      contents,
+    });
+    if (!decision.start) return false;
+    const key = this.selectedPotionStackKey();
+    if (key === null) return false;
+    this.drinkState = startDrink(this.inventory.selected, key);
+    this.lastDrinkCancelValue = null;
+    return true;
+  }
+
+  /**
+   * One fixed-tick drink step (298): cancel on release / lost input / slot or
+   * stack change / spectator / death screen (nothing consumed), finish on the
+   * 32nd held tick.
+   */
+  private tickDrinking(): void {
+    const state = this.drinkState;
+    if (!state) return;
+    const result = tickDrink(state, {
+      useHeld: this.input.isUseHeld(),
+      inputAvailable: this.pointerLocked && this.shieldInteractionAvailable(),
+      selectedSlot: this.inventory.selected,
+      selectedStackKey: this.selectedPotionStackKey(),
+      canInteract: canInteract(this.gameMode.mode),
+      deathScreenOpen: this.deathScreenOpenValue,
+    });
+    if (result.kind === 'cancel') {
+      this.drinkState = null;
+      this.lastDrinkCancelValue = result.reason;
+      return;
+    }
+    if (result.kind === 'continue') {
+      this.drinkState = result.state;
+      return;
+    }
+    this.drinkState = null;
+    this.finishDrinking();
+  }
+
+  /**
+   * Finish a drink (298, vanilla `PotionItem.finishUsingItem`): duration
+   * effects at full duration into `playerEffects` (unregistered ids skipped),
+   * instant health/harming immediately (magic damage; 265 creative exemption
+   * kept by `hurtPlayer`), then survival/adventure shrink the potion and get
+   * an empty glass bottle (in the emptied slot, else the inventory, else
+   * dropped — plain bottles carry no components). Creative keeps the potion.
+   * Saved durably (289).
+   */
+  private finishDrinking(): void {
+    const stack = this.inventory.getSelectedStack();
+    const contents = stack?.components?.get<PotionContents>(POTION_CONTENTS_COMPONENT);
+    if (!stack || !contents) return;
+    const outcome = resolveDrinkOutcome(contents, depletesItems(this.gameMode.mode));
+    for (const effect of outcome.effects) {
+      const id = tryParseResourceId(effect.typeId);
+      if (!id) continue;
+      try {
+        this.playerEffects.add(id, effect.durationSeconds, effect.amplifier);
+      } catch {
+        // Unregistered effect type: skipped (same rule as consume/splash effects).
+      }
+    }
+    if (outcome.heal > 0) this.survival.heal(outcome.heal);
+    if (outcome.damage > 0) this.hurtPlayer(outcome.damage, 'magic');
+    if (outcome.consumePotion) {
+      const bottleDef = this.itemRegistry.getByKey('glass_bottle');
+      if (stack.count <= 1 && bottleDef) {
+        this.inventory.setSelectedStack({ id: bottleDef.id, count: 1 });
+      } else {
+        this.inventory.consumeSelected();
+        if (outcome.returnBottle && bottleDef) {
+          const left = this.inventory.addItem(bottleDef.id, 1);
+          if (left > 0) {
+            const p = this.player.position;
+            this.itemEntities.spawnLootStacks([{ item: bottleDef.id, count: left }], p.x, p.y + 1, p.z, Math.random);
+          }
+        }
+      }
+    }
+    this.lastDrinkOutcomeValue = { ...outcome, creative: !outcome.consumePotion };
+    this.hud.setSurvival(this.survival.health, this.survival.hunger);
+    this.hotbar.render();
+    this.audio.play('eat');
+    this.savePlayerStateDurable();
+  }
+
+  /** Read-only drink observability (298): the in-progress drink, or null. */
+  getDrinkState(): { active: true; slot: number; ticksUsed: number; durationTicks: number } | null {
+    const s = this.drinkState;
+    return s ? { active: true, slot: s.slot, ticksUsed: s.ticksUsed, durationTicks: DRINK_DURATION_TICKS } : null;
+  }
+
+  /** Read-only (298): the last completed drink outcome and the last cancel reason. */
+  getLastDrinkOutcome(): {
+    outcome: (DrinkOutcome & { readonly creative: boolean }) | null;
+    lastCancel: DrinkCancelReason | null;
+  } {
+    const o = this.lastDrinkOutcomeValue;
+    return {
+      outcome: o ? { ...o, effects: o.effects.map((e) => ({ ...e })) } : null,
+      lastCancel: this.lastDrinkCancelValue,
+    };
+  }
+
+  /** Read-only (298): the last glass-bottle fill attempt (filled or refusal reason). */
+  getLastBottleFill(): { filled: boolean; reason: BottleFillRefusal | null } | null {
+    const f = this.lastBottleFillValue;
+    return f ? { ...f } : null;
+  }
+
+  /**
    * Player use action (295): throw the selected SPLASH potion from the eye
    * along the look direction (vanilla −20° lift). Survival/adventure consume
    * one (265 `depletesItems`); creative keeps it; spectators, the death
@@ -6355,6 +6622,41 @@ export class Game {
     return index;
   }
 
+  /**
+   * Test-only setup seam (298): put one NORMAL (drinkable) potion with a single
+   * effect `minecraft:effect/<effectKey>` into the first empty hotbar slot (else
+   * the last slot, overwritten) and select it. Survival players brew their
+   * potions from water bottles (298); the seam only gives deterministic
+   * effect/duration setup (e.g. harming, creative drinking) and is never
+   * reachable from gameplay. Returns the slot or −1.
+   */
+  testGrantPotion(effectKey: string, durationSeconds = 45, amplifier = 0): number {
+    if (this.disposed || typeof effectKey !== 'string' || effectKey.length === 0) return -1;
+    const def = this.itemRegistry.getByKey('potion');
+    if (!def) return -1;
+    let contents: PotionContents;
+    try {
+      contents = createPotionContents({
+        kind: 'NORMAL',
+        customEffects: [{ typeId: `minecraft:effect/${effectKey}`, duration: durationSeconds, amplifier }],
+      });
+    } catch {
+      return -1;
+    }
+    const map = new StackComponentMap(createDefaultStackComponentRegistry()).with(
+      POTION_CONTENTS_COMPONENT,
+      contents as never,
+    );
+    const slots = this.inventory.slots;
+    if (slots.length === 0) return -1;
+    let index = slots.findIndex((st) => !st || st.count <= 0 || st.id === ItemId.Air);
+    if (index < 0) index = slots.length - 1;
+    slots[index] = { id: def.id, count: 1, components: map };
+    this.inventory.select(index);
+    this.hotbar.render();
+    return index;
+  }
+
   /** Test seam (295): optionally set yaw/pitch, then run the real throw path. */
   debugThrowSplashPotion(yaw?: number, pitch?: number): boolean {
     if (this.disposed) return false;
@@ -6446,7 +6748,7 @@ export class Game {
 
   /**
    * Raider death loot (297): a raid witch drops the vanilla witch table
-   * (gunpowder, redstone, stick; missing items discarded) as real item entities
+   * (gunpowder, redstone, stick, glass bottle (298); missing items discarded) as real item entities
    * at its last position. Called once per consumed death from every
    * `damageRaider` path (melee, splash harming, debug damage). Other raiders
    * drop nothing (out of scope). Looting does not exist, so level 0.
@@ -7329,6 +7631,8 @@ export class Game {
       this.shieldBrokenTimer = null;
     }
     this.updateShieldIndicator();
+    // 298: a death ends any in-progress drink (nothing consumed).
+    this.drinkState = null;
     this.survival.consumeDeath();
     this.playerEffects.clear();
     // 294: vanilla clears every effect on death, Bad Omen included (supersedes

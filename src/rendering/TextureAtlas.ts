@@ -53,6 +53,7 @@ export const TILE_INDEX = {
   potionBottle: 68,
   bed: 69,
   gunpowder: 75,
+  glassBottle: 76,
 } as const;
 
 export function tileUV(tile: number): { u0: number; v0: number; u1: number; v1: number } {
@@ -712,6 +713,29 @@ export class TextureAtlas {
         ctx.fillStyle = rng.next() > 0.5 ? '#a8a8a8' : '#2e2e2e';
         ctx.fillRect(3 + rng.nextInt(10), 6 + rng.nextInt(7), 1, 1);
       }
+    });
+    // 76: glass_bottle (298, original art) — an empty clear bottle with a
+    // cork, pale glass edges and a specular streak (no liquid). Painted into a
+    // previously unused cell; no PRNG draws, so no other tile can change.
+    this.drawTile(TILE_INDEX.glassBottle, (ctx) => {
+      ctx.clearRect(0, 0, TILE_SIZE, TILE_SIZE);
+      // Cork.
+      ctx.fillStyle = '#6b4a2a';
+      ctx.fillRect(6, 0, 4, 2);
+      // Neck.
+      ctx.fillStyle = '#b9cfe0';
+      ctx.fillRect(7, 2, 2, 3);
+      // Glass body edges.
+      ctx.fillRect(4, 5, 8, 1);
+      ctx.fillRect(4, 5, 1, 9);
+      ctx.fillRect(11, 5, 1, 9);
+      ctx.fillRect(5, 14, 6, 1);
+      // Faint empty interior.
+      ctx.fillStyle = 'rgba(214, 232, 245, 0.35)';
+      ctx.fillRect(5, 6, 6, 8);
+      // Specular streak.
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(5, 7, 1, 5);
     });
   }
 

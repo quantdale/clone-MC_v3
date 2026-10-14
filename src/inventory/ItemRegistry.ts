@@ -91,6 +91,8 @@ export const enum ItemId {
   Smoker = 72,
   /** Creeper/witch drop and splash-brewing ingredient (297). */
   Gunpowder = 73,
+  /** Empty potion container; filled at water, returned by drinking (298). */
+  GlassBottle = 74,
 }
 
 /**
@@ -911,6 +913,17 @@ export function createDefaultItemRegistry(): ItemTypeRegistry {
       key: 'gunpowder',
       name: 'Gunpowder',
       iconTile: 75,
+      stackSize: 64,
+    },
+    {
+      // Glass bottle (298): dropped by raid witches (vanilla witch table) and
+      // returned by drinking a potion; filled at water into a water bottle
+      // (the `potion` item with base-only water contents). Not placeable.
+      id: ItemId.GlassBottle,
+      resourceId: rid('glass_bottle'),
+      key: 'glass_bottle',
+      name: 'Glass Bottle',
+      iconTile: 76,
       stackSize: 64,
     },
   ];

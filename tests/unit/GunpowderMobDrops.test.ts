@@ -163,12 +163,19 @@ describe('witch table (297)', () => {
     const r = resolveWitchDrops(registry, seq(0, ticket(1), 0.99)); // 1 roll -> sugar ×2
     expect(r.stacks).toEqual([]);
     expect(r.rolls).toEqual([{ itemKey: 'sugar', count: 2, dropped: 'missing-item' }]);
-    for (const key of ['glowstone_dust', 'sugar', 'spider_eye', 'glass_bottle']) {
+    for (const key of ['glowstone_dust', 'sugar', 'spider_eye']) {
       expect(registry.getByKey(key)).toBeUndefined();
     }
-    for (const key of ['redstone', 'gunpowder', 'stick']) {
+    // 298: glass_bottle is now a real item, so its rolls drop real bottles.
+    for (const key of ['redstone', 'gunpowder', 'stick', 'glass_bottle']) {
       expect(registry.getByKey(key)).toBeDefined();
     }
+  });
+
+  it('glass bottle rolls drop real glass bottles (298)', () => {
+    const r = resolveWitchDrops(registry, seq(0, ticket(4), 0.99)); // 1 roll -> glass_bottle ×2
+    expect(r.stacks).toEqual([{ item: ItemId.GlassBottle, count: 2 }]);
+    expect(r.rolls).toEqual([{ itemKey: 'glass_bottle', count: 2 }]);
   });
 
   it('redstone rolls drop real redstone', () => {
@@ -196,7 +203,7 @@ describe('witch table (297)', () => {
       expect(r.rolls.length).toBeGreaterThanOrEqual(1);
       expect(r.rolls.length).toBeLessThanOrEqual(3);
       for (const roll of r.rolls) expect(roll.count).toBeLessThanOrEqual(2);
-      for (const s of r.stacks) expect([ItemId.Gunpowder, ItemId.Redstone, ItemId.Stick]).toContain(s.item);
+      for (const s of r.stacks) expect([ItemId.Gunpowder, ItemId.Redstone, ItemId.Stick, ItemId.GlassBottle]).toContain(s.item);
     }
   });
 });

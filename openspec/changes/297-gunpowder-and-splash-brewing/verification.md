@@ -41,6 +41,10 @@ Published by fast-forward (no force) to `origin/main` at `9dfc9c7`
 - **Drinking:** normal potions are **not drinkable**. `tryEatSelected` only
   handles food, and right-click only throws SPLASH. This is a 298 candidate
   (not trivial: use-duration, bottle return, consume path).
+- *(298 note: superseded — `298-glass-bottles-and-drinkable-potions` adds
+  glass bottles (witch drops), water-bottle filling, base-only potion contents
+  so water + nether wart → awkward brews, and 32-tick drinking with bottle
+  return; the 260 seam stays test-only.)*
 
 ## Legacy alignment
 
@@ -107,6 +111,7 @@ SwiftShader timing variance of the high-profile captures, not a 297 effect.
   glass bottle) are discarded, not replaced.
 - There are no live creepers/ghasts and no looting, and other raiders do not drop loot.
 - The TNT recipe is deferred (golden-captured crafting panel).
-- Potion bases need the 260 bottle seam, and normal potions are not drinkable.
+- Potion bases need the 260 bottle seam, and normal potions are not drinkable
+  (both closed by 298).
 - As in vanilla, a splash potion keeps its effect durations. The 295 splash
   falloff still scales them on impact.

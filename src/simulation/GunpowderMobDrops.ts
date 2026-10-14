@@ -14,9 +14,9 @@
  *   `count = uniformInt(0, 2)`, then the looting term.
  *
  * Entries whose `minecraft:<key>` item is not registered (glowstone dust, sugar,
- * spider eye, glass bottle do not exist yet) are rolled and DISCARDED — not
- * re-rolled — so the odds of every present item (gunpowder, redstone, stick)
- * stay exactly vanilla. Zero counts emit nothing; stacks of the same item merge.
+ * spider eye do not exist yet) are rolled and DISCARDED — not re-rolled — so the
+ * odds of every present item (gunpowder, redstone, stick, and since 298 glass
+ * bottle) stay exactly vanilla. Zero counts emit nothing; stacks of the same item merge.
  * Ghasts and live creepers do not exist in the clone; `ghast` (and any other
  * unknown mob) resolves to no drops. No looting enchantment exists, so the live
  * game always passes `looting = 0`.

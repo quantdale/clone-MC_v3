@@ -90,8 +90,10 @@ function clampEffect(raw: PotionEffectData): PotionEffectData {
 
 /**
  * Strict factory for potion contents. Validates and clamps inputs, throwing a
- * `RegistryError` on any violation. A potion MUST carry at least one effect and MUST
- * NOT carry duplicate effect typeIds. `kind` defaults to NORMAL.
+ * `RegistryError` on any violation. A potion MUST carry at least one effect unless
+ * it names a non-empty `base` (298: vanilla base-only potions such as water,
+ * awkward and mundane carry no effects), and MUST NOT carry duplicate effect
+ * typeIds. `kind` defaults to NORMAL.
  *
  * Inputs that are merely out of the clamped range (e.g. negative duration,
  * fractional amplifier) are normalized rather than rejected; only non-numeric,
@@ -108,8 +110,11 @@ export function createPotionContents(input: {
   if (input.kind !== undefined && !isPotionKind(input.kind)) {
     throw new RegistryError('INVALID_ID', resourceIdToString(POTION_CONTENTS_COMPONENT), `potion_contents: unknown kind '${String(input.kind)}'`);
   }
-  if (!Array.isArray(input.customEffects) || input.customEffects.length === 0) {
-    throw new RegistryError('INVALID_ID', resourceIdToString(POTION_CONTENTS_COMPONENT), 'potion_contents: customEffects must be a non-empty array');
+  if (!Array.isArray(input.customEffects)) {
+    throw new RegistryError('INVALID_ID', resourceIdToString(POTION_CONTENTS_COMPONENT), 'potion_contents: customEffects must be an array');
+  }
+  if (input.customEffects.length === 0 && !isBaseName(input.base)) {
+    throw new RegistryError('INVALID_ID', resourceIdToString(POTION_CONTENTS_COMPONENT), 'potion_contents: customEffects must be a non-empty array unless base is a non-empty string');
   }
 
   const seen = new Set<string>();
@@ -130,6 +135,11 @@ export function createPotionContents(input: {
   };
 }
 
+/** True for a usable potion base name (a non-empty string). */
+function isBaseName(base: unknown): base is string {
+  return typeof base === 'string' && base.length > 0;
+}
+
 /** Lenient read-path guard used by `StackComponentMap` validation. */
 export const potionContentsComponentType: StackComponentType = {
   id: POTION_CONTENTS_COMPONENT,
@@ -139,7 +149,9 @@ export const potionContentsComponentType: StackComponentType = {
     const candidate = value as Partial<PotionContents>;
     if (!isPotionKind(candidate.kind)) return false;
     if (candidate.base !== undefined && typeof candidate.base !== 'string') return false;
-    if (!Array.isArray(candidate.customEffects) || candidate.customEffects.length === 0) return false;
+    if (!Array.isArray(candidate.customEffects)) return false;
+    // 298: base-only potions (water/awkward/mundane) carry no effects.
+    if (candidate.customEffects.length === 0 && !isBaseName(candidate.base)) return false;
     const seen = new Set<string>();
     for (const raw of candidate.customEffects) {
       if (raw === null || typeof raw !== 'object') return false;

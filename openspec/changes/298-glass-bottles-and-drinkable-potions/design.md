@@ -33,7 +33,11 @@ golden cells, so the user's rule applies:
    tolerance). Record the changed-pixel bounding boxes, crops and diff images
    under `/workspace/298-golden-experiment/`, and summarise them in
    `verification.md`.
-4. **Decision rule:**
+4. **Outcome (T5):** the recipe was **not** added. The summary line gained
+   "Glass: 0", wrapped to a second line, and pushed the inventory grid and
+   every recipe row down by about 11 px. The new row itself sits below the fold.
+   Evidence is in `verification.md` and `evidence/`.
+5. **Decision rule:**
    - The recipe is kept, and only the 6 `container-ui` goldens are re-pinned,
      iff every changed region lies inside the new recipe row.
    - If anything else changes (in particular the ingredient summary line,
@@ -41,7 +45,7 @@ golden cells, so the user's rule applies:
      shifting), the recipe is **not** added.
    - Either way the experiment directories are deleted and the temporary
      recipe reverted before commit.
-5. Sources that exist regardless of the decision:
+6. Sources that exist regardless of the decision:
    - Raid witches drop `glass_bottle` from the 297 vanilla table (ticket 4,
      count 0–2). It was discarded as a missing item before; now it drops as a
      real item entity. No code change is needed beyond the item.
@@ -88,8 +92,9 @@ still holds). Consequences:
     inventory does not already contain an identical one (vanilla
     `createFilledResult` prevent-duplicates); if none can be inserted,
     nothing changes.
-- Game: `tryFillSelectedBottle()` → `hotbar.render()`, `audio.play('pop')`
-  (an existing sound), then `savePlayerStateDurable()` (289 durable path).
+- Game: `tryFillSelectedBottle()` → `hotbar.render()`, `audio.play('place')`
+  (an existing sound; there is no bottle-fill sound), then
+  `savePlayerStateDurable()` (289 durable path).
 
 ## D5. Drinking (`src/simulation/PotionDrinking.ts`, pure)
 
@@ -165,8 +170,14 @@ is documented, and milk + buckets are listed as a candidate.
 - `getDrinkState()` returns `{active, ticksUsed, slot, durationTicks}` or
   null, and `getLastDrinkOutcome()` returns the last completed drink
   (read-only).
+- `getLastBottleFill()` returns the last fill attempt (filled or the refusal
+  reason).
+- `testGrantPotion(effectKey, durationSeconds, amplifier)` is a **test-only**
+  setup seam for a NORMAL single-effect potion. It gives deterministic
+  harming/creative setups; survival potions are brewed. It mirrors the 295
+  `testGrantSplashPotion`.
 - `debugFillSelectedBottle()` / `debugUseSelectedItem()` are **not** added.
-  The E2E uses real right-click input.
+  The E2E uses real right-click input for fill and drink.
 - Existing seams reused for setup: raid start, drop RNG, position, brewing
   state, effects, game mode.
 
