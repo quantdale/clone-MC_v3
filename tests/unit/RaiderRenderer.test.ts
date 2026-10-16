@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import * as THREE from 'three';
+import { methodBody, readSource } from '../support/sourceText';
 import type { EntityInstance } from '../../src/world/Entity';
 import { createResourceId } from '../../src/data/ResourceId';
 import {
@@ -295,8 +295,8 @@ describe('RaiderRenderer (293)', () => {
 });
 
 describe('raider rendering source guards (293)', () => {
-  const moduleSrc = readFileSync(resolve(__dirname, '../../src/rendering/RaiderRenderer.ts'), 'utf8');
-  const gameSrc = readFileSync(resolve(__dirname, '../../src/engine/Game.ts'), 'utf8');
+  const moduleSrc = readSource(resolve(__dirname, '../../src/rendering/RaiderRenderer.ts'));
+  const gameSrc = readSource(resolve(__dirname, '../../src/engine/Game.ts'));
 
   it('renderer module does not touch lights, fog, background, atlas or the camera', () => {
     const code = moduleSrc.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
@@ -304,14 +304,13 @@ describe('raider rendering source guards (293)', () => {
   });
 
   it('allocates geometry/material only through the constructor-time cache', () => {
-    const syncBody = moduleSrc.slice(moduleSrc.indexOf('  sync(entries'), moduleSrc.indexOf('  setVisible('));
+    const syncBody = methodBody(moduleSrc, '  sync(entries');
     expect(syncBody).not.toMatch(/new THREE\.(BoxGeometry|MeshLambertMaterial)/);
   });
 
   it('Game tracks the renderer and syncs it from both managers every frame before the draw', () => {
     expect(gameSrc).toMatch(/this\.raiderRenderer = new RaiderRenderer\(this\.renderer\.scene\);\s*this\.resources\.track\(this\.raiderRenderer\);/);
-    const render = gameSrc.slice(gameSrc.indexOf('  private render(): void {'));
-    const body = render.slice(0, render.indexOf('\n  }\n'));
+    const body = methodBody(gameSrc, '  private render(): void');
     expect(body.indexOf('this.syncRaiderRenderer();')).toBeGreaterThan(-1);
     expect(body.indexOf('this.syncRaiderRenderer();')).toBeLessThan(body.indexOf('this.renderer.render();'));
     expect(gameSrc).toMatch(/this\.raidEntityManager\.getInDimension\(this\.overworldDimension\),\s*this\.patrolEntityManager\.getInDimension\(this\.overworldDimension\),\s*this\.pillagerPatrol\.getCaptainId\(\),/);

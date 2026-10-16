@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { resolve } from 'node:path';
+import { readSource } from '../support/sourceText';
 import {
   projectRaidBar,
   resolveVillageName,
@@ -122,10 +124,8 @@ describe('projectRaidBar (286)', () => {
     expect(bar.badOmenLevel).toBe(1);
   });
 
-  it('does not import wither/HudParity boss-bar modules', async () => {
-    const src = await import('node:fs').then((fs) =>
-      fs.readFileSync(new URL('../../src/ui/RaidBarParity.ts', import.meta.url), 'utf8'),
-    );
+  it('does not import wither/HudParity boss-bar modules', () => {
+    const src = readSource(resolve(__dirname, '../../src/ui/RaidBarParity.ts'));
     expect(src).not.toMatch(
       /from ['"].*(BossFramework|HudBossBar|WitherBossBar|HudParity|WitherBossBarParity)/,
     );

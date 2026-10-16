@@ -1,6 +1,6 @@
-import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { methodBody as extractMethodBody, readSource } from '../support/sourceText';
 import { createDefaultAttributeRegistry } from '../../src/data/AttributeRegistry';
 import { createResourceId } from '../../src/data/ResourceId';
 import { createDefaultStatusEffectRegistry } from '../../src/data/StatusEffect';
@@ -272,23 +272,9 @@ describe('LiveRaidEscalation (294) — death clears Bad Omen', () => {
 });
 
 describe('Game source guards (294)', () => {
-  const src = readFileSync(resolve(__dirname, '../../src/engine/Game.ts'), 'utf8');
+  const src = readSource(resolve(__dirname, '../../src/engine/Game.ts'));
 
-  function methodBody(signature: string): string {
-    const start = src.indexOf(signature);
-    expect(start, signature).toBeGreaterThan(-1);
-    let depth = 0;
-    let i = src.indexOf('{', start + signature.length - 1);
-    const open = i;
-    for (; i < src.length; i++) {
-      if (src[i] === '{') depth++;
-      else if (src[i] === '}') {
-        depth--;
-        if (depth === 0) break;
-      }
-    }
-    return src.slice(open, i + 1);
-  }
+  const methodBody = (signature: string): string => extractMethodBody(src, signature);
   function inOrder(body: string, parts: string[]): void {
     let at = -1;
     for (const p of parts) {

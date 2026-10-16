@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-27T07:17:48Z",
+  "generatedAt": "2026-10-16T22:13:39.629Z",
   "reviewedSha": "3d0fd2d5aee39ae1706b7210ad27e675450f521c",
-  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288; +6 rows for 289 enchantment-persistence-reload-integrity package/implementation/tests; DirtySaveQueue.ts/Game.ts/enchanting.spec.ts/DirtySaveQueue.test.ts/InventoryComponentPersistence.test.ts re-reviewed in place for 289; +10 rows for 290 hero-of-the-village-reward package/implementation/tests; Game.ts/StatusEffect.ts re-reviewed in place for 290; +10 rows for 291 pillager-patrol-bad-omen package/implementation/tests; Game.ts re-reviewed in place for 291; +10 rows for 292 player-status-effect-persistence package/implementation/tests; Game.ts, PlayerStateRecord.ts, GamePersistence.ts and 5 tests re-reviewed in place for 292; +9 rows for 293 raider-and-patrol-rendering package/implementation/tests; Game.ts re-reviewed in place for 293; +10 rows for 294 bad-omen-raid-escalation-and-death-parity package/implementation/tests; Game.ts, 2 unit tests and the 285/291/292 design notes re-reviewed in place for 294; +12 rows for 295 throwable-splash-potion-entities package/implementation/tests; Game.ts, PlayerInteraction.ts, RaiderCombatBehavior.ts, its unit test and the 288 docs re-reviewed in place for 295; +10 rows for 296 periodic-status-effect-ticks package/implementation/tests; Game.ts, DamageType.ts, SurvivalSystem.ts, DeathRespawnPresentation.ts, 2 unit tests and the 295 docs re-reviewed in place for 296; +11 rows for 297 gunpowder-and-splash-brewing package/implementation/tests; ItemRegistry.ts, TextureAtlas.ts, BrewingRecipes.ts, BrewingStandBlockEntity.ts, RaiderCombatBehavior.ts, Game.ts, BlockItemSeparation.test.ts and the 295 docs re-reviewed in place for 297",
+  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288; +6 rows for 289 enchantment-persistence-reload-integrity package/implementation/tests; DirtySaveQueue.ts/Game.ts/enchanting.spec.ts/DirtySaveQueue.test.ts/InventoryComponentPersistence.test.ts re-reviewed in place for 289; +10 rows for 290 hero-of-the-village-reward package/implementation/tests; Game.ts/StatusEffect.ts re-reviewed in place for 290; +10 rows for 291 pillager-patrol-bad-omen package/implementation/tests; Game.ts re-reviewed in place for 291; +10 rows for 292 player-status-effect-persistence package/implementation/tests; Game.ts, PlayerStateRecord.ts, GamePersistence.ts and 5 tests re-reviewed in place for 292; +9 rows for 293 raider-and-patrol-rendering package/implementation/tests; Game.ts re-reviewed in place for 293; +10 rows for 294 bad-omen-raid-escalation-and-death-parity package/implementation/tests; Game.ts, 2 unit tests and the 285/291/292 design notes re-reviewed in place for 294; +12 rows for 295 throwable-splash-potion-entities package/implementation/tests; Game.ts, PlayerInteraction.ts, RaiderCombatBehavior.ts, its unit test and the 288 docs re-reviewed in place for 295; +10 rows for 296 periodic-status-effect-ticks package/implementation/tests; Game.ts, DamageType.ts, SurvivalSystem.ts, DeathRespawnPresentation.ts, 2 unit tests and the 295 docs re-reviewed in place for 296; +11 rows for 297 gunpowder-and-splash-brewing package/implementation/tests; ItemRegistry.ts, TextureAtlas.ts, BrewingRecipes.ts, BrewingStandBlockEntity.ts, RaiderCombatBehavior.ts, Game.ts, BlockItemSeparation.test.ts and the 295 docs re-reviewed in place for 297; +3 rows and +36 audit-package rows re-reviewed for 298 (verification-portability-eol-and-source-guards): .gitattributes, tests/support/sourceText.ts, tests/unit/SourceTextPortability.test.ts, MASTER_PLAN.md and the audit-authored 298-304 OpenSpec packages",
   "allowedReviewLevels": [
     "semantic",
     "mechanical",
@@ -10,7 +10,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 3031,
+  "total": 3070,
   "rows": [
     {
       "path": ".agent/EXECUTION_PROMPT.md",
@@ -477,6 +477,22 @@
       "status": "audited"
     },
     {
+      "path": ".gitattributes",
+      "gitBlob": null,
+      "category": "config",
+      "purpose": "298/audit coverage for .gitattributes",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "298: declares repository-wide LF checkout normalisation and explicit binary types; reviewed for content and effect.",
+      "status": "audited"
+    },
+    {
       "path": ".github/prompts/opsx-apply.prompt.md",
       "gitBlob": null,
       "category": "config",
@@ -794,6 +810,22 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "MASTER_PLAN.md",
+      "gitBlob": null,
+      "category": "docs",
+      "purpose": "298/audit coverage for MASTER_PLAN.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "3031-row audit campaign plan (findings F-001..F-008); reviewed as documentation only, no product effect.",
       "status": "audited"
     },
     {
@@ -24918,6 +24950,1838 @@
       "status": "audited"
     },
     {
+      "path": "openspec/changes/287-live-village-detection/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "287 draft override addendum (applied at T1)",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "village"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 287 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/287-live-village-detection/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "287 design for live village detection",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "village"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 287 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/287-live-village-detection/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "287 proposal for live village detection",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "village"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 287 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/287-live-village-detection/specs/live-village-detection/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "287 normative live-village-detection capability spec",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "village"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 287 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/287-live-village-detection/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "287 task checklist",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "village"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 287 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/287-live-village-detection/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "287 verification evidence",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "village"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 287 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/288-raider-combat-behavior/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "288 draft override addendum (applied at T1)",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "combat"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 288 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/288-raider-combat-behavior/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "288 design for raider combat behavior",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "combat",
+        "raid"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 288 implementation; no findings; 295 superseded banner + retired fallback rationale",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/288-raider-combat-behavior/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "288 proposal for raider combat behavior",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "combat",
+        "raid"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 288 implementation; no findings; 295 superseded banner (witch fallback retired)",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/288-raider-combat-behavior/specs/raider-combat-behavior/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "288 normative raider-combat-behavior capability spec",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "combat",
+        "raid"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 288 implementation; no findings; 295 superseded annotations (witch fallback definition/table/scenario)",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/288-raider-combat-behavior/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "288 task checklist",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "combat",
+        "raid"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 288 implementation; no findings; 295 superseded banner",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/288-raider-combat-behavior/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "288 verification evidence",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "combat",
+        "raid"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 288 implementation; no findings; 295 superseded banner",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/289-enchantment-persistence-reload-integrity/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "289 OpenSpec artifact OVERRIDE_DRAFT.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "inventory"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 289 enchantment-persistence-reload-integrity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/289-enchantment-persistence-reload-integrity/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "289 OpenSpec artifact design.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "inventory"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 289 enchantment-persistence-reload-integrity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/289-enchantment-persistence-reload-integrity/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "289 OpenSpec artifact proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "inventory"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 289 enchantment-persistence-reload-integrity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/289-enchantment-persistence-reload-integrity/specs/enchantment-persistence-reload-integrity/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "289 OpenSpec artifact spec.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "inventory"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 289 enchantment-persistence-reload-integrity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/289-enchantment-persistence-reload-integrity/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "289 OpenSpec artifact tasks.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "inventory"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 289 enchantment-persistence-reload-integrity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/289-enchantment-persistence-reload-integrity/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "289 OpenSpec artifact verification.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "inventory"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 289 enchantment-persistence-reload-integrity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/290-hero-of-the-village-reward/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "290 OpenSpec artifact OVERRIDE_DRAFT.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "trading"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/290-hero-of-the-village-reward/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "290 OpenSpec artifact design.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "trading"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/290-hero-of-the-village-reward/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "290 OpenSpec artifact proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "trading"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/290-hero-of-the-village-reward/specs/hero-of-the-village-reward/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "290 capability spec hero-of-the-village-reward",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "trading",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/290-hero-of-the-village-reward/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "290 OpenSpec artifact tasks.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "trading"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/290-hero-of-the-village-reward/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "290 OpenSpec artifact verification.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "trading"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/291-pillager-patrol-bad-omen/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "291 OpenSpec artifact OVERRIDE_DRAFT.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "spawning"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/291-pillager-patrol-bad-omen/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "291 OpenSpec artifact design.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "spawning"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings; 294 annotation (escalation also dismisses patrols)",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/291-pillager-patrol-bad-omen/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "291 OpenSpec artifact proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "spawning"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/291-pillager-patrol-bad-omen/specs/pillager-patrol-bad-omen/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "291 capability spec pillager-patrol-bad-omen",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "spawning",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/291-pillager-patrol-bad-omen/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "291 OpenSpec artifact tasks.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "spawning"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/291-pillager-patrol-bad-omen/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "291 OpenSpec artifact verification.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "spawning"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/292-player-status-effect-persistence/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "292 OpenSpec artifact OVERRIDE_DRAFT.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/292-player-status-effect-persistence/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "292 OpenSpec artifact design.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings; 294 resolved annotations (restored omen escalates ACTIVE raid; death clears Bad Omen)",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/292-player-status-effect-persistence/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "292 OpenSpec artifact proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/292-player-status-effect-persistence/specs/player-status-effect-persistence/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "292 capability spec player-status-effect-persistence",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "compatibility",
+        "persistence",
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/292-player-status-effect-persistence/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "292 OpenSpec artifact tasks.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/292-player-status-effect-persistence/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "292 OpenSpec artifact verification.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/293-raider-and-patrol-rendering/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "293 OpenSpec artifact OVERRIDE_DRAFT.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "rendering"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/293-raider-and-patrol-rendering/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "293 OpenSpec artifact design.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "rendering"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/293-raider-and-patrol-rendering/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "293 OpenSpec artifact proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "rendering"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/293-raider-and-patrol-rendering/specs/raider-and-patrol-rendering/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "293 capability spec raider-and-patrol-rendering",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "lifecycle",
+        "raid",
+        "rendering"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/293-raider-and-patrol-rendering/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "293 OpenSpec artifact tasks.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "rendering"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/293-raider-and-patrol-rendering/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "293 OpenSpec artifact verification.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "rendering"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/294-bad-omen-raid-escalation-and-death-parity/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "294 OpenSpec artifact OVERRIDE_DRAFT.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/294-bad-omen-raid-escalation-and-death-parity/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "294 OpenSpec artifact design.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/294-bad-omen-raid-escalation-and-death-parity/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "294 OpenSpec artifact proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/294-bad-omen-raid-escalation-and-death-parity/specs/bad-omen-raid-escalation-and-death-parity/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "294 capability spec bad-omen-raid-escalation-and-death-parity",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/294-bad-omen-raid-escalation-and-death-parity/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "294 OpenSpec artifact tasks.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/294-bad-omen-raid-escalation-and-death-parity/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "294 OpenSpec artifact verification.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/295-throwable-splash-potion-entities/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "295 OpenSpec artifact OVERRIDE_DRAFT.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/295-throwable-splash-potion-entities/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "295 OpenSpec artifact design.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings; re-reviewed for 296 downstream note; re-reviewed for 297 (downstream note: gunpowder + splash brewing landed in 297); no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/295-throwable-splash-potion-entities/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "295 OpenSpec artifact proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings; re-reviewed for 296 poison-ticks supersession note; re-reviewed for 297 (superseded-by-297 splash availability note); no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/295-throwable-splash-potion-entities/specs/throwable-splash-potion-entities/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "295 capability spec throwable-splash-potion-entities",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/295-throwable-splash-potion-entities/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "295 OpenSpec artifact tasks.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/295-throwable-splash-potion-entities/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "295 OpenSpec artifact verification.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings; re-reviewed for 296 closed poison-marker divergence; re-reviewed for 297 (superseded-by-297 splash availability notes); no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/296-periodic-status-effect-ticks/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "296 OpenSpec artifact OVERRIDE_DRAFT.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/296-periodic-status-effect-ticks/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "296 OpenSpec artifact design.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/296-periodic-status-effect-ticks/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "296 OpenSpec artifact proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/296-periodic-status-effect-ticks/specs/periodic-status-effect-ticks/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "296 OpenSpec artifact spec.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/296-periodic-status-effect-ticks/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "296 OpenSpec artifact tasks.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/296-periodic-status-effect-ticks/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "296 OpenSpec artifact verification.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/297-gunpowder-and-splash-brewing/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "297 OpenSpec artifact OVERRIDE_DRAFT.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "brewing",
+        "loot"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/297-gunpowder-and-splash-brewing/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "297 OpenSpec artifact design.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "brewing",
+        "loot"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/297-gunpowder-and-splash-brewing/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "297 OpenSpec artifact proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "brewing",
+        "loot"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/297-gunpowder-and-splash-brewing/specs/gunpowder-and-splash-brewing/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "297 OpenSpec artifact spec.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "brewing",
+        "loot"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/297-gunpowder-and-splash-brewing/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "297 OpenSpec artifact tasks.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "brewing",
+        "loot"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/297-gunpowder-and-splash-brewing/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "297 OpenSpec artifact verification.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "brewing",
+        "loot"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/298-verification-portability-eol-and-source-guards/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/298-verification-portability-eol-and-source-guards/design.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/298-verification-portability-eol-and-source-guards/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/298-verification-portability-eol-and-source-guards/proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/298-verification-portability-eol-and-source-guards/specs/verification-portability/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/298-verification-portability-eol-and-source-guards/specs/verification-portability/spec.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/298-verification-portability-eol-and-source-guards/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/298-verification-portability-eol-and-source-guards/tasks.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/298-verification-portability-eol-and-source-guards/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/298-verification-portability-eol-and-source-guards/verification.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/299-toolchain-dependency-reproducibility/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/299-toolchain-dependency-reproducibility/design.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/299-toolchain-dependency-reproducibility/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/299-toolchain-dependency-reproducibility/proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/299-toolchain-dependency-reproducibility/specs/toolchain-reproducibility/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/299-toolchain-dependency-reproducibility/specs/toolchain-reproducibility/spec.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/299-toolchain-dependency-reproducibility/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/299-toolchain-dependency-reproducibility/tasks.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/299-toolchain-dependency-reproducibility/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/299-toolchain-dependency-reproducibility/verification.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/300-visual-regression-gate-reliability/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/300-visual-regression-gate-reliability/design.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/300-visual-regression-gate-reliability/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/300-visual-regression-gate-reliability/proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/300-visual-regression-gate-reliability/specs/visual-regression-gate/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/300-visual-regression-gate-reliability/specs/visual-regression-gate/spec.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/300-visual-regression-gate-reliability/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/300-visual-regression-gate-reliability/tasks.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/300-visual-regression-gate-reliability/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/300-visual-regression-gate-reliability/verification.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/301-verification-script-gate-wiring/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/301-verification-script-gate-wiring/design.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/301-verification-script-gate-wiring/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/301-verification-script-gate-wiring/proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/301-verification-script-gate-wiring/specs/gate-automation/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/301-verification-script-gate-wiring/specs/gate-automation/spec.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/301-verification-script-gate-wiring/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/301-verification-script-gate-wiring/tasks.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/301-verification-script-gate-wiring/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/301-verification-script-gate-wiring/verification.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/302-multiplayer-performance-gate-enforcement/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/302-multiplayer-performance-gate-enforcement/design.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/302-multiplayer-performance-gate-enforcement/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/302-multiplayer-performance-gate-enforcement/proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/302-multiplayer-performance-gate-enforcement/specs/performance-gate-enforcement/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/302-multiplayer-performance-gate-enforcement/specs/performance-gate-enforcement/spec.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/302-multiplayer-performance-gate-enforcement/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/302-multiplayer-performance-gate-enforcement/tasks.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/302-multiplayer-performance-gate-enforcement/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/302-multiplayer-performance-gate-enforcement/verification.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/303-renderer-lifecycle-unit-coverage/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/303-renderer-lifecycle-unit-coverage/design.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/303-renderer-lifecycle-unit-coverage/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/303-renderer-lifecycle-unit-coverage/proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/303-renderer-lifecycle-unit-coverage/specs/renderer-lifecycle-coverage/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/303-renderer-lifecycle-unit-coverage/specs/renderer-lifecycle-coverage/spec.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/303-renderer-lifecycle-unit-coverage/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/303-renderer-lifecycle-unit-coverage/tasks.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/303-renderer-lifecycle-unit-coverage/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/303-renderer-lifecycle-unit-coverage/verification.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/304-modal-focus-and-keyboard-accessibility/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/304-modal-focus-and-keyboard-accessibility/design.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/304-modal-focus-and-keyboard-accessibility/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/304-modal-focus-and-keyboard-accessibility/proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/304-modal-focus-and-keyboard-accessibility/specs/modal-focus-accessibility/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/304-modal-focus-and-keyboard-accessibility/specs/modal-focus-accessibility/spec.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/304-modal-focus-and-keyboard-accessibility/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/304-modal-focus-and-keyboard-accessibility/tasks.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/304-modal-focus-and-keyboard-accessibility/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "audit-authored change package for openspec/changes/304-modal-focus-and-keyboard-accessibility/verification.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
       "path": "openspec/changes/add-voxel-game/.openspec.yaml",
       "gitBlob": null,
       "category": "spec",
@@ -32949,6 +34813,26 @@
       "status": "audited"
     },
     {
+      "path": "src/rendering/RaiderRenderer.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "293 box-mesh raider/patrol renderer: projection from raid/patrol managers, per-kind silhouettes, captain banner, facing, shared constructor-time geometry/materials, leak-free sync/dispose",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "lifecycle",
+        "raid",
+        "rendering"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
+      "status": "audited"
+    },
+    {
       "path": "src/rendering/RenderBudget.ts",
       "gitBlob": null,
       "category": "production",
@@ -33010,6 +34894,24 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "src/rendering/SplashPotionRenderer.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "295 in-flight splash potion bottle renderer on the 293 shared-resource pattern (constructor-time geometry/material palette, per-key group pool, no scene setup changes)",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "rendering"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings",
       "status": "audited"
     },
     {
@@ -33953,6 +35855,26 @@
       "status": "audited"
     },
     {
+      "path": "src/simulation/GunpowderMobDrops.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "297 pure vanilla gunpowder mob drop tables: creeper uniform 0-2 (+looting), witch 1-3 weighted rolls over the 7-entry vanilla pool (missing items discarded, not re-rolled), fixed rng draw order, stack merge, scripted rng helper",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "brewing",
+        "loot"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
+      "status": "audited"
+    },
+    {
       "path": "src/simulation/HardcoreFramework.ts",
       "gitBlob": null,
       "category": "production",
@@ -33966,6 +35888,26 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/HeroOfTheVillage.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "290 pure HOTV grant/discount helpers",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "trading",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
       "status": "audited"
     },
     {
@@ -34423,6 +36365,25 @@
       "status": "audited"
     },
     {
+      "path": "src/simulation/PeriodicStatusEffects.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "296 pure periodic status effects: vanilla poison/regeneration/wither intervals (base >> amplifier, min 1), remaining-tick rounding, schedule predicate, poison 1-HP floor / wither lethal / regeneration cap decisions, ordered live fixed-tick pass",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
+      "status": "audited"
+    },
+    {
       "path": "src/simulation/PersistentWorldCodecs.ts",
       "gitBlob": null,
       "category": "production",
@@ -34436,6 +36397,27 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/PillagerPatrol.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "291 seeded rate-limited pillager patrol planner + PillagerPatrolSystem (reuses 284 backend / 288 combat)",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "combat",
+        "determinism",
+        "raid",
+        "spawning"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
       "status": "audited"
     },
     {
@@ -34484,6 +36466,27 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/PlayerEffectsPersistence.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "292 pure codec for persisted player status effects + Bad Omen level/remaining (tolerant parse, registry clamps, omen duration helpers)",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "compatibility",
+        "persistence",
+        "security",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
       "status": "audited"
     },
     {
@@ -34540,6 +36543,26 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 284 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/RaidEscalation.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "294 pure Bad Omen raid escalation rules: wave table, in-place escalateRaid (cap 5, waves never reduced), 96-block village match, ESCALATE_RAID/START_RAID/NONE action resolver",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
       "status": "audited"
     },
     {
@@ -34622,6 +36645,25 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 284 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/RaiderCombatBehavior.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "288 raider combat system over HostileTargetAI/MeleeCombat/ProjectileCore",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "runtime",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "combat",
+        "raid"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 288 implementation; no findings; re-reviewed for 295 witch fixed-damage fallback retired, witch splash potion sink + player potion status, potionsThrown result; re-reviewed for 297 (RaiderDeathInfo (type key + pre-removal position) passed through damageRaider/onRaiderDied); no findings",
       "status": "audited"
     },
     {
@@ -35057,6 +37099,26 @@
       "status": "audited"
     },
     {
+      "path": "src/simulation/SplashPotion.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "295 pure splash potion entities: vanilla player/witch throw vectors, SplashPotionSystem over ProjectileCore (gravity 0.05/drag 0.99, block/entity shatter, cap 64), splash falloff, instant/duration application plan, throw consume decision, vanilla witch potion choice + deterministic roll",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings",
+      "status": "audited"
+    },
+    {
       "path": "src/simulation/StateHasher.ts",
       "gitBlob": null,
       "category": "production",
@@ -35150,6 +37212,26 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/VillageDetectionRules.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "287 pure Chebyshev bed-scan village detection",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "village",
+        "world"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 287 implementation; no findings",
       "status": "audited"
     },
     {
@@ -37323,6 +39405,26 @@
       "status": "audited"
     },
     {
+      "path": "tests/e2e/bad-omen-raid-escalation.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "294 browser E2E: omen during an ACTIVE raid escalates in place (same wave, patrol dismissed, bar badge, reload, escalated HOTV III), cap consumption + finished-raid restart, death clears omen across reload",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
+      "status": "audited"
+    },
+    {
       "path": "tests/e2e/boss-bar.spec.ts",
       "gitBlob": null,
       "category": "test",
@@ -37474,6 +39576,26 @@
       "status": "audited"
     },
     {
+      "path": "tests/e2e/gunpowder-splash-brewing.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "297 browser E2E: raid witch death drops gunpowder (scripted roll), real pickup, awkward+redstone then +gunpowder in a real stand -> SPLASH speed preserved, collect, throw, speed applied",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "brewing",
+        "loot"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
+      "status": "audited"
+    },
+    {
       "path": "tests/e2e/hardcore-mode.spec.ts",
       "category": "test",
       "purpose": "267 coverage for tests/e2e/hardcore-mode.spec.ts",
@@ -37488,6 +39610,26 @@
       "gitBlob": null,
       "imports": [],
       "importedBy": []
+    },
+    {
+      "path": "tests/e2e/hero-of-the-village.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "290 browser E2E journey for HOTV grant and trading discount",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "raid",
+        "trading"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings; re-reviewed for 292 reload now expects persisted HOTV (same amplifier, resumed duration)",
+      "status": "audited"
     },
     {
       "path": "tests/e2e/item-xp-persistence.spec.ts",
@@ -37554,6 +39696,25 @@
       "status": "audited"
     },
     {
+      "path": "tests/e2e/periodic-status-effects.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "296 browser E2E: splash poison lowers health over ticks and stops at 1 HP, paused game unchanged, regeneration heals to max, wither kills with death screen, creative immune",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
+      "status": "audited"
+    },
+    {
       "path": "tests/e2e/persistence.spec.ts",
       "gitBlob": "39c70f3de8a27e8fc08b5349176999af7b39b576",
       "category": "test",
@@ -37567,6 +39728,26 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/e2e/pillager-patrol.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "291 browser E2E journey for patrol rules, captain Bad Omen, cap, raid isolation, reload",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "raid",
+        "spawning"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings; re-reviewed for 292 reload now expects persisted captain Bad Omen",
       "status": "audited"
     },
     {
@@ -37625,6 +39806,44 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 283 change; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/e2e/raider-combat.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "288 browser e2e: damage + VICTORY + DEFEAT",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "combat"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 288 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/e2e/raider-rendering.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "293 browser E2E: scene raider groups mirror raid wave + patrol (kinds, captain, facing) through death, patrol dismissal, raid victory and dispose; non-golden screenshot sanity check",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "rendering"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
       "status": "audited"
     },
     {
@@ -37707,6 +39926,27 @@
       "status": "audited"
     },
     {
+      "path": "tests/e2e/splash-potion.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "295 browser E2E: self poison splash (render, shatter, scaled duration, consume), harming damage + creative keep, raid witch potion applies its effect to the player",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "raid",
+        "rendering",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings",
+      "status": "audited"
+    },
+    {
       "path": "tests/e2e/statistics.spec.ts",
       "gitBlob": null,
       "category": "test",
@@ -37723,6 +39963,26 @@
       "status": "audited"
     },
     {
+      "path": "tests/e2e/status-effect-persistence.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "292 browser E2E: HOTV + Bad Omen survive pagehide/reload with resumed durations; restored omen in village raids, dismisses patrol, stays consumed",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
+      "status": "audited"
+    },
+    {
       "path": "tests/e2e/trading.spec.ts",
       "gitBlob": null,
       "category": "test",
@@ -37736,6 +39996,25 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 278 change; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/e2e/village-detection.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "287 browser E2E village detection journey",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "village"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 287 implementation; no findings",
       "status": "audited"
     },
     {
@@ -37832,6 +40111,24 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/support/sourceText.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "298 coverage for tests/support/sourceText.ts",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npm test"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Added by change 298 (verification portability); reviewed content and its targeted regression test.",
       "status": "audited"
     },
     {
@@ -40486,6 +42783,26 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/GunpowderMobDrops.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "297 unit tests: gunpowder item/tile 75 isolation, uniformInt/looting/scripted rng, creeper distribution and looting, witch pool/weights/draw order/merge/missing-item discard/exact odds, dispatch (ghast absent)",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "brewing",
+        "loot"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/HardcoreFramework.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -40563,6 +42880,25 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/HeroOfTheVillage.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "290 unit tests for HOTV pure helpers",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "trading"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
       "status": "audited"
     },
     {
@@ -41118,6 +43454,84 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/LiveHeroOfTheVillage.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "290 live seam composition tests for HOTV grant/discount",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "trading"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/LivePeriodicStatusEffects.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "296 composition tests: real StatusEffectManager + SurvivalSystem + armor + mode gate + respawn + FixedTickDriver (poison floor, armor bypass, regen cap, wither death, creative/spectator, pause, reload cadence) and Game source guards",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/LivePillagerPatrol.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "291 integration oracle + Game source guards for captain Bad Omen grant/cap and raid isolation",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "spawning",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/LiveRaidEscalation.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "294 composition oracle (escalation + patrol dismissal + one-flush persistence, escalated HOTV, cap consumption, far/finished raid restart, death clears omen durably) + Game source guards",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/LiveRaidFeedback.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -41185,6 +43599,25 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/LiveRaiderCombat.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "288 live seam oracle with RaidWaveController",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "combat"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 288 implementation; no findings",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/LiveShieldWiring.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -41233,6 +43666,65 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/LiveSplashPotion.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "295 composition oracle (throw/consume/creative/spectator, self poison, healing, harming kills a raid raider exactly once, witch sink poison, no fallback) + Game/PlayerInteraction/RaiderCombat source guards",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/LiveStatusEffectPersistence.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "292 composition oracle (save/reload, restored omen x 285 trigger x 291 patrol) + Game source guards for durable save points and dispose ordering",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings; re-reviewed for 294 mirror escalation branch, widened trigger signature guard and respawn omen-clear guard",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/LiveVillageDetection.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "287 live Game-wiring oracle for village detection",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "village"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 287 implementation; no findings",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/LiveVillagerTrading.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -41246,6 +43738,26 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 278 change; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/LiveWitchGunpowderDrops.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "297 composition tests: real RaiderCombatSystem death info (type key + pre-removal position), witch-only drops exactly once as item entities, melee path, real pickup, Game source guards",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "brewing",
+        "loot"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
       "status": "audited"
     },
     {
@@ -41921,6 +44433,25 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/PeriodicStatusEffects.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "296 unit tests: interval table per amplifier and clamps, rounding, schedule, hit counts, poison floor, wither kill, regen cap, order, death mid-pass skip, determinism",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/PersistenceCommitHook.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -41950,6 +44481,26 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/PillagerPatrol.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "291 unit tests for patrol gates, determinism, rate limit, captain uniqueness, rollback, despawn, combat",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "spawning",
+        "determinism"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
       "status": "audited"
     },
     {
@@ -42062,6 +44613,26 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/PlayerEffectsPersistence.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "292 unit tests for effects codec round trip, resume, caps, backward compat, malformed input, omen duration",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "compatibility",
+        "persistence",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
       "status": "audited"
     },
     {
@@ -42302,6 +44873,25 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/RaidEscalation.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "294 unit tests for wave table, escalation math/cap/no-shrink/unchanged progress, terminal/invalid no-op, village radius, action precedence, escalated victory HOTV",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/RaidFeedbackView.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -42378,6 +44968,45 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 284 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/RaiderCombatBehavior.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "288 pure + system unit coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "combat",
+        "raid"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 288 implementation; no findings; re-reviewed for 295 witch no-fallback / potion sink cadence / choice / refused-throw tests",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/RaiderRenderer.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "293 unit tests for projection, sync add/update/rebuild/remove, part counts, captain marker, facing, visibility, fixed resources, exactly-once disposal + module/Game source guards",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "lifecycle",
+        "raid",
+        "rendering"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
       "status": "audited"
     },
     {
@@ -43514,6 +46143,24 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/SourceTextPortability.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "298 coverage for tests/unit/SourceTextPortability.test.ts",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npm test"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Added by change 298 (verification portability); reviewed content and its targeted regression test.",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/SpectatorFramework.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -43527,6 +46174,64 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/SplashBrewing.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "297 unit tests: gunpowder recipe gating on kind, NORMAL->SPLASH conversion preserving base/effects in the real 400-tick engine, kind preserved by other recipes, no double splash, fuel rules, envelope and live host persist/hydrate round-trips",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "brewing",
+        "loot"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/SplashPotion.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "295 unit tests: throw vectors, gravity arc/drag, block and entity shatter, owner immunity, witch scope, expiry, cap, falloff/vertical band, instant and duration application, witch choice/roll/contents, consume rules",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/SplashPotionRenderer.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "295 renderer tests: tints, one group per potion, visibility, no allocation in sync, dispose once, source guards (no scene setup / particle wiring, Game render sync)",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "rendering"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings",
       "status": "audited"
     },
     {
@@ -44199,6 +46904,25 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/VillageDetectionRules.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "287 pure VillageDetectionRules unit tests",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "village"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 287 implementation; no findings",
       "status": "audited"
     },
     {
@@ -47303,2102 +50027,6 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/287-live-village-detection/OVERRIDE_DRAFT.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "287 draft override addendum (applied at T1)",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "village"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 287 implementation; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/287-live-village-detection/design.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "287 design for live village detection",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "village"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 287 implementation; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/287-live-village-detection/proposal.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "287 proposal for live village detection",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "village"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 287 implementation; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/287-live-village-detection/specs/live-village-detection/spec.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "287 normative live-village-detection capability spec",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "village"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 287 implementation; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/287-live-village-detection/tasks.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "287 task checklist",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "village"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 287 implementation; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/287-live-village-detection/verification.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "287 verification evidence",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "village"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 287 implementation; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "src/simulation/VillageDetectionRules.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "287 pure Chebyshev bed-scan village detection",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "village",
-        "world"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 287 implementation; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/e2e/village-detection.spec.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "287 browser E2E village detection journey",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "village"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 287 implementation; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/LiveVillageDetection.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "287 live Game-wiring oracle for village detection",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "village"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 287 implementation; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/VillageDetectionRules.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "287 pure VillageDetectionRules unit tests",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "village"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 287 implementation; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/288-raider-combat-behavior/OVERRIDE_DRAFT.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "288 draft override addendum (applied at T1)",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "combat"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 288 implementation; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/288-raider-combat-behavior/design.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "288 design for raider combat behavior",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "combat",
-        "raid"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 288 implementation; no findings; 295 superseded banner + retired fallback rationale",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/288-raider-combat-behavior/proposal.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "288 proposal for raider combat behavior",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "combat",
-        "raid"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 288 implementation; no findings; 295 superseded banner (witch fallback retired)",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/288-raider-combat-behavior/specs/raider-combat-behavior/spec.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "288 normative raider-combat-behavior capability spec",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "combat",
-        "raid"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 288 implementation; no findings; 295 superseded annotations (witch fallback definition/table/scenario)",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/288-raider-combat-behavior/tasks.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "288 task checklist",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "combat",
-        "raid"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 288 implementation; no findings; 295 superseded banner",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/288-raider-combat-behavior/verification.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "288 verification evidence",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "combat",
-        "raid"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 288 implementation; no findings; 295 superseded banner",
-      "status": "audited"
-    },
-    {
-      "path": "src/simulation/RaiderCombatBehavior.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "288 raider combat system over HostileTargetAI/MeleeCombat/ProjectileCore",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "runtime",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "combat",
-        "raid"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 288 implementation; no findings; re-reviewed for 295 witch fixed-damage fallback retired, witch splash potion sink + player potion status, potionsThrown result; re-reviewed for 297 (RaiderDeathInfo (type key + pre-removal position) passed through damageRaider/onRaiderDied); no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/e2e/raider-combat.spec.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "288 browser e2e: damage + VICTORY + DEFEAT",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "combat"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 288 implementation; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/LiveRaiderCombat.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "288 live seam oracle with RaidWaveController",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "combat"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 288 implementation; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/RaiderCombatBehavior.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "288 pure + system unit coverage",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "combat",
-        "raid"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 288 implementation; no findings; re-reviewed for 295 witch no-fallback / potion sink cadence / choice / refused-throw tests",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/289-enchantment-persistence-reload-integrity/OVERRIDE_DRAFT.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "289 OpenSpec artifact OVERRIDE_DRAFT.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "persistence",
-        "inventory"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 289 enchantment-persistence-reload-integrity; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/289-enchantment-persistence-reload-integrity/design.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "289 OpenSpec artifact design.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "persistence",
-        "inventory"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 289 enchantment-persistence-reload-integrity; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/289-enchantment-persistence-reload-integrity/proposal.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "289 OpenSpec artifact proposal.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "persistence",
-        "inventory"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 289 enchantment-persistence-reload-integrity; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/289-enchantment-persistence-reload-integrity/specs/enchantment-persistence-reload-integrity/spec.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "289 OpenSpec artifact spec.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "persistence",
-        "inventory"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 289 enchantment-persistence-reload-integrity; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/289-enchantment-persistence-reload-integrity/tasks.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "289 OpenSpec artifact tasks.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "persistence",
-        "inventory"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 289 enchantment-persistence-reload-integrity; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/289-enchantment-persistence-reload-integrity/verification.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "289 OpenSpec artifact verification.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "persistence",
-        "inventory"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 289 enchantment-persistence-reload-integrity; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/290-hero-of-the-village-reward/OVERRIDE_DRAFT.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "290 OpenSpec artifact OVERRIDE_DRAFT.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "trading"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/290-hero-of-the-village-reward/design.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "290 OpenSpec artifact design.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "trading"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/290-hero-of-the-village-reward/proposal.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "290 OpenSpec artifact proposal.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "trading"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/290-hero-of-the-village-reward/tasks.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "290 OpenSpec artifact tasks.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "trading"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/290-hero-of-the-village-reward/verification.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "290 OpenSpec artifact verification.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "trading"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/290-hero-of-the-village-reward/specs/hero-of-the-village-reward/spec.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "290 capability spec hero-of-the-village-reward",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "trading",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "src/simulation/HeroOfTheVillage.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "290 pure HOTV grant/discount helpers",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "trading",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/HeroOfTheVillage.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "290 unit tests for HOTV pure helpers",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "trading"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/LiveHeroOfTheVillage.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "290 live seam composition tests for HOTV grant/discount",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "trading"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/e2e/hero-of-the-village.spec.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "290 browser E2E journey for HOTV grant and trading discount",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "persistence",
-        "raid",
-        "trading"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 290 hero-of-the-village-reward; no findings; re-reviewed for 292 reload now expects persisted HOTV (same amplifier, resumed duration)",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/291-pillager-patrol-bad-omen/OVERRIDE_DRAFT.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "291 OpenSpec artifact OVERRIDE_DRAFT.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "spawning"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/291-pillager-patrol-bad-omen/design.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "291 OpenSpec artifact design.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "spawning"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings; 294 annotation (escalation also dismisses patrols)",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/291-pillager-patrol-bad-omen/proposal.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "291 OpenSpec artifact proposal.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "spawning"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/291-pillager-patrol-bad-omen/tasks.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "291 OpenSpec artifact tasks.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "spawning"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/291-pillager-patrol-bad-omen/verification.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "291 OpenSpec artifact verification.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "spawning"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/291-pillager-patrol-bad-omen/specs/pillager-patrol-bad-omen/spec.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "291 capability spec pillager-patrol-bad-omen",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "spawning",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "src/simulation/PillagerPatrol.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "291 seeded rate-limited pillager patrol planner + PillagerPatrolSystem (reuses 284 backend / 288 combat)",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "combat",
-        "determinism",
-        "raid",
-        "spawning"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/PillagerPatrol.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "291 unit tests for patrol gates, determinism, rate limit, captain uniqueness, rollback, despawn, combat",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "spawning",
-        "determinism"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/LivePillagerPatrol.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "291 integration oracle + Game source guards for captain Bad Omen grant/cap and raid isolation",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "spawning",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/e2e/pillager-patrol.spec.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "291 browser E2E journey for patrol rules, captain Bad Omen, cap, raid isolation, reload",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "persistence",
-        "raid",
-        "spawning"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings; re-reviewed for 292 reload now expects persisted captain Bad Omen",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/292-player-status-effect-persistence/OVERRIDE_DRAFT.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "292 OpenSpec artifact OVERRIDE_DRAFT.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "persistence",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/292-player-status-effect-persistence/design.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "292 OpenSpec artifact design.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "persistence",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings; 294 resolved annotations (restored omen escalates ACTIVE raid; death clears Bad Omen)",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/292-player-status-effect-persistence/proposal.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "292 OpenSpec artifact proposal.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "persistence",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/292-player-status-effect-persistence/tasks.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "292 OpenSpec artifact tasks.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "persistence",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/292-player-status-effect-persistence/verification.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "292 OpenSpec artifact verification.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "persistence",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/292-player-status-effect-persistence/specs/player-status-effect-persistence/spec.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "292 capability spec player-status-effect-persistence",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "compatibility",
-        "persistence",
-        "raid",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "src/simulation/PlayerEffectsPersistence.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "292 pure codec for persisted player status effects + Bad Omen level/remaining (tolerant parse, registry clamps, omen duration helpers)",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "compatibility",
-        "persistence",
-        "security",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/PlayerEffectsPersistence.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "292 unit tests for effects codec round trip, resume, caps, backward compat, malformed input, omen duration",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "compatibility",
-        "persistence",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/LiveStatusEffectPersistence.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "292 composition oracle (save/reload, restored omen x 285 trigger x 291 patrol) + Game source guards for durable save points and dispose ordering",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "persistence",
-        "raid",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings; re-reviewed for 294 mirror escalation branch, widened trigger signature guard and respawn omen-clear guard",
-      "status": "audited"
-    },
-    {
-      "path": "tests/e2e/status-effect-persistence.spec.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "292 browser E2E: HOTV + Bad Omen survive pagehide/reload with resumed durations; restored omen in village raids, dismisses patrol, stays consumed",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "persistence",
-        "raid",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/293-raider-and-patrol-rendering/OVERRIDE_DRAFT.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "293 OpenSpec artifact OVERRIDE_DRAFT.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "rendering"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/293-raider-and-patrol-rendering/design.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "293 OpenSpec artifact design.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "rendering"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/293-raider-and-patrol-rendering/proposal.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "293 OpenSpec artifact proposal.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "rendering"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/293-raider-and-patrol-rendering/tasks.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "293 OpenSpec artifact tasks.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "rendering"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/293-raider-and-patrol-rendering/verification.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "293 OpenSpec artifact verification.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "rendering"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/293-raider-and-patrol-rendering/specs/raider-and-patrol-rendering/spec.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "293 capability spec raider-and-patrol-rendering",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "lifecycle",
-        "raid",
-        "rendering"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "src/rendering/RaiderRenderer.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "293 box-mesh raider/patrol renderer: projection from raid/patrol managers, per-kind silhouettes, captain banner, facing, shared constructor-time geometry/materials, leak-free sync/dispose",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "lifecycle",
-        "raid",
-        "rendering"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/RaiderRenderer.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "293 unit tests for projection, sync add/update/rebuild/remove, part counts, captain marker, facing, visibility, fixed resources, exactly-once disposal + module/Game source guards",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "lifecycle",
-        "raid",
-        "rendering"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/e2e/raider-rendering.spec.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "293 browser E2E: scene raider groups mirror raid wave + patrol (kinds, captain, facing) through death, patrol dismissal, raid victory and dispose; non-golden screenshot sanity check",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "rendering"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/294-bad-omen-raid-escalation-and-death-parity/OVERRIDE_DRAFT.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "294 OpenSpec artifact OVERRIDE_DRAFT.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/294-bad-omen-raid-escalation-and-death-parity/design.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "294 OpenSpec artifact design.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/294-bad-omen-raid-escalation-and-death-parity/proposal.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "294 OpenSpec artifact proposal.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/294-bad-omen-raid-escalation-and-death-parity/tasks.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "294 OpenSpec artifact tasks.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/294-bad-omen-raid-escalation-and-death-parity/verification.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "294 OpenSpec artifact verification.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/294-bad-omen-raid-escalation-and-death-parity/specs/bad-omen-raid-escalation-and-death-parity/spec.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "294 capability spec bad-omen-raid-escalation-and-death-parity",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "persistence",
-        "raid",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "src/simulation/RaidEscalation.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "294 pure Bad Omen raid escalation rules: wave table, in-place escalateRaid (cap 5, waves never reduced), 96-block village match, ESCALATE_RAID/START_RAID/NONE action resolver",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "raid",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/RaidEscalation.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "294 unit tests for wave table, escalation math/cap/no-shrink/unchanged progress, terminal/invalid no-op, village radius, action precedence, escalated victory HOTV",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/LiveRaidEscalation.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "294 composition oracle (escalation + patrol dismissal + one-flush persistence, escalated HOTV, cap consumption, far/finished raid restart, death clears omen durably) + Game source guards",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "persistence",
-        "raid",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/e2e/bad-omen-raid-escalation.spec.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "294 browser E2E: omen during an ACTIVE raid escalates in place (same wave, patrol dismissed, bar badge, reload, escalated HOTV III), cap consumption + finished-raid restart, death clears omen across reload",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "persistence",
-        "raid",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 294 bad-omen-raid-escalation-and-death-parity; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/295-throwable-splash-potion-entities/OVERRIDE_DRAFT.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "295 OpenSpec artifact OVERRIDE_DRAFT.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "raid",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/295-throwable-splash-potion-entities/design.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "295 OpenSpec artifact design.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "raid",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings; re-reviewed for 296 downstream note; re-reviewed for 297 (downstream note: gunpowder + splash brewing landed in 297); no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/295-throwable-splash-potion-entities/proposal.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "295 OpenSpec artifact proposal.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "raid",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings; re-reviewed for 296 poison-ticks supersession note; re-reviewed for 297 (superseded-by-297 splash availability note); no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/295-throwable-splash-potion-entities/tasks.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "295 OpenSpec artifact tasks.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "raid",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/295-throwable-splash-potion-entities/verification.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "295 OpenSpec artifact verification.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "raid",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings; re-reviewed for 296 closed poison-marker divergence; re-reviewed for 297 (superseded-by-297 splash availability notes); no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/295-throwable-splash-potion-entities/specs/throwable-splash-potion-entities/spec.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "295 capability spec throwable-splash-potion-entities",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "raid",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "src/simulation/SplashPotion.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "295 pure splash potion entities: vanilla player/witch throw vectors, SplashPotionSystem over ProjectileCore (gravity 0.05/drag 0.99, block/entity shatter, cap 64), splash falloff, instant/duration application plan, throw consume decision, vanilla witch potion choice + deterministic roll",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "raid",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "src/rendering/SplashPotionRenderer.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "295 in-flight splash potion bottle renderer on the 293 shared-resource pattern (constructor-time geometry/material palette, per-key group pool, no scene setup changes)",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "rendering"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/SplashPotion.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "295 unit tests: throw vectors, gravity arc/drag, block and entity shatter, owner immunity, witch scope, expiry, cap, falloff/vertical band, instant and duration application, witch choice/roll/contents, consume rules",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "raid",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/SplashPotionRenderer.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "295 renderer tests: tints, one group per potion, visibility, no allocation in sync, dispose once, source guards (no scene setup / particle wiring, Game render sync)",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "rendering"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/LiveSplashPotion.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "295 composition oracle (throw/consume/creative/spectator, self poison, healing, harming kills a raid raider exactly once, witch sink poison, no fallback) + Game/PlayerInteraction/RaiderCombat source guards",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "raid",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/e2e/splash-potion.spec.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "295 browser E2E: self poison splash (render, shatter, scaled duration, consume), harming damage + creative keep, raid witch potion applies its effect to the player",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "raid",
-        "rendering",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/296-periodic-status-effect-ticks/OVERRIDE_DRAFT.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "296 OpenSpec artifact OVERRIDE_DRAFT.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/296-periodic-status-effect-ticks/design.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "296 OpenSpec artifact design.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/296-periodic-status-effect-ticks/proposal.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "296 OpenSpec artifact proposal.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/296-periodic-status-effect-ticks/specs/periodic-status-effect-ticks/spec.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "296 OpenSpec artifact spec.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/296-periodic-status-effect-ticks/tasks.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "296 OpenSpec artifact tasks.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/296-periodic-status-effect-ticks/verification.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "296 OpenSpec artifact verification.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "src/simulation/PeriodicStatusEffects.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "296 pure periodic status effects: vanilla poison/regeneration/wither intervals (base >> amplifier, min 1), remaining-tick rounding, schedule predicate, poison 1-HP floor / wither lethal / regeneration cap decisions, ordered live fixed-tick pass",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/PeriodicStatusEffects.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "296 unit tests: interval table per amplifier and clamps, rounding, schedule, hit counts, poison floor, wither kill, regen cap, order, death mid-pass skip, determinism",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/LivePeriodicStatusEffects.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "296 composition tests: real StatusEffectManager + SurvivalSystem + armor + mode gate + respawn + FixedTickDriver (poison floor, armor bypass, regen cap, wither death, creative/spectator, pause, reload cadence) and Game source guards",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/e2e/periodic-status-effects.spec.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "296 browser E2E: splash poison lowers health over ticks and stops at 1 HP, paused game unchanged, regeneration heals to max, wither kills with death screen, creative immune",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 296 periodic-status-effect-ticks; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/297-gunpowder-and-splash-brewing/OVERRIDE_DRAFT.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "297 OpenSpec artifact OVERRIDE_DRAFT.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "brewing",
-        "loot"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/297-gunpowder-and-splash-brewing/design.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "297 OpenSpec artifact design.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "brewing",
-        "loot"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/297-gunpowder-and-splash-brewing/proposal.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "297 OpenSpec artifact proposal.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "brewing",
-        "loot"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/297-gunpowder-and-splash-brewing/specs/gunpowder-and-splash-brewing/spec.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "297 OpenSpec artifact spec.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "brewing",
-        "loot"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/297-gunpowder-and-splash-brewing/tasks.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "297 OpenSpec artifact tasks.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "brewing",
-        "loot"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/297-gunpowder-and-splash-brewing/verification.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "297 OpenSpec artifact verification.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "brewing",
-        "loot"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "src/simulation/GunpowderMobDrops.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "297 pure vanilla gunpowder mob drop tables: creeper uniform 0-2 (+looting), witch 1-3 weighted rolls over the 7-entry vanilla pool (missing items discarded, not re-rolled), fixed rng draw order, stack merge, scripted rng helper",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "brewing",
-        "loot"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/GunpowderMobDrops.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "297 unit tests: gunpowder item/tile 75 isolation, uniformInt/looting/scripted rng, creeper distribution and looting, witch pool/weights/draw order/merge/missing-item discard/exact odds, dispatch (ghast absent)",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "brewing",
-        "loot"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/SplashBrewing.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "297 unit tests: gunpowder recipe gating on kind, NORMAL->SPLASH conversion preserving base/effects in the real 400-tick engine, kind preserved by other recipes, no double splash, fuel rules, envelope and live host persist/hydrate round-trips",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "brewing",
-        "loot"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/LiveWitchGunpowderDrops.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "297 composition tests: real RaiderCombatSystem death info (type key + pre-removal position), witch-only drops exactly once as item entities, melee path, real pickup, Game source guards",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "brewing",
-        "loot"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/e2e/gunpowder-splash-brewing.spec.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "297 browser E2E: raid witch death drops gunpowder (scripted roll), real pickup, awkward+redstone then +gunpowder in a real stand -> SPLASH speed preserved, collect, throw, speed applied",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "brewing",
-        "loot"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 297 gunpowder-and-splash-brewing; no findings",
       "status": "audited"
     }
   ]

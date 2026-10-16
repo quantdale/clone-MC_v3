@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import * as THREE from 'three';
+import { methodBody, readSource } from '../support/sourceText';
 import { createPotionContents } from '../../src/data/PotionItemData';
 import {
   SPLASH_POTION_TINTS,
@@ -99,8 +99,8 @@ describe('SplashPotionRenderer (295)', () => {
 });
 
 describe('splash potion rendering source guards (295)', () => {
-  const moduleSrc = readFileSync(resolve(__dirname, '../../src/rendering/SplashPotionRenderer.ts'), 'utf8');
-  const gameSrc = readFileSync(resolve(__dirname, '../../src/engine/Game.ts'), 'utf8');
+  const moduleSrc = readSource(resolve(__dirname, '../../src/rendering/SplashPotionRenderer.ts'));
+  const gameSrc = readSource(resolve(__dirname, '../../src/engine/Game.ts'));
 
   it('renderer module does not touch lights, fog, background, atlas, textures or the camera', () => {
     const code = moduleSrc.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
@@ -108,14 +108,13 @@ describe('splash potion rendering source guards (295)', () => {
   });
 
   it('sync never allocates GPU resources', () => {
-    const syncBody = moduleSrc.slice(moduleSrc.indexOf('  sync(entries'), moduleSrc.indexOf('  setVisible('));
+    const syncBody = methodBody(moduleSrc, '  sync(entries');
     expect(syncBody).not.toMatch(/new THREE\.(BoxGeometry|MeshLambertMaterial)/);
   });
 
   it('Game tracks the renderer and syncs it every frame before the draw', () => {
     expect(gameSrc).toMatch(/this\.splashPotionRenderer = new SplashPotionRenderer\(this\.renderer\.scene\);\s*this\.resources\.track\(this\.splashPotionRenderer\);/);
-    const render = gameSrc.slice(gameSrc.indexOf('  private render(): void {'));
-    const body = render.slice(0, render.indexOf('\n  }\n'));
+    const body = methodBody(gameSrc, '  private render(): void');
     expect(body.indexOf('this.syncSplashPotionRenderer();')).toBeGreaterThan(-1);
     expect(body.indexOf('this.syncSplashPotionRenderer();')).toBeLessThan(body.indexOf('this.renderer.render();'));
   });

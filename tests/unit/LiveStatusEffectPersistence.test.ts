@@ -1,6 +1,6 @@
-import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { countOccurrences, methodBody as extractMethodBody, readSource } from '../support/sourceText';
 import { createDefaultAttributeRegistry } from '../../src/data/AttributeRegistry';
 import { createResourceId } from '../../src/data/ResourceId';
 import { createDefaultStatusEffectRegistry } from '../../src/data/StatusEffect';
@@ -284,23 +284,9 @@ describe('LiveStatusEffectPersistence (292) — restored omen × 285 trigger × 
 });
 
 describe('Game source guards (292)', () => {
-  const src = readFileSync(resolve(__dirname, '../../src/engine/Game.ts'), 'utf8');
+  const src = readSource(resolve(__dirname, '../../src/engine/Game.ts'));
 
-  function methodBody(signature: string): string {
-    const start = src.indexOf(signature);
-    expect(start, signature).toBeGreaterThan(-1);
-    let depth = 0;
-    let i = src.indexOf('{', start + signature.length - 1);
-    const open = i;
-    for (; i < src.length; i++) {
-      if (src[i] === '{') depth++;
-      else if (src[i] === '}') {
-        depth--;
-        if (depth === 0) break;
-      }
-    }
-    return src.slice(open, i + 1);
-  }
+  const methodBody = (signature: string): string => extractMethodBody(src, signature);
 
   function inOrder(body: string, parts: string[]): void {
     let at = -1;
@@ -371,6 +357,12 @@ describe('Game source guards (292)', () => {
   });
 
   it('fixed tick counts the omen down beside the status-effect tick', () => {
-    expect(src).toMatch(/this\.playerEffects\.tick\(dt\);\n\s*\/\/ 292[^\n]*\n\s*this\.tickBadOmenDuration\(dt\);/);
+    const body = methodBody('private runFixedTick(');
+    expect(countOccurrences(body, 'this.playerEffects.tick(dt);')).toBe(1);
+    expect(countOccurrences(body, 'this.tickBadOmenDuration(dt);')).toBe(1);
+    const effects = body.indexOf('this.playerEffects.tick(dt);');
+    const omen = body.indexOf('this.tickBadOmenDuration(dt);');
+    expect(effects).toBeGreaterThan(-1);
+    expect(omen).toBeGreaterThan(effects);
   });
 });

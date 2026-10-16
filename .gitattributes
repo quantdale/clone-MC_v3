@@ -1,0 +1,19 @@
+# Repository-declared line-ending policy (change 298).
+#
+# Git normalises text files to LF in the index and checks them out with LF in
+# every working tree, so a fresh clone of the same commit produces byte-identical
+# text files on Linux, macOS and Windows. This removes the platform dependency
+# that previously let source-text assertions pass on CI and fail on a Windows
+# checkout.
+#
+# Binary artifacts are declared explicitly so Git never transforms their bytes.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary

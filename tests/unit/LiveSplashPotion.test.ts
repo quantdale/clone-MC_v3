@@ -1,6 +1,6 @@
-import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { countOccurrences, methodBody, readSource } from '../support/sourceText';
 import { createDefaultAttributeRegistry } from '../../src/data/AttributeRegistry';
 import { createDefaultEntityRegistry } from '../../src/data/EntityType';
 import { createPotionContents, type PotionContents } from '../../src/data/PotionItemData';
@@ -230,9 +230,9 @@ describe('LiveSplashPotion composition (295)', () => {
 });
 
 describe('Game splash potion source guards (295)', () => {
-  const game = readFileSync(resolve(__dirname, '../../src/engine/Game.ts'), 'utf8');
-  const interaction = readFileSync(resolve(__dirname, '../../src/player/PlayerInteraction.ts'), 'utf8');
-  const combat = readFileSync(resolve(__dirname, '../../src/simulation/RaiderCombatBehavior.ts'), 'utf8');
+  const game = readSource(resolve(__dirname, '../../src/engine/Game.ts'));
+  const interaction = readSource(resolve(__dirname, '../../src/player/PlayerInteraction.ts'));
+  const combat = readSource(resolve(__dirname, '../../src/simulation/RaiderCombatBehavior.ts'));
 
   it('the 288 witch fallback is gone', () => {
     for (const src of [game, combat]) expect(src).not.toMatch(/WITCH_RANGED_FALLBACK_DAMAGE/);
@@ -240,23 +240,27 @@ describe('Game splash potion source guards (295)', () => {
   });
 
   it('tick 5.10 steps potions after the raid and patrol ticks', () => {
-    const raid = game.indexOf('    this.tickRaidFeedback();\n    // 5.8');
-    const patrol = game.indexOf('    this.tickPillagerPatrol();\n    // 5.10');
-    const potions = game.indexOf('    this.tickSplashPotions();\n\n    // 6. Survival');
+    const body = methodBody(game, 'private runFixedTick(');
+    expect(countOccurrences(body, 'this.tickRaidFeedback();')).toBe(1);
+    expect(countOccurrences(body, 'this.tickPillagerPatrol();')).toBe(1);
+    expect(countOccurrences(body, 'this.tickSplashPotions();')).toBe(1);
+    const raid = body.indexOf('this.tickRaidFeedback();');
+    const patrol = body.indexOf('this.tickPillagerPatrol();');
+    const potions = body.indexOf('this.tickSplashPotions();');
     expect(raid).toBeGreaterThan(-1);
     expect(patrol).toBeGreaterThan(raid);
     expect(potions).toBeGreaterThan(patrol);
   });
 
   it('raid combat hands witches the potion sink and the player status', () => {
-    const body = game.slice(game.indexOf('  private tickRaiderCombat(): void {'), game.indexOf('  private spawnWitchPotion('));
+    const body = methodBody(game, 'private tickRaiderCombat(): void');
     expect(body).toMatch(/throwWitchPotion: \(t\) => this\.spawnWitchPotion\(t\)/);
     expect(body).toMatch(/getPlayerPotionStatus: \(\) => \(\{/);
     expect(game).toMatch(/thrower: 'witch',\s*owner: \{ kind: 'raid', entityId: t\.ownerId \}/);
   });
 
   it('throw path: decision → spawn → consume only when the decision says so', () => {
-    const body = game.slice(game.indexOf('  tryThrowSelectedSplashPotion(): boolean {'), game.indexOf('  private splashTargets('));
+    const body = methodBody(game, 'tryThrowSelectedSplashPotion(): boolean');
     const decide = body.indexOf('splashThrowDecision({');
     const spawn = body.indexOf('this.splashPotions.spawn({');
     const consume = body.indexOf('if (decision.consume) this.inventory.consumeSelected();');
@@ -268,7 +272,7 @@ describe('Game splash potion source guards (295)', () => {
   });
 
   it('shatter application routes damage through hurtPlayer/damageRaider/damageMember', () => {
-    const body = game.slice(game.indexOf('  private applySplashShatter('), game.indexOf('  testGrantSplashPotion('));
+    const body = methodBody(game, 'private applySplashShatter(');
     expect(body).toMatch(/this\.hurtPlayer\(application\.damage, 'magic'\)/);
     expect(body).toMatch(/this\.survival\.heal\(application\.heal\)/);
     expect(body).toMatch(/this\.playerEffects\.add\(id, effect\.durationSeconds, effect\.amplifier\)/);
@@ -281,7 +285,7 @@ describe('Game splash potion source guards (295)', () => {
   });
 
   it('PlayerInteraction offers item use in the air and before placement, after container uses', () => {
-    const code = interaction.replace(/\r\n/g, '\n');
+    const code = interaction;
     const bone = code.indexOf('selectedId === ItemId.BoneMeal');
     const use = code.indexOf('} else if (this.onUseItem?.()) {');
     const place = code.indexOf('} else if (this.placeBlock()) {');

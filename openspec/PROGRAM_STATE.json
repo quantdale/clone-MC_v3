@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "status": "ACTIVE",
-  "currentChange": "297-gunpowder-and-splash-brewing",
+  "currentChange": "298-verification-portability-eol-and-source-guards",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "297-gunpowder-and-splash-brewing",
-  "nextChange": "298",
-  "completedTasks": 12,
-  "totalTasks": 12,
+  "lastCompletedChange": "298-verification-portability-eol-and-source-guards",
+  "nextChange": "299",
+  "completedTasks": 14,
+  "totalTasks": 14,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -14,15 +14,23 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "fdba42d738ebf0972ffecb5a6b38cddf3663fd54",
-  "localHead": "9dfc9c7fb4eeedd92468abccbe1ecc3659b3d8dc",
-  "publishedHead": "9dfc9c7fb4eeedd92468abccbe1ecc3659b3d8dc",
-  "nextExactAction": "297 VERIFIED 12/12 published at 9dfc9c7fb4eeedd92468abccbe1ecc3659b3d8dc (origin/main verified equal); next exact action is author a spec-first OpenSpec package for 298 (NOT started this session); candidate topics: (1) glass bottles + water bottles (fill from water) and the water->awkward brew path so potion bases need no seam; (2) drinkable potions (use-to-drink consume path; normal potions are not drinkable today); (3) TNT recipe (5 gunpowder + 4 sand) with a container-ui golden re-pin + TNT ignition; (4) live creepers (spawn/AI/explosion) using the 297 creeper drop table; (5) lingering potions (dragon's breath) / area-effect clouds; (6) minimal villager entities that panic/flee during raids; (7) raider walk/attack animation with simulation-side yaw updates and smoothed rendering; (8) concurrent raids per village; (9) raid celebration/cooldown phase after VICTORY/DEFEAT; (10) per-mob status effects + witch self-healing/healing raiders; (11) hunger status effect; (12) other raider/patrol drops (pillager crossbow/arrows, ravager saddle, ominous banner). 258 stays BLOCKED",
-  "lastCompletedTask": "T12 complete: C297 exact/VERIFIED, verification 12/12, published to origin/main at 9dfc9c7fb4eeedd92468abccbe1ecc3659b3d8dc; next is author 298 package (not started)",
+  "sessionStartHead": "0e90fa2a13c1658b91b0e84b3047467f3ddc87d9",
+  "localHead": "0e90fa2a13c1658b91b0e84b3047467f3ddc87d9",
+  "publishedHead": "0e90fa2a13c1658b91b0e84b3047467f3ddc87d9",
+  "nextExactAction": "298 VERIFIED 14/14. Next exact action is change 299-toolchain-dependency-reproducibility (audit finding F-002): pin an exact packageManager field, add read-only scripts/check-install.mjs (exit 0 match/fresh, 1 drift with remediation table, 2 malformed lockfile) wired as preinstall so a drifted tree aborts before mutation, add verify:deps as the first documented baseline step, and document the Node/npm contract plus the provider-specific coverage caveat. NOTE for the 299 session: this 298 session rebuilt node_modules with npm ci, so the installed tree now matches the lockfile (vitest 4.1.11) and the coverage gate measures 91.82/88.61/94.65/93.15 against thresholds 91/88/94/93; 299 must make that state ENFORCED, not incidental. After 299: 300 visual-regression-gate-reliability (golden staleness detection + high/1920x1080 column), 301 verification-script-gate-wiring, 302 multiplayer-performance-gate-enforcement, 303 renderer-lifecycle-unit-coverage, 304 modal-focus-and-keyboard-accessibility. 258 stays BLOCKED.",
+  "lastCompletedTask": "T14 complete: C298 exact/VERIFIED, verification 14/14, gates green (typecheck/lint 0 errors 85 warnings/unit 477 files 5725+1/build 266 modules/coverage 91.82-88.61-94.65-93.15/file-audit 3070/E2E 137-137); publication pending in this session",
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-297 are VERIFIED; game shippable with known performance-certification debt. The 297 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
   "validationResults": [
+    {
+      "change": "298-verification-portability-eol-and-source-guards",
+      "status": "VERIFIED",
+      "unitTests": 5725,
+      "e2eTests": 137,
+      "note": "14/14 tasks complete (100%). .gitattributes declares * text=auto eol=lf plus explicit binary types (png/jpg/jpeg/gif/webp/ico/woff/woff2); git check-attr reports eol: lf for Game.ts/index.html/visual spec and text: unset for golden PNGs; 0 rows of *.png churn. tests/support/sourceText.ts exports the single CRLF-normalising readSource plus brace-aware methodBody and countOccurrences; all eight source-guard suites route through it and the four newline-bearing comment-coupled anchors (// 5.8, // 5.10, // 6. Survival, // 292) were replaced by methodBody-scoped identifier/count/ordering assertions. tests/unit/SourceTextPortability.test.ts (12 tests) proves CRLF==LF, no carriage return, error propagation, methodBody negative cases, and sweeps that no tests/unit file reads src/ directly and no indexOf(newline) anchor remains. 2138 tracked files renormalised; git diff -w --cached HEAD shows ONLY .gitattributes content-changed (package-lock.json proven byte-identical after \r strip: md5 1275a9682b3bc0078a9854215bb5cb4d both sides); no src/ file changed. Platform proof: npm test exit 0 with 477 files / 5725 passed + 1 skipped on BOTH the LF tree and a disposable CRLF worktree (Game.ts 7381 CRLF), and a reordered tickSplashPotions/tickPillagerPatrol still FAILS the ordering assertion (5059 !> 5196), so regression power is preserved. File-audit manifest extended by 39 rows to 3070 (the two new test files, .gitattributes, MASTER_PLAN.md, the audit-authored 298-304 packages) and validate-file-audit PASSES. Gate: validate-state PASS; typecheck PASS; lint 0 errors / 85 warnings; npm test 477 files 5725+1 exit 0 (measured on the LOCKED vitest 4.1.11 after npm ci); coverage statements 91.82 / branches 88.61 / functions 94.65 / lines 93.15 vs thresholds 91/88/94/93 PASS; build 266 modules, existing chunk advisory only; check-release-bundle PASS; full E2E 137/137 exit 0 including the 60-cell visual matrix (no drift classification needed this run); file-audit PASSED 3070 rows. C298 exact. No product behaviour, save format, API, dependency version, coverage threshold or golden threshold changed. 258 BLOCKED.",
+      "head": "0e90fa2a13c1658b91b0e84b3047467f3ddc87d9"
+    },
     {
       "change": "297-gunpowder-and-splash-brewing",
       "status": "VERIFIED",

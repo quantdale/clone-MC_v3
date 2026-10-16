@@ -1,6 +1,6 @@
-import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { methodBody as extractMethodBody, readSource } from '../support/sourceText';
 import { createDefaultEntityRegistry } from '../../src/data/EntityType';
 import { createResourceId } from '../../src/data/ResourceId';
 import {
@@ -203,23 +203,9 @@ describe('Live pillager patrol → Bad Omen (291)', () => {
 });
 
 describe('Game source isolation guards (291)', () => {
-  const src = readFileSync(resolve(__dirname, '../../src/engine/Game.ts'), 'utf8');
+  const src = readSource(resolve(__dirname, '../../src/engine/Game.ts'));
 
-  function methodBody(signature: string): string {
-    const start = src.indexOf(signature);
-    expect(start).toBeGreaterThan(-1);
-    let depth = 0;
-    let i = src.indexOf('{', start);
-    const open = i;
-    for (; i < src.length; i++) {
-      if (src[i] === '{') depth++;
-      else if (src[i] === '}') {
-        depth--;
-        if (depth === 0) break;
-      }
-    }
-    return src.slice(open, i + 1);
-  }
+  const methodBody = (signature: string): string => extractMethodBody(src, signature);
 
   it('raid death choke never grants Bad Omen', () => {
     const body = methodBody('onRaidEntityRemoved(entityId: number): boolean');
@@ -233,10 +219,7 @@ describe('Game source isolation guards (291)', () => {
   });
 
   it('patrol module has no RaidState dependency', () => {
-    const patrolSrc = readFileSync(
-      resolve(__dirname, '../../src/simulation/PillagerPatrol.ts'),
-      'utf8',
-    );
+    const patrolSrc = readSource(resolve(__dirname, '../../src/simulation/PillagerPatrol.ts'));
     expect(patrolSrc).not.toMatch(/from '\.\/RaidStateMachine'/);
     expect(patrolSrc).not.toMatch(/recordRaiderDeath\(|forceRaidDefeat\(/);
   });

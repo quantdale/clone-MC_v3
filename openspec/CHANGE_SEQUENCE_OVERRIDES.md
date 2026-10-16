@@ -1471,3 +1471,49 @@ the TNT recipe is deferred (golden-captured crafting panel). Full E2E
 - Changes 259–297 remain VERIFIED and are not reopened.
 - The next sequential slot after published VERIFIED 297 is **298** (spec-first package to
   author). It is NOT implemented by the 297 track.
+
+## 298-verification-portability-eol-and-source-guards — activated and VERIFIED (2026-09-30)
+
+The session instruction ("find out everything wrong on this repo and fix it. improve
+its code quality significantly") authorizes activating and implementing the
+highest-priority open finding in the repository's own audit campaign:
+**F-001 / Change 298** (`MASTER_PLAN.md` §4), which the audit itself marks **P0**
+and a prerequisite for every later change's evidence.
+
+- **Activation dependency (satisfied):** Change
+  **297-gunpowder-and-splash-brewing** is VERIFIED 12/12 and published; session
+  start head `0e90fa2` (origin/main), which already carries the audit-authored
+  `MASTER_PLAN.md` and the 298–304 OpenSpec packages and the `CHANGE_SEQUENCE.md`
+  post-terminal rows.
+- **Scope actually implemented:** `.gitattributes` with `* text=auto eol=lf` plus
+  explicit binary types; one shared CRLF-normalising `tests/support/sourceText.ts`
+  (`readSource`, brace-aware `methodBody`, `countOccurrences`); all eight
+  source-guard suites routed through it; the four newline-bearing and
+  comment-coupled anchors (`// 5.8`, `// 5.10`, `// 6. Survival`, `// 292`)
+  rewritten as `methodBody`-scoped identifier/count/ordering assertions; a new
+  `tests/unit/SourceTextPortability.test.ts`; a content-neutral line-ending
+  renormalisation of the tree; and 39 appended rows in the reviewed file-audit
+  manifest.
+- **Out of scope and untouched:** every file under `src/`; every committed golden
+  `*.png`; every dependency version; every coverage and golden threshold; changes
+  299–304. Change **258** stays **BLOCKED**; Changes **259–297** stay **VERIFIED**
+  and are not reopened.
+- **Result:** `npm test` exits 0 with an identical count (477 files, 5725 passed +
+  1 skipped) on both an LF checkout and a CRLF checkout, and the full baseline
+  gate (validate-state, typecheck, lint 0 errors / 85 warnings, build,
+  check-release-bundle, coverage, full E2E 137/137 including the 60-cell visual
+  matrix, file-audit) passes. `git diff -w` over the renormalisation shows only
+  `.gitattributes` as content-changed. Change 298 is **VERIFIED 14/14**.
+
+### Sequence row (authoritative with CHANGE_SEQUENCE.md)
+
+| 298 | `298-verification-portability-eol-and-source-guards` | VERIFIED 14/14 — `.gitattributes` LF declaration + shared normalising reader + structural source-guard assertions; identical green unit count on LF and CRLF; no product change; 258 BLOCKED. |
+
+### Toolchain note carried forward to 299
+
+This session rebuilt `node_modules` with `npm ci`, so the installed tree now
+matches `package-lock.json` (Vitest **4.1.11**), and `npm run test:coverage` was
+measured green locally for the first time (statements 91.82 / branches 88.61 /
+functions 94.65 / lines 93.15 against thresholds 91/88/94/93). That state is
+incidental, not enforced — change 299 (`verify:deps` + `preinstall` guard +
+`packageManager`) is what makes it durable.

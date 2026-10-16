@@ -1,6 +1,6 @@
-import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { readSource } from '../support/sourceText';
 import { createDefaultEntityRegistry } from '../../src/data/EntityType';
 import { createResourceId } from '../../src/data/ResourceId';
 import { EntityManager } from '../../src/simulation/EntityManager';
@@ -213,7 +213,7 @@ describe('live witch drops (297)', () => {
 });
 
 describe('Game wiring source guards (297)', () => {
-  const src = readFileSync(resolve(__dirname, '../../src/engine/Game.ts'), 'utf8');
+  const src = readSource(resolve(__dirname, '../../src/engine/Game.ts'));
 
   it('every raid death site drops loot only when the death is consumed', () => {
     const sites = src.match(/if \(this\.onRaidEntityRemoved\(\w+\)\) this\.dropRaiderLoot\(death\);/g) ?? [];

@@ -1,6 +1,6 @@
-import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { methodBody as extractMethodBody, readSource } from '../support/sourceText';
 import { createDefaultAttributeRegistry } from '../../src/data/AttributeRegistry';
 import { createDefaultDamageTypeRegistry } from '../../src/data/DamageType';
 import { createResourceId } from '../../src/data/ResourceId';
@@ -235,13 +235,8 @@ describe('LivePeriodicStatusEffects: survival composition (296)', () => {
 });
 
 describe('LivePeriodicStatusEffects: Game source guards (296)', () => {
-  const src = readFileSync(resolve(__dirname, '../../src/engine/Game.ts'), 'utf8');
-  const body = (name: string): string => {
-    const start = src.indexOf(`  ${name}(`);
-    expect(start).toBeGreaterThan(0);
-    const end = src.indexOf('\n  }\n', start);
-    return src.slice(start, end);
-  };
+  const src = readSource(resolve(__dirname, '../../src/engine/Game.ts'));
+  const body = (name: string): string => extractMethodBody(src, `  ${name}(`);
 
   it('runs the pass in runFixedTick step 6 before the duration count-down', () => {
     const tick = body('private runFixedTick');
