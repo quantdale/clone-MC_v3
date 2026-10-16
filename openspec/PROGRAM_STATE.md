@@ -3,7 +3,7 @@
 ## Current checkpoint — 2026-09-30 Change 298-verification-portability-eol-and-source-guards VERIFIED 14/14 (100%); 299 next (author package only; audit finding F-002)
 
 > **Change `298-verification-portability-eol-and-source-guards` is VERIFIED 14/14 (100%)**; all baseline gates green (validate-state/typecheck/lint 0 errors 85 warnings/unit 477 files 5725+1/build 266 modules/coverage 91.82-88.61-94.65-93.15 vs 91/88/94/93/file-audit 3070/E2E 137 passed including the 60-cell visual matrix); last completed Change 298 is VERIFIED; Changes 001–298 are VERIFIED except Change 258 BLOCKED; Changes 259–298 are not reopened.
-> Session start head: `0e90fa2a13c1658b91b0e84b3047467f3ddc87d9` (origin/main). Published head recorded in `PROGRAM_STATE.json` after publication.
+> Session start head: `0e90fa2a13c1658b91b0e84b3047467f3ddc87d9` (origin/main). Published head `1d10c7db0e5e73bc2219c36c01df1be31d3a5d66` (origin/main verified equal).
 > 298 declares the repository's line-ending convention in `.gitattributes` (`* text=auto eol=lf` + explicit binary types), routes all eight source-guard suites through one CRLF-normalising `readSource` helper, and replaces the four newline-bearing comment-coupled anchors with `methodBody`-scoped identifier/ordering assertions; `npm test` is now green with an identical count (5725+1) on LF and CRLF checkouts, and a genuine reordering still fails. No product change; `258` stays BLOCKED.
 
 - Gates: validate-state PASS; typecheck PASS; lint 0 errors / 85 warnings; unit 477 files 5725+1 exit 0 (on the locked vitest 4.1.11); coverage 91.82/88.61/94.65/93.15 PASS; build 266 modules; check-release-bundle PASS; full E2E 137/137 (60-cell visual matrix green, no drift classification needed); file-audit PASSED 3070 rows.
