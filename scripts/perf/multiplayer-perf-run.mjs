@@ -129,10 +129,18 @@ child.on('close', (code, signal) => {
   // -------------------------------------------------------------------------
   // Step 4: prove exactly one test ran and passed. `vitest -t` exits 0 when the
   // filter matches nothing, so the exit code alone is not evidence.
+  //
+  // The captured output must be ANSI-stripped first: CI hosts run vitest with
+  // colour enabled, which inserts escape sequences BETWEEN `Tests` and the counts
+  // (`Tests \x1b[1m\x1b[32m1 passed`). Parsing the raw stream made this guard
+  // report "zero tests" on CI even though the measurement had passed and printed
+  // `Tests 1 passed | 11 skipped`.
   // -------------------------------------------------------------------------
+  const ESC = String.fromCharCode(27);
+  const plain = output.replace(new RegExp(`${ESC}\\[[0-9;]*[A-Za-z]`, 'g'), '');
   // vitest prints no `Tests` summary line at all when zero tests match, so a
   // missing summary is itself the zero-match signal — not an unreadable output.
-  const summary = /Tests\s+(?:(\d+)\s+failed\s*\|\s*)?(\d+)\s+passed(?:\s*\|\s*(\d+)\s+skipped)?/.exec(output);
+  const summary = /Tests\s+(?:(\d+)\s+failed\s*\|\s*)?(\d+)\s+passed(?:\s*\|\s*(\d+)\s+skipped)?/.exec(plain);
   if (!summary) {
     console.error('');
     console.error(

@@ -197,6 +197,34 @@ describe('canonical multiplayer performance gate (302)', () => {
     expect(DEFAULT_BASELINE_BUDGETS.maxElapsedMsForTicks).toBe(6000);
   });
 
+  it('parses an ANSI-coloured summary exactly as CI emits it', () => {
+    // The exact CI failure: the measurement PASSED and printed
+    // `Tests 1 passed | 11 skipped`, but the guard reported "zero tests" because
+    // vitest's colour escapes sit between `Tests` and the counts. The parser must
+    // strip ANSI before matching, and a genuine zero-match must still not match.
+    const ESC = String.fromCharCode(27);
+    const strip = (text: string): string =>
+      text.replace(new RegExp(`${ESC}\\[[0-9;]*[A-Za-z]`, 'g'), '');
+    const summaryRe = /Tests\s+(?:(\d+)\s+failed\s*\|\s*)?(\d+)\s+passed(?:\s*\|\s*(\d+)\s+skipped)?/;
+
+    const coloured =
+      `${ESC}[2m      Tests ${ESC}[22m ${ESC}[1m${ESC}[32m1 passed${ESC}[39m${ESC}[22m` +
+      `${ESC}[2m | ${ESC}[22m${ESC}[33m11 skipped${ESC}[39m${ESC}[90m (12)${ESC}[39m`;
+
+    // The raw stream does NOT match — this is exactly what broke CI.
+    expect(summaryRe.exec(coloured)).toBeNull();
+    // Stripped, it parses to the correct counts.
+    const match = summaryRe.exec(strip(coloured));
+    expect(match).not.toBeNull();
+    expect(match?.[1] ?? null).toBeNull(); // no failures
+    expect(match?.[2]).toBe('1');
+    expect(match?.[3]).toBe('11');
+    // A genuine zero-match still yields no summary line.
+    expect(summaryRe.exec(strip('No test files found, exiting with code 0'))).toBeNull();
+    // And the runner really does strip before matching.
+    expect(readSource(RUNNER)).toContain('String.fromCharCode(27)');
+  });
+
   it('spawns without a shell (portable, no .cmd shim, no argument interpolation)', () => {
     const runner = readSource(RUNNER);
     expect(runner).toMatch(/shell:\s*false/);
