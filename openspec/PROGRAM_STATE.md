@@ -1,5 +1,14 @@
 # Program State
 
+## Current checkpoint — 2026-10-17 Change 303-renderer-lifecycle-unit-coverage VERIFIED; 304 next (audit finding F-008)
+
+> **Change `303-renderer-lifecycle-unit-coverage` is VERIFIED (F-007 closed)**; gates green: Renderer.test 27/27 / verify:deps / verify:file-audit 3081 rows / validate-state / typecheck / lint 0 errors 85 warnings / unit 483 files 5793+1 / coverage **91.84-88.62-94.66-93.17** vs 91/88/94/93 / build / check-release-bundle / full E2E 137-137. Last completed Change 303 is VERIFIED; Changes 001–303 are VERIFIED except Change 258 BLOCKED; Changes 259–303 are not reopened.
+> Session start head: `95b758e7302eb1f17f4daaa848e36ceb5d41828f` (origin/main). Published head recorded in `PROGRAM_STATE.json` after publication.
+> 303 closes F-007: `src/engine/Renderer.ts` had **zero** unit coverage (no test imported it; its only consumer is the DOM-bound `Game.ts`; it carried a `c8 ignore` block around its own test-only freeze methods) — and the untested surface was exactly what produces a black screen after a GPU reset. A defaulted `WebGLRendererFactory` seam whose default is the exact shipped `THREE.WebGLRenderer` call, plus a 27-test headless suite, move it to **100% statements / 90.62% branches / 100% functions / 100% lines**, pinning no-WebGL fail-closed construction, context loss/restoration **including restoration failure**, dispose completeness and idempotency, headless vs standard pixel-ratio caps, resize clamp, drawing-buffer clamping and frozen dynamic resolution. The aggregate gate improved on all four metrics **with no threshold lowered**. `258` stays BLOCKED.
+
+- Gates: Renderer.test 27/27 PASS; verify:deps PASS; verify:file-audit PASS 3081 rows; validate-state PASS; typecheck PASS; lint 0 errors / 85 warnings; unit 483 files 5793+1; coverage 91.84/88.62/94.66/93.17 PASS; build PASS; check-release-bundle PASS; full E2E 137/137.
+- Next exact action: **Author a spec-first OpenSpec package for `304-modal-focus-and-keyboard-accessibility` (audit finding F-008) — do NOT implement 304 in the 303 session. 304 scope: a first-party `src/ui/ModalFocus.ts` helper (pure `nextFocusIndex`/`focusableOrder` for node unit tests, plus open/close/inert/Escape wiring) that moves focus into a dialog on open, contains Tab/Shift+Tab within it while open, marks `#ui-root` background subtrees `inert` so the declared `aria-modal` semantics are truthful, restores focus to the opener on close, and routes Escape through ONE dismiss path alongside the existing close control and `KeyC`; additive per-panel wiring with no signature or `KeyC` change; `death-screen` gains the missing `aria-modal`; no rendering change and no new dependency (no jsdom — DOM behaviour proven in the browser suite). Audit evidence: 11 `aria-modal` surfaces, exactly one unrelated `focus()` call (`Game.ts:3021`), zero `inert` attributes, zero `tabIndex` in `src/`, zero Escape handling, and zero focus assertions in `tests/` — a keyboard user tabs through the UI behind an open modal. After 304 the audit-authored 298–304 sequence is COMPLETE; then re-audit the repository for remaining defects and further code-quality improvement. `258` stays BLOCKED.**
+
 ## Current checkpoint — 2026-10-17 Change 302-multiplayer-performance-gate-enforcement VERIFIED; 303 next (audit finding F-007)
 
 > **Change `302-multiplayer-performance-gate-enforcement` is VERIFIED (F-005 closed)**; gates green: test:perf:multiplayer PASS (sustainedTps 717.2 / elapsedMs 1673.2 vs the 200 / 6000 floors) / verify:deps / verify:file-audit 3080 rows / validate-state / typecheck / lint 0 errors 85 warnings / unit 482 files 5766+1 / coverage 91.82-88.61-94.65-93.15 vs 91/88/94/93 / build / check-release-bundle / full E2E 137-137. Last completed Change 302 is VERIFIED; Changes 001–302 are VERIFIED except Change 258 BLOCKED; Changes 259–302 are not reopened.
@@ -431,15 +440,15 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **302-multiplayer-performance-gate-enforcement — VERIFIED; 258 BLOCKED, 259–302 VERIFIED**
+- Active implementation change: **303-renderer-lifecycle-unit-coverage — VERIFIED; 258 BLOCKED, 259–303 VERIFIED**
 - Prior active implementation change: **283-live-raid-persistence — VERIFIED (13/13); 258 stays BLOCKED, 259–283 stay VERIFIED**
 - Prior prior active implementation change: **282-live-raid-feedback — VERIFIED (10/10); 258 stays BLOCKED, 259–282 stay VERIFIED**
-- Next change: **303 — author spec-first package after 302 VERIFIED (NOT started; audit finding F-007); 258 stays BLOCKED**
+- Next change: **304 — author spec-first package after 303 VERIFIED (NOT started; audit finding F-008); 258 stays BLOCKED**
 - 240 advancement allowed: **yes**
 
 - Program: **ACTIVE — Change 284-live-raid-wave-spawning VERIFIED 12/12 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–284 VERIFIED**
 - 284 checkpoint: **VERIFIED 12/12 — implementation + gates complete; enchanting flake + visual SwiftShader drift documented non-blocking; 258 BLOCKED; 285 not started**
-- Last completed change: **302-multiplayer-performance-gate-enforcement — VERIFIED — C302 exact, 258 BLOCKED**
+- Last completed change: **303-renderer-lifecycle-unit-coverage — VERIFIED — C303 exact, 258 BLOCKED**
 - Prior last completed change: **281-workstation-ui — VERIFIED (12/12); 258 stays BLOCKED, 259–281 stay VERIFIED**
 - Prior prior last completed change: **272-lighting-clock-dt-sync — VERIFIED (10/10) — full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85/file-audit 2792); 271 remains VERIFIED (14/14)
 - All changes 001–257 and 259–284: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed; Change 283 is VERIFIED 13/13; Change 284 is VERIFIED 12/12 (this session).

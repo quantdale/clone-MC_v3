@@ -54,9 +54,13 @@ export default defineConfig({
       // 2026-08-31 (f8d9991): branches dip to 90.68% due to 4 new test-only hooks
       // (Game.testIsWorldReady/testFreezeDynamicResolution, Renderer.testFreezeAtMaxScale/testFreezeDynamicResolution, DynamicResolution.setScaleForTest)
       // that are E2E-covered (visual determinism, 51/51) and c8-ignored for unit branches;
-      // plus Renderer.ts remains 0% unit-covered (E2E-only). Threshold 91 not reachable
-      // without Renderer unit harness; 90 is accepted debt until Renderer is unit-covered
-      // or excluded from coverage. statments/lines 84 holds.
+      // plus Renderer.ts was 0% unit-covered (E2E-only). Threshold 91 not reachable
+      // without a Renderer unit harness; 90 was accepted debt until then.
+      // 2026-10-17 (change 303, audit F-007): that debt is CLOSED. A defaulted
+      // `WebGLRendererFactory` construction seam (default path byte-identical) plus
+      // tests/unit/Renderer.test.ts now measure Renderer.ts at
+      // 100% statements / 90.62% branches / 100% functions / 100% lines, so the
+      // "Renderer.ts remains 0% unit-covered" note above is stale and superseded.
       // 2026-09-18 audit: Vitest 4.1.11 changed V8 branch remapping and no longer carries
       // Vitest 3's default test/config exclusions. The exclusions above restore the product
       // scope; moving the pure random-tick resolver out of DOM-bound Game.ts removes an

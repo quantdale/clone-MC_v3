@@ -8,6 +8,25 @@ import {
 } from '../rendering/DynamicResolution';
 
 /**
+ * Construction seam for the WebGL renderer (change 303).
+ *
+ * The default is the exact production call — `new THREE.WebGLRenderer({canvas,
+ * antialias: true, powerPreference: 'high-performance'})` — so the shipped path
+ * is byte-identical. Tests inject a fake to exercise the lifecycle branches
+ * (no-WebGL fail-closed construction, context loss/restoration including a
+ * restore failure, dispose, pixel-ratio capping, resize clamp) that are
+ * unreachable without a GPU.
+ */
+export type WebGLRendererFactory = (canvas: HTMLCanvasElement) => THREE.WebGLRenderer;
+
+export const createDefaultWebGLRenderer: WebGLRendererFactory = (canvas) =>
+  new THREE.WebGLRenderer({
+    canvas,
+    antialias: true,
+    powerPreference: 'high-performance',
+  });
+
+/**
  * Owns the Three.js scene, camera, and WebGL renderer.
  *
  * The renderer construction is wrapped in a try/catch so that an environment
@@ -31,16 +50,21 @@ export class Renderer {
   /** Dynamic pixel scale is presentation-only; callers feed completed-frame metrics. */
   readonly dynamicResolution: DynamicResolutionController;
 
+  /** Renderer factory; defaults to the production Three.js constructor. */
+  private readonly webglFactory: WebGLRendererFactory;
+
   constructor(
     canvas: HTMLCanvasElement,
     onContextLost?: () => void,
     onContextRestored?: () => void,
     dynamicResolution: DynamicResolutionController = new DynamicResolutionController('medium'),
+    webglFactory: WebGLRendererFactory = createDefaultWebGLRenderer,
   ) {
     this.canvas = canvas;
     this.onContextLostCallback = onContextLost;
     this.onContextRestoredCallback = onContextRestored;
     this.dynamicResolution = dynamicResolution;
+    this.webglFactory = webglFactory;
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(CONFIG.fog.color);
@@ -52,11 +76,7 @@ export class Renderer {
 
     let renderer: THREE.WebGLRenderer | null = null;
     try {
-      renderer = new THREE.WebGLRenderer({
-        canvas,
-        antialias: true,
-        powerPreference: 'high-performance',
-      });
+      renderer = this.webglFactory(canvas);
     } catch {
       // WebGL is unavailable. Leave renderer null so the game can enter its
       // init-error state (rendererCreated === false) instead of crashing. Do
@@ -201,11 +221,7 @@ export class Renderer {
     }
     let renderer: THREE.WebGLRenderer | null = null;
     try {
-      renderer = new THREE.WebGLRenderer({
-        canvas: this.canvas,
-        antialias: true,
-        powerPreference: 'high-performance',
-      });
+      renderer = this.webglFactory(this.canvas);
     } catch {
       // Restoration failed — leave rendererCreated false.
     }

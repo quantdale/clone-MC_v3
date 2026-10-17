@@ -1,180 +1,203 @@
 # Verification: 303-renderer-lifecycle-unit-coverage
 
-Status: NOT VERIFIED
-Completion: 0% (T1 is pre-implementation evidence only; T2–T14 are open)
-Advancement allowed: false
+Status: VERIFIED
+Completion: 100%
+Advancement allowed: true
+Session start head: `95b758e7302eb1f17f4daaa848e36ceb5d41828f` (origin/main after change 302)
+Published head: recorded in `openspec/PROGRAM_STATE.json` after publication
 
-Authored by an audit campaign that is **forbidden from implementing code**. T1
-records the measured baseline. No passing evidence is pre-filled.
+## Summary
 
-## Pre-implementation evidence captured at base `2ecf781`
+Audit finding F-007 is closed. `src/engine/Renderer.ts` had **zero** unit coverage:
+no test imported it, its only consumer was the DOM-bound `Game.ts`, and it carried
+a `c8 ignore` block around its own test-only freeze methods, so **0%** of it was
+executed by `npm test`. Its untested surface was exactly the part that produces a
+black screen after a GPU reset — no-WebGL fail-closed construction and the
+`webglcontextlost` / `webglcontextrestored` lifecycle.
 
-### E1 — `src/engine/Renderer.ts` has no unit test
+A defaulted, test-tagged construction seam plus a deterministic headless suite now
+measure:
 
-```
-$ grep -rln "engine/Renderer" tests/
-(no matches)
+| Metric | Before | After |
+|---|---|---|
+| Statements | **0%** | **100%** (79/79) |
+| Branches | **0%** | **90.62%** |
+| Functions | **0%** | **100%** |
+| Lines | **0%** | **100%** |
 
-$ grep -rln "engine/Renderer" src/
-src/engine/Game.ts
-```
+Production behaviour is unchanged: the default is the exact shipped
+`new THREE.WebGLRenderer({canvas, antialias: true, powerPreference:
+'high-performance'})` call.
 
-`src/engine/Renderer.ts` is 221 lines and its only consumer is
-`src/engine/Game.ts`.
-
-### E2 — The four existing renderer tests cover a different subject
-
-`tests/unit/` contains `PassiveMobRenderer.test.ts`, `HostileMobRenderer.test.ts`,
-`RaiderRenderer.test.ts` and `SplashPotionRenderer.test.ts`. These cover the
-**entity** renderers in `src/rendering/` (`PassiveMobRenderer.ts`,
-`HostileMobRenderer.ts`, `RaiderRenderer.ts`, `SplashPotionRenderer.ts`), **not**
-`src/engine/Renderer.ts`.
-
-### E3 — The gap is documented as accepted debt, and the note is stale
-
-`vitest.config.ts` (verbatim):
-
-```
-// 2026-08-31 (f8d9991): branches dip to 90.68% due to 4 new test-only hooks
-// (Game.testIsWorldReady/testFreezeDynamicResolution, Renderer.testFreezeAtMaxScale/
-// testFreezeDynamicResolution, DynamicResolution.setScaleForTest) that are
-// E2E-covered (visual determinism, 51/51) and c8-ignored for unit branches;
-// plus Renderer.ts remains 0% unit-covered (E2E-only). Threshold 91 not reachable
-// without Renderer unit harness; 90 is accepted debt until Renderer is unit-covered
-// or excluded from coverage. statments/lines 84 holds.
-```
-
-The note is stale in two ways: the configured floors are now
-`{ statements: 91, branches: 88, functions: 94, lines: 93 }` (branches re-pinned
-to 88 on 2026-09-18 per AUDIT-009), and `Renderer.ts` is still uncovered four
-months later.
-
-### E4 — The class already anticipates a unit harness
+## The seam (`src/engine/Renderer.ts`)
 
 ```ts
-/* c8 ignore start - test-only freeze, E2E-covered (visual determinism), not unit-branch-reachable */
-  /** Test-only: prevent further adaptive scale changes (keeps current scale). */
-  testFreezeDynamicResolution(): void { … }
-  /** Test-only: reset scale to max (1) and then freeze adaptive changes. */
-  testFreezeAtMaxScale(): void { … }
-/* c8 ignore stop */
+export type WebGLRendererFactory = (canvas: HTMLCanvasElement) => THREE.WebGLRenderer;
+
+export const createDefaultWebGLRenderer: WebGLRendererFactory = (canvas) =>
+  new THREE.WebGLRenderer({
+    canvas,
+    antialias: true,
+    powerPreference: 'high-performance',
+  });
 ```
 
-### E5 — The uncovered logic and its failure modes
+The constructor gained a fifth, **defaulted** parameter, so no caller changes:
 
-| Region | Contract | Consequence of an untested regression |
-|---|---|---|
-| constructor `try/catch` around `new THREE.WebGLRenderer` | no-WebGL → `rendererCreated = false`, no throw | crash on a machine without WebGL instead of the init-error state |
-| `configureRenderer` | SRGB output, ACES Filmic, exposure 1.05, PCFSoft shadows, headless shadow disable, initial size | whole-game visual change, visible only to a golden/E2E |
-| `handleContextLost` | `preventDefault()`, not-created, loss callback | game does not pause after a GPU reset |
-| `handleContextRestored` | dispose old, recreate, reconfigure, restore callback | black screen after a GPU reset |
-| `dispose` | remove both listeners, dispose, null | listener/GPU leak; double-dispose crash |
-| `applyPixelRatio` | `min(devicePixelRatio, cap) * dynamicScale`, headless vs standard cap | wrong backing-store resolution |
-| `updateDynamicResolution` frozen branch | `{changed:false, valid:true, effectiveFrameTimeMillis:null}`, no size re-apply | resolution thrash / frozen-scale regressions |
-| `resize` | size + aspect, height clamped ≥ 1 | degenerate aspect on a zero-height viewport |
-| `actualDrawingBufferSize` | floored, non-negative; `{0,0}` without a renderer | incorrect performance accounting |
-| `render` | no-op without a renderer | throw on the no-WebGL path |
+```ts
+constructor(
+  canvas, onContextLost?, onContextRestored?,
+  dynamicResolution = new DynamicResolutionController('medium'),
+  webglFactory: WebGLRendererFactory = createDefaultWebGLRenderer,   // new, defaulted
+)
+```
 
-### E6 — This area has repeatedly destabilised the browser gate
+Both construction sites (initial and `handleContextRestored`) now call
+`this.webglFactory(...)` instead of `new THREE.WebGLRenderer({...})` with the
+identical argument object. The diff is four surgical hunks:
 
-The change record shows GPU-context behaviour producing E2E drift that a
-deterministic unit seam would have localised — for example change 254's recorded
-"E2E remains 50/51 (visual pass, **GPU-context restore drift 5 vs 4**)" and
-change 281's recorded "one unrelated pre-existing hud/high/1280x720 Linux
-software-WebGL golden drift".
+| Hunk | Change |
+|---|---|
+| 1 | the factory type + default implementation (extracted verbatim from the old inline call) |
+| 2 | one private field and one defaulted constructor parameter |
+| 3 | initial construction → `this.webglFactory(canvas)` |
+| 4 | restoration construction → `this.webglFactory(this.canvas)` |
 
-## Requirement evidence
+No configuration, threshold, shadow/colour-management policy, resize, pixel-ratio,
+dispose or context-event behaviour was touched. `Game.ts` is the only caller and
+passes four arguments, so it is unaffected by construction.
 
-| Requirement | Evidence | Status |
-|---|---|---|
-| WebGL-unavailable construction fails closed | E1/E5 show no test. T3/T5 unimplemented. | NOT VERIFIED |
-| Context loss/restoration deterministic | E1/E5/E6 show no test. T3/T5 unimplemented. | NOT VERIFIED |
-| Disposal complete and idempotent | E1/E5 show no test. T5 unimplemented. | NOT VERIFIED |
-| Pixel ratio honours headless cap and scale | E1/E5 show no test. T5 unimplemented. | NOT VERIFIED |
-| Presentation queries covered | E1/E5 show no test. T5 unimplemented. | NOT VERIFIED |
-| Test seam defaults to production behaviour | No seam exists. T3 unimplemented. | NOT VERIFIED |
+**Default-path identity proof.** The default factory body is character-for-character
+the object literal the constructor previously contained, and the suite asserts the
+default is a real factory (a `null` canvas makes Three.js itself throw), so the
+shipped path is the production call — not a stub.
 
-## Commands
+## `tests/unit/Renderer.test.ts` — 27 tests, all pass
 
-| Command | Result | Evidence/notes |
-|---|---|---|
-| `grep -rln "engine/Renderer" tests/` | no matches | E1 |
-| `grep -rln "engine/Renderer" src/` | `src/engine/Game.ts` only | E1 |
-| `npm run typecheck` | PASS | see change 298 E1 |
-| `npm run lint` | PASS (0 errors / 85 warnings) | see change 298 E1 |
-| `npm run validate-state` | PASSED | see change 298 E1 |
-| `npm test` | FAIL (2 unit tests) | see change 298; unrelated to this change |
-| `npm run test:coverage` | **NOT RUN (deliberately)** | The installed provider is Vitest 3.2.7 while the thresholds were calibrated against 4.1.11 (see change 299). T2 must fix this before any coverage figure is recorded. |
-| `npm run build` | NOT RUN | must PASS at T12 |
-| `npm run test:e2e` | NOT RUN | must PASS at T12 |
-| `git diff --numstat -- tests/visual-golden/` | NOT RUN | must be empty at T10 |
+Headless (`environment: 'node'`, no jsdom). Three seams:
 
-## Edge/adversarial validation (required at T5/T6/T8)
+1. a **recording fake** standing in for `THREE.WebGLRenderer` (spies on `dispose`,
+   `setPixelRatio`, `setSize`, `getDrawingBufferSize`, `render`, plus the
+   colour-management/shadow fields);
+2. a **canvas stub** that records `webglcontextlost` / `webglcontextrestored`
+   listeners, so dispose's listener removal is observable;
+3. `vi.stubGlobal` for `window`/`navigator`, because `globalThis.navigator` is a
+   **getter-only** property in Node and plain assignment throws (`TypeError:
+   Cannot set property navigator of #<Object> which has only a getter` — observed
+   and fixed; `vi.unstubAllGlobals()` restores it).
 
-- [ ] Construction success configures colour space, tone mapping, exposure,
-      shadow-map type and initial size, and attaches both listeners.
-- [ ] Construction failure swallows the throw, reports not-created, leaves the
-      renderer null, and **keeps both listeners attached**.
-- [ ] Context loss marks not-created, fires the loss callback exactly once, and
-      prevents the event default.
-- [ ] Context restoration success disposes the previous renderer exactly once,
-      constructs and re-configures a new one, and fires the restore callback once.
-- [ ] Context restoration failure swallows the throw, reports not-created, and
-      **still fires the restore callback exactly once**.
-- [ ] Dispose releases the renderer and removes both listeners (proved by a
-      subsequent context-restored event producing no reconstruction).
-- [ ] Repeated dispose neither throws nor double-disposes.
-- [ ] Pixel ratio: standard cap, headless cap, and below-cap device ratio, each
-      multiplied by the dynamic-resolution scale.
-- [ ] Resize clamps a zero/negative viewport height to 1 and reflects it in the
-      camera aspect.
-- [ ] Drawing-buffer size is floored/non-negative with a renderer and `{0,0}`
-      without one.
-- [ ] Frozen dynamic resolution returns no change and does not re-apply size.
-- [ ] Render without a renderer does not throw.
-- [ ] The seam default is restored after every test (a leak fails loudly).
-- [ ] Measured Renderer.ts coverage is greater than 0% and no threshold was
-      lowered.
+Coverage by requirement:
 
-## Migration/compatibility validation
+| Requirement | Tests |
+|---|---|
+| No-WebGL fail-closed construction | factory throws → `rendererCreated === false`, `renderer === null`, scene **and** camera still constructed (so `Game` can enter its init-error state), `render()` is a no-op, `actualDrawingBufferSize()` is `{0,0}`, `resize()` still updates the camera aspect |
+| Context loss | marks unusable, calls `event.preventDefault()` exactly once, notifies the callback, does not render while lost |
+| Context restoration | disposes the old renderer exactly once, builds a working replacement, **re-applies** the configuration (colour space, tone mapping, shadow type), notifies, renders again |
+| Restoration **failure** | stays fail-closed (`rendererCreated === false`, `renderer === null`), does not throw, **still fires** the restored callback so the game can leave its loss-pause state, and reports a zero buffer |
+| Dispose completeness | disposes once, clears `renderer`, sets `rendererCreated = false`, removes **both** listeners; no-renderer path safe; no render after dispose |
+| Dispose idempotency | a second `dispose()` does not re-dispose and does not throw |
+| Pixel-ratio capping | standard DPR 8 → `min(8, CONFIG.maxPixelRatio)`; `navigator.webdriver` → `min(8, CONFIG.headless.maxPixelRatio)`; asserts the headless cap is never looser than the standard cap |
+| Resize clamp | height `0` → `setSize(w, 1)` and `aspect === w`; normal resize applies width/height and the aspect ratio |
+| Drawing-buffer size | floors fractional sizes (255.9 → 255); clamps negatives to 0 |
+| Frozen dynamic resolution | both freeze hooks stop adaptive change and report `reason: 'at-bound'`; **plus** an unfrozen case that drives a sustained 900 ms overload until the controller accepts a scale change and asserts `setSize` was called (covers the `if (update.changed) applyDynamicResolutionSize()` branch); an invalid metric is ignored without resizing; `setDynamicResolutionTier` applies the new size |
+| Configuration | `outputColorSpace === SRGBColorSpace`, `toneMapping === ACESFilmicToneMapping`, exposure `1.05`, `shadowMap.type === PCFSoftShadowMap`, `shadowMap.enabled === CONFIG.rendering.shadows` |
 
-- [ ] With no seam override, construction and behaviour are identical to before
-      (asserted by T5 case 13 and by the unchanged E2E suite).
-- [ ] `src/engine/Game.ts` requires no call-site change.
-- [ ] `git diff --numstat -- tests/visual-golden/` is empty (no re-pin).
-- [ ] No save-format or product-data change.
+An early draft used the wrong metric field (`averageFrameTimeMillis` instead of
+`p95FrameTimeMillis`), which silently routed every update through the
+`invalid-metric` path and left the changed-scale branch uncovered. That was
+caught by re-measuring per-file coverage (94.93% → then 100%) rather than trusting
+the green suite, and fixed.
+
+## `vitest.config.ts` stale note corrected
+
+The config carried, since 2026-08-31, the claim:
+
+> plus Renderer.ts remains 0% unit-covered (E2E-only). Threshold 91 not reachable
+> without Renderer unit harness; 90 is accepted debt until Renderer is unit-covered
+> or excluded from coverage. statments/lines 84 holds.
+
+That note is now stale on two counts: the thresholds were re-pinned for Vitest 4
+(91/88/94/93) after it was written, and Renderer.ts is fully covered. It is
+replaced with an explicit closure note recording the new measurements. **No
+threshold was lowered** — the floors remain 91/88/94/93.
+
+## Effect on the repository coverage gate
+
+All four aggregate metrics improved, which is the direct consequence of removing a
+0%-covered 221-line product file from the denominator:
+
+| Metric | Before 303 | After 303 | Floor |
+|---|---|---|---|
+| Statements | 91.82 | **91.84** | 91 |
+| Branches | 88.61 | **88.62** | 88 |
+| Functions | 94.65 | **94.66** | 94 |
+| Lines | 93.15 | **93.17** | 93 |
+
+## Commands (final, `303` candidate tree)
+
+| Command | Result |
+|---|---|
+| `npx vitest run tests/unit/Renderer.test.ts` | **PASS — 27 tests** |
+| per-file coverage of `src/engine/Renderer.ts` | **100 / 90.62 / 100 / 100** (statements/branches/functions/lines) |
+| `npm run verify:deps` | **PASS** — 171 packages verified |
+| `npm run verify:file-audit` | **PASS** — 3081 rows |
+| `npm run validate-state` | **PASS** |
+| `npm run typecheck` | **PASS** |
+| `npm run lint` | **PASS — 0 errors / 85 warnings** (unchanged) |
+| `npm test` | **PASS — 483 files, 5793 passed + 1 skipped, exit 0** |
+| `npm run test:coverage` | **PASS — 91.84 / 88.62 / 94.66 / 93.17** vs 91/88/94/93 |
+| `npm run test:perf:multiplayer` | **PASS** (unchanged by this change) |
+| `npm run build` | **PASS — 2.29 s** |
+| `node scripts/check-release-bundle.mjs` | **PASS — 4 assets checked; no E2E hook found** |
+| `npm run test:e2e` | **PASS — 137/137, exit 0**, including the 60-cell visual matrix |
+| `node scripts/validate-file-audit.mjs <manifest>` | **PASSED — 3081 rows** |
+
+## Edge/adversarial validation
+
+- [x] Construction failure leaves the object usable (scene/camera built).
+- [x] Restoration failure does not throw and does not leave a dangling renderer.
+- [x] The restored callback fires on **both** success and failure (no hang).
+- [x] `dispose()` is idempotent and removes both listeners.
+- [x] Rendering is impossible while lost, after dispose, or without a renderer.
+- [x] Pixel-ratio capping respects the headless cap and never exceeds the standard one.
+- [x] Zero/negative viewport heights and negative buffer dimensions never produce
+      invalid numbers.
+- [x] An invalid resolution metric does not resize.
+- [x] `globalThis.navigator` restoration is handled via `vi.unstubAllGlobals`.
+
+## Migration/compatibility
+
+- [x] The constructor's new parameter is **defaulted and trailing**, so the only
+      production caller (`Game.ts`) compiles and behaves unchanged.
+- [x] No rendering behaviour, configuration, threshold, golden, dependency or
+      product-visible change.
+- [x] `git diff --numstat -- tests/visual-golden/` is empty (no golden churn).
+- [x] No DOM-emulation dependency added (the suite runs in the existing `node`
+      environment with fakes).
 
 ## Performance/resource validation
 
-- [ ] The new tests require no GPU, no browser and no worker, and complete in
-      milliseconds.
-- [ ] The seam is consulted only at renderer construction, never per frame.
-- [ ] `npm test` total duration is not meaningfully increased.
+- [x] The suite runs in ~0.3 s and adds no measurable cost to `npm test`.
+- [x] No production bundle impact (`check-release-bundle.mjs` passes; the seam is a
+      const arrow that Three.js already called through the same object literal).
 
-## Regressions
+## Regression / debt status
 
-- None by design: the change adds one defaulted seam, one test-support module, one
-  test file, and a coverage-comment correction.
-- Known consequence to record: adding `src/engine/Renderer.ts` coverage can move
-  the product coverage denominator. The measurement must be recorded honestly; if
-  a figure falls below a floor, that is a finding to report, not a threshold to
-  lower.
-
-## Incomplete tasks
-
-T2–T14 (13 of 14 tasks). Completion **0%** by checkbox count.
+- No regression introduced. R-8/R-9-era debt is unaffected.
+- Remaining audit finding: **304** (modal focus and keyboard accessibility).
+- `258-real-world-runtime-performance-fps-recovery` remains **BLOCKED** at
+  40/100. No headed FPS work, no GPU evidence, no 258 status change.
 
 ## Advancement Exception
 
-Not applicable: completion is below 90%; advancement is forbidden.
+Not required: every task is complete, every MUST/SHALL requirement in
+`specs/renderer-lifecycle-coverage/spec.md` has passing evidence above, all
+mandatory tests pass, and no unresolved data-loss, corruption, determinism,
+compatibility, security, or regression blocker remains.
 
 ## Final decision
 
-**NOT VERIFIED.** `src/engine/Renderer.ts` — the class owning the game's scene,
-camera and WebGL renderer — has zero unit tests, and its fail-closed no-WebGL
-path, context-loss/restoration lifecycle, dispose semantics and headless
-pixel-ratio capping are therefore verified only indirectly by a browser suite
-whose own record shows GPU-context drift. The repository has carried this as a
-documented coverage debt since 2026-08-31 without closing it. T2–T14 must be
-implemented and the measured Renderer.ts coverage must be greater than 0% with no
-threshold lowered before this change may be marked VERIFIED.
+**VERIFIED.** `Renderer.ts` moved from 0% to 100% statement / 90.62% branch / 100%
+function / 100% line coverage through a defaulted seam whose default path is the
+shipped call, with the no-WebGL, context-loss, restoration-failure, dispose and
+pixel-ratio branches now pinned deterministically headlessly.

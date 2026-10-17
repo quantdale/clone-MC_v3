@@ -1705,3 +1705,52 @@ Activation dependency satisfied: change 301 is VERIFIED and published at
 ### Sequence row (authoritative with CHANGE_SEQUENCE.md)
 
 | 302 | `302-multiplayer-performance-gate-enforcement` | VERIFIED — the never-executed REQ-P3/REQ-P7 budgets now run in a dedicated single-worker CI job through a runner that closes the `vitest -t` fail-open hazard (exit 2 on rename, exit 1 unless exactly one test passed); both failure modes demonstrated on the real runner; no budget constant, `npm test` semantics or product change; 258 BLOCKED. |
+
+## 303-renderer-lifecycle-unit-coverage — activated and verified (2026-10-17)
+
+Continuation of the audit-authored sequence (finding F-007, `MASTER_PLAN.md` §4).
+Activation dependency satisfied: change 302 is VERIFIED and published at
+`95b758e`; session start head `95b758e`.
+
+- **Implemented:** a defaulted, test-tagged `WebGLRendererFactory` construction
+  seam in `src/engine/Renderer.ts` whose default (`createDefaultWebGLRenderer`) is
+  the exact shipped `new THREE.WebGLRenderer({canvas, antialias: true,
+  powerPreference: 'high-performance'})` call, with both construction sites (initial
+  and context-restoration) routed through it; the new parameter is trailing and
+  defaulted so the only production caller (`Game.ts`) is unchanged. Plus
+  `tests/unit/Renderer.test.ts` (27 tests) and a corrected `vitest.config.ts` note.
+- **Result: `Renderer.ts` went from 0% to 100% statements / 90.62% branches / 100%
+  functions / 100% lines.** The whole aggregate coverage gate improved as a direct
+  consequence (91.82→91.84 statements, 88.61→88.62 branches, 94.65→94.66
+  functions, 93.15→93.17 lines) with **no threshold lowered** (floors stay
+  91/88/94/93).
+- **Branches pinned that were previously unreachable without a GPU:** no-WebGL
+  fail-closed construction (scene/camera still built so the game can enter its
+  init-error state, no-op render, zero buffer, resize still updates aspect);
+  context loss (preventDefault exactly once, render suppressed, callback fired);
+  context restoration (old renderer disposed once, replacement reconfigured and
+  rendered); **restoration failure** (stays fail-closed, does not throw, still
+  fires the callback so the game cannot hang in its loss-pause state); dispose
+  completeness and idempotency plus the no-renderer path; headless vs standard
+  pixel-ratio capping against `CONFIG`; resize clamp at height 0; drawing-buffer
+  flooring and negative clamping; and the frozen-dynamic-resolution hooks with the
+  **real** `p95FrameTimeMillis` metric including the changed-scale resize branch.
+- **Two defects found in my own work and fixed, recorded rather than hidden:** the
+  first suite assigned `globalThis.navigator` directly, which throws in Node
+  because it is a getter-only property (fixed with `vi.stubGlobal` /
+  `vi.unstubAllGlobals`); and the first dynamic-resolution tests used the wrong
+  metric field name, silently routing every update through the `invalid-metric`
+  path — caught by re-measuring per-file coverage (94.93%) instead of trusting the
+  green suite, then fixed to reach 100%.
+- **Out of scope and untouched:** rendering behaviour, configuration, thresholds,
+  goldens, dependencies, product-visible behaviour, changes 304. No DOM-emulation
+  dependency added (node environment + fakes). `git diff --numstat --
+  tests/visual-golden/` is empty. Change **258** stays **BLOCKED**.
+- **Result:** Renderer.test 27/27 PASS; verify:deps PASS; verify:file-audit PASS
+  3081 rows; validate-state/typecheck/lint 0 errors 85 warnings/unit 483 files 5793
+  + 1 skipped/coverage 91.84·88.62·94.66·93.17/build/release-bundle PASS; full E2E
+  137/137. Change 303 is **VERIFIED**.
+
+### Sequence row (authoritative with CHANGE_SEQUENCE.md)
+
+| 303 | `303-renderer-lifecycle-unit-coverage` | VERIFIED — closes F-007: defaulted `WebGLRendererFactory` seam (default path = shipped call) + 27-test headless suite moves `Renderer.ts` from **0% to 100/90.62/100/100** coverage, pinning no-WebGL fail-closed construction, context loss/restoration incl. restore failure, dispose idempotency, pixel-ratio caps, resize clamp and frozen dynamic resolution; aggregate coverage rises with no threshold lowered; stale config note corrected; 258 BLOCKED. |

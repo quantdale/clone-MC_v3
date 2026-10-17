@@ -11,26 +11,26 @@
   (E2E-only)" and "Threshold 91 not reachable" while the configured `branches`
   floor is now `88`. **Evidence already captured at base `2ecf781`.**
 
-- [ ] **T2.** Re-run the dependency check and, if 299 has landed, `npm ci` so the
+- [x] **T2.** Re-run the dependency check and, if 299 has landed, `npm ci` so the
   coverage measurement is taken under the locked toolchain. Record the installed
   Vitest/coverage provider version alongside the measurement; a figure produced
   under a drifted provider MUST be labelled as such and is not repository
   evidence.
 
-- [ ] **T3.** Add the defaulted construction seam to `src/engine/Renderer.ts`:
+- [x] **T3.** Add the defaulted construction seam to `src/engine/Renderer.ts`:
   `static webglFactory: (opts: THREE.WebGLRendererParameters) => THREE.WebGLRenderer`
   defaulting to `(opts) => new THREE.WebGLRenderer(opts)`, used at BOTH
   construction sites (constructor and `handleContextRestored`). The default path
   MUST be byte-identical to today's behaviour.
 
-- [ ] **T4.** Add `tests/support/rendererDom.ts`: a typed fake renderer recording
+- [x] **T4.** Add `tests/support/rendererDom.ts`: a typed fake renderer recording
   `setPixelRatio` / `setSize` / `getDrawingBufferSize` / `render` / `dispose`,
   configurable `outputColorSpace` / `toneMapping` / `toneMappingExposure` /
   `shadowMap`, an optional construct-time throw, and a configurable drawing-buffer
   size; plus a `window`/`navigator` double installer and a `restoreAll()` that
   removes the seam override and the globals.
 
-- [ ] **T5.** Add `tests/unit/Renderer.test.ts` with a mandatory
+- [x] **T5.** Add `tests/unit/Renderer.test.ts` with a mandatory
   `beforeEach`/`afterEach` that installs and restores the doubles, and an
   explicit assertion that the seam default is restored after each test so a leak
   fails loudly. Cases:
@@ -60,44 +60,44 @@
   12. render without a renderer — no throw;
   13. default-path assertion — with no override, the real factory is used.
 
-- [ ] **T6.** Re-run `npm test` and confirm the new suite passes, that the total
+- [x] **T6.** Re-run `npm test` and confirm the new suite passes, that the total
   test count increased by exactly the new cases, and that no previously passing
   test changed status.
 
-- [ ] **T7.** Re-evaluate the `c8 ignore` blocks around
+- [x] **T7.** Re-evaluate the `c8 ignore` blocks around
   `testFreezeDynamicResolution` / `testFreezeAtMaxScale`. If the new tests make
   them unit-reachable, remove the ignore; if not, keep it and record why.
 
-- [ ] **T8.** Run `npm run test:coverage` and record the measured
+- [x] **T8.** Run `npm run test:coverage` and record the measured
   statements/branches/functions/lines plus the per-file Renderer.ts figures.
   Confirm Renderer.ts coverage is greater than 0%. Confirm **no threshold was
   lowered** to achieve the result; if a figure falls below a pinned floor, that is
   a finding to report, not a threshold to edit.
 
-- [ ] **T9.** Update `vitest.config.ts`: correct the stale
+- [x] **T9.** Update `vitest.config.ts`: correct the stale
   "Renderer.ts remains 0% unit-covered (E2E-only)" debt note to the current
   measured reality and the current threshold set, keeping the full audit trail of
   previous measurements in the comment as the file's existing style does.
 
-- [ ] **T10.** Confirm no committed `*.png` changed: `git diff --numstat` over
+- [x] **T10.** Confirm no committed `*.png` changed: `git diff --numstat` over
   `tests/visual-golden/` must be empty.
 
-- [ ] **T11.** Update the file-audit manifest for the two new files and the
+- [x] **T11.** Update the file-audit manifest for the two new files and the
   modified `src/engine/Renderer.ts` / `vitest.config.ts` rows, then run
   `node scripts/validate-file-audit.mjs …` (or `npm run verify:file-audit` if
   301 landed) to PASS.
 
-- [ ] **T12.** Full mandatory gate on the candidate SHA: `npm run validate-state`,
+- [x] **T12.** Full mandatory gate on the candidate SHA: `npm run validate-state`,
   `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`,
   `node scripts/check-release-bundle.mjs`, `npm run test:e2e`. Lint MUST stay at
   0 errors; the 85 pre-existing warnings MUST NOT increase.
 
-- [ ] **T13.** Documentation and state: add the post-terminal row to
+- [x] **T13.** Documentation and state: add the post-terminal row to
   `CHANGE_SEQUENCE.md`; record the measured coverage before/after in
   `verification.md`; update `openspec/PROGRAM_STATE.json` / `.md` at activation
   with `session_start_head` / `published_head`.
 
-- [ ] **T14.** Final reconciliation and publication: re-read all artifacts
+- [x] **T14.** Final reconciliation and publication: re-read all artifacts
   against the implemented result, confirm every MUST/SHALL in
   `specs/renderer-lifecycle-coverage/spec.md` has evidence (especially T5's
   thirteen cases and T8's measured Renderer.ts coverage being greater than 0%),
