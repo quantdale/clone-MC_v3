@@ -4,7 +4,7 @@ Status: VERIFIED
 Completion: 100%
 Advancement allowed: true
 Session start head: `95b758e7302eb1f17f4daaa848e36ceb5d41828f` (origin/main after change 302)
-Published head: recorded in `openspec/PROGRAM_STATE.json` after publication
+Published head: `88d53d897ab740d06032bb86e00716c9387356a7` (origin/main verified equal after a normal history-preserving push)
 
 ## Summary
 
