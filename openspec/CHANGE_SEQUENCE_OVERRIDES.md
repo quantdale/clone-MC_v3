@@ -1654,3 +1654,54 @@ Activation dependency satisfied: change 300 is VERIFIED 17/17 and published at
 ### Sequence row (authoritative with CHANGE_SEQUENCE.md)
 
 | 301 | `301-verification-script-gate-wiring` | VERIFIED — six unenforced verification scripts npm-exposed, four invariant guards blocking in CI, one `verify:all` aggregate that stops at the first failure and propagates its exit code (failure demonstrated on a real omission), gate catalogue published; no gate logic or product change; 258 BLOCKED. |
+
+## 302-multiplayer-performance-gate-enforcement — activated and verified (2026-10-17)
+
+Continuation of the audit-authored sequence (finding F-005, `MASTER_PLAN.md` §4).
+Activation dependency satisfied: change 301 is VERIFIED and published at
+`deca0fa`; session start head `deca0fa`.
+
+- **Implemented:** `scripts/perf/multiplayer-perf-run.mjs` +
+  `npm run test:perf:multiplayer`, and a dedicated single-worker `perf-multiplayer`
+  CI job. The runner sets `MC_CANONICAL=1`, runs ONLY the REQ-P3/REQ-P7
+  measurement with `--no-file-parallelism`, propagates a genuine budget failure's
+  exit code, and adds three guards.
+- **The decisive measurement:** `vitest run <file> -t "<name matching nothing>"`
+  exits **0** with every test `skipped`. The exit code is therefore not evidence
+  that the canonical measurement ran, so a renamed test would have turned the fix
+  into a permanently green, completely vacuous gate — reintroducing the very
+  defect F-005 describes. The runner therefore (a) pre-checks that the canonical
+  test name still exists (exit 2), and (b) requires exactly ONE passing test and
+  zero failures (exit 1), treating a missing `Tests` summary as the zero-match
+  signal. A filter matching several tests is likewise rejected.
+- **Both required failure modes demonstrated on the real runner, not asserted:**
+  zero-match → exit 1 with
+  `the filter selected zero tests (vitest printed no Tests summary)`; renamed test
+  → exit 2 with the searched name. A third case (filter matching two tests) is
+  also covered.
+- **Two rejected implementations, recorded:** `npm exec -- vitest …` re-resolved
+  through npm's exec cache and ran a SECOND spec file (the count guard observed
+  2 files / 17 tests instead of 1 / 12), so the runner now spawns
+  `process.execPath` on `node_modules/vitest/vitest.mjs` directly — removing npm
+  from the path and making the invocation identical on every platform. And the
+  first unit-test draft asserted the wall-clock budget from inside the shared
+  suite, which fails legitimately under coverage instrumentation; the guard tests
+  now use cheap synthetic fixtures in a throwaway temp dir, and the real
+  measurement belongs to the dedicated job. A transient fixture placed under
+  `tests/unit/` was also rejected because the file-audit gate correctly flagged it
+  mid-run.
+- **Out of scope and untouched:** every budget constant (`minTicksPerSecond 200` /
+  `maxElapsedMsForTicks 6000` pinned by a unit test), `npm test` semantics (still
+  `vitest run`, shared suite still skips the measurement), any product code, any
+  dependency, changes 303–304. `258` stays **BLOCKED** — this headless canonical
+  measurement is explicitly NOT a substitute for 258's headed hardware-WebGL
+  certification.
+- **Result:** test:perf:multiplayer PASS (`sustainedTps 717.2`, `elapsedMs 1673.2`
+  vs floors 200 / 6000); verify:deps/verify:file-audit 3080 rows/validate-state/
+  typecheck/lint 0 errors 85 warnings/unit 482 files 5766+1/coverage
+  91.82·88.61·94.65·93.15/build/release-bundle PASS; E2E 137/137. Change 302 is
+  **VERIFIED**.
+
+### Sequence row (authoritative with CHANGE_SEQUENCE.md)
+
+| 302 | `302-multiplayer-performance-gate-enforcement` | VERIFIED — the never-executed REQ-P3/REQ-P7 budgets now run in a dedicated single-worker CI job through a runner that closes the `vitest -t` fail-open hazard (exit 2 on rename, exit 1 unless exactly one test passed); both failure modes demonstrated on the real runner; no budget constant, `npm test` semantics or product change; 258 BLOCKED. |

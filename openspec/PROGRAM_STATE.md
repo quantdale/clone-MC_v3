@@ -1,5 +1,14 @@
 # Program State
 
+## Current checkpoint — 2026-10-17 Change 302-multiplayer-performance-gate-enforcement VERIFIED; 303 next (audit finding F-007)
+
+> **Change `302-multiplayer-performance-gate-enforcement` is VERIFIED (F-005 closed)**; gates green: test:perf:multiplayer PASS (sustainedTps 717.2 / elapsedMs 1673.2 vs the 200 / 6000 floors) / verify:deps / verify:file-audit 3080 rows / validate-state / typecheck / lint 0 errors 85 warnings / unit 482 files 5766+1 / coverage 91.82-88.61-94.65-93.15 vs 91/88/94/93 / build / check-release-bundle / full E2E 137-137. Last completed Change 302 is VERIFIED; Changes 001–302 are VERIFIED except Change 258 BLOCKED; Changes 259–302 are not reopened.
+> Session start head: `deca0fa83f069bc9e27a25c64f09f43bfd356ea4` (origin/main). Published head recorded in `PROGRAM_STATE.json` after publication.
+> 302 closes F-005: the normative multiplayer budgets REQ-P3 (`sustainedTps >= 200`) and REQ-P7 (`elapsedMs <= 6000`) were guarded by `it.skipIf(MC_CANONICAL !== '1')` while **nothing ever set `MC_CANONICAL`** outside OpenSpec prose, so the budget was never executed by automation. A dedicated single-worker `perf-multiplayer` CI job now enforces it through a runner that closes a decisive hazard: `vitest -t <no match>` exits **0** with everything skipped, so a renamed test would have turned the fix into a permanently green vacuous gate. The runner pre-checks the test name (exit 2) and requires exactly one passing test (exit 1); both failure modes were demonstrated on the real runner. No budget constant, `npm test` semantics, product code, dependency or threshold changed. This headless measurement is explicitly NOT a substitute for 258's headed hardware-WebGL certification. `258` stays BLOCKED.
+
+- Gates: test:perf:multiplayer PASS; verify:deps PASS; verify:file-audit PASS 3080 rows; validate-state PASS; typecheck PASS; lint 0 errors / 85 warnings; unit 482 files 5766+1; coverage 91.82/88.61/94.65/93.15 PASS; build PASS; check-release-bundle PASS; full E2E 137/137.
+- Next exact action: **Author a spec-first OpenSpec package for `303-renderer-lifecycle-unit-coverage` (audit finding F-007) — do NOT implement 303 in the 302 session. 303 scope: add a defaulted, test-tagged `Renderer.webglFactory` construction seam in `src/engine/Renderer.ts` whose DEFAULT path is byte-identical, and `tests/unit/Renderer.test.ts` pinning the no-WebGL fail-closed construction, context-loss/restoration lifecycle including restore failure, dispose completeness and idempotency, headless vs standard pixel-ratio capping, resize clamp, drawing-buffer size and frozen dynamic resolution; correct the stale `vitest.config.ts` note that still claims Renderer is 0% unit-covered. Audit evidence: no test imports `src/engine/Renderer`, the class carries a `c8 ignore` block around its own test-only freeze methods, and the browser gate has repeatedly logged GPU-context-restore drift. No production rendering behaviour or golden change. Then 304 (modal focus/keyboard accessibility: 11 `aria-modal` dialogs, zero focus/inert/Escape handling, `death-screen` missing `aria-modal`). `258` stays BLOCKED.**
+
 ## Current checkpoint — 2026-10-17 Change 301-verification-script-gate-wiring VERIFIED; 302 next (author package only; audit finding F-005)
 
 > **Change `301-verification-script-gate-wiring` is VERIFIED (F-004 closed)**; gates green: verify:deps / verify:file-audit 3078 rows / verify:orphans / verify:mcp / verify:visual-goldens / validate-state / typecheck / lint 0 errors 85 warnings / unit 481 files 5757+1 / coverage 91.82-88.61-94.65-93.15 vs 91/88/94/93 / build / check-release-bundle / full E2E 137-137. Last completed Change 301 is VERIFIED; Changes 001–301 are VERIFIED except Change 258 BLOCKED; Changes 259–301 are not reopened.
@@ -422,15 +431,15 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **301-verification-script-gate-wiring — VERIFIED; 258 BLOCKED, 259–301 VERIFIED**
+- Active implementation change: **302-multiplayer-performance-gate-enforcement — VERIFIED; 258 BLOCKED, 259–302 VERIFIED**
 - Prior active implementation change: **283-live-raid-persistence — VERIFIED (13/13); 258 stays BLOCKED, 259–283 stay VERIFIED**
 - Prior prior active implementation change: **282-live-raid-feedback — VERIFIED (10/10); 258 stays BLOCKED, 259–282 stay VERIFIED**
-- Next change: **302 — author spec-first package after 301 VERIFIED (NOT started; audit finding F-005); 258 stays BLOCKED**
+- Next change: **303 — author spec-first package after 302 VERIFIED (NOT started; audit finding F-007); 258 stays BLOCKED**
 - 240 advancement allowed: **yes**
 
 - Program: **ACTIVE — Change 284-live-raid-wave-spawning VERIFIED 12/12 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–284 VERIFIED**
 - 284 checkpoint: **VERIFIED 12/12 — implementation + gates complete; enchanting flake + visual SwiftShader drift documented non-blocking; 258 BLOCKED; 285 not started**
-- Last completed change: **301-verification-script-gate-wiring — VERIFIED — C301 exact, 258 BLOCKED**
+- Last completed change: **302-multiplayer-performance-gate-enforcement — VERIFIED — C302 exact, 258 BLOCKED**
 - Prior last completed change: **281-workstation-ui — VERIFIED (12/12); 258 stays BLOCKED, 259–281 stay VERIFIED**
 - Prior prior last completed change: **272-lighting-clock-dt-sync — VERIFIED (10/10) — full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85/file-audit 2792); 271 remains VERIFIED (14/14)
 - All changes 001–257 and 259–284: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed; Change 283 is VERIFIED 13/13; Change 284 is VERIFIED 12/12 (this session).

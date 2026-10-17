@@ -128,6 +128,30 @@ first failure, propagating that gate's own exit code.
 | 12 | `npm run test:coverage` | Coverage thresholds hold under the locked provider. |
 | 13 | `npm run test:e2e` | The browser suite and the 60-cell visual matrix pass. |
 
+### Isolated performance gate (separate CI job)
+
+| npm command | What it proves |
+|---|---|
+| `npm run test:perf:multiplayer` | The normative multiplayer budgets **REQ-P3** (`sustainedTps >= 200`) and **REQ-P7** (`elapsedMs <= 6000`). |
+
+These budgets are guarded by
+`it.skipIf(process.env.MC_CANONICAL !== '1')` in
+`tests/unit/multi-client-performance.test.ts`, so `npm test` deliberately skips
+the contention-sensitive measurement. This command sets `MC_CANONICAL=1`, runs
+**only** that test with `--no-file-parallelism`, and then asserts that **exactly
+one** test passed.
+
+That count check is load-bearing, not decorative: `vitest run <file> -t "<name
+matching nothing>"` exits **0** with every test reported `skipped`. Without it a
+renamed test would silently turn the normative budget into a permanent pass.
+The runner also fails with exit 2 when the canonical test name is absent from the
+test file.
+
+It therefore belongs in a **dedicated single-worker CI job**
+(`perf-multiplayer`), never inside the shared `gate` or `e2e` jobs — a
+wall-clock measurement taken while other suites compete for CPU measures
+contention, not the product.
+
 ### Report generators (exposed, not blocking)
 
 | npm command | Purpose |

@@ -165,3 +165,40 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 14
+
+  # Change 302: the normative multiplayer budgets REQ-P3 (sustainedTps >= 200)
+  # and REQ-P7 (elapsedMs <= 6000) are guarded by
+  #   it.skipIf(process.env.MC_CANONICAL !== '1')
+  # so the shared `npm test` suite never runs the contention-sensitive
+  # measurement. Before this job NOTHING set MC_CANONICAL outside OpenSpec
+  # prose,
+  # which meant the budget could regress silently with every gate green.
+  # Dedicated, single-worker, and isolated from the other jobs' CPU load.
+  perf-multiplayer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      # persist-credentials: false keeps the job token out of .git/config.
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify dependency tree matches the lockfile
+        run: npm run verify:deps
+
+      # The runner asserts exactly ONE test passed, so a renamed test or a
+      # zero-match filter fails here instead of passing vacuously.
+      - name: Canonical multiplayer throughput and wall-clock budget
+        run: npm run test:perf:multiplayer

@@ -26,7 +26,8 @@
     "verify:mcp": "node scripts/verify-mcp-addons.mjs",
     "verify:inventory": "node scripts/audit-inventory.mjs",
     "evidence:archive": "node scripts/build-evidence-archive.mjs",
-    "verify:all": "node scripts/verify-all.mjs"
+    "verify:all": "node scripts/verify-all.mjs",
+    "test:perf:multiplayer": "node scripts/perf/multiplayer-perf-run.mjs"
   },
   "engines": {
     "node": ">=20",

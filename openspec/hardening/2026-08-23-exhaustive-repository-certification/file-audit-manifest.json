@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-17T03:44:14Z",
+  "generatedAt": "2026-10-17T04:37:07Z",
   "reviewedSha": "3d0fd2d5aee39ae1706b7210ad27e675450f521c",
-  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288; +6 rows for 289 enchantment-persistence-reload-integrity package/implementation/tests; DirtySaveQueue.ts/Game.ts/enchanting.spec.ts/DirtySaveQueue.test.ts/InventoryComponentPersistence.test.ts re-reviewed in place for 289; +10 rows for 290 hero-of-the-village-reward package/implementation/tests; Game.ts/StatusEffect.ts re-reviewed in place for 290; +10 rows for 291 pillager-patrol-bad-omen package/implementation/tests; Game.ts re-reviewed in place for 291; +10 rows for 292 player-status-effect-persistence package/implementation/tests; Game.ts, PlayerStateRecord.ts, GamePersistence.ts and 5 tests re-reviewed in place for 292; +9 rows for 293 raider-and-patrol-rendering package/implementation/tests; Game.ts re-reviewed in place for 293; +10 rows for 294 bad-omen-raid-escalation-and-death-parity package/implementation/tests; Game.ts, 2 unit tests and the 285/291/292 design notes re-reviewed in place for 294; +12 rows for 295 throwable-splash-potion-entities package/implementation/tests; Game.ts, PlayerInteraction.ts, RaiderCombatBehavior.ts, its unit test and the 288 docs re-reviewed in place for 295; +10 rows for 296 periodic-status-effect-ticks package/implementation/tests; Game.ts, DamageType.ts, SurvivalSystem.ts, DeathRespawnPresentation.ts, 2 unit tests and the 295 docs re-reviewed in place for 296; +11 rows for 297 gunpowder-and-splash-brewing package/implementation/tests; ItemRegistry.ts, TextureAtlas.ts, BrewingRecipes.ts, BrewingStandBlockEntity.ts, RaiderCombatBehavior.ts, Game.ts, BlockItemSeparation.test.ts and the 295 docs re-reviewed in place for 297; +3 rows and +36 audit-package rows re-reviewed for 298 (verification-portability-eol-and-source-guards): .gitattributes, tests/support/sourceText.ts, tests/unit/SourceTextPortability.test.ts, MASTER_PLAN.md and the audit-authored 298-304 OpenSpec packages; +2 rows and 3 in-place re-reviews for 299 (toolchain-dependency-reproducibility): scripts/check-install.mjs, tests/unit/ToolchainReproducibility.test.ts, plus package.json/AGENTS.md/ONBOARDING.md re-reviewed in place; +4 rows and in-place re-reviews for 300 (visual-regression-gate-reliability): scripts/check-visual-goldens.mjs, tests/unit/VisualGoldenStaleness.test.ts, tests/unit/VisualGoldenNoiseBound.test.ts, tests/visual-golden/acknowledgements.json; tests/visual/matrix.ts, tests/e2e/visual-regression.spec.ts, tests/visual-golden/README.md and .github/workflows/{ci,seed-visual-goldens}.yml re-reviewed in place; +1 row and in-place re-reviews for 301 (verification-script-gate-wiring): scripts/verify-all.mjs plus package.json, .github/workflows/ci.yml, ONBOARDING.md and AGENTS.md re-reviewed in place",
+  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288; +6 rows for 289 enchantment-persistence-reload-integrity package/implementation/tests; DirtySaveQueue.ts/Game.ts/enchanting.spec.ts/DirtySaveQueue.test.ts/InventoryComponentPersistence.test.ts re-reviewed in place for 289; +10 rows for 290 hero-of-the-village-reward package/implementation/tests; Game.ts/StatusEffect.ts re-reviewed in place for 290; +10 rows for 291 pillager-patrol-bad-omen package/implementation/tests; Game.ts re-reviewed in place for 291; +10 rows for 292 player-status-effect-persistence package/implementation/tests; Game.ts, PlayerStateRecord.ts, GamePersistence.ts and 5 tests re-reviewed in place for 292; +9 rows for 293 raider-and-patrol-rendering package/implementation/tests; Game.ts re-reviewed in place for 293; +10 rows for 294 bad-omen-raid-escalation-and-death-parity package/implementation/tests; Game.ts, 2 unit tests and the 285/291/292 design notes re-reviewed in place for 294; +12 rows for 295 throwable-splash-potion-entities package/implementation/tests; Game.ts, PlayerInteraction.ts, RaiderCombatBehavior.ts, its unit test and the 288 docs re-reviewed in place for 295; +10 rows for 296 periodic-status-effect-ticks package/implementation/tests; Game.ts, DamageType.ts, SurvivalSystem.ts, DeathRespawnPresentation.ts, 2 unit tests and the 295 docs re-reviewed in place for 296; +11 rows for 297 gunpowder-and-splash-brewing package/implementation/tests; ItemRegistry.ts, TextureAtlas.ts, BrewingRecipes.ts, BrewingStandBlockEntity.ts, RaiderCombatBehavior.ts, Game.ts, BlockItemSeparation.test.ts and the 295 docs re-reviewed in place for 297; +3 rows and +36 audit-package rows re-reviewed for 298 (verification-portability-eol-and-source-guards): .gitattributes, tests/support/sourceText.ts, tests/unit/SourceTextPortability.test.ts, MASTER_PLAN.md and the audit-authored 298-304 OpenSpec packages; +2 rows and 3 in-place re-reviews for 299 (toolchain-dependency-reproducibility): scripts/check-install.mjs, tests/unit/ToolchainReproducibility.test.ts, plus package.json/AGENTS.md/ONBOARDING.md re-reviewed in place; +4 rows and in-place re-reviews for 300 (visual-regression-gate-reliability): scripts/check-visual-goldens.mjs, tests/unit/VisualGoldenStaleness.test.ts, tests/unit/VisualGoldenNoiseBound.test.ts, tests/visual-golden/acknowledgements.json; tests/visual/matrix.ts, tests/e2e/visual-regression.spec.ts, tests/visual-golden/README.md and .github/workflows/{ci,seed-visual-goldens}.yml re-reviewed in place; +1 row and in-place re-reviews for 301 (verification-script-gate-wiring): scripts/verify-all.mjs plus package.json, .github/workflows/ci.yml, ONBOARDING.md and AGENTS.md re-reviewed in place; +2 rows and in-place re-reviews for 302 (multiplayer-performance-gate-enforcement): scripts/perf/multiplayer-perf-run.mjs and tests/unit/MultiplayerPerformanceGate.test.ts, plus package.json, .github/workflows/ci.yml, AGENTS.md and ONBOARDING.md re-reviewed in place",
   "allowedReviewLevels": [
     "semantic",
     "mechanical",
@@ -10,7 +10,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 3078,
+  "total": 3080,
   "rows": [
     {
       "path": ".agent/EXECUTION_PROMPT.md",
@@ -32834,6 +32834,24 @@
       "status": "audited"
     },
     {
+      "path": "scripts/perf/multiplayer-perf-run.mjs",
+      "gitBlob": null,
+      "category": "script",
+      "purpose": "302 coverage for scripts/perf/multiplayer-perf-run.mjs",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npm test"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Canonical multiplayer performance gate (change 302): spawns vitest through the running node binary (shell-free, no .cmd shim) with MC_CANONICAL=1 to run ONLY the REQ-P3/REQ-P7 measurement in isolation. Three guards: a static pre-check that the test name still exists (exit 2 on rename), a post-run count check that exactly ONE test passed (vitest -t exits 0 when the filter matches nothing, so the exit code alone is not evidence), and the propagated child exit code for an exceeded budget.",
+      "status": "audited"
+    },
+    {
       "path": "scripts/validate-file-audit.mjs",
       "gitBlob": null,
       "category": "script",
@@ -44164,6 +44182,24 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/MultiplayerPerformanceGate.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "302 coverage for tests/unit/MultiplayerPerformanceGate.test.ts",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npm test"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Unit coverage for scripts/perf/multiplayer-perf-run.mjs (change 302): 8 tests proving the npm wiring leaves `npm test` semantics unchanged, MC_CANONICAL is set only for the child while the shared suite keeps its skipIf guard, one isolated canonical test runs and satisfies the budgets, a renamed test exits 2, a zero-match filter exits 1 (the vitest no-op hazard), a filter matching several tests is rejected, the normative constants (minTicksPerSecond 200 / maxElapsedMsForTicks 6000) are pinned, and the runner spawns shell-free via process.execPath.",
       "status": "audited"
     },
     {

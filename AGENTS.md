@@ -87,6 +87,13 @@ gate while propagating its exit code. The individual commands remain
 authoritative for targeted re-runs and MUST still be named in change evidence;
 the full gate catalogue is in `ONBOARDING.md` §7.
 
+`npm run test:perf:multiplayer` is **excluded from `verify:all` on purpose**. It
+measures the normative multiplayer throughput and wall-clock budgets
+(REQ-P3/REQ-P7), which are meaningless while other suites compete for CPU. It
+runs in its own single-worker CI job (`perf-multiplayer`) and MUST NOT be
+executed concurrently with any other gate. Its runner asserts that exactly one
+test passed, because `vitest -t <no match>` exits 0 with everything skipped.
+
 Never fabricate evidence. Record exact blockers when a mandatory command cannot run.
 
 ## Durable checkpoint
