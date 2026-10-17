@@ -85,10 +85,11 @@ synthetic image above 0.026 (and at 2x it), passes 0.0253, and that the global
   an explicit message on a shallow clone.
 - **Where it runs.** The `gate` CI job (which checks out with `fetch-depth: 0`)
   runs it next to the other fast repository-invariant guards, so a stale baseline
-  fails in seconds. The `e2e` and `perf-multiplayer` jobs deliberately keep the
-  default shallow checkout: giving the browser job full history slowed the visual
-  matrix from 8.7m to 14.4m per attempt, which is a real cost for no benefit —
-  the check does not run there.
+  fails in seconds. The `e2e` and `perf-multiplayer` jobs keep the default shallow
+  checkout because the check does not run there, so there is no reason to pay for
+  history. Their capture times are dominated by SwiftShader runner variance: the
+  same 60-cell matrix has measured 8.7m, 14.3m and 14.6m across runs of equivalent
+  commits, including 14.6m with a shallow checkout.
 
 ### Measured status at 2026-10-17 (not a claim from the older audit dossiers)
 
