@@ -83,16 +83,37 @@ function installedVersion(name, cache) {
   return version;
 }
 
-/** Whether an optional dependency is absent for a platform reason. */
+/**
+ * Whether an optional dependency is absent for a platform reason.
+ *
+ * Platform-specific binaries are published as
+ * `@<scope>/<name>-<os>-<cpu>[-<libc>]`, e.g.
+ * `@rollup/rollup-win32-x64-msvc`, `@rollup/rollup-linux-x64-gnu`,
+ * `@esbuild/linux-x64`. The `<name>` segment varies in length and may itself
+ * contain hyphens (`simple-linux-x64-gnu`), so the platform and cpu are taken
+ * from the END of the name, not by fixed capture positions.
+ */
 function isPlatformInapplicable(name) {
-  const pattern = /^@[^/]+\/([a-z0-9]+)-([a-z0-9]+)-([a-z0-9]+)(?:-([a-z0-9]+))?$/;
-  const match = name.match(pattern);
+  const match = name.match(/^@[^/]+\/(.+)$/);
   if (!match) return false;
-  const [, os, cpu, third] = match;
+  const segments = match[1].split('-');
+  if (segments.length < 2) return false;
   const platform = process.platform;
   const arch = process.arch;
-  // libc qualifier, e.g. "-gnu"/"-musl"; only meaningful on Linux.
-  if (platform === 'linux' && third && third !== 'gnu' && third !== 'musl') return false;
+
+  // Trailing toolchain qualifier (`-gnu`, `-musl`, `-msvc`) eats one segment.
+  // `@rollup/rollup-win32-x64-msvc` and `@rollup/rollup-linux-x64-gnu` are the
+  // same `<name>-<os>-<cpu>-<qualifier>` shape, and the qualifier says nothing
+  // about which platform the package applies to.
+  const tail = segments.at(-1);
+  const hasQualifier = tail === 'gnu' || tail === 'musl' || tail === 'msvc';
+  const cpu = segments[segments.length - (hasQualifier ? 2 : 1)];
+  const os = segments[segments.length - (hasQualifier ? 3 : 2)];
+  if (!os || !cpu) return false;
+  // Only treat a name as platform-specific when the OS segment is a real
+  // platform token; otherwise the suffix is part of an unrelated package name.
+  const KNOWN_OS = ['win32', 'linux', 'darwin', 'freebsd', 'openbsd', 'sunos', 'android', 'aix'];
+  if (!KNOWN_OS.includes(os)) return false;
   return os !== platform || cpu !== arch;
 }
 
@@ -147,7 +168,14 @@ for (const key of transitive) {
   const entry = lockfile.packages[key];
   if (!entry || typeof entry.version !== 'string') continue;
   const installed = installedVersion(name, cache);
-  if (installed === '<unreadable>') continue; // transitive absence is not gated
+  if (installed === '<unreadable>') {
+    // A platform-specific binary that cannot apply here is correctly absent, so it
+    // is not drift — the same rule the direct-dependency pass applies. Without this
+    // the closure pass reported `@rollup/rollup-win32-x64-msvc` as drift on Linux
+    // CI even though it was correctly not installed there.
+    if (isPlatformInapplicable(name)) continue;
+    continue; // transitive absence in general is not gated
+  }
   if (installed !== entry.version) {
     drifts.push({ name, installed, locked: entry.version });
     continue;

@@ -164,6 +164,30 @@ describe('scripts/check-install.mjs (299)', () => {
     }
   });
 
+  it('does not report a platform-inapplicable package absent from the TRANSITIVE closure', () => {
+    // Regression for the exact Linux CI failure: `@rollup/rollup-win32-x64-msvc`
+    // is recorded in the lockfile's transitive closure but is correctly NOT
+    // installed on Linux, so the closure pass must skip it rather than report
+    // drift. The earlier implementation captured the package's own name prefix as
+    // the OS segment, so it never recognised any platform-specific binary.
+    const inapplicable =
+      process.platform === 'win32' ? '@rollup/rollup-linux-x64-gnu' : '@rollup/rollup-win32-x64-msvc';
+    const lockfile = lock({ alpha: '2.0.0' });
+    // Record it as a TRANSITIVE entry (locked, but not a declared dependency).
+    (lockfile as { packages: Record<string, unknown> }).packages[`node_modules/${inapplicable}`] = {
+      version: '4.62.4',
+    };
+    const fixture = makeFixture({ lockfile, installed: { alpha: '2.0.0' } });
+    try {
+      const result = runGuard(fixture.root);
+      expect(result.status).toBe(0);
+      expect(result.stderr).not.toMatch(/does not match/);
+      expect(result.stderr).not.toMatch(/win32-x64-msvc|linux-x64-gnu/);
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
   it('reports an unreadable installed manifest as drift', () => {
     const fixture = makeFixture({
       lockfile: lock({ alpha: '2.0.0' }),
