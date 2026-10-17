@@ -47,7 +47,14 @@ Properties:
   may be acknowledged; naming any other commit has no effect. Set
   `VISUAL_GOLDENS_ACKNOWLEDGED=<sha>` for a one-off local run.
 - **Exit codes.** 0 fresh or acknowledged, 1 stale, 2 a baseline directory is
-  missing.
+  missing **or** the checkout is shallow.
+- **Full history required.** The check compares commit dates along two pathspecs,
+  so it needs real history. On a depth-1 clone (GitHub Actions' default) every
+  path's newest commit is the single root commit, both sides compare equal and the
+  check would report `fresh` for any tree — observed as CI passing while a
+  full-history clone of the same commit reported `stale`. It therefore exits 2 with
+  an explicit message on a shallow clone, and every CI job checks out with
+  `fetch-depth: 0`.
 
 ### Measured status at 2026-10-17 (not a claim from the older audit dossiers)
 

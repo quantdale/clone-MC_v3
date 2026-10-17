@@ -102,6 +102,25 @@ function newestCommit(pathspecs) {
   }
 }
 
+/**
+ * Whether the checkout has usable history.
+ *
+ * A shallow clone (GitHub Actions' default `fetch-depth: 1`) has exactly one
+ * commit, so EVERY path's newest commit is that same root commit. The staleness
+ * comparison then always sees `golden.sha === surface.sha` and reports "fresh" no
+ * matter what actually changed — the gate would pass vacuously in CI while
+ * failing correctly on a full-history clone. That inversion was observed: CI
+ * reported "fresh against 76159529" while a local full clone reported the same
+ * tree as stale against 1c8908f.
+ */
+function isShallow() {
+  try {
+    return fs.readFileSync(path.join(root, '.git', 'shallow'), 'utf8').trim().length > 0;
+  } catch {
+    return false;
+  }
+}
+
 /** The golden environment directories committed under tests/visual-golden. */
 function goldenEnvironments() {
   let entries;
@@ -144,6 +163,19 @@ if (environments === null) {
 }
 if (environments.length === 0) {
   console.error(`Golden directory is empty: ${path.relative(root, goldenRoot)}`);
+  process.exit(2);
+}
+
+// A shallow checkout cannot answer this question. Refuse loudly rather than
+// reporting "fresh" from a single-commit history where every path trivially
+// shares one commit (see isShallow).
+if (isShallow()) {
+  console.error(
+    'Visual golden staleness cannot be evaluated on a shallow clone: with one commit ' +
+      'every path resolves to the same root commit, so the check would always report ' +
+      '"fresh". Fetch full history for this job (actions/checkout with ' +
+      '`fetch-depth: 0`) and re-run.',
+  );
   process.exit(2);
 }
 

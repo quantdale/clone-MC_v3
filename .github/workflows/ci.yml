@@ -34,6 +34,12 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
+          # Change 300's visual-golden staleness check compares the newest
+          # commit touching each golden set against the newest REAL change to a
+          # captured surface. A depth-1 clone has a single commit, so both
+          # resolve to the same root and the check passes vacuously; full
+          # history is therefore required.
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -119,6 +125,12 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
+          # Change 300's visual-golden staleness check compares the newest
+          # commit touching each golden set against the newest REAL change to a
+          # captured surface. A depth-1 clone has a single commit, so both
+          # resolve to the same root and the check passes vacuously; full
+          # history is therefore required.
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -185,6 +197,12 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
+          # Change 300's visual-golden staleness check compares the newest
+          # commit touching each golden set against the newest REAL change to a
+          # captured surface. A depth-1 clone has a single commit, so both
+          # resolve to the same root and the check passes vacuously; full
+          # history is therefore required.
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4

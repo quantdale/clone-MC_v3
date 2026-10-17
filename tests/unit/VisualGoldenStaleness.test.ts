@@ -128,6 +128,32 @@ describe('visual golden staleness check (300)', () => {
     }
   });
 
+  it('exits 2 on a shallow clone instead of passing vacuously', () => {
+    // Regression for a real inversion: GitHub Actions checks out depth 1 by
+    // default, so EVERY path's newest commit is the single root commit. The
+    // golden and surface SHAs then compare equal and the check reported "fresh"
+    // in CI while a full-history clone of the same tree reported "stale". The
+    // check must refuse to answer rather than green a gate it cannot evaluate.
+    const repo = makeRepo();
+    try {
+      repo.commit({ 'index.html': '<html>v1</html>' }, '2026-01-01T00:00:00Z');
+      repo.commit({ 'tests/visual-golden/linux-ci/hud/low/1280x720.png': 'PNG' }, '2026-02-01T00:00:00Z');
+      repo.commit({ 'index.html': '<html>v2</html>' }, '2026-03-01T00:00:00Z');
+      // Simulate the shallow marker git writes for a depth-limited clone.
+      mkdirSync(join(repo.root, '.git'), { recursive: true });
+      writeFileSync(join(repo.root, '.git', 'shallow'), '0123456789abcdef\n', 'utf8');
+
+      const result = runCheck(repo.root);
+      expect(result.status).toBe(2);
+      expect(result.stderr).toMatch(/shallow clone/);
+      expect(result.stderr).toMatch(/fetch-depth: 0/);
+      // It must NOT claim freshness.
+      expect(result.stdout).not.toMatch(/are fresh/);
+    } finally {
+      repo.cleanup();
+    }
+  });
+
   it('skips a line-ending-only change to a captured surface', () => {
     const repo = makeRepo();
     try {
