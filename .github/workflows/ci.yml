@@ -47,6 +47,21 @@ jobs:
       - name: Validate repository state
         run: npm run validate-state
 
+      # Change 301: the three fast repository-invariant guards. They previously
+      # shipped but were reachable only by typing a file path, so the invariants
+      # every change's verification.md claims were enforced by memory alone.
+      - name: Verify dependency tree matches the lockfile
+        run: npm run verify:deps
+
+      - name: File-audit manifest integrity
+        run: npm run verify:file-audit
+
+      - name: Unreferenced-source guard
+        run: npm run verify:orphans
+
+      - name: Add-on security preflight
+        run: npm run verify:mcp
+
       - name: Typecheck
         run: npm run typecheck
 

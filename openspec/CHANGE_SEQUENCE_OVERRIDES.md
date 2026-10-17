@@ -1612,3 +1612,45 @@ Activation dependency satisfied: change 299 is VERIFIED 14/14 and published at
 ### Sequence row (authoritative with CHANGE_SEQUENCE.md)
 
 | 300 | `300-visual-regression-gate-reliability` | VERIFIED 17/17 — declared captured-surface contract + CI staleness check with a durable exact-commit acknowledgement + one measured per-cell noise bound with a regression tripwire + documented two-set baseline policy; measured proof that the "chronically red" premise does not reproduce, so **no golden was re-pinned**; thresholds unchanged; 258 BLOCKED. |
+
+## 301-verification-script-gate-wiring — activated and verified (2026-10-17)
+
+Continuation of the audit-authored sequence (finding F-004, `MASTER_PLAN.md` §4).
+Activation dependency satisfied: change 300 is VERIFIED 17/17 and published at
+`e62f367`; session start head `43ece16` (origin/main).
+
+- **Implemented:** all six previously-unreferenced verification programs exposed
+  as named npm commands (`verify:file-audit` pointing at the reviewed manifest
+  artifact, `gen:file-audit`, `verify:orphans`, `verify:mcp`, `verify:inventory`,
+  `evidence:archive`), with gates distinguished from report generators by a
+  `gen:`/`evidence:` prefix; the three fast invariant guards plus `verify:deps`
+  wired into the CI `gate` job before the heavy suites; `scripts/verify-all.mjs`
+  as the aggregate command (13 gates in the documented order, stops at the first
+  failure and propagates that gate's own exit code, asserts every referenced
+  package script is declared, `--list`/`--only=`/`--from=` for targeted re-runs);
+  `npm run verify:all`; a full gate catalogue in `ONBOARDING.md` §7; and an
+  `AGENTS.md` reference to `verify:all`.
+- **Failure path proven on real repository state, not asserted:** the
+  `file-audit` gate caught `scripts/verify-all.mjs` as a missing manifest row and
+  `verify-all` reported `FAIL file-audit (exit 1)`; later the same gate turned the
+  whole `npm test` suite red for the missing
+  `tests/unit/VerificationGateWiring.test.ts` row. Exit-code propagation is
+  proven by a test that spawns a real child gate exiting 7 and observes 7.
+- **Two real implementation defects found and fixed:** a shell-less
+  `spawn('npm', …)` fails on Windows with `EINVAL` because `npm` is `npm.cmd`
+  (Node >= 20 refuses a `.cmd` without a shell) — the runner now uses the shell on
+  Windows only, with every token taken from the literal gate table; and the first
+  draft could settle its promise twice via `error` + `close`.
+- **Out of scope and untouched:** every gate's logic; any product code; any
+  dependency or threshold; changes 302–304. `npm test` semantics unchanged (the
+  new test runs inside it). Change **258** stays **BLOCKED**.
+- **Result:** verify:deps PASS; verify:file-audit PASS (3078 rows);
+  verify:orphans PASS; verify:mcp PASS; verify:visual-goldens PASS; `verify-all
+  --list` shows 13 gates in order; validate-state/typecheck/lint (0 errors, 85
+  warnings)/unit 481 files 5757 + 1 skipped/coverage 91.82·88.61·94.65·93.15/
+  build/release-bundle all PASS; full E2E 137/137. Change 301 is
+  **VERIFIED 100%**.
+
+### Sequence row (authoritative with CHANGE_SEQUENCE.md)
+
+| 301 | `301-verification-script-gate-wiring` | VERIFIED — six unenforced verification scripts npm-exposed, four invariant guards blocking in CI, one `verify:all` aggregate that stops at the first failure and propagates its exit code (failure demonstrated on a real omission), gate catalogue published; no gate logic or product change; 258 BLOCKED. |

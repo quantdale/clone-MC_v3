@@ -80,6 +80,13 @@ result and MUST NOT be recorded as one.
 reproducible, and it cannot be guarded by an npm lifecycle hook because npm
 removes `node_modules` before `preinstall` runs (see change 299).
 
+`npm run verify:all` runs the whole sequence above plus the repository-invariant
+guards (`verify:file-audit`, `verify:orphans`, `verify:mcp`,
+`verify:visual-goldens`) in the documented order, and stops at the first failing
+gate while propagating its exit code. The individual commands remain
+authoritative for targeted re-runs and MUST still be named in change evidence;
+the full gate catalogue is in `ONBOARDING.md` §7.
+
 Never fabricate evidence. Record exact blockers when a mandatory command cannot run.
 
 ## Durable checkpoint

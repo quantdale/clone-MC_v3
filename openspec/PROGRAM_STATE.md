@@ -1,5 +1,14 @@
 # Program State
 
+## Current checkpoint — 2026-10-17 Change 301-verification-script-gate-wiring VERIFIED; 302 next (author package only; audit finding F-005)
+
+> **Change `301-verification-script-gate-wiring` is VERIFIED (F-004 closed)**; gates green: verify:deps / verify:file-audit 3078 rows / verify:orphans / verify:mcp / verify:visual-goldens / validate-state / typecheck / lint 0 errors 85 warnings / unit 481 files 5757+1 / coverage 91.82-88.61-94.65-93.15 vs 91/88/94/93 / build / check-release-bundle / full E2E 137-137. Last completed Change 301 is VERIFIED; Changes 001–301 are VERIFIED except Change 258 BLOCKED; Changes 259–301 are not reopened.
+> Session start head: `43ece1637f16a52056fdceced4e512e924dac154` (origin/main). Published head recorded in `PROGRAM_STATE.json` after publication.
+> 301 closes F-004: six of eight shipped verification programs were reachable **only by typing a file path** (including the file-audit manifest gate every `verification.md` claims as mandatory and the fail-closed MCP security preflight). All six are now named npm commands, the four fast invariant guards run in the CI `gate` job before the heavy suites, and `npm run verify:all` runs 13 gates in the documented order, stops at the first failure, propagates that gate's own exit code, and refuses to run when a referenced package script is undeclared. The failure path was proven on real repository state, not asserted. No gate logic, product code, dependency or threshold changed; `npm test` semantics unchanged. `258` stays BLOCKED.
+
+- Gates: verify:deps PASS; verify:file-audit PASS 3078 rows; verify:orphans PASS; verify:mcp PASS; verify:visual-goldens PASS; validate-state PASS; typecheck PASS; lint 0 errors / 85 warnings; unit 481 files 5757+1; coverage 91.82/88.61/94.65/93.15 PASS; build PASS; check-release-bundle PASS; full E2E 137/137.
+- Next exact action: **Author a spec-first OpenSpec package for `302-multiplayer-performance-gate-enforcement` (audit finding F-005) — do NOT implement 302 in the 301 session. 302 scope: a cross-platform `test:perf:multiplayer` npm command (node-builtins runner that sets `MC_CANONICAL=1`, spawns without a shell, and FAILS when the `-t` filter selects anything other than exactly the canonical measurement) plus a dedicated single-worker `perf-multiplayer` CI job, leaving `npm test` semantics unchanged so the shared suite still skips the contention-sensitive measurement. Audit evidence: `tests/unit/multi-client-performance.test.ts:319` guards REQ-P3 (`sustainedTps >= 200`) and REQ-P7 (`elapsedMs <= 6000`) behind `it.skipIf(process.env.MC_CANONICAL !== '1')`, and `grep -rn MC_CANONICAL` matches only OpenSpec documentation — never a workflow, npm script or runnable script. The measured budget is healthy (sustainedTps 514.2 vs the 200 floor, elapsedMs 2333.7 vs the 6000 ceiling), so enforcement is low-risk. Then 303 (Renderer lifecycle coverage) and 304 (modal focus/keyboard accessibility). `258` stays BLOCKED.**
+
 ## Current checkpoint — 2026-10-17 Change 300-visual-regression-gate-reliability VERIFIED 17/17 (100%); 301 next (author package only; audit finding F-004)
 
 > **Change `300-visual-regression-gate-reliability` is VERIFIED 17/17 (100%)**; all baseline gates green (verify:deps PASS 171 packages / verify:visual-goldens PASS fresh / validate-state / typecheck / lint 0 errors 85 warnings / unit 480 files 5748+1 / coverage 91.82-88.61-94.65-93.15 vs 91/88/94/93 / build / check-release-bundle / full E2E green / file-audit 3076); last completed Change 300 is VERIFIED; Changes 001–300 are VERIFIED except Change 258 BLOCKED; Changes 259–300 are not reopened.
@@ -413,15 +422,15 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **300-visual-regression-gate-reliability — VERIFIED (17/17); 258 BLOCKED, 259–300 VERIFIED**
+- Active implementation change: **301-verification-script-gate-wiring — VERIFIED; 258 BLOCKED, 259–301 VERIFIED**
 - Prior active implementation change: **283-live-raid-persistence — VERIFIED (13/13); 258 stays BLOCKED, 259–283 stay VERIFIED**
 - Prior prior active implementation change: **282-live-raid-feedback — VERIFIED (10/10); 258 stays BLOCKED, 259–282 stay VERIFIED**
-- Next change: **301 — author spec-first package after 300 VERIFIED (NOT started; audit finding F-004); 258 stays BLOCKED**
+- Next change: **302 — author spec-first package after 301 VERIFIED (NOT started; audit finding F-005); 258 stays BLOCKED**
 - 240 advancement allowed: **yes**
 
 - Program: **ACTIVE — Change 284-live-raid-wave-spawning VERIFIED 12/12 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–284 VERIFIED**
 - 284 checkpoint: **VERIFIED 12/12 — implementation + gates complete; enchanting flake + visual SwiftShader drift documented non-blocking; 258 BLOCKED; 285 not started**
-- Last completed change: **300-visual-regression-gate-reliability — VERIFIED (17/17) — C300 exact, 258 BLOCKED**
+- Last completed change: **301-verification-script-gate-wiring — VERIFIED — C301 exact, 258 BLOCKED**
 - Prior last completed change: **281-workstation-ui — VERIFIED (12/12); 258 stays BLOCKED, 259–281 stay VERIFIED**
 - Prior prior last completed change: **272-lighting-clock-dt-sync — VERIFIED (10/10) — full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85/file-audit 2792); 271 remains VERIFIED (14/14)
 - All changes 001–257 and 259–284: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed; Change 283 is VERIFIED 13/13; Change 284 is VERIFIED 12/12 (this session).

@@ -104,7 +104,59 @@ drift, run `npm ci` and start the sequence again.
 
 A fresh machine is considered **development-ready** only when the applicable non-external gates above pass. Hardware/device/signing/account gates may remain explicitly blocked if the repository already classifies them that way.
 
-## 7. Fresh-agent instruction
+## 7. Verification gate catalogue (change 301)
+
+Every verification program the repository ships is reachable through a named npm
+command. `npm run verify:all` runs the blocking gates in order and stops at the
+first failure, propagating that gate's own exit code.
+
+### Blocking gates (in `verify:all` order)
+
+| # | npm command | Invariant it protects |
+|---|---|---|
+| 1 | `npm run verify:deps` | Installed dependency tree equals `package-lock.json`. Every later gate's figures are only attributable to the locked toolchain when this passes. |
+| 2 | `npm run validate-state` | OpenSpec program state is internally coherent. |
+| 3 | `npm run typecheck` | `tsc --noEmit` is clean. |
+| 4 | `npm run lint` | ESLint reports zero errors (warnings are tracked, not blocking). |
+| 5 | `npm run build` | The production bundle builds. |
+| 6 | `node scripts/check-release-bundle.mjs` | The plain release bundle contains no E2E hook. |
+| 7 | `npm run verify:file-audit` | The reviewed file-audit manifest covers every tracked file and carries no pending or evidence-free rows. |
+| 8 | `npm run verify:orphans` | No new source file has zero importers (allow-list: the three real entry points). |
+| 9 | `npm run verify:mcp` | The repository-local MCP config is pinned, secret-free, and non-global. |
+| 10 | `npm run verify:visual-goldens` | The committed visual goldens are not older than the newest captured-surface change. |
+| 11 | `npm test` | The unit suite passes. |
+| 12 | `npm run test:coverage` | Coverage thresholds hold under the locked provider. |
+| 13 | `npm run test:e2e` | The browser suite and the 60-cell visual matrix pass. |
+
+### Report generators (exposed, not blocking)
+
+| npm command | Purpose |
+|---|---|
+| `npm run gen:file-audit` | Emit a *pending* file-audit inventory. Deliberately cannot assign verdicts. |
+| `npm run verify:inventory` | Legacy-world inventory scan (change 253 evidence). Writes an artifact. |
+| `npm run evidence:archive` | Build the evidence archive. |
+
+### Aggregate and selectors
+
+```bash
+npm run verify:all                 # every gate, in order, stops at first failure
+node scripts/verify-all.mjs --list # print the ordered gate list
+node scripts/verify-all.mjs --only=file-audit
+node scripts/verify-all.mjs --from=lint   # resume from a gate
+```
+
+`--only` and `--from` are targeted re-run conveniences; they are **not** the
+authoritative invocation. `verify:all` also fails loudly (exit 2) if
+`package.json` is missing a script it references, so a renamed script cannot
+silently turn a gate into a no-op.
+
+### Which gates run in CI
+
+The `gate` job runs gates 1–9 and 11–12 plus both `npm audit` checks; the `e2e`
+job runs gate 10 immediately before gate 13 (so a stale baseline fails in seconds
+rather than after the 14-minute browser run).
+
+## 8. Fresh-agent instruction
 
 Use this exact operating rule when handing the repository to a new agent:
 

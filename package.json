@@ -19,7 +19,14 @@
     "test:e2e:ui": "playwright test --ui",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "validate-state": "node scripts/validate-state.mjs"
+    "validate-state": "node scripts/validate-state.mjs",
+    "verify:file-audit": "node scripts/validate-file-audit.mjs openspec/hardening/2026-08-23-exhaustive-repository-certification/file-audit-manifest.json",
+    "gen:file-audit": "node scripts/gen-file-audit.mjs",
+    "verify:orphans": "node scripts/orphan-check.mjs",
+    "verify:mcp": "node scripts/verify-mcp-addons.mjs",
+    "verify:inventory": "node scripts/audit-inventory.mjs",
+    "evidence:archive": "node scripts/build-evidence-archive.mjs",
+    "verify:all": "node scripts/verify-all.mjs"
   },
   "engines": {
     "node": ">=20",
