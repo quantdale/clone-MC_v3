@@ -61,12 +61,24 @@ Mark a task `[x]` only when its implementation exists, required tests/evidence p
 Unless the active change explicitly and validly requires more, the final gate includes:
 
 ```bash
+npm run verify:deps
+npm run validate-state
 npm run typecheck
 npm run lint
 npm test
 npm run build
 npm run test:e2e
 ```
+
+`npm run verify:deps` MUST run **first**. It proves the installed dependency tree
+matches `package-lock.json`; every later gate's coverage/runner figures are only
+attributable to the locked toolchain when it passes. If it fails, run `npm ci`
+and start over. A gate result obtained under a drifted tree is not a repository
+result and MUST NOT be recorded as one.
+
+`npm ci` is the only supported install command. `npm install` is not
+reproducible, and it cannot be guarded by an npm lifecycle hook because npm
+removes `node_modules` before `preinstall` runs (see change 299).
 
 Never fabricate evidence. Record exact blockers when a mandatory command cannot run.
 

@@ -1517,3 +1517,47 @@ measured green locally for the first time (statements 91.82 / branches 88.61 /
 functions 94.65 / lines 93.15 against thresholds 91/88/94/93). That state is
 incidental, not enforced — change 299 (`verify:deps` + `preinstall` guard +
 `packageManager`) is what makes it durable.
+
+## 299-toolchain-dependency-reproducibility — activated and verified (2026-09-30)
+
+Continuation of the audit-authored sequence (finding F-002, `MASTER_PLAN.md` §4)
+under the same session instruction that completed 298. The audit marks F-002
+"P1, toolchain-critical" because the coverage thresholds in `vitest.config.ts`
+were calibrated for Vitest 4.1.11 while the installed tree held 3.2.7, making a
+local coverage result meaningless.
+
+- **Activation dependency (satisfied):** Change 298 is VERIFIED 14/14 and
+  published at `1d10c7d`; session start head `29d088d` (origin/main).
+- **Implemented:** exact `packageManager: npm@10.8.2` (the npm bundled with every
+  Node 20 release, resolved from the Node dist index); `engines.npm: ">=10"`;
+  read-only `scripts/check-install.mjs` (direct + transitive closure; exit 0
+  match/fresh, 1 drift with a remediation table, 2 missing/malformed lockfile);
+  `verify:deps` wired as the **first** step of the baseline gate in `AGENTS.md`
+  and `ONBOARDING.md`; `tests/unit/ToolchainReproducibility.test.ts` (10 tests);
+  a "Toolchain" section in `ONBOARDING.md` documenting the Node/npm contract and
+  the provider-specific coverage caveat.
+- **Spec correction made before shipping:** the audit package required the check
+  to be wired to npm's `preinstall` lifecycle so a drifted `npm install` would
+  abort before mutating. Measurement proves that impossible: npm removes
+  `node_modules` **before** running the root `preinstall` hook, so a hook-hosted
+  guard always observes an absent/pre-existing tree, prints
+  `Dependency tree matches package-lock.json`, and lets the install mutate —
+  manufacturing false-green evidence. `preinstall` is therefore deliberately
+  absent (asserted by the test suite), and `proposal.md` §2a, the design's
+  correction section and the spec's "on-demand pre-gate, never as a lifecycle
+  hook" requirement record the probe and its output. Per `AGENTS.md` the spec was
+  amended before the divergence was allowed to ship.
+- **Out of scope and untouched:** every dependency version; `vitest.config.ts`
+  thresholds; every file under `src/`; changes 300–304. Change **258** stays
+  **BLOCKED**; Changes **259–298** stay **VERIFIED**.
+- **Result:** `verify:deps`, `validate-state`, `typecheck`, `lint` (0 errors /
+  85 warnings), `npm test` (478 files, 5735 + 1 skipped), `test:coverage`
+  (**91.82 / 88.61 / 94.65 / 93.15** against 91/88/94/93 — the first
+  locally-attributable coverage measurement in the repository), `build` (266
+  modules), `check-release-bundle`, full E2E **137/137** including the 60-cell
+  visual matrix, and the file-audit gate (3072 rows) all pass. Change 299 is
+  **VERIFIED 14/14**.
+
+### Sequence row (authoritative with CHANGE_SEQUENCE.md)
+
+| 299 | `299-toolchain-dependency-reproducibility` | VERIFIED 14/14 — exact `packageManager` pin + read-only `verify:deps` dependency-tree gate + documented Node/npm/no-hook contract; coverage re-measured green on the locked Vitest 4.1.11; the audit's `preinstall` mechanism was measured incapable and the spec corrected before shipping; no dependency/threshold/product change; 258 BLOCKED. |

@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "status": "ACTIVE",
-  "currentChange": "298-verification-portability-eol-and-source-guards",
+  "currentChange": "299-toolchain-dependency-reproducibility",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "298-verification-portability-eol-and-source-guards",
-  "nextChange": "299",
+  "lastCompletedChange": "299-toolchain-dependency-reproducibility",
+  "nextChange": "300",
   "completedTasks": 14,
   "totalTasks": 14,
   "completionPercentage": 100,
@@ -14,15 +14,22 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "0e90fa2a13c1658b91b0e84b3047467f3ddc87d9",
+  "sessionStartHead": "29d088d70300805b4cc18cd11e650c818250ac8e",
   "localHead": "1d10c7db0e5e73bc2219c36c01df1be31d3a5d66",
   "publishedHead": "1d10c7db0e5e73bc2219c36c01df1be31d3a5d66",
-  "nextExactAction": "298 VERIFIED 14/14, published at 1d10c7db0e5e73bc2219c36c01df1be31d3a5d66 (origin/main verified equal). Next exact action is change 299-toolchain-dependency-reproducibility (audit finding F-002): pin an exact packageManager field, add read-only scripts/check-install.mjs (exit 0 match/fresh, 1 drift with remediation table, 2 malformed lockfile) wired as preinstall so a drifted tree aborts before mutation, add verify:deps as the first documented baseline step, and document the Node/npm contract plus the provider-specific coverage caveat. NOTE for the 299 session: this 298 session rebuilt node_modules with npm ci, so the installed tree now matches the lockfile (vitest 4.1.11) and the coverage gate measures 91.82/88.61/94.65/93.15 against thresholds 91/88/94/93; 299 must make that state ENFORCED, not incidental. After 299: 300 visual-regression-gate-reliability (golden staleness detection + high/1920x1080 column), 301 verification-script-gate-wiring, 302 multiplayer-performance-gate-enforcement, 303 renderer-lifecycle-unit-coverage, 304 modal-focus-and-keyboard-accessibility. 258 stays BLOCKED.",
-  "lastCompletedTask": "T14 complete: C298 exact/VERIFIED 14/14, verification 14/14, full gate green (validate-state/typecheck/lint 0 errors 85 warnings/unit 477 files 5725+1/build 266 modules/check-release-bundle/coverage 91.82-88.61-94.65-93.15 vs 91/88/94/93 on locked vitest 4.1.11/file-audit 3070/E2E 137-137 incl. 60-cell visual matrix); published to origin/main at 1d10c7db0e5e73bc2219c36c01df1be31d3a5d66 (verified equal)",
+  "nextExactAction": "299 VERIFIED 14/14, published at {pub} (origin/main verified equal). Next exact action is change 300-visual-regression-gate-reliability (audit finding F-003): re-pin the canonical linux-ci baseline through the documented UPDATE_SNAPSHOTS=1 path so it includes the always-visible #trading-open HUD chip added by 278; add scripts/check-visual-goldens.mjs staleness detection (golden commit newer than every captured-surface commit) as a CI step with an explicit per-commit acknowledgement; make the unstable high/1920x1080 column deterministic (frame-completion settle / profile-scaled settle / frozen dynamic resolution) or bound it with a recorded noise floor plus a comparePng tripwire; retire the duplicate win32-local set. Do NOT raise thresholds. After 300: 301 verification-script-gate-wiring (also wires verify:deps + check-visual-goldens into CI), 302 multiplayer-performance-gate-enforcement, 303 renderer-lifecycle-unit-coverage, 304 modal-focus-and-keyboard-accessibility. 258 stays BLOCKED.",
+  "lastCompletedTask": "T14 complete: C299 exact/VERIFIED 14/14, verification 14/14, full gate green (verify:deps PASS/validate-state/typecheck/lint 0 errors 85 warnings/unit 478 files 5735+1/coverage 91.82-88.61-94.65-93.15 vs 91/88/94/93 on locked vitest 4.1.11/build 266 modules/check-release-bundle/E2E 137-137 incl. 60-cell visual matrix/file-audit 3072); publication pending in this session",
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-297 are VERIFIED; game shippable with known performance-certification debt. The 297 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
   "validationResults": [
+    {
+      "change": "299-toolchain-dependency-reproducibility",
+      "status": "VERIFIED",
+      "unitTests": 5735,
+      "e2eTests": 137,
+      "note": "14/14 tasks complete (100%). package.json gains an exact packageManager (npm@10.8.2, the npm bundled with every Node 20 release) and engines.npm >=10, plus verify:deps. scripts/check-install.mjs is a read-only node-builtins check comparing direct deps + the transitive lockfile closure against installed versions: exit 0 match, 0 fresh (absent/empty node_modules), 1 drift with a stable name/installed/locked table and a single \"Run: npm ci\" line, 2 missing/malformed lockfile; unreadable installed manifests are drift, platform-inapplicable optional deps are skipped, and nothing is ever written or spawned. AGENTS.md and ONBOARDING.md make verify:deps the FIRST baseline step and document npm ci as the only supported install plus the provider-specific coverage caveat (Vitest 4 branch remapping is not comparable to Vitest 3). SPEC CORRECTION BEFORE SHIPPING: the audit package required a preinstall lifecycle guard; measurement proved npm removes node_modules BEFORE preinstall runs, so a hook-hosted guard observes an absent/pre-existing tree, prints \"Dependency tree matches package-lock.json\", and lets npm install mutate a drifted tree (measured on a synthetic vitest-3.2.7 fixture: false green + \"added 227 packages, changed 1 package\"). preinstall is therefore deliberately absent (asserted by the test suite) and proposal 2a, the design correction and the spec's on-demand-pregate requirement record the probe. tests/unit/ToolchainReproducibility.test.ts (10 tests) covers match, drift table, fresh, incompatible optional, unreadable manifest, malformed lockfile, missing lockfile, the read-only property, self-application to the real tree, and the packageManager/verify:deps/no-preinstall declarations. Gates: verify:deps PASS 171 packages; validate-state PASS; typecheck PASS; lint 0 errors/85 warnings; unit 478 files 5735 passed + 1 skipped exit 0; coverage statements 91.82 / branches 88.61 / functions 94.65 / lines 93.15 vs thresholds 91/88/94/93 PASS on the locked vitest 4.1.11 (the first locally-attributable coverage measurement in the repository); build 266 modules; check-release-bundle PASS; full E2E 137/137 exit 0 including the 60-cell visual matrix; file-audit PASSED 3072 rows. One earlier E2E invocation run concurrently with coverage+build on a single-worker host timed out 9 WebGL/memory specs; the clean single-purpose re-run is 137/137 and is the recorded evidence. No dependency version, coverage threshold, lockfile row or src/ change. 258 BLOCKED."
+    },
     {
       "change": "298-verification-portability-eol-and-source-guards",
       "status": "VERIFIED",

@@ -50,6 +50,35 @@ npx playwright install chromium
 
 The committed MCP versions are part of the repo setup. Keep optional `CONTEXT7_API_KEY` in the environment only.
 
+`npm ci` is the **only supported install command**: it deletes `node_modules` and
+reconstructs it at exactly the versions `package-lock.json` records. Do not use
+`npm install` — it can resolve a different tree than the lockfile, which makes
+local gate results (especially coverage) incomparable with CI.
+
+### Toolchain contract
+
+| Item | Canonical value |
+|---|---|
+| Node.js | **20** (CI-canonical; every workflow pins `node-version: 20`). `engines.node` allows `>=20`, so a newer local Node also runs, but CI evidence is Node 20. |
+| npm | **10.8.2** — declared exactly in `package.json` `packageManager` (the npm bundled with the Node 20 image). `engines.npm` requires `>=10`. |
+| Install | `npm ci` |
+| Version check | `npm run verify:deps` |
+
+`npm run verify:deps` (`scripts/check-install.mjs`) compares every installed
+package against its lockfile-resolved version and exits 1 with a drift table if
+they differ. It is read-only. It is **not** wired to `preinstall` on purpose:
+npm removes `node_modules` before running the root `preinstall` hook, so a
+hook-hosted check observes an absent tree and always reports a match. Run it as
+an explicit first step of the baseline gate instead.
+
+### Coverage thresholds are provider-specific
+
+The thresholds in `vitest.config.ts` (`statements 91 / branches 88 / functions
+94 / lines 93`) are calibrated for the **locked** coverage provider version
+(`@vitest/coverage-v8` **4.1.11**). Vitest 4 changed V8 branch remapping and
+dropped Vitest 3's default test/config exclusions, so the **branch metric is not
+comparable across provider major versions**. A coverage figure produced by a
+different provider version is not evidence for this gate.
 
 ## 5. Editor/LSP baseline
 
@@ -60,6 +89,7 @@ The editor is optional; the language servers are not. Agents should have diagnos
 ## 6. Baseline verification
 
 ```bash
+npm run verify:deps
 npm run validate-state
 npm run lint
 npm run typecheck
@@ -67,6 +97,10 @@ npm test
 npm run build
 npm run test:e2e
 ```
+
+`verify:deps` runs first: a gate result obtained under a dependency tree that does
+not match `package-lock.json` is invalid and must not be recorded. If it reports
+drift, run `npm ci` and start the sequence again.
 
 A fresh machine is considered **development-ready** only when the applicable non-external gates above pass. Hardware/device/signing/account gates may remain explicitly blocked if the repository already classifies them that way.
 

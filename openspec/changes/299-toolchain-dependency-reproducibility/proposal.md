@@ -103,21 +103,12 @@ The value MUST be the exact npm version that ships with the CI Node 20 image (or
 the version verified to produce the current lockfile), so Corepack reproduces the
 CI install exactly.
 
-### 2. Add a failing-fast install guard
+### 2. Add a failing-fast dependency-tree guard
 
-Add a `preinstall` script that verifies the tree is clean/reproducible. The
-simplest correct guard is a small Node script that, without mutating anything,
-checks that the resolved installed versions of the drift-prone tools match the
-lockfile, and exits non-zero with an actionable message if they do not. It MUST
-NOT run `npm install`/`npm ci` itself (that would recurse); it MUST only detect
-and report.
-
-```
-"scripts": {
-  "preinstall": "node scripts/check-install.mjs",
-  ...
-}
-```
+Add a small Node script that, without mutating anything, checks that the
+resolved installed versions match the lockfile and exits non-zero with an
+actionable message when they do not. It MUST NOT run `npm install`/`npm ci`
+itself (that would recurse); it MUST only detect and report.
 
 `scripts/check-install.mjs` compares each lockfile entry under
 `packages["node_modules/<name>"]` against the on-disk installed version for every
@@ -131,8 +122,65 @@ Dependency tree does not match package-lock.json:
 Run: npm ci
 ```
 
-It MUST exit 1 on any drift so `npm install`/`npm ci` abort before mutating, and
-exit 0 when the tree matches.
+It MUST exit 1 on any drift and 0 when the tree matches or is fresh.
+
+### 2a. SPEC CORRECTION (measured 2026-09-30): the guard MUST NOT live in `preinstall`
+
+The original design put the guard in npm's `preinstall` lifecycle so that
+`npm install` on a drifted tree would abort before mutating it. **Measurement
+proves that premise false on the npm versions in use, so the requirement is
+amended here before the divergence is shipped.**
+
+Probe (minimal fixture whose only script is a `preinstall` that lists
+`node_modules`):
+
+```
+$ cmd /c "npm install"          # node_modules absent before the command
+> probe@1.0.0 preinstall
+PREINSTALL sees node_modules entries = ABSENT
+
+$ mkdir node_modules && cmd /c "npm install"    # node_modules present (1 entry)
+> probe@1.0.0 preinstall
+PREINSTALL sees node_modules entries = 1        # still the pre-existing tree
+```
+
+`npm install` removes the existing `node_modules` tree **before** running the
+root `preinstall` hook (observed with npm 11.4.2 / Node 24.3.0). A `preinstall`
+guard therefore cannot observe the pre-install state at all.
+
+Measured end-to-end on a synthetic drifted tree (`vitest` 3.2.7 on disk against a
+4.1.11 lockfile) with the guard wired as `preinstall`:
+
+```
+$ cd <drifted fixture> && npm install
+> voxel-game@1.0.0 preinstall
+> node scripts/check-install.mjs
+Dependency tree matches package-lock.json (171 packages verified).   <-- FALSE
+added 227 packages, changed 1 package, and audited 229 packages
+```
+
+The guard reported a match and the install mutated the tree. Wiring the guard to
+`preinstall` would therefore convert a real drift into a **false-green** message
+— strictly worse than no guard, because it would manufacture evidence that the
+tree matched.
+
+Amended requirements:
+
+- The guard runs **on demand** as the documented `verify:deps` gate, positioned
+  before every gate whose result depends on the toolchain version, and becomes
+  the first step of the aggregate command added by change 301.
+- The guard MUST NOT be wired to `preinstall`. A lifecycle hook that cannot
+  observe the pre-install tree cannot fail it, so wiring it there is explicitly
+  forbidden.
+- The documented install contract is: **run `npm ci`** (never `npm install`) so
+  the tree is constructed at the locked versions, then run `verify:deps` to prove
+  it. A contract-violating `npm install` on a drifted tree is *detected* by
+  `verify:deps`, not *prevented* by a lifecycle hook.
+- `npm ci` deletes `node_modules` and installs exactly the lockfile, so the
+  reproducible path is unaffected by this correction.
+
+The `preinstall` scenario in `specs/toolchain-reproducibility/spec.md` is amended
+to the on-demand gate scenario accordingly.
 
 ### 3. Add an explicit, documented verify path for the gates
 
@@ -150,27 +198,29 @@ that coverage thresholds are provider-specific to the locked Vitest version.
 ## Compatibility and migration
 
 - No product code, data, or API change.
-- `preinstall` runs on `npm install`/`npm ci`. It reads only; it never mutates
-  `node_modules`, so `npm ci` (which installs into a fresh tree) still succeeds
-  when the tree is absent — the guard must treat "not installed" as *skip*, not
-  *drift*, or it would block a legitimate first install.
-- CI is unaffected: it runs `npm ci`, which produces a matching tree, so the
-  guard exits 0.
+- The guard reads only and is invoked on demand (`verify:deps`), never as a
+  lifecycle hook, because npm removes `node_modules` before `preinstall` runs
+  (see 2a). It treats an absent tree as *fresh* and passes, so a first `npm ci`
+  is never impeded.
+- CI is unaffected: it runs `npm ci`, which produces a matching tree, and the
+  guard then exits 0 when invoked.
 
 ## Risks
 
-- **`preinstall` false positives.** A too-strict guard (e.g. demanding exact
-  equality on caret-ranged optional/platform packages) would block valid installs.
+- **False green if wired as a lifecycle hook.** Measured and removed: npm clears
+  `node_modules` before `preinstall`, so a hook-based guard always reports a
+  match. The guard is an on-demand gate instead.
+- **Guard false positives.** A too-strict guard (e.g. demanding exact equality
+  on caret-ranged optional/platform packages) would fail valid trees.
   Mitigation: compare installed versions to the **lockfile's** resolved version
   (not the caret range), and treat platform-specific optional dependencies
   (e.g. `@rollup/rollup-win32-x64-msvc` on non-Windows) as satisfied when absent
   on an incompatible platform.
-- **`preinstall` blocking CI.** Mitigated by the "absent ⇒ skip on fresh ci"
-  rule and by validating the guard against a clean `npm ci` in a throwaway
-  directory before landing.
-- **npm `preinstall` semantics differ** when Corepack is not enabled. Mitigation:
-  also expose the same check as `verify:deps` so it can be invoked manually
-  regardless of lifecycle behaviour.
+- **A drifted tree is no longer *prevented*, only *detected*.** Accepted: the
+  repository cannot prevent `npm install` (unlike `npm ci`) without a lifecycle
+  hook that provably cannot observe drift. Detection is placed where it matters —
+  before any gate whose result depends on the toolchain — and is enforced in CI
+  by change 301.
 
 ## Rollback strategy
 
@@ -183,9 +233,10 @@ Remove the `preinstall`/`verify:deps` scripts, the `packageManager` field, and
 - `npm run verify:deps` exits 0 on a freshly `npm ci`-installed tree.
 - `npm run verify:deps` exits 1 with a remediation message when `vitest` is
   3.2.7 on disk against a 4.1.11 lockfile.
-- `npm install` on a drifted tree aborts before mutating (verified in a throwaway
-  copy, never in the primary working tree).
-- `npm ci` on a clean checkout succeeds (guard treats absent as skip).
+- `npm install` on a drifted tree is proven **not** to abort (measured), and the
+  spec records that the guard is therefore an on-demand gate rather than a
+  lifecycle hook; the false-green hazard is documented in 2a.
+- `npm ci` on a clean checkout succeeds and the guard passes afterwards.
 - CI `gate` job still passes end to end (the guard exits 0 after `npm ci`).
 - `ONBOARDING.md` documents the Node version, `npm ci`, and provider-specific
   coverage thresholds.

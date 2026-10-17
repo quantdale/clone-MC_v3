@@ -9,8 +9,10 @@ one.
 
 The repository MUST declare its package manager exactly, MUST provide a
 read-only check that reports whether the installed tree matches the lockfile,
-and MUST make that check runnable both as a manual command and as an install-time
-guard. The check MUST NOT mutate `node_modules`.
+and MUST make that check runnable as a named command positioned before the
+toolchain-sensitive gates. The check MUST NOT be wired to an npm lifecycle hook,
+because such a hook cannot observe the pre-install tree (see the on-demand
+requirement below). The check MUST NOT mutate `node_modules`.
 
 This capability governs the toolchain only. It does not change product code,
 product behaviour, dependency versions, or coverage thresholds.
@@ -119,28 +121,56 @@ compare against a caret or tilde range.
   `package-lock.json`, is modified
 - **AND** `git status` reports no new modification after the run
 
-### Requirement: The check runs as an install-time guard
+### Requirement: The check runs as an on-demand pre-gate, never as a lifecycle hook
 
-`package.json` MUST declare a `preinstall` lifecycle script that invokes the
-check. Because `preinstall` runs before npm mutates the tree, a drifted tree MUST
-cause the install to abort before any package is added, removed, or updated.
+The check MUST be exposed as a named `package.json` script (`verify:deps`) and
+MUST be the documented dependency-verification step of the mandatory baseline
+sequence. It MUST NOT be wired to `preinstall` (or any other npm lifecycle hook),
+because a lifecycle hook cannot observe the pre-install tree and would therefore
+report a false match.
 
-The guard MUST NOT invoke `npm install`, `npm ci`, or any other package manager,
-because doing so from within `preinstall` would recurse.
+This requirement is a measured correction of an earlier draft that specified
+`preinstall`. The measurement is part of the contract:
 
-#### Scenario: Drifted tree aborts the install before mutation
+- npm removes the existing `node_modules` directory **before** running the root
+  `preinstall` hook. A probe fixture whose `preinstall` lists `node_modules`
+  reports it absent even when it existed immediately before the command, and
+  reports only the pre-existing entry count when an empty `node_modules` was
+  created beforehand.
+- Consequently a `preinstall`-hosted guard always observes a fresh or reified
+  tree and prints a success line. On a synthetic drifted tree (`vitest` 3.2.7 on
+  disk, 4.1.11 locked) the hook printed
+  `Dependency tree matches package-lock.json (171 packages verified)` and
+  `npm install` then mutated the tree.
+
+Therefore the guard's authority is *detection before the gates*, not *prevention
+during install*, and the documented install command is `npm ci`.
+
+The guard MUST NOT invoke `npm install`, `npm ci`, or any other package manager.
+
+#### Scenario: Drifted tree is detected before the gates run
 
 - **GIVEN** a working copy with a drifted installed tree
-- **WHEN** `npm install` is invoked
+- **WHEN** `npm run verify:deps` is invoked
 - **THEN** the process exits non-zero
-- **AND** the drift table is printed
-- **AND** no package directory is added, removed, or updated
+- **AND** the drift table naming each package, installed version, and locked
+  version is printed
+- **AND** the remediation command appears exactly once
+- **AND** no file is added, removed, or modified by the run
 
-#### Scenario: Clean install succeeds
+#### Scenario: The guard is not a lifecycle hook
+
+- **WHEN** the `scripts` block of `package.json` is inspected
+- **THEN** no `preinstall` entry exists
+- **AND** the drift check is reachable only through the named verification script
+
+#### Scenario: Clean install succeeds and verifies
 
 - **GIVEN** a fresh working copy
 - **WHEN** `npm ci` is invoked
-- **THEN** the guard exits 0 and the install completes
+- **THEN** the install completes
+- **AND** a subsequent `npm run verify:deps` exits 0
+  and prints the number of packages verified
 
 ### Requirement: Gates are declared as depending on a matching tree
 
@@ -219,5 +249,5 @@ under a drifted tree is invalid.
 | Package manager declared exactly | Parse `package.json`; assert `packageManager` present with no range |
 | Read-only check available | Run on a matching tree (exit 0), a drifted tree (exit 1 + table), a fresh tree (exit 0), and an incompatible-optional platform case (exit 0) |
 | Read-only property | Snapshot `git status` before/after; assert no `node_modules`, `package.json`, or `package-lock.json` change |
-| Install-time guard | In a throwaway copy: `npm install` on a drifted tree aborts before mutation; `npm ci` on a fresh tree succeeds |
+| On-demand pre-gate (corrected) | `verify:deps` exits 1 on a drifted tree and 0 on a matching/fresh tree; the guard is absent from `preinstall`; the measured lifecycle false-green is recorded |
 | Gates depend on a matching tree | Read `AGENTS.md` / `ONBOARDING.md`; assert the check precedes the toolchain-sensitive gates and that the provider caveat is stated |

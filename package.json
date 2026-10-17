@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "packageManager": "npm@10.8.2",
   "description": "A browser-based Three.js voxel sandbox game (Minecraft-inspired) with procedural terrain, chunk streaming, block interaction, and a polished UI.",
   "scripts": {
+    "verify:deps": "node scripts/check-install.mjs",
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
@@ -19,7 +21,8 @@
     "validate-state": "node scripts/validate-state.mjs"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20",
+    "npm": ">=10"
   },
   "dependencies": {
     "three": "^0.169.0"

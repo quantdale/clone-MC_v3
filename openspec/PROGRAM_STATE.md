@@ -1,5 +1,22 @@
 # Program State
 
+## Current checkpoint — 2026-09-30 Change 299-toolchain-dependency-reproducibility VERIFIED 14/14 (100%); 300 next (author package only; audit finding F-003)
+
+> **Change `299-toolchain-dependency-reproducibility` is VERIFIED 14/14 (100%)**; all baseline gates green (verify:deps PASS 171 packages / validate-state / typecheck / lint 0 errors 85 warnings / unit 478 files 5735+1 / coverage 91.82-88.61-94.65-93.15 vs 91/88/94/93 on the locked vitest 4.1.11 / build 266 modules / check-release-bundle / E2E 137 passed including the 60-cell visual matrix / file-audit 3072); last completed Change 299 is VERIFIED; Changes 001–299 are VERIFIED except Change 258 BLOCKED; Changes 259–299 are not reopened.
+> Session start head: `29d088d70300805b4cc18cd11e650c818250ac8e` (origin/main). Published head recorded in `PROGRAM_STATE.json` after publication.
+> 299 declares an exact `packageManager` (`npm@10.8.2`, the npm bundled with the Node 20 CI image), adds a read-only `verify:deps` dependency-tree gate as the FIRST baseline step, documents `npm ci` as the only supported install plus the provider-specific coverage caveat, and re-establishes the coverage measurement on the locked provider. The audit's `preinstall` mechanism was measured incapable (npm removes `node_modules` before the hook runs, so the guard reports a false match) and the normative spec was corrected before shipping. No dependency version, threshold, lockfile row or `src/` change; `258` stays BLOCKED.
+
+- Gates: verify:deps PASS (171 packages); validate-state PASS; typecheck PASS; lint 0 errors / 85 warnings; unit 478 files 5735+1 exit 0; coverage 91.82/88.61/94.65/93.15 PASS; build 266 modules; check-release-bundle PASS; full E2E 137/137 (60-cell visual matrix green); file-audit PASSED 3072 rows.
+- Next exact action: **Author a spec-first OpenSpec package for `300-visual-regression-gate-reliability` (audit finding F-003) — do NOT implement 300 in the 299 session. 300 scope: re-pin the canonical `linux-ci` baseline through the documented `UPDATE_SNAPSHOTS=1` path so it includes the always-visible `#trading-open` HUD chip added by 278; add `scripts/check-visual-goldens.mjs` staleness detection (golden commit newer than every captured-surface commit) as a CI step with an explicit per-commit acknowledgement; make the unstable `high/1920x1080` column deterministic via frame-completion settle / profile-scaled settle / frozen dynamic resolution, or bound it with a recorded noise floor plus a `comparePng` tripwire; retire the duplicate `win32-local` set. Thresholds MUST NOT be raised. Then 301 (verification-script gate wiring — also wires `verify:deps` and `check-visual-goldens` into CI), 302 (multiplayer performance gate), 303 (Renderer lifecycle coverage), 304 (modal focus/keyboard accessibility). `258` stays BLOCKED.**
+
+## Current checkpoint — 2026-09-30 Change 299-toolchain-dependency-reproducibility ACTIVE 2/14 (audit finding F-002; implementation next; 258 stays BLOCKED)
+
+> **Change `299-toolchain-dependency-reproducibility` is ACTIVE 2/14**; T1–T2 control-plane evidence complete (drift baseline + provider-coupling rationale in `verification.md`). Last completed Change 298-verification-portability-eol-and-source-guards is VERIFIED 14/14; Changes 001–298 are VERIFIED except Change 258 BLOCKED; Changes 259–298 are not reopened.
+> Session start head: `29d088d70300805b4cc18cd11e650c818250ac8e` (origin/main).
+> Scope: exact `packageManager` pin; read-only `scripts/check-install.mjs` (exit 0 match/fresh, 1 drift with remediation table, 2 malformed lockfile) wired as `preinstall` so a drifted tree aborts before mutation; `verify:deps` as the first documented baseline step; documented Node/npm contract and provider-specific coverage caveat. 299 is what makes 298's newly-green local coverage measurement ENFORCED rather than incidental. No dependency version change; `258` stays BLOCKED.
+
+- Next exact action: **Implement 299 T3 exact `packageManager` pin (`npm@10.8.2`, the npm bundled with the CI-canonical Node 20 image), then T4 `scripts/check-install.mjs`, T5 tests, T6 wiring, T7 install-abort proof, T8 CI confirmation, T9 locked-toolchain coverage, T10 docs, T11 file-audit, T12 full gate, T13 state, T14 publication. `258` stays BLOCKED.**
+
 ## Current checkpoint — 2026-09-30 Change 298-verification-portability-eol-and-source-guards VERIFIED 14/14 (100%); 299 next (author package only; audit finding F-002)
 
 > **Change `298-verification-portability-eol-and-source-guards` is VERIFIED 14/14 (100%)**; all baseline gates green (validate-state/typecheck/lint 0 errors 85 warnings/unit 477 files 5725+1/build 266 modules/coverage 91.82-88.61-94.65-93.15 vs 91/88/94/93/file-audit 3070/E2E 137 passed including the 60-cell visual matrix); last completed Change 298 is VERIFIED; Changes 001–298 are VERIFIED except Change 258 BLOCKED; Changes 259–298 are not reopened.
@@ -387,15 +404,15 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **298-verification-portability-eol-and-source-guards — VERIFIED (14/14); 258 BLOCKED, 259–298 VERIFIED**
+- Active implementation change: **299-toolchain-dependency-reproducibility — VERIFIED (14/14); 258 BLOCKED, 259–299 VERIFIED**
 - Prior active implementation change: **283-live-raid-persistence — VERIFIED (13/13); 258 stays BLOCKED, 259–283 stay VERIFIED**
 - Prior prior active implementation change: **282-live-raid-feedback — VERIFIED (10/10); 258 stays BLOCKED, 259–282 stay VERIFIED**
-- Next change: **299 — author spec-first package after 298 VERIFIED (NOT started; audit finding F-002); 258 stays BLOCKED**
+- Next change: **300 — author spec-first package after 299 VERIFIED (NOT started; audit finding F-003); 258 stays BLOCKED**
 - 240 advancement allowed: **yes**
 
 - Program: **ACTIVE — Change 284-live-raid-wave-spawning VERIFIED 12/12 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–284 VERIFIED**
 - 284 checkpoint: **VERIFIED 12/12 — implementation + gates complete; enchanting flake + visual SwiftShader drift documented non-blocking; 258 BLOCKED; 285 not started**
-- Last completed change: **298-verification-portability-eol-and-source-guards — VERIFIED (14/14) — C298 exact, 258 BLOCKED**
+- Last completed change: **299-toolchain-dependency-reproducibility — VERIFIED (14/14) — C299 exact, 258 BLOCKED**
 - Prior last completed change: **281-workstation-ui — VERIFIED (12/12); 258 stays BLOCKED, 259–281 stay VERIFIED**
 - Prior prior last completed change: **272-lighting-clock-dt-sync — VERIFIED (10/10) — full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85/file-audit 2792); 271 remains VERIFIED (14/14)
 - All changes 001–257 and 259–284: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed; Change 283 is VERIFIED 13/13; Change 284 is VERIFIED 12/12 (this session).
@@ -406,7 +423,7 @@
 - Publication history: **Change 257 VERIFIED 92/92 at 96b5dc37 (F257-A..L closed, 22 new fault-injection tests, 5× proofs, import tx); Change 256 archived at `ad75b65` as `2026-08-31-256-production-readiness-hardening` (23/23).**
 - Section milestone: **PROGRAM VERIFIED through Change 284; Change 284 is VERIFIED 12/12; Change 258 remains BLOCKED at 40/100 pending headed hardware-WebGL certification; no GPU evidence was fabricated.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ri…
-- Next exact action: **Author a spec-first OpenSpec package for 299-toolchain-dependency-reproducibility (audit finding F-002; NOT started) — exact packageManager field, read-only scripts/check-install.mjs with preinstall abort, verify:deps as the first baseline step, documented Node/npm contract and provider-specific coverage caveat; then 300 (visual gate + golden staleness), 301 (verification-script gate wiring), 302 (multiplayer performance gate), 303 (Renderer lifecycle coverage), 304 (modal focus/keyboard accessibility); 258 stays BLOCKED**
+- Next exact action: **Author a spec-first OpenSpec package for 300-visual-regression-gate-reliability (audit finding F-003; NOT started) — re-pin linux-ci goldens including the 278 #trading-open chip, add scripts/check-visual-goldens.mjs staleness detection with a per-commit acknowledgement, stabilise or bound the high/1920x1080 column, retire the duplicate win32-local set, thresholds unchanged; then 301 (verification-script gate wiring, incl. verify:deps + check-visual-goldens in CI), 302 (multiplayer performance gate), 303 (Renderer lifecycle coverage), 304 (modal focus/keyboard accessibility); 258 stays BLOCKED**
 - Superseded next action: **T8 confirm 282 feedback is unchanged (projection, pause, dispose hide, no spawning/settlement/258 work); 258 stays BLOCKED**
 - Release note (2026-09-11 owner deferral): **headed FPS gates (258 tasks 91–95) are deferred, not waived — 001–257 VERIFIED, production default unchanged (sync meshing, no quality retune), game shippable with known performance-certification debt**
 

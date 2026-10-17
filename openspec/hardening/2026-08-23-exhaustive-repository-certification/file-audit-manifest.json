@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-16T22:13:39.629Z",
+  "generatedAt": "2026-10-16T23:18:57Z",
   "reviewedSha": "3d0fd2d5aee39ae1706b7210ad27e675450f521c",
-  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288; +6 rows for 289 enchantment-persistence-reload-integrity package/implementation/tests; DirtySaveQueue.ts/Game.ts/enchanting.spec.ts/DirtySaveQueue.test.ts/InventoryComponentPersistence.test.ts re-reviewed in place for 289; +10 rows for 290 hero-of-the-village-reward package/implementation/tests; Game.ts/StatusEffect.ts re-reviewed in place for 290; +10 rows for 291 pillager-patrol-bad-omen package/implementation/tests; Game.ts re-reviewed in place for 291; +10 rows for 292 player-status-effect-persistence package/implementation/tests; Game.ts, PlayerStateRecord.ts, GamePersistence.ts and 5 tests re-reviewed in place for 292; +9 rows for 293 raider-and-patrol-rendering package/implementation/tests; Game.ts re-reviewed in place for 293; +10 rows for 294 bad-omen-raid-escalation-and-death-parity package/implementation/tests; Game.ts, 2 unit tests and the 285/291/292 design notes re-reviewed in place for 294; +12 rows for 295 throwable-splash-potion-entities package/implementation/tests; Game.ts, PlayerInteraction.ts, RaiderCombatBehavior.ts, its unit test and the 288 docs re-reviewed in place for 295; +10 rows for 296 periodic-status-effect-ticks package/implementation/tests; Game.ts, DamageType.ts, SurvivalSystem.ts, DeathRespawnPresentation.ts, 2 unit tests and the 295 docs re-reviewed in place for 296; +11 rows for 297 gunpowder-and-splash-brewing package/implementation/tests; ItemRegistry.ts, TextureAtlas.ts, BrewingRecipes.ts, BrewingStandBlockEntity.ts, RaiderCombatBehavior.ts, Game.ts, BlockItemSeparation.test.ts and the 295 docs re-reviewed in place for 297; +3 rows and +36 audit-package rows re-reviewed for 298 (verification-portability-eol-and-source-guards): .gitattributes, tests/support/sourceText.ts, tests/unit/SourceTextPortability.test.ts, MASTER_PLAN.md and the audit-authored 298-304 OpenSpec packages",
+  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288; +6 rows for 289 enchantment-persistence-reload-integrity package/implementation/tests; DirtySaveQueue.ts/Game.ts/enchanting.spec.ts/DirtySaveQueue.test.ts/InventoryComponentPersistence.test.ts re-reviewed in place for 289; +10 rows for 290 hero-of-the-village-reward package/implementation/tests; Game.ts/StatusEffect.ts re-reviewed in place for 290; +10 rows for 291 pillager-patrol-bad-omen package/implementation/tests; Game.ts re-reviewed in place for 291; +10 rows for 292 player-status-effect-persistence package/implementation/tests; Game.ts, PlayerStateRecord.ts, GamePersistence.ts and 5 tests re-reviewed in place for 292; +9 rows for 293 raider-and-patrol-rendering package/implementation/tests; Game.ts re-reviewed in place for 293; +10 rows for 294 bad-omen-raid-escalation-and-death-parity package/implementation/tests; Game.ts, 2 unit tests and the 285/291/292 design notes re-reviewed in place for 294; +12 rows for 295 throwable-splash-potion-entities package/implementation/tests; Game.ts, PlayerInteraction.ts, RaiderCombatBehavior.ts, its unit test and the 288 docs re-reviewed in place for 295; +10 rows for 296 periodic-status-effect-ticks package/implementation/tests; Game.ts, DamageType.ts, SurvivalSystem.ts, DeathRespawnPresentation.ts, 2 unit tests and the 295 docs re-reviewed in place for 296; +11 rows for 297 gunpowder-and-splash-brewing package/implementation/tests; ItemRegistry.ts, TextureAtlas.ts, BrewingRecipes.ts, BrewingStandBlockEntity.ts, RaiderCombatBehavior.ts, Game.ts, BlockItemSeparation.test.ts and the 295 docs re-reviewed in place for 297; +3 rows and +36 audit-package rows re-reviewed for 298 (verification-portability-eol-and-source-guards): .gitattributes, tests/support/sourceText.ts, tests/unit/SourceTextPortability.test.ts, MASTER_PLAN.md and the audit-authored 298-304 OpenSpec packages; +2 rows and 3 in-place re-reviews for 299 (toolchain-dependency-reproducibility): scripts/check-install.mjs, tests/unit/ToolchainReproducibility.test.ts, plus package.json/AGENTS.md/ONBOARDING.md re-reviewed in place",
   "allowedReviewLevels": [
     "semantic",
     "mechanical",
@@ -10,7 +10,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 3070,
+  "total": 3072,
   "rows": [
     {
       "path": ".agent/EXECUTION_PROMPT.md",
@@ -976,7 +976,7 @@
       "path": "docs/audit-1-277-findings.md",
       "gitBlob": null,
       "category": "docs",
-      "purpose": "Durable audit ledger for Changes 1–277, including remediation status and the Change-258 external blocker",
+      "purpose": "Durable audit ledger for Changes 1\u2013277, including remediation status and the Change-258 external blocker",
       "reviewLevel": "semantic",
       "runtimeReachability": "documentation-only",
       "imports": [],
@@ -32734,6 +32734,24 @@
       "status": "audited"
     },
     {
+      "path": "scripts/check-install.mjs",
+      "gitBlob": null,
+      "category": "script",
+      "purpose": "299 coverage for scripts/check-install.mjs",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npm test"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Read-only dependency-tree reproducibility check (change 299): compares every lockfile-recorded package against its on-disk version, exits 0 match/fresh, 1 drift with a remediation table, 2 missing/malformed lockfile; never mutates a file and never spawns npm. Deliberately not wired to preinstall because npm removes node_modules before that hook runs.",
+      "status": "audited"
+    },
+    {
       "path": "scripts/check-release-bundle.mjs",
       "gitBlob": null,
       "category": "script",
@@ -33172,7 +33190,7 @@
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 284 implementation; no findings — four keys appended after item=13; zombie and other prior definitions unchanged",
+      "reviewNotes": "reviewed for 284 implementation; no findings \u2014 four keys appended after item=13; zombie and other prior definitions unchanged",
       "status": "audited"
     },
     {
@@ -33512,7 +33530,7 @@
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 284 implementation; no findings — additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits | 285 ephemeral badOmen + villageQuery + fixed-tick evaluate through 282 start seam; re-reviewed for 288 raider combat wiring; re-reviewed for 289 concurrent-drain / enchant persist integrity; re-reviewed for 290 HOTV grant + emerald trade discount wiring; re-reviewed for 291 pillager patrol tick/captain Bad Omen/raid-start dismissal/seams; re-reviewed for 292 status-effect/Bad Omen persistence (snapshot payload, restore, omen duration tick, durable save points, dispose ordering, seams); re-reviewed for 293 raider renderer wiring (tracked resource, per-frame sync in render from raid/patrol managers, render-state/visibility seams); re-reviewed for 294 omen trigger ESCALATE_RAID branch (in-place escalation, patrol dismissal, one durable save) and Bad Omen clear on death in respawnPlayer; re-reviewed for 295 splash potion wiring (use-item throw with consume rules, tick 5.10 potion step, shatter application to player/raid/patrol, witch potion sink, renderer sync, transient clears, test seams); re-reviewed for 296 periodic status-effect pass (step 6 before duration count-down, hurtPlayer/survival.heal routing, tickWithers global-tick wither stand-in retired, debugAddPlayerEffect/debugTickPeriodicStatusEffects seams); re-reviewed for 297 (witch death loot on all three consumed-death sites, injectable drop rng + debugSetMobDropRandomSequence/getLastMobDrops seams, testGrantSplashPotion doc test-only); no findings",
+      "reviewNotes": "reviewed for 284 implementation; no findings \u2014 additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits | 285 ephemeral badOmen + villageQuery + fixed-tick evaluate through 282 start seam; re-reviewed for 288 raider combat wiring; re-reviewed for 289 concurrent-drain / enchant persist integrity; re-reviewed for 290 HOTV grant + emerald trade discount wiring; re-reviewed for 291 pillager patrol tick/captain Bad Omen/raid-start dismissal/seams; re-reviewed for 292 status-effect/Bad Omen persistence (snapshot payload, restore, omen duration tick, durable save points, dispose ordering, seams); re-reviewed for 293 raider renderer wiring (tracked resource, per-frame sync in render from raid/patrol managers, render-state/visibility seams); re-reviewed for 294 omen trigger ESCALATE_RAID branch (in-place escalation, patrol dismissal, one durable save) and Bad Omen clear on death in respawnPlayer; re-reviewed for 295 splash potion wiring (use-item throw with consume rules, tick 5.10 potion step, shatter application to player/raid/patrol, witch potion sink, renderer sync, transient clears, test seams); re-reviewed for 296 periodic status-effect pass (step 6 before duration count-down, hurtPlayer/survival.heal routing, tickWithers global-tick wither stand-in retired, debugAddPlayerEffect/debugTickPeriodicStatusEffects seams); re-reviewed for 297 (witch death loot on all three consumed-death sites, injectable drop rng + debugSetMobDropRandomSequence/getLastMobDrops seams, testGrantSplashPotion doc test-only); no findings",
       "status": "audited"
     },
     {
@@ -39386,7 +39404,7 @@
       "path": "tests/e2e/bad-omen-acquisition.spec.ts",
       "gitBlob": null,
       "category": "test",
-      "purpose": "285 browser journey: fixture village + grant → raid feedback + reload level 0",
+      "purpose": "285 browser journey: fixture village + grant \u2192 raid feedback + reload level 0",
       "reviewLevel": "semantic",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -42125,7 +42143,7 @@
       "path": "tests/unit/EntityType.test.ts",
       "gitBlob": null,
       "category": "test",
-      "purpose": "284 registry stability tests: size 14→18, sorted keys, append-order/runtime-id pins (item=13, pillager=14, witch=17), roster-key MONSTER, zombie stability",
+      "purpose": "284 registry stability tests: size 14\u219218, sorted keys, append-order/runtime-id pins (item=13, pillager=14, witch=17), roster-key MONSTER, zombie stability",
       "reviewLevel": "semantic",
       "runtimeReachability": "test-only",
       "imports": [],
@@ -43047,7 +43065,7 @@
         "tests/unit/GameStartupPersistence.test.ts"
       ],
       "testEvidence": [
-        "Indirectly tested by every test that uses createIdbFactoryMock — the mock now matches real IDB multi-store + oncomplete timing, so the same mock can drive the multi-store reset path."
+        "Indirectly tested by every test that uses createIdbFactoryMock \u2014 the mock now matches real IDB multi-store + oncomplete timing, so the same mock can drive the multi-store reset path."
       ],
       "riskAreas": [
         "mock-vs-real-fidelity"
@@ -45221,7 +45239,7 @@
         "F257-D",
         "F257-K"
       ],
-      "disposition": "NEW — 22 fault-injection tests added in the 257 reopen",
+      "disposition": "NEW \u2014 22 fault-injection tests added in the 257 reopen",
       "reviewNotes": "Covers every read class (7 stores), every delete class (6 stores), ownership rejection (metadata + playerState), and round-trip payload equality (every field) plus foreign-world preservation.",
       "status": "audited"
     },
@@ -46648,6 +46666,24 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/ToolchainReproducibility.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "299 coverage for tests/unit/ToolchainReproducibility.test.ts",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npm test"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Unit coverage for scripts/check-install.mjs (change 299): 10 tests over synthetic temp fixtures for match, drift table, fresh tree, platform-inapplicable optional dependency, unreadable installed manifest, malformed lockfile, missing lockfile, the read-only property, self-application to the real tree, and the packageManager/verify:deps declarations with no preinstall entry.",
       "status": "audited"
     },
     {
