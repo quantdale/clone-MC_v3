@@ -5,14 +5,22 @@
  */
 import { describe, it, expect } from 'vitest';
 import { GamePersistence } from '../../src/storage/GamePersistence';
-import { WorldMetadataRepository, type IdbFactoryLike, type IdbOpenRequestLike } from '../../src/storage/WorldMetadataRepository';
+import {
+  WorldMetadataRepository,
+  type IdbDatabaseLike,
+  type IdbFactoryLike,
+  type IdbObjectStoreLike,
+  type IdbOpenRequestLike,
+  type IdbRequestLike,
+  type IdbTransactionLike,
+} from '../../src/storage/WorldMetadataRepository';
 import { ChunkSectionRepository } from '../../src/storage/ChunkSectionRepository';
 import { ChunkEditRepository } from '../../src/storage/ChunkEditRepository';
 import { BlockEntityRepository } from '../../src/storage/BlockEntityRepository';
 import { EntityRepository } from '../../src/storage/EntityRepository';
 import { PlayerStateRepository } from '../../src/storage/PlayerStateRepository';
 import { WorldArchiver } from '../../src/storage/WorldArchiver';
-import { validateWorldArchive } from '../../src/storage/WorldArchive';
+import { validateWorldArchive, type WorldArchive } from '../../src/storage/WorldArchive';
 import { createIdbFactoryMock, type MockIdbFactory } from './IdbFactoryMock';
 import { ChunkColumn } from '../../src/world/ChunkColumn';
 import { createDefaultBlockStateRegistry } from '../../src/world/BlockStateRegistry';
@@ -113,30 +121,35 @@ class FaultFactory implements IdbFactoryLike {
     const wrapped: IdbOpenRequestLike = { onupgradeneeded: null, onsuccess: null, onerror: null, result: req.result, error: null };
     queueMicrotask(() => {
       req.onupgradeneeded?.({});
-      const baseDb = req.result as any;
+      const baseDb: IdbDatabaseLike = req.result;
       const originalTransaction = baseDb.transaction.bind(baseDb);
       let injected = false;
-      const wrappedDb: any = {
+      const wrappedDb: IdbDatabaseLike = {
         get objectStoreNames() { return baseDb.objectStoreNames; },
         createObjectStore: baseDb.createObjectStore.bind(baseDb),
         close: baseDb.close.bind(baseDb),
         version: baseDb.version,
         transaction: (store: string) => {
           const tx = originalTransaction(store);
-          const origStore = tx.objectStore(store) as any;
+          const origStore = tx.objectStore(store);
           const origDelete = origStore.delete.bind(origStore);
-          const fakeStore: any = {
+          const fakeStore: IdbObjectStoreLike = {
             get: origStore.get.bind(origStore),
             getAll: origStore.getAll.bind(origStore),
             put: origStore.put.bind(origStore),
-            delete: (...args: any[]) => {
+            delete: (...args: [unknown]) => {
               const key = args[0];
               const isProbe = typeof key === 'string' && key.includes('__probe__');
               let shouldFault = false;
               for (const fault of this.faults) if (fault.store === store && fault.op === 'delete' && !injected && !isProbe) shouldFault = true;
               if (shouldFault) {
                 injected = true;
-                const fake: any = { onsuccess: null as any, onerror: null as any, result: undefined, error: new Error(`injected delete failure on ${store}`) };
+                const fake: IdbRequestLike = {
+                  onsuccess: null,
+                  onerror: null,
+                  result: undefined,
+                  error: new Error(`injected delete failure on ${store}`),
+                };
                 queueMicrotask(() => {
                   fake.onerror?.({});
                 });
@@ -146,11 +159,11 @@ class FaultFactory implements IdbFactoryLike {
             },
           };
           const origObjectStore = tx.objectStore.bind(tx);
-          (tx as any).objectStore = (name: string) => (name === store ? fakeStore : origObjectStore(name));
+          (tx as IdbTransactionLike).objectStore = (name: string) => (name === store ? fakeStore : origObjectStore(name));
           return tx;
         },
       };
-      (wrapped as any).result = wrappedDb;
+      (wrapped as IdbOpenRequestLike).result = wrappedDb;
       wrapped.onsuccess?.({});
     });
     return wrapped;
@@ -170,7 +183,7 @@ async function snapshotWorld(factory: IdbFactoryLike, worldId: string) {
   return { meta, wither, cols, edits, ps, bes, es };
 }
 
-function normalizeMeta(m: any) {
+function normalizeMeta<T extends { updatedAt?: unknown; createdAt?: unknown } | null | undefined>(m: T) {
   if (!m) return m;
   const { updatedAt, createdAt, ...rest } = m;
   void updatedAt; void createdAt;
@@ -201,7 +214,9 @@ describe('257 blocker A: complete backup', () => {
     const backup = await p.exportWorldBackup();
     expect(backup.ok).toBe(true);
     if (!backup.ok) return;
-    const archive: any = JSON.parse(backup.json);
+    // SAFETY: `backup.json` is the archive this test just produced, so the parsed
+    // value is a WorldArchive; validateWorldArchive covers the rejection cases.
+    const archive = JSON.parse(backup.json) as WorldArchive;
     expect(archive.worldId).toBe(WORLD_ID);
     expect(archive.metadata).not.toBeNull();
     expect(archive.columns.length).toBe(25);
@@ -210,7 +225,9 @@ describe('257 blocker A: complete backup', () => {
     expect(archive.chunkEdits.length).toBe(2);
     expect(archive.witherData).not.toBeNull();
     expect(Array.isArray(archive.witherData)).toBe(true);
-    expect(archive.witherData.length).toBe(1);
+    // Narrow through the array check rather than asserting on a possibly-null value.
+    const witherRows = archive.witherData as unknown[];
+    expect(witherRows.length).toBe(1);
     // No foreign data leaked
     expect(JSON.stringify(archive).includes(FOREIGN_ID)).toBe(false);
     validateWorldArchive(archive);
@@ -258,7 +275,7 @@ describe('257 blocker A: complete backup', () => {
     expect(restored.es.length).toBe(1);
     expect(restored.ps).not.toBeNull();
     expect(restored.wither).not.toBeNull();
-    expect((restored.wither as any[]).length).toBe(1);
+    expect((restored.wither as unknown[]).length).toBe(1);
 
     // Foreign still untouched after import
     const foreignAfterImport = await snapshotWorld(factory, FOREIGN_ID);
@@ -277,7 +294,9 @@ describe('257 blocker A: complete backup', () => {
     const backup = await p.exportWorldBackup();
     expect(backup.ok).toBe(true);
     if (!backup.ok) return;
-    const archive: any = JSON.parse(backup.json);
+    // SAFETY: `backup.json` is the archive this test just produced, so the parsed
+    // value is a WorldArchive; validateWorldArchive covers the rejection cases.
+    const archive = JSON.parse(backup.json) as WorldArchive;
     // Tamper with chunkEdits to be malformed
     archive.chunkEdits = [{ chunkX: 0, chunkY: 0, chunkZ: 0, changes: [[999999, 1]] }]; // out of range index
     const freshFactory = createIdbFactoryMock();
@@ -322,7 +341,11 @@ describe('257 blocker B: atomic reset with rollback equivalence', () => {
       const before = await snapshotWorld(inner, WORLD_ID);
       const foreignBefore = await snapshotWorld(inner, FOREIGN_ID);
       const faultFactory = new FaultFactory(inner, [{ store: stage.store, op: 'delete' }]);
-      const p = new GamePersistence({ seed: SEED, factory: faultFactory as any, legacyStorage: null });
+      const p = new GamePersistence({
+        seed: SEED,
+        factory: faultFactory as unknown as IdbFactoryLike,
+        legacyStorage: null,
+      });
       await p.open();
       const result = await p.resetCurrentWorld();
       expect(result.ok).toBe(false);

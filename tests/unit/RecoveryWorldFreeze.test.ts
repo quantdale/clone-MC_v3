@@ -4,12 +4,14 @@
  */
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
-import { World } from '../../src/world/World';
+import { World, type WorldMaterials } from '../../src/world/World';
 import { createDefaultBlockRegistry, BlockId } from '../../src/world/BlockRegistry';
 import { createDefaultBlockStateRegistry } from '../../src/world/BlockStateRegistry';
 import { OVERWORLD_DIMENSION_TYPE } from '../../src/data/DimensionTypes';
 import { CONFIG } from '../../src/config';
 import { Chunk } from '../../src/world/Chunk';
+import type { ChunkMesher } from '../../src/world/ChunkMesher';
+import type { TerrainGenerator } from '../../src/world/TerrainGenerator';
 
 function makeWorld(): World {
   const registry = createDefaultBlockRegistry();
@@ -25,16 +27,19 @@ function makeWorld(): World {
   };
   const mesher = {
     mesh(): { opaque: null; transparent: null } { return { opaque: null, transparent: null }; },
-    meshSection(): any { return { opaque: null, transparent: null, cutout: null, translucent: null, fluid: null, streams: { opaque: { positions: new Float32Array(), normals: new Float32Array(), indices: [], light: new Float32Array() }, cutout: null, translucent: null, fluid: null } }; }
+    meshSection(): unknown { return { opaque: null, transparent: null, cutout: null, translucent: null, fluid: null, streams: { opaque: { positions: new Float32Array(), normals: new Float32Array(), indices: [], light: new Float32Array() }, cutout: null, translucent: null, fluid: null } }; }
   };
   return new World({
     registry,
     stateRegistry,
     seed: 1,
     scene,
-    mesher: mesher as any,
-    generator: generator as any,
-    materials: materials as any,
+    // SAFETY: these are minimal stubs exercising only the members the recovery
+    // freeze touches (meshSection / generateChunk / material map); the casts state
+    // that the partial shape satisfies the constructor seam for this test.
+    mesher: mesher as unknown as ChunkMesher,
+    generator: generator as unknown as TerrainGenerator,
+    materials: materials as unknown as WorldMaterials,
     renderDistance: 2,
     dimension: OVERWORLD_DIMENSION_TYPE,
   });

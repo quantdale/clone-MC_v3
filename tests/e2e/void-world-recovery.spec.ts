@@ -47,7 +47,7 @@ async function seedBeforeBoot(page: Page, cfg: SeedConfig, once = false) {
     async ({ worldId, dbName, dbVersion, cfg, columns }) => {
       const req = window.indexedDB.open(dbName, dbVersion);
       req.onupgradeneeded = () => {
-        const db = req.result as any;
+        const db = req.result;
         if (!db.objectStoreNames.contains("world-metadata"))
           db.createObjectStore("world-metadata", { keyPath: "worldId" });
         if (!db.objectStoreNames.contains("chunk-sections"))
@@ -65,12 +65,12 @@ async function seedBeforeBoot(page: Page, cfg: SeedConfig, once = false) {
         req.onsuccess = () => resolve();
         req.onerror = () => reject(req.error);
       });
-      const db: any = req.result;
-      async function put(store: string, value: any) {
+      const db: IDBDatabase = req.result;
+      async function put(store: string, value: unknown): Promise<void> {
         await new Promise<void>((resolve, reject) => {
           const tx = db.transaction(store, "readwrite");
           const st = tx.objectStore(store);
-          const r: any = st.put(value);
+          const r: IDBRequest<IDBValidKey> = st.put(value);
           r.onsuccess = () => resolve();
           r.onerror = () => reject(r.error);
         });
@@ -87,7 +87,7 @@ async function seedBeforeBoot(page: Page, cfg: SeedConfig, once = false) {
           await new Promise<void>((resolve, reject) => {
             const tx = db.transaction(store, "readwrite");
             const st = tx.objectStore(store);
-            const r: any = st.clear();
+            const r: IDBRequest<undefined> = st.clear();
             r.onsuccess = () => resolve();
             r.onerror = () => reject(r.error);
           });
@@ -95,9 +95,9 @@ async function seedBeforeBoot(page: Page, cfg: SeedConfig, once = false) {
       }
       await clearAll();
       if (cfg.metadata !== null) {
-        const meta: any = cfg.metadata === undefined ? undefined : cfg.metadata;
+        const meta = cfg.metadata;
         if (meta !== undefined) {
-          const record: any = {
+          const record: Record<string, unknown> = {
             schemaVersion: 1,
             worldId,
             seed: 771,
@@ -117,11 +117,14 @@ async function seedBeforeBoot(page: Page, cfg: SeedConfig, once = false) {
         await new Promise<void>((resolve, reject) => {
           const tx = db.transaction("chunk-sections", "readwrite");
           const store = tx.objectStore("chunk-sections");
-          for (const col of columns as any[]) {
+          for (const col of columns) {
             // columns are pre-serialized stone columns from makeSerializedStoneColumn
-            (col as any).key = `${worldId}|${(col as any).chunkX}|${(col as any).chunkZ}`;
-            (col as any).worldId = worldId;
-            const req2: any = store.put(col);
+            const record = {
+              ...col,
+              key: `${worldId}|${col.chunkX}|${col.chunkZ}`,
+              worldId,
+            };
+            const req2 = store.put(record);
             req2.onerror = () => console.error("put failed", col, req2.error);
           }
           tx.oncomplete = () => resolve();
@@ -144,7 +147,7 @@ async function seedBeforeBoot(page: Page, cfg: SeedConfig, once = false) {
         await put("player-state", rec);
       }
       db.close();
-      (window as any).__seedDone = true;
+      (window as unknown as { __seedDone?: boolean }).__seedDone = true;
     },
     { worldId: WORLD_ID, dbName: DB_NAME, dbVersion: DB_VERSION, cfg, columns: serializedColumns },
   );
@@ -156,6 +159,30 @@ async function seedBeforeBoot(page: Page, cfg: SeedConfig, once = false) {
   }
 }
 
+/**
+ * The E2E-only handle `src/main.ts` exposes under `VITE_E2E`. Typed once here so
+ * the spec never needs `any`: every field is optional because the handle is only
+ * present after boot.
+ */
+interface VoxelGameHandle {
+  worldStartupMode?: string;
+  isRecoveryRequired?: boolean;
+  worldGenerationBaseline?: unknown;
+  spawnResolution?: string;
+  player: { position: { x: number; y: number; z: number }; velocity: { x: number; y: number; z: number } };
+  world: {
+    getBlock(x: number, y: number, z: number): number;
+    setBlock(x: number, y: number, z: number, id: number): void;
+    getMotionBlockingHeight(x: number, z: number): number;
+    dimension: { minY: number; height: number };
+    isRecoveryFrozen(): boolean;
+  };
+  blockEntityHost?: { hasBrewing?(x: number, y: number, z: number): boolean };
+}
+
+/** The typed `window.__voxelGame` handle for this spec. */
+type GameWindow = { __voxelGame?: VoxelGameHandle };
+
 async function waitForBoot(page: Page) {
   await page.goto(`/?seed=${SEED}`);
   await page.waitForFunction(
@@ -164,7 +191,7 @@ async function waitForBoot(page: Page) {
       const recovery = document.getElementById("recovery");
       const loadingHidden = loading ? loading.classList.contains("hidden") : true;
       const recoveryVisible = recovery ? !recovery.classList.contains("hidden") : false;
-      const hasGame = !!(window as any).__voxelGame;
+      const hasGame = !!(window as unknown as GameWindow).__voxelGame;
       return (loadingHidden || recoveryVisible) && hasGame;
     },
     { timeout: 60000 }
@@ -181,13 +208,13 @@ test.describe("void-world startup recovery (257 e2e)", () => {
     await expect(page.locator("#recovery")).toBeHidden();
     await expect(page.locator("#loading")).toBeHidden({ timeout: 60000 });
     // Check game bootstrapped and not recovery
-    const mode = await page.evaluate(() => (window as any).__voxelGame?.worldStartupMode);
+    const mode = await page.evaluate(() => (window as unknown as GameWindow).__voxelGame?.worldStartupMode);
     expect(mode).toBe("current");
-    const isRecovery = await page.evaluate(() => (window as any).__voxelGame?.isRecoveryRequired);
+    const isRecovery = await page.evaluate(() => (window as unknown as GameWindow).__voxelGame?.isRecoveryRequired);
     expect(isRecovery).toBe(false);
     // Verify player has support (getMotionBlockingHeight below)
     const supported = await page.evaluate(() => {
-      const g: any = (window as any).__voxelGame;
+      const g = (window as unknown as GameWindow).__voxelGame;
       if (!g) return false;
       const x = Math.floor(g.player.position.x);
       const z = Math.floor(g.player.position.z);
@@ -210,25 +237,25 @@ test.describe("void-world startup recovery (257 e2e)", () => {
     await waitForBoot(page);
     await expect(page.locator("#recovery")).toBeVisible();
     await expect(page.locator("#recovery")).toContainText("Saved world needs recovery");
-    const isRecovery = await page.evaluate(() => (window as any).__voxelGame?.isRecoveryRequired);
+    const isRecovery = await page.evaluate(() => (window as unknown as GameWindow).__voxelGame?.isRecoveryRequired);
     expect(isRecovery).toBe(true);
-    const mode = await page.evaluate(() => (window as any).__voxelGame?.worldStartupMode);
+    const mode = await page.evaluate(() => (window as unknown as GameWindow).__voxelGame?.worldStartupMode);
     expect(mode).toBe("recovery-required");
     // Ensure player velocity is zero and not falling
-    const velY = await page.evaluate(() => (window as any).__voxelGame?.player.velocity.y);
+    const velY = await page.evaluate(() => (window as unknown as GameWindow).__voxelGame?.player.velocity.y);
     expect(velY).toBe(0);
     await page.waitForTimeout(1500);
     await expect(page.locator("#recovery")).toBeVisible();
     // Visual evidence: recovery overlay
     await page.screenshot({ path: "test-results/void-world-recovery/recovery-overlay.png", fullPage: true });
     // Prove world remains frozen: y should not change over time
-    const y1 = await page.evaluate(() => (window as any).__voxelGame.player.position.y);
+    const y1 = await page.evaluate(() => (window as unknown as GameWindow).__voxelGame!.player.position.y);
     await page.waitForTimeout(1000);
-    const y2 = await page.evaluate(() => (window as any).__voxelGame.player.position.y);
+    const y2 = await page.evaluate(() => (window as unknown as GameWindow).__voxelGame!.player.position.y);
     expect(y2).toBe(y1);
     // Also prove world frozen via World API (supports getter)
     const frozen = await page.evaluate(() => {
-      const w: any = (window as any).__voxelGame.world;
+      const w = (window as unknown as GameWindow).__voxelGame!.world;
       return typeof w.isRecoveryFrozen === 'function' ? w.isRecoveryFrozen() : w.isRecoveryFrozen;
     });
     expect(frozen).toBe(true);
@@ -242,16 +269,16 @@ test.describe("void-world startup recovery (257 e2e)", () => {
     });
     await waitForBoot(page);
     await expect(page.locator("#recovery")).toBeVisible();
-    const baseline = await page.evaluate(() => (window as any).__voxelGame?.worldGenerationBaseline);
+    const baseline = await page.evaluate(() => (window as unknown as GameWindow).__voxelGame?.worldGenerationBaseline);
     expect(baseline).toBe("unsupported");
     // Verify records still present via direct IDB read
     const stillThere = await page.evaluate(async (worldId) => {
       return await new Promise<boolean>((resolve) => {
-        const req: any = window.indexedDB.open("voxel-world-db", 6);
+        const req = window.indexedDB.open("voxel-world-db", 6);
         req.onsuccess = () => {
-          const db: any = req.result;
+          const db: IDBDatabase = req.result;
           const tx = db.transaction("world-metadata", "readonly");
-          const r: any = tx.objectStore("world-metadata").get(worldId);
+          const r: IDBRequest<{ generationVersion?: string } | undefined> = tx.objectStore("world-metadata").get(worldId);
           r.onsuccess = () => {
             const val = r.result;
             db.close();
@@ -275,12 +302,12 @@ test.describe("void-world startup recovery (257 e2e)", () => {
     });
     await waitForBoot(page);
     await expect(page.locator("#recovery")).toBeHidden();
-    const mode = await page.evaluate(() => (window as any).__voxelGame?.worldStartupMode);
+    const mode = await page.evaluate(() => (window as unknown as GameWindow).__voxelGame?.worldStartupMode);
     expect(mode).toBe("preserved");
-    const baseline = await page.evaluate(() => (window as any).__voxelGame?.worldGenerationBaseline);
+    const baseline = await page.evaluate(() => (window as unknown as GameWindow).__voxelGame?.worldGenerationBaseline);
     expect(baseline).toBe("legacy-unknown");
     await expect(page.locator("#loading")).toBeHidden({ timeout: 60000 });
-    const spawnRes = await page.evaluate(() => (window as any).__voxelGame?.spawnResolution);
+    const spawnRes = await page.evaluate(() => (window as unknown as GameWindow).__voxelGame?.spawnResolution);
     expect(spawnRes).toBe("canonical");
   });
 
@@ -296,13 +323,13 @@ test.describe("void-world startup recovery (257 e2e)", () => {
     await waitForBoot(page);
     // Because player chunk is 100,100, coverage anchor is there, but no columns there -> recovery
     await expect(page.locator("#recovery")).toBeVisible();
-    const isRecovery = await page.evaluate(() => (window as any).__voxelGame?.isRecoveryRequired);
+    const isRecovery = await page.evaluate(() => (window as unknown as GameWindow).__voxelGame?.isRecoveryRequired);
     expect(isRecovery).toBe(true);
-    const y = await page.evaluate(() => (window as any).__voxelGame?.player.position.y);
+    const y = await page.evaluate(() => (window as unknown as GameWindow).__voxelGame?.player.position.y);
     // Should not be falling into void; y should be finite and not decreasing rapidly
     expect(Number.isFinite(y)).toBe(true);
     await page.waitForTimeout(1000);
-    const y2 = await page.evaluate(() => (window as any).__voxelGame?.player.position.y);
+    const y2 = await page.evaluate(() => (window as unknown as GameWindow).__voxelGame?.player.position.y);
     // In recovery, velocity is zero so y should not have decreased (free-fall would drop)
     expect(y2).toBe(y);
   });
@@ -324,13 +351,13 @@ test.describe("void-world startup recovery (257 e2e)", () => {
     // Second click executes reset and reloads via window.location.reload()
     await page.locator("#recovery-reset").click();
     // Wait for reload and fresh boot
-    await page.waitForFunction(() => (window as any).__voxelGame?.worldStartupMode === "current", { timeout: 60000 });
+    await page.waitForFunction(() => (window as unknown as GameWindow).__voxelGame?.worldStartupMode === "current", { timeout: 60000 });
     await expect(page.locator("#recovery")).toBeHidden({ timeout: 60000 });
     // After reload, should be fresh current world without recovery
     await expect(page.locator("#loading")).toBeHidden({ timeout: 60000 });
-    const mode = await page.evaluate(() => (window as any).__voxelGame?.worldStartupMode);
+    const mode = await page.evaluate(() => (window as unknown as GameWindow).__voxelGame?.worldStartupMode);
     expect(mode).toBe("current");
-    const baseline = await page.evaluate(() => (window as any).__voxelGame?.worldGenerationBaseline);
+    const baseline = await page.evaluate(() => (window as unknown as GameWindow).__voxelGame?.worldGenerationBaseline);
     expect(baseline).toBe("current");
     // Visual evidence: post-reset terrain
     await page.screenshot({ path: "test-results/void-world-recovery/post-reset-terrain.png", fullPage: true });
@@ -346,16 +373,23 @@ test.describe("void-world startup recovery (257 e2e)", () => {
     await expect(page.locator("#recovery")).toBeVisible();
     // Inject failure: patch IDB delete to fail for one store
     await page.evaluate(() => {
-      const orig = (window as any).IDBObjectStore?.prototype?.delete;
+      const orig = IDBObjectStore.prototype.delete;
       if (!orig) return;
       let called = false;
-      (window as any).__origDelete = orig;
-      (window as any).IDBObjectStore.prototype.delete = function(key: any) {
+      (window as unknown as { __origDelete?: typeof orig }).__origDelete = orig;
+      IDBObjectStore.prototype.delete = function (this: IDBObjectStore, key: IDBValidKey | IDBKeyRange) {
         // Fail only for first delete on world-metadata store with world-771
         if (!called && typeof key === 'string' && key === 'world-771') {
           called = true;
-          const req: any = { onsuccess: null, onerror: null, result: undefined, error: new Error('injected browser delete failure') };
-          queueMicrotask(() => req.onerror?.({ target: req }));
+          const req = {
+            onsuccess: null,
+            onerror: null,
+            result: undefined as undefined,
+            error: new Error('injected browser delete failure'),
+          } as unknown as IDBRequest<undefined>;
+          queueMicrotask(() =>
+            (req as unknown as { onerror?: (e: unknown) => void }).onerror?.({ target: req }),
+          );
           return req;
         }
         return orig.call(this, key);
@@ -372,11 +406,11 @@ test.describe("void-world startup recovery (257 e2e)", () => {
     // Verify world still has metadata via IDB
     const stillThere = await page.evaluate(async (worldId) => {
       return await new Promise<boolean>((resolve) => {
-        const req: any = window.indexedDB.open("voxel-world-db", 6);
+        const req = window.indexedDB.open("voxel-world-db", 6);
         req.onsuccess = () => {
-          const db: any = req.result;
+          const db: IDBDatabase = req.result;
           const tx = db.transaction("world-metadata", "readonly");
-          const r: any = tx.objectStore("world-metadata").get(worldId);
+          const r: IDBRequest<{ generationVersion?: string } | undefined> = tx.objectStore("world-metadata").get(worldId);
           r.onsuccess = () => { db.close(); resolve(!!r.result); };
           r.onerror = () => resolve(false);
         };
@@ -386,15 +420,20 @@ test.describe("void-world startup recovery (257 e2e)", () => {
     expect(stillThere).toBe(true);
     // Restore original delete and retry should succeed
     await page.evaluate(() => {
-      if ((window as any).__origDelete) {
-        (window as any).IDBObjectStore.prototype.delete = (window as any).__origDelete;
+      const saved = (
+        window as unknown as {
+          __origDelete?: IDBObjectStore['delete'];
+        }
+      ).__origDelete;
+      if (saved) {
+        IDBObjectStore.prototype.delete = saved;
       }
     });
     // Need to re-arm: click again (need to click twice more because state was reset to not confirmed)
     await page.locator("#recovery-reset").click();
     await expect(page.locator("#recovery-status")).toContainText("backup");
     await page.locator("#recovery-reset").click();
-    await page.waitForFunction(() => (window as any).__voxelGame?.worldStartupMode === "current", { timeout: 60000 });
+    await page.waitForFunction(() => (window as unknown as GameWindow).__voxelGame?.worldStartupMode === "current", { timeout: 60000 });
     await expect(page.locator("#recovery")).toBeHidden({ timeout: 60000 });
   });
 
@@ -406,10 +445,10 @@ test.describe("void-world startup recovery (257 e2e)", () => {
       player: { position: [8.5, 64, 8.5] },
     });
     await waitForBoot(page);
-    const baseline = await page.evaluate(() => (window as any).__voxelGame?.worldGenerationBaseline);
+    const baseline = await page.evaluate(() => (window as unknown as GameWindow).__voxelGame?.worldGenerationBaseline);
     // With no metadata but columns present, it should be legacy-unknown, not current
     expect(baseline).toBe("legacy-unknown");
-    const mode = await page.evaluate(() => (window as any).__voxelGame?.worldStartupMode);
+    const mode = await page.evaluate(() => (window as unknown as GameWindow).__voxelGame?.worldStartupMode);
     // With only one column, spawn coverage is insufficient, so should be recovery-required
     expect(mode).toBe("recovery-required");
     await expect(page.locator("#recovery")).toBeVisible();
@@ -425,7 +464,7 @@ test.describe("void-world startup recovery (257 e2e)", () => {
     });
     await waitForBoot(page);
     await expect(page.locator("#recovery")).toBeVisible();
-    const mode = await page.evaluate(() => (window as any).__voxelGame?.worldStartupMode);
+    const mode = await page.evaluate(() => (window as unknown as GameWindow).__voxelGame?.worldStartupMode);
     expect(mode).toBe("recovery-required");
   });
 });

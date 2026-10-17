@@ -9,12 +9,14 @@
  */
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
-import { World } from '../../src/world/World';
+import { World, type WorldMaterials } from '../../src/world/World';
 import { createDefaultBlockRegistry, BlockId } from '../../src/world/BlockRegistry';
 import { createDefaultBlockStateRegistry } from '../../src/world/BlockStateRegistry';
 import { OVERWORLD_DIMENSION_TYPE } from '../../src/data/DimensionTypes';
 import { CONFIG } from '../../src/config';
 import { Chunk } from '../../src/world/Chunk';
+import type { ChunkMesher } from '../../src/world/ChunkMesher';
+import type { TerrainGenerator } from '../../src/world/TerrainGenerator';
 import {
   WORLD_TIMED_PHASES,
   validateWorldFrameWorkCounts,
@@ -64,9 +66,11 @@ function makeWorld(): World {
     stateRegistry,
     seed: 1,
     scene,
-    mesher: mesher as any,
-    generator: generator as any,
-    materials: materials as any,
+    // SAFETY: partial stubs — only the members the frame-work counters read are
+    // implemented; the casts assert the partial shape is sufficient here.
+    mesher: mesher as unknown as ChunkMesher,
+    generator: generator as unknown as TerrainGenerator,
+    materials: materials as unknown as WorldMaterials,
     renderDistance: 2,
     dimension: OVERWORLD_DIMENSION_TYPE,
   });
@@ -93,7 +97,11 @@ describe('258 WorldTimedPhase contract', () => {
     expect(() => validateWorldFrameWorkCounts({ ...zeroWorldFrameWorkCounts(), generatedChunks: -1 }))
       .toThrow('WorldPhaseTelemetry: generatedChunks');
     // Unknown keys are ignored (forward-compatible), never accepted.
-    expect(validateWorldFrameWorkCounts({ ...zeroWorldFrameWorkCounts(), uploadBytes: 1 } as any))
+    expect(validateWorldFrameWorkCounts({
+        ...zeroWorldFrameWorkCounts(),
+        uploadBytes: 1,
+        // SAFETY: deliberately mistyped field to exercise the validator's rejection.
+      } as unknown as Parameters<typeof validateWorldFrameWorkCounts>[0]))
       .toEqual(zeroWorldFrameWorkCounts());
     expect(() => validateWorldFrameWorkCounts({ ...zeroWorldFrameWorkCounts(), lightOpsUsed: 1.5 }))
       .toThrow('WorldPhaseTelemetry: lightOpsUsed');
@@ -130,7 +138,7 @@ describe('258 PhaseTimer.accumulate', () => {
 
   it('rejects unknown phases and negative/non-finite contributions', () => {
     const timer = new PhaseTimer(() => 0, true);
-    expect(() => timer.accumulate('nope' as any, 1)).toThrow('WholeFrameMetrics: unknown phase');
+    expect(() => timer.accumulate('nope' as unknown as Parameters<typeof timer.accumulate>[0], 1)).toThrow('WholeFrameMetrics: unknown phase');
     expect(() => timer.accumulate('generation', -1)).toThrow('WholeFrameMetrics: accumulate(generation)');
     expect(() => timer.accumulate('generation', Number.NaN)).toThrow('WholeFrameMetrics: accumulate(generation)');
   });

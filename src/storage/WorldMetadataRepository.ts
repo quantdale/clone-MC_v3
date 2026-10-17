@@ -49,6 +49,8 @@ export interface IdbTransactionLike {
 }
 export interface IdbDatabaseLike {
   objectStoreNames: { contains(name: string): boolean };
+  /** Schema version of the open database (present on the real IDBDatabase). */
+  readonly version?: number;
   createObjectStore(name: string, opts?: { keyPath: string }): IdbObjectStoreLike;
   /** Single- or multi-store transaction. Real IndexedDB supports both; this seams
    *  both forms through one signature. */
@@ -552,6 +554,12 @@ export function browserIdbFactory(): IdbFactoryLike {
   }
   return {
     open(name: string, version?: number): IdbOpenRequestLike {
+      // SAFETY: the real browser `IDBOpenRequest` is a strict superset of
+      // `IdbOpenRequestLike` — it carries the same onupgradeneeded/onsuccess/
+      // onerror handlers plus a `result: IDBDatabase` that itself satisfies
+      // `IdbDatabaseLike` (objectStoreNames, createObjectStore, transaction,
+      // close). The assertion narrows the DOM type to the minimal seam the
+      // repositories depend on; no runtime value is reinterpreted.
       return real.open(name, version) as unknown as IdbOpenRequestLike;
     },
   };
