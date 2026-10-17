@@ -188,7 +188,7 @@ export function withStorageFailure(
   };
   const metadata = Object.create(deps.metadata) as WorldArchiverDeps['metadata'];
   metadata.putMetadata = reject;
-  (metadata as any).putWitherData = reject;
+  metadata.putWitherData = reject;
   const chunkSections = Object.create(deps.chunkSections) as WorldArchiverDeps['chunkSections'];
   chunkSections.putColumn = reject;
   const blockEntities = Object.create(deps.blockEntities) as WorldArchiverDeps['blockEntities'];
@@ -198,10 +198,10 @@ export function withStorageFailure(
   const playerStates = Object.create(deps.playerStates) as WorldArchiverDeps['playerStates'];
   playerStates.putPlayerState = reject;
   const out: WorldArchiverDeps = { metadata, chunkSections, blockEntities, entities, playerStates };
-  if ((deps as any).chunkEdits) {
-    const chunkEdits = Object.create((deps as any).chunkEdits) as any;
+  if (deps.chunkEdits) {
+    const chunkEdits = Object.create(deps.chunkEdits) as NonNullable<WorldArchiverDeps['chunkEdits']>;
     chunkEdits.putChunkEdits = reject;
-    (out as any).chunkEdits = chunkEdits;
+    out.chunkEdits = chunkEdits;
   }
   return out;
 }
@@ -241,10 +241,14 @@ class ScriptedProbe implements StorageProbe {
   }
 }
 
+/** Opaque timer handle the counter hands back. `TimerLike` declares
+ *  `setInterval(...): unknown`, so the double names what it actually returns. */
+type CountingTimerHandle = number;
+
 /** A timer double that counts active intervals (039 test seam). */
 class CountingTimer implements TimerLike {
   private active = 0;
-  setInterval(): unknown {
+  setInterval(): CountingTimerHandle {
     this.active++;
     return this.active;
   }
@@ -282,10 +286,15 @@ const NOOP_SINK: SaveSink = {
   },
 };
 
+/** The persisted payload shape this identity codec round-trips unchanged. */
+type IdentityCodecPayload = ServerWorldUnit['value'];
+
 /** An identity codec for driving 234's `ServerSaveLifecycle` over in-memory repositories. */
 function createIdentityCodec(): WorldSaveCodec {
   return {
-    encode(unit: ServerWorldUnit): unknown {
+    // `WorldSaveCodec.encode` is declared to return `unknown`; this codec returns
+    // the unit's own `value` verbatim, which is exactly that contract.
+    encode(unit: ServerWorldUnit): IdentityCodecPayload {
       return unit.value;
     },
     decode(payload: unknown, meta: WorldCodecMeta): ServerWorldUnit {
@@ -720,6 +729,10 @@ export class SaveRecoveryMatrix {
       }),
 
       await runScenario('migration.unsupported-archive-version', axis, async () => {
+        // SAFETY: deliberately an unsupported archive — `version: 99` is not a
+        // schema version the importer accepts. The cast exists because the value
+        // violates `WorldArchive`'s version literal on purpose; the importer's
+        // rejection of it is the behaviour under test.
         const archive = {
           format: 'voxel-world',
           version: 99,
@@ -921,6 +934,10 @@ export class SaveRecoveryMatrix {
         await source.openAll();
         await this.populate(source.deps, 'x');
         const exported = await new WorldArchiver(source.deps).exportWorld('x');
+        // SAFETY: every entry is a deliberate corruption of a well-formed archive,
+        // used to prove `importWorld` rejects invalid input atomically. The casts
+        // exist because the values intentionally violate `WorldArchive`; the
+        // importer's own validation is precisely what these cases exercise.
         const corruptions: WorldArchive[] = [
           { ...exported, format: 'nope' } as unknown as WorldArchive,
           { ...exported, columns: [{ ...exported.columns[0]!, version: 'x' }] } as unknown as WorldArchive,
@@ -1076,8 +1093,8 @@ export class SaveRecoveryMatrix {
     await deps.blockEntities.putChunkEntities(worldId, 1, 2, [this.makeBlockEntity()]);
     await deps.entities.putChunkEntities(worldId, 1, 2, [this.makeEntity()]);
     await deps.playerStates.putPlayerState(this.makePlayerState(worldId));
-    if ((deps as any).chunkEdits) {
-      await (deps as any).chunkEdits.putChunkEdits(worldId, 0, 0, 0, [[0, 1]]);
+    if (deps.chunkEdits) {
+      await deps.chunkEdits.putChunkEdits(worldId, 0, 0, 0, [[0, 1]]);
     }
     try { await deps.metadata.putWitherData(worldId, [{ id: 1, x: 0, y: 64, z: 0 }]); } catch (e) { void e; }
   }
