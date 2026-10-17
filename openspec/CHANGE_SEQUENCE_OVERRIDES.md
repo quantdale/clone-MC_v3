@@ -1561,3 +1561,54 @@ local coverage result meaningless.
 ### Sequence row (authoritative with CHANGE_SEQUENCE.md)
 
 | 299 | `299-toolchain-dependency-reproducibility` | VERIFIED 14/14 — exact `packageManager` pin + read-only `verify:deps` dependency-tree gate + documented Node/npm/no-hook contract; coverage re-measured green on the locked Vitest 4.1.11; the audit's `preinstall` mechanism was measured incapable and the spec corrected before shipping; no dependency/threshold/product change; 258 BLOCKED. |
+
+## 300-visual-regression-gate-reliability — activated and verified (2026-10-17)
+
+Continuation of the audit-authored sequence (finding F-003, `MASTER_PLAN.md` §4).
+Activation dependency satisfied: change 299 is VERIFIED 14/14 and published at
+`d36b1a0`; session start head `ad3de55` (origin/main).
+
+- **Implemented:** `CAPTURED_SURFACE_GLOBS` in `tests/visual/matrix.ts` as the
+  single declared captured-surface contract (`index.html`, `src/styles.css`,
+  `src/rendering/**`); read-only `scripts/check-visual-goldens.mjs` (exit 0
+  fresh/acknowledged, 1 stale, 2 missing directory) with a durable
+  `tests/visual-golden/acknowledgements.json` exact-commit mechanism and the
+  whitespace-only-commit skip required by change 298's renormalisation;
+  `tests/unit/VisualGoldenStaleness.test.ts` (8 tests, throwaway git repos);
+  a documented per-cell noise bound `UNSTABLE_CELL_NOISE_BOUND = 0.022` for
+  `render-world/high/1920x1080` plus `tests/unit/VisualGoldenNoiseBound.test.ts`
+  (5 tripwire tests proving it still fails a real regression); the CI staleness
+  step ahead of the browser gate; `npm run verify:visual-goldens`; awaited
+  `show()`/`hide()` in the capture harness (they returned `void` while callers
+  awaited them, so per-screen state assembly was not actually sequential); a
+  documented baseline policy in `tests/visual-golden/README.md`; and
+  `persist-credentials: false` on every `actions/checkout` in both workflows.
+- **Measured corrections to the audit premise (recorded, not assumed):** F-003
+  claimed the matrix is chronically ~50% red and that the `#trading-open` chip
+  makes 12 `linux-ci` cells unmatchable. Neither reproduces on the authoritative
+  environments — canonical CI run `38989997105` (commit `d36b1a0`) passed
+  `every matrix cell matches its committed golden` with **all 60 `linux-ci` cells
+  green in 14.1m**, and local verify mode is **60/60 four consecutive times** on
+  the resolved `win32-local` set. A fresh `win32-local` re-pin changed **19 cells
+  that were already passing**, so it was reverted as churn that could have masked
+  a regression. The `#trading-open` chip does live inside `#hud` and is captured,
+  but it moves those cells by less than the 0.02 tolerance. The one genuinely
+  reproducible defect is the single cell whose software-WebGL noise floor equals
+  the threshold (measured `0, 0, 0, 0, 0.0201` over five captures), handled by
+  the explicit per-cell bound instead of a global threshold raise.
+- **Therefore no golden PNG was re-pinned** — re-pinning correct goldens would
+  destroy the regression signal this change exists to protect. The staleness
+  check plus the reviewable acknowledgement file is what makes "the baseline is
+  correct" a *checked* claim.
+- **Out of scope and untouched:** any product/rendering code; every global
+  comparison threshold (0.02 remains for 59 of 60 cells); every dependency; any
+  golden PNG; changes 301–304. Change **258** stays **BLOCKED**; no claim that a
+  Windows/WSL host produced a `linux-ci` baseline.
+- **Result:** verify:deps PASS; verify:visual-goldens PASS; validate-state PASS;
+  typecheck PASS; lint 0 errors / 85 warnings; unit 480 files 5748 + 1 skipped;
+  coverage 91.82/88.61/94.65/93.15; build PASS; check-release-bundle PASS; full
+  E2E green; file-audit 3076 rows. Change 300 is **VERIFIED 17/17**.
+
+### Sequence row (authoritative with CHANGE_SEQUENCE.md)
+
+| 300 | `300-visual-regression-gate-reliability` | VERIFIED 17/17 — declared captured-surface contract + CI staleness check with a durable exact-commit acknowledgement + one measured per-cell noise bound with a regression tripwire + documented two-set baseline policy; measured proof that the "chronically red" premise does not reproduce, so **no golden was re-pinned**; thresholds unchanged; 258 BLOCKED. |

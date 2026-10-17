@@ -224,3 +224,24 @@ export function validateMatrix(): string[] {
     ...validateResolutions(RESOLUTIONS),
   ];
 }
+
+/**
+ * Git pathspecs whose commits can change captured pixels (change 300).
+ *
+ * Single source of truth shared by the staleness check
+ * (`scripts/check-visual-goldens.mjs`) and the capture harness: a golden set is
+ * stale when the newest commit touching any of these globs is newer than the
+ * newest commit touching the golden directory.
+ *
+ * `index.html` owns all HUD/menu markup, `src/styles.css` owns every captured
+ * style, and `src/rendering/**` owns the renderer/scene/lighting/meshing output.
+ * `src/world/**` and `src/worldgen/**` are deliberately excluded: they feed the
+ * captured scene through the fixed `?seed=1337` fixture, so a worldgen commit
+ * does not move a pinned scene's pixels (change 244's golden-seed matrix covers
+ * terrain regressions instead).
+ */
+export const CAPTURED_SURFACE_GLOBS: readonly string[] = [
+  'index.html',
+  'src/styles.css',
+  'src/rendering/**',
+];

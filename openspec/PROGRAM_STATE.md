@@ -1,5 +1,14 @@
 # Program State
 
+## Current checkpoint — 2026-10-17 Change 300-visual-regression-gate-reliability VERIFIED 17/17 (100%); 301 next (author package only; audit finding F-004)
+
+> **Change `300-visual-regression-gate-reliability` is VERIFIED 17/17 (100%)**; all baseline gates green (verify:deps PASS 171 packages / verify:visual-goldens PASS fresh / validate-state / typecheck / lint 0 errors 85 warnings / unit 480 files 5748+1 / coverage 91.82-88.61-94.65-93.15 vs 91/88/94/93 / build / check-release-bundle / full E2E green / file-audit 3076); last completed Change 300 is VERIFIED; Changes 001–300 are VERIFIED except Change 258 BLOCKED; Changes 259–300 are not reopened.
+> Session start head: `ad3de555e6bbad14680a4e521c8319aed8d21c98` (origin/main). Published head recorded in `PROGRAM_STATE.json` after publication.
+> 300 makes the visual gate self-checking: one declared captured-surface contract (`CAPTURED_SURFACE_GLOBS`), a CI staleness check before the 14-minute browser gate with a durable exact-commit acknowledgement, and one measured per-cell noise bound (0.022 for `render-world/high/1920x1080`, whose five-capture noise floor is 0.0201) with a tripwire proving it still fails a real regression. The audit's "chronically ~50% red / 12 unmatchable cells" premise was **re-measured and does not reproduce** — canonical CI run `38989997105` passes all 60 `linux-ci` cells and local verify mode is 60/60 four times — so **no golden PNG was re-pinned**. Thresholds unchanged. `258` stays BLOCKED.
+
+- Gates: verify:deps PASS; verify:visual-goldens PASS; validate-state PASS; typecheck PASS; lint 0 errors / 85 warnings; unit 480 files 5748+1; coverage 91.82/88.61/94.65/93.15 PASS; build PASS; check-release-bundle PASS; full E2E green; file-audit PASSED 3076 rows.
+- Next exact action: **Author a spec-first OpenSpec package for `301-verification-script-gate-wiring` (audit finding F-004) — do NOT implement 301 in the 300 session. 301 scope: expose all six currently unreferenced `scripts/*.mjs` as named npm scripts (`verify:file-audit`, `gen:file-audit`, `verify:orphans`, `verify:mcp`, `verify:inventory`, `evidence:archive`); wire the three fast invariant guards (file-audit manifest integrity, unreferenced-source, add-on security preflight) into the CI `gate` job with a reviewed entry-point allow-list; add `scripts/verify-all.mjs` as the aggregate command that runs the documented order and stops at the first failing gate (it MUST include `verify:deps` from 299 and `verify:visual-goldens` from 300); publish a gate catalogue in `ONBOARDING.md`. Each wired gate MUST be demonstrated to FAIL on a synthetic violation. Then 302 (multiplayer performance gate), 303 (Renderer lifecycle coverage), 304 (modal focus/keyboard accessibility). `258` stays BLOCKED.**
+
 ## Current checkpoint — 2026-09-30 Change 299-toolchain-dependency-reproducibility VERIFIED 14/14 (100%); 300 next (author package only; audit finding F-003)
 
 > **Change `299-toolchain-dependency-reproducibility` is VERIFIED 14/14 (100%)**; all baseline gates green (verify:deps PASS 171 packages / validate-state / typecheck / lint 0 errors 85 warnings / unit 478 files 5735+1 / coverage 91.82-88.61-94.65-93.15 vs 91/88/94/93 on the locked vitest 4.1.11 / build 266 modules / check-release-bundle / E2E 137 passed including the 60-cell visual matrix / file-audit 3072); last completed Change 299 is VERIFIED; Changes 001–299 are VERIFIED except Change 258 BLOCKED; Changes 259–299 are not reopened.
@@ -404,15 +413,15 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **299-toolchain-dependency-reproducibility — VERIFIED (14/14); 258 BLOCKED, 259–299 VERIFIED**
+- Active implementation change: **300-visual-regression-gate-reliability — VERIFIED (17/17); 258 BLOCKED, 259–300 VERIFIED**
 - Prior active implementation change: **283-live-raid-persistence — VERIFIED (13/13); 258 stays BLOCKED, 259–283 stay VERIFIED**
 - Prior prior active implementation change: **282-live-raid-feedback — VERIFIED (10/10); 258 stays BLOCKED, 259–282 stay VERIFIED**
-- Next change: **300 — author spec-first package after 299 VERIFIED (NOT started; audit finding F-003); 258 stays BLOCKED**
+- Next change: **301 — author spec-first package after 300 VERIFIED (NOT started; audit finding F-004); 258 stays BLOCKED**
 - 240 advancement allowed: **yes**
 
 - Program: **ACTIVE — Change 284-live-raid-wave-spawning VERIFIED 12/12 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–284 VERIFIED**
 - 284 checkpoint: **VERIFIED 12/12 — implementation + gates complete; enchanting flake + visual SwiftShader drift documented non-blocking; 258 BLOCKED; 285 not started**
-- Last completed change: **299-toolchain-dependency-reproducibility — VERIFIED (14/14) — C299 exact, 258 BLOCKED**
+- Last completed change: **300-visual-regression-gate-reliability — VERIFIED (17/17) — C300 exact, 258 BLOCKED**
 - Prior last completed change: **281-workstation-ui — VERIFIED (12/12); 258 stays BLOCKED, 259–281 stay VERIFIED**
 - Prior prior last completed change: **272-lighting-clock-dt-sync — VERIFIED (10/10) — full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85/file-audit 2792); 271 remains VERIFIED (14/14)
 - All changes 001–257 and 259–284: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed; Change 283 is VERIFIED 13/13; Change 284 is VERIFIED 12/12 (this session).
@@ -423,7 +432,7 @@
 - Publication history: **Change 257 VERIFIED 92/92 at 96b5dc37 (F257-A..L closed, 22 new fault-injection tests, 5× proofs, import tx); Change 256 archived at `ad75b65` as `2026-08-31-256-production-readiness-hardening` (23/23).**
 - Section milestone: **PROGRAM VERIFIED through Change 284; Change 284 is VERIFIED 12/12; Change 258 remains BLOCKED at 40/100 pending headed hardware-WebGL certification; no GPU evidence was fabricated.**
 - Live-boot repair (2026-08-28): **owner reported "stuck on the loading screen"; reproduced and fixed.** Two `World` streaming defects that only surface once the bounded pipeline queues saturate at the desktop `renderDistance` 6 (1014 chunks vs 64/96-job caps). **D1 CRITICAL** — `processMeshing` drained the parked-mesh retry queue with `while (length > 0)` while `enqueueMeshWithRetry` re-parked rejected jobs at the tail, so a full mesh queue spun forever and hard-locked the browser main thread; the drain is now bounded by the parked count on entry and stops at the first re-park. **D2 HIGH** — `ensureChunks` scanned `dx`/`dz` in raster order and aborted at the generate-queue cap, filling it from the far corner of the render distance and stranding the spawn ri…
-- Next exact action: **Author a spec-first OpenSpec package for 300-visual-regression-gate-reliability (audit finding F-003; NOT started) — re-pin linux-ci goldens including the 278 #trading-open chip, add scripts/check-visual-goldens.mjs staleness detection with a per-commit acknowledgement, stabilise or bound the high/1920x1080 column, retire the duplicate win32-local set, thresholds unchanged; then 301 (verification-script gate wiring, incl. verify:deps + check-visual-goldens in CI), 302 (multiplayer performance gate), 303 (Renderer lifecycle coverage), 304 (modal focus/keyboard accessibility); 258 stays BLOCKED**
+- Next exact action: **Author a spec-first OpenSpec package for 301-verification-script-gate-wiring (audit finding F-004; NOT started) — expose the six unreferenced scripts as named npm commands, wire the three fast invariant guards (file-audit, orphan-check, MCP preflight) into the CI gate job with a reviewed entry-point allow-list, add scripts/verify-all.mjs as the aggregate command including verify:deps (299) and verify:visual-goldens (300), publish a gate catalogue in ONBOARDING.md, and prove each wired gate fails on a synthetic violation; then 302 (multiplayer performance gate), 303 (Renderer lifecycle coverage), 304 (modal focus/keyboard accessibility); 258 stays BLOCKED**
 - Superseded next action: **T8 confirm 282 feedback is unchanged (projection, pause, dispose hide, no spawning/settlement/258 work); 258 stays BLOCKED**
 - Release note (2026-09-11 owner deferral): **headed FPS gates (258 tasks 91–95) are deferred, not waived — 001–257 VERIFIED, production default unchanged (sync meshing, no quality retune), game shippable with known performance-certification debt**
 
