@@ -82,8 +82,13 @@ synthetic image above 0.026 (and at 2x it), passes 0.0253, and that the global
   path's newest commit is the single root commit, both sides compare equal and the
   check would report `fresh` for any tree — observed as CI passing while a
   full-history clone of the same commit reported `stale`. It therefore exits 2 with
-  an explicit message on a shallow clone, and every CI job checks out with
-  `fetch-depth: 0`.
+  an explicit message on a shallow clone.
+- **Where it runs.** The `gate` CI job (which checks out with `fetch-depth: 0`)
+  runs it next to the other fast repository-invariant guards, so a stale baseline
+  fails in seconds. The `e2e` and `perf-multiplayer` jobs deliberately keep the
+  default shallow checkout: giving the browser job full history slowed the visual
+  matrix from 8.7m to 14.4m per attempt, which is a real cost for no benefit —
+  the check does not run there.
 
 ### Measured status at 2026-10-17 (not a claim from the older audit dossiers)
 

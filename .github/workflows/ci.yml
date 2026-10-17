@@ -68,6 +68,12 @@ jobs:
       - name: Add-on security preflight
         run: npm run verify:mcp
 
+      # Change 300: a stale golden baseline must fail fast here, not after a
+      # 14-minute browser capture. This job checks out full history; the e2e
+      # job keeps a default shallow clone so the browser suite is not slowed.
+      - name: Visual golden staleness
+        run: node scripts/check-visual-goldens.mjs
+
       - name: Typecheck
         run: npm run typecheck
 
@@ -125,12 +131,6 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-          # Change 300's visual-golden staleness check compares the newest
-          # commit touching each golden set against the newest REAL change to a
-          # captured surface. A depth-1 clone has a single commit, so both
-          # resolve to the same root and the check passes vacuously; full
-          # history is therefore required.
-          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -151,15 +151,6 @@ jobs:
       # actions/cache).
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
-
-      # Change 300: refuse to spend 40+ minutes on the browser gate when the
-      # committed golden set predates a change to a captured surface
-      # (index.html / src/styles.css / src/rendering/**). Line-ending-only
-      # commits are skipped. A reviewer who has genuinely reviewed the new
-      # surface may acknowledge one exact commit with
-      # VISUAL_GOLDENS_ACKNOWLEDGED=<40-hex sha>.
-      - name: Visual golden staleness
-        run: node scripts/check-visual-goldens.mjs
 
       # Playwright's webServer rebuilds with VITE_E2E=true before booting the
       # suite (the E2E-only window.__voxelGame hook is legitimately present for
@@ -197,12 +188,6 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-          # Change 300's visual-golden staleness check compares the newest
-          # commit touching each golden set against the newest REAL change to a
-          # captured surface. A depth-1 clone has a single commit, so both
-          # resolve to the same root and the check passes vacuously; full
-          # history is therefore required.
-          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
