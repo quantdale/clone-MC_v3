@@ -66,6 +66,7 @@ import { SaveStatusIndicator } from '../ui/SaveStatusIndicator';
 import { LoadingIndicator } from '../ui/LoadingIndicator';
 import { DebugOverlay, formatPerfLine } from '../ui/DebugOverlay';
 import { CraftingPanel } from '../ui/CraftingPanel';
+import { ModalFocus } from '../ui/ModalFocus';
 import type { CraftingRecipe } from '../inventory/Crafting';
 import { PLAYER_MAX_HEALTH, SurvivalSystem } from '../player/SurvivalSystem';
 import type { SurvivalEvent } from '../player/SurvivalSystem';
@@ -909,6 +910,13 @@ export class Game {
   private contextLost = false;
   private pointerLocked = false;
   private craftingOpen = false;
+
+  /**
+   * Accessible modal lifecycle (304): moves focus into an open dialog, contains
+   * Tab, inerts the background, restores the opener on close and routes Escape
+   * through the same dismiss path as the close control and KeyC.
+   */
+  private readonly modalFocus = new ModalFocus();
   /** Whether the pause/start overlay is currently shown (246 playability input). */
   private overlayOpen = false;
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
@@ -1945,6 +1953,10 @@ export class Game {
     this.resources.dispose();
     this.hotbar.dispose();
     this.craftingPanel.hide();
+    this.syncModalFocus();
+    // 304: release the modal lifecycle (removes the capture-phase keydown listener
+    // and clears any inert marks) so nothing survives teardown. Idempotent.
+    this.modalFocus.dispose();
   }
 
   /** Whether the renderer was successfully created (false → show error state). */
@@ -3304,6 +3316,59 @@ export class Game {
     }
   }
 
+  /**
+   * Accessible modal synchronisation (304).
+   *
+   * The existing `*Open` booleans are the single source of truth for what is
+   * showing. This derives the one open dialog from them (the application enforces
+   * a one-container rule) and hands it to {@link ModalFocus}, which then owns
+   * focus movement, Tab containment, background `inert`, opener restoration and
+   * Escape routing. Called after every open/close so the accessibility state can
+   * never drift from the visible state.
+   */
+  private syncModalFocus(): void {
+    const candidates: Array<{ elementId: string; dismiss: () => void }> = [
+      { elementId: 'crafting', dismiss: () => this.closeCrafting() },
+      { elementId: 'furnace', dismiss: () => this.closeFurnace() },
+      { elementId: 'brewing', dismiss: () => this.closeBrewing() },
+      { elementId: 'enchanting', dismiss: () => this.closeEnchanting() },
+      { elementId: 'gamerule', dismiss: () => this.closeGamerule() },
+      { elementId: 'recipebook', dismiss: () => this.closeRecipeBook() },
+      { elementId: 'advancements', dismiss: () => this.closeAdvancements() },
+      { elementId: 'statistics', dismiss: () => this.closeStatistics() },
+      { elementId: 'trading', dismiss: () => this.closeTrading() },
+      { elementId: 'creative', dismiss: () => this.closeCreative() },
+    ];
+    const active = candidates.find((candidate) => {
+      const element = document.getElementById(candidate.elementId);
+      return element !== null && !element.classList.contains('hidden');
+    });
+    if (!active) {
+      this.modalFocus.close();
+      return;
+    }
+    const container = document.getElementById(active.elementId);
+    if (!container) {
+      this.modalFocus.close();
+      return;
+    }
+    // The dialog element itself carries role/aria-modal; the shared panel markup
+    // nests it one level inside the container, so prefer that descendant.
+    const dialog = container.querySelector('[aria-modal="true"]');
+    const modalRoot = dialog instanceof HTMLElement ? dialog : container;
+    if (this.modalFocus.openRoot === modalRoot) return;
+    const uiRoot = document.getElementById('ui-root');
+    // Inert the surfaces the modal replaces. That is every background child
+    // EXCEPT the other dialogs: a closed dialog is already unreachable and the
+    // "switching surfaces" rule requires that a modal that was just closed is
+    // never left inert. HUD/hotbar/overlay are inerted whether or not the panel
+    // has hidden them, so nothing behind the modal stays in the Tab order.
+    const isBackgroundSurface = (child: Element): boolean =>
+      !child.contains(modalRoot) && child.querySelector('[aria-modal="true"]') === null;
+    const background = uiRoot ? Array.from(uiRoot.children).filter(isBackgroundSurface) : [];
+    this.modalFocus.open(modalRoot, active.dismiss, { backgroundRoots: background });
+  }
+
   private showOverlay(message = 'Click to play'): void {
     this.overlayMessageEl.textContent = message;
     this.overlayEl.classList.remove('hidden');
@@ -3331,6 +3396,7 @@ export class Game {
     this.hud.hide();
     this.hotbar.hide();
     this.craftingPanel.show();
+    this.syncModalFocus();
     this.craftingPanel.render(this.itemRegistry);
   }
 
@@ -3836,6 +3902,7 @@ export class Game {
     this.setBreakProgress(0);
     this.interaction.clearTarget();
     this.brewingPanel.show();
+    this.syncModalFocus();
   }
 
   /**
@@ -3854,6 +3921,7 @@ export class Game {
     this.brewingOpen = false;
     this.brewingPos = null;
     this.brewingPanel.hide();
+    this.syncModalFocus();
     this.showOverlay('Click to play');
   }
 
@@ -3984,6 +4052,7 @@ export class Game {
     this.interaction.clearTarget();
     this.furnacePanel.setStationName(station === 'smoker' ? 'Smoker' : 'Furnace');
     this.furnacePanel.show();
+    this.syncModalFocus();
   }
 
   /** Open a smoker session through the shared furnace-compatible panel. */
@@ -4008,6 +4077,7 @@ export class Game {
     this.furnacePos = null;
     this.furnaceStation = 'furnace';
     this.furnacePanel.hide();
+    this.syncModalFocus();
     if (pos) {
       const taken = station === 'smoker'
         ? this.blockEntityHost.takeSmokerExperience(pos.x, pos.y, pos.z)
@@ -4573,6 +4643,7 @@ export class Game {
     this.setBreakProgress(0);
     this.interaction.clearTarget();
     this.enchantingPanel.show();
+    this.syncModalFocus();
   }
 
   /**
@@ -4588,6 +4659,7 @@ export class Game {
     this.enchantingSession = null;
     this.enchantingSessionSlot = null;
     this.enchantingPanel.hide();
+    this.syncModalFocus();
     this.showOverlay('Click to play');
   }
 
@@ -4642,6 +4714,7 @@ export class Game {
     this.setBreakProgress(0);
     this.interaction.clearTarget();
     this.gamerulePanel.show();
+    this.syncModalFocus();
   }
 
   /**
@@ -4652,6 +4725,7 @@ export class Game {
     if (!this.gameruleOpen) return;
     this.gameruleOpen = false;
     this.gamerulePanel.hide();
+    this.syncModalFocus();
     this.showOverlay('Click to play');
   }
 
@@ -4811,6 +4885,7 @@ export class Game {
     this.setBreakProgress(0);
     this.interaction.clearTarget();
     this.recipeBookPanel.show();
+    this.syncModalFocus();
     this.recipeBookPanel.render();
     const discovered = grown.known.length - before;
     this.recipeBookPanel.setStatus(discovered > 0 ? `Learned ${discovered} recipe${discovered === 1 ? '' : 's'}.` : '');
@@ -4826,6 +4901,7 @@ export class Game {
     this.recipeBookOpen = false;
     this.selectedRecipeBookKey = null;
     this.recipeBookPanel.hide();
+    this.syncModalFocus();
     this.showOverlay('Click to play');
   }
 
@@ -4906,6 +4982,7 @@ export class Game {
     this.setBreakProgress(0);
     this.interaction.clearTarget();
     this.advancementPanel.show();
+    this.syncModalFocus();
     this.advancementPanel.render();
     const done = this.advancements.filter((p) => p.achieved).length;
     this.advancementPanel.setStatus(
@@ -4922,6 +4999,7 @@ export class Game {
     if (!this.advancementOpen) return;
     this.advancementOpen = false;
     this.advancementPanel.hide();
+    this.syncModalFocus();
     this.showOverlay('Click to play');
   }
 
@@ -4997,6 +5075,7 @@ export class Game {
     this.setBreakProgress(0);
     this.interaction.clearTarget();
     this.statisticsPanel.show();
+    this.syncModalFocus();
     this.statisticsPanel.render();
     const nonZero = (Object.values(this.statistics) as number[]).filter((v) => v > 0).length;
     this.statisticsPanel.setStatus(
@@ -5014,6 +5093,7 @@ export class Game {
     if (!this.statisticsOpen) return;
     this.statisticsOpen = false;
     this.statisticsPanel.hide();
+    this.syncModalFocus();
     this.saveStatistics();
     this.showOverlay('Click to play');
   }
@@ -5181,6 +5261,7 @@ export class Game {
     this.setBreakProgress(0);
     this.interaction.clearTarget();
     this.tradingPanel.show();
+    this.syncModalFocus();
     this.tradingPanel.render();
   }
 
@@ -5194,6 +5275,7 @@ export class Game {
     if (!this.tradingOpen) return;
     this.tradingOpen = false;
     this.tradingPanel.hide();
+    this.syncModalFocus();
     this.saveTrading();
     this.showOverlay('Click to play');
   }
@@ -6856,6 +6938,7 @@ export class Game {
     this.setBreakProgress(0);
     this.interaction.clearTarget();
     this.creativePanel.show();
+    this.syncModalFocus();
     this.creativePanel.render();
   }
 
@@ -6868,6 +6951,7 @@ export class Game {
     if (!this.creativeOpen) return;
     this.creativeOpen = false;
     this.creativePanel.hide();
+    this.syncModalFocus();
     this.showOverlay('Click to play');
   }
 

@@ -1,5 +1,14 @@
 # Program State
 
+## Current checkpoint — 2026-10-17 Change 304-modal-focus-and-keyboard-accessibility VERIFIED; audit sequence 298–304 COMPLETE
+
+> **Change `304-modal-focus-and-keyboard-accessibility` is VERIFIED (F-008 closed)** and the audit-authored 298–304 sequence is **COMPLETE** (F-001, F-002, F-003, F-004, F-005, F-007, F-008 all closed). Gates green: ModalFocus unit 12+17 / modal-focus e2e 7/7 / verify:deps / verify:file-audit 3085 rows / validate-state / typecheck / lint 0 errors 85 warnings / unit 485 files 5822+1 / coverage **91.84-88.60-94.68-93.19** vs 91/88/94/93 / build / check-release-bundle / full E2E 144-144 (60-cell visual matrix green). Last completed Change 304 is VERIFIED; Changes 001–304 are VERIFIED except Change 258 BLOCKED; Changes 259–304 are not reopened.
+> Session start head: `88d53d897ab740d06032bb86e00716c9387356a7` (origin/main). Published head recorded in `PROGRAM_STATE.json` after publication.
+> 304 closes F-008: twelve surfaces declared `aria-modal="true"` — a promise to assistive technology that the rest of the page is unavailable — while nothing moved focus into a dialog, `Tab` walked through the HUD behind the overlay, `inert` appeared nowhere, and `Escape` did nothing anywhere in `src/`. A first-party `src/ui/ModalFocus.ts` now makes the declaration truthful: focus moves in on open, `Tab`/`Shift+Tab` are contained with wrapping, the background is genuinely `inert`, focus returns to the recorded opener on close, and `Escape` converges on the **same dismiss path** as the close control and `KeyC`. `death-screen` gained the missing `aria-modal`. Proven by 12 pure-policy unit tests, 17 DOM-level unit tests of the real class, and 7 real-browser journeys asserting `document.activeElement`. No rendering change and **zero golden churn**; no new dependency; no threshold lowered. `258` stays BLOCKED.
+
+- Gates: ModalFocus unit 12+17 PASS; modal-focus e2e 7/7 PASS; verify:deps PASS; verify:file-audit PASS 3085 rows; validate-state PASS; typecheck PASS; lint 0 errors / 85 warnings; unit 485 files 5822+1; coverage 91.84/88.60/94.68/93.19 PASS; build PASS; check-release-bundle PASS; full E2E 144/144.
+- Next exact action: **Run a fresh repository-wide re-audit for anything still wrong and for further significant code-quality improvement** (the standing goal). Highest-value known candidates, in order: (1) `src/engine/Game.ts` is a ~7.4k-line composition root with ~278 methods — extract coherent seams (renderer/presentation sync, raid wiring, potion wiring, UI modal/session dispatch) behind small modules and replace the remaining source-text guards with behavioural tests; (2) the 85 pre-existing `no-explicit-any` lint warnings are concentrated in a handful of storage/e2e files — replace with precise types; (3) the ~102 hardcoded `waitForTimeout` calls in the e2e suite are a flake surface — replace with deterministic condition waits where observable; (4) confirm the CI workflows are green on the published tip and fix any failure; (5) re-run `npm run verify:all` on the published tree. `258` stays BLOCKED — never fabricate headed GPU evidence.**
+
 ## Current checkpoint — 2026-10-17 Change 303-renderer-lifecycle-unit-coverage VERIFIED; 304 next (audit finding F-008)
 
 > **Change `303-renderer-lifecycle-unit-coverage` is VERIFIED (F-007 closed)**; gates green: Renderer.test 27/27 / verify:deps / verify:file-audit 3081 rows / validate-state / typecheck / lint 0 errors 85 warnings / unit 483 files 5793+1 / coverage **91.84-88.62-94.66-93.17** vs 91/88/94/93 / build / check-release-bundle / full E2E 137-137. Last completed Change 303 is VERIFIED; Changes 001–303 are VERIFIED except Change 258 BLOCKED; Changes 259–303 are not reopened.
@@ -440,15 +449,15 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **303-renderer-lifecycle-unit-coverage — VERIFIED; 258 BLOCKED, 259–303 VERIFIED**
+- Active implementation change: **304-modal-focus-and-keyboard-accessibility — VERIFIED; 258 BLOCKED, 259–304 VERIFIED**
 - Prior active implementation change: **283-live-raid-persistence — VERIFIED (13/13); 258 stays BLOCKED, 259–283 stay VERIFIED**
 - Prior prior active implementation change: **282-live-raid-feedback — VERIFIED (10/10); 258 stays BLOCKED, 259–282 stay VERIFIED**
-- Next change: **304 — author spec-first package after 303 VERIFIED (NOT started; audit finding F-008); 258 stays BLOCKED**
+- Next change: **305 — fresh repository-wide re-audit and code-quality improvement (audit sequence 298–304 complete); 258 stays BLOCKED**
 - 240 advancement allowed: **yes**
 
 - Program: **ACTIVE — Change 284-live-raid-wave-spawning VERIFIED 12/12 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–284 VERIFIED**
 - 284 checkpoint: **VERIFIED 12/12 — implementation + gates complete; enchanting flake + visual SwiftShader drift documented non-blocking; 258 BLOCKED; 285 not started**
-- Last completed change: **303-renderer-lifecycle-unit-coverage — VERIFIED — C303 exact, 258 BLOCKED**
+- Last completed change: **304-modal-focus-and-keyboard-accessibility — VERIFIED — C304 exact, 258 BLOCKED**
 - Prior last completed change: **281-workstation-ui — VERIFIED (12/12); 258 stays BLOCKED, 259–281 stay VERIFIED**
 - Prior prior last completed change: **272-lighting-clock-dt-sync — VERIFIED (10/10) — full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85/file-audit 2792); 271 remains VERIFIED (14/14)
 - All changes 001–257 and 259–284: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed; Change 283 is VERIFIED 13/13; Change 284 is VERIFIED 12/12 (this session).

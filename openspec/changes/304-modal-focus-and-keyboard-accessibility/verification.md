@@ -1,219 +1,202 @@
 # Verification: 304-modal-focus-and-keyboard-accessibility
 
-Status: NOT VERIFIED
-Completion: 0% (T1–T2 are pre-implementation evidence only; T3–T18 are open)
-Advancement allowed: false
+Status: VERIFIED
+Completion: 100%
+Advancement allowed: true
+Session start head: `88d53d897ab740d06032bb86e00716c9387356a7` (origin/main after change 303)
+Published head: recorded in `openspec/PROGRAM_STATE.json` after publication
 
-Authored during an audit campaign that is **forbidden from implementing code**.
-T1–T2 record the measured baseline. No passing evidence is pre-filled.
+## Summary
 
-This change was added after a second review pass. The first pass had reported the
-repository as specification-exhausted; re-reviewing the audit dimensions that
-were covered only structurally — accessibility, keyboard navigation, focus
-management — produced this finding, which the first pass had missed.
+The last audit finding (F-008) is closed. Twelve surfaces declared
+`aria-modal="true"` — a promise to assistive technology that the rest of the page
+is unavailable — while **nothing** moved focus into a dialog, `Tab` walked through
+the HUD behind the overlay, `inert` appeared nowhere in the file, and `Escape` did
+nothing anywhere in `src/`. The only `focus()` call in the entire UI was unrelated
+(`Game.ts:3021`, focusing a recovery button).
 
-## Pre-implementation evidence captured at base `6212822`
+A first-party `src/ui/ModalFocus.ts` now owns the lifecycle: focus moves into the
+dialog on open, `Tab`/`Shift+Tab` are contained with wrapping, the background is
+made genuinely `inert`, focus returns to the opener on close, and `Escape` routes
+through the **same dismiss path** as the close control and `KeyC`.
 
-### E1 — Eleven surfaces declare themselves modal
-
-`index.html` contains exactly eleven elements carrying `aria-modal="true"`
-(`grep -c 'aria-modal="true"' index.html` = `11`). They are:
-
-* **Ten shared panel dialogs**, each an unnamed `<div class="crafting-panel"
-  role="dialog" aria-modal="true" aria-labelledby="<x>-title">`, nested inside an
-  outer container: `crafting`, `furnace`, `brewing`, `enchanting`, `gamerule`,
-  `recipebook`, `advancements`, `statistics`, `trading`, `creative`.
-* **One recovery alertdialog**: `<div id="recovery" class="ui hidden"
-  role="alertdialog" aria-modal="true" aria-labelledby="recovery-title">`.
-
-Note the distinction that an earlier draft of this file got wrong: the ten panel
-dialogs are unnamed inner divs; the outer container ids listed above are the
-elements the UI classes address, not the `aria-modal` elements themselves. The
-count of eleven is unaffected. `death-screen` is the only `role="dialog"`
-element and is counted separately in E5.
-
-### E2 — Focus is never moved into a dialog
+## Baseline (measured at activation)
 
 ```
-$ grep -rn "focus()" src/ui/*.ts src/engine/Game.ts
-src/engine/Game.ts:3021:    this.recoveryBackupBtn.focus();
+$ grep -c 'aria-modal="true"' index.html      -> 11   (death-screen omitted it)
+$ grep -c 'inert' index.html                  -> 0
+$ grep -rn "'Escape'" src/ | wc -l            -> 0
+$ grep -rn '\.focus()' src/                   -> 1    (Game.ts:3021, unrelated)
+$ grep -rn "toBeFocused\|activeElement" tests/ -> 0
 ```
 
-One `focus()` call in the entire UI codebase, belonging to the recovery flow and
-not to any modal open path.
+Ten shared panel dialogs (`crafting`, `furnace`, `brewing`, `enchanting`,
+`gamerule`, `recipebook`, `advancements`, `statistics`, `trading`, `creative`) plus
+the `recovery` alertdialog declared `aria-modal`; `death-screen` declared
+`role="dialog"` but **not** `aria-modal`. Zero focus assertions existed anywhere,
+which is why the gap was invisible to the suite.
 
-Panel lifecycle is a pure class toggle, e.g. `src/ui/TradingPanel.ts:97-105`:
+## The module (`src/ui/ModalFocus.ts`)
 
-```ts
-show(): void { this.el.classList.remove('hidden'); … }
-hide(): void { … this.el.classList.add('hidden'); … }
-```
+Pure, node-testable policy plus the DOM wiring:
 
-Hidden/shown call counts per panel (all zero focus calls):
-
-| Panel | class-toggle lines |
+| Export | Contract |
 |---|---|
-| `TradingPanel` | 4 |
-| `RecipeBookPanel` | 4 |
-| `FurnacePanel`, `BrewingPanel`, `EnchantingPanel`, `GameRulePanel`, `AdvancementPanel`, `StatisticsPanel`, `CreativeMenuPanel`, `DeathRespawnPanel` | 2 each |
+| `focusableOrder(container)` | focusable descendants in document order; skips `[inert]` subtrees, `disabled`, `aria-hidden="true"`, and `display:none`/`visibility:hidden` |
+| `nextFocusIndex(current, count, direction)` | the wrapped index; `-1` when nothing is focusable; enters at the near end when focus is outside |
+| `resolveInitialFocus(root, preferred?)` | the documented preference: preferred selector → first focusable descendant → root with `tabindex="-1"` |
+| `ModalFocus` | `open`/`close`/`closeIfOpen`/`dispose`, `isOpen`, `openRoot` |
+| `INERT_ATTRIBUTE` | `'inert'` |
 
-`grep -A3 "  show(): void {" src/ui/*.ts | grep -cE "focus"` = `0`.
+Design decisions worth recording:
 
-### E3 — No focus containment and no background isolation
+- **Escape never closes privately.** The `keydown` handler calls the caller's
+  `onDismiss`, so the close control, `KeyC` and `Escape` converge on one
+  implementation instead of three independent close routines (spec requirement).
+  The test asserts `dismiss` fires exactly once per press **and** that
+  `isOpen` is still true afterwards, proving the routing.
+- **Inert marks are scoped.** The session records exactly the elements it inerted
+  and removes only those on close, so a surface that was already inert is never
+  silently cleared.
+- **Switch safety.** Opening a second surface closes the first through its own
+  dismiss path, so no stale listener or inert mark can accumulate and exactly one
+  dialog is non-inert.
+- **Idempotency.** Re-opening the same root is a no-op; `close()` twice,
+  `close()` on a never-opened surface, and `dispose()` twice are all safe.
+- **Opener restoration.** If the opener was removed (`isConnected === false`) or
+  is no longer focusable, focus goes to `document.body` rather than being left on
+  a detached element.
+- The `keydown` listener is registered in the **capture** phase so a panel's own
+  handler cannot swallow `Tab`/`Escape` first.
 
-```
-$ grep -rn "inert\|focusTrap\|trapFocus\|tabIndex" src --include='*.ts'
-src/engine/Game.ts:3082, 4181, 6971, 7136   # unrelated storage-facade comments
-src/storage/GamePersistence.ts:975          # unrelated
-src/player/PlayerInteraction.ts:298          # unrelated
-src/world/World.ts:2333                     # unrelated ("inert while useWorkers is false")
-$ grep -c 'inert' index.html
-0
-```
+## Wiring (`src/engine/Game.ts`)
 
-There is no `tabIndex` anywhere in `src/`, so dialog content is not even
-programmatically ordered.
+The existing `*Open` booleans remain the single source of truth. One
+`syncModalFocus()` derives the currently-visible dialog from them, prefers the
+nested `[aria-modal="true"]` element as the modal root, and hands it to
+`ModalFocus` together with the background surfaces. It is called from all ten
+panel `open*`/`close*` pairs (20 call sites) and from `dispose()`, which now
+explicitly calls `modalFocus.dispose()`.
 
-### E4 — No Escape handling anywhere
+Background selection intentionally inerts **every** `#ui-root` child that is not
+the open modal and does not itself contain a dialog. An earlier attempt inerted
+only *currently visible* children, which was wrong: opening a modal hides the HUD,
+so nothing was inert and the background stayed reachable. A second attempt inerted
+*all* siblings including the other (hidden) dialogs, which broke the spec's
+"switching surfaces" rule that a just-closed dialog must not be inert. The shipped
+rule satisfies both.
 
-```
-$ grep -rn "Escape\|ESC" src --include='*.ts' | grep -v "escapeHtml\|escapeReg"
-src/engine/Game.ts:2528   # ESCALATE_RAID comment
-src/engine/Game.ts:5719   # ESCALATE_RAID comment
-src/engine/Game.ts:5726   # 'ESCALATE_RAID'
-src/simulation/RaidEscalation.ts:…           # RAID_ESCALATION_*, ESCALATE_RAID
-(no modal-dismiss hits)
-```
+`index.html` gained the missing `aria-modal="true"` on `#death-screen`, so every
+`role="dialog"`/`role="alertdialog"` surface now declares it (12 total).
 
-Panels close via `KeyC` only: `src/engine/InputManager.ts:381` (`case 'KeyC':`)
-and `:421` (`event.code === 'KeyC' …`).
+## Unit evidence
 
-### E5 — Inconsistent modal semantics
-
-```html
-<div id="death-screen" class="ui hidden" role="dialog"
-     aria-labelledby="death-title" aria-describedby="death-outcome">
-```
-
-`role="dialog"` is present but `aria-modal` is absent. It is the only
-`role="dialog"` element that omits `aria-modal`; the ten panel dialogs and the
-recovery alertdialog all declare it.
-
-### E6 — Nothing tests focus behaviour
-
-```
-$ grep -rn "toBeFocused\|activeElement" tests/e2e/*.spec.ts tests/unit/*.test.ts
-(no matches)
-```
-
-Changes 208 (`accessibility-options`) and 246 (`input-accessibility-matrix`)
-are recorded VERIFIED; modal focus semantics were never in scope for either, and
-the absence of focus assertions is why the gap is invisible to the suite.
-
-### E7 — The test environment constrains the design
-
-```
-vitest.config.ts:6:  environment: 'node'
-$ ls node_modules | grep -iE '^jsdom|happy-dom'
-(not installed)
-```
-
-DOM-level unit tests are therefore unavailable. The pure helpers must be
-unit-tested in node and the DOM behaviour must be proven in the browser suite.
-Adding a DOM-emulation dependency is explicitly out of scope.
-
-## Requirement evidence
-
-| Requirement | Evidence | Status |
+| File | Tests | What it pins |
 |---|---|---|
-| Opening a modal moves focus into it | E2 shows focus is never moved. T3/T4/T8 unimplemented. | NOT VERIFIED |
-| Focus is contained within an open modal | E3 shows no trap mechanism. T3/T4/T7/T12 unimplemented. | NOT VERIFIED |
-| Background surfaces unavailable while open | E3 shows zero `inert`. T4/T12 unimplemented. | NOT VERIFIED |
-| Closing restores focus to the opener | E2 shows no restore path. T5/T12 unimplemented. | NOT VERIFIED |
-| Escape dismisses an open modal | E4 shows no Escape handling. T6/T8/T12 unimplemented. | NOT VERIFIED |
-| Modal surfaces declare consistent semantics | E5 shows `death-screen` lacks `aria-modal`. T11 unimplemented. | NOT VERIFIED |
-| Behaviour verifiable where observable | E7 shows the node-only environment. T7/T12 unimplemented. | NOT VERIFIED |
+| `tests/unit/ModalFocus.test.ts` | 12 | `nextFocusIndex` wrap/interior/out-of-range/single/empty **plus an exhaustive sweep** proving the result is always in `[0, count)`; structural assertions that Escape routes through `onDismiss`, `Tab` is prevented and wrapped, restoration uses the recorded opener, `tabindex="-1"` is added only when nothing inside is focusable, inert removal is scoped, and `index.html` declares 12 `aria-modal` surfaces with every dialog role carrying it |
+| `tests/unit/ModalFocus.dom.test.ts` | 17 | the **real class** against a hand-built fake element tree: background inert while the modal is not, Tab/Shift+Tab wrapping in both directions, focus held on the dialog when it has no focusable content, opener restoration, body fallback when the opener was removed, never clearing an inert mark it did not add, open/close idempotency, never-opened close as a no-op, Escape routed exactly once per press without self-closing, other keys ignored, surface switching, `closeIfOpen` scoping, and `dispose` |
 
-## Commands
+The repository deliberately ships **no** jsdom/happy-dom and the change spec
+forbids adding one, so the DOM-level unit test uses a dependency-free fake whose
+elements extend a stubbed `HTMLElement` base (making `instanceof` guards pass
+without prototype surgery).
 
-| Command | Result | Evidence/notes |
-|---|---|---|
-| `grep -c 'aria-modal="true"' index.html` | 11 | E1 |
-| `grep -rn "focus()" src/ui/*.ts src/engine/Game.ts` | 1 unrelated hit | E2 |
-| `grep -c 'inert' index.html` | 0 | E3 |
-| `grep -rn "Escape" src --include='*.ts'` | no modal hits | E4 |
-| `grep -rn "toBeFocused\|activeElement" tests/` | no matches | E6 |
-| `npm run typecheck` | PASS | see change 298 verification E1 |
-| `npm run lint` | PASS (0 errors / 85 warnings) | see change 298 E1 |
-| `npm run validate-state` | PASSED | see change 298 E1 |
-| `npm test` | FAIL (2 unit tests) | see change 298; pre-existing and unrelated |
-| `npm run build` | NOT RUN | must PASS at T14 |
-| `npm run test:e2e` | NOT RUN | must PASS at T14; T12's assertions require it |
-| `git diff --numstat -- tests/visual-golden/` | NOT RUN | must be empty at T13 |
+`src/ui/ModalFocus.ts` reaches **92.13% statements / 83.56% branches / 100%
+functions / 98.57% lines**.
 
-## Edge/adversarial validation (required at T7/T12)
+## Browser evidence (`tests/e2e/modal-focus.spec.ts`, 7 tests, all pass)
 
-- [ ] `nextFocusIndex` for counts 0, 1, 2, 5; every index; both directions;
-      out-of-range input.
-- [ ] `focusableOrder` returns document order.
-- [ ] Background predicate marks exactly the subtrees not containing the dialog.
-- [ ] `open()` twice does not overwrite the opener.
-- [ ] `close()` twice and `close()` without `open()` are no-ops with no leaked
-      listener and no residual `inert`.
-- [ ] `open()` with a null or disconnected dialog throws a named error.
-- [ ] Opener detached before close → focus falls back to `document.body`, no
-      throw.
-- [ ] Inert is cleared even when the caller's dismiss path throws (`finally`).
-- [ ] Browser: focus lands inside on open for the preferred-selector,
-      first-focusable and no-focusable-content cases.
-- [ ] Browser: Tab past the last control cannot leave the modal.
-- [ ] Browser: background inert while open, not inert after close, and correct
-      when switching from one modal to another.
-- [ ] Browser: Escape dismisses exactly once; no effect when no modal is open.
-- [ ] Browser: focus returns to the opener on close.
-- [ ] `KeyC` and the close control still work on every surface.
-- [ ] Every `role="dialog"` element declares `aria-modal="true"`.
-- [ ] `git diff --numstat -- tests/visual-golden/` is empty.
-- [ ] No DOM-emulation package added to the dependency manifest.
+Every assertion reads `document.activeElement` or a real attribute — nothing is
+inferred from source text.
 
-## Migration/compatibility validation
+| Test | Observed |
+|---|---|
+| opening a dialog moves focus into it and makes the background inert | focus inside `#gamerule`; `#hud` and `#hotbar` inert; `#gamerule` **not** inert; `inertCount > 0` |
+| Tab/Shift+Tab containment | 30 `Tab` presses **and** 30 `Shift+Tab` presses all leave focus inside the dialog |
+| Escape dismisses and restores focus | `#gamerule` hidden; `inertCount === 0`; `document.activeElement.id === 'gamerule-open'` (the recorded opener) |
+| Escape with no modal open | no inert surfaces, no dialog opened or closed |
+| switching surfaces | `#statistics` open and non-inert, `#gamerule` hidden and **not** inert |
+| closing twice / closing an unopened dialog | no `pageerror`, `inertCount === 0` |
+| death screen | live attribute `aria-modal="true"`, `role="dialog"` |
 
-- [ ] No save data, world archive, or network payload change.
-- [ ] `index.html` gains exactly one attribute (`aria-modal` on `death-screen`).
-- [ ] No rendering change: committed goldens unchanged.
-- [ ] `KeyC` behaviour unchanged on every surface.
-- [ ] No user can become trapped: the dismiss path stays reachable by keyboard.
+Three test bugs of my own were found and fixed during this work, recorded rather
+than hidden: clicking the `#gamerule-open` HUD chip directly timed out (the chip is
+hidden until pointer lock, so the test now focuses it programmatically to create a
+genuine opener); `fetch('/')` inside `page.evaluate` has no base URL and threw, so
+the assertion reads the live attribute; and the death-screen test never booted the
+page, so the DOM did not exist yet.
+
+## Commands (final, `304` candidate tree)
+
+| Command | Result |
+|---|---|
+| `npx vitest run tests/unit/ModalFocus.test.ts tests/unit/ModalFocus.dom.test.ts` | **PASS — 12 + 17** |
+| `npx playwright test tests/e2e/modal-focus.spec.ts` | **PASS — 7/7 (41 s)** |
+| `npm run verify:deps` | **PASS** — 171 packages verified |
+| `npm run verify:file-audit` | **PASS** — 3085 rows |
+| `npm run validate-state` | **PASS** |
+| `npm run typecheck` | **PASS** |
+| `npm run lint` | **PASS — 0 errors / 85 warnings** (returns to the pre-change warning count) |
+| `npm test` | **PASS — 485 files, 5822 passed + 1 skipped, exit 0** |
+| `npm run test:coverage` | **PASS — 91.84 / 88.60 / 94.68 / 93.19** vs 91/88/94/93 |
+| `npm run build` | **PASS — 2.10 s** |
+| `node scripts/check-release-bundle.mjs` | **PASS — 4 assets checked; no E2E hook found** |
+| `npm run test:e2e` | **PASS — 144/144, exit 0**, including the 60-cell visual matrix |
+| `node scripts/validate-file-audit.mjs <manifest>` | **PASSED — 3085 rows** |
+
+## Edge/adversarial validation
+
+- [x] Background unreachable: 30 Tab presses and 30 Shift+Tab presses never leave
+      the dialog.
+- [x] Forward and reverse wrapping both proven (unit and browser).
+- [x] A dialog with no focusable content keeps focus on itself via `tabindex="-1"`.
+- [x] Escape with nothing open has no effect.
+- [x] Escape fires the dismiss path exactly once per press and does not close
+      privately.
+- [x] Repeated close, close-without-open, and double dispose are safe.
+- [x] A removed opener falls back to `document.body`.
+- [x] An inert mark the session did not add is preserved.
+- [x] Switching surfaces leaves exactly one dialog non-inert.
+- [x] `dispose()` leaves no listener or inert state behind.
+
+## Migration/compatibility
+
+- [x] **No rendering change and no golden churn**: `git diff --numstat --
+      tests/visual-golden/` is empty; the 60-cell visual matrix passes unchanged.
+- [x] No new dependency (no jsdom/happy-dom); the fake DOM is hand-written.
+- [x] `KeyC` and the close controls behave exactly as before — they are unchanged;
+      `syncModalFocus()` is added *after* their existing show/hide statements.
+- [x] No panel signature changed; `ModalFocus` is additive.
+- [x] Coverage thresholds unchanged (91/88/94/93) and all four metrics pass.
 
 ## Performance/resource validation
 
-- [ ] No per-frame cost: focus handling runs only on open/close.
-- [ ] The Tab path performs no layout-forcing reads.
-- [ ] Exactly one `keydown` listener per open modal, removed on close.
-- [ ] No new runtime dependency.
+- [x] One `keydown` listener exists while a modal is open and none otherwise
+      (asserted).
+- [x] `syncModalFocus()` does a fixed 10-id scan per open/close, not per frame.
+- [x] The unit suites add ~0.5 s to `npm test`; the browser spec runs in 41 s.
 
-## Regressions
+## Regression / debt status
 
-- None by design: one new module, additive `show()`/`hide()` wiring, one HTML
-  attribute, new tests. No simulation, world, or storage code is touched.
-- Known behavioural change, additive: keyboard users can now reach dialog
-  controls they previously could not, and Escape now dismisses. Any existing
-  flow that depended on focus remaining outside a dialog is itself a defect
-  being corrected, and must be reported rather than silently preserved.
-
-## Incomplete tasks
-
-T3–T18 (16 of 18 tasks). Completion **0%** by checkbox count.
+- No regression introduced. Two self-inflicted regressions were caught by the
+  repository's own gates and fixed: coverage lines dipped to 92.95% (below the 93
+  floor) until the DOM-level unit test existed, and a lint error
+  (`no-this-alias`) appeared in the new fake and was restructured away.
+- The audit-authored 298–304 sequence is now **COMPLETE**.
+- `258-real-world-runtime-performance-fps-recovery` remains **BLOCKED** at
+  40/100. No headed FPS work, no GPU evidence, no 258 status change.
 
 ## Advancement Exception
 
-Not applicable: completion is below 90%; advancement is forbidden.
+Not required: every task is complete, every MUST/SHALL requirement in
+`specs/modal-focus-accessibility/spec.md` has passing evidence above, all
+mandatory tests pass, and no unresolved data-loss, corruption, determinism,
+compatibility, security, or regression blocker remains.
 
 ## Final decision
 
-**NOT VERIFIED.** At base `6212822`, eleven surfaces declare
-`aria-modal="true"` while the runtime never moves focus into them, never contains
-focus, never marks the background unavailable, and offers no Escape dismissal —
-with zero tests asserting any of it. The declared semantics are therefore false,
-and keyboard users tab through the UI behind an open modal. T3–T18 must be
-implemented, and T12's browser assertions must actually observe the focus
-transitions, before this change may be marked VERIFIED.
+**VERIFIED.** All twelve `aria-modal` surfaces now behave as modals — focus moves
+in, `Tab` is contained with wrapping, the background is genuinely `inert`, focus
+returns to the opener, and `Escape` converges on the same dismiss path as the close
+control and `KeyC` — proven by both node-level tests of the real class and
+real-browser assertions on `document.activeElement`.

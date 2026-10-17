@@ -1754,3 +1754,63 @@ Activation dependency satisfied: change 302 is VERIFIED and published at
 ### Sequence row (authoritative with CHANGE_SEQUENCE.md)
 
 | 303 | `303-renderer-lifecycle-unit-coverage` | VERIFIED — closes F-007: defaulted `WebGLRendererFactory` seam (default path = shipped call) + 27-test headless suite moves `Renderer.ts` from **0% to 100/90.62/100/100** coverage, pinning no-WebGL fail-closed construction, context loss/restoration incl. restore failure, dispose idempotency, pixel-ratio caps, resize clamp and frozen dynamic resolution; aggregate coverage rises with no threshold lowered; stale config note corrected; 258 BLOCKED. |
+
+## 304-modal-focus-and-keyboard-accessibility — activated and verified (2026-10-17)
+
+Final change of the audit-authored 298–304 sequence (finding F-008,
+`MASTER_PLAN.md` §4). Activation dependency satisfied: change 303 is VERIFIED and
+published at `88d53d8`; session start head `88d53d8`.
+
+- **Implemented:** first-party `src/ui/ModalFocus.ts` — pure node-testable
+  `focusableOrder` / `nextFocusIndex` (wrap both directions, out-of-range entry,
+  `-1` for an empty container) / `resolveInitialFocus` (preferred control → first
+  focusable → root with `tabindex="-1"`), plus a `ModalFocus` class that records
+  the opener, moves focus in, contains `Tab`/`Shift+Tab` by wrapping, inerts only
+  the background surfaces it added and removes exactly those, restores focus to
+  the opener (or `document.body` when it is gone), routes **Escape through the
+  caller's dismiss path** (capture phase) so close/Escape/`KeyC` converge on one
+  implementation, treats a re-open of the same root as a no-op, closes the previous
+  modal when switching surfaces, and disposes cleanly. `Game.ts` gained one
+  `syncModalFocus()` helper deriving the visible dialog from the existing `*Open`
+  booleans, wired into all ten panel open/close pairs (20 call sites) and into
+  `dispose()`. `index.html` gained the missing `aria-modal="true"` on
+  `#death-screen`, so all 12 dialog surfaces now declare it.
+- **Evidence:** 12 pure-policy unit tests (`tests/unit/ModalFocus.test.ts`,
+  including an exhaustive sweep proving the wrapped index can never leave
+  `[0, count)`), 17 DOM-level unit tests (`tests/unit/ModalFocus.dom.test.ts`)
+  driving the **real class** through a dependency-free fake element tree, and 7
+  **real-browser** Playwright journeys (`tests/e2e/modal-focus.spec.ts`) asserting
+  `document.activeElement` and live attributes: 30 `Tab` presses and 30
+  `Shift+Tab` presses never escape the dialog, the background is inert while the
+  open dialog is not, Escape dismisses and restores focus to the opener, Escape
+  with nothing open is a no-op, switching surfaces leaves exactly one dialog
+  non-inert, repeated/unopened closes do not throw, and `death-screen` declares
+  `role=dialog` + `aria-modal=true`. `ModalFocus.ts` measures 92.13% statements /
+  83.56% branches / 100% functions / 98.57% lines.
+- **Three of my own test bugs found and fixed (recorded, not hidden):** clicking the
+  `#gamerule-open` HUD chip timed out because the chip is hidden until pointer
+  lock (the test now focuses it programmatically to create a genuine opener);
+  `fetch('/')` inside `page.evaluate` has no base URL and threw (the assertion now
+  reads the live attribute); and the death-screen test never booted the page. Two
+  implementation attempts were also rejected for cause: inerting only *visible*
+  background children left nothing inert once the modal hid the HUD, and inerting
+  *all* siblings violated the spec's rule that a just-closed dialog must not be
+  inert; the shipped rule inerts every `#ui-root` child that is neither the open
+  modal nor contains a dialog.
+- **Two self-inflicted regressions caught by the repository's own gates and fixed:**
+  coverage lines dipped to 92.95% (below the 93 floor) until the DOM-level unit
+  test existed, and a `no-this-alias` lint error appeared in the new fake and was
+  restructured away (lint returns to 0 errors / 85 warnings).
+- **Out of scope and untouched:** no rendering change and **zero golden churn**
+  (`git diff --numstat -- tests/visual-golden/` empty; the 60-cell visual matrix
+  passes); no new dependency (no jsdom/happy-dom — the fake DOM is hand-written,
+  as the spec requires); `KeyC` and every close control behave exactly as before;
+  no panel signature changed; coverage thresholds unchanged (91/88/94/93) and all
+  four metrics pass. Change **258** stays **BLOCKED**.
+- **The audit-authored 298–304 sequence is now COMPLETE**, closing F-001 through
+  F-005, F-007 and F-008. Next work is a fresh repository re-audit for any
+  remaining defect and further code-quality improvement.
+
+### Sequence row (authoritative with CHANGE_SEQUENCE.md)
+
+| 304 | `304-modal-focus-and-keyboard-accessibility` | VERIFIED — closes F-008: a first-party `ModalFocus` helper makes all 12 `aria-modal` surfaces behave as modals (focus in, Tab contained with wrapping, background `inert`, opener restored, Escape converged on one dismiss path) with `death-screen` gaining the missing `aria-modal`; proven by 29 node tests of the real class plus 7 real-browser `document.activeElement` journeys; no rendering, golden, dependency or threshold change; 258 BLOCKED. |

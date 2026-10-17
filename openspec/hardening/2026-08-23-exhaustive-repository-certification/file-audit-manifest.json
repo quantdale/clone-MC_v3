@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-17T05:42:04Z",
+  "generatedAt": "2026-10-17T06:54:07Z",
   "reviewedSha": "3d0fd2d5aee39ae1706b7210ad27e675450f521c",
-  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288; +6 rows for 289 enchantment-persistence-reload-integrity package/implementation/tests; DirtySaveQueue.ts/Game.ts/enchanting.spec.ts/DirtySaveQueue.test.ts/InventoryComponentPersistence.test.ts re-reviewed in place for 289; +10 rows for 290 hero-of-the-village-reward package/implementation/tests; Game.ts/StatusEffect.ts re-reviewed in place for 290; +10 rows for 291 pillager-patrol-bad-omen package/implementation/tests; Game.ts re-reviewed in place for 291; +10 rows for 292 player-status-effect-persistence package/implementation/tests; Game.ts, PlayerStateRecord.ts, GamePersistence.ts and 5 tests re-reviewed in place for 292; +9 rows for 293 raider-and-patrol-rendering package/implementation/tests; Game.ts re-reviewed in place for 293; +10 rows for 294 bad-omen-raid-escalation-and-death-parity package/implementation/tests; Game.ts, 2 unit tests and the 285/291/292 design notes re-reviewed in place for 294; +12 rows for 295 throwable-splash-potion-entities package/implementation/tests; Game.ts, PlayerInteraction.ts, RaiderCombatBehavior.ts, its unit test and the 288 docs re-reviewed in place for 295; +10 rows for 296 periodic-status-effect-ticks package/implementation/tests; Game.ts, DamageType.ts, SurvivalSystem.ts, DeathRespawnPresentation.ts, 2 unit tests and the 295 docs re-reviewed in place for 296; +11 rows for 297 gunpowder-and-splash-brewing package/implementation/tests; ItemRegistry.ts, TextureAtlas.ts, BrewingRecipes.ts, BrewingStandBlockEntity.ts, RaiderCombatBehavior.ts, Game.ts, BlockItemSeparation.test.ts and the 295 docs re-reviewed in place for 297; +3 rows and +36 audit-package rows re-reviewed for 298 (verification-portability-eol-and-source-guards): .gitattributes, tests/support/sourceText.ts, tests/unit/SourceTextPortability.test.ts, MASTER_PLAN.md and the audit-authored 298-304 OpenSpec packages; +2 rows and 3 in-place re-reviews for 299 (toolchain-dependency-reproducibility): scripts/check-install.mjs, tests/unit/ToolchainReproducibility.test.ts, plus package.json/AGENTS.md/ONBOARDING.md re-reviewed in place; +4 rows and in-place re-reviews for 300 (visual-regression-gate-reliability): scripts/check-visual-goldens.mjs, tests/unit/VisualGoldenStaleness.test.ts, tests/unit/VisualGoldenNoiseBound.test.ts, tests/visual-golden/acknowledgements.json; tests/visual/matrix.ts, tests/e2e/visual-regression.spec.ts, tests/visual-golden/README.md and .github/workflows/{ci,seed-visual-goldens}.yml re-reviewed in place; +1 row and in-place re-reviews for 301 (verification-script-gate-wiring): scripts/verify-all.mjs plus package.json, .github/workflows/ci.yml, ONBOARDING.md and AGENTS.md re-reviewed in place; +2 rows and in-place re-reviews for 302 (multiplayer-performance-gate-enforcement): scripts/perf/multiplayer-perf-run.mjs and tests/unit/MultiplayerPerformanceGate.test.ts, plus package.json, .github/workflows/ci.yml, AGENTS.md and ONBOARDING.md re-reviewed in place; +1 row and in-place re-reviews for 303 (renderer-lifecycle-unit-coverage): tests/unit/Renderer.test.ts added, src/engine/Renderer.ts and vitest.config.ts re-reviewed in place",
+  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288; +6 rows for 289 enchantment-persistence-reload-integrity package/implementation/tests; DirtySaveQueue.ts/Game.ts/enchanting.spec.ts/DirtySaveQueue.test.ts/InventoryComponentPersistence.test.ts re-reviewed in place for 289; +10 rows for 290 hero-of-the-village-reward package/implementation/tests; Game.ts/StatusEffect.ts re-reviewed in place for 290; +10 rows for 291 pillager-patrol-bad-omen package/implementation/tests; Game.ts re-reviewed in place for 291; +10 rows for 292 player-status-effect-persistence package/implementation/tests; Game.ts, PlayerStateRecord.ts, GamePersistence.ts and 5 tests re-reviewed in place for 292; +9 rows for 293 raider-and-patrol-rendering package/implementation/tests; Game.ts re-reviewed in place for 293; +10 rows for 294 bad-omen-raid-escalation-and-death-parity package/implementation/tests; Game.ts, 2 unit tests and the 285/291/292 design notes re-reviewed in place for 294; +12 rows for 295 throwable-splash-potion-entities package/implementation/tests; Game.ts, PlayerInteraction.ts, RaiderCombatBehavior.ts, its unit test and the 288 docs re-reviewed in place for 295; +10 rows for 296 periodic-status-effect-ticks package/implementation/tests; Game.ts, DamageType.ts, SurvivalSystem.ts, DeathRespawnPresentation.ts, 2 unit tests and the 295 docs re-reviewed in place for 296; +11 rows for 297 gunpowder-and-splash-brewing package/implementation/tests; ItemRegistry.ts, TextureAtlas.ts, BrewingRecipes.ts, BrewingStandBlockEntity.ts, RaiderCombatBehavior.ts, Game.ts, BlockItemSeparation.test.ts and the 295 docs re-reviewed in place for 297; +3 rows and +36 audit-package rows re-reviewed for 298 (verification-portability-eol-and-source-guards): .gitattributes, tests/support/sourceText.ts, tests/unit/SourceTextPortability.test.ts, MASTER_PLAN.md and the audit-authored 298-304 OpenSpec packages; +2 rows and 3 in-place re-reviews for 299 (toolchain-dependency-reproducibility): scripts/check-install.mjs, tests/unit/ToolchainReproducibility.test.ts, plus package.json/AGENTS.md/ONBOARDING.md re-reviewed in place; +4 rows and in-place re-reviews for 300 (visual-regression-gate-reliability): scripts/check-visual-goldens.mjs, tests/unit/VisualGoldenStaleness.test.ts, tests/unit/VisualGoldenNoiseBound.test.ts, tests/visual-golden/acknowledgements.json; tests/visual/matrix.ts, tests/e2e/visual-regression.spec.ts, tests/visual-golden/README.md and .github/workflows/{ci,seed-visual-goldens}.yml re-reviewed in place; +1 row and in-place re-reviews for 301 (verification-script-gate-wiring): scripts/verify-all.mjs plus package.json, .github/workflows/ci.yml, ONBOARDING.md and AGENTS.md re-reviewed in place; +2 rows and in-place re-reviews for 302 (multiplayer-performance-gate-enforcement): scripts/perf/multiplayer-perf-run.mjs and tests/unit/MultiplayerPerformanceGate.test.ts, plus package.json, .github/workflows/ci.yml, AGENTS.md and ONBOARDING.md re-reviewed in place; +1 row and in-place re-reviews for 303 (renderer-lifecycle-unit-coverage): tests/unit/Renderer.test.ts added, src/engine/Renderer.ts and vitest.config.ts re-reviewed in place; +3 rows and in-place re-reviews for 304 (modal-focus-and-keyboard-accessibility): src/ui/ModalFocus.ts, tests/unit/ModalFocus.test.ts, tests/e2e/modal-focus.spec.ts added; index.html and src/engine/Game.ts re-reviewed in place; +1 row for 304 (tests/unit/ModalFocus.dom.test.ts)",
   "allowedReviewLevels": [
     "semantic",
     "mechanical",
@@ -10,7 +10,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 3081,
+  "total": 3085,
   "rows": [
     {
       "path": ".agent/EXECUTION_PROMPT.md",
@@ -1212,7 +1212,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings Re-reviewed in place for 304: index.html gained aria-modal on #death-screen; Game.ts gained syncModalFocus() deriving the single open dialog from the existing *Open booleans, wiring all ten panel open/close pairs and dispose through ModalFocus.",
       "status": "audited"
     },
     {
@@ -33584,7 +33584,7 @@
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 284 implementation; no findings \u2014 additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits | 285 ephemeral badOmen + villageQuery + fixed-tick evaluate through 282 start seam; re-reviewed for 288 raider combat wiring; re-reviewed for 289 concurrent-drain / enchant persist integrity; re-reviewed for 290 HOTV grant + emerald trade discount wiring; re-reviewed for 291 pillager patrol tick/captain Bad Omen/raid-start dismissal/seams; re-reviewed for 292 status-effect/Bad Omen persistence (snapshot payload, restore, omen duration tick, durable save points, dispose ordering, seams); re-reviewed for 293 raider renderer wiring (tracked resource, per-frame sync in render from raid/patrol managers, render-state/visibility seams); re-reviewed for 294 omen trigger ESCALATE_RAID branch (in-place escalation, patrol dismissal, one durable save) and Bad Omen clear on death in respawnPlayer; re-reviewed for 295 splash potion wiring (use-item throw with consume rules, tick 5.10 potion step, shatter application to player/raid/patrol, witch potion sink, renderer sync, transient clears, test seams); re-reviewed for 296 periodic status-effect pass (step 6 before duration count-down, hurtPlayer/survival.heal routing, tickWithers global-tick wither stand-in retired, debugAddPlayerEffect/debugTickPeriodicStatusEffects seams); re-reviewed for 297 (witch death loot on all three consumed-death sites, injectable drop rng + debugSetMobDropRandomSequence/getLastMobDrops seams, testGrantSplashPotion doc test-only); no findings",
+      "reviewNotes": "reviewed for 284 implementation; no findings \u2014 additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits | 285 ephemeral badOmen + villageQuery + fixed-tick evaluate through 282 start seam; re-reviewed for 288 raider combat wiring; re-reviewed for 289 concurrent-drain / encha Re-reviewed in place for 304: index.html gained aria-modal on #death-screen; Game.ts gained syncModalFocus() deriving the single open dialog from the existing *Open booleans, wiring all ten panel open/close pairs and dispose through ModalFocus.",
       "status": "audited"
     },
     {
@@ -38178,6 +38178,25 @@
       "status": "audited"
     },
     {
+      "path": "src/ui/ModalFocus.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "304 coverage for src/ui/ModalFocus.ts",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npm test",
+        "npm run test:e2e"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "First-party modal focus/inert/Escape lifecycle (change 304, audit F-008). Pure, node-testable helpers (focusableOrder, nextFocusIndex with wrap and out-of-range entry, resolveInitialFocus implementing the documented preferred-control -> first-focusable -> tabindex=-1 preference) plus a ModalFocus class that records the opener, moves focus in, contains Tab/Shift+Tab by wrapping, marks only the background surfaces it added as inert and removes exactly those on close, restores focus to the opener (or body when it is gone/detached), routes Escape through the caller dismiss path exactly once via a capture-phase listener, treats re-open of the same root as a no-op, closes a previously open modal when switching surfaces so no stale inert or listener remains, and disposes cleanly. No DOM access at import time; no new dependency.",
+      "status": "audited"
+    },
+    {
       "path": "src/ui/RaidBarParity.ts",
       "gitBlob": null,
       "category": "production",
@@ -39749,6 +39768,25 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/e2e/modal-focus.spec.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "304 coverage for tests/e2e/modal-focus.spec.ts",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npm test",
+        "npm run test:e2e"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Browser proof that the declared aria-modal semantics are truthful (change 304): 7 Playwright journeys asserting real document.activeElement and real attributes - opening a dialog moves focus inside it and marks the background inert while the open dialog is not inert; Tab and Shift+Tab pressed 30x each in both directions never leave the dialog; Escape dismisses through the same close path, clears inert and restores focus to the opener; Escape with nothing open has no effect; switching surfaces keeps exactly one dialog non-inert and leaves the closed one clean; a second close and a close on an unopened dialog do not throw or leave stale state; and death-screen declares role=dialog + aria-modal=true. Added to the committed suite by 304 and runs as part of the existing e2e job.",
       "status": "audited"
     },
     {
@@ -44150,6 +44188,43 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/ModalFocus.dom.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "304 coverage for tests/unit/ModalFocus.dom.test.ts",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npm test"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "DOM-level node-environment coverage for src/ui/ModalFocus.ts (change 304), written with a hand-built fake element tree because the repository deliberately ships no jsdom/happy-dom and the 304 spec forbids adding one: 17 tests covering resolveInitialFocus preference/fallback/tabindex, focusableOrder skipping inert subtrees, and the full open/close lifecycle - background inerted while the modal is not, Tab and Shift+Tab wrapping in both directions, focus held on the dialog when it has no focusable content, opener restoration, body fallback when the opener was removed, never clearing an inert mark it did not add, open/close idempotency, never-opened close as a no-op, Escape routed to the dismiss path exactly once per press without self-closing, other keys ignored, surface switching clearing the previous modal, closeIfOpen scoping, and dispose releasing the listener and inert state. Raises ModalFocus.ts to 92.13% statements / 83.56% branches / 100% functions / 98.57% lines; the authoritative focus-behaviour evidence remains the real-browser tests/e2e/modal-focus.spec.ts.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/ModalFocus.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "304 coverage for tests/unit/ModalFocus.test.ts",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npm test",
+        "npm run test:e2e"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Unit coverage for the pure containment policy of src/ui/ModalFocus.ts (change 304): 12 tests over nextFocusIndex forward/reverse wrap, interior traversal, near-end entry for out-of-range focus, single-control stability, empty-container -1, and an exhaustive sweep proving the result is always inside [0,count); plus structural assertions that Escape routes through onDismiss, Tab is prevented and wrapped, focus restoration uses the recorded opener, tabindex=-1 is added only when nothing inside is focusable, inert removal is scoped to the marks the session added, and that index.html declares exactly 12 aria-modal surfaces with every role=dialog/alertdialog surface carrying aria-modal (death-screen gained it in 304).",
       "status": "audited"
     },
     {
