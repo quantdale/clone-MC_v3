@@ -4,7 +4,7 @@ Status: VERIFIED
 Completion: 100% (100% of tasks)
 Advancement allowed: true
 Session start head: `43ece1637f16a52056fdceced4e512e924dac154` (origin/main after change 300)
-Published head: recorded in `openspec/PROGRAM_STATE.json` after publication
+Published head: `deca0fa83f069bc9e27a25c64f09f43bfd356ea4` (origin/main verified equal after a normal history-preserving push)
 
 ## Summary
 
