@@ -1,5 +1,15 @@
 # Program State
 
+## Current checkpoint — 2026-10-17 audit sequence 298–304 COMPLETE and CI GREEN
+
+> **All eight audit findings (F-001…F-005, F-007, F-008) are closed**; changes **298, 299, 300, 301, 302, 303 and 304 are all VERIFIED** and published. **CI is green on the published tip** — run `39054908175`: `gate`, `e2e` and `perf-multiplayer` all succeed.
+> Session start head: `0e90fa2a13c1658b91b0e84b3047467f3ddc87d9` (origin/main). Published head `1e74bb7e4759d3adb9946cd530f310f88daaa0f7` (origin/main verified equal).
+> **What was wrong and is now fixed.** 298: the mandatory unit gate was red on any CRLF checkout (no `.gitattributes`, eight source-guard suites asserting on byte-exact text and comments) — now platform-independent with a shared normalising reader and structural assertions. 299: the installed toolchain could silently drift from the lockfile, making coverage meaningless — now an exact `packageManager` plus a read-only `verify:deps` gate as the first baseline step. 300: the visual gate had no staleness detection and a noise bound scoped to one cell — now a declared captured-surface contract, a CI staleness check with durable acknowledgements, and a measured family bound with a regression tripwire. 301: six of eight verification programs were reachable only by typing a file path — now named npm commands, blocking CI guards, and one `verify:all` aggregate. 302: the normative multiplayer budgets were never executed by automation — now a dedicated single-worker CI job whose runner closes the `vitest -t` fail-open hazard. 303: `Renderer.ts` had 0% unit coverage — now 100% statements / 90.62% branches with a defaulted construction seam. 304: twelve dialogs declared `aria-modal` but never behaved as modals — now real focus containment, `inert` background, opener restoration and Escape convergence.
+> **Post-audit hardening in the same session.** Two high-severity dev-toolchain advisories resolved (production was already clean); the seven `any` escapes removed from `src/storage/SaveRecoveryMatrix.ts`; and **all 85 `no-explicit-any` lint warnings eliminated with real types** — `npm run lint` now reports **0 problems**, down from 0 errors / 85 warnings. Every fix was verified in CI, and four self-inflicted regressions found along the way were fixed rather than left (the `preinstall` false-green, the vacuous shallow-clone staleness pass, the ANSI-blind perf parser, and the over-narrow noise bound).
+
+- Gates on the published tip: verify:deps PASS; verify:file-audit PASS 3085 rows; verify:orphans PASS; verify:mcp PASS; verify:visual-goldens PASS; validate-state PASS; typecheck PASS; lint **0 problems**; npm test 485 files 5825 passed + 1 skipped; coverage above all four thresholds; build PASS; check-release-bundle PASS; npm audits 0 vulnerabilities; **full CI green**.
+- Next exact action: **Continue the standing goal with a fresh repository-wide re-audit.** Highest-value remaining candidates in order: (1) `src/engine/Game.ts` is a ~7.5k-line composition root with ~280 methods — extract coherent seams (renderer/presentation sync, raid wiring, potion wiring, UI modal/session dispatch) behind small modules and replace the ~15 remaining source-text guard suites with behavioural tests; (2) ~102 hardcoded `waitForTimeout` calls across 35 e2e specs are the remaining flake surface (the brewing/furnace/smoker station journeys flake on slow CI runners) — replace with deterministic condition waits where a condition is observable; (3) keep the `seed-visual-goldens` workflow unused unless a genuine re-pin is warranted. `258` stays BLOCKED — never fabricate headed GPU evidence.
+
 ## Current checkpoint — 2026-10-17 Change 304-modal-focus-and-keyboard-accessibility VERIFIED; audit sequence 298–304 COMPLETE
 
 > **Change `304-modal-focus-and-keyboard-accessibility` is VERIFIED (F-008 closed)** and the audit-authored 298–304 sequence is **COMPLETE** (F-001, F-002, F-003, F-004, F-005, F-007, F-008 all closed). Gates green: ModalFocus unit 12+17 / modal-focus e2e 7/7 / verify:deps / verify:file-audit 3085 rows / validate-state / typecheck / lint 0 errors 85 warnings / unit 485 files 5822+1 / coverage **91.84-88.60-94.68-93.19** vs 91/88/94/93 / build / check-release-bundle / full E2E 144-144 (60-cell visual matrix green). Last completed Change 304 is VERIFIED; Changes 001–304 are VERIFIED except Change 258 BLOCKED; Changes 259–304 are not reopened.
@@ -449,15 +459,15 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **304-modal-focus-and-keyboard-accessibility — VERIFIED; 258 BLOCKED, 259–304 VERIFIED**
+- Active implementation change: **304-modal-focus-and-keyboard-accessibility — VERIFIED; audit sequence 298–304 COMPLETE; 258 BLOCKED, 259–304 VERIFIED**
 - Prior active implementation change: **283-live-raid-persistence — VERIFIED (13/13); 258 stays BLOCKED, 259–283 stay VERIFIED**
 - Prior prior active implementation change: **282-live-raid-feedback — VERIFIED (10/10); 258 stays BLOCKED, 259–282 stay VERIFIED**
-- Next change: **305 — fresh repository-wide re-audit and code-quality improvement (audit sequence 298–304 complete); 258 stays BLOCKED**
+- Next change: **305 — fresh repository-wide re-audit and code-quality improvement; 258 stays BLOCKED**
 - 240 advancement allowed: **yes**
 
 - Program: **ACTIVE — Change 284-live-raid-wave-spawning VERIFIED 12/12 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–284 VERIFIED**
 - 284 checkpoint: **VERIFIED 12/12 — implementation + gates complete; enchanting flake + visual SwiftShader drift documented non-blocking; 258 BLOCKED; 285 not started**
-- Last completed change: **304-modal-focus-and-keyboard-accessibility — VERIFIED — C304 exact, 258 BLOCKED**
+- Last completed change: **304-modal-focus-and-keyboard-accessibility — VERIFIED — audit sequence 298–304 complete, CI green, 258 BLOCKED**
 - Prior last completed change: **281-workstation-ui — VERIFIED (12/12); 258 stays BLOCKED, 259–281 stay VERIFIED**
 - Prior prior last completed change: **272-lighting-clock-dt-sync — VERIFIED (10/10) — full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85/file-audit 2792); 271 remains VERIFIED (14/14)
 - All changes 001–257 and 259–284: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed; Change 283 is VERIFIED 13/13; Change 284 is VERIFIED 12/12 (this session).
