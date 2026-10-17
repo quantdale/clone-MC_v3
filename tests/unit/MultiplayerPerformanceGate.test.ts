@@ -16,6 +16,19 @@ interface RunResult {
   stderr: string;
 }
 
+/**
+ * Remove ANSI colour escapes from captured child output.
+ *
+ * CI hosts run vitest with colour enabled, which inserts escape sequences between
+ * the `Tests` label and its counts. Assertions must therefore look at the
+ * stripped stream; asserting on raw text fails on CI even when the counts are
+ * present.
+ */
+function stripAnsi(text: string): string {
+  const ESC = String.fromCharCode(27);
+  return text.replace(new RegExp(`${ESC}\\[[0-9;]*[A-Za-z]`, 'g'), '');
+}
+
 function runNode(script: string, cwd?: string): RunResult {
   try {
     const stdout = execFileSync(process.execPath, [script], {
@@ -143,7 +156,10 @@ describe('canonical multiplayer performance gate (302)', () => {
     const variant = makeVariant({ useFixture: true });
     try {
       const result = runNode(variant.script, variant.dir);
-      const combined = result.stdout + result.stderr;
+      // CI runs vitest with colour on, so assertions must look at the stripped
+      // stream — asserting on the raw text fails there even when the counts are
+      // present between escape sequences.
+      const combined = stripAnsi(result.stdout + result.stderr);
       expect(combined).toMatch(/MC_CANONICAL=1/);
       expect(combined).toMatch(/Tests\s+1 passed/);
       expect(combined).toMatch(/budgets satisfied \(REQ-P3 \/ REQ-P7\)/);
