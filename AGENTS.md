@@ -136,3 +136,9 @@ If implementation shows the active spec is wrong, amend the active proposal/desi
 ## Original implementation
 
 Target behavior and systems parity using independently authored code and original/procedural assets. Do not copy proprietary source code or assets.
+
+## Cross-project UX, DX, and AX principles
+
+Cut taglines, helper text and secondary labels. If a screen needs them to make sense, fix the layout.
+
+Make the best decision that will elevate all three: the user experience (UX), developer experience (DX), and agent experience (AX) always, without breaking anything.
