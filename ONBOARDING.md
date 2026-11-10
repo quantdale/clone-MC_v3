@@ -75,7 +75,7 @@ an explicit first step of the baseline gate instead.
 
 The thresholds in `vitest.config.ts` (`statements 91 / branches 88 / functions
 94 / lines 93`) are calibrated for the **locked** coverage provider version
-(`@vitest/coverage-v8` **4.1.11**). Vitest 4 changed V8 branch remapping and
+(`@vitest/coverage-v8` **4.1.12**). Vitest 4 changed V8 branch remapping and
 dropped Vitest 3's default test/config exclusions, so the **branch metric is not
 comparable across provider major versions**. A coverage figure produced by a
 different provider version is not evidence for this gate.
@@ -121,7 +121,7 @@ first failure, propagating that gate's own exit code.
 | 5 | `npm run build` | The production bundle builds. |
 | 6 | `node scripts/check-release-bundle.mjs` | The plain release bundle contains no E2E hook. |
 | 7 | `npm run verify:file-audit` | The reviewed file-audit manifest covers every tracked file and carries no pending or evidence-free rows. |
-| 8 | `npm run verify:orphans` | No new source file has zero importers (allow-list: the three real entry points). |
+| 8 | `npm run verify:orphans` | **Fails closed.** No tracked `src/**` module may have zero internal importers unless it is on the reviewed allow-list (`src/main.ts`, `src/rendering/MeshWorkerEntry.ts`, `src/worldgen/WorldgenWorkerEntry.ts`). Any other importer-free file makes the gate `exit 1` naming the file; adding an allow-list entry is a reviewed edit of `scripts/orphan-check.mjs` plus `tests/unit/OrphanGateEnforcement.test.ts`. |
 | 9 | `npm run verify:mcp` | The repository-local MCP config is pinned, secret-free, and non-global. |
 | 10 | `npm run verify:visual-goldens` | The committed visual goldens are not older than the newest captured-surface change. |
 | 11 | `npm test` | The unit suite passes. |

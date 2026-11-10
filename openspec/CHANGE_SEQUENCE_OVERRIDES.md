@@ -1814,3 +1814,64 @@ published at `88d53d8`; session start head `88d53d8`.
 ### Sequence row (authoritative with CHANGE_SEQUENCE.md)
 
 | 304 | `304-modal-focus-and-keyboard-accessibility` | VERIFIED — closes F-008: a first-party `ModalFocus` helper makes all 12 `aria-modal` surfaces behave as modals (focus in, Tab contained with wrapping, background `inert`, opener restored, Escape converged on one dismiss path) with `death-screen` gaining the missing `aria-modal`; proven by 29 node tests of the real class plus 7 real-browser `document.activeElement` journeys; no rendering, golden, dependency or threshold change; 258 BLOCKED. |
+
+## 305-repository-cleanup-and-maintenance — owner-authorized repository-wide cleanup (2026-11-10)
+
+Owner instruction: `D:\Downloads\Repo Cleanup.txt` — an autonomous repository-wide
+maintenance campaign (freshness gate, audit, execution, freshness re-gate,
+integration and a final engineering report). Change **305** is the campaign's
+deliverable package; it is the next free number after the audit-authored
+298–304 sequence, whose last change (304) is VERIFIED.
+
+### Baseline (measured, not assumed)
+
+- Authoritative remote **origin** (`https://github.com/quantdale/clone-MC_v3.git`),
+  primary integration branch **`main`**, verified remote HEAD
+  `4323007f2e517ddeb5665f1f93faf295baf17fe1` after `git fetch --all --prune`;
+  local HEAD equal, clean tree, single linked worktree.
+- Freshness status: **CURRENT**. Pre-existing red gate on the remote tip: canonical
+  CI run `39806388101` failed the `gate` job at `npm audit --audit-level=high`
+  (`vite <=6.4.3` high). `e2e` and `perf-multiplayer` succeeded.
+
+### Eight measured defects, eight fixes
+
+1. **Red dependency-audit gate** → patch-level dev-toolchain move (`vite ^6.4.6`,
+   `vitest`/`@vitest/coverage-v8` `^4.1.12`), `npm ci`, `npm audit --audit-level=high`
+   exit 0 with only dev-only moderate `minimatch` rows (no upstream fix exists —
+   `typescript-eslint 8.72.2` is the newest release and is inside the advisory range).
+2. **16 dead exports** → removed (list in the package `design.md`).
+3. **`isWitherArmored` / `WITHER_MAX_SKULLS` / `WITHER_RECORD_VERSION`** → the
+   inline twins in `damageWither` and `Game.ts` now consume the exports instead of
+   restating them.
+4. **Six duplicate `promisifyRequest` copies + `awaitRequest`** → one exported
+   declaration in `WorldMetadataRepository`.
+5. **Duplicated `isFinitePosition` / `isValidRelativePath` / disconnected gamepad
+   frame** → one shared module each (`MovementGuards`, `PackManifestPaths`,
+   `InputCoordinator.emptyGamepad`).
+6. **`openspec/changes/256-production-readiness-hardening` byte-identical to its
+   archived copy** → live copy deleted, archived copy authoritative, C256 evidence
+   re-pointed.
+7. **`playwright.253.config.ts` with no consumer** → deleted.
+8. **`verify:orphans` printed its census and always exited 0** despite
+   `ONBOARDING.md` documenting an allow-list → rewritten as a real gate with a
+   reviewed allow-list, `--root` for testability, and exit 1 on any unexpected
+   orphan (both paths proven, and pinned by `tests/unit/OrphanGateEnforcement.test.ts`).
+
+Plus a record defect found during the audit: **`PARITY_MATRIX.md` covered only
+001–297 while `PROGRAM_STATE.json` records 298–304 VERIFIED** → C298–C304 rows
+added, scope/counts/coverage statement corrected to 001–304, C258 still
+`deferred`/BLOCKED.
+
+### Explicitly preserved
+
+- Both visual-golden sets (`linux-ci` + `win32-local`) per change 300 T13.
+- `NEXT_CAMPAIGN.md`, `FULL_AUDIT_REPORT.md`, the master plans, `prompt.txt` and
+  `deep review resolve.txt` — historical records cited by OpenSpec/PARITY_MATRIX.
+- Every branch, worktree and stash in existence at session start (including the two
+  `backup/pre-wipe-2026-10-14-*` remote branches that carry unmerged unfinished
+  work, and the 2026-08-28 stash whose patch no longer applies).
+- Change **258** stays **BLOCKED**; no headed GPU evidence is claimed anywhere.
+
+### Sequence row (authoritative with CHANGE_SEQUENCE.md)
+
+| 305 | `305-repository-cleanup-and-maintenance` | VERIFIED — repository-wide maintenance: patch-level toolchain move clears the only high-severity advisory and turns the remote `gate` job green; 16 unreferenced/contracted-free exports removed; three named constants become the single definition behind their live inline twins; six duplicated helpers collapse to one implementation each; the byte-identical duplicate 256 package and the consumer-less `playwright.253.config.ts` deleted; `verify:orphans` becomes a fail-closed gate with a reviewed allow-list; `PARITY_MATRIX.md` gains C298–C304 and corrected counts; no gameplay/rendering/persistence/threshold/golden change; 258 BLOCKED. |

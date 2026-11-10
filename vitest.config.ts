@@ -69,6 +69,10 @@ export default defineConfig({
       // 95.80/83.39 under Vitest 3's all-file model on the equivalent tree. The branch
       // counters are therefore not comparable; 88 is the measured Vitest 4 floor, with no
       // threshold relaxed for statements, functions, or lines.
+      // 2026-11-10 (change 305): the provider is now locked at 4.1.12 (a patch move that
+      // cleared the published high-severity dev-toolchain advisories). All four metrics were
+      // re-measured on that provider and still pass 91/88/94/93 unchanged; change 299's
+      // verify:deps gate keeps the installed provider equal to the lockfile.
       thresholds: {
         statements: 91,
         branches: 88,
