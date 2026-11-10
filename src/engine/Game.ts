@@ -325,7 +325,7 @@ import type { LootStack, RandomSource } from '../inventory/LootTable';
 import { createScriptedRandom, resolveMobGunpowderDrops } from '../simulation/GunpowderMobDrops';
 import { createDefaultBossRegistry } from '../simulation/BossFramework';
 import type { BossDefinition } from '../simulation/BossFramework';
-import { createWither, tickWither, damageWither, serializeWithers, deserializeWithers, witherExplosionWorld, WITHER_SPAWN_EXPLOSION_STRENGTH } from '../simulation/WitherBoss';
+import { createWither, tickWither, damageWither, serializeWithers, deserializeWithers, witherExplosionWorld, WITHER_MAX_SKULLS, WITHER_SPAWN_EXPLOSION_STRENGTH } from '../simulation/WitherBoss';
 import type { WitherState } from '../simulation/WitherBoss';
 import { projectWitherBossBars } from '../ui/WitherBossBarParity';
 import { detectWitherSummon, consumeSummonStructure } from '../simulation/WitherSummon';
@@ -402,8 +402,6 @@ const FURNACE_MAX_USE_DISTANCE = 8;
 const WITHER_DESPAWN_TICKS = 400;
 /** XP granted when a wither is defeated (252). */
 const WITHER_XP_REWARD = 50;
-/** Maximum wither skull projectiles live at once (252). */
-const WITHER_SKULL_CAP = 12;
 /** Ticks between wither melee attempts when in range (252). */
 const WITHER_MELEE_COOLDOWN_TICKS = 10;
 
@@ -4400,7 +4398,7 @@ export class Game {
           witherDirty = true;
         }
         for (const s of res.spawnedSkulls) {
-          if (this.witherSkulls.length >= WITHER_SKULL_CAP) this.witherSkulls.shift();
+          if (this.witherSkulls.length >= WITHER_MAX_SKULLS) this.witherSkulls.shift();
           this.witherSkulls.push(createWitherSkull(s.x, s.y, s.z, s.vx, s.vy, s.vz, s.kind, w.id));
         }
         if (state.bossState.status === 'DEFEATED' && !state.hasDroppedReward) {

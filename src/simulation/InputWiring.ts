@@ -38,7 +38,7 @@ import {
   type GamepadAxisPair,
 } from './GamepadFramework';
 import type { SettingsStore } from './SettingsFramework';
-import type { DeviceFrame } from './InputCoordinator';
+import { emptyGamepad, type DeviceFrame } from './InputCoordinator';
 
 /**
  * Resolve held keyboard codes to actions via the 207 bindings. Unbound codes
@@ -104,16 +104,6 @@ export interface RawGamepadSnapshot {
   readonly axes: readonly number[];
 }
 
-function disconnectedGamepadFrame(): DeviceFrame['gamepad'] {
-  return {
-    connected: false,
-    actions: [],
-    move: { x: 0, y: 0 },
-    look: { x: 0, y: 0 },
-    uiNav: { up: false, down: false, left: false, right: false, confirm: false, cancel: false },
-  };
-}
-
 /**
  * Resolve the polled gamepads into the coordinator's gamepad device field using
  * 209's functions (movement = left stick, look = right stick, actions/uiNav =
@@ -125,7 +115,7 @@ export function gamepadFrame(
 ): DeviceFrame['gamepad'] {
   const pad = pads?.find((candidate) => candidate?.connected === true);
   if (!pad) {
-    return disconnectedGamepadFrame();
+    return emptyGamepad();
   }
   const buttons = pad.buttons.map((button) => button?.pressed === true);
   const axis = (index: number): number => {

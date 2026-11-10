@@ -15,6 +15,7 @@ import {
 import {
   browserIdbFactory,
   ensureWorldStores,
+  promisifyRequest,
   type IdbDatabaseLike,
   type IdbFactoryLike,
   type IdbObjectStoreLike,
@@ -24,13 +25,6 @@ import {
   type PlayerStateRecord,
 } from './PlayerStateRecord';
 
-/** Promise wrapper around an IndexedDB request's success/error events. */
-function promisifyRequest(req: { onsuccess: ((e: unknown) => void) | null; onerror: ((e: unknown) => void) | null; result: unknown; error: unknown }): Promise<unknown> {
-  return new Promise((resolve, reject) => {
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error instanceof Error ? req.error : new Error('IndexedDB request failed'));
-  });
-}
 
 /**
  * Typed boundary for player state, persisted in the world IndexedDB database. The factory is

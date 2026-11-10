@@ -227,11 +227,6 @@ function withVertexShading(
   };
 }
 
-/** Pack four AO levels into an 8-bit pattern id. */
-export function aoPatternId(ao: readonly AOLevel[]): number {
-  return ao[0]! | (ao[1]! << 2) | (ao[2]! << 4) | (ao[3]! << 6);
-}
-
 /**
  * The complete merge signature of the visible cell at grid `(v, u)` of a slice:
  * base face key plus the optional merge classes. Light (070) and AO (071) are

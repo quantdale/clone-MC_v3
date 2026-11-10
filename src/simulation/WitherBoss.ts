@@ -380,10 +380,9 @@ export function damageWither(
   if (state.bossState.status === 'SPAWNING' || state.invulnerableTicks > 0) {
     return { state, phaseChanged: false, defeated: false, damageApplied: 0 };
   }
-  // Armored projectile immunity
-  const isArmored = state.bossState.phaseIndex === 1 || (state.bossState.health / definition.maxHealth) <= WITHER_ARMORED_THRESHOLD;
-  // Use phaseIndex computed, but also threshold check for edge where heal just crossed
-  if (isArmored && isProjectile) {
+  // Armored projectile immunity: one predicate owns both the phase and the
+  // health-threshold rule (the threshold half covers a heal that just crossed it).
+  if (isWitherArmored(state, definition) && isProjectile) {
     return { state, phaseChanged: false, defeated: false, damageApplied: 0 };
   }
   const result = damageBoss(state.bossState, definition, amount);
@@ -420,7 +419,7 @@ export function bossBarProgress(state: WitherState): number {
 }
 
 export interface SerializedWither {
-  readonly v: 1;
+  readonly v: typeof WITHER_RECORD_VERSION;
   readonly id: number;
   readonly boss: ReturnType<typeof serializeBoss>;
   readonly x: number;
@@ -438,7 +437,7 @@ export interface SerializedWither {
 
 export function serializeWither(state: WitherState): SerializedWither {
   return {
-    v: 1,
+    v: WITHER_RECORD_VERSION,
     id: state.id,
     boss: serializeBoss(state.bossState),
     x: state.x, y: state.y, z: state.z,

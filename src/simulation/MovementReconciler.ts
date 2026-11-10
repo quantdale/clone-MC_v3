@@ -9,11 +9,13 @@
  * predicted origin {0,0,0}, confirmedTick 0, and empty buffer. No render interpolation,
  * no IO, no DOM; fully unit-testable headlessly.
  */
-export interface Position {
-  readonly x: number;
-  readonly y: number;
-  readonly z: number;
-}
+
+import { isFinitePosition, type Position } from './MovementGuards';
+
+/** The shared position shape (see `MovementGuards`). Re-exported so every existing
+ * import site (`MovementAuthority`/`MovementReconciler` consumers and tests) keeps
+ * resolving the type from this module. */
+export type { Position };
 
 export interface PendingIntent {
   readonly tick: number;
@@ -25,18 +27,6 @@ export interface MovementReconcilerOptions {
   readonly maxPending?: number;
 }
 
-function isFinitePosition(value: unknown): value is Position {
-  if (typeof value !== 'object' || value === null) return false;
-  const p = value as Record<string, unknown>;
-  return (
-    typeof p.x === 'number' &&
-    Number.isFinite(p.x) &&
-    typeof p.y === 'number' &&
-    Number.isFinite(p.y) &&
-    typeof p.z === 'number' &&
-    Number.isFinite(p.z)
-  );
-}
 
 function validateTick(tick: number, field: string): void {
   if (!Number.isSafeInteger(tick) || tick < 0) {

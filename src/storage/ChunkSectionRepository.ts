@@ -17,11 +17,11 @@ import {
 import {
   browserIdbFactory,
   ensureWorldStores,
+  promisifyRequest,
   type IdbDatabaseLike,
   type IdbFactoryLike,
   type IdbObjectStoreLike,
   type IdbOpenRequestLike,
-  type IdbRequestLike,
   type IdbTransactionLike,
 } from './WorldMetadataRepository';
 import type { SerializedChunkColumn } from '../world/ChunkColumn';
@@ -87,13 +87,6 @@ export function validateSerializedChunkColumn(input: unknown): SerializedChunkCo
   };
 }
 
-/** Promise wrapper around an IndexedDB request's success/error events. */
-function promisifyRequest(req: IdbRequestLike): Promise<unknown> {
-  return new Promise((resolve, reject) => {
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error instanceof Error ? req.error : new Error('IndexedDB request failed'));
-  });
-}
 
 /** Strip the `key`/`worldId` surface fields, returning a plain `SerializedChunkColumn`. */
 function toPayload(record: ChunkColumnRecord): SerializedChunkColumn {

@@ -22,6 +22,7 @@ import {
   tryParseResourceId,
   type ResourceId,
 } from './ResourceId';
+import { isValidRelativePath } from './PackManifestPaths';
 
 export type DataKind = 'recipe' | 'loot_table' | 'tag' | 'worldgen' | 'advancement';
 
@@ -47,12 +48,6 @@ function isDataKind(value: unknown): value is DataKind {
   return typeof value === 'string' && DATA_KINDS.includes(value);
 }
 
-function isValidRelativePath(path: unknown): path is string {
-  if (typeof path !== 'string' || path.length === 0) return false;
-  if (path.startsWith('/')) return false;
-  const segments = path.split('/');
-  return segments.every((s) => s.length > 0 && s !== '..' && s !== '.');
-}
 
 function toResourceId(value: unknown, what: string): ResourceId {
   if (typeof value === 'string') {

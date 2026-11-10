@@ -20,7 +20,6 @@ import {
   clampSignal,
   getIndirectPower,
   offsetInDirection,
-  MIN_SIGNAL_STRENGTH,
   type RedstonePowerSource,
 } from './RedstoneSignal';
 
@@ -156,5 +155,3 @@ export const DEFAULT_WIRE_CONNECTIONS: WireConnections = Object.freeze({
   west: 'none',
 } as const);
 
-/** Re-exported for callers projecting an unpowered wire without importing 154 directly. */
-export const UNPOWERED_WIRE_POWER = MIN_SIGNAL_STRENGTH;

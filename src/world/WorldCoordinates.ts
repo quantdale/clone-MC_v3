@@ -107,12 +107,6 @@ export function worldYToSection(worldY: number): number {
 export function worldYToSectionLocal(worldY: number): number {
   return localCoord(worldY);
 }
-export function worldXToSection(worldX: number): number {
-  return sectionIndex(worldX);
-}
-export function worldZToSection(worldZ: number): number {
-  return sectionIndex(worldZ);
-}
 
 /** Compress a chunk coordinate triple into a single string key (slab identity). */
 export function chunkKey(cx: number, cy: number, cz: number): string {

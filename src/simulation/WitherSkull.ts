@@ -10,7 +10,6 @@
  */
 import { stepProjectile, type ProjectileState, type ProjectileTarget, type ProjectileOptions } from './ProjectileCore';
 import type { CollisionResolver, ShapeWorld } from '../world/CollisionResolver';
-import { computeExplosion, explosionEntityDamage, type ExplosionWorld } from './ExplosionCore';
 
 export const WITHER_SKULL_DAMAGE = 8;
 export const WITHER_BLUE_SKULL_DAMAGE = 12;
@@ -130,51 +129,3 @@ export function scaledWitherDuration(kind: WitherSkullKind, difficulty: Difficul
   }
 }
 
-/** Protected blocks never destroyed by wither explosions. */
-const PROTECTED_IDS = new Set<number>([
-  6, // bedrock
-  55, // nether_portal
-]);
-
-export function isProtectedBlock(id: number): boolean {
-  return PROTECTED_IDS.has(id);
-}
-
-/**
- * Compute skull impact explosion via ExplosionCore with wither-specific destroyable filter
- * (protected blocks excluded) and caller's resistance/drop callbacks.
- * Bounded: ExplosionCore already sorts results; caller limits per skull externally.
- */
-export function computeSkullExplosion<S>(
-  center: readonly [number, number, number],
-  kind: WitherSkullKind,
-  world: ExplosionWorld<S>,
-): ReturnType<typeof computeExplosion<S>> {
-  const strength = skullExplosionStrength(kind);
-  // Wrap destroyable to enforce protected
-  const wrapped: ExplosionWorld<S> = {
-    getBlockState: world.getBlockState,
-    isAir: world.isAir,
-    isDestroyable: (s) => world.isDestroyable(s) && !isProtectedWrapped(s, world),
-    blastResistance: world.blastResistance,
-    dropFor: world.dropFor,
-  };
-  return computeExplosion({ center, strength, world: wrapped });
-}
-
-function isProtectedWrapped<S>(state: S, world: ExplosionWorld<S>): boolean {
-  // We cannot know numeric id from generic state; rely on blastResistance >= 1000 as sentinel
-  // plus explicit protected check if caller provides numeric ids via a branded world.
-  // For generic path, check resistance: bedrock 3600000 barrier? But we bounded via destroyable.
-  // Best effort: if resistance >= 6000 treat as protected.
-  const r = world.blastResistance(state);
-  return r >= 10000 || (typeof (world as unknown as { isProtected? : (s:S)=>boolean }).isProtected === 'function' && (world as unknown as { isProtected:(s:S)=>boolean }).isProtected(state));
-}
-
-export function skullExplosionEntityDamage(
-  center: readonly [number, number, number],
-  kind: WitherSkullKind,
-  positions: ReadonlyArray<readonly [number, number, number]>,
-): ReturnType<typeof explosionEntityDamage> {
-  return explosionEntityDamage(center, skullExplosionStrength(kind), positions);
-}

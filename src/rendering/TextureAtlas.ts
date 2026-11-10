@@ -12,9 +12,6 @@ import { PRNG } from '../math/PRNG';
 
 import { TILE_SIZE, TILES_PER_ROW, ATLAS_ROWS, ATLAS_WIDTH, ATLAS_HEIGHT } from './AtlasGrid';
 export { TILE_SIZE, TILES_PER_ROW, ATLAS_ROWS, ATLAS_WIDTH, ATLAS_HEIGHT };
-/** Backwards-compatible alias for the atlas width. */
-export const ATLAS_SIZE = ATLAS_WIDTH;
-
 /** Tile atlas indices used by the block registry. */
 export const TILE_INDEX = {
   air: 0,

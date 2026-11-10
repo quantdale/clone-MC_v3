@@ -38,8 +38,6 @@ function assertNonNegativeNumber(value: number, name: string): void {
 /** Streaming queues whose depth is observable. */
 export type QueueKind = 'generate' | 'mesh' | 'upload' | 'unload';
 
-export const QUEUE_KINDS: readonly QueueKind[] = ['generate', 'mesh', 'upload', 'unload'];
-
 /** Structural subset of Three.js `renderer.info` the monitor consumes. */
 export interface RendererInfoSample {
   render: { calls: number; triangles: number };

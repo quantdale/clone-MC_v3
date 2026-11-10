@@ -72,8 +72,14 @@ export interface IdbFactoryLike {
   open(name: string, version?: number): IdbOpenRequestLike;
 }
 
-/** Promise wrapper around an IndexedDB request's success/error events. */
-function promisifyRequest(req: IdbRequestLike): Promise<unknown> {
+/** Promise wrapper around an IndexedDB request's success/error events.
+ *
+ * The single implementation for every world-database repository: the request
+ * rejection semantics (`req.error` when it is an `Error`, otherwise a named
+ * fallback) used to be duplicated verbatim in five sibling repositories plus
+ * the persistence facade, so a hardening fix had to be applied six times.
+ */
+export function promisifyRequest(req: IdbRequestLike): Promise<unknown> {
   return new Promise((resolve, reject) => {
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error instanceof Error ? req.error : new Error('IndexedDB request failed'));

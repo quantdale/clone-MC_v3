@@ -32,7 +32,7 @@ import {
   type StorageFailure,
   type StorageStatus,
 } from './StorageHealth';
-import { WorldMetadataRepository, type IdbFactoryLike, type IdbRequestLike } from './WorldMetadataRepository';
+import { WorldMetadataRepository, promisifyRequest, type IdbFactoryLike } from './WorldMetadataRepository';
 import type { WorldMetadata } from './WorldMetadata';
 import {
   WORLD_METADATA_STORE,
@@ -132,13 +132,6 @@ function validateEntitySnapshot(input: unknown, label: 'itementities' | 'xporbs'
     throw new Error(`GamePersistence: ${label} payload must be an array`);
   }
   return (input as unknown[]).map((e) => validateSerializedEntity(e));
-}
-/** Resolve a request's result or error. Mirrors WorldMetadataRepository's internal helper. */
-function awaitRequest(req: IdbRequestLike): Promise<unknown> {
-  return new Promise((resolve, reject) => {
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error instanceof Error ? req.error : new Error('IndexedDB request failed'));
-  });
 }
 export const CURRENT_WORLDGEN_VERSION = WORLDGEN_MATRIX_VERSION;
 
@@ -1093,53 +1086,53 @@ export class GamePersistence implements WorldEditDurability {
 
         // 1. Normal metadata record.
         if (snapshot!.metadata !== null) {
-          await awaitRequest(metaStore.delete(worldId));
+          await promisifyRequest(metaStore.delete(worldId));
         }
         // 2. Raw Wither record (separate key in the same metadata store).
-        await awaitRequest(metaStore.delete(`__wither__:${worldId}`));
+        await promisifyRequest(metaStore.delete(`__wither__:${worldId}`));
         // 2b. Raw gamerule record (261; separate key in the same metadata store).
-        await awaitRequest(metaStore.delete(`__gamerules__:${worldId}`));
+        await promisifyRequest(metaStore.delete(`__gamerules__:${worldId}`));
         // 2c. Raw recipe-book record (262; separate key in the same metadata store).
-        await awaitRequest(metaStore.delete(`__recipebook__:${worldId}`));
+        await promisifyRequest(metaStore.delete(`__recipebook__:${worldId}`));
         // 2d. Raw advancement record (263; separate key in the same metadata store).
-        await awaitRequest(metaStore.delete(`__advancements__:${worldId}`));
+        await promisifyRequest(metaStore.delete(`__advancements__:${worldId}`));
         // 2e. Raw item-entity + XP-orb records (264; separate keys in the same metadata store).
-        await awaitRequest(metaStore.delete(`__itementities__:${worldId}`));
-        await awaitRequest(metaStore.delete(`__xporbs__:${worldId}`));
+        await promisifyRequest(metaStore.delete(`__itementities__:${worldId}`));
+        await promisifyRequest(metaStore.delete(`__xporbs__:${worldId}`));
         // 2f. Raw game-mode record (265; separate key in the same metadata store).
-        await awaitRequest(metaStore.delete(`__gamemode__:${worldId}`));
+        await promisifyRequest(metaStore.delete(`__gamemode__:${worldId}`));
         // 2g. Raw hardcore + difficulty records (267; separate keys in the same metadata store).
-        await awaitRequest(metaStore.delete(`__hardcore__:${worldId}`));
-        await awaitRequest(metaStore.delete(`__difficulty__:${worldId}`));
+        await promisifyRequest(metaStore.delete(`__hardcore__:${worldId}`));
+        await promisifyRequest(metaStore.delete(`__difficulty__:${worldId}`));
         // 2h. Raw statistics record (271; separate key in the same metadata store).
-        await awaitRequest(metaStore.delete(`__statistics__:${worldId}`));
+        await promisifyRequest(metaStore.delete(`__statistics__:${worldId}`));
         // 2i. Raw sleep record (274; separate key in the same metadata store).
-        await awaitRequest(metaStore.delete(`__sleep__:${worldId}`));
+        await promisifyRequest(metaStore.delete(`__sleep__:${worldId}`));
         // 2j. Raw weather record (275; separate key in the same metadata store).
-        await awaitRequest(metaStore.delete(`__weather__:${worldId}`));
+        await promisifyRequest(metaStore.delete(`__weather__:${worldId}`));
         // 2k. Raw trading record (278; separate key in the same metadata store).
-        await awaitRequest(metaStore.delete(`__trades__:${worldId}`));
+        await promisifyRequest(metaStore.delete(`__trades__:${worldId}`));
         // 2l. Raw raid record (283; separate key in the same metadata store).
-        await awaitRequest(metaStore.delete(`__raid__:${worldId}`));
+        await promisifyRequest(metaStore.delete(`__raid__:${worldId}`));
         // 3. Every chunk column for this world. Key shape: `${worldId}|${cx}|${cz}`.
         for (const column of snapshot!.columns) {
-          await awaitRequest(csStore.delete(worldChunkKey(worldId, column.chunkX, column.chunkZ)));
+          await promisifyRequest(csStore.delete(worldChunkKey(worldId, column.chunkX, column.chunkZ)));
         }
         // 4. Every chunk-edit group for this world.
         for (const record of snapshot!.edits) {
-          await awaitRequest(ceStore.delete(worldChunkEditKey(worldId, record.chunkX, record.chunkY, record.chunkZ)));
+          await promisifyRequest(ceStore.delete(worldChunkEditKey(worldId, record.chunkX, record.chunkY, record.chunkZ)));
         }
         // 5. Player state.
         if (snapshot!.playerState !== null) {
-          await awaitRequest(psStore.delete(worldId));
+          await promisifyRequest(psStore.delete(worldId));
         }
         // 6. Block-entity chunk groups.
         for (const record of snapshot!.blockEntityChunks) {
-          await awaitRequest(beStore.delete(worldChunkKey(worldId, record.chunkX, record.chunkZ)));
+          await promisifyRequest(beStore.delete(worldChunkKey(worldId, record.chunkX, record.chunkZ)));
         }
         // 7. Entity chunk groups.
         for (const record of snapshot!.entityChunks) {
-          await awaitRequest(enStore.delete(worldChunkKey(worldId, record.chunkX, record.chunkZ)));
+          await promisifyRequest(enStore.delete(worldChunkKey(worldId, record.chunkX, record.chunkZ)));
         }
       });
     } catch (e) {

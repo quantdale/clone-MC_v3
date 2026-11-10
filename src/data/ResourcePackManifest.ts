@@ -21,6 +21,7 @@ import {
   tryParseResourceId,
   type ResourceId,
 } from './ResourceId';
+import { isValidRelativePath } from './PackManifestPaths';
 
 export type AssetType = 'texture' | 'model' | 'sound' | 'metadata';
 
@@ -48,12 +49,6 @@ function isAssetType(value: unknown): value is AssetType {
   return typeof value === 'string' && ASSET_TYPES.includes(value);
 }
 
-function isValidRelativePath(path: unknown): path is string {
-  if (typeof path !== 'string' || path.length === 0) return false;
-  if (path.startsWith('/')) return false;
-  const segments = path.split('/');
-  return segments.every((s) => s.length > 0 && s !== '..' && s !== '.');
-}
 
 function toResourceId(value: unknown, what: string): ResourceId {
   if (typeof value === 'string') {

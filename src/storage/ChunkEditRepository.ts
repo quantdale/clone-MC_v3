@@ -17,6 +17,7 @@ import {
 import {
   browserIdbFactory,
   ensureWorldStores,
+  promisifyRequest,
   type IdbDatabaseLike,
   type IdbFactoryLike,
   type IdbObjectStoreLike,
@@ -28,13 +29,6 @@ function chunkKey(worldId: string, chunkX: number, chunkY: number, chunkZ: numbe
   return `${worldId}|${chunkX}|${chunkY}|${chunkZ}`;
 }
 
-/** Promise wrapper around an IndexedDB request's success/error events. */
-function promisifyRequest(req: { onsuccess: ((e: unknown) => void) | null; onerror: ((e: unknown) => void) | null; result: unknown; error: unknown }): Promise<unknown> {
-  return new Promise((resolve, reject) => {
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error instanceof Error ? req.error : new Error('IndexedDB request failed'));
-  });
-}
 
 /**
  * Typed boundary for persisting and reloading per-chunk sparse edit records. The factory is

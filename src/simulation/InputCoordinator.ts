@@ -211,7 +211,12 @@ function emptyMouse(): DeviceFrame['mouse'] {
   return { look: { x: 0, y: 0 }, breakHeld: false, useHeld: false, pickHeld: false };
 }
 
-function emptyGamepad(): DeviceFrame['gamepad'] {
+/**
+ * The disconnected gamepad device frame: no held actions, zeroed move/look axes and
+ * all-false uiNav. Exported because the wiring's device resolution must produce the
+ * exact same shape when no pad is connected (it used a duplicated copy before).
+ */
+export function emptyGamepad(): DeviceFrame['gamepad'] {
   return {
     connected: false,
     actions: [],

@@ -133,19 +133,6 @@ export const CHUNK_LIFECYCLE_ORDER: readonly ChunkLifecycleStage[] = [
   ChunkLifecycleStage.Evicting,
 ];
 
-const CHUNK_LIFECYCLE_NAMES: Record<ChunkLifecycleStage, string> = {
-  [ChunkLifecycleStage.Absent]: 'absent',
-  [ChunkLifecycleStage.Allocated]: 'allocated',
-  [ChunkLifecycleStage.Generated]: 'generated',
-  [ChunkLifecycleStage.Features]: 'features',
-  [ChunkLifecycleStage.Lighted]: 'lighted',
-  [ChunkLifecycleStage.MeshQueued]: 'mesh_queued',
-  [ChunkLifecycleStage.MeshReadyCpu]: 'mesh_ready_cpu',
-  [ChunkLifecycleStage.UploadQueued]: 'upload_queued',
-  [ChunkLifecycleStage.ActiveGpu]: 'active_gpu',
-  [ChunkLifecycleStage.Evicting]: 'evicting',
-};
-
 /** Position of `s` in the ascending pipeline order (0 for `Absent`). */
 export function chunkLifecycleOrdinal(s: ChunkLifecycleStage): number {
   return CHUNK_LIFECYCLE_ORDER.indexOf(s);
@@ -154,11 +141,6 @@ export function chunkLifecycleOrdinal(s: ChunkLifecycleStage): number {
 /** True when `s` has reached or passed `min` in the pipeline order. */
 export function isChunkLifecycleAtLeast(s: ChunkLifecycleStage, min: ChunkLifecycleStage): boolean {
   return chunkLifecycleOrdinal(s) >= chunkLifecycleOrdinal(min);
-}
-
-/** Stable, non-empty human-readable name for a pipeline stage. */
-export function chunkLifecycleName(s: ChunkLifecycleStage): string {
-  return CHUNK_LIFECYCLE_NAMES[s];
 }
 
 /**
