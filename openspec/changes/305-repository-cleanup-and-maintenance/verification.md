@@ -10,7 +10,7 @@ Published head: `e9887f2afc8b6d353e15c90577a76479249242f4` (origin/main verified
 
 | Requirement | Evidence | Status |
 |---|---|---|
-| R-1 installed toolchain carries no high-severity advisory | `npm audit --json` before: `vite` severity=high range `<=6.4.3`, `@vitest/mocker`/`vitest`/`@vitest/coverage-v8` moderate. After the patch move: `npm audit --audit-level=high` exit 0, `npm audit --omit=dev` exit 0, 7 moderate dev-only rows remain. `npm run verify:deps` 171 packages verified; installed vite 6.4.6 / vitest 4.1.12 / @vitest/coverage-v8 4.1.12 == locked. Unit 486 files 5830 passed + 1 skipped; coverage 91.84/88.60/94.68/93.19 vs 91/88/94/93. | VERIFIED (commands table) |
+| R-1 installed toolchain carries no high-severity advisory | `npm audit --json` before: `vite` severity=high range `<=6.4.3`, `@vitest/mocker`/`vitest`/`@vitest/coverage-v8` moderate. After the patch move: `npm audit --audit-level=high` exit 0, `npm audit --omit=dev` exit 0, 7 moderate dev-only rows remain. `npm run verify:deps` 171 packages verified; installed vite 6.4.6 / vitest 4.1.12 / @vitest/coverage-v8 4.1.12 == locked. Unit 486 files 5830 passed + 1 skipped; coverage 91.92/88.65/94.90/93.27 vs 91/88/94/93. | VERIFIED (commands table) |
 | R-2 unreferenced non-contracted exports removed | Census before: 3122 declarations / 34 unreferenced. After: 3114 / 20. Removed: `aoPatternId`, `translucentSortKeys`, `partitionQuadsByStream`, `QUEUE_KINDS`, `ATLAS_SIZE`, `UNPOWERED_WIRE_POWER`, `chunkLifecycleName` + `CHUNK_LIFECYCLE_NAMES`, `worldXToSection`, `worldZToSection`, `computeSkullExplosion`, `isProtectedBlock`, `skullExplosionEntityDamage` + `isProtectedWrapped`, `LAYER_TO_STREAM`, `streamForRenderLayer`. `git grep` for each: 0 hits in `src`/`tests`/`scripts`. `npm run typecheck` exit 0. | VERIFIED (commands table) |
 | R-3 named constant with a live inline twin is authoritative | `Game.ts` `WITHER_SKULL_CAP` deleted; cap expression now `WITHER_MAX_SKULLS`. `SerializedWither.v: typeof WITHER_RECORD_VERSION` and `serializeWither` writes `WITHER_RECORD_VERSION` (value stays `1`). `damageWither` calls `isWitherArmored`. WitherBoss/WitherSkull/WitherProductionPath/WitherSummon/WitherBossBarParity suites pass. | VERIFIED (commands table) |
 | R-4 duplicated helpers collapse to one implementation | `promisifyRequest`: 1 declaration (exported from `WorldMetadataRepository`), imported by 5 repositories + `GamePersistence`; `awaitRequest` 0. `isFinitePosition`: 1 declaration in `src/simulation/MovementGuards.ts`, imported by both movement modules which re-export `Position`; movement suites pass. `isValidRelativePath`: 1 declaration in `src/data/PackManifestPaths.ts`, imported by both manifests; manifest suites pass. Empty gamepad: 1 exported factory in `InputCoordinator`, imported by `InputWiring`; input suites pass. | VERIFIED (commands table) |
@@ -86,6 +86,35 @@ itself the post-publication confirmation step being executed by this commit:
     and the two tracked config/docs records; session logs live in the workspace
     artifact directory, not in the repository.
 No required test is skipped and no mandatory command is unavailable.
+
+## Canonical CI evidence
+
+The fixed code tip `e9887f2afc8b6d353e15c90577a76479249242f4` was pushed normally to
+`origin/main`, and workflow run **42789057992** (triggered by that push) finished
+**success**:
+
+| Job | Conclusion |
+|---|---|
+| `gate` | **success** — every step green, including the two audit steps that were the failing ones in run `39806388101`: `Production dependency audit (block high/critical)` and `Full dependency audit (block high/critical)` |
+| `perf-multiplayer` | **success** — the isolated normative-budget job |
+| `e2e` | **success** — the full browser suite and the 60-cell visual matrix |
+
+That clean step list is the direct proof of the campaign's headline fix: the same
+audit command that failed on the session-start tip now passes on the same
+repository, because the locked `vite` moved out of its high-severity advisory range.
+
+Publication trail (normal, history-preserving pushes; no force, no history rewrite):
+
+| SHA | Content |
+|---|---|
+| `b8afb449` | toolchain move (vite 6.4.6 / vitest + coverage 4.1.12) |
+| `87f67560` | dead-export removal + helper consolidation |
+| `ac1e7848` | fail-closed orphan gate + duplicate/obsolete artifact deletion |
+| `80137be4` | change 305 package + parity record + gate catalogue |
+| `e9887f2a` | measured state + pixel-neutral golden acknowledgement |
+| `2c005d55` | published-head/exception record + guard message fix (docs only) |
+
+`git log --branches --not --remotes` is empty at completion, so nothing is unpublished.
 
 ## Final decision
 
