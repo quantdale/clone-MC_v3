@@ -15,8 +15,8 @@
   "advancementAllowed": true,
   "exceptionUsed": true,
   "sessionStartHead": "4323007f2e517ddeb5665f1f93faf295baf17fe1",
-  "localHead": "80137be45663449d09d0b7cec240b888d41338d8",
-  "publishedHead": "e9887f2afc8b6d353e15c90577a76479249242f4",
+  "localHead": "6b1bbdb0910385e059182d36c3fdd2e7e8e35796",
+  "publishedHead": "6b1bbdb0910385e059182d36c3fdd2e7e8e35796",
   "nextExactAction": "Change 305 is VERIFIED and published at e9887f2afc8b6d353e15c90577a76479249242f4; CI run 42789057992 was triggered on that push. Next exact action: author a spec-first package for 306 (fresh repository re-audit and further code-quality improvement) and execute it. Highest-value candidates in order: (1) src/engine/Game.ts remains a ~7.5k-line composition root with ~300 members - extract coherent seams (renderer/presentation sync, raid wiring, potion wiring, UI modal/session dispatch) behind small modules and replace the remaining source-text guard suites with behavioural tests; (2) ~102 hardcoded waitForTimeout calls across 34 e2e specs, including 24 pagehide-to-reload sleeps that can use the durable flush signal; (3) the dev-only moderate minimatch advisories stay tracked until an typescript-eslint release above 8.72.2 exists. 258 stays BLOCKED - never fabricate headed GPU evidence.",
   "lastCompletedTask": "305 complete: patch-level toolchain move clears the only high-severity advisory (vite 6.4.6 / vitest 4.1.12, npm ci, verify:deps 171 packages, npm audit high+prod exit 0); 16 unreferenced exports removed; WITHER_MAX_SKULLS/WITHER_RECORD_VERSION/isWitherArmored made authoritative behind their live inline twins; six duplicated helpers collapsed (promisifyRequest, isFinitePosition, isValidRelativePath, emptyGamepad); duplicate live 256 package and consumer-less playwright.253 config deleted; verify:orphans rewritten as a fail-closed gate with a reviewed allow-list and a proven failure path; PARITY_MATRIX extended to C304 with corrected counts; ONBOARDING, vitest.config, state and the file-audit manifest (3087 rows) synced; full gate green (unit 486/5830+1, coverage 91.92/88.65/94.90/93.27, E2E 144/144, visual matrix 60/60, perf:multiplayer 616.4 tps / 1946.8 ms); published to origin/main.",
   "blockers": [
@@ -2895,5 +2895,5 @@
     ]
   },
   "criticalRiskOpen": false,
-  "publishedTip": "e9887f2afc8b6d353e15c90577a76479249242f4"
+  "publishedTip": "6b1bbdb0910385e059182d36c3fdd2e7e8e35796"
 }
