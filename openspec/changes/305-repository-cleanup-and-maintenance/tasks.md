@@ -57,8 +57,10 @@
   `partitionQuadsByStream`, and the live meshing path resolves streams through
   `renderStream`/`MESH_STREAM_NAMES` instead).
 - [x] **T3.10.** Run `npm run typecheck`, `npm run lint` and the affected unit suites;
-  confirm no reference to any removed identifier remains in `src/`, `tests/` or
-  `scripts/`.
+  confirm no removed identifier remains as code in any `.ts`/`.mjs` file under
+  `src/`, `tests/` or `scripts/` (prose that *names* a removed symbol — the
+  visual-golden acknowledgement and this package's own design/verification files —
+  is the record of the deletion, not a reference to it).
 
 ## T4 — One definition per duplicated value
 

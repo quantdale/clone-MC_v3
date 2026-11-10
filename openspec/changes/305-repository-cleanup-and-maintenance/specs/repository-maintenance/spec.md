@@ -89,7 +89,10 @@ them MUST NOT change any executed statement, and `tsc --noEmit` MUST stay clean.
 #### Scenario: the dead export set is gone
 - **GIVEN** the post-change tree
 - **WHEN** the whole-repository census is re-run over `src/`, `tests/` and `scripts/`
-- **THEN** none of the removed identifiers occurs anywhere
+- **THEN** no removed identifier occurs as code (declaration or reference) in any
+  `.ts`/`.mjs` file under those roots — prose records such as the visual-golden
+  acknowledgement and the change's own design/verification files may still *name*
+  the removed symbols, because naming a deletion is its evidence
 - **AND** `npm run typecheck` exits 0
 
 #### Scenario: contracted symbols are preserved
