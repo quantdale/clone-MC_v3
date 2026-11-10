@@ -154,7 +154,7 @@
   commits overlap the changes, and that the candidate is based on the current tip.
 - [x] **T10.4.** Review the complete diff for unintended files, secrets or generated
   artifacts; commit in coherent batches and push normally to `origin/main`.
-- [ ] **T10.5.** Verify the remote head after publication and record
+- [x] **T10.5.** Verify the remote head after publication and record
   `published_head`.
 - [ ] **T10.6.** Confirm campaign temp resources are removed and the pre-existing
   branch/worktree/stash inventory is unchanged, then reconcile `verification.md` and

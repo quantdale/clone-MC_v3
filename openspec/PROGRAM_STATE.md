@@ -492,11 +492,11 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **305-repository-cleanup-and-maintenance — VERIFYING (owner-authorized repository-wide cleanup campaign); 258 BLOCKED, 259–305 VERIFIED-or-in-flight**
+- Active implementation change: **305-repository-cleanup-and-maintenance — VERIFIED (97.87%; documented non-blocking exception for the post-publication reconciliation task); 258 BLOCKED, 259–305 VERIFIED**
 - Prior active implementation change: **283-live-raid-persistence — VERIFIED (13/13); 258 stays BLOCKED, 259–283 stay VERIFIED**
 - Prior prior active implementation change: **282-live-raid-feedback — VERIFIED (10/10); 258 stays BLOCKED, 259–282 stay VERIFIED**
 - Next change: **306 — fresh repository re-audit for remaining defects and further code-quality improvement; 258 stays BLOCKED**
-- 240 advancement allowed: **no (active change not yet verified)**
+- 240 advancement allowed: **yes**
 
 - Program: **ACTIVE — Change 284-live-raid-wave-spawning VERIFIED 12/12 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–284 VERIFIED**
 - 284 checkpoint: **VERIFIED 12/12 — implementation + gates complete; enchanting flake + visual SwiftShader drift documented non-blocking; 258 BLOCKED; 285 not started**

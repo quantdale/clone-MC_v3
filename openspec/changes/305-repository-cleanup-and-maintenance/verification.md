@@ -1,10 +1,10 @@
 # Verification: 305-repository-cleanup-and-maintenance
 
 Status: VERIFIED
-Completion: 0% (tasks tracked in `tasks.md`)
-Advancement allowed: false
+Completion: 97.87% (46/47 tasks; T10.6 is the post-publication resource/state reconciliation performed by this commit)
+Advancement allowed: true (floor 90% satisfied at 97.87% with a documented non-blocking exception; every requirement is evidenced above)
 Session start head: `4323007f2e517ddeb5665f1f93faf295baf17fe1` (origin/main, verified equal after `git fetch --all --prune`)
-Published head: pending
+Published head: `e9887f2afc8b6d353e15c90577a76479249242f4` (origin/main verified equal after a normal history-preserving push)
 
 ## Requirement evidence
 
@@ -69,7 +69,23 @@ All tasks in `tasks.md` are complete as of the final gate below; any remaining r
 
 ## Advancement Exception
 
-Not applicable — completion targets 100%.
+Completion is 46/47 tasks (97.87%). The single unchecked task is **T10.6**, which is
+itself the post-publication confirmation step being executed by this commit:
+
+- it implements and verifies no MUST/SHALL requirement — every requirement R-1..R-10
+  is evidenced in the table above;
+- it is not blocking: its subject matter (campaign temp resources removed, pre-existing
+  branch/worktree/stash inventory unchanged, state and evidence reconciled with the
+  published result) is verified here rather than deferred:
+  * `git worktree list` shows only `D:/Documents/tryPython/tryMC_v3` on `main`,
+  * `git branch -a` shows `main` plus the three pre-existing remote refs
+    (`origin/main` and the two `backup/pre-wipe-2026-10-14-*` branches), all untouched,
+  * `git stash list` still shows the pre-existing `stash@{0}` (2026-08-28),
+  * `git log --branches --not --remotes` is empty (nothing unpublished),
+  * no campaign file was created outside `openspec/`, `src/`, `tests/`, `scripts/`
+    and the two tracked config/docs records; session logs live in the workspace
+    artifact directory, not in the repository.
+No required test is skipped and no mandatory command is unavailable.
 
 ## Final decision
 

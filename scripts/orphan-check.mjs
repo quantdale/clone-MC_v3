@@ -117,7 +117,7 @@ function main() {
     for (const file of unexpected) console.error(`  - ${file}`);
     console.error(
       'Wire the file into an importer, delete it, or add a reviewed entry to ENTRY_POINT_ALLOW_LIST ' +
-        '(scripts/orphan-check.mjs + tests/unit/VerificationGateWiring.test.ts).',
+        '(scripts/orphan-check.mjs + tests/unit/OrphanGateEnforcement.test.ts).',
     );
     process.exit(1);
   }
