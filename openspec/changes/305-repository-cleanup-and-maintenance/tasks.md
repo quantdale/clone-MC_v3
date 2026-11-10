@@ -158,6 +158,6 @@
   artifacts; commit in coherent batches and push normally to `origin/main`.
 - [x] **T10.5.** Verify the remote head after publication and record
   `published_head`.
-- [ ] **T10.6.** Confirm campaign temp resources are removed and the pre-existing
+- [x] **T10.6.** Confirm campaign temp resources are removed and the pre-existing
   branch/worktree/stash inventory is unchanged, then reconcile `verification.md` and
   the state files with the published result.

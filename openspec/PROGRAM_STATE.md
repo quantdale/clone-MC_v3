@@ -492,7 +492,7 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **305-repository-cleanup-and-maintenance — VERIFIED (97.87%; documented non-blocking exception for the post-publication reconciliation task); 258 BLOCKED, 259–305 VERIFIED**
+- Active implementation change: **305-repository-cleanup-and-maintenance — VERIFIED (100%, 47/47 tasks, no exception used); 258 BLOCKED, 259–305 VERIFIED**
 - Prior active implementation change: **283-live-raid-persistence — VERIFIED (13/13); 258 stays BLOCKED, 259–283 stay VERIFIED**
 - Prior prior active implementation change: **282-live-raid-feedback — VERIFIED (10/10); 258 stays BLOCKED, 259–282 stay VERIFIED**
 - Next change: **306 — fresh repository re-audit for remaining defects and further code-quality improvement; 258 stays BLOCKED**
