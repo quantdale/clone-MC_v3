@@ -9,7 +9,7 @@ Published head: `e9887f2afc8b6d353e15c90577a76479249242f4` (origin/main verified
 ## Requirement evidence
 
 | Requirement | Evidence | Status |
-|---|---|---|
+| --- | --- | --- |
 | R-1 installed toolchain carries no high-severity advisory | `npm audit --json` before: `vite` severity=high range `<=6.4.3`, `@vitest/mocker`/`vitest`/`@vitest/coverage-v8` moderate. After the patch move: `npm audit --audit-level=high` exit 0, `npm audit --omit=dev` exit 0, 7 moderate dev-only rows remain. `npm run verify:deps` 171 packages verified; installed vite 6.4.6 / vitest 4.1.12 / @vitest/coverage-v8 4.1.12 == locked. Unit 486 files 5830 passed + 1 skipped; coverage 91.92/88.65/94.90/93.27 vs 91/88/94/93. | VERIFIED (commands table) |
 | R-2 unreferenced non-contracted exports removed | Census before: 3122 declarations / 34 unreferenced. After: 3114 / 20. Removed: `aoPatternId`, `translucentSortKeys`, `partitionQuadsByStream`, `QUEUE_KINDS`, `ATLAS_SIZE`, `UNPOWERED_WIRE_POWER`, `chunkLifecycleName` + `CHUNK_LIFECYCLE_NAMES`, `worldXToSection`, `worldZToSection`, `computeSkullExplosion`, `isProtectedBlock`, `skullExplosionEntityDamage` + `isProtectedWrapped`, `LAYER_TO_STREAM`, `streamForRenderLayer`. `git grep` for each: 0 hits in `src`/`tests`/`scripts`. `npm run typecheck` exit 0. | VERIFIED (commands table) |
 | R-3 named constant with a live inline twin is authoritative | `Game.ts` `WITHER_SKULL_CAP` deleted; cap expression now `WITHER_MAX_SKULLS`. `SerializedWither.v: typeof WITHER_RECORD_VERSION` and `serializeWither` writes `WITHER_RECORD_VERSION` (value stays `1`). `damageWither` calls `isWitherArmored`. WitherBoss/WitherSkull/WitherProductionPath/WitherSummon/WitherBossBarParity suites pass. | VERIFIED (commands table) |
@@ -24,7 +24,7 @@ Published head: `e9887f2afc8b6d353e15c90577a76479249242f4` (origin/main verified
 ## Commands
 
 | Command | Result | Evidence/notes |
-|---|---|---|
+| --- | --- | --- |
 | `npm run verify:deps` | PASS | 171 packages verified; installed == locked (vite 6.4.6, vitest/coverage 4.1.12) after `npm ci` |
 | `npm audit --audit-level=high` | PASS (exit 0) | before: exit 1, 1 high (`vite <=6.4.3`) + 10 moderate; after: 7 moderate dev-only only |
 | `npm audit --omit=dev` | PASS (exit 0) | production tree clean before and after |
