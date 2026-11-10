@@ -31,7 +31,7 @@ Published head: `e9887f2afc8b6d353e15c90577a76479249242f4` (origin/main verified
 | `npm run validate-state` | PASS | parity cross-check now covers C298–C304 |
 | `npm run typecheck` | PASS | clean after every deletion/consolidation batch |
 | `npm run lint` | PASS | 0 errors, 0 warnings |
-| `npm run build` | PASS | 2.79s; `index-Bwe6NSOL.js` 755.97 kB (was 755.97 kB), `MeshWorkerEntry` 42.88 kB |
+| `npm run build` | PASS | 2.20s; main chunk **754.81 kB** vs the 755.97 kB baseline (−1.16 kB from the dead-code removal), `MeshWorkerEntry` 42.81 kB vs 42.88 kB, `three` 471.63 kB unchanged — the consolidation added no runtime bytes, as required |
 | `node scripts/check-release-bundle.mjs` | PASS | 4 assets checked, no E2E hook |
 | `npm test` | PASS | 486 files, 5830 passed + 1 skipped (baseline 485 files, 5825 passed + 1 skipped; +1 file/+5 tests from `OrphanGateEnforcement.test.ts`) |
 | `npm run test:coverage` | PASS | 91.84 / 88.60 / 94.68 / 93.19 vs floors 91 / 88 / 94 / 93 |
@@ -76,7 +76,7 @@ No stored data, wire format, save schema or public package surface changed. The 
 
 ## Performance/resource validation
 
-`npm run build` produced the same main-chunk size (755.97 kB) and the same `MeshWorkerEntry` size (42.88 kB) as the pre-change build, confirming the deletions and consolidations removed no runtime bytes and added none. Coverage denominators moved only by the added test file.
+`npm run build` produced a 1.16 kB smaller main chunk (754.81 kB vs the 755.97 kB baseline) and a 0.07 kB smaller `MeshWorkerEntry` (42.81 kB vs 42.88 kB), with the `three` vendor chunk unchanged at 471.63 kB. That is the expected direction for a dead-code removal and proves the helper consolidation added no runtime bytes: the two new shared modules are byte-identical relocations, so each carries exactly the code its duplicates carried. Coverage denominators moved only by the added test file.
 
 ## Regressions
 

@@ -289,10 +289,13 @@ evidence rather than claims.
 
 ## Performance and resource bounds
 
-Removing dead exports and duplicate helpers cannot increase any measured runtime
-metric: no hot path gains a call, no bundle gains bytes. The consolidated helpers
-keep identical bodies, so per-request allocation is unchanged. `npm run build`
-bundle size MUST be compared before and after to confirm no regression.
+Removing dead exports and duplicate helpers MUST NOT increase any measured runtime
+metric: no hot path gains a call and no bundle gains bytes, so `npm run build` MUST
+report a bundle size less than or equal to the baseline for the main and worker
+chunks. The consolidated helpers keep byte-identical bodies, so per-request
+allocation is unchanged. (Measured after implementation: main chunk 754.81 kB vs
+755.97 kB, worker 42.81 kB vs 42.88 kB, `three` unchanged — a decrease, as the
+requirement demands.)
 
 ## Compatibility and migration
 
