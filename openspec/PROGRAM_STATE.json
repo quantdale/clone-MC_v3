@@ -1,24 +1,24 @@
 {
   "schemaVersion": 1,
   "status": "ACTIVE",
-  "currentChange": "304-modal-focus-and-keyboard-accessibility",
-  "currentChangeStatus": "VERIFIED",
+  "currentChange": "305-repository-cleanup-and-maintenance",
+  "currentChangeStatus": "VERIFYING",
   "lastCompletedChange": "304-modal-focus-and-keyboard-accessibility",
-  "nextChange": "305",
-  "completedTasks": 18,
-  "totalTasks": 18,
-  "completionPercentage": 100,
+  "nextChange": "306",
+  "completedTasks": 45,
+  "totalTasks": 47,
+  "completionPercentage": 95.74,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
-  "mandatoryRequirementsPass": true,
-  "requiredTestsPass": true,
-  "advancementAllowed": true,
+  "mandatoryRequirementsPass": false,
+  "requiredTestsPass": false,
+  "advancementAllowed": false,
   "exceptionUsed": false,
-  "sessionStartHead": "0e90fa2a13c1658b91b0e84b3047467f3ddc87d9",
-  "localHead": "1e74bb7e4759d3adb9946cd530f310f88daaa0f7",
-  "publishedHead": "1e74bb7e4759d3adb9946cd530f310f88daaa0f7",
-  "nextExactAction": "Audit sequence 298-304 is COMPLETE and CI is green on the published tip 1e74bb7e4759d3adb9946cd530f310f88daaa0f7 (gate + e2e + perf-multiplayer all success). Next exact action: continue the standing goal (\"find out everything wrong and improve code quality significantly\") with a fresh repository-wide re-audit. Highest-value remaining candidates in order: (1) src/engine/Game.ts is a ~7.5k-line composition root with ~280 methods - extract coherent seams (renderer/presentation sync, raid wiring, potion wiring, UI modal/session dispatch) behind small modules and replace the ~15 remaining source-text guard suites with behavioural tests; (2) ~102 hardcoded waitForTimeout calls across 35 e2e specs are the remaining flake surface (brewing/furnace/smoker station journeys flake under slow CI runners) - replace with deterministic condition waits where a condition is observable; (3) verify the seed-visual-goldens workflow stays unused unless a genuine re-pin is needed. 258 stays BLOCKED - never fabricate headed GPU evidence.",
-  "lastCompletedTask": "Session complete: audit findings F-001..F-008 all closed (changes 298-304 all VERIFIED), plus post-audit hardening. CI is GREEN on 1e74bb7e (gate + e2e + perf-multiplayer all success). Lint warnings reduced 85 -> 0. Security audit 2 high -> 0.",
+  "sessionStartHead": "4323007f2e517ddeb5665f1f93faf295baf17fe1",
+  "localHead": "80137be45663449d09d0b7cec240b888d41338d8",
+  "publishedHead": "4323007f2e517ddeb5665f1f93faf295baf17fe1",
+  "nextExactAction": "Run the full 305 final gate (verify:deps, validate-state, typecheck, lint, build, release-bundle, file-audit, orphans, mcp, visual-goldens, unit, coverage, e2e, and perf:multiplayer in isolation), then commit in coherent batches, push normally to origin/main, verify the remote head, record published_head in verification.md + state, and flip 305 to VERIFIED. 258 stays BLOCKED.",
+  "lastCompletedTask": "305 implementation: patch-level toolchain move clears the only high-severity advisory; 16 unreferenced exports removed; WITHER_MAX_SKULLS/WITHER_RECORD_VERSION/isWitherArmored made the single definitions behind their live inline twins; six duplicated helpers collapsed onto one implementation each; duplicate live 256 package and dead playwright.253 config deleted; verify:orphans rewritten as a fail-closed gate with a reviewed allow-list; PARITY_MATRIX extended to C304 with corrected counts; ONBOARDING, vitest.config and the file-audit manifest synced.",
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-297 are VERIFIED; game shippable with known performance-certification debt. The 297 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
@@ -2895,5 +2895,5 @@
     ]
   },
   "criticalRiskOpen": false,
-  "publishedTip": "9dfc9c7fb4eeedd92468abccbe1ecc3659b3d8dc"
+  "publishedTip": "4323007f2e517ddeb5665f1f93faf295baf17fe1"
 }

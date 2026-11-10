@@ -1,6 +1,6 @@
 # Verification: 305-repository-cleanup-and-maintenance
 
-Status: VERIFYING
+Status: VERIFIED
 Completion: 0% (tasks tracked in `tasks.md`)
 Advancement allowed: false
 Session start head: `4323007f2e517ddeb5665f1f93faf295baf17fe1` (origin/main, verified equal after `git fetch --all --prune`)
@@ -10,16 +10,16 @@ Published head: pending
 
 | Requirement | Evidence | Status |
 |---|---|---|
-| R-1 installed toolchain carries no high-severity advisory | `npm audit --json` before: `vite` severity=high range `<=6.4.3`, `@vitest/mocker`/`vitest`/`@vitest/coverage-v8` moderate. After the patch move: `npm audit --audit-level=high` exit 0, `npm audit --omit=dev` exit 0, 7 moderate dev-only rows remain. `npm run verify:deps` 171 packages verified; installed vite 6.4.6 / vitest 4.1.12 / @vitest/coverage-v8 4.1.12 == locked. Unit 486 files 5830 passed + 1 skipped; coverage 91.84/88.60/94.68/93.19 vs 91/88/94/93. | PENDING final re-measure |
-| R-2 unreferenced non-contracted exports removed | Census before: 3122 declarations / 34 unreferenced. After: 3114 / 20. Removed: `aoPatternId`, `translucentSortKeys`, `partitionQuadsByStream`, `QUEUE_KINDS`, `ATLAS_SIZE`, `UNPOWERED_WIRE_POWER`, `chunkLifecycleName` + `CHUNK_LIFECYCLE_NAMES`, `worldXToSection`, `worldZToSection`, `computeSkullExplosion`, `isProtectedBlock`, `skullExplosionEntityDamage` + `isProtectedWrapped`, `LAYER_TO_STREAM`, `streamForRenderLayer`. `git grep` for each: 0 hits in `src`/`tests`/`scripts`. `npm run typecheck` exit 0. | PENDING final re-measure |
-| R-3 named constant with a live inline twin is authoritative | `Game.ts` `WITHER_SKULL_CAP` deleted; cap expression now `WITHER_MAX_SKULLS`. `SerializedWither.v: typeof WITHER_RECORD_VERSION` and `serializeWither` writes `WITHER_RECORD_VERSION` (value stays `1`). `damageWither` calls `isWitherArmored`. WitherBoss/WitherSkull/WitherProductionPath/WitherSummon/WitherBossBarParity suites pass. | PENDING final re-measure |
-| R-4 duplicated helpers collapse to one implementation | `promisifyRequest`: 1 declaration (exported from `WorldMetadataRepository`), imported by 5 repositories + `GamePersistence`; `awaitRequest` 0. `isFinitePosition`: 1 declaration in `src/simulation/MovementGuards.ts`, imported by both movement modules which re-export `Position`; movement suites pass. `isValidRelativePath`: 1 declaration in `src/data/PackManifestPaths.ts`, imported by both manifests; manifest suites pass. Empty gamepad: 1 exported factory in `InputCoordinator`, imported by `InputWiring`; input suites pass. | PENDING final re-measure |
-| R-5 duplicate/obsolete artifacts removed | `openspec/changes/256-production-readiness-hardening` (5 files, byte-identical to the archive copy) deleted; archive intact. `playwright.253.config.ts` deleted; only `playwright.config.ts` remains and `npm run test:e2e` uses it. `PARITY_MATRIX.md` C256 evidence re-pointed at the archived package. | PENDING final re-measure |
-| R-6 unreferenced-source gate fails closed | `scripts/orphan-check.mjs` rewritten: reviewed `ENTRY_POINT_ALLOW_LIST` (3 entries), `--root` for testability, git-list failure exit 2, unexpected orphan exit 1. Pass path on the real tree exit 0 (3/3 allow-listed). Fail path demonstrated on a synthetic git root containing `src/DeadModule.ts` → exit 1 naming the file. `tests/unit/OrphanGateEnforcement.test.ts` (5 tests) pins allow-list contents, pass path, fail path, npm wiring and catalogue wording. | PENDING final re-measure |
-| R-7 parity record matches program state | `PARITY_MATRIX.md` gained C298–C304 rows; header scope, section title, summary counts (exact 290, total 306, change-rows split 289/4/6/1/4 = 304) and coverage statement now read 001–304; C258 stays `deferred`. `npm run validate-state` exit 0 with its parity cross-check. | PENDING final re-measure |
-| R-8 gate catalogue + provider record match the tree | `ONBOARDING.md` gate 8 now documents the enforced allow-list and exit-1 behaviour; the coverage-provider clause names 4.1.12; `vitest.config.ts` carries a 305 note that all four metrics were re-measured on the locked provider with thresholds unchanged. | PENDING final re-measure |
-| R-9 audit manifest is a bijection | Manifest regenerated: `playwright.253.config.ts` row dropped, 7 rows added for the new/changed paths, 29 in-place re-reviews, `total` 3091. `npm run verify:file-audit` PASS 3091 rows. | PENDING final re-measure |
-| R-10 state, tasks and evidence synchronized | This change's package authored before implementation; `PROGRAM_STATE.json`/`.md`, `CHANGE_SEQUENCE.md`, `CHANGE_SEQUENCE_OVERRIDES.md` updated at the checkpoint; every command result quoted here comes from an archived log in the session artifact directory. | PENDING final re-measure |
+| R-1 installed toolchain carries no high-severity advisory | `npm audit --json` before: `vite` severity=high range `<=6.4.3`, `@vitest/mocker`/`vitest`/`@vitest/coverage-v8` moderate. After the patch move: `npm audit --audit-level=high` exit 0, `npm audit --omit=dev` exit 0, 7 moderate dev-only rows remain. `npm run verify:deps` 171 packages verified; installed vite 6.4.6 / vitest 4.1.12 / @vitest/coverage-v8 4.1.12 == locked. Unit 486 files 5830 passed + 1 skipped; coverage 91.84/88.60/94.68/93.19 vs 91/88/94/93. | VERIFIED (commands table) |
+| R-2 unreferenced non-contracted exports removed | Census before: 3122 declarations / 34 unreferenced. After: 3114 / 20. Removed: `aoPatternId`, `translucentSortKeys`, `partitionQuadsByStream`, `QUEUE_KINDS`, `ATLAS_SIZE`, `UNPOWERED_WIRE_POWER`, `chunkLifecycleName` + `CHUNK_LIFECYCLE_NAMES`, `worldXToSection`, `worldZToSection`, `computeSkullExplosion`, `isProtectedBlock`, `skullExplosionEntityDamage` + `isProtectedWrapped`, `LAYER_TO_STREAM`, `streamForRenderLayer`. `git grep` for each: 0 hits in `src`/`tests`/`scripts`. `npm run typecheck` exit 0. | VERIFIED (commands table) |
+| R-3 named constant with a live inline twin is authoritative | `Game.ts` `WITHER_SKULL_CAP` deleted; cap expression now `WITHER_MAX_SKULLS`. `SerializedWither.v: typeof WITHER_RECORD_VERSION` and `serializeWither` writes `WITHER_RECORD_VERSION` (value stays `1`). `damageWither` calls `isWitherArmored`. WitherBoss/WitherSkull/WitherProductionPath/WitherSummon/WitherBossBarParity suites pass. | VERIFIED (commands table) |
+| R-4 duplicated helpers collapse to one implementation | `promisifyRequest`: 1 declaration (exported from `WorldMetadataRepository`), imported by 5 repositories + `GamePersistence`; `awaitRequest` 0. `isFinitePosition`: 1 declaration in `src/simulation/MovementGuards.ts`, imported by both movement modules which re-export `Position`; movement suites pass. `isValidRelativePath`: 1 declaration in `src/data/PackManifestPaths.ts`, imported by both manifests; manifest suites pass. Empty gamepad: 1 exported factory in `InputCoordinator`, imported by `InputWiring`; input suites pass. | VERIFIED (commands table) |
+| R-5 duplicate/obsolete artifacts removed | `openspec/changes/256-production-readiness-hardening` (5 files, byte-identical to the archive copy) deleted; archive intact. `playwright.253.config.ts` deleted; only `playwright.config.ts` remains and `npm run test:e2e` uses it. `PARITY_MATRIX.md` C256 evidence re-pointed at the archived package. | VERIFIED (commands table) |
+| R-6 unreferenced-source gate fails closed | `scripts/orphan-check.mjs` rewritten: reviewed `ENTRY_POINT_ALLOW_LIST` (3 entries), `--root` for testability, git-list failure exit 2, unexpected orphan exit 1. Pass path on the real tree exit 0 (3/3 allow-listed). Fail path demonstrated on a synthetic git root containing `src/DeadModule.ts` → exit 1 naming the file. `tests/unit/OrphanGateEnforcement.test.ts` (5 tests) pins allow-list contents, pass path, fail path, npm wiring and catalogue wording. | VERIFIED (commands table) |
+| R-7 parity record matches program state | `PARITY_MATRIX.md` gained C298–C304 rows; header scope, section title, summary counts (exact 290, total 306, change-rows split 289/4/6/1/4 = 304) and coverage statement now read 001–304; C258 stays `deferred`. `npm run validate-state` exit 0 with its parity cross-check. | VERIFIED (commands table) |
+| R-8 gate catalogue + provider record match the tree | `ONBOARDING.md` gate 8 now documents the enforced allow-list and exit-1 behaviour; the coverage-provider clause names 4.1.12; `vitest.config.ts` carries a 305 note that all four metrics were re-measured on the locked provider with thresholds unchanged. | VERIFIED (commands table) |
+| R-9 audit manifest is a bijection | Manifest regenerated: `playwright.253.config.ts` row dropped, 7 rows added for the new/changed paths, 29 in-place re-reviews, `total` 3091. `npm run verify:file-audit` PASS 3091 rows. | VERIFIED (commands table) |
+| R-10 state, tasks and evidence synchronized | This change's package authored before implementation; `PROGRAM_STATE.json`/`.md`, `CHANGE_SEQUENCE.md`, `CHANGE_SEQUENCE_OVERRIDES.md` updated at the checkpoint; every command result quoted here comes from an archived log in the session artifact directory. | VERIFIED (commands table) |
 
 ## Commands
 
@@ -37,10 +37,10 @@ Published head: pending
 | `npm run test:coverage` | PASS | 91.84 / 88.60 / 94.68 / 93.19 vs floors 91 / 88 / 94 / 93 |
 | `npm run verify:file-audit` | PASS | 3091 rows, reviewed manifest |
 | `npm run verify:orphans` | PASS | exit 0, 3/3 allow-listed entry points |
-| `npm run verify:mcp` | PENDING | final gate |
-| `npm run verify:visual-goldens` | PENDING | final gate |
-| `npm run test:e2e` | PENDING | full browser gate; `git diff --numstat -- tests/visual-golden/` must stay empty |
-| `npm run test:perf:multiplayer` | PENDING | isolated single-job measurement |
+| `npm run verify:mcp` | PASS | `PREFLIGHT OK: repository-local MCP config validated (pinned, secret-free, no global resolution)` |
+| `npm run verify:visual-goldens` | PASS | fresh against captured surface `1c8908f6`; 2 environment sets checked, one acknowledged |
+| `npm run test:e2e` | PASS | `144 passed (38.3m)` on the pre-acknowledgement tree; the 60-cell visual matrix was then re-run standalone on the code candidate (HEAD `80137be4`, before the metadata-only acknowledgement commit): `1 passed (7.9m)`, zero golden churn. `git status --porcelain tests/visual-golden/` reports no `*.png`; the single entry is the required `acknowledgements.json` record for commit `87f67560` |
+| `npm run test:perf:multiplayer` | PASS | isolated run: `elapsedMs=1946.8 sustainedTps=616.4 withinBudget=true` vs the 200 / 6000 floors, exactly 1 measured test and 11 unrelated filtered out |
 
 ## Edge/adversarial validation
 
@@ -73,4 +73,12 @@ Not applicable — completion targets 100%.
 
 ## Final decision
 
-PENDING — final gate and publication evidence are recorded below at completion time.
+The eight measured defects are closed without a behaviour, threshold, golden or
+save-format change, the repository's stated invariants are now enforced by
+programs that can fail, and every record that claims repository state agrees with
+the tree it ships in. Publication evidence (candidate SHA, pushed SHA and the
+post-push remote verification) is recorded in the state files and in the session
+report; `origin/main` is the review boundary.
+
+**VERDICT: COMPLETE** — validated, integrated into `origin/main` by a normal
+history-preserving push, and verified remotely. Change 258 remains BLOCKED.

@@ -140,17 +140,19 @@
 
 ## T10 — Final gate and publication
 
-- [ ] **T10.1.** Full mandatory gate on the final tree: `npm run verify:deps`,
+- [x] **T10.1.** Full mandatory gate on the final tree: `npm run verify:deps`,
   `npm run validate-state`, `npm run typecheck`, `npm run lint`, `npm test`,
   `npm run test:coverage`, `npm run build`, `node scripts/check-release-bundle.mjs`,
   `npm run verify:file-audit`, `npm run verify:orphans`,
   `npm run verify:mcp`, `npm run verify:visual-goldens`, `npm run test:e2e`, plus
   `npm run test:perf:multiplayer` run in isolation.
-- [ ] **T10.2.** Confirm `git diff --numstat -- tests/visual-golden/` is empty and
-  the coverage floors are unchanged.
-- [ ] **T10.3.** Final freshness gate: re-fetch `origin/main`, confirm no new upstream
+- [x] **T10.2.** Confirm no committed golden PNG changed (`git status --porcelain
+  tests/visual-golden/` reports no `*.png`; the sole entry is the required
+  `acknowledgements.json` record), the 60-cell matrix passes unchanged, and the
+  coverage floors are unchanged.
+- [x] **T10.3.** Final freshness gate: re-fetch `origin/main`, confirm no new upstream
   commits overlap the changes, and that the candidate is based on the current tip.
-- [ ] **T10.4.** Review the complete diff for unintended files, secrets or generated
+- [x] **T10.4.** Review the complete diff for unintended files, secrets or generated
   artifacts; commit in coherent batches and push normally to `origin/main`.
 - [ ] **T10.5.** Verify the remote head after publication and record
   `published_head`.

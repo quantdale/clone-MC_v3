@@ -1,14 +1,47 @@
 # Program State
 
-## Current checkpoint — 2026-10-17 audit sequence 298–304 COMPLETE and CI GREEN
+## Current checkpoint — 2026-11-10 Change 305-repository-cleanup-and-maintenance VERIFYING (repo-wide cleanup campaign)
 
-> **All eight audit findings (F-001…F-005, F-007, F-008) are closed**; changes **298, 299, 300, 301, 302, 303 and 304 are all VERIFIED** and published. **CI is green on the published tip** — run `39054908175`: `gate`, `e2e` and `perf-multiplayer` all succeed.
-> Session start head: `0e90fa2a13c1658b91b0e84b3047467f3ddc87d9` (origin/main). Published head `1e74bb7e4759d3adb9946cd530f310f88daaa0f7` (origin/main verified equal).
-> **What was wrong and is now fixed.** 298: the mandatory unit gate was red on any CRLF checkout (no `.gitattributes`, eight source-guard suites asserting on byte-exact text and comments) — now platform-independent with a shared normalising reader and structural assertions. 299: the installed toolchain could silently drift from the lockfile, making coverage meaningless — now an exact `packageManager` plus a read-only `verify:deps` gate as the first baseline step. 300: the visual gate had no staleness detection and a noise bound scoped to one cell — now a declared captured-surface contract, a CI staleness check with durable acknowledgements, and a measured family bound with a regression tripwire. 301: six of eight verification programs were reachable only by typing a file path — now named npm commands, blocking CI guards, and one `verify:all` aggregate. 302: the normative multiplayer budgets were never executed by automation — now a dedicated single-worker CI job whose runner closes the `vitest -t` fail-open hazard. 303: `Renderer.ts` had 0% unit coverage — now 100% statements / 90.62% branches with a defaulted construction seam. 304: twelve dialogs declared `aria-modal` but never behaved as modals — now real focus containment, `inert` background, opener restoration and Escape convergence.
-> **Post-audit hardening in the same session.** Two high-severity dev-toolchain advisories resolved (production was already clean); the seven `any` escapes removed from `src/storage/SaveRecoveryMatrix.ts`; and **all 85 `no-explicit-any` lint warnings eliminated with real types** — `npm run lint` now reports **0 problems**, down from 0 errors / 85 warnings. Every fix was verified in CI, and four self-inflicted regressions found along the way were fixed rather than left (the `preinstall` false-green, the vacuous shallow-clone staleness pass, the ANSI-blind perf parser, and the over-narrow noise bound).
+> **Owner instruction:** `D:\Downloads\Repo Cleanup.txt` — an autonomous repository-wide maintenance,
+> cleanup, optimization and Git-hygiene campaign. **Change `305-repository-cleanup-and-maintenance`** is
+> the campaign's deliverable package; it follows the completed audit-authored 298–304 sequence.
+> Session start head: `4323007f2e517ddeb5665f1f93faf295baf17fe1` (origin/main, verified equal after
+> `git fetch --all --prune`; clean tree, single linked worktree) — freshness **CURRENT**.
+> **Pre-existing red gate found on the remote tip:** canonical CI run `39806388101` failed the `gate`
+> job at `npm audit --audit-level=high` (`vite <=6.4.3`, one high advisory); `e2e` and
+> `perf-multiplayer` were green. That is a toolchain defect, not a product defect.
+> **Eight measured defects and their fixes.** (1) Red dependency-audit gate -> patch-level dev-toolchain
+> move (`vite ^6.4.6`, `vitest`/`@vitest/coverage-v8` `^4.1.12`) + `npm ci`; the high advisory is gone
+> and only dev-only moderate `minimatch` rows remain (no upstream release fixes them). (2) Sixteen
+> provably unreferenced, uncontracted exports deleted. (3) `WITHER_MAX_SKULLS`, `WITHER_RECORD_VERSION`
+> and `isWitherArmored` became the single definitions behind their live inline twins instead of being
+> deleted, so the live path is bound to the named constant (the serialized record value stays `1`).
+> (4) Six byte-identical `promisifyRequest` copies plus `awaitRequest` collapsed into one exported
+> declaration. (5) `isFinitePosition`, `isValidRelativePath` and the disconnected gamepad frame each collapsed
+> to one shared implementation. (6) The byte-identical duplicate live
+> `openspec/changes/256-production-readiness-hardening` package deleted (archive remains authoritative). (7)
+> The consumer-less `playwright.253.config.ts` deleted. (8) `verify:orphans` rewritten as a **fail-closed
+> gate**: reviewed allow-list, `--root` for testability, exit 1 on any unexpected orphan — both paths
+> proven and pinned by a new unit suite. Plus a record defect found during the audit:
+> `PARITY_MATRIX.md` covered only 001–297 while program state records 298–304 VERIFIED -> C298–C304
+> rows added and scope/counts/coverage statement corrected to 001–304, C258 still `deferred`.
+> **Preserved deliberately:** both visual-golden sets (change 300 T13), every historical
+> audit/planning document, every existing branch/worktree/stash (including the two
+> `backup/pre-wipe-2026-10-14-*` remote branches with unmerged work and the 2026-08-28 stash whose
+> patch no longer applies), and Change **258** stays **BLOCKED** — no headed GPU evidence was claimed.
 
-- Gates on the published tip: verify:deps PASS; verify:file-audit PASS 3085 rows; verify:orphans PASS; verify:mcp PASS; verify:visual-goldens PASS; validate-state PASS; typecheck PASS; lint **0 problems**; npm test 485 files 5825 passed + 1 skipped; coverage above all four thresholds; build PASS; check-release-bundle PASS; npm audits 0 vulnerabilities; **full CI green**.
-- Next exact action: **Continue the standing goal with a fresh repository-wide re-audit.** Highest-value remaining candidates in order: (1) `src/engine/Game.ts` is a ~7.5k-line composition root with ~280 methods — extract coherent seams (renderer/presentation sync, raid wiring, potion wiring, UI modal/session dispatch) behind small modules and replace the ~15 remaining source-text guard suites with behavioural tests; (2) ~102 hardcoded `waitForTimeout` calls across 35 e2e specs are the remaining flake surface (the brewing/furnace/smoker station journeys flake on slow CI runners) — replace with deterministic condition waits where a condition is observable; (3) keep the `seed-visual-goldens` workflow unused unless a genuine re-pin is warranted. `258` stays BLOCKED — never fabricate headed GPU evidence.
+- Gates (measured this session): `verify:deps` PASS 171 packages; `npm audit --audit-level=high` exit 0
+  (was exit 1); `npm audit --omit=dev` exit 0; `validate-state` PASS; `typecheck` PASS; `lint` 0 problems;
+  `build` PASS (main chunk 755.97 kB, unchanged); `check-release-bundle` PASS; `verify:file-audit` PASS
+  3092 rows; `verify:orphans` PASS (3/3 allow-listed, fail path proven); `verify:mcp` PASS;
+  `verify:visual-goldens` PASS (2 sets, one acknowledgement); `npm test` 486 files 5830 passed + 1 skipped;
+  `test:coverage` 91.92/88.65/94.90/93.27 vs 91/88/94/93; full `test:e2e` 144/144 with
+  `git diff --numstat -- tests/visual-golden/` empty.
+- Next exact action: **complete change 305's final gate and publication (perf:multiplayer isolated, final
+  freshness re-gate, batched commits, normal push to `origin/main`, remote-head verification, then record
+  `published_head` and flip 305 to VERIFIED); afterwards the next candidate work is 306 (a fresh re-audit
+  for remaining defects and further code quality, with `src/engine/Game.ts`'s composition-root debt and the
+  ~102 e2e `waitForTimeout` sleeps as the known highest-value candidates). `258` stays BLOCKED.**
 
 ## Current checkpoint — 2026-10-17 Change 304-modal-focus-and-keyboard-accessibility VERIFIED; audit sequence 298–304 COMPLETE
 
@@ -459,15 +492,16 @@
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **304-modal-focus-and-keyboard-accessibility — VERIFIED; audit sequence 298–304 COMPLETE; 258 BLOCKED, 259–304 VERIFIED**
+- Active implementation change: **305-repository-cleanup-and-maintenance — VERIFYING (owner-authorized repository-wide cleanup campaign); 258 BLOCKED, 259–305 VERIFIED-or-in-flight**
 - Prior active implementation change: **283-live-raid-persistence — VERIFIED (13/13); 258 stays BLOCKED, 259–283 stay VERIFIED**
 - Prior prior active implementation change: **282-live-raid-feedback — VERIFIED (10/10); 258 stays BLOCKED, 259–282 stay VERIFIED**
-- Next change: **305 — fresh repository-wide re-audit and code-quality improvement; 258 stays BLOCKED**
-- 240 advancement allowed: **yes**
+- Next change: **306 — fresh repository re-audit for remaining defects and further code-quality improvement; 258 stays BLOCKED**
+- 240 advancement allowed: **no (active change not yet verified)**
 
 - Program: **ACTIVE — Change 284-live-raid-wave-spawning VERIFIED 12/12 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–284 VERIFIED**
 - 284 checkpoint: **VERIFIED 12/12 — implementation + gates complete; enchanting flake + visual SwiftShader drift documented non-blocking; 258 BLOCKED; 285 not started**
 - Last completed change: **304-modal-focus-and-keyboard-accessibility — VERIFIED — audit sequence 298–304 complete, CI green, 258 BLOCKED**
+- Current active change: **305-repository-cleanup-and-maintenance — VERIFYING (repository-wide maintenance campaign; baseline green, pre-existing red CI audit step fixed at source)**
 - Prior last completed change: **281-workstation-ui — VERIFIED (12/12); 258 stays BLOCKED, 259–281 stay VERIFIED**
 - Prior prior last completed change: **272-lighting-clock-dt-sync — VERIFIED (10/10) — full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85/file-audit 2792); 271 remains VERIFIED (14/14)
 - All changes 001–257 and 259–284: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed; Change 283 is VERIFIED 13/13; Change 284 is VERIFIED 12/12 (this session).

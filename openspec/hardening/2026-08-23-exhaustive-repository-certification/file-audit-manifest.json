@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-17T07:56:50Z",
-  "reviewedSha": "3d0fd2d5aee39ae1706b7210ad27e675450f521c",
-  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288; +6 rows for 289 enchantment-persistence-reload-integrity package/implementation/tests; DirtySaveQueue.ts/Game.ts/enchanting.spec.ts/DirtySaveQueue.test.ts/InventoryComponentPersistence.test.ts re-reviewed in place for 289; +10 rows for 290 hero-of-the-village-reward package/implementation/tests; Game.ts/StatusEffect.ts re-reviewed in place for 290; +10 rows for 291 pillager-patrol-bad-omen package/implementation/tests; Game.ts re-reviewed in place for 291; +10 rows for 292 player-status-effect-persistence package/implementation/tests; Game.ts, PlayerStateRecord.ts, GamePersistence.ts and 5 tests re-reviewed in place for 292; +9 rows for 293 raider-and-patrol-rendering package/implementation/tests; Game.ts re-reviewed in place for 293; +10 rows for 294 bad-omen-raid-escalation-and-death-parity package/implementation/tests; Game.ts, 2 unit tests and the 285/291/292 design notes re-reviewed in place for 294; +12 rows for 295 throwable-splash-potion-entities package/implementation/tests; Game.ts, PlayerInteraction.ts, RaiderCombatBehavior.ts, its unit test and the 288 docs re-reviewed in place for 295; +10 rows for 296 periodic-status-effect-ticks package/implementation/tests; Game.ts, DamageType.ts, SurvivalSystem.ts, DeathRespawnPresentation.ts, 2 unit tests and the 295 docs re-reviewed in place for 296; +11 rows for 297 gunpowder-and-splash-brewing package/implementation/tests; ItemRegistry.ts, TextureAtlas.ts, BrewingRecipes.ts, BrewingStandBlockEntity.ts, RaiderCombatBehavior.ts, Game.ts, BlockItemSeparation.test.ts and the 295 docs re-reviewed in place for 297; +3 rows and +36 audit-package rows re-reviewed for 298 (verification-portability-eol-and-source-guards): .gitattributes, tests/support/sourceText.ts, tests/unit/SourceTextPortability.test.ts, MASTER_PLAN.md and the audit-authored 298-304 OpenSpec packages; +2 rows and 3 in-place re-reviews for 299 (toolchain-dependency-reproducibility): scripts/check-install.mjs, tests/unit/ToolchainReproducibility.test.ts, plus package.json/AGENTS.md/ONBOARDING.md re-reviewed in place; +4 rows and in-place re-reviews for 300 (visual-regression-gate-reliability): scripts/check-visual-goldens.mjs, tests/unit/VisualGoldenStaleness.test.ts, tests/unit/VisualGoldenNoiseBound.test.ts, tests/visual-golden/acknowledgements.json; tests/visual/matrix.ts, tests/e2e/visual-regression.spec.ts, tests/visual-golden/README.md and .github/workflows/{ci,seed-visual-goldens}.yml re-reviewed in place; +1 row and in-place re-reviews for 301 (verification-script-gate-wiring): scripts/verify-all.mjs plus package.json, .github/workflows/ci.yml, ONBOARDING.md and AGENTS.md re-reviewed in place; +2 rows and in-place re-reviews for 302 (multiplayer-performance-gate-enforcement): scripts/perf/multiplayer-perf-run.mjs and tests/unit/MultiplayerPerformanceGate.test.ts, plus package.json, .github/workflows/ci.yml, AGENTS.md and ONBOARDING.md re-reviewed in place; +1 row and in-place re-reviews for 303 (renderer-lifecycle-unit-coverage): tests/unit/Renderer.test.ts added, src/engine/Renderer.ts and vitest.config.ts re-reviewed in place; +3 rows and in-place re-reviews for 304 (modal-focus-and-keyboard-accessibility): src/ui/ModalFocus.ts, tests/unit/ModalFocus.test.ts, tests/e2e/modal-focus.spec.ts added; index.html and src/engine/Game.ts re-reviewed in place; +1 row for 304 (tests/unit/ModalFocus.dom.test.ts); src/storage/SaveRecoveryMatrix.ts re-reviewed in place for the post-304 code-quality pass (all explicit any escapes removed)",
+  "generatedAt": "2026-11-10T09:00:00Z",
+  "reviewedSha": "80137be45663449d09d0b7cec240b888d41338d8",
+  "schemaNote": "Reviewed manifest; +9 rows for 282 live-raid-feedback package/implementation/tests; +10 rows for 283 live-raid-persistence package/implementation/tests; +12 rows for 284 live-raid-wave-spawning package/implementation/tests; modified Game.ts/EntityType.ts/EntityType.test.ts re-reviewed in place for 284; +10 rows for 287 live-village-detection package/implementation/tests; +10 rows for 288 raider-combat-behavior package/implementation/tests; Game.ts re-reviewed in place for 288; +6 rows for 289 enchantment-persistence-reload-integrity package/implementation/tests; DirtySaveQueue.ts/Game.ts/enchanting.spec.ts/DirtySaveQueue.test.ts/InventoryComponentPersistence.test.ts re-reviewed in place for 289; +10 rows for 290 hero-of-the-village-reward package/implementation/tests; Game.ts/StatusEffect.ts re-reviewed in place for 290; +10 rows for 291 pillager-patrol-bad-omen package/implementation/tests; Game.ts re-reviewed in place for 291; +10 rows for 292 player-status-effect-persistence package/implementation/tests; Game.ts, PlayerStateRecord.ts, GamePersistence.ts and 5 tests re-reviewed in place for 292; +9 rows for 293 raider-and-patrol-rendering package/implementation/tests; Game.ts re-reviewed in place for 293; +10 rows for 294 bad-omen-raid-escalation-and-death-parity package/implementation/tests; Game.ts, 2 unit tests and the 285/291/292 design notes re-reviewed in place for 294; +12 rows for 295 throwable-splash-potion-entities package/implementation/tests; Game.ts, PlayerInteraction.ts, RaiderCombatBehavior.ts, its unit test and the 288 docs re-reviewed in place for 295; +10 rows for 296 periodic-status-effect-ticks package/implementation/tests; Game.ts, DamageType.ts, SurvivalSystem.ts, DeathRespawnPresentation.ts, 2 unit tests and the 295 docs re-reviewed in place for 296; +11 rows for 297 gunpowder-and-splash-brewing package/implementation/tests; ItemRegistry.ts, TextureAtlas.ts, BrewingRecipes.ts, BrewingStandBlockEntity.ts, RaiderCombatBehavior.ts, Game.ts, BlockItemSeparation.test.ts and the 295 docs re-reviewed in place for 297; +3 rows and +36 audit-package rows re-reviewed for 298 (verification-portability-eol-and-source-guards): .gitattributes, tests/support/sourceText.ts, tests/unit/SourceTextPortability.test.ts, MASTER_PLAN.md and the audit-authored 298-304 OpenSpec packages; +2 rows and 3 in-place re-reviews for 299 (toolchain-dependency-reproducibility): scripts/check-install.mjs, tests/unit/ToolchainReproducibility.test.ts, plus package.json/AGENTS.md/ONBOARDING.md re-reviewed in place; +4 rows and in-place re-reviews for 300 (visual-regression-gate-reliability): scripts/check-visual-goldens.mjs, tests/unit/VisualGoldenStaleness.test.ts, tests/unit/VisualGoldenNoiseBound.test.ts, tests/visual-golden/acknowledgements.json; tests/visual/matrix.ts, tests/e2e/visual-regression.spec.ts, tests/visual-golden/README.md and .github/workflows/{ci,seed-visual-goldens}.yml re-reviewed in place; +1 row and in-place re-reviews for 301 (verification-script-gate-wiring): scripts/verify-all.mjs plus package.json, .github/workflows/ci.yml, ONBOARDING.md and AGENTS.md re-reviewed in place; +2 rows and in-place re-reviews for 302 (multiplayer-performance-gate-enforcement): scripts/perf/multiplayer-perf-run.mjs and tests/unit/MultiplayerPerformanceGate.test.ts, plus package.json, .github/workflows/ci.yml, AGENTS.md and ONBOARDING.md re-reviewed in place; +1 row and in-place re-reviews for 303 (renderer-lifecycle-unit-coverage): tests/unit/Renderer.test.ts added, src/engine/Renderer.ts and vitest.config.ts re-reviewed in place; +3 rows and in-place re-reviews for 304 (modal-focus-and-keyboard-accessibility): src/ui/ModalFocus.ts, tests/unit/ModalFocus.test.ts, tests/e2e/modal-focus.spec.ts added; index.html and src/engine/Game.ts re-reviewed in place; +1 row for 304 (tests/unit/ModalFocus.dom.test.ts); src/storage/SaveRecoveryMatrix.ts re-reviewed in place for the post-304 code-quality pass (all explicit any escapes removed); change 305 (repository-cleanup-and-maintenance): -6 rows for the deleted playwright.253.config.ts and the byte-identical duplicate live openspec/changes/256-production-readiness-hardening package (5 files; the archived copy remains authoritative), +7 rows for the 305 OpenSpec package, src/data/PackManifestPaths.ts, src/simulation/MovementGuards.ts and tests/unit/OrphanGateEnforcement.test.ts, and in-place re-reviews for the patch-level toolchain move, the dead-export removals, the helper consolidation, the enforced unreferenced-source gate, and the parity/onboarding/vitest records",
   "allowedReviewLevels": [
     "semantic",
     "mechanical",
@@ -10,7 +10,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 3085,
+  "total": 3087,
   "rows": [
     {
       "path": ".agent/EXECUTION_PROMPT.md",
@@ -873,7 +873,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | reviewed for 305: gate 8 now documents the enforced allow-list/exit-1 behaviour and the coverage-provider clause names the locked 4.1.12 provider | reviewed for 305: gate 8 now documents the enforced allow-list/exit-1 behaviour and the coverage-provider clause names the locked 4.1.12 provider",
       "status": "audited"
     },
     {
@@ -889,7 +889,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | reviewed for 305: C298-C304 rows added, summary counts and coverage statement updated to 001-304, C256 evidence re-pointed at the archived package, C258 stays deferred | reviewed for 305: C298-C304 rows added, summary counts and coverage statement updated to 001-304, C256 evidence re-pointed at the archived package, C258 stays deferred",
       "status": "audited"
     },
     {
@@ -22240,86 +22240,6 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/256-production-readiness-hardening/design.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "257 repair coverage for openspec/changes/256-production-readiness-hardening/design.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/256-production-readiness-hardening/proposal.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "257 repair coverage for openspec/changes/256-production-readiness-hardening/proposal.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/256-production-readiness-hardening/specs/production-hardening/spec.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "257 repair coverage for openspec/changes/256-production-readiness-hardening/specs/production-hardening/spec.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/256-production-readiness-hardening/tasks.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "257 repair coverage for openspec/changes/256-production-readiness-hardening/tasks.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/256-production-readiness-hardening/verification.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "257 repair coverage for openspec/changes/256-production-readiness-hardening/verification.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
       "path": "openspec/changes/257-void-world-startup-recovery/audit-findings.md",
       "gitBlob": null,
       "category": "spec",
@@ -26779,6 +26699,86 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Authored by the repository audit campaign (298-304); documentation-only OpenSpec package, no product effect until its own activation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/305-repository-cleanup-and-maintenance/design.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "305 design: measured before-state for each defect, exact removal/consolidation sets, orphan-gate semantics, parity-matrix row plan, rejected alternatives",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "authored by change 305; every claim cites a command or census; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/305-repository-cleanup-and-maintenance/proposal.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "305 repository cleanup campaign: proposal stating the eight measured defects (red dependency audit, dead exports, duplicated helpers, duplicate 256 package, obsolete playwright.253 config, unenforced orphan gate, parity-record drift) plus non-goals, risks and definition of done",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "authored by change 305 from measured evidence at 4323007f; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/305-repository-cleanup-and-maintenance/specs/repository-maintenance/spec.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "305 normative spec: R-1..R-10 maintenance requirements with scenarios",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "authored by change 305; every MUST has a scenario; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/305-repository-cleanup-and-maintenance/tasks.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "305 task list covering baseline, toolchain, dead-code, dedupe, artifacts, gate, docs, state and final gate",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "authored by change 305; checkboxes match executed work; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/305-repository-cleanup-and-maintenance/verification.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "305 requirement-to-evidence record with measured gate results",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "authored by change 305; evidence copied from real command output; no findings",
       "status": "audited"
     },
     {
@@ -32602,7 +32602,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | reviewed for 305: regenerated by npm ci on the patch-level dev-toolchain move; verify:deps passes | reviewed for 305: regenerated by npm ci on the patch-level dev-toolchain move; verify:deps passes",
       "status": "audited"
     },
     {
@@ -32618,23 +32618,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "playwright.253.config.ts",
-      "gitBlob": null,
-      "category": "script",
-      "purpose": "257 repair coverage for playwright.253.config.ts",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | reviewed for 305: vite ^6.4.6, vitest and @vitest/coverage-v8 ^4.1.12 (patch moves clearing the high-severity advisories) | reviewed for 305: vite ^6.4.6, vitest and @vitest/coverage-v8 ^4.1.12 (patch moves clearing the high-severity advisories)",
       "status": "audited"
     },
     {
@@ -32814,7 +32798,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | reviewed for 305: now a real gate - reviewed ENTRY_POINT_ALLOW_LIST, --root for testability, git-listing failure exit 2, unexpected orphan exit 1 | reviewed for 305: now a real gate - reviewed ENTRY_POINT_ALLOW_LIST, --root for testability, git-listing failure exit 2, unexpected orphan exit 1",
       "status": "audited"
     },
     {
@@ -33157,7 +33141,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | re-reviewed for 305: local path validation replaced by the shared PackManifestPaths predicate | re-reviewed for 305: local path validation replaced by the shared PackManifestPaths predicate",
       "status": "audited"
     },
     {
@@ -33296,6 +33280,22 @@
       "status": "audited"
     },
     {
+      "path": "src/data/PackManifestPaths.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Single shared relative-path validator for the 211/212 pack manifests, replacing the two byte-identical private copies",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "change 305 dedupe: body is the exact duplicated predicate; consumers DataPackManifest/ResourcePackManifest suites cover absolute, empty-segment and dot-segment rejection; no findings",
+      "status": "audited"
+    },
+    {
       "path": "src/data/PalettedContainer.ts",
       "gitBlob": null,
       "category": "production",
@@ -33420,7 +33420,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | re-reviewed for 305: local path validation replaced by the shared PackManifestPaths predicate | re-reviewed for 305: local path validation replaced by the shared PackManifestPaths predicate",
       "status": "audited"
     },
     {
@@ -33584,7 +33584,7 @@
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 284 implementation; no findings \u2014 additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits | 285 ephemeral badOmen + villageQuery + fixed-tick evaluate through 282 start seam; re-reviewed for 288 raider combat wiring; re-reviewed for 289 concurrent-drain / encha Re-reviewed in place for 304: index.html gained aria-modal on #death-screen; Game.ts gained syncModalFocus() deriving the single open dialog from the existing *Open booleans, wiring all ten panel open/close pairs and dispose through ModalFocus.",
+      "reviewNotes": "reviewed for 284 implementation; no findings \u2014 additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits | 285 ephemeral badOmen + villageQuery + fixed-tick evaluate through 282 start seam; re-reviewed for 288 raider combat wiring; re-reviewed for 289 concurrent-drain / encha Re-reviewed in place for 304: index.html gained aria-modal on #death-screen; Game.ts gained syncModalFocus() deriving the single open dialog from the existing *Open booleans, wiring all ten panel open/close pairs and dispose through ModalFocus. | re-reviewed for 305: local WITHER_SKULL_CAP deleted in favour of the exported WITHER_MAX_SKULLS | re-reviewed for 305: local WITHER_SKULL_CAP deleted in favour of the exported WITHER_MAX_SKULLS",
       "status": "audited"
     },
     {
@@ -34609,7 +34609,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | re-reviewed for 305: unconsumed aoPatternId removed | re-reviewed for 305: unconsumed aoPatternId removed",
       "status": "audited"
     },
     {
@@ -34949,7 +34949,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | re-reviewed for 305: unconsumed QUEUE_KINDS removed | re-reviewed for 305: unconsumed QUEUE_KINDS removed",
       "status": "audited"
     },
     {
@@ -35015,7 +35015,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings; re-reviewed for 297 (TILE_INDEX.gunpowder = 75 painted into an unused cell with its per-tile PRNG (no other tile changes)); no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings; re-reviewed for 297 (TILE_INDEX.gunpowder = 75 painted into an unused cell with its per-tile PRNG (no other tile changes)); no findings | re-reviewed for 305: unconsumed ATLAS_SIZE alias removed | re-reviewed for 305: unconsumed ATLAS_SIZE alias removed",
       "status": "audited"
     },
     {
@@ -35031,7 +35031,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | re-reviewed for 305: unconsumed translucentSortKeys/partitionQuadsByStream removed; sortTranslucentBackToFront and partitionQuadsByLayer (live + tested) retained | re-reviewed for 305: unconsumed translucentSortKeys/partitionQuadsByStream removed; sortTranslucentBackToFront and partitionQuadsByLayer (live + tested) retained",
       "status": "audited"
     },
     {
@@ -36043,7 +36043,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | re-reviewed for 305: emptyGamepad exported as the single disconnected-frame definition | re-reviewed for 305: emptyGamepad exported as the single disconnected-frame definition",
       "status": "audited"
     },
     {
@@ -36059,7 +36059,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | re-reviewed for 305: local duplicated frame deleted, imports emptyGamepad | re-reviewed for 305: local duplicated frame deleted, imports emptyGamepad",
       "status": "audited"
     },
     {
@@ -36241,7 +36241,23 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | re-reviewed for 305: uses the shared MovementGuards predicate and re-exports Position | re-reviewed for 305: uses the shared MovementGuards predicate and re-exports Position",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/MovementGuards.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "Single shared finite-position predicate plus Position type for 227/228 movement authority and reconciliation",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "reachable",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "change 305 dedupe: body is the exact duplicated predicate; MovementAuthority/MovementReconciler/ReconnectStateRecovery/NetworkAdversarialGuard suites cover null, non-object and non-finite rejection; no findings",
       "status": "audited"
     },
     {
@@ -36257,7 +36273,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | re-reviewed for 305: uses the shared MovementGuards predicate and re-exports Position | re-reviewed for 305: uses the shared MovementGuards predicate and re-exports Position",
       "status": "audited"
     },
     {
@@ -36943,7 +36959,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | re-reviewed for 305: unconsumed UNPOWERED_WIRE_POWER and its now-unused import removed | re-reviewed for 305: unconsumed UNPOWERED_WIRE_POWER and its now-unused import removed",
       "status": "audited"
     },
     {
@@ -37399,7 +37415,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | re-reviewed for 305: damageWither now calls isWitherArmored; SerializedWither/serializeWither use WITHER_RECORD_VERSION (serialized value stays 1) | re-reviewed for 305: damageWither now calls isWitherArmored; SerializedWither/serializeWither use WITHER_RECORD_VERSION (serialized value stays 1)",
       "status": "audited"
     },
     {
@@ -37415,7 +37431,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | re-reviewed for 305: abandoned explosion trio and its as-unknown type escape removed; live path uses Game.applyWitherExplosion | re-reviewed for 305: abandoned explosion trio and its as-unknown type escape removed; live path uses Game.applyWitherExplosion",
       "status": "audited"
     },
     {
@@ -37543,7 +37559,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | re-reviewed for 305: local promisifyRequest duplicate removed, imports the shared adapter | re-reviewed for 305: local promisifyRequest duplicate removed, imports the shared adapter",
       "status": "audited"
     },
     {
@@ -37575,7 +37591,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | re-reviewed for 305: local promisifyRequest duplicate removed, imports the shared adapter | re-reviewed for 305: local promisifyRequest duplicate removed, imports the shared adapter",
       "status": "audited"
     },
     {
@@ -37591,7 +37607,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | re-reviewed for 305: local promisifyRequest duplicate removed, imports the shared adapter; unused IdbRequestLike import dropped | re-reviewed for 305: local promisifyRequest duplicate removed, imports the shared adapter; unused IdbRequestLike import dropped",
       "status": "audited"
     },
     {
@@ -37657,7 +37673,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | re-reviewed for 305: local promisifyRequest duplicate removed, imports the shared adapter | re-reviewed for 305: local promisifyRequest duplicate removed, imports the shared adapter",
       "status": "audited"
     },
     {
@@ -37706,7 +37722,7 @@
         "F257-C"
       ],
       "disposition": "resetCurrentWorld rewritten to multi-store IDB readwrite; exportWorldBackup fail-closed; new test coverage in RecoveryBackupF257AtoL.test.ts",
-      "reviewNotes": "257 reopen: 22 new fault-injection tests prove snapshot read failure across 7 store classes aborts before any delete; 6 delete stages fault-injected in multi-store tx; world byte/record-equivalent after abort; foreign world preserved; isResetCompleted stays false; retry succeeds.; re-reviewed for 292 GamePlayerSnapshot.effects passthrough in savePlayerState/playerRecordToSnapshot",
+      "reviewNotes": "257 reopen: 22 new fault-injection tests prove snapshot read failure across 7 store classes aborts before any delete; 6 delete stages fault-injected in multi-store tx; world byte/record-equivalent after abort; foreign world preserved; isResetCompleted stays false; retry succeeds.; re-reviewed for 292 GamePlayerSnapshot.effects passthrough in savePlayerState/playerRecordToSnapshot | re-reviewed for 305: local awaitRequest duplicate removed, imports promisifyRequest (20 call sites) | re-reviewed for 305: local awaitRequest duplicate removed, imports promisifyRequest (20 call sites)",
       "status": "audited"
     },
     {
@@ -37757,7 +37773,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | re-reviewed for 305: local promisifyRequest duplicate removed, imports the shared adapter | re-reviewed for 305: local promisifyRequest duplicate removed, imports the shared adapter",
       "status": "audited"
     },
     {
@@ -37924,7 +37940,7 @@
         "F257-C"
       ],
       "disposition": "New multi-store transaction infrastructure; IdbFactoryMock updated to accept string|string[] and synthesize oncomplete on the next microtask after body settlement; validated by 22 new tests + 9 existing tests",
-      "reviewNotes": "Type checking passes; verified by 31 unit tests in the 257 scope (RecoveryBackupF257AtoL + RecoveryBackupAndAtomicReset + GamePersistence).",
+      "reviewNotes": "Type checking passes; verified by 31 unit tests in the 257 scope (RecoveryBackupF257AtoL + RecoveryBackupAndAtomicReset + GamePersistence). | re-reviewed for 305: promisifyRequest is now the single exported IndexedDB adapter | re-reviewed for 305: promisifyRequest is now the single exported IndexedDB adapter",
       "status": "audited"
     },
     {
@@ -38526,7 +38542,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | re-reviewed for 305: unconsumed chunkLifecycleName and its name table removed | re-reviewed for 305: unconsumed chunkLifecycleName and its name table removed",
       "status": "audited"
     },
     {
@@ -38942,7 +38958,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | re-reviewed for 305: unconsumed worldXToSection/worldZToSection removed | re-reviewed for 305: unconsumed worldXToSection/worldZToSection removed",
       "status": "audited"
     },
     {
@@ -44435,6 +44451,22 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/OrphanGateEnforcement.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "Pins the enforced unreferenced-source gate: allow-list contents, exit 0 on the real tree, exit 1 on a synthetic orphan, npm wiring and catalogue documentation",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "change 305: five tests, all passing; the fail path runs the real script against a temporary git root; no findings",
       "status": "audited"
     },
     {
@@ -50299,7 +50331,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | reviewed for 305: provider note extended for the 4.1.12 patch move; all four thresholds unchanged at 91/88/94/93 | reviewed for 305: provider note extended for the 4.1.12 patch move; all four thresholds unchanged at 91/88/94/93",
       "status": "audited"
     }
   ]

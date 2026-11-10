@@ -158,7 +158,11 @@ bijects 001–250, so nothing caught it.
 
 * No `src/**` runtime behaviour change: every deletion removes a symbol nothing
   calls; every consolidation replaces N identical bodies with 1 identical body.
-* No golden change: `git diff --numstat -- tests/visual-golden/` MUST be empty.
+* No golden pixel change: no committed PNG may change. The only permitted edit under
+  `tests/visual-golden/` is one `acknowledgements.json` entry, required by change 300's
+  staleness gate when a commit touches a captured-surface path (this change deletes
+  dead exports inside `src/rendering/`) without moving a captured pixel. The 60-cell
+  matrix must pass unchanged against the committed set.
 * No threshold change: `vitest.config.ts` floors stay 91/88/94/93.
 * No test deletion: the unit file count MUST NOT decrease; any removed test must
   correspond to a removed unit of behaviour (none is planned).
