@@ -1839,7 +1839,7 @@ deliverable package; it is the next free number after the audit-authored
    `vitest`/`@vitest/coverage-v8` `^4.1.12`), `npm ci`, `npm audit --audit-level=high`
    exit 0 with only dev-only moderate `minimatch` rows (no upstream fix exists —
    `typescript-eslint 8.72.2` is the newest release and is inside the advisory range).
-2. **16 dead exports** → removed (list in the package `design.md`).
+2. **14 dead exports** (+ the 2 private helpers only they used) → removed (list in the package `design.md`).
 3. **`isWitherArmored` / `WITHER_MAX_SKULLS` / `WITHER_RECORD_VERSION`** → the
    inline twins in `damageWither` and `Game.ts` now consume the exports instead of
    restating them.
@@ -1874,4 +1874,4 @@ added, scope/counts/coverage statement corrected to 001–304, C258 still
 
 ### Sequence row (authoritative with CHANGE_SEQUENCE.md)
 
-| 305 | `305-repository-cleanup-and-maintenance` | VERIFIED — repository-wide maintenance: patch-level toolchain move clears the only high-severity advisory and turns the remote `gate` job green; 16 unreferenced/contracted-free exports removed; three named constants become the single definition behind their live inline twins; six duplicated helpers collapse to one implementation each; the byte-identical duplicate 256 package and the consumer-less `playwright.253.config.ts` deleted; `verify:orphans` becomes a fail-closed gate with a reviewed allow-list; `PARITY_MATRIX.md` gains C298–C304 and corrected counts; no gameplay/rendering/persistence/threshold/golden change; 258 BLOCKED. |
+| 305 | `305-repository-cleanup-and-maintenance` | VERIFIED — repository-wide maintenance: patch-level toolchain move clears the only high-severity advisory and turns the remote `gate` job green; 14 unreferenced/contracted-free exports plus their 2 private helpers removed; three named constants become the single definition behind their live inline twins; six duplicated helpers collapse to one implementation each; the byte-identical duplicate 256 package and the consumer-less `playwright.253.config.ts` deleted; `verify:orphans` becomes a fail-closed gate with a reviewed allow-list; `PARITY_MATRIX.md` gains C298–C304 and corrected counts; no gameplay/rendering/persistence/threshold/golden change; 258 BLOCKED. |

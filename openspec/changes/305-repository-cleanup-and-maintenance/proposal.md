@@ -12,7 +12,7 @@ that survive every gate:
    cause is a locked dev-toolchain `vite` version inside a published high-severity
    advisory range. Every other job is green, so this is a pure toolchain defect —
    but it means the reproduced handoff tip is not a green build.
-2. **27 exported symbols have exactly one occurrence in the entire repository**
+2. **33 exported symbols in `src/` had exactly one occurrence in the entire repository**
    (their own declaration): dead exports that no source file, test, or script
    imports. A subset are pure numeric/type aliases with no OpenSpec contract;
    another subset are superseded alternate implementations that the live path

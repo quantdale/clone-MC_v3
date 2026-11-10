@@ -42,6 +42,25 @@ Published head: `e9887f2afc8b6d353e15c90577a76479249242f4` (origin/main verified
 | `npm run test:e2e` | PASS | `144 passed (38.3m)` on the pre-acknowledgement tree; the 60-cell visual matrix was then re-run standalone on the code candidate (HEAD `80137be4`, before the metadata-only acknowledgement commit): `1 passed (7.9m)`, zero golden churn. `git status --porcelain tests/visual-golden/` reports no `*.png`; the single entry is the required `acknowledgements.json` record for commit `87f67560` |
 | `npm run test:perf:multiplayer` | PASS | isolated run: `elapsedMs=1946.8 sustainedTps=616.4 withinBudget=true` vs the 200 / 6000 floors, exactly 1 measured test and 11 unrelated filtered out |
 
+## Count correction (recorded, not silently fixed)
+
+The published refactor commit message (`87f67560`) says "sixteen exported symbols".
+That wording is wrong and cannot be corrected without rewriting published history,
+which this campaign forbids, so the correction lives here:
+
+- **measured baseline**: 33 unreferenced exports in `src/` (34 including one
+  test constant) — census archived at `census-before.txt`;
+- **removed**: **14 exported symbols** plus **2 private helpers** that only they
+  used (`CHUNK_LIFECYCLE_NAMES`, `isProtectedWrapped`) = 16 removed symbols;
+- **preserved**: 19 unreferenced exports, each because an OpenSpec artifact quotes
+  it (e.g. `RecipeKind`, `SMOKER_ITEM_ID`, `FLUID_LEVEL_*_FLOWING`) or because it is
+  the API of a spec-named module (`OscillatorAmbientBackend`,
+  `WorkerMeshCapabilities`, the canonical gate constants).
+
+Every record (proposal, CHANGE_SEQUENCE, CHANGE_SEQUENCE_OVERRIDES,
+PROGRAM_STATE.json/.md, the final engineering report) states 33/14/2; the commit
+message's "sixteen" is the count of *removed symbols*, not of exports.
+
 ## Edge/adversarial validation
 
 * **Orphan gate fail path** — a synthetic git root with the three allow-listed entry points plus `src/DeadModule.ts` made the real script exit 1 and name `src/DeadModule.ts`. The pass path on the real tree exits 0. Both paths are pinned by `tests/unit/OrphanGateEnforcement.test.ts`.

@@ -12,8 +12,8 @@
 > `perf-multiplayer` were green. That is a toolchain defect, not a product defect.
 > **Eight measured defects and their fixes.** (1) Red dependency-audit gate -> patch-level dev-toolchain
 > move (`vite ^6.4.6`, `vitest`/`@vitest/coverage-v8` `^4.1.12`) + `npm ci`; the high advisory is gone
-> and only dev-only moderate `minimatch` rows remain (no upstream release fixes them). (2) Sixteen
-> provably unreferenced, uncontracted exports deleted. (3) `WITHER_MAX_SKULLS`, `WITHER_RECORD_VERSION`
+> and only dev-only moderate `minimatch` rows remain (no upstream release fixes them). (2) Fourteen
+> provably unreferenced, uncontracted exports deleted (plus the 2 private helpers only they used). (3) `WITHER_MAX_SKULLS`, `WITHER_RECORD_VERSION`
 > and `isWitherArmored` became the single definitions behind their live inline twins instead of being
 > deleted, so the live path is bound to the named constant (the serialized record value stays `1`).
 > (4) Six byte-identical `promisifyRequest` copies plus `awaitRequest` collapsed into one exported
