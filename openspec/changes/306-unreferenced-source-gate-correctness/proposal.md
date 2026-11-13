@@ -22,7 +22,7 @@ The locked TypeScript compiler, Git and Node; no new packages. Existing 305 gate
 
 ## Proposed change
 
-Replace regex matching with TypeScript syntax-tree traversal and robust resolution of tracked local modules. Add fixture-driven failure and passing tests. Stabilize the statistics E2E by waiting for the player to land and for targeting to update before capturing a block, while still requiring the captured block to be mined and the statistic to increase. Correct the reproduced data-loss race where an earlier batch write is in flight while a later key is re-marked: the stale batch entry must never delete the newer one. Clarify gate limitations and update durable state and file audit.
+Replace regex matching with TypeScript syntax-tree traversal and robust resolution of tracked local modules. Add fixture-driven failure and passing tests. Stabilize the statistics E2E by waiting for the player to land and for targeting to update before capturing a block, while still requiring the captured block to be mined and the statistic to increase. Correct the reproduced data-loss race where an earlier batch write is in flight while a later key is re-marked: the stale batch entry must never delete the newer one. Correct the churn browser test's time-of-check race: assess the flush's returned failure count at flush completion, and retain exact reload verification of all 150 edits. Prove separately that a real new player-state enqueue after a successful flush can make a later pending count nonzero. Clarify gate limitations and update durable state and file audit.
 
 ## Compatibility and migration
 

@@ -89,6 +89,16 @@ A draining batch MUST NOT delete or write a captured pending entry that has been
 - **WHEN** the pending queue is cleared before A completes
 - **THEN** the obsolete B entry is not written or recreated by the batch.
 
+### Requirement: R7 measure the persistence flush at its own boundary
+
+The churn browser test MUST assert the flush's returned `failed` count is zero and MUST continue verifying all 150 expected edits after reload. It MUST NOT treat a separate later global pending count as proof that the completed flush failed, because new player-state saves can be queued concurrently. A real-browser test MUST demonstrate that an independently enqueued player-state save after a successful flush is visible as pending and can itself be flushed.
+
+#### Scenario: new save after completed flush
+- **GIVEN** a successful flush returning zero failed units
+- **WHEN** a new player-state snapshot is enqueued afterwards
+- **THEN** pending count increases without changing the earlier flush outcome
+- **AND** another flush writes the new pending save successfully.
+
 ## Error and failure behavior
 
 Orphans yield exit 1 with names; scanner or input errors yield exit 2 with an actionable diagnostic.
@@ -119,3 +129,4 @@ Print unexpected paths and failing scan files; preserve the existing census.
 | R4 | Real-tree gate, focused suite, full mandatory verification and isolated performance gate |
 | R5 | Failing-first browser repeats and repeated real statistics journeys after the test-precondition correction |
 | R6 | Failing-first deterministic queue interleaving tests and existing queue/storage regression suites |
+| R7 | Controlled failing-first browser reproduction and new flush-boundary test; churn reload proves all 150 edits |

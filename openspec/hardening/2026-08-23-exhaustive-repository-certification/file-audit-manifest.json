@@ -39847,9 +39847,9 @@
     },
     {
       "path": "tests/e2e/persistence.spec.ts",
-      "gitBlob": "39c70f3de8a27e8fc08b5349176999af7b39b576",
+      "gitBlob": null,
       "category": "test",
-      "purpose": "257 repair coverage for tests/e2e/persistence.spec.ts",
+      "purpose": "306 re-review: flush-boundary assertion and independent post-flush player-save regression while preserving 150-edit reload proof",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],

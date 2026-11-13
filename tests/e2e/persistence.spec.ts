@@ -577,7 +577,9 @@ test.describe("persistence durability (249 e2e)", () => {
     const flushed = await flush(page);
     mark(`flush committed=${flushed.committed} failed=${flushed.failed}`);
     expect(flushed.committed).toBeGreaterThan(0);
-    expect(await pendingCount(page)).toBe(0);
+    // The flush reports its own boundary. A new autosave can be enqueued
+    // before a later page.evaluate reads the global pending count.
+    expect(flushed.failed).toBe(0);
 
     await page.reload();
     await waitReady(page);
@@ -615,5 +617,25 @@ test.describe("persistence durability (249 e2e)", () => {
     }, cells);
     mark("verify-reads");
     expect(mismatches).toEqual([]);
+  });
+
+  test("new player saves after a completed flush are independently pending", async ({ page }) => {
+    await waitReady(page);
+    const first = await flush(page);
+    expect(first.failed).toBe(0);
+
+    const pendingAfterNewSave = await page.evaluate(() => {
+      const game = (window as unknown as { __voxelGame: {
+        persistenceImpl: { savePlayerState(value: unknown): void; pendingCount: number };
+        buildPlayerSnapshot(): unknown;
+      } }).__voxelGame;
+      // Exercise the same enqueue path as the game's periodic player autosave.
+      game.persistenceImpl.savePlayerState(game.buildPlayerSnapshot());
+      return game.persistenceImpl.pendingCount;
+    });
+    expect(pendingAfterNewSave).toBeGreaterThan(0);
+    const second = await flush(page);
+    expect(second.committed).toBeGreaterThan(0);
+    expect(second.failed).toBe(0);
   });
 });
