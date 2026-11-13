@@ -109,13 +109,13 @@ export class DirtySaveQueue {
     const committedKeys: string[] = [];
 
     for (const [key, entry] of batch) {
-      // Remove up front so a re-entrant waiter's batch cannot process the same snapshot twice.
-      this.pending.delete(key);
-
-      // Superseded before write start: a newer markDirty already replaced this epoch.
-      if (this.epochs.get(key) !== entry.epoch) {
+      // A later batch entry may have been replaced or cleared while an earlier
+      // write awaited. Never delete the replacement or write the cleared entry.
+      if (this.pending.get(key) !== entry || this.epochs.get(key) !== entry.epoch) {
         continue;
       }
+      // Remove up front so a re-entrant waiter cannot process this snapshot twice.
+      this.pending.delete(key);
 
       try {
         await sink.write(entry.unit);

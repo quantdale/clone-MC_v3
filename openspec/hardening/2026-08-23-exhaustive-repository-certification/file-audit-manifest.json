@@ -10,8 +10,13 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 3087,
+  "total": 3092,
   "rows": [
+    {"path":"openspec/changes/306-unreferenced-source-gate-correctness/proposal.md","category":"spec","purpose":"Change 306 proposal and reproduced guard defect","reviewLevel":"semantic","reviewNotes":"Reviewed the proposal against the reproduced real-script false pass; implementation remains in progress.","status":"audited"},
+    {"path":"openspec/changes/306-unreferenced-source-gate-correctness/design.md","category":"spec","purpose":"Change 306 syntax-aware guard design","reviewLevel":"semantic","reviewNotes":"Reviewed the AST approach and stated direct-importer limits against the implementation.","status":"audited"},
+    {"path":"openspec/changes/306-unreferenced-source-gate-correctness/specs/unreferenced-source-gate/spec.md","category":"spec","purpose":"Change 306 normative guard requirements","reviewLevel":"semantic","reviewNotes":"Reviewed scenarios and verification mapping; final full gate remains open.","status":"audited"},
+    {"path":"openspec/changes/306-unreferenced-source-gate-correctness/tasks.md","category":"spec","purpose":"Change 306 task checkpoint","reviewLevel":"semantic","reviewNotes":"Reviewed task completion against focused fixture evidence; full gate remains unchecked.","status":"audited"},
+    {"path":"openspec/changes/306-unreferenced-source-gate-correctness/verification.md","category":"spec","purpose":"Change 306 measured verification evidence","reviewLevel":"semantic","reviewNotes":"Reviewed recorded baseline and failing-first fixture results; no full gate claimed.","status":"audited"},
     {
       "path": ".agent/EXECUTION_PROMPT.md",
       "gitBlob": null,
@@ -37630,7 +37635,7 @@
       "path": "src/storage/DirtySaveQueue.ts",
       "gitBlob": null,
       "category": "production",
-      "purpose": "257 repair coverage for src/storage/DirtySaveQueue.ts",
+      "purpose": "306 save queue integrity: check pending entry identity before deleting a captured batch member",
       "reviewLevel": "semantic",
       "runtimeReachability": "unknown",
       "imports": [],

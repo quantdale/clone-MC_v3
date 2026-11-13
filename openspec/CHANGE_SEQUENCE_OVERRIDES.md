@@ -1,5 +1,14 @@
 # Change Sequence Overrides
 
+## 306 activation — verification-gate correctness (2026-11-13)
+
+User requests a fresh repository-wide defect audit. After 305 VERIFIED, change
+`306-unreferenced-source-gate-correctness` is the sole ACTIVE change. The real
+orphan guard falsely passed a tracked orphan whose sole apparent import was in a
+comment; this change repairs and tests that gate without widening its allow-list.
+Session start `350b557a090b01c2d5d5574fb7ae9aa1e6fc52c3`. Change 258 remains
+BLOCKED under the existing owner deferral; no hardware-GPU evidence is claimed.
+
 ## Post-terminal ordering: owner-authorized Change 254 ahead of reserved 253 (2026-08-26)
 
 The product owner explicitly authorized a repository-wide performance-optimization campaign

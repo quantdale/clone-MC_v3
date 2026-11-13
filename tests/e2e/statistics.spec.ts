@@ -134,12 +134,20 @@ test.describe('live statistics journey (271)', () => {
       { timeout: 15_000 },
     );
     await page.keyboard.up('Space');
+    // The jump counter advances on takeoff. Capture the mining target only after
+    // landing, otherwise the raycast can move to a different block mid-break.
+    await page.waitForFunction(() => {
+      const g = (window as unknown as { __voxelGame?: { player?: { onGround: boolean } } }).__voxelGame;
+      return g?.player?.onGround === true;
+    }, { timeout: 20_000 });
 
     // ── Real break: aim down at the terrain and hold-mine (game.spec pattern) ──
     await page.evaluate(() => {
       const g = (window as unknown as { __voxelGame?: { player: { pitch: number } } }).__voxelGame;
       if (g) g.player.pitch = -1.0;
     });
+    // The target is updated by the game loop, not synchronously with pitch.
+    await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
     let target: { x: number; y: number; z: number } | null = null;
     for (let i = 0; i < 20; i++) {
       await page.waitForTimeout(100);

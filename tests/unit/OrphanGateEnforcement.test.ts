@@ -41,6 +41,22 @@ function declaredAllowList(): string[] {
   return [...body.matchAll(/'([^']+)'/g)].map((m) => m[1] ?? '');
 }
 
+function withFixture(files: Record<string, string>, check: (root: string) => void): void {
+  const root = mkdtempSync(join(tmpdir(), 'orphan-syntax-'));
+  try {
+    for (const [file, content] of Object.entries(files)) {
+      const target = join(root, file);
+      mkdirSync(dirname(target), { recursive: true });
+      writeFileSync(target, content);
+    }
+    execFileSync('git', ['init', '-q', '.'], { cwd: root });
+    execFileSync('git', ['add', '-A'], { cwd: root, stdio: 'pipe' });
+    check(root);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+}
+
 describe('scripts/orphan-check.mjs enforces its allow-list (305)', () => {
   it('declares exactly the three non-import-loadable entry points', () => {
     expect(declaredAllowList()).toEqual([
@@ -82,6 +98,81 @@ describe('scripts/orphan-check.mjs enforces its allow-list (305)', () => {
       rmSync(root, { recursive: true, force: true });
     }
   }, 60000);
+
+  it('rejects import-like text in comments and ordinary strings', () => {
+    withFixture({
+      'src/main.ts': `// import { dead } from './Commented';\nconst text = "export { dead } from './Quoted'";\nvoid text;\n`,
+      'src/Commented.ts': 'export const dead = 1;\n',
+      'src/Quoted.ts': 'export const dead = 2;\n',
+    }, (root) => {
+      const result = run(ORPHAN_SCRIPT, ['--root', root], root);
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('src/Commented.ts');
+      expect(result.stderr).toContain('src/Quoted.ts');
+    });
+  });
+
+  it('recognizes real static, side-effect, type, export, dynamic, require and import-equals references', () => {
+    withFixture({
+      'src/main.ts': `import { value } from './Static';
+import './SideEffect';
+import type { Shape } from './Types';
+export { other } from './Export';
+import legacy = require('./Legacy');
+const dynamic = import('./Dynamic');
+const required = require('./Required');
+void [value, dynamic, required, legacy];
+let shape: Shape; void shape!;`,
+      'src/Static.ts': 'export const value = 1;',
+      'src/SideEffect.ts': 'export const sideEffect = 1;',
+      'src/Types.ts': 'export type Shape = number;',
+      'src/Export.ts': 'export const other = 1;',
+      'src/Legacy.ts': 'export const legacy = 1;',
+      'src/Dynamic.ts': 'export const dynamic = 1;',
+      'src/Required.ts': 'export const required = 1;',
+    }, (root) => {
+      const result = run(ORPHAN_SCRIPT, ['--root', root], root);
+      expect(result.status, result.stderr).toBe(0);
+    });
+  });
+
+  it('resolves tracked explicit extensions and directory indexes without inventing edges', () => {
+    withFixture({
+      'src/main.ts': `import './One.ts'; import './Two.js'; import './folder'; import 'Orphan'; import './missing';`,
+      'src/One.ts': 'export const one = 1;',
+      'src/Two.ts': 'export const two = 2;',
+      'src/folder/index.ts': 'export const three = 3;',
+      'src/Orphan.ts': 'export const orphan = 4;',
+    }, (root) => {
+      const result = run(ORPHAN_SCRIPT, ['--root', root], root);
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('src/Orphan.ts');
+      expect(result.stderr).not.toContain('src/One.ts');
+      expect(result.stderr).not.toContain('src/Two.ts');
+      expect(result.stderr).not.toContain('src/folder/index.ts');
+    });
+  });
+
+  it('fails closed on invalid syntax and invalid roots', () => {
+    withFixture({ 'src/main.ts': 'export const broken = ;' }, (root) => {
+      const result = run(ORPHAN_SCRIPT, ['--root', root], root);
+      expect(result.status).toBe(2);
+      expect(result.stderr).toContain('src/main.ts');
+    });
+    withFixture({ 'src/main.ts': 'export const main = true;', 'src/Deleted.ts': 'export const x = 1;' }, (root) => {
+      rmSync(join(root, 'src/Deleted.ts'));
+      const result = run(ORPHAN_SCRIPT, ['--root', root], root);
+      expect(result.status).toBe(2);
+      expect(result.stderr).toContain('Deleted.ts');
+    });
+    expect(run(ORPHAN_SCRIPT, ['--root']).status).toBe(2);
+    const root = mkdtempSync(join(tmpdir(), 'orphan-not-git-'));
+    try {
+      expect(run(ORPHAN_SCRIPT, ['--root', root], root).status).toBe(2);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
 
   it('is the verify:orphans npm gate (not an advisory report)', () => {
     const pkg = JSON.parse(readSource(resolve(REPO_ROOT, 'package.json'))) as {

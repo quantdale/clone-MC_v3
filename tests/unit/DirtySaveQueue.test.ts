@@ -252,6 +252,58 @@ describe('RepositorySaveSink integration (in-memory mocks)', () => {
 });
 
 describe('DirtySaveQueue concurrent drain integrity (289)', () => {
+  it('retains a newer snapshot of a later batch entry while an earlier write is pending', async () => {
+    const q = new DirtySaveQueue();
+    q.markDirty(unit({ key: 'a', payload: 'a1' }));
+    q.markDirty(unit({ key: 'b', payload: 'b1' }));
+    let release!: () => void;
+    let started!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const writing = new Promise<void>((resolve) => { started = resolve; });
+    const durable: string[] = [];
+    const sink: SaveSink = {
+      async write(value) {
+        if (value.key === 'a') { started(); await gate; }
+        durable.push(String(value.payload));
+      },
+    };
+    const first = q.drainReport(sink, 10);
+    await writing;
+    q.markDirty(unit({ key: 'b', payload: 'b2' }));
+    release();
+    const result = await first;
+    expect(result.committedKeys).toEqual(['a']);
+    expect(q.keys()).toEqual(['b']);
+    await q.drain(sink, 10);
+    expect(durable).toEqual(['a1', 'b2']);
+    expect(q.size).toBe(0);
+  });
+
+  it('does not write a later batch entry cleared while an earlier write is pending', async () => {
+    const q = new DirtySaveQueue();
+    q.markDirty(unit({ key: 'a', payload: 'a1' }));
+    q.markDirty(unit({ key: 'b', payload: 'b1' }));
+    let release!: () => void;
+    let started!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const writing = new Promise<void>((resolve) => { started = resolve; });
+    const durable: string[] = [];
+    const sink: SaveSink = {
+      async write(value) {
+        if (value.key === 'a') { started(); await gate; }
+        durable.push(String(value.payload));
+      },
+    };
+    const first = q.drainReport(sink, 10);
+    await writing;
+    q.clear();
+    release();
+    const result = await first;
+    expect(result.committedKeys).toEqual(['a']);
+    expect(durable).toEqual(['a1']);
+    expect(q.size).toBe(0);
+  });
+
   it('concurrent drains must not leave a superseded payload as last durable write', async () => {
     const q = new DirtySaveQueue();
     q.markDirty(unit({ key: 'k', payload: 'v1' }));

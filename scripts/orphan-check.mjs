@@ -23,10 +23,11 @@
  * Usage: node scripts/orphan-check.mjs [--root <repoRoot>]
  * Exit 0 when every importer-free file is allow-listed, 1 otherwise, 2 on a bad root.
  */
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import ts from 'typescript';
 
 const __filename = fileURLToPath(import.meta.url);
 const defaultRoot = path.resolve(path.dirname(__filename), '..');
@@ -40,11 +41,11 @@ export const ENTRY_POINT_ALLOW_LIST = Object.freeze([
 
 function resolveRoot() {
   const argv = process.argv.slice(2);
-  const flagIndex = argv.indexOf('--root');
-  if (flagIndex !== -1 && argv[flagIndex + 1]) {
-    return path.resolve(argv[flagIndex + 1]);
+  if (argv.length === 0) return defaultRoot;
+  if (argv.length !== 2 || argv[0] !== '--root' || !argv[1] || argv[1].startsWith('--')) {
+    throw new Error('usage: orphan-check.mjs [--root <repoRoot>]');
   }
-  return defaultRoot;
+  return path.resolve(argv[1]);
 }
 
 function main() {
@@ -61,8 +62,8 @@ function main() {
    */
   const gitFiles = (pattern) => {
     try {
-      return execSync(`git ls-files ${pattern}`, { cwd: root, encoding: 'utf8' })
-        .split('\n')
+      return execFileSync('git', ['ls-files', '-z', '--', pattern], { cwd: root, encoding: 'utf8' })
+        .split('\0')
         .filter(Boolean);
     } catch (error) {
       console.error(
@@ -76,27 +77,41 @@ function main() {
   const srcFiles = gitFiles('src').filter((f) => f.endsWith('.ts') && !f.endsWith('.d.ts'));
   const testFiles = gitFiles('tests').filter((f) => f.endsWith('.ts'));
 
-  const importRe = /(?:import|export)[^'"]*from\s*['"]([^'"]+)['"]/g;
+  const trackedSources = new Set(srcFiles.map((file) => path.resolve(root, file)));
+  const importers = new Set();
 
-  function resolveImport(specifier, fromFile) {
-    if (!specifier.startsWith('.')) return null;
+  function recordImport(specifier, fromFile) {
+    if (!specifier.startsWith('.')) return;
     const base = path.resolve(root, path.dirname(fromFile), specifier);
-    if (fs.existsSync(`${base}.ts`)) return `${base}.ts`;
-    if (fs.existsSync(path.join(base, 'index.ts'))) return path.join(base, 'index.ts');
-    return null;
+    const candidates = base.endsWith('.ts') ? [base]
+      : base.endsWith('.js') ? [`${base.slice(0, -3)}.ts`]
+        : [`${base}.ts`, path.join(base, 'index.ts')];
+    const target = candidates.find((candidate) => trackedSources.has(candidate));
+    if (target) importers.add(target);
   }
 
-  const srcPrefix = path.resolve(root, 'src');
-  const importers = new Map();
   for (const file of [...srcFiles, ...testFiles]) {
     const text = fs.readFileSync(path.resolve(root, file), 'utf8');
-    let match;
-    importRe.lastIndex = 0;
-    while ((match = importRe.exec(text))) {
-      const resolved = resolveImport(match[1], file);
-      if (!resolved || !resolved.startsWith(srcPrefix)) continue;
-      importers.set(resolved, (importers.get(resolved) ?? 0) + 1);
+    const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    if (source.parseDiagnostics.length > 0) {
+      const message = ts.flattenDiagnosticMessageText(source.parseDiagnostics[0].messageText, '\n');
+      throw new Error(`cannot parse ${file}: ${message}`);
     }
+    function visit(node) {
+      let specifier;
+      if ((ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) && node.moduleSpecifier) {
+        specifier = node.moduleSpecifier;
+      } else if (ts.isImportEqualsDeclaration(node) && ts.isExternalModuleReference(node.moduleReference)) {
+        specifier = node.moduleReference.expression;
+      } else if (ts.isCallExpression(node) && node.arguments.length === 1 &&
+        (node.expression.kind === ts.SyntaxKind.ImportKeyword ||
+          (ts.isIdentifier(node.expression) && node.expression.text === 'require'))) {
+        specifier = node.arguments[0];
+      }
+      if (specifier && ts.isStringLiteral(specifier)) recordImport(specifier.text, file);
+      ts.forEachChild(node, visit);
+    }
+    visit(source);
   }
 
   const orphans = srcFiles.filter((file) => !importers.has(path.resolve(root, file)));
@@ -106,8 +121,8 @@ function main() {
   console.log(`Source files: ${srcFiles.length}`);
   console.log(`Allow-listed importer-free entry points present: ${allowed.length}/${ENTRY_POINT_ALLOW_LIST.length}`);
   for (const entry of ENTRY_POINT_ALLOW_LIST) {
-    const mark = allowed.includes(entry) ? 'ok  ' : 'MISSING';
-    console.log(`  ${mark} ${entry}`);
+    const mark = allowed.includes(entry) ? 'ok' : trackedSources.has(path.resolve(root, entry)) ? 'has importer' : 'MISSING';
+    console.log(`  ${mark}   ${entry}`);
   }
 
   if (unexpected.length > 0) {
@@ -126,4 +141,9 @@ function main() {
   process.exit(0);
 }
 
-main();
+try {
+  main();
+} catch (error) {
+  console.error(`Unreferenced-source guard: ${error instanceof Error ? error.message : String(error)}`);
+  process.exit(2);
+}
