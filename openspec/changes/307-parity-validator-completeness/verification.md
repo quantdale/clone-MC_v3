@@ -1,16 +1,17 @@
 # Verification: 307-parity-validator-completeness
 
-Status: VERIFYING — NOT VERIFIED
-Completion: 5/6 (83.333333%)
-Advancement allowed: false
+Status: VERIFIED
+Completion: 6/6 (100%)
+Advancement allowed: true
+Published verification checkpoint: `439682bda3916fd34255d3848880692cc3843726` (normal push and remote-head verification); the final state-only closure follows it.
 Starting head for this change: `2031fededbc2597ce80e9eab7967d8d013fd625c` (local and remote main verified equal; clean tree). Session start head: `350b557a090b01c2d5d5574fb7ae9aa1e6fc52c3`.
 
 ## Requirement evidence
 
 | Requirement | Evidence | Status |
 | --- | --- | --- |
-| R1 | Copied real state/matrix with verified C305 removed and summary adjusted: real validator exited 0 before, exits 1 naming C305 after. Fixtures cover last-completed during ACTIVE, verified current, historical and non-VERIFIED row. | FOCUSED PASS |
-| R2 | Copied real matrix with bold total changed from 308 to 1: real validator exited 0 before, exits 1 naming the mismatch after. Fixtures cover plain/bold, missing, nonnumeric, duplicate and incorrect totals and category counts. | FOCUSED PASS |
+| R1 | Copied real state/matrix with verified C305 removed and summary adjusted: real validator exited 0 before, exits 1 naming C305 after. Fixtures cover last-completed during ACTIVE, verified current, historical and non-VERIFIED row. | PASS |
+| R2 | Copied real matrix with bold total changed from 308 to 1: real validator exited 0 before, exits 1 naming the mismatch after. Fixtures cover plain/bold, missing, nonnumeric, duplicate and incorrect totals and category counts. | PASS |
 | R3 | Existing synthetic no-matrix suite passes; new tests keep 001–250 and duplicate guards and accept deferred C258. Real `validate-state` and full gate pass. | PASS |
 
 ## Commands
@@ -48,7 +49,7 @@ Focused state-validator suites and all 13 mandatory gates pass. No game or save 
 
 ## Incomplete tasks
 
-T6 remains open: review, publication and verified remote head; no advancement until complete.
+None. The implementation, evidence and requirements were reviewed; published checkpoint `439682bda3916fd34255d3848880692cc3843726` was verified on `origin/main`.
 
 ## Advancement Exception
 
@@ -56,4 +57,4 @@ Not applicable.
 
 ## Final decision
 
-VERIFYING. Review the complete diff and requirements, publish evidence, and verify remote head. Change 258 remains BLOCKED; no headed GPU evidence claimed.
+VERIFIED. All six tasks and mandatory requirements pass, with no advancement exception. Continue the broader user-requested repository audit. Change 258 remains BLOCKED; no headed GPU evidence claimed.

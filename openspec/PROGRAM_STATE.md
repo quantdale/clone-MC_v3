@@ -1,10 +1,10 @@
 # Program State
 
-## Current checkpoint — 2026-11-13 Change 307 VERIFYING (5/6)
+## Current checkpoint — 2026-11-13 Change 307 VERIFIED (6/6)
 
-After 306 VERIFIED, the repository audit independently reproduced two `validate-state` false passes using copied real state: deleting VERIFIED C305 with adjusted category counts and changing the bold summary total from 308 to 1. Change 307 starts from remote-verified `2031fededbc2597ce80e9eab7967d8d013fd625c`; its spec-first package and active state are in place. Nine focused CLI fixture cases failed before the validator fix; afterwards the two original copied fixtures correctly exit 1, the expanded state-validator suites pass 35/35, and real validate-state, 3097-row file audit, typecheck and lint pass. Full `verify:all` at `ce68d6e75c233ffa4efbc33a5238ee3ba3024fcc` passed 13/13 gates: 5852 unit + 1 skipped, coverage 91.93/88.66/94.90/93.28, 145 browser tests including the visual matrix. Isolated multiplayer performance passed 836.5 TPS / 1434.5 ms. Final review/publication remains. Change 258 remains BLOCKED.
+After 306 VERIFIED, the repository audit independently reproduced two `validate-state` false passes using copied real state: deleting VERIFIED C305 with adjusted category counts and changing the bold summary total from 308 to 1. Change 307 starts from remote-verified `2031fededbc2597ce80e9eab7967d8d013fd625c`; its spec-first package and active state are in place. Nine focused CLI fixture cases failed before the validator fix; afterwards the two original copied fixtures correctly exit 1, the expanded state-validator suites pass 35/35, and real validate-state, 3097-row file audit, typecheck and lint pass. Full `verify:all` at `ce68d6e75c233ffa4efbc33a5238ee3ba3024fcc` passed 13/13 gates: 5852 unit + 1 skipped, coverage 91.93/88.66/94.90/93.28, 145 browser tests including the visual matrix. Isolated multiplayer performance passed 836.5 TPS / 1434.5 ms. The evidence checkpoint `439682bda3916fd34255d3848880692cc3843726` was published and remote-verified; parity C307 is reconciled. Change 258 remains BLOCKED.
 
-- Next exact action: **Review change 307 requirements and the complete diff, publish evidence and verify the remote head.**
+- Next exact action: **Continue the user-requested repository-wide audit with real failing-first tests; author the next narrow spec before implementation.**
 
 ## Current checkpoint — 2026-11-13 Change 306 VERIFIED (7/7)
 
@@ -504,16 +504,16 @@ Session start `350b557a090b01c2d5d5574fb7ae9aa1e6fc52c3` matches live `origin/ma
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **307-parity-validator-completeness — VERIFYING (5/6); 258 BLOCKED, 259–306 VERIFIED**
+- Active implementation change: **307-parity-validator-completeness — VERIFIED (6/6); 258 BLOCKED, 259–307 VERIFIED**
 - Prior active implementation change: **283-live-raid-persistence — VERIFIED (13/13); 258 stays BLOCKED, 259–283 stay VERIFIED**
 - Prior prior active implementation change: **282-live-raid-feedback — VERIFIED (10/10); 258 stays BLOCKED, 259–282 stay VERIFIED**
 - Next change: **308 — pending audit after 307; 258 stays BLOCKED**
-- 240 advancement allowed: **no (active change not yet verified)**
+- 240 advancement allowed: **yes**
 
 - Program: **ACTIVE — Change 284-live-raid-wave-spawning VERIFIED 12/12 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–284 VERIFIED**
 - 284 checkpoint: **VERIFIED 12/12 — implementation + gates complete; enchanting flake + visual SwiftShader drift documented non-blocking; 258 BLOCKED; 285 not started**
 - Last completed change: **306-unreferenced-source-gate-correctness — VERIFIED (7/7); 258 BLOCKED**
-- Current active change: **307-parity-validator-completeness — VERIFYING (5/6); full gate passes, publication pending**
+- Current active change: **307-parity-validator-completeness — VERIFIED (6/6); full gate passes**
 - Prior last completed change: **281-workstation-ui — VERIFIED (12/12); 258 stays BLOCKED, 259–281 stay VERIFIED**
 - Prior prior last completed change: **272-lighting-clock-dt-sync — VERIFIED (10/10) — full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85/file-audit 2792); 271 remains VERIFIED (14/14)
 - All changes 001–257 and 259–284: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed; Change 283 is VERIFIED 13/13; Change 284 is VERIFIED 12/12 (this session).

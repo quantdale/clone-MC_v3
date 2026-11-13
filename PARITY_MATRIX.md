@@ -2,7 +2,7 @@
 
 - **Schema version:** `v1`
 - **Generated:** 2026-11-10 Change 305 reconciliation (original matrix generated 2026-08-25; post-terminal rows and the Change-258 blocker are included; provenance in `openspec/PROGRAM_STATE.json`)
-- **Scope:** one row per numbered change `001`–`306` (FeatureId `C<number>`), plus master-plan-only feature areas (`MP-<section>-<seq>`). Change 258 is intentionally recorded as `deferred`/`BLOCKED`, not VERIFIED.
+- **Scope:** one row per numbered change `001`–`307` (FeatureId `C<number>`), plus master-plan-only feature areas (`MP-<section>-<seq>`). Change 258 is intentionally recorded as `deferred`/`BLOCKED`, not VERIFIED.
 
 ## Sources of truth
 
@@ -27,7 +27,7 @@ Directory-slug note: three directories use slugs that differ from the sequence t
 
 Boundary disambiguation: `exact` vs `equivalent` — if only the internal mechanism differs but the player-visible behavior and its rules match as specified, it is still `exact`; `equivalent` is reserved for outcomes whose reference mechanism is proprietary/unavailable and was deliberately replaced by a locally-documented one. `equivalent` vs `approx` — `equivalent` rows have no behavioral shortfall, only a substituted mechanism; `approx` rows record an actual known behavioral/fidelity difference caused by a platform or legal-resource constraint. `deferred` vs `out-of-scope` — `deferred` features remain planned work; `out-of-scope` features will never be implemented because they require proprietary assets/services or non-browser capability.
 
-## Change matrix (C001–C306)
+## Change matrix (C001–C307)
 
 Narrow-outcome text is quoted from `openspec/CHANGE_SEQUENCE.md` (authoritative catalog); status is confirmed against `openspec/PROGRAM_STATE.json` (`validationResults`) and each change's `verification.md`.
 
@@ -339,6 +339,7 @@ Narrow-outcome text is quoted from `openspec/CHANGE_SEQUENCE.md` (authoritative 
 
 | C305 | `305-repository-cleanup-and-maintenance` | Repository maintenance, toolchain advisory remediation, helper consolidation, unreferenced-source enforcement and record reconciliation. | exact | `openspec/changes/305-repository-cleanup-and-maintenance/verification.md` (VERIFIED 47/47) | Change 258 remains BLOCKED. The original orphan guard's comment false pass was subsequently repaired by C306. | VERIFIED |
 | C306 | `306-unreferenced-source-gate-correctness` | Syntax-aware unreferenced-source gate, urgent save-queue supersession integrity fix, and browser verification race corrections. | exact | `openspec/changes/306-unreferenced-source-gate-correctness/verification.md` (VERIFIED 7/7) | Direct-importer census, not root reachability; original intermittent pending-count failure's exact cause remains unproven. No headed GPU evidence. | VERIFIED |
+| C307 | `307-parity-validator-completeness` | Reject missing explicitly verified parity rows and incorrect, missing, duplicated or malformed Markdown summary counts. | exact | `openspec/changes/307-parity-validator-completeness/verification.md` (VERIFIED 6/6) | Two real false passes repaired with failing-first CLI fixtures; C258 remains deferred. | VERIFIED |
 
 ## Master-plan-only features
 
@@ -406,14 +407,14 @@ Feature areas named in `MINECRAFT_PARITY_MASTER_PLAN.md` that no single numbered
 
 | Category | Rows |
 |---|---|
-| exact | 292 (291 numbered rows plus MP-19.4-1 Wither-like secondary boss via C252) |
+| exact | 293 (292 numbered rows plus MP-19.4-1 Wither-like secondary boss via C252) |
 | equivalent | 4 |
 | approx | 6 |
 | deferred | 1 (C258 — BLOCKED headed hardware-WebGL evidence) |
 | out-of-scope | 1 (MP-33-1 proprietary services/assets) |
 | n/a (documentation) | 4 (C248, C249, C250, C268) |
-| **Total rows** | **308** (306 change rows + 2 master-plan rows) |
+| **Total rows** | **309** (307 change rows + 2 master-plan rows) |
 
-Change-rows-only split: exact 291 / equivalent 4 / approx 6 / deferred 1 / n/a 4 = 306.
+Change-rows-only split: exact 292 / equivalent 4 / approx 6 / deferred 1 / n/a 4 = 307.
 
-**Coverage statement:** every numbered change 001–306 appears in exactly one row (bijective `C001`…`C306`, no duplicates, no orphan rows). Every completed change maps to a cited VERIFIED artifact; C258 is explicitly documented as BLOCKED rather than upgraded to VERIFIED. The two additional `MP-*` rows cover master-plan areas outside the numbered sequence; MP-19.4-1 is closed `exact` by C252. The matrix audit is cross-checked against the package evidence and `openspec/PROGRAM_STATE.json`; the current state validator still owns its historical 001–250 schema checks and does not treat C258 as verified.
+**Coverage statement:** every numbered change 001–307 appears in exactly one row (bijective `C001`…`C307`, no duplicates, no orphan rows). Every completed change maps to a cited VERIFIED artifact; C258 is explicitly documented as BLOCKED rather than upgraded to VERIFIED. The two additional `MP-*` rows cover master-plan areas outside the numbered sequence; MP-19.4-1 is closed `exact` by C252. The matrix audit is cross-checked against the package evidence and `openspec/PROGRAM_STATE.json`; the current state validator still owns its historical 001–250 schema checks and does not treat C258 as verified.
