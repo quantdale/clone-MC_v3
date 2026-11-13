@@ -252,6 +252,64 @@ describe('RepositorySaveSink integration (in-memory mocks)', () => {
 });
 
 describe('DirtySaveQueue concurrent drain integrity (289)', () => {
+  it('counts an in-flight key as outstanding and deduplicates a newer mark', async () => {
+    const q = new DirtySaveQueue();
+    q.markDirty(unit({ key: 'k', payload: 'old' }));
+    let release!: () => void;
+    let started!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const writing = new Promise<void>((resolve) => { started = resolve; });
+    const first = q.drain({ async write() { started(); await gate; } }, 1);
+    await writing;
+    expect(q.size).toBe(0);
+    expect(q.outstandingSize).toBe(1);
+    expect(q.has('k')).toBe(true);
+    q.markDirty(unit({ key: 'k', payload: 'new' }));
+    expect(q.size).toBe(1);
+    expect(q.outstandingSize).toBe(1);
+    release();
+    expect(await first).toBe(1);
+    expect(q.outstandingSize).toBe(1);
+    const sink = new RecordingSink();
+    await q.drain(sink, 1);
+    expect(sink.calls.map((entry) => entry.payload)).toEqual(['new']);
+    expect(q.outstandingSize).toBe(0);
+  });
+
+  it('does not requeue an in-flight failure after clear', async () => {
+    const q = new DirtySaveQueue();
+    q.markDirty(unit({ key: 'k', payload: 'old' }));
+    let release!: () => void;
+    let started!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const writing = new Promise<void>((resolve) => { started = resolve; });
+    const first = q.drain({ async write() { started(); await gate; throw new Error('forced'); } }, 1);
+    await writing;
+    q.clear();
+    release();
+    expect(await first).toBe(0);
+    expect(q.keys()).toEqual([]);
+  });
+
+  it('keeps a newer mark made after clear when the old write fails', async () => {
+    const q = new DirtySaveQueue();
+    q.markDirty(unit({ key: 'k', payload: 'old' }));
+    let release!: () => void;
+    let started!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const writing = new Promise<void>((resolve) => { started = resolve; });
+    const first = q.drain({ async write() { started(); await gate; throw new Error('forced'); } }, 1);
+    await writing;
+    q.clear();
+    q.markDirty(unit({ key: 'k', payload: 'new' }));
+    release();
+    expect(await first).toBe(0);
+    expect(q.keys()).toEqual(['k']);
+    const sink = new RecordingSink();
+    expect(await q.drain(sink, 1)).toBe(1);
+    expect(sink.calls.map((entry) => entry.payload)).toEqual(['new']);
+  });
+
   it('retains a newer snapshot of a later batch entry while an earlier write is pending', async () => {
     const q = new DirtySaveQueue();
     q.markDirty(unit({ key: 'a', payload: 'a1' }));

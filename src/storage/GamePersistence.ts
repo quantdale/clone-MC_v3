@@ -380,6 +380,13 @@ export class GamePersistence implements WorldEditDurability {
    * re-written between the reset and the page reload that boots the fresh world.
    */
   private resetCompleted = false;
+  private resetInProgress = false;
+  private resetTask: Promise<{ ok: true } | { ok: false; error: string }> | null = null;
+  private readonly rawWrites = new Map<Promise<boolean>, { key: string; label: string; revision: number; write: () => Promise<void> }>();
+  private readonly rawTails = new Map<string, Promise<boolean>>();
+  /** Raw keys are the fixed set of world-owned metadata record kinds. */
+  private readonly rawRevisions = new Map<string, number>();
+  private readonly deferredRawWrites = new Map<string, { label: string; revision: number; write: () => Promise<void> }>();
 
   constructor(opts: GamePersistenceOptions) {
     this.seed = opts.seed;
@@ -433,11 +440,8 @@ export class GamePersistence implements WorldEditDurability {
     this.healthMonitor.onStatusChange((status) => {
       if (status === 'ok') {
         this.stopRecoveryTimer();
-      } else if (this.recoveryTimerId === null && !this.disposed) {
-        this.recoveryTimerId = this.timer.setInterval(
-          () => void this.healthMonitor.check().catch(() => undefined),
-          Math.max(this.intervalMs, MIN_RECOVERY_PROBE_MS),
-        );
+      } else {
+        this.startRecoveryTimerIfNeeded();
       }
     });
 
@@ -977,12 +981,50 @@ export class GamePersistence implements WorldEditDurability {
     if (!this.opened || this.disposed) {
       return { ok: false, error: 'reset failed: persistence is not open' };
     }
-    // Stop scheduled autosave + recovery probes and drop every pending dirty unit so
-    // nothing can write between/after the destructive phase.
+    if (this.resetCompleted) return { ok: true };
+    if (this.resetTask) return this.resetTask;
+
+    this.resetInProgress = true;
     this.stopRecoveryTimer();
     this.coordinator.stop();
-    this.queue.clear();
-    this.pendingEdits.clear();
+    const priorRawWrites = [...this.rawWrites.entries()];
+    const operation = this.queue.runExclusive(async () => {
+      const results = await Promise.all(priorRawWrites.map(([promise]) => promise));
+      let failed = false;
+      for (const [i, [, entry]] of priorRawWrites.entries()) {
+        if (results[i]) continue;
+        failed = true;
+        // Retry only the latest snapshot; a newer one already supersedes this failure.
+        if (this.rawRevisions.get(entry.key) !== entry.revision) continue;
+        if (!this.deferredRawWrites.has(entry.key)) {
+          this.deferredRawWrites.set(entry.key, { label: entry.label, revision: entry.revision, write: entry.write });
+        }
+      }
+      if (failed) return { ok: false as const, error: 'reset failed: an in-flight metadata save failed' };
+      return this.resetCurrentWorldExclusive();
+    });
+    this.resetTask = (async () => {
+      try {
+        return await operation;
+      } catch (error) {
+        return { ok: false as const, error: `reset failed: ${errorMessage(error)}` };
+      } finally {
+        this.resetInProgress = false;
+        this.resetTask = null;
+        const deferred = [...this.deferredRawWrites.entries()];
+        this.deferredRawWrites.clear();
+        if (!this.resetCompleted && !this.disposed) {
+          this.coordinator.start();
+          this.startRecoveryTimerIfNeeded();
+          for (const [key, entry] of deferred) this.scheduleRawOperation(key, entry.label, entry.revision, entry.write);
+        }
+      }
+    })();
+    return this.resetTask;
+  }
+
+  /** Runs only under the dirty-queue reset barrier. */
+  private async resetCurrentWorldExclusive(): Promise<{ ok: true } | { ok: false; error: string }> {
     const worldId = this.worldIdValue;
 
     // PHASE 1 (F257-B): snapshot every world-owned record. Any read failure here
@@ -1169,6 +1211,8 @@ export class GamePersistence implements WorldEditDurability {
       }
       return { ok: false, error: `reset failed: ${msg}` };
     }
+    this.queue.clear();
+    this.pendingEdits.clear();
     this.resetCompleted = true;
     return { ok: true };
   }
@@ -1439,7 +1483,7 @@ export class GamePersistence implements WorldEditDurability {
   async flush(): Promise<GamePersistenceFlushResult> {
     const seqBefore = this.monitoredSink.checks;
     const committed = await this.coordinator.flush();
-    const failed = this.queue.size;
+    const failed = this.queue.outstandingSize;
     this.prunePendingEdits();
 
     let health = this.healthMonitor.status;
@@ -1466,9 +1510,9 @@ export class GamePersistence implements WorldEditDurability {
     return this.healthMonitor.status;
   }
 
-  /** Number of dirty units awaiting a durable write. */
+  /** Number of distinct dirty units awaiting durable completion, including in-flight writes. */
   get pendingCount(): number {
-    return this.queue.size;
+    return this.queue.outstandingSize;
   }
 
   /** Committed edits bulk-loaded at `open()` (null before open / when none exist). */
@@ -1582,56 +1626,47 @@ export class GamePersistence implements WorldEditDurability {
 
   /** Persist wither list via raw wither data (252). */
   saveWithers(payload: unknown[]): void {
-    if (this.disposed || this.resetCompleted) return;
-    void this.metadata.putWitherData(this.worldIdValue, payload).catch((e) => this.recordError(`save withers: ${errorMessage(e)}`));
+    this.scheduleRawWrite('wither', 'save withers', payload, (value) => this.metadata.putWitherData(this.worldIdValue, value));
   }
 
   /** Persist the item-entity snapshot via raw item-entity data (264). */
   saveItemEntities(payload: unknown): void {
-    if (this.disposed || this.resetCompleted) return;
-    void this.metadata.putItemEntityData(this.worldIdValue, payload).catch((e) => this.recordError(`save itementities: ${errorMessage(e)}`));
+    this.scheduleRawWrite('itementities', 'save itementities', payload, (value) => this.metadata.putItemEntityData(this.worldIdValue, value));
   }
 
   /** Persist the game-mode payload via raw game-mode data (265). */
   saveGameMode(payload: unknown): void {
-    if (this.disposed || this.resetCompleted) return;
-    void this.metadata.putGameModeData(this.worldIdValue, payload).catch((e) => this.recordError(`save gamemode: ${errorMessage(e)}`));
+    this.scheduleRawWrite('gamemode', 'save gamemode', payload, (value) => this.metadata.putGameModeData(this.worldIdValue, value));
   }
 
   /** Persist the hardcore payload via raw hardcore data (267). */
   saveHardcore(payload: unknown): void {
-    if (this.disposed || this.resetCompleted) return;
-    void this.metadata.putHardcoreData(this.worldIdValue, payload).catch((e) => this.recordError(`save hardcore: ${errorMessage(e)}`));
+    this.scheduleRawWrite('hardcore', 'save hardcore', payload, (value) => this.metadata.putHardcoreData(this.worldIdValue, value));
   }
 
   /** Persist the difficulty payload via raw difficulty data (267). */
   saveDifficulty(payload: unknown): void {
-    if (this.disposed || this.resetCompleted) return;
-    void this.metadata.putDifficultyData(this.worldIdValue, payload).catch((e) => this.recordError(`save difficulty: ${errorMessage(e)}`));
+    this.scheduleRawWrite('difficulty', 'save difficulty', payload, (value) => this.metadata.putDifficultyData(this.worldIdValue, value));
   }
 
   /** Persist the statistics payload via raw statistics data (271). */
   saveStatistics(payload: unknown): void {
-    if (this.disposed || this.resetCompleted) return;
-    void this.metadata.putStatisticData(this.worldIdValue, payload).catch((e) => this.recordError(`save statistics: ${errorMessage(e)}`));
+    this.scheduleRawWrite('statistics', 'save statistics', payload, (value) => this.metadata.putStatisticData(this.worldIdValue, value));
   }
 
   /** Persist the sleep payload via raw sleep data (274). */
   saveSleep(payload: unknown): void {
-    if (this.disposed || this.resetCompleted) return;
-    void this.metadata.putSleepData(this.worldIdValue, payload).catch((e) => this.recordError(`save sleep: ${errorMessage(e)}`));
+    this.scheduleRawWrite('sleep', 'save sleep', payload, (value) => this.metadata.putSleepData(this.worldIdValue, value));
   }
 
   /** Persist the weather payload via raw weather data (275). */
   saveWeather(payload: unknown): void {
-    if (this.disposed || this.resetCompleted) return;
-    void this.metadata.putWeatherData(this.worldIdValue, payload).catch((e) => this.recordError(`save weather: ${errorMessage(e)}`));
+    this.scheduleRawWrite('weather', 'save weather', payload, (value) => this.metadata.putWeatherData(this.worldIdValue, value));
   }
 
   /** Persist the trading payload via raw trading data (278). */
   saveTrading(payload: unknown): void {
-    if (this.disposed || this.resetCompleted) return;
-    void this.metadata.putTradingData(this.worldIdValue, payload).catch((e) => this.recordError(`save trading: ${errorMessage(e)}`));
+    this.scheduleRawWrite('trading', 'save trading', payload, (value) => this.metadata.putTradingData(this.worldIdValue, value));
   }
 
   /**
@@ -1641,36 +1676,29 @@ export class GamePersistence implements WorldEditDurability {
    * Guarded like `saveWeather`/`saveTrading` (disposed / post-reset ⇒ no-op).
    */
   saveRaid(payload: unknown): void {
-    if (this.disposed || this.resetCompleted) return;
-    if (payload === null || payload === undefined) {
-      void this.metadata.deleteRaw(`__raid__:${this.worldIdValue}`).catch((e) => this.recordError(`save raid: ${errorMessage(e)}`));
-      return;
-    }
-    void this.metadata.putRaidData(this.worldIdValue, payload).catch((e) => this.recordError(`save raid: ${errorMessage(e)}`));
+    this.scheduleRawWrite('raid', 'save raid', payload, (value) => value === null || value === undefined
+      ? this.metadata.deleteRaw(`__raid__:${this.worldIdValue}`)
+      : this.metadata.putRaidData(this.worldIdValue, value));
   }
 
   /** Persist the XP-orb snapshot via raw XP-orb data (264). */
   saveXpOrbs(payload: unknown): void {
-    if (this.disposed || this.resetCompleted) return;
-    void this.metadata.putXpOrbData(this.worldIdValue, payload).catch((e) => this.recordError(`save xporbs: ${errorMessage(e)}`));
+    this.scheduleRawWrite('xporbs', 'save xporbs', payload, (value) => this.metadata.putXpOrbData(this.worldIdValue, value));
   }
 
   /** Persist the advancement payload via raw advancement data (263). */
   saveAdvancements(payload: unknown): void {
-    if (this.disposed || this.resetCompleted) return;
-    void this.metadata.putAdvancementData(this.worldIdValue, payload).catch((e) => this.recordError(`save advancements: ${errorMessage(e)}`));
+    this.scheduleRawWrite('advancements', 'save advancements', payload, (value) => this.metadata.putAdvancementData(this.worldIdValue, value));
   }
 
   /** Persist the recipe-book payload via raw recipe-book data (262). */
   saveRecipeBook(payload: unknown): void {
-    if (this.disposed || this.resetCompleted) return;
-    void this.metadata.putRecipeBookData(this.worldIdValue, payload).catch((e) => this.recordError(`save recipebook: ${errorMessage(e)}`));
+    this.scheduleRawWrite('recipebook', 'save recipebook', payload, (value) => this.metadata.putRecipeBookData(this.worldIdValue, value));
   }
 
   /** Persist the gamerule payload via raw gamerule data (261). */
   saveGameRules(payload: unknown): void {
-    if (this.disposed || this.resetCompleted) return;
-    void this.metadata.putGameRuleData(this.worldIdValue, payload).catch((e) => this.recordError(`save gamerules: ${errorMessage(e)}`));
+    this.scheduleRawWrite('gamerules', 'save gamerules', payload, (value) => this.metadata.putGameRuleData(this.worldIdValue, value));
   }
 
   /** Last classified write failure observed by the monitoring sink, or `null` (debug surface). */
@@ -1741,6 +1769,59 @@ export class GamePersistence implements WorldEditDurability {
         }
       }
     }
+  }
+
+  /** Snapshot at the call boundary so deferral or retry cannot observe caller mutations. */
+  private scheduleRawWrite<T>(key: string, label: string, payload: T, write: (value: T) => Promise<void>): void {
+    if (this.disposed || this.resetCompleted) return;
+    let snapshot: T;
+    try {
+      snapshot = structuredClone(payload);
+    } catch (error) {
+      this.recordError(`${label}: ${errorMessage(error)}`);
+      return;
+    }
+    const revision = (this.rawRevisions.get(key) ?? 0) + 1;
+    this.rawRevisions.set(key, revision);
+    this.scheduleRawOperation(key, label, revision, () => write(snapshot));
+  }
+
+  /** Track raw metadata writes so reset can fence pre-existing writes and defer new ones. */
+  private scheduleRawOperation(key: string, label: string, revision: number, write: () => Promise<void>): void {
+    if (this.disposed || this.resetCompleted) return;
+    if (this.resetInProgress) {
+      this.deferredRawWrites.set(key, { label, revision, write });
+      return;
+    }
+    const previous = this.rawTails.get(key);
+    let operation: Promise<void>;
+    try {
+      operation = previous ? previous.then(() => write()) : write();
+    } catch (error) {
+      this.recordError(`${label}: ${errorMessage(error)}`);
+      return;
+    }
+    const pending = operation.then(
+      () => true,
+      (error: unknown) => {
+        this.recordError(`${label}: ${errorMessage(error)}`);
+        return false;
+      },
+    );
+    this.rawWrites.set(pending, { key, label, revision, write });
+    this.rawTails.set(key, pending);
+    void pending.then(() => {
+      this.rawWrites.delete(pending);
+      if (this.rawTails.get(key) === pending) this.rawTails.delete(key);
+    });
+  }
+
+  private startRecoveryTimerIfNeeded(): void {
+    if (this.healthMonitor.status === 'ok' || this.recoveryTimerId !== null || this.disposed || this.resetInProgress) return;
+    this.recoveryTimerId = this.timer.setInterval(
+      () => void this.healthMonitor.check().catch(() => undefined),
+      Math.max(this.intervalMs, MIN_RECOVERY_PROBE_MS),
+    );
   }
 
   private stopRecoveryTimer(): void {

@@ -61,6 +61,10 @@ export class DirtySaveQueue {
   private readonly epochs = new Map<string, number>();
   /** Promise-chain mutex: only one drainReport body runs at a time (289). */
   private drainTail: Promise<unknown> = Promise.resolve();
+  /** Invalidates in-flight requeue when pending work is cleared. */
+  private clearGeneration = 0;
+  /** Drains are serialized, so at most one key is being written at a time. */
+  private inFlightKey: string | null = null;
 
   /** Mark a unit dirty (or refresh an already-pending one). Insertion order is retained on re-mark. */
   markDirty(unit: SaveUnit): void {
@@ -85,15 +89,15 @@ export class DirtySaveQueue {
    * copies once their durable commit lands) without re-queue ambiguity.
    */
   async drainReport(sink: SaveSink, limit: number): Promise<{ written: number; committedKeys: string[] }> {
-    const run = (): Promise<{ written: number; committedKeys: string[] }> => this.drainReportUnlocked(sink, limit);
-    // Single-flight: chain behind the previous drain so concurrent flush callers serialize.
-    const resultPromise = this.drainTail.then(run, run);
-    // Keep the chain alive even when run rejects (should not; drainReportUnlocked catches writes).
-    this.drainTail = resultPromise.then(
-      () => undefined,
-      () => undefined,
-    );
-    return resultPromise;
+    return this.runExclusive(() => this.drainReportUnlocked(sink, limit));
+  }
+
+  /** Serialize an operation with drains; the operation must not await another queue drain. */
+  runExclusive<T>(operation: () => Promise<T>): Promise<T> {
+    const result = this.drainTail.then(operation, operation);
+    // Keep the chain usable even if the operation rejects.
+    this.drainTail = result.then(() => undefined, () => undefined);
+    return result;
   }
 
   private async drainReportUnlocked(
@@ -116,6 +120,8 @@ export class DirtySaveQueue {
       }
       // Remove up front so a re-entrant waiter cannot process this snapshot twice.
       this.pending.delete(key);
+      this.inFlightKey = key;
+      const clearGeneration = this.clearGeneration;
 
       try {
         await sink.write(entry.unit);
@@ -136,9 +142,11 @@ export class DirtySaveQueue {
         // Re-queue at the end for retry; preserves no-loss semantics. If a
         // newer markDirty for this key landed while the write was in flight,
         // keep that newer snapshot instead of resurrecting the stale one.
-        if (!this.pending.has(key)) {
+        if (this.clearGeneration === clearGeneration && !this.pending.has(key)) {
           this.pending.set(key, entry);
         }
+      } finally {
+        this.inFlightKey = null;
       }
     }
 
@@ -150,9 +158,14 @@ export class DirtySaveQueue {
     return this.pending.size;
   }
 
-  /** Whether a unit with `key` is currently pending. */
+  /** Number of distinct dirty keys awaiting durable completion, including an in-flight write. */
+  get outstandingSize(): number {
+    return this.pending.size + (this.inFlightKey !== null && !this.pending.has(this.inFlightKey) ? 1 : 0);
+  }
+
+  /** Whether a key is pending or its write is still in flight. */
   has(key: string): boolean {
-    return this.pending.has(key);
+    return this.pending.has(key) || this.inFlightKey === key;
   }
 
   /** The pending unit keys in FIFO order. */
@@ -162,6 +175,7 @@ export class DirtySaveQueue {
 
   /** Remove all pending units. */
   clear(): void {
+    this.clearGeneration++;
     this.pending.clear();
   }
 }

@@ -104,6 +104,36 @@ describe('AutosaveCoordinator', () => {
     expect(coord.size).toBe(0);
   });
 
+  it('waits for an in-flight failed tick and keeps the failed unit pending', async () => {
+    const q = new DirtySaveQueue();
+    let release!: () => void;
+    let started!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const writing = new Promise<void>((resolve) => { started = resolve; });
+    let attempts = 0;
+    const sink: SaveSink = {
+      async write() {
+        attempts++;
+        if (attempts === 1) { started(); await gate; }
+        throw new Error('persistent failure');
+      },
+    };
+    const coord = new AutosaveCoordinator({ queue: q, sink, flushTarget: null });
+    coord.markDirty(unit('bad'));
+    const tick = coord.tick();
+    await writing;
+    let completed = false;
+    const flush = coord.flush().then((written) => { completed = true; return written; });
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(completed).toBe(false);
+    release();
+    expect(await tick).toBe(0);
+    expect(await flush).toBe(0);
+    expect(q.keys()).toEqual(['bad']);
+    coord.stop();
+  });
+
   it('flush terminates on persistent failure, keeping the unit pending', async () => {
     const q = new DirtySaveQueue();
     const sink = new RecordingSink();

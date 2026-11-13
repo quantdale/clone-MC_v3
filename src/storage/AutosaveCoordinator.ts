@@ -147,6 +147,9 @@ export class AutosaveCoordinator {
    * of units written; units beyond the cap remain queued for the next tick/flush.
    */
   async flush(): Promise<number> {
+    // A drain removes its current unit from pending while its write is in flight.
+    // Join earlier drains before interpreting an empty queue as a completed flush.
+    await this.queue.runExclusive(async () => undefined);
     let total = 0;
     let zeroProgressRuns = 0;
     let rounds = 0;
@@ -166,8 +169,8 @@ export class AutosaveCoordinator {
     return total;
   }
 
-  /** Number of pending (not-yet-persisted) units. */
+  /** Number of distinct dirty units awaiting durable completion, including in-flight writes. */
   get size(): number {
-    return this.queue.size;
+    return this.queue.outstandingSize;
   }
 }

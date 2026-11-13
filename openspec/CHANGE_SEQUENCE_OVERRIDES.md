@@ -1,5 +1,14 @@
 # Change Sequence Overrides
 
+## 308 activation — reset and save integrity (2026-11-13)
+
+Following VERIFIED change 307, a failing-first integration test reproduced loss
+of a pending chunk edit on failed reset; a separate controlled queue probe
+reproduced clear/failure resurrection. `308-reset-save-integrity` is the sole
+ACTIVE change and targets these urgent integrity issues. Starting head
+`f1f1cac2506dffa7573fa67a7b2f95fa989ba85e`. Change 258 remains BLOCKED under its
+owner deferral; no headed GPU evidence is claimed.
+
 ## 307 activation — parity validation correctness (2026-11-13)
 
 Following VERIFIED change 306, the user-requested audit reproduced two false

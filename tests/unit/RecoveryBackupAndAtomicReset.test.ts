@@ -3,7 +3,7 @@
  * Proves invariant: If reset can delete a world-owned record, successful recovery backup MUST preserve it.
  * Also proves atomic reset leaves world observably equivalent after injected failures.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { GamePersistence } from '../../src/storage/GamePersistence';
 import {
   WorldMetadataRepository,
@@ -319,6 +319,592 @@ describe('257 blocker A: complete backup', () => {
 });
 
 describe('257 blocker B: atomic reset with rollback equivalence', () => {
+  it('preserves unsaved edits when reset fails', async () => {
+    const inner = createIdbFactoryMock();
+    await seedMetadata(inner, WORLD_ID);
+    await seedCoverage(inner, WORLD_ID);
+    const faultFactory = new FaultFactory(inner, [{ store: 'world-metadata', op: 'delete' }]);
+    const p = new GamePersistence({ seed: SEED, factory: faultFactory as unknown as IdbFactoryLike, legacyStorage: null });
+    await p.open();
+    try {
+      p.captureChunkEdits(3, 0, 4, new Map([[1, 3]]));
+      expect(p.pendingCount).toBeGreaterThan(0);
+      const result = await p.resetCurrentWorld();
+      expect(result.ok).toBe(false);
+      expect(p.restorePendingChunkEdits(3, 0, 4)?.get(1)).toBe(3);
+      expect(p.pendingCount).toBeGreaterThan(0);
+      const flushed = await p.flush();
+      expect(flushed.failed).toBe(0);
+      expect(await p.loadCommittedChunkEdits(3, 0, 4)).toContainEqual([1, 3]);
+    } finally {
+      await p.dispose();
+    }
+  });
+
+  it('keeps existing and newly marked edits after a snapshot failure', async () => {
+    const factory = createIdbFactoryMock();
+    await seedMetadata(factory, WORLD_ID);
+    await seedCoverage(factory, WORLD_ID);
+    const p = new GamePersistence({ seed: SEED, factory, legacyStorage: null });
+    await p.open();
+    const metadata = (p as unknown as { metadata: WorldMetadataRepository }).metadata;
+    let release!: () => void;
+    let started!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const reading = new Promise<void>((resolve) => { started = resolve; });
+    const spy = vi.spyOn(metadata, 'getMetadata').mockImplementation(async () => {
+      started();
+      await gate;
+      throw new Error('forced snapshot failure');
+    });
+    try {
+      p.captureChunkEdits(3, 0, 4, new Map([[1, 3]]));
+      const reset = p.resetCurrentWorld();
+      await reading;
+      p.captureChunkEdits(5, 0, 6, new Map([[2, 4]]));
+      release();
+      expect((await reset).ok).toBe(false);
+      expect(p.restorePendingChunkEdits(3, 0, 4)?.get(1)).toBe(3);
+      expect(p.restorePendingChunkEdits(5, 0, 6)?.get(2)).toBe(4);
+      spy.mockRestore();
+      expect((await p.flush()).failed).toBe(0);
+      expect(await p.loadCommittedChunkEdits(3, 0, 4)).toContainEqual([1, 3]);
+      expect(await p.loadCommittedChunkEdits(5, 0, 6)).toContainEqual([2, 4]);
+    } finally {
+      release();
+      spy.mockRestore();
+      await p.dispose();
+    }
+  });
+
+  it('does not report a second flush complete or discard its overlay while a write is in flight', async () => {
+    const factory = createIdbFactoryMock();
+    await seedMetadata(factory, WORLD_ID);
+    await seedCoverage(factory, WORLD_ID);
+    const p = new GamePersistence({ seed: SEED, factory, legacyStorage: null });
+    await p.open();
+    const edits = (p as unknown as { chunkEdits: ChunkEditRepository }).chunkEdits;
+    const put = edits.putChunkEdits.bind(edits);
+    let release!: () => void;
+    let started!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const writing = new Promise<void>((resolve) => { started = resolve; });
+    const spy = vi.spyOn(edits, 'putChunkEdits').mockImplementation(async (...args) => {
+      started();
+      await gate;
+      return put(...args);
+    });
+    try {
+      p.captureChunkEdits(3, 0, 4, new Map([[1, 3]]));
+      const first = p.flush();
+      await writing;
+      let completed = false;
+      const second = p.flush().then((result) => { completed = true; return result; });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      const completedBeforeRelease = completed;
+      const overlayBeforeRelease = p.restorePendingChunkEdits(3, 0, 4)?.get(1);
+      release();
+      expect((await first).failed).toBe(0);
+      expect((await second).failed).toBe(0);
+      expect(await p.loadCommittedChunkEdits(3, 0, 4)).toContainEqual([1, 3]);
+      expect(overlayBeforeRelease).toBe(3);
+      expect(completedBeforeRelease).toBe(false);
+    } finally {
+      release();
+      spy.mockRestore();
+      await p.dispose();
+    }
+  });
+
+  it('keeps the overlay and reports failure when concurrent flushes encounter a persistent write failure', async () => {
+    const factory = createIdbFactoryMock();
+    await seedMetadata(factory, WORLD_ID);
+    await seedCoverage(factory, WORLD_ID);
+    const p = new GamePersistence({ seed: SEED, factory, legacyStorage: null });
+    await p.open();
+    const edits = (p as unknown as { chunkEdits: ChunkEditRepository }).chunkEdits;
+    let release!: () => void;
+    let started!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const writing = new Promise<void>((resolve) => { started = resolve; });
+    let attempts = 0;
+    const spy = vi.spyOn(edits, 'putChunkEdits').mockImplementation(async () => {
+      attempts++;
+      if (attempts === 1) { started(); await gate; }
+      throw new Error('persistent write failure');
+    });
+    try {
+      p.captureChunkEdits(3, 0, 4, new Map([[1, 3]]));
+      const first = p.flush();
+      await writing;
+      const second = p.flush();
+      release();
+      const [a, b] = await Promise.all([first, second]);
+      expect(a.failed).toBeGreaterThan(0);
+      expect(b.failed).toBeGreaterThan(0);
+      expect(p.restorePendingChunkEdits(3, 0, 4)?.get(1)).toBe(3);
+      expect(p.pendingCount).toBeGreaterThan(0);
+    } finally {
+      release();
+      spy.mockRestore();
+      await p.dispose();
+    }
+  });
+
+  it('waits for an in-flight queued write before resetting the world', async () => {
+    const factory = createIdbFactoryMock();
+    await seedMetadata(factory, WORLD_ID);
+    await seedCoverage(factory, WORLD_ID);
+    const p = new GamePersistence({ seed: SEED, factory, legacyStorage: null });
+    await p.open();
+    const edits = (p as unknown as { chunkEdits: ChunkEditRepository }).chunkEdits;
+    const put = edits.putChunkEdits.bind(edits);
+    let release!: () => void;
+    let started!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const writing = new Promise<void>((resolve) => { started = resolve; });
+    const spy = vi.spyOn(edits, 'putChunkEdits').mockImplementation(async (...args) => {
+      started();
+      await gate;
+      return put(...args);
+    });
+    try {
+      p.captureChunkEdits(3, 0, 4, new Map([[1, 3]]));
+      const flush = p.flush();
+      await writing;
+      let completed = false;
+      const reset = p.resetCurrentWorld().then((result) => { completed = true; return result; });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      const completedBeforeRelease = completed;
+      release();
+      await flush;
+      expect((await reset).ok).toBe(true);
+      const reader = new ChunkEditRepository({ factory });
+      await reader.open();
+      try {
+        expect(await reader.getChunkEdits(WORLD_ID, 3, 0, 4)).toBeNull();
+      } finally {
+        reader.close();
+      }
+      expect(completedBeforeRelease).toBe(false);
+    } finally {
+      release();
+      spy.mockRestore();
+      await p.dispose();
+    }
+  });
+
+  it('waits for an in-flight raw metadata save before resetting the world', async () => {
+    const factory = createIdbFactoryMock();
+    await seedMetadata(factory, WORLD_ID);
+    await seedCoverage(factory, WORLD_ID);
+    const p = new GamePersistence({ seed: SEED, factory, legacyStorage: null });
+    await p.open();
+    const metadata = (p as unknown as { metadata: WorldMetadataRepository }).metadata;
+    const put = metadata.putGameModeData.bind(metadata);
+    let release!: () => void;
+    let started!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const writing = new Promise<void>((resolve) => { started = resolve; });
+    let finished!: () => void;
+    const written = new Promise<void>((resolve) => { finished = resolve; });
+    const spy = vi.spyOn(metadata, 'putGameModeData').mockImplementation(async (...args) => {
+      started();
+      await gate;
+      try {
+        return await put(...args);
+      } finally {
+        finished();
+      }
+    });
+    try {
+      p.saveGameMode({ mode: 'creative' });
+      await writing;
+      let completed = false;
+      const reset = p.resetCurrentWorld().then((result) => { completed = true; return result; });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      const completedBeforeRelease = completed;
+      release();
+      expect((await reset).ok).toBe(true);
+      await written;
+      expect(await metadata.getGameModeData(WORLD_ID)).toBeNull();
+      expect(completedBeforeRelease).toBe(false);
+    } finally {
+      release();
+      spy.mockRestore();
+      await p.dispose();
+    }
+  });
+
+  it('defers raw saves during a failed reset and retries the latest value', async () => {
+    const factory = createIdbFactoryMock();
+    await seedMetadata(factory, WORLD_ID);
+    await seedCoverage(factory, WORLD_ID);
+    const p = new GamePersistence({ seed: SEED, factory, legacyStorage: null });
+    await p.open();
+    const metadata = (p as unknown as { metadata: WorldMetadataRepository }).metadata;
+    let release!: () => void;
+    let started!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const reading = new Promise<void>((resolve) => { started = resolve; });
+    const spy = vi.spyOn(metadata, 'getMetadata').mockImplementation(async () => {
+      started();
+      await gate;
+      throw new Error('forced snapshot failure');
+    });
+    try {
+      const reset = p.resetCurrentWorld();
+      await reading;
+      p.saveGameMode({ mode: 'creative' });
+      p.saveGameMode({ mode: 'adventure' });
+      expect(await metadata.getGameModeData(WORLD_ID)).toBeNull();
+      release();
+      expect((await reset).ok).toBe(false);
+      spy.mockRestore();
+      await vi.waitFor(async () => {
+        expect(await metadata.getGameModeData(WORLD_ID)).toEqual({ mode: 'adventure' });
+      });
+    } finally {
+      release();
+      spy.mockRestore();
+      await p.dispose();
+    }
+  });
+
+  it('snapshots a deferred raw payload at the time it is saved', async () => {
+    const factory = createIdbFactoryMock();
+    await seedMetadata(factory, WORLD_ID);
+    await seedCoverage(factory, WORLD_ID);
+    const p = new GamePersistence({ seed: SEED, factory, legacyStorage: null });
+    await p.open();
+    const metadata = (p as unknown as { metadata: WorldMetadataRepository }).metadata;
+    let release!: () => void;
+    let started!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const reading = new Promise<void>((resolve) => { started = resolve; });
+    const spy = vi.spyOn(metadata, 'getMetadata').mockImplementation(async () => {
+      started(); await gate; throw new Error('forced snapshot failure');
+    });
+    try {
+      const reset = p.resetCurrentWorld();
+      await reading;
+      const payload = { mode: 'creative' };
+      p.saveGameMode(payload);
+      payload.mode = 'adventure';
+      release();
+      expect((await reset).ok).toBe(false);
+      spy.mockRestore();
+      await vi.waitFor(async () => {
+        expect(await metadata.getGameModeData(WORLD_ID)).toEqual({ mode: 'creative' });
+      });
+    } finally {
+      release();
+      spy.mockRestore();
+      await p.dispose();
+    }
+  });
+
+  it('defers and retries every direct raw save kind after reset failure', async () => {
+    const factory = createIdbFactoryMock();
+    await seedMetadata(factory, WORLD_ID);
+    await seedCoverage(factory, WORLD_ID);
+    const p = new GamePersistence({ seed: SEED, factory, legacyStorage: null });
+    await p.open();
+    const metadata = (p as unknown as { metadata: WorldMetadataRepository }).metadata;
+    let release!: () => void;
+    let started!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const reading = new Promise<void>((resolve) => { started = resolve; });
+    const snapshotSpy = vi.spyOn(metadata, 'getMetadata').mockImplementation(async () => {
+      started();
+      await gate;
+      throw new Error('forced snapshot failure');
+    });
+    const writes = [
+      vi.spyOn(metadata, 'putWitherData'), vi.spyOn(metadata, 'putItemEntityData'),
+      vi.spyOn(metadata, 'putGameModeData'), vi.spyOn(metadata, 'putHardcoreData'),
+      vi.spyOn(metadata, 'putDifficultyData'), vi.spyOn(metadata, 'putStatisticData'),
+      vi.spyOn(metadata, 'putSleepData'), vi.spyOn(metadata, 'putWeatherData'),
+      vi.spyOn(metadata, 'putTradingData'), vi.spyOn(metadata, 'putRaidData'),
+      vi.spyOn(metadata, 'putXpOrbData'), vi.spyOn(metadata, 'putAdvancementData'),
+      vi.spyOn(metadata, 'putRecipeBookData'), vi.spyOn(metadata, 'putGameRuleData'),
+    ];
+    try {
+      const reset = p.resetCurrentWorld();
+      await reading;
+      p.saveWithers([]); p.saveItemEntities([]); p.saveGameMode({ mode: 'creative' });
+      p.saveHardcore({}); p.saveDifficulty({}); p.saveStatistics({}); p.saveSleep({});
+      p.saveWeather({}); p.saveTrading({}); p.saveRaid({}); p.saveXpOrbs([]);
+      p.saveAdvancements({}); p.saveRecipeBook({}); p.saveGameRules({});
+      for (const write of writes) expect(write).not.toHaveBeenCalled();
+      release();
+      expect((await reset).ok).toBe(false);
+      await vi.waitFor(() => {
+        for (const write of writes) expect(write).toHaveBeenCalledTimes(1);
+        expect((p as unknown as { rawWrites: Map<unknown, unknown> }).rawWrites.size).toBe(0);
+      });
+    } finally {
+      release();
+      snapshotSpy.mockRestore();
+      for (const write of writes) write.mockRestore();
+      await p.dispose();
+    }
+  });
+
+  it('keeps only the latest deferred raid save or deletion after reset failure', async () => {
+    const factory = createIdbFactoryMock();
+    await seedMetadata(factory, WORLD_ID);
+    await seedCoverage(factory, WORLD_ID);
+    const p = new GamePersistence({ seed: SEED, factory, legacyStorage: null });
+    await p.open();
+    const metadata = (p as unknown as { metadata: WorldMetadataRepository }).metadata;
+    let release!: () => void;
+    let started!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const reading = new Promise<void>((resolve) => { started = resolve; });
+    const snapshotSpy = vi.spyOn(metadata, 'getMetadata').mockImplementation(async () => {
+      started(); await gate; throw new Error('forced snapshot failure');
+    });
+    const put = vi.spyOn(metadata, 'putRaidData');
+    const remove = vi.spyOn(metadata, 'deleteRaw');
+    try {
+      const reset = p.resetCurrentWorld();
+      await reading;
+      p.saveRaid({ marker: 'old' });
+      p.saveRaid(null);
+      expect(put).not.toHaveBeenCalled();
+      expect(remove).not.toHaveBeenCalled();
+      release();
+      expect((await reset).ok).toBe(false);
+      await vi.waitFor(() => expect(remove).toHaveBeenCalledTimes(1));
+      expect(put).not.toHaveBeenCalled();
+      expect(remove).toHaveBeenCalledWith(`__raid__:${WORLD_ID}`);
+      await vi.waitFor(() => expect((p as unknown as { rawWrites: Map<unknown, unknown> }).rawWrites.size).toBe(0));
+    } finally {
+      release();
+      snapshotSpy.mockRestore(); put.mockRestore(); remove.mockRestore();
+      await p.dispose();
+    }
+  });
+
+  it('does not write deferred raw saves after a successful reset', async () => {
+    const factory = createIdbFactoryMock();
+    await seedMetadata(factory, WORLD_ID);
+    await seedCoverage(factory, WORLD_ID);
+    const p = new GamePersistence({ seed: SEED, factory, legacyStorage: null });
+    await p.open();
+    const metadata = (p as unknown as { metadata: WorldMetadataRepository }).metadata;
+    const get = metadata.getMetadata.bind(metadata);
+    let release!: () => void;
+    let started!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const reading = new Promise<void>((resolve) => { started = resolve; });
+    const spy = vi.spyOn(metadata, 'getMetadata').mockImplementation(async (...args) => {
+      started();
+      await gate;
+      return get(...args);
+    });
+    try {
+      const reset = p.resetCurrentWorld();
+      await reading;
+      p.saveGameMode({ mode: 'creative' });
+      expect(await metadata.getGameModeData(WORLD_ID)).toBeNull();
+      release();
+      expect((await reset).ok).toBe(true);
+      expect(await metadata.getGameModeData(WORLD_ID)).toBeNull();
+    } finally {
+      release();
+      spy.mockRestore();
+      await p.dispose();
+    }
+  });
+
+  it('aborts reset and retries an in-flight raw write that fails', async () => {
+    const factory = createIdbFactoryMock();
+    await seedMetadata(factory, WORLD_ID);
+    await seedCoverage(factory, WORLD_ID);
+    const p = new GamePersistence({ seed: SEED, factory, legacyStorage: null });
+    await p.open();
+    const metadata = (p as unknown as { metadata: WorldMetadataRepository }).metadata;
+    const put = metadata.putGameModeData.bind(metadata);
+    let release!: () => void;
+    let started!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const writing = new Promise<void>((resolve) => { started = resolve; });
+    let attempts = 0;
+    const spy = vi.spyOn(metadata, 'putGameModeData').mockImplementation(async (...args) => {
+      attempts++;
+      if (attempts === 1) {
+        started();
+        await gate;
+        throw new Error('forced raw save failure');
+      }
+      return put(...args);
+    });
+    try {
+      p.saveGameMode({ mode: 'creative' });
+      await writing;
+      const reset = p.resetCurrentWorld();
+      release();
+      const result = await reset;
+      expect(result.ok).toBe(false);
+      expect(p.isResetCompleted).toBe(false);
+      await vi.waitFor(async () => {
+        expect(await metadata.getGameModeData(WORLD_ID)).toEqual({ mode: 'creative' });
+      });
+      expect(await metadata.getMetadata(WORLD_ID)).not.toBeNull();
+    } finally {
+      release();
+      spy.mockRestore();
+      await p.dispose();
+    }
+  });
+
+  it('keeps the latest raw save when an earlier write completes late', async () => {
+    const factory = createIdbFactoryMock();
+    await seedMetadata(factory, WORLD_ID);
+    await seedCoverage(factory, WORLD_ID);
+    const p = new GamePersistence({ seed: SEED, factory, legacyStorage: null });
+    await p.open();
+    const metadata = (p as unknown as { metadata: WorldMetadataRepository }).metadata;
+    const put = metadata.putGameModeData.bind(metadata);
+    let release!: () => void;
+    let started!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const writing = new Promise<void>((resolve) => { started = resolve; });
+    let attempts = 0;
+    const spy = vi.spyOn(metadata, 'putGameModeData').mockImplementation(async (...args) => {
+      attempts++;
+      if (attempts === 1) { started(); await gate; }
+      return put(...args);
+    });
+    try {
+      p.saveGameMode({ mode: 'creative' });
+      await writing;
+      p.saveGameMode({ mode: 'adventure' });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      release();
+      await vi.waitFor(() => expect((p as unknown as { rawWrites: Map<unknown, unknown> }).rawWrites.size).toBe(0));
+      expect(await metadata.getGameModeData(WORLD_ID)).toEqual({ mode: 'adventure' });
+    } finally {
+      release();
+      spy.mockRestore();
+      await p.dispose();
+    }
+  });
+
+  it('prefers a newer deferred raw save over an older in-flight failure', async () => {
+    const factory = createIdbFactoryMock();
+    await seedMetadata(factory, WORLD_ID);
+    await seedCoverage(factory, WORLD_ID);
+    const p = new GamePersistence({ seed: SEED, factory, legacyStorage: null });
+    await p.open();
+    const metadata = (p as unknown as { metadata: WorldMetadataRepository }).metadata;
+    const put = metadata.putGameModeData.bind(metadata);
+    let release!: () => void;
+    let started!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const writing = new Promise<void>((resolve) => { started = resolve; });
+    let attempts = 0;
+    const spy = vi.spyOn(metadata, 'putGameModeData').mockImplementation(async (...args) => {
+      attempts++;
+      if (attempts === 1) { started(); await gate; throw new Error('forced raw save failure'); }
+      return put(...args);
+    });
+    try {
+      p.saveGameMode({ mode: 'creative' });
+      await writing;
+      const reset = p.resetCurrentWorld();
+      p.saveGameMode({ mode: 'adventure' });
+      release();
+      expect((await reset).ok).toBe(false);
+      await vi.waitFor(async () => {
+        expect(await metadata.getGameModeData(WORLD_ID)).toEqual({ mode: 'adventure' });
+      });
+      expect(attempts).toBe(2);
+    } finally {
+      release();
+      spy.mockRestore();
+      await p.dispose();
+    }
+  });
+
+  it('discards new queued edits only when the reset succeeds', async () => {
+    const factory = createIdbFactoryMock();
+    await seedMetadata(factory, WORLD_ID);
+    await seedCoverage(factory, WORLD_ID);
+    const p = new GamePersistence({ seed: SEED, factory, legacyStorage: null });
+    await p.open();
+    const metadata = (p as unknown as { metadata: WorldMetadataRepository }).metadata;
+    const get = metadata.getMetadata.bind(metadata);
+    let release!: () => void;
+    let started!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const reading = new Promise<void>((resolve) => { started = resolve; });
+    const spy = vi.spyOn(metadata, 'getMetadata').mockImplementation(async (...args) => {
+      started();
+      await gate;
+      return get(...args);
+    });
+    try {
+      p.captureChunkEdits(3, 0, 4, new Map([[1, 3]]));
+      const reset = p.resetCurrentWorld();
+      await reading;
+      p.captureChunkEdits(5, 0, 6, new Map([[2, 4]]));
+      release();
+      expect((await reset).ok).toBe(true);
+      expect(p.pendingCount).toBe(0);
+      expect(p.restorePendingChunkEdits(3, 0, 4)).toBeNull();
+      expect(p.restorePendingChunkEdits(5, 0, 6)).toBeNull();
+      const reader = new ChunkEditRepository({ factory });
+      await reader.open();
+      try {
+        expect(await reader.getChunkEdits(WORLD_ID, 3, 0, 4)).toBeNull();
+        expect(await reader.getChunkEdits(WORLD_ID, 5, 0, 6)).toBeNull();
+      } finally {
+        reader.close();
+      }
+    } finally {
+      release();
+      spy.mockRestore();
+      await p.dispose();
+    }
+  });
+
+  it('coalesces concurrent reset requests into one destructive transaction', async () => {
+    const factory = createIdbFactoryMock();
+    await seedMetadata(factory, WORLD_ID);
+    await seedCoverage(factory, WORLD_ID);
+    const p = new GamePersistence({ seed: SEED, factory, legacyStorage: null });
+    await p.open();
+    const metadata = (p as unknown as { metadata: WorldMetadataRepository }).metadata;
+    const get = metadata.getMetadata.bind(metadata);
+    let release!: () => void;
+    let started!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const reading = new Promise<void>((resolve) => { started = resolve; });
+    const snapshotSpy = vi.spyOn(metadata, 'getMetadata').mockImplementation(async (...args) => {
+      started();
+      await gate;
+      return get(...args);
+    });
+    const transactionSpy = vi.spyOn(metadata, 'runInTransaction');
+    try {
+      const first = p.resetCurrentWorld();
+      await reading;
+      const second = p.resetCurrentWorld();
+      release();
+      expect((await first).ok).toBe(true);
+      expect((await second).ok).toBe(true);
+      expect(transactionSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      release();
+      snapshotSpy.mockRestore();
+      transactionSpy.mockRestore();
+      await p.dispose();
+    }
+  });
+
   const stages: Array<{ store: string; label: string }> = [
     { store: 'world-metadata', label: 'metadata delete' },
     { store: 'chunk-sections', label: 'column delete' },
