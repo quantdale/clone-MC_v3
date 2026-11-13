@@ -105,6 +105,56 @@ function runValidator() {
   return { code: 0, output: stdout };
 }
 
+function writeParityFixture(options: {
+  includeLast?: boolean;
+  currentVerified?: boolean;
+  includeCurrent?: boolean;
+  historicalVerified?: boolean;
+  lastStatus?: "VERIFIED" | "ACTIVE";
+  omitBaseline?: boolean;
+  duplicateRow?: boolean;
+  summary?: "plain" | "bold" | "wrong-total" | "bad-total" | "missing-total" | "duplicate-total" | "missing-exact" | "bad-exact" | "wrong-exact" | "duplicate-exact";
+} = {}) {
+  const currentVerified = options.currentVerified ?? false;
+  const state = {
+    status: "ACTIVE",
+    currentChange: "307-active",
+    currentChangeStatus: currentVerified ? "VERIFIED" : "ACTIVE",
+    lastCompletedChange: "305-completed",
+    nextChange: "308",
+    mandatoryRequirementsPass: currentVerified,
+    requiredTestsPass: currentVerified,
+    advancementAllowed: currentVerified,
+    validationResults: options.historicalVerified ? [{ change: "304-history", status: "VERIFIED" }] : [],
+  };
+  writeState(state, [
+    "- Active implementation change: **307-active**",
+    "- Last completed change: **305-completed**",
+    "- Next change: **308**",
+    `- 240 advancement allowed: **${currentVerified ? "yes" : "no (active change not yet verified)"}**`,
+  ]);
+  const rows = Array.from({ length: 250 }, (_, i) =>
+    `| C${String(i + 1).padStart(3, "0")} | entry | outcome | exact | evidence | - | VERIFIED |`);
+  if (options.omitBaseline) rows.shift();
+  if (options.duplicateRow) rows.push(rows[0]!);
+  rows.push("| C258 | deferred | outcome | deferred | evidence | - | BLOCKED |");
+  if (options.includeLast !== false) rows.push(`| C305 | completed | outcome | exact | evidence | - | ${options.lastStatus ?? "VERIFIED"} |`);
+  if (options.includeCurrent) rows.push("| C307 | current | outcome | exact | evidence | - | VERIFIED |");
+  rows.push("| MP-19.4-1 | boss | outcome | exact | evidence | - | VERIFIED |");
+  rows.push("| MP-33-1 | services | outcome | out-of-scope | evidence | - | n/a |");
+  const exact = 251 + (options.includeLast !== false ? 1 : 0) + (options.includeCurrent ? 1 : 0) - (options.omitBaseline ? 1 : 0);
+  const total = rows.length - (options.duplicateRow ? 1 : 0);
+  const style = options.summary ?? "bold";
+  const exactValue = style === "bad-exact" ? "bad" : style === "wrong-exact" ? "1" : String(exact);
+  const exactRow = style === "missing-exact" ? "" : style === "bold"
+    ? `| **exact** | **${exactValue}** |\n` : `| exact | ${exactValue} |\n`;
+  const totalRow = style === "missing-total" ? "" : style === "plain"
+    ? `| Total rows | ${total} |\n`
+    : `| **Total rows** | **${style === "wrong-total" ? 1 : style === "bad-total" ? "bad" : total}** |\n`;
+  const summary = `${exactRow}${style === "duplicate-exact" ? exactRow : ""}| deferred | 1 |\n| out-of-scope | 1 |\n${totalRow}${style === "duplicate-total" ? totalRow : ""}`;
+  fs.writeFileSync(path.join(root, "PARITY_MATRIX.md"), `${rows.join("\n")}\n\n## Summary\n\n| Category | Rows |\n|---|---|\n${summary}`);
+}
+
 describe("scripts/validate-state.mjs rejects incoherent synthetic states", () => {
   it("passes on a clean synthetic terminal state", () => {
     writeState(terminalState(), terminalMd());
@@ -354,4 +404,53 @@ describe("scripts/validate-state.mjs rejects incoherent synthetic states", () =>
     expect(result.output).toContain("PASSED");
     expect(result.code).toBe(0);
   });
+});
+
+describe("parity state validation (307)", () => {
+  it.each(["plain", "bold"] as const)("accepts coherent %s summary and deferred C258 with an active successor", (summary) => {
+    writeParityFixture({ summary });
+    expect(runValidator().code).toBe(0);
+  });
+
+  it("rejects a missing last-completed post-250 row even while the current change is active", () => {
+    writeParityFixture({ includeLast: false });
+    const result = runValidator();
+    expect(result.code).toBe(1);
+    expect(result.output).toContain("C305");
+  });
+
+  it("rejects a missing verified current row", () => {
+    writeParityFixture({ currentVerified: true });
+    const result = runValidator();
+    expect(result.code).toBe(1);
+    expect(result.output).toContain("C307");
+  });
+
+  it("rejects a missing historical verified row", () => {
+    writeParityFixture({ historicalVerified: true });
+    const result = runValidator();
+    expect(result.code).toBe(1);
+    expect(result.output).toContain("C304");
+  });
+
+  it("rejects a non-VERIFIED row for a last-completed change", () => {
+    writeParityFixture({ lastStatus: "ACTIVE" });
+    const result = runValidator();
+    expect(result.code).toBe(1);
+    expect(result.output).toContain("C305");
+  });
+
+  it.each(["omitBaseline", "duplicateRow"] as const)("keeps the existing %s check", (field) => {
+    writeParityFixture({ [field]: true });
+    expect(runValidator().code).toBe(1);
+  });
+
+  it.each(["wrong-total", "bad-total", "missing-total", "duplicate-total", "missing-exact", "bad-exact", "wrong-exact", "duplicate-exact"] as const)(
+    "rejects the %s summary", (summary) => {
+      writeParityFixture({ summary });
+      const result = runValidator();
+      expect(result.code).toBe(1);
+      expect(result.output).toContain("PARITY_MATRIX");
+    },
+  );
 });

@@ -1,5 +1,14 @@
 # Change Sequence Overrides
 
+## 307 activation — parity validation correctness (2026-11-13)
+
+Following VERIFIED change 306, the user-requested audit reproduced two false
+passes in the state validator: missing verified C305 and an incorrect bold total.
+`307-parity-validator-completeness` is the sole ACTIVE change, with spec-first
+artifacts and failing-first validation required. Starting head
+`2031fededbc2597ce80e9eab7967d8d013fd625c`. Change 258 remains BLOCKED under
+its owner deferral; no headed GPU evidence is claimed.
+
 ## 306 activation — verification-gate correctness (2026-11-13)
 
 User requests a fresh repository-wide defect audit. After 305 VERIFIED, change

@@ -308,13 +308,15 @@ function validateParityMatrix(json, errors) {
     }
   }
   if (json.currentChangeStatus === 'VERIFIED') collectVerified(json.currentChange);
-  if (json.lastCompletedChange && json.currentChangeStatus === 'VERIFIED') {
-    collectVerified(typeof json.lastCompletedChange === 'string' ? json.lastCompletedChange : null);
-  }
+  collectVerified(json.lastCompletedChange);
   for (const num of verifiedNumbers) {
     const id = `C${num}`;
     const row = rows.get(id);
-    if (!row) continue; // missing-row case already reported above
+    if (!row) {
+      // The baseline 001–250 loop already reports missing rows in that range.
+      if (Number(num) > 250) errors.push(`PARITY_MATRIX is missing VERIFIED row ${id}`);
+      continue;
+    }
     if (row.status !== 'verified') {
       errors.push(`PARITY_MATRIX row ${id} is marked "${row.status}" but PROGRAM_STATE records change ${num} as VERIFIED`);
     }
@@ -330,7 +332,8 @@ function validateParityMatrix(json, errors) {
 
   // d. Summary counts agree with the actual rows (C rows + MP rows both carry
   // a category cell; the Summary table totals across both sections).
-  const norm = (s) => s.toLowerCase().replace(/\s*\(.*\)$/, '').trim();
+  const clean = (s) => s.replace(/\*\*|__/g, '').trim();
+  const norm = (s) => clean(s).toLowerCase().replace(/\s*\(.*\)$/, '').trim();
   const categoryCounts = {};
   for (const { category } of rows.values()) {
     const key = norm(category);
@@ -342,27 +345,37 @@ function validateParityMatrix(json, errors) {
   }
   const totalRows = rows.size + mpRows.size;
   let inSummary = false;
+  const seenCounts = new Set();
   for (const line of lines) {
     if (line.startsWith('## Summary')) {
       inSummary = true;
       continue;
     }
+    if (inSummary && /^##\s/.test(line)) break;
     if (!inSummary || !line.startsWith('|')) continue;
-    const cells = line.split('|').map((c) => c.trim()).filter((c) => c.length > 0);
-    if (cells.length < 2) continue;
-    const label = cells[0];
-    const declared = parseInt(cells[1], 10);
-    if (Number.isNaN(declared)) continue;
-    if (/^total rows$/i.test(label)) {
-      if (declared !== totalRows) {
-        errors.push(`PARITY_MATRIX summary declares ${declared} total rows but ${totalRows} rows exist`);
-      }
+    const cells = line.split('|').slice(1, -1).map(clean);
+    const label = cells[0] ?? '';
+    if (!label || /^category$/i.test(label) || /^[-:]+$/.test(label)) continue;
+    const key = /^total rows$/i.test(label) ? 'total rows' : norm(label);
+    if (seenCounts.has(key)) {
+      errors.push(`PARITY_MATRIX summary duplicates "${label}"`);
       continue;
     }
-    const actual = categoryCounts[norm(label)] ?? 0;
+    seenCounts.add(key);
+    const count = /^(\d+)(?:\s*\(.*\))?$/.exec(cells[1] ?? '');
+    if (!count) {
+      errors.push(`PARITY_MATRIX summary has invalid count for "${label}"`);
+      continue;
+    }
+    const declared = Number(count[1]);
+    const actual = key === 'total rows' ? totalRows : categoryCounts[key] ?? 0;
     if (actual !== declared) {
       errors.push(`PARITY_MATRIX summary declares ${declared} "${label}" rows but the matrix has ${actual}`);
     }
+  }
+  if (!seenCounts.has('total rows')) errors.push('PARITY_MATRIX summary is missing total rows');
+  for (const category of Object.keys(categoryCounts)) {
+    if (!seenCounts.has(category)) errors.push(`PARITY_MATRIX summary is missing "${category}" count`);
   }
 }
 

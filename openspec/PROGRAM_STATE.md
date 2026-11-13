@@ -1,5 +1,11 @@
 # Program State
 
+## Current checkpoint — 2026-11-13 Change 307 ACTIVE (4/6)
+
+After 306 VERIFIED, the repository audit independently reproduced two `validate-state` false passes using copied real state: deleting VERIFIED C305 with adjusted category counts and changing the bold summary total from 308 to 1. Change 307 starts from remote-verified `2031fededbc2597ce80e9eab7967d8d013fd625c`; its spec-first package and active state are in place. Nine focused CLI fixture cases failed before the validator fix; afterwards the two original copied fixtures correctly exit 1, the expanded state-validator suites pass 35/35, and real validate-state, 3097-row file audit, typecheck and lint pass. Full gates remain pending. Change 258 remains BLOCKED.
+
+- Next exact action: **Run full mandatory 307 gates and isolated multiplayer performance, reconcile requirements, review and publish.**
+
 ## Current checkpoint — 2026-11-13 Change 306 VERIFIED (7/7)
 
 Session start `350b557a090b01c2d5d5574fb7ae9aa1e6fc52c3` matches live `origin/main`; worktree was clean. A synthetic Git fixture independently reproduced `verify:orphans` passing an actual orphan when its only apparent import is in a comment. Spec-first change `306-unreferenced-source-gate-correctness` is active; the guard now uses the TypeScript syntax tree and tracked-path resolution. Four focused tests failed before the fix; the focused suite now passes 9/9 and the real-tree guard passes without allow-list expansion. Baseline: verify:deps (171), validate-state, file-audit (3087), orphans, MCP, visual staleness, typecheck, lint, unit (5830 passed, 1 skipped), build, release bundle, high/prod audits, and isolated multiplayer performance (438.7 TPS, 2735.2 ms) passed. The full `verify:all` run passed through coverage (91.92/88.65/94.90/93.27) but browser failed 2/144: persistence churn pending count 1 after flush, and statistics block-break wait timed out. The statistics test captured a target mid-jump; waiting for landing and fresh targeting passes 10/10. A distinct save-queue data-loss race was independently reproduced and fixed (two tests failed before, 29 storage tests pass after). The original pending-count failure's exact cause is unproven, but a controlled browser probe demonstrated that a new player autosave after a successful flush makes a later pending count nonzero. The churn test now checks the flush's returned failure count and retains all 150 reload checks; its new boundary regression and churn pass 6/6. The final full gate on `77995128071a90e16392d3c3741b28b02e5ad62c` passed 13/13 gates (5836 unit + 1 skipped, 145 browser, coverage 91.93/88.66/94.90/93.28); isolated multiplayer performance passed 818.1 TPS / 1466.9 ms. The implementation and verification checkpoint `e2ea4669924c3464517a174ca2256844d95b97aa` was published normally and remote-verified; C305 and C306 are now recorded in the parity matrix. Seven moderate dev-only audit advisories remain. Change 258 remains BLOCKED; no hardware GPU claim.
@@ -498,16 +504,16 @@ Session start `350b557a090b01c2d5d5574fb7ae9aa1e6fc52c3` matches live `origin/ma
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **306-unreferenced-source-gate-correctness — VERIFIED (7/7); 258 BLOCKED, 259–306 VERIFIED**
+- Active implementation change: **307-parity-validator-completeness — ACTIVE (4/6); 258 BLOCKED, 259–306 VERIFIED**
 - Prior active implementation change: **283-live-raid-persistence — VERIFIED (13/13); 258 stays BLOCKED, 259–283 stay VERIFIED**
 - Prior prior active implementation change: **282-live-raid-feedback — VERIFIED (10/10); 258 stays BLOCKED, 259–282 stay VERIFIED**
-- Next change: **307 — pending fresh audit after 306; 258 stays BLOCKED**
-- 240 advancement allowed: **yes**
+- Next change: **308 — pending audit after 307; 258 stays BLOCKED**
+- 240 advancement allowed: **no (active change not yet verified)**
 
 - Program: **ACTIVE — Change 284-live-raid-wave-spawning VERIFIED 12/12 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–284 VERIFIED**
 - 284 checkpoint: **VERIFIED 12/12 — implementation + gates complete; enchanting flake + visual SwiftShader drift documented non-blocking; 258 BLOCKED; 285 not started**
-- Last completed change: **305-repository-cleanup-and-maintenance — VERIFIED (47/47); 258 BLOCKED**
-- Current active change: **306-unreferenced-source-gate-correctness — VERIFIED (7/7); full gate passed**
+- Last completed change: **306-unreferenced-source-gate-correctness — VERIFIED (7/7); 258 BLOCKED**
+- Current active change: **307-parity-validator-completeness — ACTIVE (4/6); focused validator tests pass, full gate pending**
 - Prior last completed change: **281-workstation-ui — VERIFIED (12/12); 258 stays BLOCKED, 259–281 stay VERIFIED**
 - Prior prior last completed change: **272-lighting-clock-dt-sync — VERIFIED (10/10) — full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85/file-audit 2792); 271 remains VERIFIED (14/14)
 - All changes 001–257 and 259–284: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed; Change 283 is VERIFIED 13/13; Change 284 is VERIFIED 12/12 (this session).
