@@ -1,8 +1,9 @@
 # Verification: 308-reset-save-integrity
 
-Status: VERIFYING — NOT VERIFIED
-Completion: 6/7 (85.714286%)
-Advancement allowed: false
+Status: VERIFIED
+Completion: 7/7 (100%)
+Advancement allowed: true
+Published verification checkpoint: `3658cd8b8d877537c39db7f813b916bae48f4499` (normal push and remote-head verification); final state-only closure follows it.
 Starting change head: `f1f1cac2506dffa7573fa67a7b2f95fa989ba85e` (local and remote main equal; clean tree before failing-first test). Original audit session start head: `350b557a090b01c2d5d5574fb7ae9aa1e6fc52c3`. Resumed verification session start head: `d36746bb79cd5fcff3af4ce57471fbb6e48dc2d0` (clean, matches fetched `origin/main`).
 
 ## Requirement evidence
@@ -55,7 +56,7 @@ One implementation attempt also suppressed committed-key reporting for a success
 
 ## Incomplete tasks
 
-T7 remains open: review and publish the coherent checkpoint. No advancement while publication remains incomplete.
+None. The requirements, implementation and tests were reviewed; evidence checkpoint `3658cd8b8d877537c39db7f813b916bae48f4499` was verified on `origin/main`.
 
 ## Advancement Exception
 
@@ -63,4 +64,4 @@ Not applicable.
 
 ## Final decision
 
-VERIFYING, not verified: full gate and isolated multiplayer performance passed; complete final review and publication. 258 remains BLOCKED; no hardware GPU evidence claimed.
+VERIFIED: all seven tasks and mandatory requirements pass; no advancement exception. 258 remains BLOCKED; no hardware GPU evidence claimed.

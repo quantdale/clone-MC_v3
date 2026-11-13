@@ -6,4 +6,4 @@
 - [x] **T4.** Implement reset synchronization and clear cancellation without breaking newer marks, failure retry or existing save semantics; prove focused storage suites.
 - [x] **T5.** Investigate direct raw metadata writes for reset races, reproduce and fix any corruption with tests or leave advancement blocked.
 - [x] **T6.** Run full mandatory gates, browser reset/persistence and isolated multiplayer performance; reconcile every normative scenario and record evidence.
-- [ ] **T7.** Review and publish the coherent checkpoint normally to `origin/main`; verify remote head and durable state.
+- [x] **T7.** Review and publish the coherent checkpoint normally to `origin/main`; verify remote head and durable state.

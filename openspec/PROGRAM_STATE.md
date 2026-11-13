@@ -1,10 +1,10 @@
 # Program State
 
-## Current checkpoint — Change 308 VERIFYING (6/7)
+## Current checkpoint — Change 308 VERIFIED (7/7)
 
-After 307 VERIFIED and published at `f1f1cac2506dffa7573fa67a7b2f95fa989ba85e`, failing-first tests reproduced lost pending edits after failed reset, cleared in-flight writes requeued after failure, queued and raw writes resurrecting records after successful reset, out-of-order raw saves, deferred-payload mutation, and concurrent flushes falsely reporting success and pruning an in-flight overlay. The reset/queue barrier, clear cancellation, 14 tracked/snapshotted/ordered raw save paths, failure retries and in-flight accounting now pass 58/58 focused storage tests and 16/16 headless Chromium persistence/reset journeys; typecheck, lint, validate-state and the 3102-row file audit pass. The resumed session started at `d36746bb79cd5fcff3af4ce57471fbb6e48dc2d0`, matching current remote `main`. The ordered full gate passed: 5872 unit tests plus one skipped, coverage 92/88.70/95.24/93.28, and 145 browser tests; isolated multiplayer performance passed 565.7 TPS / 2121.5 ms. All remaining named gates passed as recorded in change verification. Its changes cover the 308 package, state, manifest, storage code and tests. A separate 10,000-key probe showed the queue retains 10,000 epoch entries after all writes succeed; that boundedness issue is tracked for later, not claimed fixed. Change 258 remains BLOCKED.
+After 307 VERIFIED and published at `f1f1cac2506dffa7573fa67a7b2f95fa989ba85e`, failing-first tests reproduced lost pending edits after failed reset, cleared in-flight writes requeued after failure, queued and raw writes resurrecting records after successful reset, out-of-order raw saves, deferred-payload mutation, and concurrent flushes falsely reporting success and pruning an in-flight overlay. The reset/queue barrier, clear cancellation, 14 tracked/snapshotted/ordered raw save paths, failure retries and in-flight accounting now pass 58/58 focused storage tests and 16/16 headless Chromium persistence/reset journeys; typecheck, lint, validate-state and the 3102-row file audit pass. The resumed session started at `d36746bb79cd5fcff3af4ce57471fbb6e48dc2d0`, matching remote `main`. The ordered full gate passed: 5872 unit tests plus one skipped, coverage 92/88.70/95.24/93.28, and 145 browser tests; isolated multiplayer performance passed 565.7 TPS / 2121.5 ms. All remaining named gates passed as recorded in change verification. The evidence checkpoint `3658cd8b8d877537c39db7f813b916bae48f4499` was published and remote-verified; parity C308 is reconciled. Its changes cover the 308 package, state, manifest, storage code and tests. A separate 10,000-key probe showed the queue retains 10,000 epoch entries after all writes succeed; that boundedness issue is tracked for later, not claimed fixed. Change 258 remains BLOCKED.
 
-- Next exact action: **Review requirement evidence and the diff, publish the checkpoint and reconcile T7/VERIFIED state.**
+- Next exact action: **Continue the repository-wide audit with failing-first tests, beginning with measured queue epoch-map retention; author and validate the next narrow spec before implementation.**
 
 ## Current checkpoint — 2026-11-13 Change 307 VERIFIED (6/6)
 
@@ -510,16 +510,16 @@ Session start `350b557a090b01c2d5d5574fb7ae9aa1e6fc52c3` matches live `origin/ma
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **308-reset-save-integrity — ACTIVE (2/7); 258 BLOCKED, 259–307 VERIFIED**
+- Active implementation change: **308-reset-save-integrity — VERIFIED (7/7); 258 BLOCKED, 259–308 VERIFIED**
 - Prior active implementation change: **283-live-raid-persistence — VERIFIED (13/13); 258 stays BLOCKED, 259–283 stay VERIFIED**
 - Prior prior active implementation change: **282-live-raid-feedback — VERIFIED (10/10); 258 stays BLOCKED, 259–282 stay VERIFIED**
 - Next change: **309 — pending audit after 308; 258 stays BLOCKED**
-- 240 advancement allowed: **no (active change not yet verified)**
+- 240 advancement allowed: **yes**
 
 - Program: **ACTIVE — Change 284-live-raid-wave-spawning VERIFIED 12/12 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–284 VERIFIED**
 - 284 checkpoint: **VERIFIED 12/12 — implementation + gates complete; enchanting flake + visual SwiftShader drift documented non-blocking; 258 BLOCKED; 285 not started**
 - Last completed change: **307-parity-validator-completeness — VERIFIED (6/6); 258 BLOCKED**
-- Current active change: **308-reset-save-integrity — ACTIVE (2/7); failing-first reset test in progress**
+- Current active change: **308-reset-save-integrity — VERIFIED (7/7); next audit change not yet activated**
 - Prior last completed change: **281-workstation-ui — VERIFIED (12/12); 258 stays BLOCKED, 259–281 stay VERIFIED**
 - Prior prior last completed change: **272-lighting-clock-dt-sync — VERIFIED (10/10) — full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85/file-audit 2792); 271 remains VERIFIED (14/14)
 - All changes 001–257 and 259–284: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed; Change 283 is VERIFIED 13/13; Change 284 is VERIFIED 12/12 (this session).
