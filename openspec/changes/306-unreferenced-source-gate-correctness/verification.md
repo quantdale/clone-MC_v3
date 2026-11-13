@@ -1,21 +1,22 @@
 # Verification: 306-unreferenced-source-gate-correctness
 
-Status: VERIFYING — NOT VERIFIED
-Completion: 6/7 (85.714286%)
-Advancement allowed: false
+Status: VERIFIED
+Completion: 7/7 (100%)
+Advancement allowed: true
+Published verification checkpoint: `e2ea4669924c3464517a174ca2256844d95b97aa` (normal push, remote head verified); the final state-only closure follows it.
 Session start head: `350b557a090b01c2d5d5574fb7ae9aa1e6fc52c3` (local and remote `main` matched after fetch and `git ls-remote`; worktree clean).
 
 ## Requirement evidence
 
 | Requirement | Evidence | Status |
 | --- | --- | --- |
-| R1 | Baseline real guard incorrectly exits 0 for an orphan referenced only in a comment; fixture under `_AgentArtifacts/tryMC_v3/sessions/20261113-pi-repo-audit/orphan-fixture`. New real-script comment/string and supported-syntax tests fail before and pass after implementation. | FOCUSED PASS |
-| R2 | Real-script fixture covers `.ts`, `.js`, index, missing and bare package imports. | FOCUSED PASS |
-| R3 | Real-script fixtures cover parse error, deleted tracked file, missing root flag and non-Git root. | FOCUSED PASS |
+| R1 | Baseline real guard incorrectly exits 0 for an orphan referenced only in a comment; fixture under `_AgentArtifacts/tryMC_v3/sessions/20261113-pi-repo-audit/orphan-fixture`. New real-script comment/string and supported-syntax tests fail before and pass after implementation. | PASS |
+| R2 | Real-script fixture covers `.ts`, `.js`, index, missing and bare package imports. | PASS |
+| R3 | Real-script fixtures cover parse error, deleted tracked file, missing root flag and non-Git root. | PASS |
 | R4 | Corrected real-tree guard passes unchanged allow-list; final full gate passes all 13 steps and 145 browser tests. | PASS |
-| R5 | Statistics browser test failed 8/10, followed by 3/3 instrumented failures: captured target (0,32,-3) remained block 4 while current target was (0,31,-2), grounded true, blocks_broken 0. After waiting for landing and two targeting frames, 10/10 repeated real-browser journeys pass with exact-block, counter, panel and reload assertions retained. | FOCUSED PASS |
-| R6 | Two deterministic real-queue tests failed before the fix: a later re-mark vanished and a later cleared entry was still written. After checking current entry identity and epoch before deletion, `DirtySaveQueue`, `SaveRecoveryMatrix`, and `AutosaveCoordinator` pass 29/29. | FOCUSED PASS |
-| R7 | A controlled browser probe produced `{committed:119,failed:0}` then enqueued a player snapshot, observing pending count 1 and key `player-state|world-20260821`; the former later-count assertion failed as expected. The churn test now asserts the flush's own `failed` result and retains all 150 reload checks; the dedicated enqueue/second-flush test plus churn passed 6/6 over three repeats. The precise original failure cause remains unproven. | FOCUSED PASS |
+| R5 | Statistics browser test failed 8/10, followed by 3/3 instrumented failures: captured target (0,32,-3) remained block 4 while current target was (0,31,-2), grounded true, blocks_broken 0. After waiting for landing and two targeting frames, 10/10 repeated real-browser journeys pass with exact-block, counter, panel and reload assertions retained. | PASS |
+| R6 | Two deterministic real-queue tests failed before the fix: a later re-mark vanished and a later cleared entry was still written. After checking current entry identity and epoch before deletion, `DirtySaveQueue`, `SaveRecoveryMatrix`, and `AutosaveCoordinator` pass 29/29. | PASS |
+| R7 | A controlled browser probe produced `{committed:119,failed:0}` then enqueued a player snapshot, observing pending count 1 and key `player-state|world-20260821`; the former later-count assertion failed as expected. The churn test now asserts the flush's own `failed` result and retains all 150 reload checks; the dedicated enqueue/second-flush test plus churn passed 6/6 over three repeats. The precise original failure cause remains unproven. | PASS |
 
 ## Commands
 
@@ -62,7 +63,7 @@ Initial full browser gate failed two tests. Statistics target-capture race was d
 
 ## Incomplete tasks
 
-T7 is open: final diff review, publication, and verified remote head. The change is not verified and advancement is forbidden.
+None. Reviewed implementation and tests, checked no visual-golden changes, validated state and the 3092-row manifest, and verified the normal publication of the implementation and evidence checkpoints to `origin/main`.
 
 ## Advancement Exception
 
@@ -70,4 +71,4 @@ Not applicable.
 
 ## Final decision
 
-VERIFYING. Next: review all requirements and the final diff, publish the verification checkpoint, and verify remote main. Change 258 remains BLOCKED; no headed GPU evidence claimed.
+VERIFIED. All seven tasks and requirements pass; no advancement exception. Continue the broader user-requested repository audit. Change 258 remains BLOCKED; no headed GPU evidence claimed.
