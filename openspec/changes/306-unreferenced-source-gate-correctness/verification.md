@@ -1,7 +1,7 @@
 # Verification: 306-unreferenced-source-gate-correctness
 
-Status: ACTIVE — NOT VERIFIED
-Completion: 5/7 (71.428571%)
+Status: VERIFYING — NOT VERIFIED
+Completion: 6/7 (85.714286%)
 Advancement allowed: false
 Session start head: `350b557a090b01c2d5d5574fb7ae9aa1e6fc52c3` (local and remote `main` matched after fetch and `git ls-remote`; worktree clean).
 
@@ -12,7 +12,7 @@ Session start head: `350b557a090b01c2d5d5574fb7ae9aa1e6fc52c3` (local and remote
 | R1 | Baseline real guard incorrectly exits 0 for an orphan referenced only in a comment; fixture under `_AgentArtifacts/tryMC_v3/sessions/20261113-pi-repo-audit/orphan-fixture`. New real-script comment/string and supported-syntax tests fail before and pass after implementation. | FOCUSED PASS |
 | R2 | Real-script fixture covers `.ts`, `.js`, index, missing and bare package imports. | FOCUSED PASS |
 | R3 | Real-script fixtures cover parse error, deleted tracked file, missing root flag and non-Git root. | FOCUSED PASS |
-| R4 | Corrected real-tree guard passes; full gate failed in browser. | NOT VERIFIED |
+| R4 | Corrected real-tree guard passes unchanged allow-list; final full gate passes all 13 steps and 145 browser tests. | PASS |
 | R5 | Statistics browser test failed 8/10, followed by 3/3 instrumented failures: captured target (0,32,-3) remained block 4 while current target was (0,31,-2), grounded true, blocks_broken 0. After waiting for landing and two targeting frames, 10/10 repeated real-browser journeys pass with exact-block, counter, panel and reload assertions retained. | FOCUSED PASS |
 | R6 | Two deterministic real-queue tests failed before the fix: a later re-mark vanished and a later cleared entry was still written. After checking current entry identity and epoch before deletion, `DirtySaveQueue`, `SaveRecoveryMatrix`, and `AutosaveCoordinator` pass 29/29. | FOCUSED PASS |
 | R7 | A controlled browser probe produced `{committed:119,failed:0}` then enqueued a player snapshot, observing pending count 1 and key `player-state|world-20260821`; the former later-count assertion failed as expected. The churn test now asserts the flush's own `failed` result and retains all 150 reload checks; the dedicated enqueue/second-flush test plus churn passed 6/6 over three repeats. The precise original failure cause remains unproven. | FOCUSED PASS |
@@ -40,7 +40,9 @@ Session start head: `350b557a090b01c2d5d5574fb7ae9aa1e6fc52c3` (local and remote
 | `vitest run tests/unit/DirtySaveQueue.test.ts tests/unit/SaveRecoveryMatrix.test.ts tests/unit/AutosaveCoordinator.test.ts` | PASS after fix | 3 files / 29 tests; typecheck and lint also PASS. |
 | `npm run verify:all` at `bcc56ced1426f35111046b328f8f6e221b6f9bf1` | PASS | All 13 gates: `verify:deps`, `validate-state`, `typecheck`, `lint`, `build`, `check-release-bundle`, `verify:file-audit`, `verify:orphans`, `verify:mcp`, `verify:visual-goldens`, `npm test` (486 files, 5836 passed + 1 skipped), `test:coverage` (91.93/88.66/94.90/93.28), `test:e2e` (144/144, 60-cell visual matrix). Raw log `_AgentArtifacts/tryMC_v3/sessions/20261113-pi-repo-audit/verify-all-rerun.log`. |
 | `npm run test:perf:multiplayer` after full gate | PASS | Isolated, one measured test: 840.7 TPS / 1427.4 ms. |
-| Playwright persistence churn + new player-save boundary test, `--repeat-each=3 --workers=1` | PASS | 6/6; typecheck and lint pass. The earlier 144/144 full gate precedes this subsequent test change, so a fresh final gate is needed. |
+| Playwright persistence churn + new player-save boundary test, `--repeat-each=3 --workers=1` | PASS | 6/6; typecheck and lint pass. |
+| `npm run verify:all` at `77995128071a90e16392d3c3741b28b02e5ad62c` | PASS | All 13 gates: `verify:deps`, `validate-state`, `typecheck`, `lint`, `build`, `node scripts/check-release-bundle.mjs`, `verify:file-audit` (3092), `verify:orphans`, `verify:mcp`, `verify:visual-goldens`, `npm test` (486 files, 5836 passed + 1 skipped), `test:coverage` (91.93/88.66/94.90/93.28), `test:e2e` (145/145, including 60-cell visual matrix). Raw log `_AgentArtifacts/tryMC_v3/sessions/20261113-pi-repo-audit/verify-all-final.log`. |
+| `npm run test:perf:multiplayer` after final gate | PASS | Isolated, one measured test: 818.1 TPS / 1466.9 ms. |
 
 ## Edge/adversarial validation
 
@@ -52,15 +54,15 @@ No gameplay or save-format change. DirtySaveQueue preserves newer pending data a
 
 ## Performance/resource validation
 
-Not yet measured for the corrected checker. Baseline isolated multiplayer performance recorded above.
+Final real-tree orphan gate completed in 1.8 seconds, below the 30-second test budget. Isolated multiplayer performance passed at 818.1 TPS / 1466.9 ms.
 
 ## Regressions
 
-Initial full browser gate failed two tests. Statistics target-capture race was diagnosed and corrected with 10/10 focused passes. Persistence churn passed 5/5 before and 15/15 after the queue fix; its original failure cause remains unproven. A controlled enqueue proves the old post-flush pending-count assertion races with later player saves. The corrected assertion retains all 150 durable reload checks, and a new test proves the boundary; both pass 3 repetitions. A full 13-gate rerun passed 144/144 before this additional test change. Temporary diagnostics were removed; rerun the final gate.
+Initial full browser gate failed two tests. Statistics target-capture race was diagnosed and corrected with 10/10 focused passes. Persistence churn passed 5/5 before and 15/15 after the queue fix; its original failure cause remains unproven. A controlled enqueue proves the old post-flush pending-count assertion races with later player saves. The corrected assertion retains all 150 durable reload checks, and a new test proves the boundary; both pass 3 repetitions. A full 13-gate rerun passed 144/144 before this additional test change; the final tree subsequently passed 145/145. Temporary diagnostics were removed.
 
 ## Incomplete tasks
 
-T6–T7 are open. The change is not verified and advancement is forbidden.
+T7 is open: final diff review, publication, and verified remote head. The change is not verified and advancement is forbidden.
 
 ## Advancement Exception
 
@@ -68,4 +70,4 @@ Not applicable.
 
 ## Final decision
 
-ACTIVE. Next: rerun all mandatory gates on the revised test tree and isolated multiplayer performance, reconcile requirements, state and publication. Change 258 remains BLOCKED; no headed GPU evidence claimed.
+VERIFYING. Next: review all requirements and the final diff, publish the verification checkpoint, and verify remote main. Change 258 remains BLOCKED; no headed GPU evidence claimed.
