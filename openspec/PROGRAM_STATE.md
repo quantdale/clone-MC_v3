@@ -2,7 +2,7 @@
 
 ## Current checkpoint — Change 309-resource-leak-and-storage-boundedness-remediation VERIFIED (7/7)
 
-Change 309 remediates three significant resource and boundedness defects: (1) unbounded `DirtySaveQueue.epochs` retention across thousands of unique writes; (2) Three.js WebGL material leaks and un-disposed geometries/materials during Wither skull presentation; (3) missing resource teardown in `Game.dispose()` across presentation, audio, and UI subsystems. All 13 verify:all gates (5884 unit tests, coverage, 145 browser tests) and isolated multiplayer performance (823.7 TPS / 1456.9 ms) passed. Zero regressions; C258 remains BLOCKED.
+Change 309 remediates three significant resource and boundedness defects: (1) unbounded `DirtySaveQueue.epochs` retention across thousands of unique writes; (2) Three.js WebGL material leaks and un-disposed geometries/materials during Wither skull presentation; (3) missing resource teardown in `Game.dispose()` across presentation, audio, and UI subsystems. All 13 verify:all gates (5884 unit tests, coverage, 145 browser tests) and isolated multiplayer performance (823.7 TPS / 1456.9 ms) passed. Evidence published at `218f512f57dd66f1a74ca2d8bab6600b5d375b50` and verified on remote `main`. Zero regressions; C258 remains BLOCKED.
 
 - Next exact action: **Continue the repository-wide audit with failing-first tests; author and validate the next change package before implementation. 258 remains BLOCKED.**
 

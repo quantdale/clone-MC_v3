@@ -15,10 +15,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d2daeadb4808c981dff2ba2adc0e01cd239110de",
-  "localHead": "d2daeadb4808c981dff2ba2adc0e01cd239110de",
-  "publishedHead": "d2daeadb4808c981dff2ba2adc0e01cd239110de",
+  "localHead": "218f512f57dd66f1a74ca2d8bab6600b5d375b50",
+  "publishedHead": "218f512f57dd66f1a74ca2d8bab6600b5d375b50",
   "nextExactAction": "Continue the repository-wide audit with failing-first tests; author and validate the next change package before implementation. 258 remains BLOCKED.",
-  "lastCompletedTask": "309 T7: reviewed requirement evidence and verified full gates; parity C309 reconciled. All 13 verify:all gates (dependency-tree, program-state, typecheck, lint, build, release-bundle, file-audit 3108, unreferenced-source, addon-preflight, visual-goldens, unit 5884 passed, coverage, browser 145 passed) and isolated multiplayer performance (823.7 TPS / 1456.9 ms) passed.",
+  "lastCompletedTask": "309 T7: reviewed requirement evidence and published checkpoint 218f512f57dd66f1a74ca2d8bab6600b5d375b50; parity C309 reconciled. All 13 verify:all gates (dependency-tree, program-state, typecheck, lint, build, release-bundle, file-audit 3108, unreferenced-source, addon-preflight, visual-goldens, unit 5884 passed, coverage, browser 145 passed) and isolated multiplayer performance (823.7 TPS / 1456.9 ms) passed.",
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-297 are VERIFIED; game shippable with known performance-certification debt. The 297 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
@@ -28,7 +28,7 @@
       "status": "VERIFIED",
       "unitTests": 5884,
       "e2eTests": 145,
-      "head": "d2daeadb4808c981dff2ba2adc0e01cd239110de",
+      "head": "218f512f57dd66f1a74ca2d8bab6600b5d375b50",
       "note": "All 13 verify:all gates and isolated multiplayer performance passed. Remediated unbounded epoch-map memory retention in DirtySaveQueue on 10,000+ key drains and clears, prevented Three.js WebGL material leaks during Wither boss battles by reusing static skull geometry/materials and disposing despawned skull/wither meshes, and completed Game.dispose teardown across all presentation, ambient audio, and UI elements. Zero regressions across 5884 unit tests, 145 e2e tests, and canonical multiplayer performance."
     },
     {
