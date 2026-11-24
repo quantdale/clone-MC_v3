@@ -802,6 +802,9 @@ export class Game {
   private readonly witherGroup = new THREE.Group();
   private witherMeshes = new Map<number, THREE.Group>();
   private skullMeshes = new Map<number, THREE.Mesh>();
+  private readonly skullGeometry = new THREE.SphereGeometry(0.15, 6, 6);
+  private readonly skullMaterialNormal = new THREE.MeshLambertMaterial({ color: 0x333333 });
+  private readonly skullMaterialBlue = new THREE.MeshLambertMaterial({ color: 0x0066ff });
   private witherBossBarEl: HTMLElement | null = null;
   private witherAttackCooldown = 0;
   private readonly overworldDimension: ResourceId;
@@ -1955,6 +1958,38 @@ export class Game {
     // 304: release the modal lifecycle (removes the capture-phase keydown listener
     // and clears any inert marks) so nothing survives teardown. Idempotent.
     this.modalFocus.dispose();
+    // 309 (R3): teardown wither presentation and skull resources
+    for (const mesh of this.skullMeshes.values()) {
+      this.witherGroup.remove(mesh);
+    }
+    this.skullMeshes.clear();
+    this.skullGeometry.dispose();
+    this.skullMaterialNormal.dispose();
+    this.skullMaterialBlue.dispose();
+
+    for (const group of this.witherMeshes.values()) {
+      this.witherGroup.remove(group);
+      group.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.geometry?.dispose();
+          if (Array.isArray(child.material)) {
+            for (const m of child.material) m.dispose();
+          } else {
+            child.material?.dispose();
+          }
+        }
+      });
+    }
+    this.witherMeshes.clear();
+    if (this.witherGroup.parent) {
+      this.witherGroup.parent.remove(this.witherGroup);
+    }
+    if (this.witherBossBarEl?.parentNode) {
+      this.witherBossBarEl.parentNode.removeChild(this.witherBossBarEl);
+    }
+    if (this.ambientBackend && 'dispose' in this.ambientBackend && typeof (this.ambientBackend as { dispose?: () => void }).dispose === 'function') {
+      (this.ambientBackend as { dispose: () => void }).dispose();
+    }
   }
 
   /** Whether the renderer was successfully created (false → show error state). */
@@ -4494,6 +4529,16 @@ export class Game {
       if (!present.has(id)) {
         this.witherGroup.remove(group);
         this.witherMeshes.delete(id);
+        group.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            child.geometry?.dispose();
+            if (Array.isArray(child.material)) {
+              for (const m of child.material) m.dispose();
+            } else {
+              child.material?.dispose();
+            }
+          }
+        });
       }
     }
     for (const w of this.withers) {
@@ -4528,22 +4573,29 @@ export class Game {
       const right = g.getObjectByName('right');
       if (right) right.rotation.y = THREE.MathUtils.degToRad(w.sideHeadYaws[1] ?? 0);
     }
-    // Skulls are few (cap 12); rebuild each tick.
-    for (const mesh of this.skullMeshes.values()) {
-      this.witherGroup.remove(mesh);
-      mesh.geometry.dispose();
-    }
-    this.skullMeshes.clear();
+    // 309 (R2): Skulls are few (cap 12); reuse static geometry and materials without per-tick allocations.
     for (let i = 0; i < this.witherSkulls.length; i++) {
       const s = this.witherSkulls[i];
       if (!s) continue;
-      const mesh = new THREE.Mesh(
-        new THREE.SphereGeometry(0.15, 6, 6),
-        new THREE.MeshLambertMaterial({ color: s.kind === 'blue' ? 0x0066ff : 0x333333 }),
-      );
+      const mat = s.kind === 'blue' ? this.skullMaterialBlue : this.skullMaterialNormal;
+      let mesh = this.skullMeshes.get(i);
+      if (!mesh) {
+        mesh = new THREE.Mesh(this.skullGeometry, mat);
+        this.witherGroup.add(mesh);
+        this.skullMeshes.set(i, mesh);
+      } else {
+        if (mesh.material !== mat) {
+          mesh.material = mat;
+        }
+      }
       mesh.position.set(s.x, s.y, s.z);
-      this.witherGroup.add(mesh);
-      this.skullMeshes.set(i, mesh);
+    }
+    for (let i = this.witherSkulls.length; i < this.skullMeshes.size; i++) {
+      const mesh = this.skullMeshes.get(i);
+      if (mesh) {
+        this.witherGroup.remove(mesh);
+        this.skullMeshes.delete(i);
+      }
     }
     // Boss bar (276): HudParity projection over BossFramework snapshots.
     this.syncWitherBossBarHud();

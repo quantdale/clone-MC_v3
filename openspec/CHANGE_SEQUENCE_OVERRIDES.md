@@ -1,5 +1,17 @@
 # Change Sequence Overrides
 
+## 309 activation — resource leak and storage boundedness remediation (2026-11-24)
+
+Following VERIFIED change 308, the repository-wide audit confirmed the 10,000-key
+queue epoch retention memory leak, uncovered a severe WebGL shader material leak in
+`syncWitherPresentation()` (up to 720 un-disposed Three.js materials allocated per
+second during wither battles), and identified missing teardown in `Game.dispose()`
+across ten internal rendering and audio subsystems.
+`309-resource-leak-and-storage-boundedness-remediation` is the sole ACTIVE change,
+with spec-first artifacts and failing-first tests required. Starting head
+`d2daeadb4808c981dff2ba2adc0e01cd239110de`. Change 258 remains BLOCKED under its
+owner deferral; no headed GPU evidence is claimed.
+
 ## 308 activation — reset and save integrity (2026-11-13)
 
 Following VERIFIED change 307, a failing-first integration test reproduced loss

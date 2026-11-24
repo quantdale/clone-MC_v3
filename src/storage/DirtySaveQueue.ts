@@ -138,12 +138,21 @@ export class DirtySaveQueue {
         }
         written++;
         committedKeys.push(key);
+        // Change 309 (R1): Boundedness - prune epoch when write completes un-superseded.
+        if (this.epochs.get(key) === entry.epoch) {
+          this.epochs.delete(key);
+        }
       } catch {
         // Re-queue at the end for retry; preserves no-loss semantics. If a
         // newer markDirty for this key landed while the write was in flight,
         // keep that newer snapshot instead of resurrecting the stale one.
         if (this.clearGeneration === clearGeneration && !this.pending.has(key)) {
           this.pending.set(key, entry);
+        } else if (this.clearGeneration !== clearGeneration && !this.pending.has(key)) {
+          // Cleared while in-flight and failed: do not retain stale epoch if not re-marked.
+          if (this.epochs.get(key) === entry.epoch) {
+            this.epochs.delete(key);
+          }
         }
       } finally {
         this.inFlightKey = null;
@@ -163,6 +172,11 @@ export class DirtySaveQueue {
     return this.pending.size + (this.inFlightKey !== null && !this.pending.has(this.inFlightKey) ? 1 : 0);
   }
 
+  /** Number of retained epoch entries (Change 309 observability/boundedness). */
+  get retainedEpochCount(): number {
+    return this.epochs.size;
+  }
+
   /** Whether a key is pending or its write is still in flight. */
   has(key: string): boolean {
     return this.pending.has(key) || this.inFlightKey === key;
@@ -177,5 +191,14 @@ export class DirtySaveQueue {
   clear(): void {
     this.clearGeneration++;
     this.pending.clear();
+    if (this.inFlightKey === null) {
+      this.epochs.clear();
+    } else {
+      const inFlightEpoch = this.epochs.get(this.inFlightKey);
+      this.epochs.clear();
+      if (inFlightEpoch !== undefined) {
+        this.epochs.set(this.inFlightKey, inFlightEpoch);
+      }
+    }
   }
 }

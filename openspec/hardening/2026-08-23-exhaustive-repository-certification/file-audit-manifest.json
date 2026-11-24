@@ -10,8 +10,14 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 3102,
+  "total": 3108,
   "rows": [
+    {"path":"tests/unit/GameLifecycleTeardown.test.ts","category":"test","purpose":"Change 309 unit tests for Wither skull presentation reuse and Game teardown","reviewLevel":"semantic","reviewNotes":"Reviewed failing-first and passing tests for R2 and R3.","status":"audited"},
+    {"path":"openspec/changes/309-resource-leak-and-storage-boundedness-remediation/proposal.md","category":"spec","purpose":"Change 309 proposal for resource leak and storage boundedness remediation","reviewLevel":"semantic","reviewNotes":"Reviewed against actual queue epoch retention and Three.js/dispose leaks; implementation pending.","status":"audited"},
+    {"path":"openspec/changes/309-resource-leak-and-storage-boundedness-remediation/design.md","category":"spec","purpose":"Change 309 design for resource teardown and queue epoch boundedness","reviewLevel":"semantic","reviewNotes":"Reviewed target lifecycle and failure scenarios; implementation pending.","status":"audited"},
+    {"path":"openspec/changes/309-resource-leak-and-storage-boundedness-remediation/specs/resource-lifecycle/spec.md","category":"spec","purpose":"Change 309 normative resource lifecycle and boundedness requirements","reviewLevel":"semantic","reviewNotes":"Reviewed epoch boundedness, skull reuse, and teardown scenarios; verification pending.","status":"audited"},
+    {"path":"openspec/changes/309-resource-leak-and-storage-boundedness-remediation/tasks.md","category":"spec","purpose":"Change 309 task checkpoint","reviewLevel":"semantic","reviewNotes":"Reviewed task status against spec package; implementation pending.","status":"audited"},
+    {"path":"openspec/changes/309-resource-leak-and-storage-boundedness-remediation/verification.md","category":"spec","purpose":"Change 309 verification evidence","reviewLevel":"semantic","reviewNotes":"Baseline verification initialized; full gate pending implementation.","status":"audited"},
     {"path":"openspec/changes/308-reset-save-integrity/proposal.md","category":"spec","purpose":"Change 308 proposal and reproduced reset/queue integrity failures","reviewLevel":"semantic","reviewNotes":"Reviewed against actual failed reset and queue probes; implementation pending.","status":"audited"},
     {"path":"openspec/changes/308-reset-save-integrity/design.md","category":"spec","purpose":"Change 308 reset synchronization design","reviewLevel":"semantic","reviewNotes":"Reviewed target lifecycle and failure scenarios; implementation pending.","status":"audited"},
     {"path":"openspec/changes/308-reset-save-integrity/specs/reset-save-integrity/spec.md","category":"spec","purpose":"Change 308 normative reset durability requirements","reviewLevel":"semantic","reviewNotes":"Reviewed failure, cancellation and concurrency scenarios; verification pending.","status":"audited"},

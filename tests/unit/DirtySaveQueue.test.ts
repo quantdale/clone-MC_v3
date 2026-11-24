@@ -407,3 +407,103 @@ describe('DirtySaveQueue concurrent drain integrity (289)', () => {
     expect(q.size).toBe(0);
   });
 });
+
+describe('DirtySaveQueue epoch boundedness (309 / R1)', () => {
+  it('bounds retained epochs to zero after 10,000 distinct writes complete', async () => {
+    const q = new DirtySaveQueue();
+    const count = 10_000;
+    for (let i = 0; i < count; i++) {
+      q.markDirty(unit({ key: `chunk|${i}`, payload: i }));
+    }
+    expect(q.size).toBe(count);
+
+    const sink: SaveSink = {
+      async write(): Promise<void> {},
+    };
+
+    const written = await q.drain(sink, count);
+    expect(written).toBe(count);
+    expect(q.size).toBe(0);
+    // Boundedness requirement: epoch map must not permanently leak distinct keys
+    expect(q.retainedEpochCount).toBe(0);
+  });
+
+  it('retains epoch for a key re-marked during in-flight write until newer write settles', async () => {
+    const q = new DirtySaveQueue();
+    q.markDirty(unit({ key: 'k', payload: 'v1' }));
+    let release!: () => void;
+    let started!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const writing = new Promise<void>((resolve) => { started = resolve; });
+    const sink: SaveSink = {
+      async write(u) {
+        if (u.payload === 'v1') {
+          started();
+          await gate;
+        }
+      },
+    };
+
+    const firstDrain = q.drain(sink, 1);
+    await writing;
+    // Mark dirty with v2 while v1 is in flight
+    q.markDirty(unit({ key: 'k', payload: 'v2' }));
+    // Release v1
+    release();
+    expect(await firstDrain).toBe(1);
+
+    // v2 is still pending, so epoch must still be retained
+    expect(q.size).toBe(1);
+    expect(q.retainedEpochCount).toBe(1);
+
+    // Drain v2
+    expect(await q.drain(sink, 1)).toBe(1);
+    expect(q.size).toBe(0);
+    // Now that v2 completed un-superseded, epoch must be pruned
+    expect(q.retainedEpochCount).toBe(0);
+  });
+
+  it('clears retained epochs on clear() when no write is in flight', () => {
+    const q = new DirtySaveQueue();
+    q.markDirty(unit({ key: 'a' }));
+    q.markDirty(unit({ key: 'b' }));
+    q.markDirty(unit({ key: 'c' }));
+    expect(q.size).toBe(3);
+    expect(q.retainedEpochCount).toBe(3);
+
+    q.clear();
+    expect(q.size).toBe(0);
+    expect(q.retainedEpochCount).toBe(0);
+  });
+
+  it('preserves only the active in-flight epoch if clear() is called during write', async () => {
+    const q = new DirtySaveQueue();
+    q.markDirty(unit({ key: 'a', payload: 'a1' }));
+    q.markDirty(unit({ key: 'b', payload: 'b1' }));
+    let release!: () => void;
+    let started!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const writing = new Promise<void>((resolve) => { started = resolve; });
+    const sink: SaveSink = {
+      async write(u) {
+        if (u.key === 'a') {
+          started();
+          await gate;
+        }
+      },
+    };
+
+    const firstDrain = q.drain(sink, 10);
+    await writing;
+    // clear() while 'a' is writing
+    q.clear();
+    // 'b' is gone, 'a' was already in flight
+    expect(q.size).toBe(0);
+    expect(q.retainedEpochCount).toBe(1);
+
+    release();
+    await firstDrain;
+    // Once 'a' finishes, retainedEpochCount must be 0
+    expect(q.retainedEpochCount).toBe(0);
+  });
+});
