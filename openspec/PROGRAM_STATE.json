@@ -15,8 +15,8 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "92b2b9305ec767677bf1fb8c575003c023d6a454",
-  "localHead": "92b2b9305ec767677bf1fb8c575003c023d6a454",
-  "publishedHead": "92b2b9305ec767677bf1fb8c575003c023d6a454",
+  "localHead": "6570d4a57daf0e106fdd0f78320e608a601f3901",
+  "publishedHead": "6570d4a57daf0e106fdd0f78320e608a601f3901",
   "nextExactAction": "T0: author and validate complete OpenSpec package (proposal, design, tasks, verification, spec) for change 312.",
   "lastCompletedTask": "311 T7: review requirement evidence, run full 13 verify:all gates and isolated multiplayer performance, update program state, and publish checkpoint to origin/main.",
   "blockers": [
@@ -28,7 +28,7 @@
       "status": "VERIFIED",
       "unitTests": 5907,
       "e2eTests": 145,
-      "head": "92b2b9305ec767677bf1fb8c575003c023d6a454",
+      "head": "6570d4a57daf0e106fdd0f78320e608a601f3901",
       "note": "All 13 verify:all gates and isolated multiplayer performance passed. Remediated item component data loss and corruption across container screens (InventoryScreenParity dragEnd, doubleClickGather, sameSlot, sameMenu) and block entities (MenuTransaction validateSlot/validateCursor, BrewingStandBlockEntity validateSlot/consumeOne, LiveBlockEntityHost brewingStateEquals/furnaceStateEquals). Enforced strict slot/cursor hygiene rejecting components on empty slots/cursors, preserved components during screen drag distribution and double-click gather, ensured clean component removal upon slot depletion, and restored dirty chunk propagation and persistence when slot components change. Zero regressions across 5907 unit tests, 145 browser tests, and canonical multiplayer performance."
     },
     {
@@ -2774,6 +2774,11 @@
     }
   ],
   "publicationHistory": [
+    {
+      "head": "6570d4a57daf0e106fdd0f78320e608a601f3901",
+      "at": "2026-11-24T16:48:41+08:00",
+      "note": "Change 311 VERIFIED (7/7): component lifecycle and slot hygiene enforced across container screens (drag distribution, double-click gather, slot/menu equality) and block entities (brewing stand empty slot hygiene, clean depletion, host equality). 13 verify:all gates and canonical multiplayer performance passed."
+    },
     {
       "head": "63224a8d047c0a6b6e03ce8779bfbb7d4a7bc5d5",
       "at": "2026-11-10T18:25:48Z",
