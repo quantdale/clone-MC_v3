@@ -110,6 +110,9 @@ function validateSlot(slot: MenuSlot, what: string): void {
     if (slot.count !== 0) {
       throw new Error(`FurnaceBlockEntity: ${what} with a null item must have count 0`);
     }
+    if (slot.components !== undefined) {
+      throw new Error(`FurnaceBlockEntity: ${what} with a null item must not have components`);
+    }
   } else {
     if (typeof slot.item !== 'string' || slot.item.length === 0) {
       throw new Error(`FurnaceBlockEntity: ${what}.item must be a non-empty string or null`);
@@ -125,7 +128,14 @@ function parseSlot(input: unknown, what: string): MenuSlot {
     throw new Error(`FurnaceBlockEntity: ${what} must be an object`);
   }
   const s = input as Record<string, unknown>;
-  const slot: MenuSlot = { item: s.item as string | null, count: s.count as number, maxStack: s.maxStack as number };
+  const slot: MenuSlot = {
+    item: s.item as string | null,
+    count: s.count as number,
+    maxStack: s.maxStack as number,
+    ...(s.components !== undefined && typeof s.components === 'object' && s.components !== null
+      ? { components: s.components as Readonly<Record<string, unknown>> }
+      : {}),
+  };
   validateSlot(slot, what);
   return slot;
 }
@@ -322,10 +332,16 @@ function tickOnce(state: FurnaceState, ctx: FurnaceContext): FurnaceState {
 /** Serialize a furnace state into the 036 opaque payload envelope (lossless). */
 export function serializeFurnaceState(state: FurnaceState): unknown {
   const valid = validateFurnaceState(state);
+  const serializeSlot = (s: MenuSlot) => ({
+    item: s.item,
+    count: s.count,
+    maxStack: s.maxStack,
+    ...(s.components !== undefined ? { components: s.components } : {}),
+  });
   return {
-    input: { item: valid.input.item, count: valid.input.count, maxStack: valid.input.maxStack },
-    fuel: { item: valid.fuel.item, count: valid.fuel.count, maxStack: valid.fuel.maxStack },
-    output: { item: valid.output.item, count: valid.output.count, maxStack: valid.output.maxStack },
+    input: serializeSlot(valid.input),
+    fuel: serializeSlot(valid.fuel),
+    output: serializeSlot(valid.output),
     burnTime: valid.burnTime,
     burnTimeTotal: valid.burnTimeTotal,
     smeltTime: valid.smeltTime,

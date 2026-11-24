@@ -1,5 +1,11 @@
 # Program State
 
+## Current checkpoint — Change 310-container-and-transfer-component-integrity VERIFIED (7/7)
+
+Change 310 remediates systematic item component data loss and corruption across container block-entity serialization and automated transfers: (1) `ChestBlockEntity` and `FurnaceBlockEntity` (and `SmokerBlockEntity`) serialize/deserialize `components` losslessly on every slot; (2) empty slots carrying components are strictly rejected; (3) `HopperTransfer.transferOneItem` merges only when `menuComponentsEqual` matches, copies components when moving to an empty slot, and deletes components when a source slot is depleted to count 0; (4) `DropperEject` and `DispenserBehavior` delete components upon slot depletion, and `DroppedItem` carries item components. All 13 verify:all gates (5894 unit tests, coverage, 145 browser tests) and isolated multiplayer performance (785.9 TPS / 1526.8 ms) passed. Zero regressions; C258 remains BLOCKED.
+
+- Next exact action: **Continue the repository-wide audit with failing-first tests; author and validate the next change package before implementation. 258 remains BLOCKED.**
+
 ## Current checkpoint — Change 309-resource-leak-and-storage-boundedness-remediation VERIFIED (7/7)
 
 Change 309 remediates three significant resource and boundedness defects: (1) unbounded `DirtySaveQueue.epochs` retention across thousands of unique writes; (2) Three.js WebGL material leaks and un-disposed geometries/materials during Wither skull presentation; (3) missing resource teardown in `Game.dispose()` across presentation, audio, and UI subsystems. All 13 verify:all gates (5884 unit tests, coverage, 145 browser tests) and isolated multiplayer performance (823.7 TPS / 1456.9 ms) passed. Evidence published at `218f512f57dd66f1a74ca2d8bab6600b5d375b50` and verified on remote `main`. Zero regressions; C258 remains BLOCKED.
@@ -516,16 +522,16 @@ Session start `350b557a090b01c2d5d5574fb7ae9aa1e6fc52c3` matches live `origin/ma
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **309-resource-leak-and-storage-boundedness-remediation — VERIFIED (7/7); 258 BLOCKED, 259–309 VERIFIED**
-- Prior active implementation change: **308-reset-save-integrity — VERIFIED (7/7); 258 stays BLOCKED, 259–308 stay VERIFIED**
-- Prior prior active implementation change: **283-live-raid-persistence — VERIFIED (13/13); 258 stays BLOCKED, 259–283 stay VERIFIED**
-- Next change: **310 — pending audit after 309; 258 stays BLOCKED**
+- Active implementation change: **310-container-and-transfer-component-integrity — VERIFIED (7/7); 258 BLOCKED, 259–310 VERIFIED**
+- Prior active implementation change: **309-resource-leak-and-storage-boundedness-remediation — VERIFIED (7/7); 258 stays BLOCKED, 259–309 stay VERIFIED**
+- Prior prior active implementation change: **308-reset-save-integrity — VERIFIED (7/7); 258 stays BLOCKED, 259–308 stay VERIFIED**
+- Next change: **311 — pending audit after 310; 258 stays BLOCKED**
 - 240 advancement allowed: **yes**
 
-- Program: **ACTIVE — Change 309-resource-leak-and-storage-boundedness-remediation VERIFIED 7/7 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–309 VERIFIED**
+- Program: **ACTIVE — Change 310-container-and-transfer-component-integrity VERIFIED 7/7 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–310 VERIFIED**
 - 284 checkpoint: **VERIFIED 12/12 — implementation + gates complete; enchanting flake + visual SwiftShader drift documented non-blocking; 258 BLOCKED; 285 not started**
-- Last completed change: **308-reset-save-integrity — VERIFIED (7/7); 258 BLOCKED**
-- Current active change: **309-resource-leak-and-storage-boundedness-remediation — VERIFIED (7/7); next audit change not yet activated**
+- Last completed change: **309-resource-leak-and-storage-boundedness-remediation — VERIFIED (7/7); 258 BLOCKED**
+- Current active change: **310-container-and-transfer-component-integrity — VERIFIED (7/7); next audit change not yet activated**
 - Prior last completed change: **281-workstation-ui — VERIFIED (12/12); 258 stays BLOCKED, 259–281 stay VERIFIED**
 - Prior prior last completed change: **272-lighting-clock-dt-sync — VERIFIED (10/10) — full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85/file-audit 2792); 271 remains VERIFIED (14/14)
 - All changes 001–257 and 259–284: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed; Change 283 is VERIFIED 13/13; Change 284 is VERIFIED 12/12 (this session).

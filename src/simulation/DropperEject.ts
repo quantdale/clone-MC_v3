@@ -39,6 +39,7 @@ export interface DroppedItem {
   readonly item: string;
   readonly count: number;
   readonly position: readonly [number, number, number];
+  readonly components?: Readonly<Record<string, unknown>>;
 }
 
 /** The outcome of one dropper ejection attempt. */
@@ -81,15 +82,22 @@ export function ejectFromDropper(
   }
 
   // Facing no container: drop into the world at the provided position.
+  const itemComponents = sourceSlot.components;
   sourceSlot.count -= 1;
   if (sourceSlot.count === 0) {
     sourceSlot.item = null;
+    delete sourceSlot.components;
   }
   return {
     kind: 'drop',
     moved: true,
     source: sourceSlots,
-    drop: { item, count: 1, position: [dropPosition[0], dropPosition[1], dropPosition[2]] },
+    drop: {
+      item,
+      count: 1,
+      position: [dropPosition[0], dropPosition[1], dropPosition[2]],
+      ...(itemComponents !== undefined ? { components: itemComponents } : {}),
+    },
   };
 }
 

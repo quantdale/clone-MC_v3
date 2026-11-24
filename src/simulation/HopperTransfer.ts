@@ -21,7 +21,7 @@
  */
 import { offsetInDirection } from './RedstoneSignal';
 import type { ScheduledTick, ScheduledTickQueue } from './ScheduledTickQueue';
-import type { MenuSlot } from '../inventory/MenuTransaction';
+import { menuComponentsEqual, type MenuSlot } from '../inventory/MenuTransaction';
 
 /** A hopper's facing: five-way, since `'up'` is reserved for its fixed intake. */
 export type HopperFacing = 'down' | 'north' | 'south' | 'east' | 'west';
@@ -63,8 +63,11 @@ export function transferOneItem(
   }
   const sourceSlot = sourceSlots[sourceIndex]!;
   const item = sourceSlot.item!;
+  const sourceComponents = sourceSlot.components;
 
-  let destIndex = destinationSlots.findIndex((d) => d.item === item && d.count < d.maxStack);
+  let destIndex = destinationSlots.findIndex(
+    (d) => d.item === item && d.count < d.maxStack && menuComponentsEqual(sourceComponents, d.components),
+  );
   if (destIndex === -1) {
     destIndex = destinationSlots.findIndex((d) => d.item === null);
   }
@@ -76,12 +79,16 @@ export function transferOneItem(
   if (destSlot.item === null) {
     destSlot.item = item;
     destSlot.count = 1;
+    if (sourceComponents !== undefined) {
+      destSlot.components = sourceComponents;
+    }
   } else {
     destSlot.count += 1;
   }
   sourceSlot.count -= 1;
   if (sourceSlot.count === 0) {
     sourceSlot.item = null;
+    delete sourceSlot.components;
   }
 
   return { moved: true, source: sourceSlots, destination: destinationSlots };

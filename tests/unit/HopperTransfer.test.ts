@@ -109,6 +109,91 @@ describe('transferOneItem', () => {
     expect(result.moved).toBe(true);
     expect(result.source[0]!.count).toBe(4);
   });
+
+  it('does not merge items with mismatched components (310 / R2)', () => {
+    const source: MenuSlot[] = [
+      {
+        item: 'minecraft:potion',
+        count: 1,
+        maxStack: 16,
+        components: { potion: 'healing' },
+      },
+    ];
+    const destination: MenuSlot[] = [
+      {
+        item: 'minecraft:potion',
+        count: 1,
+        maxStack: 16,
+        components: { potion: 'harming' },
+      },
+      slot(null, 0, 16),
+    ];
+    const result = transferOneItem(source, destination);
+    expect(result.moved).toBe(true);
+    expect(result.destination[0]!.count).toBe(1);
+    expect(result.destination[0]!.components).toEqual({ potion: 'harming' });
+    expect(result.destination[1]!.item).toBe('minecraft:potion');
+    expect(result.destination[1]!.count).toBe(1);
+    expect(result.destination[1]!.components).toEqual({ potion: 'healing' });
+  });
+
+  it('transfers components to an empty destination slot (310 / R2)', () => {
+    const source: MenuSlot[] = [
+      {
+        item: 'minecraft:potion',
+        count: 1,
+        maxStack: 16,
+        components: { potion: 'healing' },
+      },
+    ];
+    const destination: MenuSlot[] = [slot(null, 0, 16)];
+    const result = transferOneItem(source, destination);
+    expect(result.moved).toBe(true);
+    expect(result.destination[0]!.components).toEqual({ potion: 'healing' });
+  });
+
+  it('deletes components from source slot when depleted to count 0 (310 / R2)', () => {
+    const source: MenuSlot[] = [
+      {
+        item: 'minecraft:potion',
+        count: 1,
+        maxStack: 16,
+        components: { potion: 'healing' },
+      },
+    ];
+    const destination: MenuSlot[] = [slot(null, 0, 16)];
+    const result = transferOneItem(source, destination);
+    expect(result.moved).toBe(true);
+    expect(result.source[0]!.item).toBeNull();
+    expect(result.source[0]!.count).toBe(0);
+    expect(result.source[0]!.components).toBeUndefined();
+    expect('components' in result.source[0]!).toBe(false);
+  });
+
+  it('merges into an existing slot when components match (310 / R2)', () => {
+    const source: MenuSlot[] = [
+      {
+        item: 'minecraft:potion',
+        count: 1,
+        maxStack: 16,
+        components: { potion: 'healing' },
+      },
+    ];
+    const destination: MenuSlot[] = [
+      {
+        item: 'minecraft:potion',
+        count: 2,
+        maxStack: 16,
+        components: { potion: 'healing' },
+      },
+      slot(null, 0, 16),
+    ];
+    const result = transferOneItem(source, destination);
+    expect(result.moved).toBe(true);
+    expect(result.destination[0]!.count).toBe(3);
+    expect(result.destination[0]!.components).toEqual({ potion: 'healing' });
+    expect(result.destination[1]!.item).toBeNull();
+  });
 });
 
 describe('hopperShouldTransfer', () => {

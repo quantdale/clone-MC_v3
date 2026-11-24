@@ -102,6 +102,7 @@ export function dispenseFromDispenser(
     sourceSlot.count -= 1;
     if (sourceSlot.count === 0) {
       sourceSlot.item = null;
+      delete sourceSlot.components;
     }
     return { kind: 'behavior', behavior, source: sourceSlots };
   }

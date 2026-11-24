@@ -131,6 +131,25 @@ describe('ejectFromDropper', () => {
     expect(result.drop.position).toEqual([7, 8, 9]);
     expect(result.source[0]!.count).toBe(4);
   });
+
+  it('preserves components in DroppedItem and deletes components when source reaches count 0 (310 / R3)', () => {
+    const source: MenuSlot[] = [
+      {
+        item: 'minecraft:potion',
+        count: 1,
+        maxStack: 16,
+        components: { potion: 'healing' },
+      },
+    ];
+    const result = ejectFromDropper(source, null, [1, 2, 3]);
+    expect(result.kind).toBe('drop');
+    if (result.kind !== 'drop') throw new Error('expected drop');
+    expect(result.drop.components).toEqual({ potion: 'healing' });
+    expect(result.source[0]!.item).toBeNull();
+    expect(result.source[0]!.count).toBe(0);
+    expect(result.source[0]!.components).toBeUndefined();
+    expect('components' in result.source[0]!).toBe(false);
+  });
 });
 
 describe('dropper scheduling', () => {

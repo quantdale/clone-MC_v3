@@ -245,6 +245,44 @@ describe('furnace serialization', () => {
     expect(() => deserializeFurnaceState({ ...payload, burnTime: 5 })).toThrow(/requires burnTime 0/);
     expect(() => deserializeFurnaceState({ ...payload, smeltTimeTotal: -2 })).toThrow(/non-negative integer/);
   });
+
+  it('preserves components on input, fuel, and output slots (310 / R1)', () => {
+    const s = state({
+      input: {
+        item: 'minecraft:potion',
+        count: 1,
+        maxStack: 1,
+        components: { custom: 'ingredient' },
+      },
+      fuel: {
+        item: 'minecraft:wooden_sword',
+        count: 1,
+        maxStack: 1,
+        components: { damage: 10 },
+      },
+      output: {
+        item: 'minecraft:potion',
+        count: 1,
+        maxStack: 1,
+        components: { custom: 'result' },
+      },
+      burnTime: 100,
+      burnTimeTotal: 200,
+      smeltTime: 50,
+      smeltTimeTotal: 100,
+    });
+    const serialized = serializeFurnaceState(s);
+    const restored = deserializeFurnaceState(serialized);
+    expect(restored.input.components).toEqual({ custom: 'ingredient' });
+    expect(restored.fuel.components).toEqual({ damage: 10 });
+    expect(restored.output.components).toEqual({ custom: 'result' });
+  });
+
+  it('rejects an empty furnace slot with components (310 / R1)', () => {
+    const payload = serializeFurnaceState(createFurnaceState()) as Record<string, unknown>;
+    payload.input = { item: null, count: 0, maxStack: 64, components: { invalid: true } };
+    expect(() => deserializeFurnaceState(payload)).toThrow(/null item must not have components/);
+  });
 });
 
 describe('furnace menu bridge', () => {

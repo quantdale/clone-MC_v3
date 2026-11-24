@@ -1,5 +1,21 @@
 # Change Sequence Overrides
 
+## 310 activation — container and transfer component integrity (2026-11-24)
+
+Following VERIFIED change 309, the repository-wide audit uncovered systematic item component
+data loss and corruption across container block entities and automated transfers:
+(1) `ChestBlockEntity` and `FurnaceBlockEntity` (and `SmokerBlockEntity`) serialize/deserialize
+`MenuSlot`s by dropping `components`, silently stripping stack data components (such as potions,
+enchantments, and custom items) upon save/load;
+(2) `HopperTransfer.transferOneItem` merges items with mismatched components into the same slot,
+drops components when moving an item into an empty slot, and fails to delete `components` when an
+item stack is depleted to 0;
+(3) `DropperEject` and `DispenserBehavior` fail to clean up `components` when a slot reaches count 0,
+and `DroppedItem` fails to carry item components.
+`310-container-and-transfer-component-integrity` is the sole ACTIVE change, with spec-first artifacts
+and failing-first tests required. Starting head `a07a745d31f60e5d3b0456290310d6094a4af0f1`. Change 258
+remains BLOCKED under its owner deferral; no headed GPU evidence is claimed.
+
 ## 309 activation — resource leak and storage boundedness remediation (2026-11-24)
 
 Following VERIFIED change 308, the repository-wide audit confirmed the 10,000-key

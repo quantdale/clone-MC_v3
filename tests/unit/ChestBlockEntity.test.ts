@@ -131,6 +131,30 @@ describe('chest inventory serialization', () => {
     badSlot[0] = { item: 'minecraft:coal', count: 100, maxStack: 64 };
     expect(() => deserializeChestInventory({ slots: badSlot })).toThrow(/count must be an integer/);
   });
+
+  it('preserves components across serialization and deserialization (310 / R1)', () => {
+    const inv = createChestInventory();
+    inv.slots[0] = {
+      item: 'minecraft:potion',
+      count: 1,
+      maxStack: 1,
+      components: {
+        'minecraft:potion_contents': { potion: 'minecraft:healing' },
+      },
+    };
+    const serialized = serializeChestInventory(inv);
+    const restored = deserializeChestInventory(serialized);
+    expect(restored.slots[0]!.components).toEqual({
+      'minecraft:potion_contents': { potion: 'minecraft:healing' },
+    });
+  });
+
+  it('rejects an empty slot with components (310 / R1)', () => {
+    const inv = createChestInventory();
+    const serialized = serializeChestInventory(inv) as { slots: Record<string, unknown>[] };
+    serialized.slots[0] = { item: null, count: 0, maxStack: 64, components: { invalid: true } };
+    expect(() => deserializeChestInventory(serialized)).toThrow(/null item must not have components/);
+  });
 });
 
 describe('chest menu bridge', () => {

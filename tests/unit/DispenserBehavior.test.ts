@@ -149,6 +149,23 @@ describe('dispenseFromDispenser', () => {
     expect(result.moved).toBe(false);
     expect(result.source[0]!.count).toBe(5);
   });
+
+  it('deletes components when special item is depleted to count 0 (310 / R3)', () => {
+    const source: MenuSlot[] = [
+      {
+        item: 'minecraft:arrow',
+        count: 1,
+        maxStack: 64,
+        components: { custom: 'tipped' },
+      },
+    ];
+    const result = dispenseFromDispenser(source, null, [1, 2, 3]);
+    expect(result.kind).toBe('behavior');
+    expect(result.source[0]!.item).toBeNull();
+    expect(result.source[0]!.count).toBe(0);
+    expect(result.source[0]!.components).toBeUndefined();
+    expect('components' in result.source[0]!).toBe(false);
+  });
 });
 
 describe('dispenser scheduling', () => {

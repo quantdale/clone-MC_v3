@@ -64,6 +64,9 @@ function validateSlot(slot: MenuSlot, index: number): void {
     if (slot.count !== 0) {
       throw new Error(`ChestBlockEntity: slot ${index} with a null item must have count 0`);
     }
+    if (slot.components !== undefined) {
+      throw new Error(`ChestBlockEntity: slot ${index} with a null item must not have components`);
+    }
   } else {
     if (typeof slot.item !== 'string' || slot.item.length === 0) {
       throw new Error(`ChestBlockEntity: slot ${index}.item must be a non-empty string or null`);
@@ -89,6 +92,9 @@ function validateSlots(slots: unknown, length: number, what: string): MenuSlot[]
       item: s.item as string | null,
       count: s.count as number,
       maxStack: s.maxStack as number,
+      ...(s.components !== undefined && typeof s.components === 'object' && s.components !== null
+        ? { components: s.components as Readonly<Record<string, unknown>> }
+        : {}),
     };
     validateSlot(parsed, i);
     out.push(parsed);
@@ -122,7 +128,12 @@ export function validateChestInventory(input: unknown): ChestInventory {
 export function serializeChestInventory(inv: ChestInventory): unknown {
   validateChestInventory(inv);
   return {
-    slots: inv.slots.map((s) => ({ item: s.item, count: s.count, maxStack: s.maxStack })),
+    slots: inv.slots.map((s) => ({
+      item: s.item,
+      count: s.count,
+      maxStack: s.maxStack,
+      ...(s.components !== undefined ? { components: s.components } : {}),
+    })),
   };
 }
 
