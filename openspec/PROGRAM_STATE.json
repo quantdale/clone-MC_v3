@@ -15,8 +15,8 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "98df628ec9adf7a839d94f484203d8e66f2570a9",
-  "localHead": "98df628ec9adf7a839d94f484203d8e66f2570a9",
-  "publishedHead": "98df628ec9adf7a839d94f484203d8e66f2570a9",
+  "localHead": "4deb9fbffd9c43921ca60cccf5877332c0ee8c97",
+  "publishedHead": "4deb9fbffd9c43921ca60cccf5877332c0ee8c97",
   "nextExactAction": "Continue the repository-wide audit or activate change 313 when new actionable findings are identified; 258 remains BLOCKED.",
   "lastCompletedTask": "312 T7: verify all gates and isolated multiplayer performance, reconcile state and parity matrix, and publish checkpoint to origin/main.",
   "blockers": [
@@ -28,7 +28,7 @@
       "status": "VERIFIED",
       "unitTests": 5912,
       "e2eTests": 145,
-      "head": "98df628ec9adf7a839d94f484203d8e66f2570a9",
+      "head": "4deb9fbffd9c43921ca60cccf5877332c0ee8c97",
       "note": "All 13 verify:all gates, 3x repeat persistence E2E (21/21, all committed=151 failed=0), full 145/145 Playwright E2E, and isolated multiplayer performance (791.8 TPS / 1515.5 ms) passed. Serialized AutosaveCoordinator.flush(), suppressed periodic tick() during active flushes, settled external/concurrent in-flight queue drains before returning, and awaited rawWrites settlement in GamePersistence.dispose() (before DB close) and GamePersistence.flush(). Zero regressions across 5912 unit tests and 145 browser tests."
     },
     {
@@ -2782,6 +2782,11 @@
     }
   ],
   "publicationHistory": [
+    {
+      "head": "4deb9fbffd9c43921ca60cccf5877332c0ee8c97",
+      "at": "2026-11-25T02:06:27+08:00",
+      "note": "Change 312 VERIFIED (7/7): autosave flush serialization, tick suppression during active flush, external in-flight drain settlement, and rawWrites settlement on dispose/flush. 13 verify:all gates, 3x repeat persistence E2E (21/21, committed=151 failed=0), full 145/145 Playwright E2E, and canonical multiplayer performance passed."
+    },
     {
       "head": "6570d4a57daf0e106fdd0f78320e608a601f3901",
       "at": "2026-11-24T16:48:41+08:00",
