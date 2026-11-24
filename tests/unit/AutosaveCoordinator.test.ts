@@ -200,4 +200,154 @@ describe('AutosaveCoordinator', () => {
     expect(coord.size).toBe(0);
     expect(sink.calls).toHaveLength(5);
   });
+
+  it('suppresses overlapping tick() during flush and waits for all writes to settle (REQ-AFD-1)', async () => {
+    const q = new DirtySaveQueue();
+    let slowRelease!: () => void;
+    const slowGate = new Promise<void>((resolve) => { slowRelease = resolve; });
+    let tickPromise: Promise<number> | null = null;
+    let tickFinished = false;
+    const holder: { coord?: AutosaveCoordinator } = {};
+
+    const sink: SaveSink = {
+      async write(u: SaveUnit): Promise<void> {
+        if (u.key === 'b') {
+          tickPromise = holder.coord!.tick().then((v) => {
+            tickFinished = true;
+            return v;
+          });
+        }
+        if (u.key === 'c') {
+          await slowGate;
+        }
+      },
+    };
+
+    const coord = new AutosaveCoordinator({ queue: q, sink, limitPerTick: 2, intervalMs: 1000, flushTarget: null });
+    holder.coord = coord;
+    coord.markDirty(unit('a'));
+    coord.markDirty(unit('b'));
+    coord.markDirty(unit('c'));
+
+    let flushFinished = false;
+    const flushPromise = coord.flush().then((n) => {
+      flushFinished = true;
+      return n;
+    });
+
+    try {
+      for (let i = 0; i < 16; i++) await Promise.resolve();
+
+      expect(tickPromise).not.toBeNull();
+      expect(tickFinished).toBe(true);
+      expect(flushFinished).toBe(false);
+      expect(q.outstandingSize).toBe(1);
+
+      slowRelease();
+      expect(await tickPromise!).toBe(0);
+      expect(await flushPromise).toBe(3);
+      expect(coord.size).toBe(0);
+    } finally {
+      slowRelease();
+    }
+  });
+
+  it('settles external in-flight drain between rounds and retries on failure (REQ-AFD-1)', async () => {
+    const q = new DirtySaveQueue();
+    let slowRelease!: () => void;
+    const slowGate = new Promise<void>((resolve) => { slowRelease = resolve; });
+    let externalDrain: Promise<unknown> | null = null;
+    let cAttempts = 0;
+
+    const sink: SaveSink = {
+      async write(u: SaveUnit): Promise<void> {
+        if (u.key === 'b' && externalDrain === null) {
+          externalDrain = q.drainReport(sink, 2);
+        }
+        if (u.key === 'c') {
+          cAttempts++;
+          if (cAttempts === 1) {
+            await slowGate;
+            throw new Error('transient external drain failure');
+          }
+        }
+      },
+    };
+
+    const coord = new AutosaveCoordinator({ queue: q, sink, limitPerTick: 2, intervalMs: 1000, flushTarget: null });
+    coord.markDirty(unit('a'));
+    coord.markDirty(unit('b'));
+    coord.markDirty(unit('c'));
+
+    let flushFinished = false;
+    const flushPromise = coord.flush().then((n) => {
+      flushFinished = true;
+      return n;
+    });
+
+    for (let i = 0; i < 16; i++) await Promise.resolve();
+
+    expect(externalDrain).not.toBeNull();
+    expect(flushFinished).toBe(false);
+    expect(q.outstandingSize).toBe(1);
+
+    slowRelease();
+    await flushPromise;
+    await externalDrain;
+
+    expect(cAttempts).toBe(2);
+    expect(q.outstandingSize).toBe(0);
+    expect(coord.size).toBe(0);
+  });
+
+  it('serializes concurrent flush() calls sequentially without early completion (REQ-AFD-2)', async () => {
+    const q = new DirtySaveQueue();
+    let releaseA!: () => void;
+    let startedA!: () => void;
+    let releaseB!: () => void;
+    let startedB!: () => void;
+    const gateA = new Promise<void>((resolve) => { releaseA = resolve; });
+    const waitA = new Promise<void>((resolve) => { startedA = resolve; });
+    const gateB = new Promise<void>((resolve) => { releaseB = resolve; });
+    const waitB = new Promise<void>((resolve) => { startedB = resolve; });
+    const written: string[] = [];
+
+    const sink: SaveSink = {
+      async write(u: SaveUnit): Promise<void> {
+        if (u.key === 'a') {
+          startedA();
+          await gateA;
+        }
+        if (u.key === 'b') {
+          startedB();
+          await gateB;
+        }
+        written.push(u.key);
+      },
+    };
+
+    const coord = new AutosaveCoordinator({ queue: q, sink, limitPerTick: 1, intervalMs: 1000, flushTarget: null });
+    coord.markDirty(unit('a'));
+
+    const first = coord.flush();
+    await waitA;
+
+    coord.markDirty(unit('b'));
+    let secondFinished = false;
+    const second = coord.flush().then((n) => {
+      secondFinished = true;
+      return n;
+    });
+
+    releaseA();
+    await waitB;
+    for (let i = 0; i < 8; i++) await Promise.resolve();
+    expect(secondFinished).toBe(false);
+
+    releaseB();
+    const [w1, w2] = await Promise.all([first, second]);
+    expect(w1 + w2).toBe(2);
+    expect(written).toEqual(['a', 'b']);
+    expect(coord.size).toBe(0);
+  });
 });

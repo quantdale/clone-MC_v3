@@ -1013,4 +1013,106 @@ describe("GamePersistence — composition convenience", () => {
 
     await p.dispose();
   });
+
+  it("dispose settles active and chained raw metadata writes before closing DB (REQ-AFD-3)", async () => {
+    const factory = createIdbFactoryMock();
+    const p = makeFacade(factory);
+    await p.open();
+
+    const metadata = (p as unknown as { metadata: WorldMetadataRepository }).metadata;
+    const realPut = metadata.putGameModeData.bind(metadata);
+    let releaseFirst!: () => void;
+    let firstStarted!: () => void;
+    const firstGate = new Promise<void>((resolve) => { releaseFirst = resolve; });
+    const waitFirst = new Promise<void>((resolve) => { firstStarted = resolve; });
+    let calls = 0;
+
+    const spy = vi.spyOn(metadata, "putGameModeData").mockImplementation(async (...args) => {
+      calls++;
+      if (calls === 1) {
+        firstStarted();
+        await firstGate;
+      }
+      return realPut(...args);
+    });
+
+    try {
+      p.saveGameMode({ version: 1, mode: "creative" });
+      await waitFirst;
+
+      // Enqueue a second write chained behind the first, then immediately dispose.
+      p.saveGameMode({ version: 1, mode: "adventure" });
+      let disposeFinished = false;
+      const disposing = p.dispose().then(() => {
+        disposeFinished = true;
+      });
+
+      for (let i = 0; i < 12; i++) await Promise.resolve();
+      expect(disposeFinished).toBe(false);
+
+      releaseFirst();
+      await disposing;
+
+      expect((p as unknown as { errors: string[] }).errors).toEqual([]);
+      expect(calls).toBe(2);
+
+      const reader = new WorldMetadataRepository({ factory });
+      await reader.open();
+      expect(await reader.getGameModeData(WORLD_ID)).toEqual({ version: 1, mode: "adventure" });
+      reader.close();
+    } finally {
+      releaseFirst();
+      spy.mockRestore();
+      await p.dispose();
+    }
+  });
+
+  it("flush settles in-flight raw metadata writes before returning (REQ-AFD-4)", async () => {
+    const factory = createIdbFactoryMock();
+    const p = makeFacade(factory);
+    await p.open();
+
+    const metadata = (p as unknown as { metadata: WorldMetadataRepository }).metadata;
+    const realPut = metadata.putWeatherData.bind(metadata);
+    let releaseWeather!: () => void;
+    let weatherStarted!: () => void;
+    const weatherGate = new Promise<void>((resolve) => { releaseWeather = resolve; });
+    const waitWeather = new Promise<void>((resolve) => { weatherStarted = resolve; });
+
+    const spy = vi.spyOn(metadata, "putWeatherData").mockImplementation(async (...args) => {
+      weatherStarted();
+      await weatherGate;
+      return realPut(...args);
+    });
+
+    try {
+      const payload = { version: 1, weather: "thunder", rainTime: 400, thunderTime: 50 };
+      p.saveWeather(payload);
+      await waitWeather;
+
+      let flushFinished = false;
+      const flushing = p.flush().then((res) => {
+        flushFinished = true;
+        return res;
+      });
+
+      for (let i = 0; i < 12; i++) await Promise.resolve();
+      expect(flushFinished).toBe(false);
+
+      releaseWeather();
+      const result = await flushing;
+      expect(result.failed).toBe(0);
+      expect(result.health).toBe("ok");
+      expect((p as unknown as { errors: string[] }).errors).toEqual([]);
+
+      const reader = new WorldMetadataRepository({ factory });
+      await reader.open();
+      expect(await reader.getWeatherData(WORLD_ID)).toEqual(payload);
+      reader.close();
+    } finally {
+      releaseWeather();
+      spy.mockRestore();
+      await p.dispose();
+    }
+  });
 });

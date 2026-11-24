@@ -1,5 +1,11 @@
 # Program State
 
+## Current checkpoint — Change 312-autosave-flush-and-dispose-concurrency-integrity VERIFIED (7/7)
+
+Change 312 remediates persistence concurrency and teardown integrity defects: (1) `AutosaveCoordinator.flush()` serializes overlapping flush calls in FIFO order, suppresses periodic `tick()` drains during active flushes, settles external in-flight drains (`queue.outstandingSize > 0`), and joins the queue mutex before returning; (2) `GamePersistence.dispose()` and `GamePersistence.flush()` settle all tracked `rawWrites` via bounded `settleRawWrites()` before closing repositories or reporting completion. All 13 verify:all gates (`5912` unit tests, coverage `91.96 / 88.68 / 95.19 / 93.22`, `145` Playwright browser tests incl. `committed=151 failed=0` across 4 churn runs) and isolated multiplayer performance (`791.8` TPS / `1515.5` ms) passed. Zero regressions; C258 remains BLOCKED.
+
+- Next exact action: **Continue the repository-wide audit or activate change 313 when new actionable findings are identified; 258 remains BLOCKED.**
+
 ## Current checkpoint — Change 311-container-screen-and-block-entity-component-lifecycle VERIFIED (7/7)
 
 Change 311 remediates item component data loss, corruption, and slot hygiene violations across container screens and block entities: (1) `MenuTransaction.validateSlot` and `validateCursor` reject empty slots/cursors carrying `components`; (2) `InventoryScreenParity.dragEnd` preserves `cursor.components` when placing into empty slots, respects `menuComponentsEqual` on occupied slots, and retains `components` on the remaining cursor; (3) `InventoryScreenParity.doubleClickGather` filters by `menuComponentsEqual`, preserves `components` on the cursor, and deletes `components` on depleted slots; (4) `InventoryScreenParity.sameSlot` and `sameMenu` incorporate `menuComponentsEqual`; (5) `BrewingStandBlockEntity.validateSlot` rejects empty slots with components, and `consumeOne` deletes components upon count reaching 0; (6) `LiveBlockEntityHost.brewingStateEquals` and `furnaceStateEquals` verify `menuComponentsEqual` on every slot. All 13 verify:all gates (5907 unit tests, coverage, 145 browser tests) and isolated multiplayer performance (758.2 TPS / 1582.8 ms) passed. Evidence published at `6570d4a57daf0e106fdd0f78320e608a601f3901` and verified on remote `main`. Zero regressions; C258 remains BLOCKED.
@@ -528,17 +534,17 @@ Session start `350b557a090b01c2d5d5574fb7ae9aa1e6fc52c3` matches live `origin/ma
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **311-container-screen-and-block-entity-component-lifecycle — VERIFIED (7/7); 258 BLOCKED, 259–311 VERIFIED**
-- Prior active implementation change: **310-container-and-transfer-component-integrity — VERIFIED (7/7); 258 stays BLOCKED, 259–310 stay VERIFIED**
-- Prior prior active implementation change: **309-resource-leak-and-storage-boundedness-remediation — VERIFIED (7/7); 258 stays BLOCKED, 259–309 stay VERIFIED**
-- Next change: **312 — pending 312; 258 stays BLOCKED**
+- Active implementation change: **312-autosave-flush-and-dispose-concurrency-integrity — VERIFIED (7/7); 258 BLOCKED, 259–312 VERIFIED**
+- Prior active implementation change: **311-container-screen-and-block-entity-component-lifecycle — VERIFIED (7/7); 258 stays BLOCKED, 259–311 stay VERIFIED**
+- Prior prior active implementation change: **310-container-and-transfer-component-integrity — VERIFIED (7/7); 258 stays BLOCKED, 259–310 stay VERIFIED**
+- Next change: **313 — pending 313; 258 stays BLOCKED**
 - 240 advancement allowed: **yes**
 
-- Program: **ACTIVE — Change 311-container-screen-and-block-entity-component-lifecycle VERIFIED 7/7 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–311 VERIFIED**
+- Program: **ACTIVE — Change 312-autosave-flush-and-dispose-concurrency-integrity VERIFIED 7/7 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–312 VERIFIED**
 - 284 checkpoint: **VERIFIED 12/12 — implementation + gates complete; enchanting flake + visual SwiftShader drift documented non-blocking; 258 BLOCKED; 285 not started**
-- Last completed change: **311-container-screen-and-block-entity-component-lifecycle — VERIFIED (7/7); 258 BLOCKED**
-- Current active change: **311-container-screen-and-block-entity-component-lifecycle — VERIFIED (7/7); 258 BLOCKED**
-- Prior last completed change: **310-container-and-transfer-component-integrity — VERIFIED (7/7); 258 BLOCKED**
+- Last completed change: **312-autosave-flush-and-dispose-concurrency-integrity — VERIFIED (7/7); 258 BLOCKED**
+- Current active change: **312-autosave-flush-and-dispose-concurrency-integrity — VERIFIED (7/7); 258 BLOCKED**
+- Prior last completed change: **311-container-screen-and-block-entity-component-lifecycle — VERIFIED (7/7); 258 BLOCKED**
 - Prior prior last completed change: **272-lighting-clock-dt-sync — VERIFIED (10/10) — full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85/file-audit 2792); 271 remains VERIFIED (14/14)
 - All changes 001–257 and 259–284: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed; Change 283 is VERIFIED 13/13; Change 284 is VERIFIED 12/12 (this session).
 - Historical Change 250-era bullets (preserved; superseded **for current release authority** by `openspec/evidence/release-readiness-post-hardening.md`): 250 required-test gate PASS at head `502d021` / byte-identical tree `b56529e`; historical release-readiness READY RC-1..RC-9 (`openspec/evidence/release-readiness.md`); final parity audit PASS with DL dispositions later rejected by this interlock (`openspec/evidence/parity/final-parity-audit.md`); evidence archive complete (`openspec/evidence/`)

@@ -1280,11 +1280,10 @@ export class GamePersistence implements WorldEditDurability {
     this.disposed = true;
     this.stopRecoveryTimer();
     this.coordinator.stop();
-    try {
-      await this.coordinator.flush();
-    } catch {
-      // Best-effort final flush; never throws out of dispose.
-    }
+    await Promise.allSettled([
+      this.coordinator.flush(),
+      this.settleRawWrites(),
+    ]);
     for (const repo of [
       this.metadata,
       this.chunkSections,
@@ -1482,7 +1481,29 @@ export class GamePersistence implements WorldEditDurability {
    */
   async flush(): Promise<GamePersistenceFlushResult> {
     const seqBefore = this.monitoredSink.checks;
-    const committed = await this.coordinator.flush();
+    let committed = 0;
+    for (let pass = 0; pass < 4; pass++) {
+      let batchCommitted: number;
+      let failedAfterCoordinator: number;
+      if (this.rawWrites.size > 0) {
+        const [[flushed, remaining]] = await Promise.all([
+          this.coordinator.flush().then((n) => [n, this.queue.outstandingSize] as const),
+          this.settleRawWrites(),
+        ]);
+        batchCommitted = flushed;
+        failedAfterCoordinator = remaining;
+      } else {
+        batchCommitted = await this.coordinator.flush();
+        failedAfterCoordinator = this.queue.outstandingSize;
+      }
+      committed += batchCommitted;
+      if (failedAfterCoordinator > 0) {
+        break;
+      }
+      if (this.queue.outstandingSize === 0 && this.rawWrites.size === 0) {
+        break;
+      }
+    }
     const failed = this.queue.outstandingSize;
     this.prunePendingEdits();
 
@@ -1744,6 +1765,13 @@ export class GamePersistence implements WorldEditDurability {
     this.errors.push(message);
     if (this.errors.length > MAX_RECORDED_ERRORS) {
       this.errors.splice(0, this.errors.length - MAX_RECORDED_ERRORS);
+    }
+  }
+
+  /** Settle all tracked in-flight and chained raw metadata writes (bounded). */
+  private async settleRawWrites(): Promise<void> {
+    for (let pass = 0; pass < 16 && this.rawWrites.size > 0; pass++) {
+      await Promise.all([...this.rawWrites.keys()]);
     }
   }
 

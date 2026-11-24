@@ -79,6 +79,8 @@ export class AutosaveCoordinator {
   private readonly onUnitsCommitted?: (keys: readonly string[]) => void;
   private intervalId: unknown | null = null;
   private started = false;
+  private flushingDepth = 0;
+  private flushTail: Promise<unknown> = Promise.resolve();
   private readonly onFlush = (): void => {
     void this.flush().catch(() => undefined);
   };
@@ -130,7 +132,7 @@ export class AutosaveCoordinator {
 
   /** Drain one bounded batch. Returns the number of units written. */
   async tick(): Promise<number> {
-    if (this.queue.size === 0) return 0;
+    if (this.flushingDepth > 0 || this.queue.size === 0) return 0;
     const result = await this.queue.drainReport(this.sink, this.limitPerTick);
     if (result.written > 0 && this.onUnitsCommitted && result.committedKeys.length > 0) {
       try {
@@ -143,30 +145,60 @@ export class AutosaveCoordinator {
   }
 
   /**
-   * Best-effort drain-to-empty with a zero-progress guard and a hard round cap. Returns the number
-   * of units written; units beyond the cap remain queued for the next tick/flush.
+   * Best-effort drain-to-empty with a zero-progress guard and a hard round cap. Overlapping calls
+   * serialize sequentially in FIFO order so concurrent flush paths never interleave batches or
+   * resolve prematurely with in-flight writes. Returns the number of units written; units beyond
+   * the cap remain queued for the next tick/flush.
    */
-  async flush(): Promise<number> {
-    // A drain removes its current unit from pending while its write is in flight.
-    // Join earlier drains before interpreting an empty queue as a completed flush.
-    await this.queue.runExclusive(async () => undefined);
-    let total = 0;
-    let zeroProgressRuns = 0;
-    let rounds = 0;
-    while (this.queue.size > 0 && zeroProgressRuns < FLUSH_ZERO_PROGRESS_LIMIT && rounds < FLUSH_MAX_ROUNDS) {
-      const result = await this.queue.drainReport(this.sink, this.limitPerTick);
-      total += result.written;
-      rounds++;
-      zeroProgressRuns = result.written === 0 ? zeroProgressRuns + 1 : 0;
-      if (result.written > 0 && this.onUnitsCommitted && result.committedKeys.length > 0) {
-        try {
-          this.onUnitsCommitted(result.committedKeys);
-        } catch {
-          // Bookkeeping callbacks must never break the save loop.
+  flush(): Promise<number> {
+    const run = this.flushTail.then(
+      () => this.flushExclusive(),
+      () => this.flushExclusive(),
+    );
+    this.flushTail = run.then(() => undefined, () => undefined);
+    return run;
+  }
+
+  private async flushExclusive(): Promise<number> {
+    this.flushingDepth++;
+    try {
+      // A drain removes its current unit from pending while its write is in flight.
+      // Join earlier drains before interpreting an empty queue as a completed flush.
+      await this.queue.runExclusive(async () => undefined);
+      let total = 0;
+      let zeroProgressRuns = 0;
+      let rounds = 0;
+      let settleWaits = 0;
+      while (
+        (this.queue.size > 0 || this.queue.outstandingSize > 0) &&
+        zeroProgressRuns < FLUSH_ZERO_PROGRESS_LIMIT &&
+        rounds < FLUSH_MAX_ROUNDS &&
+        settleWaits < FLUSH_MAX_ROUNDS
+      ) {
+        if (this.queue.size === 0) {
+          // An external queue.drainReport started between rounds holds the only unit in flight.
+          settleWaits++;
+          await this.queue.runExclusive(async () => undefined);
+          continue;
+        }
+        const result = await this.queue.drainReport(this.sink, this.limitPerTick);
+        total += result.written;
+        rounds++;
+        zeroProgressRuns = result.written === 0 ? zeroProgressRuns + 1 : 0;
+        if (result.written > 0 && this.onUnitsCommitted && result.committedKeys.length > 0) {
+          try {
+            this.onUnitsCommitted(result.committedKeys);
+          } catch {
+            // Bookkeeping callbacks must never break the save loop.
+          }
         }
       }
+      // Settle any concurrent/external drain that acquired the mutex before returning.
+      await this.queue.runExclusive(async () => undefined);
+      return total;
+    } finally {
+      this.flushingDepth--;
     }
-    return total;
   }
 
   /** Number of distinct dirty units awaiting durable completion, including in-flight writes. */

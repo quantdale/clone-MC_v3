@@ -1,5 +1,20 @@
 # Change Sequence Overrides
 
+## 312 activation — autosave flush and dispose concurrency integrity (2026-11-25)
+
+Following VERIFIED change 311, browser verification (`tests/e2e/persistence.spec.ts`) and storage
+subagent/manual audit uncovered two persistence concurrency and teardown integrity defects:
+(1) `AutosaveCoordinator.flush()` does not suppress concurrent periodic `tick()` calls or serialize
+overlapping `flush()` invocations and terminates on `queue.size === 0` rather than `queue.outstandingSize === 0`,
+causing premature returns while an interleaved drain still holds a unit in flight (leaving `failed: 1`
+in `GamePersistence.flush()`, under-reporting committed count, and skipping retries on failure);
+(2) `GamePersistence.dispose()` and `GamePersistence.flush()` omit settlement of `this.rawWrites`
+(the 14 raw metadata save subsystems), allowing `dispose()` to close `this.metadata` while queued raw writes
+are still pending or chained (`WorldMetadataRepository: database not open`).
+`312-autosave-flush-and-dispose-concurrency-integrity` is the sole ACTIVE change, with spec-first artifacts
+and failing-first tests required. Starting head `98df628ec9adf7a839d94f484203d8e66f2570a9`. Change 258
+remains BLOCKED under its owner deferral; no headed GPU evidence is claimed.
+
 ## 311 activation — container screen and block entity component lifecycle (2026-11-24)
 
 Following VERIFIED change 310, the repository-wide audit uncovered component data loss, corruption,

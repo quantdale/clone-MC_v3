@@ -10,7 +10,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 3118,
+  "total": 3123,
   "rows": [
     {
       "path": ".agent/EXECUTION_PROMPT.md",
@@ -26905,6 +26905,46 @@
       "path": "openspec/changes/311-container-screen-and-block-entity-component-lifecycle/verification.md",
       "category": "spec",
       "purpose": "Change 311 verification evidence",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Baseline verification initialized; full gate pending implementation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/312-autosave-flush-and-dispose-concurrency-integrity/design.md",
+      "category": "spec",
+      "purpose": "Change 312 design for autosave flush and dispose concurrency integrity",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed tick suppression, flush serialization, outstandingSize waiting, and rawWrites teardown settlement; implementation pending.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/312-autosave-flush-and-dispose-concurrency-integrity/proposal.md",
+      "category": "spec",
+      "purpose": "Change 312 proposal for autosave flush and dispose concurrency integrity",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed reproduced concurrent tick/flush race and rawWrites teardown risk; implementation pending.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/312-autosave-flush-and-dispose-concurrency-integrity/specs/autosave-flush-concurrency/spec.md",
+      "category": "spec",
+      "purpose": "Change 312 normative autosave flush and rawWrites settlement requirements",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed REQ-AFD-1 through REQ-AFD-4 scenarios; verification pending.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/312-autosave-flush-and-dispose-concurrency-integrity/tasks.md",
+      "category": "spec",
+      "purpose": "Change 312 task checkpoint",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed task status against spec package; implementation pending.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/312-autosave-flush-and-dispose-concurrency-integrity/verification.md",
+      "category": "spec",
+      "purpose": "Change 312 verification evidence",
       "reviewLevel": "semantic",
       "reviewNotes": "Baseline verification initialized; full gate pending implementation.",
       "status": "audited"
