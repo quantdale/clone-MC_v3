@@ -15,10 +15,10 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "d2daeadb4808c981dff2ba2adc0e01cd239110de",
-  "localHead": "a07a745d31f60e5d3b0456290310d6094a4af0f1",
-  "publishedHead": "a07a745d31f60e5d3b0456290310d6094a4af0f1",
+  "localHead": "697262f664dfdb80f2d48083884df002d08316df",
+  "publishedHead": "697262f664dfdb80f2d48083884df002d08316df",
   "nextExactAction": "Continue the repository-wide audit with failing-first tests; author and validate the next change package before implementation. 258 remains BLOCKED.",
-  "lastCompletedTask": "310 T7: reviewed requirement evidence and verified full gates; parity C310 reconciled. All 13 verify:all gates (dependency-tree, program-state, typecheck, lint, build, release-bundle, file-audit 3113, unreferenced-source, addon-preflight, visual-goldens, unit 5894 passed, coverage, browser 145 passed) and isolated multiplayer performance (785.9 TPS / 1526.8 ms) passed.",
+  "lastCompletedTask": "310 T7: reviewed requirement evidence and published checkpoint 697262f664dfdb80f2d48083884df002d08316df; parity C310 reconciled. All 13 verify:all gates (dependency-tree, program-state, typecheck, lint, build, release-bundle, file-audit 3113, unreferenced-source, addon-preflight, visual-goldens, unit 5894 passed, coverage, browser 145 passed) and isolated multiplayer performance (785.9 TPS / 1526.8 ms) passed.",
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-297 are VERIFIED; game shippable with known performance-certification debt. The 297 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
@@ -28,7 +28,7 @@
       "status": "VERIFIED",
       "unitTests": 5894,
       "e2eTests": 145,
-      "head": "a07a745d31f60e5d3b0456290310d6094a4af0f1",
+      "head": "697262f664dfdb80f2d48083884df002d08316df",
       "note": "All 13 verify:all gates and isolated multiplayer performance passed. Remediated item component data loss and corruption across container block-entity serialization (ChestBlockEntity, DoubleChest, FurnaceBlockEntity, SmokerBlockEntity) and automated transfers (HopperTransfer, DropperEject, DispenserBehavior), enforced strict slot hygiene forbidding components on empty slots, enabled component-aware destination matching with menuComponentsEqual, and preserved components on dropped world items. Zero regressions across 5894 unit tests, 145 browser tests, and canonical multiplayer performance."
     },
     {
