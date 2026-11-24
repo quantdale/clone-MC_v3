@@ -10,34 +10,8 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 3108,
+  "total": 3118,
   "rows": [
-    {"path":"tests/unit/GameLifecycleTeardown.test.ts","category":"test","purpose":"Change 309 unit tests for Wither skull presentation reuse and Game teardown","reviewLevel":"semantic","reviewNotes":"Reviewed failing-first and passing tests for R2 and R3.","status":"audited"},
-    {"path":"openspec/changes/310-container-and-transfer-component-integrity/proposal.md","category":"spec","purpose":"Change 310 proposal for container and transfer component integrity","reviewLevel":"semantic","reviewNotes":"Reviewed component loss across containers and transfers; implementation pending.","status":"audited"},
-    {"path":"openspec/changes/310-container-and-transfer-component-integrity/design.md","category":"spec","purpose":"Change 310 design for container and transfer component preservation","reviewLevel":"semantic","reviewNotes":"Reviewed slot validation and transfer merge rules; implementation pending.","status":"audited"},
-    {"path":"openspec/changes/310-container-and-transfer-component-integrity/specs/component-integrity/spec.md","category":"spec","purpose":"Change 310 normative component preservation and slot hygiene requirements","reviewLevel":"semantic","reviewNotes":"Reviewed container round-trip and transfer scenarios; verification pending.","status":"audited"},
-    {"path":"openspec/changes/310-container-and-transfer-component-integrity/tasks.md","category":"spec","purpose":"Change 310 task checkpoint","reviewLevel":"semantic","reviewNotes":"Reviewed task status against spec package; implementation pending.","status":"audited"},
-    {"path":"openspec/changes/310-container-and-transfer-component-integrity/verification.md","category":"spec","purpose":"Change 310 verification evidence","reviewLevel":"semantic","reviewNotes":"Baseline verification initialized; full gate pending implementation.","status":"audited"},
-    {"path":"openspec/changes/309-resource-leak-and-storage-boundedness-remediation/proposal.md","category":"spec","purpose":"Change 309 proposal for resource leak and storage boundedness remediation","reviewLevel":"semantic","reviewNotes":"Reviewed against actual queue epoch retention and Three.js/dispose leaks; implementation pending.","status":"audited"},
-    {"path":"openspec/changes/309-resource-leak-and-storage-boundedness-remediation/design.md","category":"spec","purpose":"Change 309 design for resource teardown and queue epoch boundedness","reviewLevel":"semantic","reviewNotes":"Reviewed target lifecycle and failure scenarios; implementation pending.","status":"audited"},
-    {"path":"openspec/changes/309-resource-leak-and-storage-boundedness-remediation/specs/resource-lifecycle/spec.md","category":"spec","purpose":"Change 309 normative resource lifecycle and boundedness requirements","reviewLevel":"semantic","reviewNotes":"Reviewed epoch boundedness, skull reuse, and teardown scenarios; verification pending.","status":"audited"},
-    {"path":"openspec/changes/309-resource-leak-and-storage-boundedness-remediation/tasks.md","category":"spec","purpose":"Change 309 task checkpoint","reviewLevel":"semantic","reviewNotes":"Reviewed task status against spec package; implementation pending.","status":"audited"},
-    {"path":"openspec/changes/309-resource-leak-and-storage-boundedness-remediation/verification.md","category":"spec","purpose":"Change 309 verification evidence","reviewLevel":"semantic","reviewNotes":"Baseline verification initialized; full gate pending implementation.","status":"audited"},
-    {"path":"openspec/changes/308-reset-save-integrity/proposal.md","category":"spec","purpose":"Change 308 proposal and reproduced reset/queue integrity failures","reviewLevel":"semantic","reviewNotes":"Reviewed against actual failed reset and queue probes; implementation pending.","status":"audited"},
-    {"path":"openspec/changes/308-reset-save-integrity/design.md","category":"spec","purpose":"Change 308 reset synchronization design","reviewLevel":"semantic","reviewNotes":"Reviewed target lifecycle and failure scenarios; implementation pending.","status":"audited"},
-    {"path":"openspec/changes/308-reset-save-integrity/specs/reset-save-integrity/spec.md","category":"spec","purpose":"Change 308 normative reset durability requirements","reviewLevel":"semantic","reviewNotes":"Reviewed failure, cancellation and concurrency scenarios; verification pending.","status":"audited"},
-    {"path":"openspec/changes/308-reset-save-integrity/tasks.md","category":"spec","purpose":"Change 308 task checkpoint","reviewLevel":"semantic","reviewNotes":"Reviewed against actual reproduced failures; full implementation and gate remain open.","status":"audited"},
-    {"path":"openspec/changes/308-reset-save-integrity/verification.md","category":"spec","purpose":"Change 308 measured evidence","reviewLevel":"semantic","reviewNotes":"Reviewed failing-first test and queue probes; no fix or full gate claimed.","status":"audited"},
-    {"path":"openspec/changes/307-parity-validator-completeness/proposal.md","category":"spec","purpose":"Change 307 proposal and reproduced parity validator defects","reviewLevel":"semantic","reviewNotes":"Reviewed 307 proposal against the reproduced false passes and verified full-gate evidence.","status":"audited"},
-    {"path":"openspec/changes/307-parity-validator-completeness/design.md","category":"spec","purpose":"Change 307 parity validator design","reviewLevel":"semantic","reviewNotes":"Reviewed 307 design against completed implementation and optional synthetic-matrix tests.","status":"audited"},
-    {"path":"openspec/changes/307-parity-validator-completeness/specs/parity-state-validation/spec.md","category":"spec","purpose":"Change 307 normative parity validation requirements","reviewLevel":"semantic","reviewNotes":"Reviewed 307 requirement scenarios against passing focused and full-gate evidence.","status":"audited"},
-    {"path":"openspec/changes/307-parity-validator-completeness/tasks.md","category":"spec","purpose":"Change 307 task checkpoint","reviewLevel":"semantic","reviewNotes":"Reviewed 307 task status against completed focused and full-gate evidence.","status":"audited"},
-    {"path":"openspec/changes/307-parity-validator-completeness/verification.md","category":"spec","purpose":"Change 307 measured evidence","reviewLevel":"semantic","reviewNotes":"Reviewed 307 failing-first evidence and final passing gate.","status":"audited"},
-    {"path":"openspec/changes/306-unreferenced-source-gate-correctness/proposal.md","category":"spec","purpose":"Change 306 proposal and reproduced guard defect","reviewLevel":"semantic","reviewNotes":"Reviewed the proposal against reproduced false passes and published 306 verification evidence.","status":"audited"},
-    {"path":"openspec/changes/306-unreferenced-source-gate-correctness/design.md","category":"spec","purpose":"Change 306 syntax-aware guard design","reviewLevel":"semantic","reviewNotes":"Reviewed the AST approach and stated direct-importer limits against the implementation.","status":"audited"},
-    {"path":"openspec/changes/306-unreferenced-source-gate-correctness/specs/unreferenced-source-gate/spec.md","category":"spec","purpose":"Change 306 normative guard requirements","reviewLevel":"semantic","reviewNotes":"Reviewed scenarios against 306 final full-gate and focused evidence.","status":"audited"},
-    {"path":"openspec/changes/306-unreferenced-source-gate-correctness/tasks.md","category":"spec","purpose":"Change 306 task checkpoint","reviewLevel":"semantic","reviewNotes":"Reviewed all completed 306 tasks against focused and full-gate evidence.","status":"audited"},
-    {"path":"openspec/changes/306-unreferenced-source-gate-correctness/verification.md","category":"spec","purpose":"Change 306 measured verification evidence","reviewLevel":"semantic","reviewNotes":"Reviewed recorded baseline, failing-first fixtures and final passing full gate.","status":"audited"},
     {
       "path": ".agent/EXECUTION_PROMPT.md",
       "gitBlob": null,
@@ -823,134 +797,6 @@
       "status": "audited"
     },
     {
-      "path": "FULL_AUDIT_REPORT.md",
-      "gitBlob": null,
-      "category": "docs",
-      "purpose": "257 repair coverage for FULL_AUDIT_REPORT.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "MASTER_PLAN.md",
-      "gitBlob": null,
-      "category": "docs",
-      "purpose": "298/audit coverage for MASTER_PLAN.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "3031-row audit campaign plan (findings F-001..F-008); reviewed as documentation only, no product effect.",
-      "status": "audited"
-    },
-    {
-      "path": "MINECRAFT_PARITY_MASTER_PLAN.md",
-      "gitBlob": null,
-      "category": "docs",
-      "purpose": "257 repair coverage for MINECRAFT_PARITY_MASTER_PLAN.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "NEXT_CAMPAIGN.md",
-      "gitBlob": null,
-      "category": "docs",
-      "purpose": "257 repair coverage for NEXT_CAMPAIGN.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "ONBOARDING.md",
-      "gitBlob": null,
-      "category": "docs",
-      "purpose": "257 repair coverage for ONBOARDING.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings | reviewed for 305: gate 8 now documents the enforced allow-list/exit-1 behaviour and the coverage-provider clause names the locked 4.1.12 provider | reviewed for 305: gate 8 now documents the enforced allow-list/exit-1 behaviour and the coverage-provider clause names the locked 4.1.12 provider",
-      "status": "audited"
-    },
-    {
-      "path": "PARITY_MATRIX.md",
-      "gitBlob": null,
-      "category": "docs",
-      "purpose": "257 repair coverage for PARITY_MATRIX.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings | reviewed for 305: C298-C304 rows added, summary counts and coverage statement updated to 001-304, C256 evidence re-pointed at the archived package, C258 stays deferred | reviewed for 305: C298-C304 rows added, summary counts and coverage statement updated to 001-304, C256 evidence re-pointed at the archived package, C258 stays deferred",
-      "status": "audited"
-    },
-    {
-      "path": "PERFORMANCE_OPTIMIZATION_MASTER_PLAN.md",
-      "gitBlob": null,
-      "category": "docs",
-      "purpose": "257 repair coverage for PERFORMANCE_OPTIMIZATION_MASTER_PLAN.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "README.md",
-      "gitBlob": null,
-      "category": "docs",
-      "purpose": "257 repair coverage for README.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
       "path": "docs/258-headed-resume.md",
       "gitBlob": null,
       "category": "docs",
@@ -1002,7 +848,7 @@
       "path": "docs/audit-1-277-findings.md",
       "gitBlob": null,
       "category": "docs",
-      "purpose": "Durable audit ledger for Changes 1\u2013277, including remediation status and the Change-258 external blocker",
+      "purpose": "Durable audit ledger for Changes 1–277, including remediation status and the Change-258 external blocker",
       "reviewLevel": "semantic",
       "runtimeReachability": "documentation-only",
       "imports": [],
@@ -1226,6 +1072,22 @@
       "status": "audited"
     },
     {
+      "path": "FULL_AUDIT_REPORT.md",
+      "gitBlob": null,
+      "category": "docs",
+      "purpose": "257 repair coverage for FULL_AUDIT_REPORT.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
       "path": "index.html",
       "gitBlob": null,
       "category": "config",
@@ -1242,10 +1104,26 @@
       "status": "audited"
     },
     {
-      "path": "openspec/AUTONOMOUS_GOAL.md",
+      "path": "MASTER_PLAN.md",
       "gitBlob": null,
-      "category": "spec",
-      "purpose": "257 repair coverage for openspec/AUTONOMOUS_GOAL.md",
+      "category": "docs",
+      "purpose": "298/audit coverage for MASTER_PLAN.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "3031-row audit campaign plan (findings F-001..F-008); reviewed as documentation only, no product effect.",
+      "status": "audited"
+    },
+    {
+      "path": "MINECRAFT_PARITY_MASTER_PLAN.md",
+      "gitBlob": null,
+      "category": "docs",
+      "purpose": "257 repair coverage for MINECRAFT_PARITY_MASTER_PLAN.md",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -1258,10 +1136,42 @@
       "status": "audited"
     },
     {
-      "path": "openspec/CHANGE_SEQUENCE.md",
+      "path": "NEXT_CAMPAIGN.md",
+      "gitBlob": null,
+      "category": "docs",
+      "purpose": "257 repair coverage for NEXT_CAMPAIGN.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "ONBOARDING.md",
+      "gitBlob": null,
+      "category": "docs",
+      "purpose": "257 repair coverage for ONBOARDING.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | reviewed for 305: gate 8 now documents the enforced allow-list/exit-1 behaviour and the coverage-provider clause names the locked 4.1.12 provider | reviewed for 305: gate 8 now documents the enforced allow-list/exit-1 behaviour and the coverage-provider clause names the locked 4.1.12 provider",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/AUTONOMOUS_GOAL.md",
       "gitBlob": null,
       "category": "spec",
-      "purpose": "257 repair coverage for openspec/CHANGE_SEQUENCE.md",
+      "purpose": "257 repair coverage for openspec/AUTONOMOUS_GOAL.md",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -1290,58 +1200,10 @@
       "status": "audited"
     },
     {
-      "path": "openspec/PROGRAM_STATE.json",
-      "gitBlob": "ccd6e1e37eb1f7b35ced2217939e19fdffa68ed2",
-      "category": "spec",
-      "purpose": "257 repair coverage for openspec/PROGRAM_STATE.json",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/PROGRAM_STATE.md",
+      "path": "openspec/CHANGE_SEQUENCE.md",
       "gitBlob": null,
       "category": "spec",
-      "purpose": "257 repair coverage for openspec/PROGRAM_STATE.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/REVIEW_HANDOFF.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "257 repair coverage for openspec/REVIEW_HANDOFF.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/SPEC_AUTHORING_PROTOCOL.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "257 repair coverage for openspec/SPEC_AUTHORING_PROTOCOL.md",
+      "purpose": "257 repair coverage for openspec/CHANGE_SEQUENCE.md",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -24455,22 +24317,6 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/283-live-raid-persistence/OVERRIDE_DRAFT.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "283 control-plane override draft addendum (activation snippet)",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 283 change; no findings",
-      "status": "audited"
-    },
-    {
       "path": "openspec/changes/283-live-raid-persistence/design.md",
       "gitBlob": null,
       "category": "spec",
@@ -24483,6 +24329,22 @@
       "riskAreas": [
         "gameplay"
       ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 283 change; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/283-live-raid-persistence/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "283 control-plane override draft addendum (activation snippet)",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 283 change; no findings",
@@ -24560,10 +24422,10 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/284-live-raid-wave-spawning/OVERRIDE_DRAFT.md",
+      "path": "openspec/changes/284-live-raid-wave-spawning/design.md",
       "gitBlob": null,
       "category": "spec",
-      "purpose": "284 control-plane override draft (superseded by live CHANGE_SEQUENCE_OVERRIDES activation section)",
+      "purpose": "284 design: pure plan, injectable backend, Game wave controller, failure modes",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -24578,10 +24440,10 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/284-live-raid-wave-spawning/design.md",
+      "path": "openspec/changes/284-live-raid-wave-spawning/OVERRIDE_DRAFT.md",
       "gitBlob": null,
       "category": "spec",
-      "purpose": "284 design: pure plan, injectable backend, Game wave controller, failure modes",
+      "purpose": "284 control-plane override draft (superseded by live CHANGE_SEQUENCE_OVERRIDES activation section)",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -24668,25 +24530,6 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/285-live-bad-omen-acquisition/OVERRIDE_DRAFT.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "285 draft override addendum for control-plane activation",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "simulation",
-        "raid"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 285 implementation; no findings",
-      "status": "audited"
-    },
-    {
       "path": "openspec/changes/285-live-bad-omen-acquisition/design.md",
       "gitBlob": null,
       "category": "spec",
@@ -24703,6 +24546,25 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 285 implementation; no findings; 294 superseded annotation (ACTIVE village raid escalates instead of replacement)",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/285-live-bad-omen-acquisition/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "285 draft override addendum for control-plane activation",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "simulation",
+        "raid"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 285 implementation; no findings",
       "status": "audited"
     },
     {
@@ -24782,10 +24644,10 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/286-live-raid-bar-parity/OVERRIDE_DRAFT.md",
+      "path": "openspec/changes/286-live-raid-bar-parity/design.md",
       "gitBlob": null,
       "category": "spec",
-      "purpose": "286 draft override addendum (applied at T1)",
+      "purpose": "286 design for live raid bar parity",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -24801,10 +24663,10 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/286-live-raid-bar-parity/design.md",
+      "path": "openspec/changes/286-live-raid-bar-parity/OVERRIDE_DRAFT.md",
       "gitBlob": null,
       "category": "spec",
-      "purpose": "286 design for live raid bar parity",
+      "purpose": "286 draft override addendum (applied at T1)",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -24896,10 +24758,10 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/287-live-village-detection/OVERRIDE_DRAFT.md",
+      "path": "openspec/changes/287-live-village-detection/design.md",
       "gitBlob": null,
       "category": "spec",
-      "purpose": "287 draft override addendum (applied at T1)",
+      "purpose": "287 design for live village detection",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -24915,10 +24777,10 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/287-live-village-detection/design.md",
+      "path": "openspec/changes/287-live-village-detection/OVERRIDE_DRAFT.md",
       "gitBlob": null,
       "category": "spec",
-      "purpose": "287 design for live village detection",
+      "purpose": "287 draft override addendum (applied at T1)",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -25010,25 +24872,6 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/288-raider-combat-behavior/OVERRIDE_DRAFT.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "288 draft override addendum (applied at T1)",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "combat"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 288 implementation; no findings",
-      "status": "audited"
-    },
-    {
       "path": "openspec/changes/288-raider-combat-behavior/design.md",
       "gitBlob": null,
       "category": "spec",
@@ -25045,6 +24888,25 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 288 implementation; no findings; 295 superseded banner + retired fallback rationale",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/288-raider-combat-behavior/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "288 draft override addendum (applied at T1)",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "combat"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 288 implementation; no findings",
       "status": "audited"
     },
     {
@@ -25124,10 +24986,10 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/289-enchantment-persistence-reload-integrity/OVERRIDE_DRAFT.md",
+      "path": "openspec/changes/289-enchantment-persistence-reload-integrity/design.md",
       "gitBlob": null,
       "category": "spec",
-      "purpose": "289 OpenSpec artifact OVERRIDE_DRAFT.md",
+      "purpose": "289 OpenSpec artifact design.md",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -25143,10 +25005,10 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/289-enchantment-persistence-reload-integrity/design.md",
+      "path": "openspec/changes/289-enchantment-persistence-reload-integrity/OVERRIDE_DRAFT.md",
       "gitBlob": null,
       "category": "spec",
-      "purpose": "289 OpenSpec artifact design.md",
+      "purpose": "289 OpenSpec artifact OVERRIDE_DRAFT.md",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -25238,10 +25100,10 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/290-hero-of-the-village-reward/OVERRIDE_DRAFT.md",
+      "path": "openspec/changes/290-hero-of-the-village-reward/design.md",
       "gitBlob": null,
       "category": "spec",
-      "purpose": "290 OpenSpec artifact OVERRIDE_DRAFT.md",
+      "purpose": "290 OpenSpec artifact design.md",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -25257,10 +25119,10 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/290-hero-of-the-village-reward/design.md",
+      "path": "openspec/changes/290-hero-of-the-village-reward/OVERRIDE_DRAFT.md",
       "gitBlob": null,
       "category": "spec",
-      "purpose": "290 OpenSpec artifact design.md",
+      "purpose": "290 OpenSpec artifact OVERRIDE_DRAFT.md",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -25353,25 +25215,6 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/291-pillager-patrol-bad-omen/OVERRIDE_DRAFT.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "291 OpenSpec artifact OVERRIDE_DRAFT.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "spawning"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
-      "status": "audited"
-    },
-    {
       "path": "openspec/changes/291-pillager-patrol-bad-omen/design.md",
       "gitBlob": null,
       "category": "spec",
@@ -25388,6 +25231,25 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings; 294 annotation (escalation also dismisses patrols)",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/291-pillager-patrol-bad-omen/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "291 OpenSpec artifact OVERRIDE_DRAFT.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "spawning"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 291 pillager-patrol-bad-omen; no findings",
       "status": "audited"
     },
     {
@@ -25468,25 +25330,6 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/292-player-status-effect-persistence/OVERRIDE_DRAFT.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "292 OpenSpec artifact OVERRIDE_DRAFT.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "persistence",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
-      "status": "audited"
-    },
-    {
       "path": "openspec/changes/292-player-status-effect-persistence/design.md",
       "gitBlob": null,
       "category": "spec",
@@ -25503,6 +25346,25 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings; 294 resolved annotations (restored omen escalates ACTIVE raid; death clears Bad Omen)",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/292-player-status-effect-persistence/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "292 OpenSpec artifact OVERRIDE_DRAFT.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "persistence",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 292 player-status-effect-persistence; no findings",
       "status": "audited"
     },
     {
@@ -25584,10 +25446,10 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/293-raider-and-patrol-rendering/OVERRIDE_DRAFT.md",
+      "path": "openspec/changes/293-raider-and-patrol-rendering/design.md",
       "gitBlob": null,
       "category": "spec",
-      "purpose": "293 OpenSpec artifact OVERRIDE_DRAFT.md",
+      "purpose": "293 OpenSpec artifact design.md",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -25603,10 +25465,10 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/293-raider-and-patrol-rendering/design.md",
+      "path": "openspec/changes/293-raider-and-patrol-rendering/OVERRIDE_DRAFT.md",
       "gitBlob": null,
       "category": "spec",
-      "purpose": "293 OpenSpec artifact design.md",
+      "purpose": "293 OpenSpec artifact OVERRIDE_DRAFT.md",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -25699,10 +25561,10 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/294-bad-omen-raid-escalation-and-death-parity/OVERRIDE_DRAFT.md",
+      "path": "openspec/changes/294-bad-omen-raid-escalation-and-death-parity/design.md",
       "gitBlob": null,
       "category": "spec",
-      "purpose": "294 OpenSpec artifact OVERRIDE_DRAFT.md",
+      "purpose": "294 OpenSpec artifact design.md",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -25718,10 +25580,10 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/294-bad-omen-raid-escalation-and-death-parity/design.md",
+      "path": "openspec/changes/294-bad-omen-raid-escalation-and-death-parity/OVERRIDE_DRAFT.md",
       "gitBlob": null,
       "category": "spec",
-      "purpose": "294 OpenSpec artifact design.md",
+      "purpose": "294 OpenSpec artifact OVERRIDE_DRAFT.md",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -25814,26 +25676,6 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/295-throwable-splash-potion-entities/OVERRIDE_DRAFT.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "295 OpenSpec artifact OVERRIDE_DRAFT.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "gameplay",
-        "raid",
-        "status-effect"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings",
-      "status": "audited"
-    },
-    {
       "path": "openspec/changes/295-throwable-splash-potion-entities/design.md",
       "gitBlob": null,
       "category": "spec",
@@ -25851,6 +25693,26 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings; re-reviewed for 296 downstream note; re-reviewed for 297 (downstream note: gunpowder + splash brewing landed in 297); no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/295-throwable-splash-potion-entities/OVERRIDE_DRAFT.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "295 OpenSpec artifact OVERRIDE_DRAFT.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "gameplay",
+        "raid",
+        "status-effect"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 295 throwable-splash-potion-entities; no findings",
       "status": "audited"
     },
     {
@@ -25934,10 +25796,10 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/296-periodic-status-effect-ticks/OVERRIDE_DRAFT.md",
+      "path": "openspec/changes/296-periodic-status-effect-ticks/design.md",
       "gitBlob": null,
       "category": "spec",
-      "purpose": "296 OpenSpec artifact OVERRIDE_DRAFT.md",
+      "purpose": "296 OpenSpec artifact design.md",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -25953,10 +25815,10 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/296-periodic-status-effect-ticks/design.md",
+      "path": "openspec/changes/296-periodic-status-effect-ticks/OVERRIDE_DRAFT.md",
       "gitBlob": null,
       "category": "spec",
-      "purpose": "296 OpenSpec artifact design.md",
+      "purpose": "296 OpenSpec artifact OVERRIDE_DRAFT.md",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -26048,10 +25910,10 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/297-gunpowder-and-splash-brewing/OVERRIDE_DRAFT.md",
+      "path": "openspec/changes/297-gunpowder-and-splash-brewing/design.md",
       "gitBlob": null,
       "category": "spec",
-      "purpose": "297 OpenSpec artifact OVERRIDE_DRAFT.md",
+      "purpose": "297 OpenSpec artifact design.md",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -26068,10 +25930,10 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/297-gunpowder-and-splash-brewing/design.md",
+      "path": "openspec/changes/297-gunpowder-and-splash-brewing/OVERRIDE_DRAFT.md",
       "gitBlob": null,
       "category": "spec",
-      "purpose": "297 OpenSpec artifact design.md",
+      "purpose": "297 OpenSpec artifact OVERRIDE_DRAFT.md",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -26808,26 +26670,250 @@
       "status": "audited"
     },
     {
+      "path": "openspec/changes/306-unreferenced-source-gate-correctness/design.md",
+      "category": "spec",
+      "purpose": "Change 306 syntax-aware guard design",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed the AST approach and stated direct-importer limits against the implementation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/306-unreferenced-source-gate-correctness/proposal.md",
+      "category": "spec",
+      "purpose": "Change 306 proposal and reproduced guard defect",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed the proposal against reproduced false passes and published 306 verification evidence.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/306-unreferenced-source-gate-correctness/specs/unreferenced-source-gate/spec.md",
+      "category": "spec",
+      "purpose": "Change 306 normative guard requirements",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed scenarios against 306 final full-gate and focused evidence.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/306-unreferenced-source-gate-correctness/tasks.md",
+      "category": "spec",
+      "purpose": "Change 306 task checkpoint",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed all completed 306 tasks against focused and full-gate evidence.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/306-unreferenced-source-gate-correctness/verification.md",
+      "category": "spec",
+      "purpose": "Change 306 measured verification evidence",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed recorded baseline, failing-first fixtures and final passing full gate.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/307-parity-validator-completeness/design.md",
+      "category": "spec",
+      "purpose": "Change 307 parity validator design",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed 307 design against completed implementation and optional synthetic-matrix tests.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/307-parity-validator-completeness/proposal.md",
+      "category": "spec",
+      "purpose": "Change 307 proposal and reproduced parity validator defects",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed 307 proposal against the reproduced false passes and verified full-gate evidence.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/307-parity-validator-completeness/specs/parity-state-validation/spec.md",
+      "category": "spec",
+      "purpose": "Change 307 normative parity validation requirements",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed 307 requirement scenarios against passing focused and full-gate evidence.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/307-parity-validator-completeness/tasks.md",
+      "category": "spec",
+      "purpose": "Change 307 task checkpoint",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed 307 task status against completed focused and full-gate evidence.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/307-parity-validator-completeness/verification.md",
+      "category": "spec",
+      "purpose": "Change 307 measured evidence",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed 307 failing-first evidence and final passing gate.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/308-reset-save-integrity/design.md",
+      "category": "spec",
+      "purpose": "Change 308 reset synchronization design",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed target lifecycle and failure scenarios; implementation pending.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/308-reset-save-integrity/proposal.md",
+      "category": "spec",
+      "purpose": "Change 308 proposal and reproduced reset/queue integrity failures",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed against actual failed reset and queue probes; implementation pending.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/308-reset-save-integrity/specs/reset-save-integrity/spec.md",
+      "category": "spec",
+      "purpose": "Change 308 normative reset durability requirements",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed failure, cancellation and concurrency scenarios; verification pending.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/308-reset-save-integrity/tasks.md",
+      "category": "spec",
+      "purpose": "Change 308 task checkpoint",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed against actual reproduced failures; full implementation and gate remain open.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/308-reset-save-integrity/verification.md",
+      "category": "spec",
+      "purpose": "Change 308 measured evidence",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed failing-first test and queue probes; no fix or full gate claimed.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/309-resource-leak-and-storage-boundedness-remediation/design.md",
+      "category": "spec",
+      "purpose": "Change 309 design for resource teardown and queue epoch boundedness",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed target lifecycle and failure scenarios; implementation pending.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/309-resource-leak-and-storage-boundedness-remediation/proposal.md",
+      "category": "spec",
+      "purpose": "Change 309 proposal for resource leak and storage boundedness remediation",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed against actual queue epoch retention and Three.js/dispose leaks; implementation pending.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/309-resource-leak-and-storage-boundedness-remediation/specs/resource-lifecycle/spec.md",
+      "category": "spec",
+      "purpose": "Change 309 normative resource lifecycle and boundedness requirements",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed epoch boundedness, skull reuse, and teardown scenarios; verification pending.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/309-resource-leak-and-storage-boundedness-remediation/tasks.md",
+      "category": "spec",
+      "purpose": "Change 309 task checkpoint",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed task status against spec package; implementation pending.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/309-resource-leak-and-storage-boundedness-remediation/verification.md",
+      "category": "spec",
+      "purpose": "Change 309 verification evidence",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Baseline verification initialized; full gate pending implementation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/310-container-and-transfer-component-integrity/design.md",
+      "category": "spec",
+      "purpose": "Change 310 design for container and transfer component preservation",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed slot validation and transfer merge rules; implementation pending.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/310-container-and-transfer-component-integrity/proposal.md",
+      "category": "spec",
+      "purpose": "Change 310 proposal for container and transfer component integrity",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed component loss across containers and transfers; implementation pending.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/310-container-and-transfer-component-integrity/specs/component-integrity/spec.md",
+      "category": "spec",
+      "purpose": "Change 310 normative component preservation and slot hygiene requirements",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed container round-trip and transfer scenarios; verification pending.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/310-container-and-transfer-component-integrity/tasks.md",
+      "category": "spec",
+      "purpose": "Change 310 task checkpoint",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed task status against spec package; implementation pending.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/310-container-and-transfer-component-integrity/verification.md",
+      "category": "spec",
+      "purpose": "Change 310 verification evidence",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Baseline verification initialized; full gate pending implementation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/311-container-screen-and-block-entity-component-lifecycle/design.md",
+      "category": "spec",
+      "purpose": "Change 311 design for container screen and block entity component preservation",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed drag/gather distribution, slot hygiene, and state equality rules; implementation pending.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/311-container-screen-and-block-entity-component-lifecycle/proposal.md",
+      "category": "spec",
+      "purpose": "Change 311 proposal for container screen and block entity component lifecycle",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed component loss and slot hygiene across screens and block entities; implementation pending.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/311-container-screen-and-block-entity-component-lifecycle/specs/component-lifecycle/spec.md",
+      "category": "spec",
+      "purpose": "Change 311 normative component lifecycle and slot hygiene requirements",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed drag, gather, equality, and block entity scenarios; verification pending.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/311-container-screen-and-block-entity-component-lifecycle/tasks.md",
+      "category": "spec",
+      "purpose": "Change 311 task checkpoint",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed task status against spec package; implementation pending.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/311-container-screen-and-block-entity-component-lifecycle/verification.md",
+      "category": "spec",
+      "purpose": "Change 311 verification evidence",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Baseline verification initialized; full gate pending implementation.",
+      "status": "audited"
+    },
+    {
       "path": "openspec/changes/add-voxel-game/.openspec.yaml",
       "gitBlob": null,
       "category": "spec",
       "purpose": "257 repair coverage for openspec/changes/add-voxel-game/.openspec.yaml",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/changes/add-voxel-game/README.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "257 repair coverage for openspec/changes/add-voxel-game/README.md",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -26876,6 +26962,22 @@
       "gitBlob": null,
       "category": "spec",
       "purpose": "257 repair coverage for openspec/changes/add-voxel-game/proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/add-voxel-game/README.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "257 repair coverage for openspec/changes/add-voxel-game/README.md",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -27736,22 +27838,6 @@
       "status": "audited"
     },
     {
-      "path": "openspec/changes/hardening-polish/README.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "257 repair coverage for openspec/changes/hardening-polish/README.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
       "path": "openspec/changes/hardening-polish/design.md",
       "gitBlob": null,
       "category": "spec",
@@ -27772,6 +27858,22 @@
       "gitBlob": null,
       "category": "spec",
       "purpose": "257 repair coverage for openspec/changes/hardening-polish/proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/hardening-polish/README.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "257 repair coverage for openspec/changes/hardening-polish/README.md",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -27836,22 +27938,6 @@
       "gitBlob": null,
       "category": "spec",
       "purpose": "257 repair coverage for openspec/config.yaml",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/evidence/README.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "257 repair coverage for openspec/evidence/README.md",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -31896,6 +31982,22 @@
       "status": "audited"
     },
     {
+      "path": "openspec/evidence/README.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "257 repair coverage for openspec/evidence/README.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
       "path": "openspec/evidence/release-readiness-post-hardening.md",
       "gitBlob": null,
       "category": "spec",
@@ -31932,22 +32034,6 @@
       "gitBlob": null,
       "category": "spec",
       "purpose": "257 repair coverage for openspec/evidence/suites/final-regression-suite.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "openspec/hardening/2026-08-17-pre-241-repository-hardening/README.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "257 repair coverage for openspec/hardening/2026-08-17-pre-241-repository-hardening/README.md",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -32028,6 +32114,22 @@
       "gitBlob": null,
       "category": "spec",
       "purpose": "257 repair coverage for openspec/hardening/2026-08-17-pre-241-repository-hardening/proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/hardening/2026-08-17-pre-241-repository-hardening/README.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "257 repair coverage for openspec/hardening/2026-08-17-pre-241-repository-hardening/README.md",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -32184,22 +32286,6 @@
       "status": "audited"
     },
     {
-      "path": "openspec/hardening/2026-08-21-post-250-production-persistence-hardening/README.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "257 repair coverage for openspec/hardening/2026-08-21-post-250-production-persistence-hardening/README.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
       "path": "openspec/hardening/2026-08-21-post-250-production-persistence-hardening/design-addendum.md",
       "gitBlob": null,
       "category": "spec",
@@ -32252,6 +32338,22 @@
       "gitBlob": null,
       "category": "spec",
       "purpose": "257 repair coverage for openspec/hardening/2026-08-21-post-250-production-persistence-hardening/proposal.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/hardening/2026-08-21-post-250-production-persistence-hardening/README.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "257 repair coverage for openspec/hardening/2026-08-21-post-250-production-persistence-hardening/README.md",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -32392,22 +32494,6 @@
       "status": "audited"
     },
     {
-      "path": "openspec/hardening/2026-08-23-exhaustive-repository-certification/README.md",
-      "gitBlob": null,
-      "category": "spec",
-      "purpose": "257 repair coverage for openspec/hardening/2026-08-23-exhaustive-repository-certification/README.md",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
       "path": "openspec/hardening/2026-08-23-exhaustive-repository-certification/design.md",
       "gitBlob": null,
       "category": "spec",
@@ -32504,6 +32590,22 @@
       "status": "audited"
     },
     {
+      "path": "openspec/hardening/2026-08-23-exhaustive-repository-certification/README.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "257 repair coverage for openspec/hardening/2026-08-23-exhaustive-repository-certification/README.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
       "path": "openspec/hardening/2026-08-23-exhaustive-repository-certification/risk-register.md",
       "gitBlob": null,
       "category": "spec",
@@ -32552,10 +32654,74 @@
       "status": "audited"
     },
     {
+      "path": "openspec/PROGRAM_STATE.json",
+      "gitBlob": "ccd6e1e37eb1f7b35ced2217939e19fdffa68ed2",
+      "category": "spec",
+      "purpose": "257 repair coverage for openspec/PROGRAM_STATE.json",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/PROGRAM_STATE.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "257 repair coverage for openspec/PROGRAM_STATE.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
       "path": "openspec/program-state.json",
       "gitBlob": null,
       "category": "spec",
       "purpose": "257 repair coverage for openspec/program-state.json",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/REVIEW_HANDOFF.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "257 repair coverage for openspec/REVIEW_HANDOFF.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/SPEC_AUTHORING_PROTOCOL.md",
+      "gitBlob": null,
+      "category": "spec",
+      "purpose": "257 repair coverage for openspec/SPEC_AUTHORING_PROTOCOL.md",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -32648,6 +32814,38 @@
       "status": "audited"
     },
     {
+      "path": "PARITY_MATRIX.md",
+      "gitBlob": null,
+      "category": "docs",
+      "purpose": "257 repair coverage for PARITY_MATRIX.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings | reviewed for 305: C298-C304 rows added, summary counts and coverage statement updated to 001-304, C256 evidence re-pointed at the archived package, C258 stays deferred | reviewed for 305: C298-C304 rows added, summary counts and coverage statement updated to 001-304, C256 evidence re-pointed at the archived package, C258 stays deferred",
+      "status": "audited"
+    },
+    {
+      "path": "PERFORMANCE_OPTIMIZATION_MASTER_PLAN.md",
+      "gitBlob": null,
+      "category": "docs",
+      "purpose": "257 repair coverage for PERFORMANCE_OPTIMIZATION_MASTER_PLAN.md",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
       "path": "playwright.config.ts",
       "gitBlob": null,
       "category": "config",
@@ -32684,6 +32882,22 @@
       "gitBlob": null,
       "category": "other",
       "purpose": "257 repair coverage for public/empty.html",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "README.md",
+      "gitBlob": null,
+      "category": "docs",
+      "purpose": "257 repair coverage for README.md",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -33254,7 +33468,7 @@
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 284 implementation; no findings \u2014 four keys appended after item=13; zombie and other prior definitions unchanged",
+      "reviewNotes": "reviewed for 284 implementation; no findings — four keys appended after item=13; zombie and other prior definitions unchanged",
       "status": "audited"
     },
     {
@@ -33610,7 +33824,7 @@
       ],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "reviewed for 284 implementation; no findings \u2014 additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits | 285 ephemeral badOmen + villageQuery + fixed-tick evaluate through 282 start seam; re-reviewed for 288 raider combat wiring; re-reviewed for 289 concurrent-drain / encha Re-reviewed in place for 304: index.html gained aria-modal on #death-screen; Game.ts gained syncModalFocus() deriving the single open dialog from the existing *Open booleans, wiring all ten panel open/close pairs and dispose through ModalFocus. | re-reviewed for 305: local WITHER_SKULL_CAP deleted in favour of the exported WITHER_MAX_SKULLS | re-reviewed for 305: local WITHER_SKULL_CAP deleted in favour of the exported WITHER_MAX_SKULLS",
+      "reviewNotes": "reviewed for 284 implementation; no findings — additive 284 seams only; 282 feedback projection and 283 saveRaid path unchanged in authority; no bad-omen acquisition, settlement detection, persistence namespace, or 258 GPU edits | 285 ephemeral badOmen + villageQuery + fixed-tick evaluate through 282 start seam; re-reviewed for 288 raider combat wiring; re-reviewed for 289 concurrent-drain / encha Re-reviewed in place for 304: index.html gained aria-modal on #death-screen; Game.ts gained syncModalFocus() deriving the single open dialog from the existing *Open booleans, wiring all ten panel open/close pairs and dispose through ModalFocus. | re-reviewed for 305: local WITHER_SKULL_CAP deleted in favour of the exported WITHER_MAX_SKULLS | re-reviewed for 305: local WITHER_SKULL_CAP deleted in favour of the exported WITHER_MAX_SKULLS",
       "status": "audited"
     },
     {
@@ -33694,22 +33908,6 @@
       "status": "audited"
     },
     {
-      "path": "src/engine/RenderInterpolator.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "257 repair coverage for src/engine/RenderInterpolator.ts",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
       "path": "src/engine/Renderer.ts",
       "gitBlob": null,
       "category": "production",
@@ -33723,6 +33921,22 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Owns the Three.js scene/camera/WebGL renderer and the context-loss lifecycle. Change 303 added a defaulted WebGLRendererFactory construction seam (createDefaultWebGLRenderer = the exact production THREE.WebGLRenderer call, so the shipped path is behaviourally identical) and routed both construction sites through it, purely so the no-GPU lifecycle branches become unit-testable; no rendering behaviour, configuration, threshold or golden changed. Re-reviewed in place for 303.",
+      "status": "audited"
+    },
+    {
+      "path": "src/engine/RenderInterpolator.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "257 repair coverage for src/engine/RenderInterpolator.ts",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
       "status": "audited"
     },
     {
@@ -34655,6 +34869,22 @@
       "status": "audited"
     },
     {
+      "path": "src/rendering/Lighting.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "257 repair coverage for src/rendering/Lighting.ts",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
       "path": "src/rendering/LightSaturation.ts",
       "gitBlob": null,
       "category": "production",
@@ -34691,22 +34921,6 @@
       "gitBlob": null,
       "category": "production",
       "purpose": "257 repair coverage for src/rendering/LightUpdateEngine.ts",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "src/rendering/Lighting.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "257 repair coverage for src/rendering/Lighting.ts",
       "reviewLevel": "semantic",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -35189,22 +35403,6 @@
       "status": "audited"
     },
     {
-      "path": "src/simulation/AStarPathfinding.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "257 repair coverage for src/simulation/AStarPathfinding.ts",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
       "path": "src/simulation/AccessibilityFramework.ts",
       "gitBlob": null,
       "category": "production",
@@ -35321,6 +35519,22 @@
       "gitBlob": null,
       "category": "production",
       "purpose": "257 repair coverage for src/simulation/AnimalBreeding.ts",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "src/simulation/AStarPathfinding.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "257 repair coverage for src/simulation/AStarPathfinding.ts",
       "reviewLevel": "semantic",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -35665,6 +35879,22 @@
       "status": "audited"
     },
     {
+      "path": "src/simulation/EnderDragon.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "257 repair coverage for src/simulation/EnderDragon.ts",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
       "path": "src/simulation/EndExitProgression.ts",
       "gitBlob": null,
       "category": "production",
@@ -35685,22 +35915,6 @@
       "gitBlob": null,
       "category": "production",
       "purpose": "257 repair coverage for src/simulation/EndPortalProgression.ts",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "src/simulation/EnderDragon.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "257 repair coverage for src/simulation/EnderDragon.ts",
       "reviewLevel": "semantic",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -35905,10 +36119,10 @@
       "status": "audited"
     },
     {
-      "path": "src/simulation/GameRuleFramework.ts",
+      "path": "src/simulation/GamepadFramework.ts",
       "gitBlob": null,
       "category": "production",
-      "purpose": "257 repair coverage for src/simulation/GameRuleFramework.ts",
+      "purpose": "257 repair coverage for src/simulation/GamepadFramework.ts",
       "reviewLevel": "semantic",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -35921,10 +36135,10 @@
       "status": "audited"
     },
     {
-      "path": "src/simulation/GamepadFramework.ts",
+      "path": "src/simulation/GameRuleFramework.ts",
       "gitBlob": null,
       "category": "production",
-      "purpose": "257 repair coverage for src/simulation/GamepadFramework.ts",
+      "purpose": "257 repair coverage for src/simulation/GameRuleFramework.ts",
       "reviewLevel": "semantic",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -36660,6 +36874,25 @@
       "status": "audited"
     },
     {
+      "path": "src/simulation/RaiderCombatBehavior.ts",
+      "gitBlob": null,
+      "category": "production",
+      "purpose": "288 raider combat system over HostileTargetAI/MeleeCombat/ProjectileCore",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "runtime",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "combat",
+        "raid"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 288 implementation; no findings; re-reviewed for 295 witch fixed-damage fallback retired, witch splash potion sink + player potion status, potionsThrown result; re-reviewed for 297 (RaiderDeathInfo (type key + pre-removal position) passed through damageRaider/onRaiderDied); no findings",
+      "status": "audited"
+    },
+    {
       "path": "src/simulation/RaidEscalation.ts",
       "gitBlob": null,
       "category": "production",
@@ -36759,25 +36992,6 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 284 implementation; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "src/simulation/RaiderCombatBehavior.ts",
-      "gitBlob": null,
-      "category": "production",
-      "purpose": "288 raider combat system over HostileTargetAI/MeleeCombat/ProjectileCore",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "runtime",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "combat",
-        "raid"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 288 implementation; no findings; re-reviewed for 295 witch fixed-damage fallback retired, witch splash potion sink + player potion status, potionsThrown result; re-reviewed for 297 (RaiderDeathInfo (type key + pre-removal position) passed through damageRaider/onRaiderDied); no findings",
       "status": "audited"
     },
     {
@@ -37847,7 +38061,7 @@
       "riskAreas": [],
       "findingIds": [],
       "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings RE-REVIEWED in place: the seven explicit `any` escapes in this production test-seam module were removed \u2014 `putWitherData` and `chunkEdits` are real members of WorldMetadataRepository / WorldArchiverDeps, so the `(x as any)` casts were unnecessary; `TimerLike.setInterval` and `WorldSaveCodec.encode` genuinely return `unknown` by contract, so the doubles now name what they return (`CountingTimerHandle`, `IdentityCodecPayload = ServerWorldUnit[\"value\"]`); and the four intentional `as unknown as WorldArchive` corruption fixtures now carry SAFETY comments stating the invariant. The file went from 7 lint warnings and 6 pi-lens error-level findings to ZERO of each.",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings RE-REVIEWED in place: the seven explicit `any` escapes in this production test-seam module were removed — `putWitherData` and `chunkEdits` are real members of WorldMetadataRepository / WorldArchiverDeps, so the `(x as any)` casts were unnecessary; `TimerLike.setInterval` and `WorldSaveCodec.encode` genuinely return `unknown` by contract, so the doubles now name what they return (`CountingTimerHandle`, `IdentityCodecPayload = ServerWorldUnit[\"value\"]`); and the four intentional `as unknown as WorldArchive` corruption fixtures now carry SAFETY comments stating the invariant. The file went from 7 lint warnings and 6 pi-lens error-level findings to ZERO of each.",
       "status": "audited"
     },
     {
@@ -39519,7 +39733,7 @@
       "path": "tests/e2e/bad-omen-acquisition.spec.ts",
       "gitBlob": null,
       "category": "test",
-      "purpose": "285 browser journey: fixture village + grant \u2192 raid feedback + reload level 0",
+      "purpose": "285 browser journey: fixture village + grant → raid feedback + reload level 0",
       "reviewLevel": "semantic",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -40284,10 +40498,42 @@
       "status": "audited"
     },
     {
-      "path": "tests/unit/AStarPathfinding.test.ts",
+      "path": "tests/unit/__measure.test.ts",
       "gitBlob": null,
       "category": "test",
-      "purpose": "257 repair coverage for tests/unit/AStarPathfinding.test.ts",
+      "purpose": "257 repair coverage for tests/unit/__measure.test.ts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/__real-mesher-measure.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "257 repair coverage for tests/unit/__real-mesher-measure.test.ts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/abrupt-close-recovery.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "257 repair coverage for tests/unit/abrupt-close-recovery.test.ts",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -40592,6 +40838,22 @@
       "gitBlob": null,
       "category": "test",
       "purpose": "257 repair coverage for tests/unit/ArmorProtection.test.ts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/AStarPathfinding.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "257 repair coverage for tests/unit/AStarPathfinding.test.ts",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -41683,22 +41945,6 @@
       "status": "audited"
     },
     {
-      "path": "tests/unit/DDA.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "257 repair coverage for tests/unit/DDA.test.ts",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
       "path": "tests/unit/DamageType.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -41738,6 +41984,22 @@
       "gitBlob": null,
       "category": "test",
       "purpose": "257 repair coverage for tests/unit/DataPackManifest.test.ts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/DDA.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "257 repair coverage for tests/unit/DDA.test.ts",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -42114,6 +42376,22 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/EnderDragon.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "257 repair coverage for tests/unit/EnderDragon.test.ts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/EndExitProgression.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -42150,22 +42428,6 @@
       "gitBlob": null,
       "category": "test",
       "purpose": "257 repair coverage for tests/unit/EndTerrain.test.ts",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/EnderDragon.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "257 repair coverage for tests/unit/EnderDragon.test.ts",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -42277,7 +42539,7 @@
       "path": "tests/unit/EntityType.test.ts",
       "gitBlob": null,
       "category": "test",
-      "purpose": "284 registry stability tests: size 14\u219218, sorted keys, append-order/runtime-id pins (item=13, pillager=14, witch=17), roster-key MONSTER, zombie stability",
+      "purpose": "284 registry stability tests: size 14→18, sorted keys, append-order/runtime-id pins (item=13, pillager=14, witch=17), roster-key MONSTER, zombie stability",
       "reviewLevel": "semantic",
       "runtimeReachability": "test-only",
       "imports": [],
@@ -42663,6 +42925,14 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/GameLifecycleTeardown.test.ts",
+      "category": "test",
+      "purpose": "Change 309 unit tests for Wither skull presentation reuse and Game teardown",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed failing-first and passing tests for R2 and R3.",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/GameLoop.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -42711,6 +42981,22 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/GamepadFramework.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "257 repair coverage for tests/unit/GamepadFramework.test.ts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/GamePersistence.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -42724,6 +43010,22 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings; re-reviewed for 292 effects payload IndexedDB round trip tests",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/GameplayBoundaryMatrix.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "257 repair coverage for tests/unit/GameplayBoundaryMatrix.test.ts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
       "status": "audited"
     },
     {
@@ -42759,22 +43061,6 @@
       "status": "audited"
     },
     {
-      "path": "tests/unit/GameRuleWiring.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "261 coverage for tests/unit/GameRuleWiring.test.ts",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 261 wiring oracles (tick-count clamp, mobGriefing gate); no findings",
-      "status": "audited"
-    },
-    {
       "path": "tests/unit/GameRulesPersistence.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -42791,42 +43077,26 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/GameRuleWiring.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "261 coverage for tests/unit/GameRuleWiring.test.ts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 261 wiring oracles (tick-count clamp, mobGriefing gate); no findings",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/GameStartupPersistence.test.ts",
       "gitBlob": null,
       "category": "test",
       "purpose": "257 repair coverage for tests/unit/GameStartupPersistence.test.ts",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/GamepadFramework.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "257 repair coverage for tests/unit/GamepadFramework.test.ts",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/GameplayBoundaryMatrix.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "257 repair coverage for tests/unit/GameplayBoundaryMatrix.test.ts",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -43118,10 +43388,10 @@
       "status": "audited"
     },
     {
-      "path": "tests/unit/HotPathEquivalence.test.ts",
+      "path": "tests/unit/HotbarIconRefresh.test.ts",
       "gitBlob": null,
       "category": "test",
-      "purpose": "257 repair coverage for tests/unit/HotPathEquivalence.test.ts",
+      "purpose": "257 repair coverage for tests/unit/HotbarIconRefresh.test.ts",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -43134,10 +43404,10 @@
       "status": "audited"
     },
     {
-      "path": "tests/unit/HotbarIconRefresh.test.ts",
+      "path": "tests/unit/HotPathEquivalence.test.ts",
       "gitBlob": null,
       "category": "test",
-      "purpose": "257 repair coverage for tests/unit/HotbarIconRefresh.test.ts",
+      "purpose": "257 repair coverage for tests/unit/HotPathEquivalence.test.ts",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -43199,7 +43469,7 @@
         "tests/unit/GameStartupPersistence.test.ts"
       ],
       "testEvidence": [
-        "Indirectly tested by every test that uses createIdbFactoryMock \u2014 the mock now matches real IDB multi-store + oncomplete timing, so the same mock can drive the multi-store reset path."
+        "Indirectly tested by every test that uses createIdbFactoryMock — the mock now matches real IDB multi-store + oncomplete timing, so the same mock can drive the multi-store reset path."
       ],
       "riskAreas": [
         "mock-vs-real-fidelity"
@@ -43209,6 +43479,22 @@
       ],
       "disposition": "Mock now supports string|string[] tx and oncomplete microtask; fault-injection helpers (ReadFaultFactory/DeleteFaultFactory) defined in test files reuse the same Proxy approach",
       "reviewNotes": "Validated by 73 tests in the 257 scope (RecoveryBackupF257AtoL 22, RecoveryBackupAndAtomicReset 9, GamePersistence 22, WorldArchiver 6, import-export-recovery 6, SaveRecoveryMatrix 8).",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/import-export-recovery.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "257 repair coverage for tests/unit/import-export-recovery.test.ts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
       "status": "audited"
     },
     {
@@ -43438,6 +43724,22 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/Lighting.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "257 repair coverage for tests/unit/Lighting.test.ts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/LightSaturation.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -43490,22 +43792,6 @@
       "gitBlob": null,
       "category": "test",
       "purpose": "257 repair coverage for tests/unit/LightUpdateEngine.test.ts",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/Lighting.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "257 repair coverage for tests/unit/Lighting.test.ts",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -43664,6 +43950,25 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/LiveRaiderCombat.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "288 live seam oracle with RaidWaveController",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "raid",
+        "combat"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 288 implementation; no findings",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/LiveRaidEscalation.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -43748,25 +44053,6 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 284 implementation; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/LiveRaiderCombat.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "288 live seam oracle with RaidWaveController",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "raid",
-        "combat"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 288 implementation; no findings",
       "status": "audited"
     },
     {
@@ -44073,6 +44359,22 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/MeshingTypes.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "257 repair coverage for tests/unit/MeshingTypes.test.ts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/MeshReadyQueue.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -44137,10 +44439,10 @@
       "status": "audited"
     },
     {
-      "path": "tests/unit/MeshingTypes.test.ts",
+      "path": "tests/unit/migration-recovery.test.ts",
       "gitBlob": null,
       "category": "test",
-      "purpose": "257 repair coverage for tests/unit/MeshingTypes.test.ts",
+      "purpose": "257 repair coverage for tests/unit/migration-recovery.test.ts",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -44290,6 +44592,38 @@
       "gitBlob": null,
       "category": "test",
       "purpose": "257 repair coverage for tests/unit/MovementReconciler.test.ts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/multi-client-correctness.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "257 repair coverage for tests/unit/multi-client-correctness.test.ts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/multi-client-performance.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "257 repair coverage for tests/unit/multi-client-performance.test.ts",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -44516,6 +44850,22 @@
       "gitBlob": null,
       "category": "test",
       "purpose": "257 repair coverage for tests/unit/PalettedContainer.test.ts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/partial-write-recovery.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "257 repair coverage for tests/unit/partial-write-recovery.test.ts",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -45051,6 +45401,22 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/quota-recovery.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "257 repair coverage for tests/unit/quota-recovery.test.ts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/RaidBarParity.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -45093,6 +45459,45 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 284 implementation; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/RaiderCombatBehavior.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "288 pure + system unit coverage",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "combat",
+        "raid"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 288 implementation; no findings; re-reviewed for 295 witch no-fallback / potion sink cadence / choice / refused-throw tests",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/RaiderRenderer.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "293 unit tests for projection, sync add/update/rebuild/remove, part counts, captain marker, facing, visibility, fixed resources, exactly-once disposal + module/Game source guards",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [
+        "lifecycle",
+        "raid",
+        "rendering"
+      ],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
       "status": "audited"
     },
     {
@@ -45191,45 +45596,6 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "reviewed for 284 implementation; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/RaiderCombatBehavior.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "288 pure + system unit coverage",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "combat",
-        "raid"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 288 implementation; no findings; re-reviewed for 295 witch no-fallback / potion sink cadence / choice / refused-throw tests",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/RaiderRenderer.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "293 unit tests for projection, sync add/update/rebuild/remove, part counts, captain marker, facing, visibility, fixed resources, exactly-once disposal + module/Game source guards",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [
-        "lifecycle",
-        "raid",
-        "rendering"
-      ],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "reviewed for 293 raider-and-patrol-rendering; no findings",
       "status": "audited"
     },
     {
@@ -45444,7 +45810,7 @@
         "F257-D",
         "F257-K"
       ],
-      "disposition": "NEW \u2014 22 fault-injection tests added in the 257 reopen",
+      "disposition": "NEW — 22 fault-injection tests added in the 257 reopen",
       "reviewNotes": "Covers every read class (7 stores), every delete class (6 stores), ownership rejection (metadata + playerState), and round-trip payload equality (every field) plus foreign-world preservation.",
       "status": "audited"
     },
@@ -45689,6 +46055,22 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/release-performance-gate.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "257 repair coverage for tests/unit/release-performance-gate.test.ts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/ReleaseDelta.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -45734,6 +46116,24 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/Renderer.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "303 coverage for tests/unit/Renderer.test.ts",
+      "reviewLevel": "semantic",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [
+        "npm test"
+      ],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "Deterministic headless unit coverage for src/engine/Renderer.ts (change 303, audit F-007), which had ZERO unit coverage: 27 tests injecting a recording fake through the new defaulted WebGLRendererFactory seam to pin the no-WebGL fail-closed construction (rendererCreated=false, null renderer, scene/camera still built, no-op render, zero buffer size, resize still updates aspect), colour management/tone mapping/shadow policy, 13 context-loss-and-restoration lifecycle cases including a restore FAILURE that stays fail-closed while still firing the callback, dispose completeness plus idempotency plus the no-renderer path plus no-render-after-dispose, headless vs standard pixel-ratio capping against CONFIG values, resize clamp at height 0, drawing-buffer floor and negative clamping, and the frozen dynamic-resolution hooks with the real p95FrameTimeMillis metric including the changed-scale resize branch. Measured Renderer.ts coverage 100% statements / 90.62% branches / 100% functions / 100% lines, up from 0%.",
       "status": "audited"
     },
     {
@@ -45830,24 +46230,6 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/Renderer.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "303 coverage for tests/unit/Renderer.test.ts",
-      "reviewLevel": "semantic",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [
-        "npm test"
-      ],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "Deterministic headless unit coverage for src/engine/Renderer.ts (change 303, audit F-007), which had ZERO unit coverage: 27 tests injecting a recording fake through the new defaulted WebGLRendererFactory seam to pin the no-WebGL fail-closed construction (rendererCreated=false, null renderer, scene/camera still built, no-op render, zero buffer size, resize still updates aspect), colour management/tone mapping/shadow policy, 13 context-loss-and-restoration lifecycle cases including a restore FAILURE that stays fail-closed while still firing the callback, dispose completeness plus idempotency plus the no-renderer path plus no-render-after-dispose, headless vs standard pixel-ratio capping against CONFIG values, resize clamp at height 0, drawing-buffer floor and negative clamping, and the frozen dynamic-resolution hooks with the real p95FrameTimeMillis metric including the changed-scale resize branch. Measured Renderer.ts coverage 100% statements / 90.62% branches / 100% functions / 100% lines, up from 0%.",
       "status": "audited"
     },
     {
@@ -45999,6 +46381,22 @@
       "gitBlob": null,
       "category": "test",
       "purpose": "257 repair coverage for tests/unit/SaveQueueSaturation.test.ts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/saveRecoveryFixture.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "257 repair coverage for tests/unit/saveRecoveryFixture.ts",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -46876,22 +47274,6 @@
       "status": "audited"
     },
     {
-      "path": "tests/unit/ToolStackingRegression.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "257 repair coverage for tests/unit/ToolStackingRegression.test.ts",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
       "path": "tests/unit/ToolchainReproducibility.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -46907,6 +47289,22 @@
       "findingIds": [],
       "disposition": "",
       "reviewNotes": "Unit coverage for scripts/check-install.mjs (change 299): 10 tests over synthetic temp fixtures for match, drift table, fresh tree, platform-inapplicable optional dependency, unreadable installed manifest, malformed lockfile, missing lockfile, the read-only property, self-application to the real tree, and the packageManager/verify:deps declarations with no preinstall entry.",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/ToolStackingRegression.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "257 repair coverage for tests/unit/ToolStackingRegression.test.ts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
       "status": "audited"
     },
     {
@@ -47591,10 +47989,10 @@
       "status": "audited"
     },
     {
-      "path": "tests/unit/WorkerMeshParity.test.ts",
+      "path": "tests/unit/WorkerMeshing.test.ts",
       "gitBlob": null,
       "category": "test",
-      "purpose": "257 repair coverage for tests/unit/WorkerMeshParity.test.ts",
+      "purpose": "257 repair coverage for tests/unit/WorkerMeshing.test.ts",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -47607,10 +48005,10 @@
       "status": "audited"
     },
     {
-      "path": "tests/unit/WorkerMeshing.test.ts",
+      "path": "tests/unit/WorkerMeshParity.test.ts",
       "gitBlob": null,
       "category": "test",
-      "purpose": "257 repair coverage for tests/unit/WorkerMeshing.test.ts",
+      "purpose": "257 repair coverage for tests/unit/WorkerMeshParity.test.ts",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -47911,6 +48309,38 @@
       "status": "audited"
     },
     {
+      "path": "tests/unit/WorldgenDeterminism.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "257 repair coverage for tests/unit/WorldgenDeterminism.test.ts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/unit/WorldgenRegressionMatrix.test.ts",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "257 repair coverage for tests/unit/WorldgenRegressionMatrix.test.ts",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
       "path": "tests/unit/WorldGeometryDisposal.test.ts",
       "gitBlob": null,
       "category": "test",
@@ -48103,234 +48533,10 @@
       "status": "audited"
     },
     {
-      "path": "tests/unit/WorldgenDeterminism.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "257 repair coverage for tests/unit/WorldgenDeterminism.test.ts",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/WorldgenRegressionMatrix.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "257 repair coverage for tests/unit/WorldgenRegressionMatrix.test.ts",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
       "path": "tests/unit/XpOrbManager.test.ts",
       "gitBlob": null,
       "category": "test",
       "purpose": "257 repair coverage for tests/unit/XpOrbManager.test.ts",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/__measure.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "257 repair coverage for tests/unit/__measure.test.ts",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/__real-mesher-measure.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "257 repair coverage for tests/unit/__real-mesher-measure.test.ts",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/abrupt-close-recovery.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "257 repair coverage for tests/unit/abrupt-close-recovery.test.ts",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/import-export-recovery.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "257 repair coverage for tests/unit/import-export-recovery.test.ts",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/migration-recovery.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "257 repair coverage for tests/unit/migration-recovery.test.ts",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/multi-client-correctness.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "257 repair coverage for tests/unit/multi-client-correctness.test.ts",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/multi-client-performance.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "257 repair coverage for tests/unit/multi-client-performance.test.ts",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/partial-write-recovery.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "257 repair coverage for tests/unit/partial-write-recovery.test.ts",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/quota-recovery.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "257 repair coverage for tests/unit/quota-recovery.test.ts",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/release-performance-gate.test.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "257 repair coverage for tests/unit/release-performance-gate.test.ts",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/unit/saveRecoveryFixture.ts",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "257 repair coverage for tests/unit/saveRecoveryFixture.ts",
-      "reviewLevel": "mechanical",
-      "runtimeReachability": "unknown",
-      "imports": [],
-      "importedBy": [],
-      "testEvidence": [],
-      "riskAreas": [],
-      "findingIds": [],
-      "disposition": "",
-      "reviewNotes": "auto-reviewed for 257 repair; no findings",
-      "status": "audited"
-    },
-    {
-      "path": "tests/visual-golden/README.md",
-      "gitBlob": null,
-      "category": "test",
-      "purpose": "257 repair coverage for tests/visual-golden/README.md",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],
@@ -49309,6 +49515,22 @@
       "gitBlob": null,
       "category": "test",
       "purpose": "257 repair coverage for tests/visual-golden/linux-ci/start-overlay/low/1920x1080.png",
+      "reviewLevel": "mechanical",
+      "runtimeReachability": "unknown",
+      "imports": [],
+      "importedBy": [],
+      "testEvidence": [],
+      "riskAreas": [],
+      "findingIds": [],
+      "disposition": "",
+      "reviewNotes": "auto-reviewed for 257 repair; no findings",
+      "status": "audited"
+    },
+    {
+      "path": "tests/visual-golden/README.md",
+      "gitBlob": null,
+      "category": "test",
+      "purpose": "257 repair coverage for tests/visual-golden/README.md",
       "reviewLevel": "mechanical",
       "runtimeReachability": "unknown",
       "imports": [],

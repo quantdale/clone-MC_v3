@@ -17,7 +17,9 @@
  */
 import {
   MAX_CURSOR_COUNT,
+  menuComponentsEqual,
   type ContainerMenu,
+  type MenuCursor,
   type MenuSlot,
 } from './MenuTransaction';
 
@@ -66,6 +68,7 @@ export function dragEnd(
     return { menu, drag: inactive };
   }
   const item = menu.cursor.item;
+  const cursorComponents = menu.cursor.components;
   const slots = cloneSlots(menu);
   let remaining = menu.cursor.count;
 
@@ -78,9 +81,12 @@ export function dragEnd(
         if (slot.item === null) {
           slot.item = item;
           slot.count = 1;
+          if (cursorComponents !== undefined) {
+            slot.components = cursorComponents;
+          }
           remaining -= 1;
           progress = true;
-        } else if (slot.item === item && slot.count < slot.maxStack) {
+        } else if (slot.item === item && slot.count < slot.maxStack && menuComponentsEqual(cursorComponents, slot.components)) {
           slot.count += 1;
           remaining -= 1;
           progress = true;
@@ -97,10 +103,15 @@ export function dragEnd(
       const want = base + (i < rem ? 1 : 0);
       if (slot.item === null) {
         const take = Math.min(want, slot.maxStack, remaining);
-        slot.item = item;
-        slot.count = take;
-        remaining -= take;
-      } else if (slot.item === item) {
+        if (take > 0) {
+          slot.item = item;
+          slot.count = take;
+          if (cursorComponents !== undefined) {
+            slot.components = cursorComponents;
+          }
+          remaining -= take;
+        }
+      } else if (slot.item === item && menuComponentsEqual(cursorComponents, slot.components)) {
         const take = Math.min(want, slot.maxStack - slot.count, remaining);
         slot.count += take;
         remaining -= take;
@@ -108,10 +119,10 @@ export function dragEnd(
     }
   }
 
-  const cursor =
+  const cursor: MenuCursor =
     remaining === 0
       ? { item: null, count: 0 }
-      : { item, count: remaining };
+      : { item, count: remaining, ...(cursorComponents !== undefined ? { components: cursorComponents } : {}) };
 
   return {
     menu: { slots, playerSlotStart: menu.playerSlotStart, cursor },
@@ -119,13 +130,13 @@ export function dragEnd(
   };
 }
 
-function sameSlot(a: MenuSlot, b: MenuSlot): boolean {
-  return a.item === b.item && a.count === b.count && a.maxStack === b.maxStack;
+export function sameSlot(a: MenuSlot, b: MenuSlot): boolean {
+  return a.item === b.item && a.count === b.count && a.maxStack === b.maxStack && menuComponentsEqual(a.components, b.components);
 }
 
-function sameMenu(a: ContainerMenu, b: ContainerMenu): boolean {
+export function sameMenu(a: ContainerMenu, b: ContainerMenu): boolean {
   if (a.playerSlotStart !== b.playerSlotStart) return false;
-  if (a.cursor.item !== b.cursor.item || a.cursor.count !== b.cursor.count) return false;
+  if (a.cursor.item !== b.cursor.item || a.cursor.count !== b.cursor.count || !menuComponentsEqual(a.cursor.components, b.cursor.components)) return false;
   if (a.slots.length !== b.slots.length) return false;
   for (let i = 0; i < a.slots.length; i += 1) {
     if (!sameSlot(a.slots[i]!, b.slots[i]!)) return false;
@@ -141,26 +152,32 @@ function sameMenu(a: ContainerMenu, b: ContainerMenu): boolean {
 export function doubleClickGather(menu: ContainerMenu, index: number): ContainerMenu {
   const slot = menu.slots[index];
   if (slot === undefined) return menu;
-  if (menu.cursor.item !== null && slot.item !== menu.cursor.item) return menu;
+  if (menu.cursor.item !== null && (slot.item !== menu.cursor.item || !menuComponentsEqual(menu.cursor.components, slot.components))) {
+    return menu;
+  }
   const target = menu.cursor.item ?? slot.item;
   if (target === null) return menu;
+  const targetComponents = menu.cursor.item !== null ? menu.cursor.components : slot.components;
 
   const slots = cloneSlots(menu);
   let count = menu.cursor.count;
   for (let i = 0; i < slots.length && count < MAX_CURSOR_COUNT; i += 1) {
     const s = slots[i]!;
-    if (s.item !== target) continue;
+    if (s.item !== target || !menuComponentsEqual(s.components, targetComponents)) continue;
     const room = MAX_CURSOR_COUNT - count;
     const moved = Math.min(s.count, room);
     s.count -= moved;
-    if (s.count === 0) s.item = null;
+    if (s.count === 0) {
+      s.item = null;
+      delete s.components;
+    }
     count += moved;
   }
 
   const result: ContainerMenu = {
     slots,
     playerSlotStart: menu.playerSlotStart,
-    cursor: { item: target, count },
+    cursor: { item: target, count, ...(targetComponents !== undefined ? { components: targetComponents } : {}) },
   };
   return sameMenu(menu, result) ? menu : result;
 }

@@ -254,6 +254,37 @@ describe('LiveBlockEntityHost fixed-tick simulation (251)', () => {
     expect(persistence.calls[0]!.entities).toHaveLength(1);
   });
 
+  it('detects component changes on furnace slots and marks chunk dirty (311)', () => {
+    const customCtx: FurnaceContext = {
+      fuelBurnTicks: () => 10,
+      cookTicks: () => 1,
+      resultOf: () => ({ item: 'minecraft:gold_nugget', count: 1 }),
+      experienceOf: () => 0,
+    };
+    const world = new FakeWorld();
+    const persistence = new FakePersistence();
+    const host = new LiveBlockEntityHost({
+      world,
+      persistence,
+      furnaceContext: customCtx,
+    });
+    world.simulating.add('0,-1');
+    world.setBlock(X, Y, Z, 20);
+    host.hydrate([furnaceRecord({
+      ...createFurnaceState(),
+      input: { item: 'minecraft:golden_sword', count: 1, maxStack: 1, components: { damage: 10 } },
+      fuel: { item: 'minecraft:coal', count: 1, maxStack: 64 },
+      burnTime: 5,
+      burnTimeTotal: 10,
+      smeltTime: 0,
+      smeltTimeTotal: 1,
+    })]);
+    persistence.calls.length = 0;
+    const changed = host.tickFurnaces();
+    expect(changed).toBe(1);
+    expect(persistence.calls.length).toBe(1);
+  });
+
   it('reload restores the committed boundary and never double-consumes fuel or double-produces output', () => {
     const { world, host } = makeRig();
     world.setBlock(X, Y, Z, 20);

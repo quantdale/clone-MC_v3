@@ -1,5 +1,19 @@
 # Change Sequence Overrides
 
+## 311 activation — container screen and block entity component lifecycle (2026-11-24)
+
+Following VERIFIED change 310, the repository-wide audit uncovered component data loss, corruption,
+and slot hygiene violations across container screens, menu transactions, and block entity lifecycle:
+(1) `MenuTransaction.validateSlot` and `validateCursor` fail to reject empty slots/cursors carrying dangling `components`;
+(2) `InventoryScreenParity.dragEnd` drops cursor `components` when placing into empty slots, fails to match `menuComponentsEqual` on occupied slots, and strips `components` from the remaining cursor;
+(3) `InventoryScreenParity.doubleClickGather` fails to match `menuComponentsEqual` when gathering items into the cursor, fails to carry `components` to an empty cursor, and leaves dangling `components` on emptied slots;
+(4) `InventoryScreenParity.sameSlot` and `sameMenu` ignore `components`, falsely treating distinct item stacks as identical;
+(5) `BrewingStandBlockEntity.validateSlot` accepts empty slots with `components`, and `consumeOne` retains `components` upon slot depletion;
+(6) `LiveBlockEntityHost.brewingStateEquals` and `furnaceStateEquals` ignore `components`, failing to detect state changes and skipping persistence.
+`311-container-screen-and-block-entity-component-lifecycle` is the sole ACTIVE change, with spec-first artifacts
+and failing-first tests required. Starting head `92b2b9305ec767677bf1fb8c575003c023d6a454`. Change 258
+remains BLOCKED under its owner deferral; no headed GPU evidence is claimed.
+
 ## 310 activation — container and transfer component integrity (2026-11-24)
 
 Following VERIFIED change 309, the repository-wide audit uncovered systematic item component

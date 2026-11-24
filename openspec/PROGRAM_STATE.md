@@ -1,5 +1,11 @@
 # Program State
 
+## Current checkpoint — Change 311-container-screen-and-block-entity-component-lifecycle VERIFIED (7/7)
+
+Change 311 remediates item component data loss, corruption, and slot hygiene violations across container screens and block entities: (1) `MenuTransaction.validateSlot` and `validateCursor` reject empty slots/cursors carrying `components`; (2) `InventoryScreenParity.dragEnd` preserves `cursor.components` when placing into empty slots, respects `menuComponentsEqual` on occupied slots, and retains `components` on the remaining cursor; (3) `InventoryScreenParity.doubleClickGather` filters by `menuComponentsEqual`, preserves `components` on the cursor, and deletes `components` on depleted slots; (4) `InventoryScreenParity.sameSlot` and `sameMenu` incorporate `menuComponentsEqual`; (5) `BrewingStandBlockEntity.validateSlot` rejects empty slots with components, and `consumeOne` deletes components upon count reaching 0; (6) `LiveBlockEntityHost.brewingStateEquals` and `furnaceStateEquals` verify `menuComponentsEqual` on every slot. All 13 verify:all gates (5907 unit tests, coverage, 145 browser tests) and isolated multiplayer performance (758.2 TPS / 1582.8 ms) passed. Evidence published at `92b2b9305ec767677bf1fb8c575003c023d6a454` and verified on remote `main`. Zero regressions; C258 remains BLOCKED.
+
+- Next exact action: **T0: author and validate complete OpenSpec package (proposal, design, tasks, verification, spec) for change 312.**
+
 ## Current checkpoint — Change 310-container-and-transfer-component-integrity VERIFIED (7/7)
 
 Change 310 remediates systematic item component data loss and corruption across container block-entity serialization and automated transfers: (1) `ChestBlockEntity` and `FurnaceBlockEntity` (and `SmokerBlockEntity`) serialize/deserialize `components` losslessly on every slot; (2) empty slots carrying components are strictly rejected; (3) `HopperTransfer.transferOneItem` merges only when `menuComponentsEqual` matches, copies components when moving to an empty slot, and deletes components when a source slot is depleted to count 0; (4) `DropperEject` and `DispenserBehavior` delete components upon slot depletion, and `DroppedItem` carries item components. All 13 verify:all gates (5894 unit tests, coverage, 145 browser tests) and isolated multiplayer performance (785.9 TPS / 1526.8 ms) passed. Evidence published at `697262f664dfdb80f2d48083884df002d08316df` and verified on remote `main`. Zero regressions; C258 remains BLOCKED.
@@ -522,17 +528,17 @@ Session start `350b557a090b01c2d5d5574fb7ae9aa1e6fc52c3` matches live `origin/ma
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **310-container-and-transfer-component-integrity — VERIFIED (7/7); 258 BLOCKED, 259–310 VERIFIED**
-- Prior active implementation change: **309-resource-leak-and-storage-boundedness-remediation — VERIFIED (7/7); 258 stays BLOCKED, 259–309 stay VERIFIED**
-- Prior prior active implementation change: **308-reset-save-integrity — VERIFIED (7/7); 258 stays BLOCKED, 259–308 stay VERIFIED**
-- Next change: **311 — pending audit after 310; 258 stays BLOCKED**
+- Active implementation change: **311-container-screen-and-block-entity-component-lifecycle — VERIFIED (7/7); 258 BLOCKED, 259–311 VERIFIED**
+- Prior active implementation change: **310-container-and-transfer-component-integrity — VERIFIED (7/7); 258 stays BLOCKED, 259–310 stay VERIFIED**
+- Prior prior active implementation change: **309-resource-leak-and-storage-boundedness-remediation — VERIFIED (7/7); 258 stays BLOCKED, 259–309 stay VERIFIED**
+- Next change: **312 — pending 312; 258 stays BLOCKED**
 - 240 advancement allowed: **yes**
 
-- Program: **ACTIVE — Change 310-container-and-transfer-component-integrity VERIFIED 7/7 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–310 VERIFIED**
+- Program: **ACTIVE — Change 311-container-screen-and-block-entity-component-lifecycle VERIFIED 7/7 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–311 VERIFIED**
 - 284 checkpoint: **VERIFIED 12/12 — implementation + gates complete; enchanting flake + visual SwiftShader drift documented non-blocking; 258 BLOCKED; 285 not started**
-- Last completed change: **309-resource-leak-and-storage-boundedness-remediation — VERIFIED (7/7); 258 BLOCKED**
-- Current active change: **310-container-and-transfer-component-integrity — VERIFIED (7/7); next audit change not yet activated**
-- Prior last completed change: **281-workstation-ui — VERIFIED (12/12); 258 stays BLOCKED, 259–281 stay VERIFIED**
+- Last completed change: **311-container-screen-and-block-entity-component-lifecycle — VERIFIED (7/7); 258 BLOCKED**
+- Current active change: **311-container-screen-and-block-entity-component-lifecycle — VERIFIED (7/7); 258 BLOCKED**
+- Prior last completed change: **310-container-and-transfer-component-integrity — VERIFIED (7/7); 258 BLOCKED**
 - Prior prior last completed change: **272-lighting-clock-dt-sync — VERIFIED (10/10) — full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85/file-audit 2792); 271 remains VERIFIED (14/14)
 - All changes 001–257 and 259–284: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed; Change 283 is VERIFIED 13/13; Change 284 is VERIFIED 12/12 (this session).
 - Historical Change 250-era bullets (preserved; superseded **for current release authority** by `openspec/evidence/release-readiness-post-hardening.md`): 250 required-test gate PASS at head `502d021` / byte-identical tree `b56529e`; historical release-readiness READY RC-1..RC-9 (`openspec/evidence/release-readiness.md`); final parity audit PASS with DL dispositions later rejected by this interlock (`openspec/evidence/parity/final-parity-audit.md`); evidence archive complete (`openspec/evidence/`)

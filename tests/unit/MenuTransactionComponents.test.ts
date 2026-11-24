@@ -134,4 +134,32 @@ describe('component carry (260)', () => {
     expect(next.cursor).toEqual({ item: 'minecraft:coal', count: 5 });
     expect(next.slots[0]).toEqual({ item: null, count: 0, maxStack: 64 });
   });
+
+  it('validateContainerMenu rejects a slot with null item carrying components (311)', () => {
+    const slots = [
+      { item: null, count: 0, maxStack: 64, components: FX_A },
+      { item: null, count: 0, maxStack: 64 },
+    ];
+    expect(() =>
+      validateContainerMenu({
+        slots,
+        playerSlotStart: 1,
+        cursor: { item: null, count: 0 },
+      }),
+    ).toThrow(/slot 0 with a null item must not have components/);
+  });
+
+  it('validateContainerMenu rejects an empty cursor carrying components (311)', () => {
+    const slots = [
+      { item: null, count: 0, maxStack: 64 },
+      { item: null, count: 0, maxStack: 64 },
+    ];
+    expect(() =>
+      validateContainerMenu({
+        slots,
+        playerSlotStart: 1,
+        cursor: { item: null, count: 0, components: FX_A },
+      }),
+    ).toThrow(/cursor with a null item must not have components/);
+  });
 });

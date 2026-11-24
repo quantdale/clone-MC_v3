@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "status": "ACTIVE",
-  "currentChange": "310-container-and-transfer-component-integrity",
+  "currentChange": "311-container-screen-and-block-entity-component-lifecycle",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "309-resource-leak-and-storage-boundedness-remediation",
-  "nextChange": "311",
+  "lastCompletedChange": "311-container-screen-and-block-entity-component-lifecycle",
+  "nextChange": "312",
   "completedTasks": 7,
   "totalTasks": 7,
   "completionPercentage": 100,
@@ -14,15 +14,23 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "d2daeadb4808c981dff2ba2adc0e01cd239110de",
-  "localHead": "697262f664dfdb80f2d48083884df002d08316df",
-  "publishedHead": "697262f664dfdb80f2d48083884df002d08316df",
-  "nextExactAction": "Continue the repository-wide audit with failing-first tests; author and validate the next change package before implementation. 258 remains BLOCKED.",
-  "lastCompletedTask": "310 T7: reviewed requirement evidence and published checkpoint 697262f664dfdb80f2d48083884df002d08316df; parity C310 reconciled. All 13 verify:all gates (dependency-tree, program-state, typecheck, lint, build, release-bundle, file-audit 3113, unreferenced-source, addon-preflight, visual-goldens, unit 5894 passed, coverage, browser 145 passed) and isolated multiplayer performance (785.9 TPS / 1526.8 ms) passed.",
+  "sessionStartHead": "92b2b9305ec767677bf1fb8c575003c023d6a454",
+  "localHead": "92b2b9305ec767677bf1fb8c575003c023d6a454",
+  "publishedHead": "92b2b9305ec767677bf1fb8c575003c023d6a454",
+  "nextExactAction": "T0: author and validate complete OpenSpec package (proposal, design, tasks, verification, spec) for change 312.",
+  "lastCompletedTask": "311 T7: review requirement evidence, run full 13 verify:all gates and isolated multiplayer performance, update program state, and publish checkpoint to origin/main.",
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-297 are VERIFIED; game shippable with known performance-certification debt. The 297 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
   "validationResults": [
+    {
+      "change": "311-container-screen-and-block-entity-component-lifecycle",
+      "status": "VERIFIED",
+      "unitTests": 5907,
+      "e2eTests": 145,
+      "head": "92b2b9305ec767677bf1fb8c575003c023d6a454",
+      "note": "All 13 verify:all gates and isolated multiplayer performance passed. Remediated item component data loss and corruption across container screens (InventoryScreenParity dragEnd, doubleClickGather, sameSlot, sameMenu) and block entities (MenuTransaction validateSlot/validateCursor, BrewingStandBlockEntity validateSlot/consumeOne, LiveBlockEntityHost brewingStateEquals/furnaceStateEquals). Enforced strict slot/cursor hygiene rejecting components on empty slots/cursors, preserved components during screen drag distribution and double-click gather, ensured clean component removal upon slot depletion, and restored dirty chunk propagation and persistence when slot components change. Zero regressions across 5907 unit tests, 145 browser tests, and canonical multiplayer performance."
+    },
     {
       "change": "310-container-and-transfer-component-integrity",
       "status": "VERIFIED",

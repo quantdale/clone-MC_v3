@@ -112,6 +112,9 @@ function validateSlot(slot: MenuSlot, index: number): void {
     if (slot.count !== 0) {
       throw new Error(`MenuTransaction: slot ${index} with a null item must have count 0`);
     }
+    if (slot.components !== undefined) {
+      throw new Error(`MenuTransaction: slot ${index} with a null item must not have components`);
+    }
   } else {
     if (typeof slot.item !== 'string' || slot.item.length === 0) {
       throw new Error(`MenuTransaction: slot ${index}.item must be a non-empty string or null`);
@@ -131,6 +134,9 @@ function validateCursor(cursor: MenuCursor): void {
   if (cursor.item === null) {
     if (cursor.count !== 0) {
       throw new Error('MenuTransaction: cursor with a null item must have count 0');
+    }
+    if (cursor.components !== undefined) {
+      throw new Error('MenuTransaction: cursor with a null item must not have components');
     }
   } else {
     if (typeof cursor.item !== 'string' || cursor.item.length === 0) {

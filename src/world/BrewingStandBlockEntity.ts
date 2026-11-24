@@ -102,6 +102,9 @@ function validateSlot(slot: MenuSlot, what: string): void {
     if (slot.count !== 0) {
       throw new Error(`BrewingStandBlockEntity: ${what} with a null item must have count 0`);
     }
+    if (slot.components !== undefined) {
+      throw new Error(`BrewingStandBlockEntity: ${what} with a null item must not have components`);
+    }
   } else {
     if (typeof slot.item !== 'string' || slot.item.length === 0) {
       throw new Error(`BrewingStandBlockEntity: ${what}.item must be a non-empty string or null`);
@@ -210,7 +213,10 @@ function consumeOne(slot: MenuSlot): MenuSlot {
     throw new Error('BrewingStandBlockEntity: cannot consume from an empty slot');
   }
   const count = slot.count - 1;
-  return count === 0 ? { ...slot, item: null, count: 0 } : { ...slot, count };
+  if (count === 0) {
+    return { item: null, count: 0, maxStack: slot.maxStack };
+  }
+  return { ...slot, count };
 }
 
 /** Apply a recipe output to the bottle's potion contents; null when the result is invalid. */

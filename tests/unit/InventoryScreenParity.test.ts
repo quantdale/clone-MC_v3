@@ -8,6 +8,8 @@ import {
   dragHover,
   dragStart,
   hotbarSwap,
+  sameSlot,
+  sameMenu,
 } from '../../src/inventory/InventoryScreenParity';
 
 const EMPTY = (maxStack = 64): MenuSlot => ({ item: null, count: 0, maxStack });
@@ -199,5 +201,116 @@ describe('hotbar swap', () => {
       'InventoryScreenParity: targetIndex 99 is out of bounds for 18 slots',
     );
     expect(HOTBAR_SIZE).toBe(9);
+  });
+});
+
+describe('component lifecycle in screen interactions (311)', () => {
+  const FX_SPEED = { 'minecraft:potion_contents': { kind: 'NORMAL', customEffects: [{ typeId: 'speed', duration: 100, amplifier: 0 }] } };
+  const FX_HEAL = { 'minecraft:potion_contents': { kind: 'NORMAL', customEffects: [{ typeId: 'healing', duration: 1, amplifier: 0 }] } };
+
+  it('dragEnd delivers cursor components into empty slots and clears cursor components on completion', () => {
+    const base = menuWith({ item: null, count: 0 });
+    const menu: ContainerMenu = {
+      ...base,
+      cursor: { item: 'minecraft:potion', count: 2, components: FX_SPEED },
+    };
+    const drag = dragStart(dragHover(dragStart(createDragState(), 'left', 3), 4), 'left', 3);
+    const { menu: result } = dragEnd(menu, drag);
+    expect(result.slots[3]).toEqual({ item: 'minecraft:potion', count: 1, maxStack: 64, components: FX_SPEED });
+    expect(result.slots[4]).toEqual({ item: 'minecraft:potion', count: 1, maxStack: 64, components: FX_SPEED });
+    expect(result.cursor).toEqual({ item: null, count: 0 });
+    expect('components' in result.cursor).toBe(false);
+  });
+
+  it('dragEnd preserves cursor components when drag leaves a remainder', () => {
+    const base = menuWith({ item: null, count: 0 });
+    const slots = base.slots.map((s, i) => (i === 3 ? { item: null, count: 0, maxStack: 1 } : s));
+    const menu: ContainerMenu = {
+      ...base,
+      slots,
+      cursor: { item: 'minecraft:potion', count: 3, components: FX_SPEED },
+    };
+    const drag = dragStart(createDragState(), 'left', 3);
+    const { menu: result } = dragEnd(menu, drag);
+    expect(result.slots[3]).toEqual({ item: 'minecraft:potion', count: 1, maxStack: 1, components: FX_SPEED });
+    expect(result.cursor).toEqual({ item: 'minecraft:potion', count: 2, components: FX_SPEED });
+  });
+
+  it('dragEnd merges into occupied slot only when components match, and skips mismatched slot', () => {
+    const base = menuWith({ item: null, count: 0 });
+    const slots = base.slots.map((s, i) => {
+      if (i === 3) return { item: 'minecraft:potion', count: 1, maxStack: 64, components: FX_SPEED };
+      if (i === 4) return { item: 'minecraft:potion', count: 1, maxStack: 64, components: FX_HEAL };
+      return s;
+    });
+    const menu: ContainerMenu = {
+      ...base,
+      slots,
+      cursor: { item: 'minecraft:potion', count: 2, components: FX_SPEED },
+    };
+    // Hover slot 3 (matching FX_SPEED) and slot 4 (mismatched FX_HEAL)
+    const drag = dragStart(dragHover(dragStart(createDragState(), 'left', 3), 4), 'left', 3);
+    const { menu: result } = dragEnd(menu, drag);
+    // Slot 3 should have received items, slot 4 should be untouched
+    expect(result.slots[3]).toEqual({ item: 'minecraft:potion', count: 3, maxStack: 64, components: FX_SPEED });
+    expect(result.slots[4]).toEqual({ item: 'minecraft:potion', count: 1, maxStack: 64, components: FX_HEAL });
+    expect(result.cursor).toEqual({ item: null, count: 0 });
+  });
+
+  it('doubleClickGather gathers only slots with matching components and carries components onto empty cursor', () => {
+    const base = menuWith({ item: null, count: 0 });
+    const slots = base.slots.map((s, i) => {
+      if (i === 3) return { item: 'minecraft:potion', count: 2, maxStack: 64, components: FX_SPEED };
+      if (i === 4) return { item: 'minecraft:potion', count: 3, maxStack: 64, components: FX_HEAL };
+      if (i === 5) return { item: 'minecraft:potion', count: 4, maxStack: 64, components: FX_SPEED };
+      return s;
+    });
+    const menu: ContainerMenu = { ...base, slots, cursor: { item: null, count: 0 } };
+    // Double click slot 3 (FX_SPEED)
+    const result = doubleClickGather(menu, 3);
+    // Should gather slot 3 (2) + slot 5 (4) = 6 units of FX_SPEED, leaving slot 4 (FX_HEAL) untouched
+    expect(result.cursor).toEqual({ item: 'minecraft:potion', count: 6, components: FX_SPEED });
+    expect(result.slots[3]).toEqual({ item: null, count: 0, maxStack: 64 });
+    expect('components' in result.slots[3]!).toBe(false);
+    expect(result.slots[5]).toEqual({ item: null, count: 0, maxStack: 64 });
+    expect('components' in result.slots[5]!).toBe(false);
+    expect(result.slots[4]).toEqual({ item: 'minecraft:potion', count: 3, maxStack: 64, components: FX_HEAL });
+  });
+
+  it('doubleClickGather with active cursor gathers only matching components', () => {
+    const base = menuWith({ item: null, count: 0 });
+    const slots = base.slots.map((s, i) => {
+      if (i === 3) return { item: 'minecraft:potion', count: 2, maxStack: 64, components: FX_SPEED };
+      if (i === 4) return { item: 'minecraft:potion', count: 3, maxStack: 64, components: FX_HEAL };
+      return s;
+    });
+    const menu: ContainerMenu = {
+      ...base,
+      slots,
+      cursor: { item: 'minecraft:potion', count: 1, components: FX_HEAL },
+    };
+    // Click slot 4 (FX_HEAL)
+    const result = doubleClickGather(menu, 4);
+    // Cursor had 1 FX_HEAL, gathered 3 from slot 4 -> 4 FX_HEAL. Slot 3 (FX_SPEED) untouched.
+    expect(result.cursor).toEqual({ item: 'minecraft:potion', count: 4, components: FX_HEAL });
+    expect(result.slots[4]).toEqual({ item: null, count: 0, maxStack: 64 });
+    expect('components' in result.slots[4]!).toBe(false);
+    expect(result.slots[3]).toEqual({ item: 'minecraft:potion', count: 2, maxStack: 64, components: FX_SPEED });
+  });
+
+  it('sameSlot and sameMenu distinguish items with differing components (311)', () => {
+    const slotA: MenuSlot = { item: 'minecraft:potion', count: 1, maxStack: 64, components: FX_SPEED };
+    const slotB: MenuSlot = { item: 'minecraft:potion', count: 1, maxStack: 64, components: FX_HEAL };
+    const slotPlain: MenuSlot = { item: 'minecraft:potion', count: 1, maxStack: 64 };
+    expect(sameSlot(slotA, slotA)).toBe(true);
+    expect(sameSlot(slotA, slotB)).toBe(false);
+    expect(sameSlot(slotA, slotPlain)).toBe(false);
+
+    const menuA = menuWith({ item: 'minecraft:potion', count: 1 });
+    menuA.cursor.components = FX_SPEED;
+    const menuB = menuWith({ item: 'minecraft:potion', count: 1 });
+    menuB.cursor.components = FX_HEAL;
+    expect(sameMenu(menuA, menuA)).toBe(true);
+    expect(sameMenu(menuA, menuB)).toBe(false);
   });
 });

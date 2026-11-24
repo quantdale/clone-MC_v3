@@ -57,6 +57,7 @@ import {
   type BrewingState,
 } from '../world/BrewingStandBlockEntity';
 import type { BrewingContext } from '../inventory/BrewingRecipes';
+import { menuComponentsEqual } from '../inventory/MenuTransaction';
 
 /** Minimal world surface the host needs (kept narrow for testability). */
 export interface HostWorldView {
@@ -86,7 +87,7 @@ function chunkCoords(x: number, z: number): { cx: number; cz: number } {
 
 function brewingStateEquals(a: BrewingState, b: BrewingState): boolean {
   const slotEquals = (x: BrewingState['bottle'], y: BrewingState['bottle']) =>
-    x.item === y.item && x.count === y.count;
+    x.item === y.item && x.count === y.count && menuComponentsEqual(x.components, y.components);
   return (
     slotEquals(a.bottle, b.bottle) &&
     slotEquals(a.fuel, b.fuel) &&
@@ -100,7 +101,7 @@ function brewingStateEquals(a: BrewingState, b: BrewingState): boolean {
 
 function furnaceStateEquals(a: FurnaceState, b: FurnaceState): boolean {
   const slotEquals = (x: FurnaceState['input'], y: FurnaceState['input']) =>
-    x.item === y.item && x.count === y.count;
+    x.item === y.item && x.count === y.count && menuComponentsEqual(x.components, y.components);
   return (
     slotEquals(a.input, b.input) &&
     slotEquals(a.fuel, b.fuel) &&

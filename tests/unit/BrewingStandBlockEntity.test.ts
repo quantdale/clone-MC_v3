@@ -109,6 +109,28 @@ describe("createBrewingState / validateBrewingState", () => {
       }),
     ).toThrow(/components must be an object/);
   });
+
+  it("rejects an empty slot carrying components (311)", () => {
+    const bad = createBrewingState();
+    expect(() =>
+      validateBrewingState({
+        ...bad,
+        fuel: { item: null, count: 0, maxStack: 64, components: { test: 1 } },
+      }),
+    ).toThrow(/fuel with a null item must not have components/);
+    expect(() =>
+      validateBrewingState({
+        ...bad,
+        bottle: { item: null, count: 0, maxStack: 64, components: { test: 1 } },
+      }),
+    ).toThrow(/bottle with a null item must not have components/);
+    expect(() =>
+      validateBrewingState({
+        ...bad,
+        ingredient: { item: null, count: 0, maxStack: 64, components: { test: 1 } },
+      }),
+    ).toThrow(/ingredient with a null item must not have components/);
+  });
 });
 
 describe("readBottleContents", () => {
@@ -153,6 +175,21 @@ describe("tickBrewing: fuel gating", () => {
     expect(brewingIsLit(next)).toBe(true);
   });
 
+  it("deletes components when fuel with components is consumed down to 0 (311)", () => {
+    const s: BrewingState = {
+      bottle: waterBottle(),
+      fuel: { item: BLAZE_POWDER_ITEM, count: 1, maxStack: 64, components: { custom: true } },
+      ingredient: slot(NETHER_WART_ITEM, 1),
+      brewTime: 0,
+      brewTimeTotal: 0,
+      fuelBurnTime: 0,
+      fuelBurnTimeTotal: 0,
+    };
+    const next = tickBrewing(s, ctx, 1);
+    expect(next.fuel).toEqual({ item: null, count: 0, maxStack: 64 });
+    expect('components' in next.fuel).toBe(false);
+  });
+
   it("does not consume fuel when no recipe applies", () => {
     const s: BrewingState = {
       bottle: waterBottle(),
@@ -190,6 +227,21 @@ describe("tickBrewing: brew completion (modifier)", () => {
     expect(next.ingredient).toEqual(slot(null, 0)); // one consumed
     expect(next.brewTime).toBe(0);
     expect(next.brewTimeTotal).toBe(0);
+  });
+
+  it("deletes components when ingredient with components is consumed down to 0 (311)", () => {
+    const s: BrewingState = {
+      bottle: awkwardBottle(),
+      fuel: slot(BLAZE_POWDER_ITEM, 1),
+      ingredient: { item: REDSTONE_ITEM, count: 1, maxStack: 64, components: { custom: true } },
+      brewTime: 399,
+      brewTimeTotal: 400,
+      fuelBurnTime: 10,
+      fuelBurnTimeTotal: 10,
+    };
+    const next = tickBrewing(s, ctx, 1);
+    expect(next.ingredient).toEqual({ item: null, count: 0, maxStack: 64 });
+    expect('components' in next.ingredient).toBe(false);
   });
 });
 

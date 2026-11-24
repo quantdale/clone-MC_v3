@@ -423,4 +423,27 @@ describe('brewing hydration and quarantine (260)', () => {
     expect(rig2.host.hydrate(saved)).toEqual({ hydrated: 1, quarantined: 0 });
     expect(rig2.host.getBrewingState(X, Y, Z)?.bottle).toEqual(awkwardBottle());
   });
+
+  it('detects component changes on bottle slot and marks chunk dirty (311)', () => {
+    const rig = makeRig(REAL_CTX);
+    rig.world.setBlock(X, Y, Z, BREWING_STAND_BLOCK_ID);
+    rig.world.simulating.add('0,-1');
+    rig.host.placeBrewing(X, Y, Z);
+    rig.host.applyBrewingMenuSlots(X, Y, Z, {
+      bottle: awkwardBottle(),
+      fuel: slot(BLAZE_POWDER_ITEM, 1),
+      ingredient: slot(REDSTONE_ITEM, 1),
+    });
+    rig.persistence.calls.length = 0;
+    // Advance brew until completion (400 ticks)
+    for (let i = 0; i < 400; i++) {
+      rig.host.tickBrewingStands();
+    }
+    // The stand should have brewed and persisted
+    const lastSaved = rig.persistence.saved.get('0,-1');
+    expect(lastSaved).toBeDefined();
+    const standData = lastSaved![0]!.data as BrewingState;
+    expect(standData.bottle.components?.[POTION_CONTENTS_KEY]).toBeDefined();
+    expect(standData.bottle.components?.[POTION_CONTENTS_KEY]).not.toEqual(awkwardBottle().components?.[POTION_CONTENTS_KEY]);
+  });
 });
