@@ -15,8 +15,8 @@
   "advancementAllowed": true,
   "exceptionUsed": false,
   "sessionStartHead": "b91b5ace2474259f500ca58be236741fc9c679d2",
-  "localHead": "b91b5ace2474259f500ca58be236741fc9c679d2",
-  "publishedHead": "b91b5ace2474259f500ca58be236741fc9c679d2",
+  "localHead": "005a325dd1487abfc996ea3531684fd3a086f912",
+  "publishedHead": "005a325dd1487abfc996ea3531684fd3a086f912",
   "nextExactAction": "Continue the repository-wide audit or activate change 314 when new actionable findings are identified; 258 remains BLOCKED.",
   "lastCompletedTask": "313 T6: reconcile state, parity matrix, and file-audit manifest and verify all gates.",
   "blockers": [
@@ -28,7 +28,7 @@
       "status": "VERIFIED",
       "unitTests": 5917,
       "e2eTests": 145,
-      "head": "pending",
+      "head": "005a325dd1487abfc996ea3531684fd3a086f912",
       "note": "All 12 verify:all pre-E2E gates, 5917/5917 unit tests (487 files + 1 skipped), coverage (91.96%/88.69%/95.19%/93.23%), 145/145 Playwright E2E (committed=151 failed=0), and isolated multiplayer performance (838.1 TPS / 1431.8 ms) passed. Fixed World.processMeshing pre-stage ungenerated chunk deferral, World.processCanonicalSectionMeshing missing-column inFlight rollback, World.beginEditHydration post-dispose guard, and Game selfOpenPromise/savePlayerStateDurable async dispose guards."
     },
     {
@@ -2790,6 +2790,11 @@
     }
   ],
   "publicationHistory": [
+    {
+      "head": "005a325dd1487abfc996ea3531684fd3a086f912",
+      "at": "2026-11-25T09:47:37+08:00",
+      "note": "Change 313 VERIFIED (6/6): World.processMeshing pre-stage ungenerated deferral, World.processCanonicalSectionMeshing missing-column inFlight rollback, World.beginEditHydration post-dispose guard, and Game primary selfOpenPromise/savePlayerStateDurable dispose guards. 12 pre-E2E gates, 5917 unit tests (487 files + 1 skipped), coverage (91.96%/88.69%/95.19%/93.23%), 145/145 Playwright E2E (committed=151 failed=0), and isolated multiplayer performance (838.1 TPS / 1431.8 ms) passed."
+    },
     {
       "head": "4deb9fbffd9c43921ca60cccf5877332c0ee8c97",
       "at": "2026-11-25T02:06:27+08:00",
