@@ -1014,6 +1014,7 @@ export class Game {
       this.selfOpenPromise = composed
         .open()
         .then((result) => {
+          if (this.disposed) return;
           this.applyInitialWorldData(result.initialColumns, result.generationBaseline, result.initialEdits);
           // Startup compatibility decision (257) with canonical data now loaded:
           // recovery-required worlds enter the paused recovery state; preserved
@@ -1034,6 +1035,7 @@ export class Game {
           }
         })
         .catch(() => {
+          if (this.disposed) return;
           // Offline-first: an unusable storage layer degrades visibly instead
           // of preventing the game from starting (memory-only play).
           this.bootSaveDegraded = true;
@@ -7273,6 +7275,7 @@ export class Game {
     void p
       .flush()
       .then((r) => {
+        if (this.disposed) return;
         // A verified durable commit clears the sticky boot warning (SAVE-FAIL-3).
         if (r.committed > 0) {
           this.bootSaveDegraded = false;

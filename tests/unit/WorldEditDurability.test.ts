@@ -350,4 +350,33 @@ describe('world edit durability bridge', () => {
     streamUntilGenerated(restored, 0, 0);
     expect(restored.getBlock(8, 8, 8)).toBe(BlockId.Sand);
   });
+
+  it('ignores late committed edit hydration resolution after World.dispose()', async () => {
+    const durability = new MockDurability();
+    let resolveLoad!: (v: Array<[number, number]> | null) => void;
+    const gate = new Promise<Array<[number, number]> | null>((resolve) => {
+      resolveLoad = resolve;
+    });
+    durability.loadImpl = () => gate;
+    const world = makeWorldWithDurability(12, durability);
+
+    const idx = localIndex(5, 20, 5);
+    streamUntilGenerated(world, 2, 3);
+    expect(durability.loadCallsByKey.get('2,0,3')).toBe(1);
+
+    world.dispose();
+    expect(world.getEditOverlayChunkCount()).toBe(0);
+
+    resolveLoad([[idx, BlockId.Dirt]]);
+    for (let i = 0; i < 6; i++) await Promise.resolve();
+
+    const priv = world as unknown as {
+      editOverlayAccessOrder: string[];
+      hydrationPending: Set<string>;
+    };
+    expect(world.getEditOverlayChunkCount()).toBe(0);
+    expect(priv.editOverlayAccessOrder).toHaveLength(0);
+    expect(priv.hydrationPending.size).toBe(0);
+    expect(world.storage.getBlock(2 * 16 + 5, 20, 3 * 16 + 5)).toBe(BlockId.Stone);
+  });
 });

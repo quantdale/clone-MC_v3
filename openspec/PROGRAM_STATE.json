@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "status": "ACTIVE",
-  "currentChange": "312-autosave-flush-and-dispose-concurrency-integrity",
+  "currentChange": "313-world-meshing-deferral-and-async-dispose-guards",
   "currentChangeStatus": "VERIFIED",
-  "lastCompletedChange": "312-autosave-flush-and-dispose-concurrency-integrity",
-  "nextChange": "313",
-  "completedTasks": 7,
-  "totalTasks": 7,
+  "lastCompletedChange": "313-world-meshing-deferral-and-async-dispose-guards",
+  "nextChange": "314",
+  "completedTasks": 6,
+  "totalTasks": 6,
   "completionPercentage": 100,
   "targetCompletionPercentage": 100,
   "minimumCompletionPercentage": 90,
@@ -14,15 +14,23 @@
   "requiredTestsPass": true,
   "advancementAllowed": true,
   "exceptionUsed": false,
-  "sessionStartHead": "98df628ec9adf7a839d94f484203d8e66f2570a9",
-  "localHead": "4deb9fbffd9c43921ca60cccf5877332c0ee8c97",
-  "publishedHead": "4deb9fbffd9c43921ca60cccf5877332c0ee8c97",
-  "nextExactAction": "Continue the repository-wide audit or activate change 313 when new actionable findings are identified; 258 remains BLOCKED.",
-  "lastCompletedTask": "312 T7: verify all gates and isolated multiplayer performance, reconcile state and parity matrix, and publish checkpoint to origin/main.",
+  "sessionStartHead": "b91b5ace2474259f500ca58be236741fc9c679d2",
+  "localHead": "b91b5ace2474259f500ca58be236741fc9c679d2",
+  "publishedHead": "b91b5ace2474259f500ca58be236741fc9c679d2",
+  "nextExactAction": "Continue the repository-wide audit or activate change 314 when new actionable findings are identified; 258 remains BLOCKED.",
+  "lastCompletedTask": "313 T6: reconcile state, parity matrix, and file-audit manifest and verify all gates.",
   "blockers": [
     "Owner-deferred headed hardware-WebGL certification (2026-09-11, Michael via Minecraft Clone Dev): Change 258 BLOCKED at 40/100; host is Grok Bot computer / Linux, Chrome 151.0.7922.169, SwiftShader-only software WebGL, no /dev/dri, no nvidia-smi. Strictly headed-blocked tasks 3, 6-15, 29, 34, 91-95, 97-98; headed-profiling-gated tasks 39, 41, 48-57, 59-63, 65, 67-76, 78-81, 83, 86-90; process-closure tasks 99-100. Completed 40/100 environment-independent tasks (1, 2, 4, 5, 16-28, 30-33, 35-38, 40, 42-47, 58, 64, 66, 77, 82, 84, 85, 96-headless); production default remains sync meshing with no quality retune. Changes 001-257 and 259-297 are VERIFIED; game shippable with known performance-certification debt. The 297 track MUST NOT touch headed FPS work, fake GPU evidence, or mark 258 VERIFIED."
   ],
   "validationResults": [
+    {
+      "change": "313-world-meshing-deferral-and-async-dispose-guards",
+      "status": "VERIFIED",
+      "unitTests": 5917,
+      "e2eTests": 145,
+      "head": "pending",
+      "note": "All 12 verify:all pre-E2E gates, 5917/5917 unit tests (487 files + 1 skipped), coverage (91.96%/88.69%/95.19%/93.23%), 145/145 Playwright E2E (committed=151 failed=0), and isolated multiplayer performance (838.1 TPS / 1431.8 ms) passed. Fixed World.processMeshing pre-stage ungenerated chunk deferral, World.processCanonicalSectionMeshing missing-column inFlight rollback, World.beginEditHydration post-dispose guard, and Game selfOpenPromise/savePlayerStateDurable async dispose guards."
+    },
     {
       "change": "312-autosave-flush-and-dispose-concurrency-integrity",
       "status": "VERIFIED",

@@ -2,11 +2,17 @@ import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
 import { World } from '../../src/world/World';
 import { createDefaultBlockRegistry, BlockId } from '../../src/world/BlockRegistry';
-import { Chunk } from '../../src/world/Chunk';
+import { createDefaultBlockStateRegistry } from '../../src/world/BlockStateRegistry';
+import { Chunk, ChunkState } from '../../src/world/Chunk';
 import { DimensionType } from '../../src/data/DimensionType';
+import { OVERWORLD_DIMENSION_TYPE } from '../../src/data/DimensionTypes';
 import { createResourceId } from '../../src/data/ResourceId';
 import { CONFIG } from '../../src/config';
 import { CHUNK_PIPELINE_QUEUE_CAPS } from '../../src/world/ChunkPipeline';
+import { ChunkStreamPriority } from '../../src/world/ChunkTicket';
+import { ChunkLifecycleStage } from '../../src/world/ChunkStatus';
+import { createChunkWorkPriority } from '../../src/world/ChunkWorkPriority';
+import { emptyMeshBuildResult, type ChunkMeshResult } from '../../src/world/MeshingTypes';
 
 /**
  * Streaming behavior under a saturated work pipeline.
@@ -210,4 +216,95 @@ describe('World streaming under queue saturation', () => {
     expect(ready).toBe(1);
     world.dispose();
   }, 30_000);
+
+  it('defers an ungenerated chunk in processMeshing without stranding mesh inFlight or dropping the job', () => {
+    const world = makeWorld(0);
+    const priv = world as unknown as {
+      chunkManager: { createChunk(cx: number, cy: number, cz: number): Chunk; pipeline: import('../../src/world/ChunkPipeline').ChunkPipeline };
+      processMeshing(): void;
+    };
+    const chunk = priv.chunkManager.createChunk(0, 0, 0);
+    chunk.generated = false;
+    const pipeline = priv.chunkManager.pipeline;
+    const key = '0,0,0';
+    for (const stage of ['generate', 'features', 'light'] as const) {
+      expect(pipeline.beginStage(key, stage, 0).ok).toBe(true);
+      expect(pipeline.completeStage(key, stage, 0).ok).toBe(true);
+    }
+    const details = createChunkWorkPriority(ChunkStreamPriority.VisibleNear, 0, 0, 0, 0, 0);
+    expect(pipeline.enqueue('mesh', 0, 0, 0, ChunkStreamPriority.VisibleNear, details)).toBe(true);
+
+    priv.processMeshing();
+    const deferredRecord = pipeline.getRecord(key)!;
+    expect(deferredRecord.inFlight.has('mesh')).toBe(false);
+    expect(deferredRecord.status).toBe(ChunkLifecycleStage.Lighted);
+    expect(pipeline.queueDepth('mesh')).toBe(1);
+
+    chunk.generated = true;
+    priv.processMeshing();
+    expect(deferredRecord.inFlight.size).toBe(0);
+    expect(chunk.state).toBe(ChunkState.Visible);
+    world.dispose();
+  });
+
+  it('rolls back in-flight mesh stage when canonical column is missing on active generation', () => {
+    const registry = createDefaultBlockRegistry();
+    const stateRegistry = createDefaultBlockStateRegistry();
+    const world = new World({
+      registry,
+      stateRegistry,
+      seed: 1337,
+      scene: new THREE.Scene(),
+      mesher: {
+        mesh: () => ({
+          opaque: null,
+          transparent: null,
+          cutout: null,
+          translucent: null,
+          fluid: null,
+          streams: emptyMeshBuildResult(),
+        }),
+        meshSection: (): ChunkMeshResult => ({
+          opaque: null,
+          transparent: null,
+          cutout: null,
+          translucent: null,
+          fluid: null,
+          streams: emptyMeshBuildResult(),
+        }),
+      } as never,
+      generator: {
+        generateColumn(): void {},
+        getHeightAt(): number {
+          return 64;
+        },
+      } as never,
+      materials: {
+        opaque: new THREE.MeshLambertMaterial(),
+        transparent: new THREE.MeshLambertMaterial(),
+      },
+      renderDistance: 0,
+      dimension: OVERWORLD_DIMENSION_TYPE,
+    });
+    const priv = world as unknown as {
+      chunkManager: { createChunk(cx: number, cy: number, cz: number): Chunk; pipeline: import('../../src/world/ChunkPipeline').ChunkPipeline };
+      captureSectionVersions(c: Chunk): unknown;
+      processCanonicalSectionMeshing(c: Chunk, g: number, v: unknown): void;
+    };
+    const chunk = priv.chunkManager.createChunk(0, 0, 0);
+    chunk.generated = true;
+    const pipeline = priv.chunkManager.pipeline;
+    const key = '0,0,0';
+    for (const stage of ['generate', 'features', 'light'] as const) {
+      expect(pipeline.beginStage(key, stage, 0).ok).toBe(true);
+      expect(pipeline.completeStage(key, stage, 0).ok).toBe(true);
+    }
+    expect(pipeline.beginStage(key, 'mesh', 0).ok).toBe(true);
+
+    const snapshot = priv.captureSectionVersions(chunk);
+    priv.processCanonicalSectionMeshing(chunk, 0, snapshot);
+
+    expect(pipeline.getRecord(key)!.inFlight.has('mesh')).toBe(false);
+    world.dispose();
+  });
 });

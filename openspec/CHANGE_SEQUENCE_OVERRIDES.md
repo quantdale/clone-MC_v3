@@ -1,5 +1,15 @@
 # Change Sequence Overrides
 
+## 313 activation — world meshing deferral and async dispose guards (2026-11-25)
+
+Following VERIFIED change 312, continuing the repository-wide audit uncovered three lifecycle and state-machine defects across `src/world/World.ts` and `src/engine/Game.ts`:
+(1) `World.processMeshing()` invokes `pipeline.beginStage(job.key, 'mesh', job.version)` before checking `!chunk || !chunk.generated` deferral, which either drops an unready chunk on `invalid-transition` or leaves `'mesh'` in `record.inFlight` when re-enqueueing so `dequeue('mesh')` drops it as stale and strands `'mesh'` in `inFlight`; additionally `World.processCanonicalSectionMeshing()` returns early on `!column` without calling `failStage(..., 'mesh')` on the matching generation;
+(2) `World.beginEditHydration()` mutates `storage`, `editOverlay`, and `editOverlayAccessOrder` when `loadCommittedChunkEdits` settles after `World.dispose()`;
+(3) `Game` constructor's `composed.open().then(...)` / `.catch(...)` (`selfOpenPromise`) and `savePlayerStateDurable()` `.then(...)` lack `if (this.disposed) return;` guards.
+`313-world-meshing-deferral-and-async-dispose-guards` is the sole ACTIVE change, with spec-first artifacts
+and failing-first tests required. Starting head `b91b5ace2474259f500ca58be236741fc9c679d2`. Change 258
+remains BLOCKED under its owner deferral; no headed GPU evidence is claimed.
+
 ## 312 activation — autosave flush and dispose concurrency integrity (2026-11-25)
 
 Following VERIFIED change 311, browser verification (`tests/e2e/persistence.spec.ts`) and storage

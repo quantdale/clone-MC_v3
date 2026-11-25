@@ -1547,19 +1547,19 @@ export class World implements WorldAccess {
       }
       const t0 = performance.now();
       const record = pipeline.getRecord(job.key);
-      if (!record) continue;
-      if (pipeline.beginStage(job.key, 'mesh', job.version).ok === false) {
-        continue; // stale token or unknown chunk
-      }
+      if (!record || record.generation !== job.version) continue;
       const chunk = this.chunkManager.getChunk(job.cx, job.cy, job.cz);
       if (!chunk || !chunk.generated) {
         // Generation has not caught up with this entry (defensive: neighbours
-        // are only mesh-dirtied once generated). Defer it intact instead of
-        // failing — a failed stage would bump the generation token and strand
-        // the queued job as stale — and stop draining so a not-yet-generatable
-        // entry cannot starve the frame's mesh budget.
+        // are only mesh-dirtied once generated). Defer it BEFORE calling
+        // beginStage('mesh') so record.inFlight and record.status stay intact
+        // instead of stranding 'mesh' in flight or failing the stage token,
+        // and stop draining so an unready entry cannot starve the frame budget.
         pipeline.enqueue('mesh', job.cx, job.cy, job.cz, job.priority, job.priorityDetails);
         break;
+      }
+      if (pipeline.beginStage(job.key, 'mesh', job.version).ok === false) {
+        continue; // stale token, in-flight collision, or invalid transition
       }
 
       const versionSnapshot = this.captureSectionVersions(chunk);
@@ -1642,7 +1642,13 @@ export class World implements WorldAccess {
   ): void {
     const column = this.storage.getColumn(chunk.cx, chunk.cz);
     const record = this.chunkManager.pipeline.getRecordByCoords(chunk.cx, chunk.cy, chunk.cz);
-    if (!column || !record || record.generation !== generation) {
+    if (!column) {
+      if (record?.generation === generation && record.inFlight.has('mesh')) {
+        this.chunkManager.pipeline.failStage(chunkKey(chunk.cx, chunk.cy, chunk.cz), 'mesh');
+      }
+      return;
+    }
+    if (!record || record.generation !== generation) {
       return;
     }
 
@@ -2069,6 +2075,9 @@ export class World implements WorldAccess {
     this.editDurability!
       .loadCommittedChunkEdits(cx, cy, cz)
       .then((changes) => {
+        if (this.disposed) {
+          return;
+        }
         if (!changes || changes.length === 0) {
           return;
         }

@@ -345,6 +345,7 @@ Narrow-outcome text is quoted from `openspec/CHANGE_SEQUENCE.md` (authoritative 
 | C310 | `310-container-and-transfer-component-integrity` | Preserve item components across container serialization (chest, furnace, smoker) and enforce component-aware automated transfer/ejection (hopper, dropper, dispenser). | exact | `openspec/changes/310-container-and-transfer-component-integrity/verification.md` (VERIFIED) | Zero GPU claims; C258 remains deferred. | VERIFIED |
 | C311 | `311-container-screen-and-block-entity-component-lifecycle` | Enforce component preservation and null-slot hygiene across container screens (drag, double-click gather, slot/menu equality) and block entities (brewing stand empty slot hygiene, clean depletion, host equality). | exact | `openspec/changes/311-container-screen-and-block-entity-component-lifecycle/verification.md` (VERIFIED) | Zero GPU claims; C258 remains deferred. | VERIFIED |
 | C312 | `312-autosave-flush-and-dispose-concurrency-integrity` | Eliminate concurrent tick/flush premature exit and settle chained raw metadata writes across `AutosaveCoordinator.flush()` and `GamePersistence.dispose()` / `flush()`. | exact | `openspec/changes/312-autosave-flush-and-dispose-concurrency-integrity/verification.md` (VERIFIED) | Zero GPU claims; C258 remains deferred. | VERIFIED |
+| C313 | `313-world-meshing-deferral-and-async-dispose-guards` | Defer ungenerated chunks before `beginStage('mesh')` in `World.processMeshing()`, roll back in-flight `'mesh'` on missing canonical column in `processCanonicalSectionMeshing()`, and enforce `this.disposed` guards on `World.beginEditHydration()` and `Game` async open/flush continuations. | exact | `openspec/changes/313-world-meshing-deferral-and-async-dispose-guards/verification.md` (VERIFIED) | Zero GPU claims; C258 remains deferred. | VERIFIED |
 
 ## Master-plan-only features
 
@@ -412,14 +413,14 @@ Feature areas named in `MINECRAFT_PARITY_MASTER_PLAN.md` that no single numbered
 
 | Category | Rows |
 |---|---|
-| exact | 298 (297 numbered rows plus MP-19.4-1 Wither-like secondary boss via C252) |
+| exact | 299 (298 numbered rows plus MP-19.4-1 Wither-like secondary boss via C252) |
 | equivalent | 4 |
 | approx | 6 |
 | deferred | 1 (C258 — BLOCKED headed hardware-WebGL evidence) |
 | out-of-scope | 1 (MP-33-1 proprietary services/assets) |
 | n/a (documentation) | 4 (C248, C249, C250, C268) |
-| **Total rows** | **314** (312 change rows + 2 master-plan rows) |
+| **Total rows** | **315** (313 change rows + 2 master-plan rows) |
 
-Change-rows-only split: exact 297 / equivalent 4 / approx 6 / deferred 1 / n/a 4 = 312.
+Change-rows-only split: exact 298 / equivalent 4 / approx 6 / deferred 1 / n/a 4 = 313.
 
-**Coverage statement:** every numbered change 001–312 appears in exactly one row (bijective `C001`…`C312`, no duplicates, no orphan rows). Every completed change maps to a cited VERIFIED artifact; C258 is explicitly documented as BLOCKED rather than upgraded to VERIFIED. The two additional `MP-*` rows cover master-plan areas outside the numbered sequence; MP-19.4-1 is closed `exact` by C252. The matrix audit is cross-checked against the package evidence and `openspec/PROGRAM_STATE.json`; the current state validator still owns its historical 001–250 schema checks and does not treat C258 as verified.
+**Coverage statement:** every numbered change 001–313 appears in exactly one row (bijective `C001`…`C313`, no duplicates, no orphan rows). Every completed change maps to a cited VERIFIED artifact; C258 is explicitly documented as BLOCKED rather than upgraded to VERIFIED. The two additional `MP-*` rows cover master-plan areas outside the numbered sequence; MP-19.4-1 is closed `exact` by C252. The matrix audit is cross-checked against the package evidence and `openspec/PROGRAM_STATE.json`; the current state validator still owns its historical 001–250 schema checks and does not treat C258 as verified.

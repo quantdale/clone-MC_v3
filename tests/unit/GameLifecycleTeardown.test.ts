@@ -108,4 +108,28 @@ describe('GameLifecycleTeardown (309 / R2 & R3)', () => {
       expect(matSpy).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe('Game async open and flush dispose guards (313 / REQ-WMD-4)', () => {
+    it('primary composed.open() .then/.catch continuations return immediately when this.disposed is true', () => {
+      const openBlockStart = gameSource.indexOf('this.selfOpenPromise = composed');
+      expect(openBlockStart).toBeGreaterThan(-1);
+      const openBlock = gameSource.slice(
+        openBlockStart,
+        gameSource.indexOf('this.blockRegistry = createDefaultBlockRegistry();', openBlockStart),
+      );
+      const thenMatch = openBlock.match(/\.then\(\(result\)\s*=>\s*\{([\s\S]*?)\n\s*\}\)\s*\n\s*\.catch\(/);
+      const catchMatch = openBlock.match(/\.catch\(\(\)\s*=>\s*\{([\s\S]*?)\}\);/);
+      expect(thenMatch).not.toBeNull();
+      expect(catchMatch).not.toBeNull();
+      expect(thenMatch![1]).toMatch(/^\s*if\s*\(\s*this\.disposed\s*\)\s*return;/);
+      expect(catchMatch![1]).toMatch(/^\s*if\s*\(\s*this\.disposed\s*\)\s*return;/);
+    });
+
+    it('savePlayerStateDurable() flush continuation returns immediately when this.disposed is true', () => {
+      const saveBody = methodBody(gameSource, '  private savePlayerStateDurable(): void');
+      const thenMatch = saveBody.match(/\.then\(\(r\)\s*=>\s*\{([\s\S]*?)\}\)/);
+      expect(thenMatch).not.toBeNull();
+      expect(thenMatch![1]).toMatch(/if\s*\(\s*this\.disposed\s*\)\s*return;/);
+    });
+  });
 });

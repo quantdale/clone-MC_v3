@@ -1,0 +1,8 @@
+# Tasks: 313-world-meshing-deferral-and-async-dispose-guards
+
+- [x] T1: Add failing-first unit tests in `tests/unit/WorldStreamingSaturation.test.ts`, `tests/unit/WorldEditDurability.test.ts`, and `tests/unit/GameLifecycleTeardown.test.ts` proving ungenerated mesh deferral `inFlight` stranding, missing-column canonical mesh `inFlight` leak, post-dispose `beginEditHydration` mutation, and unguarded `Game` async continuations.
+- [x] T2: Reorder `World.processMeshing` to validate `record.generation` and defer `!chunk || !chunk.generated` before `pipeline.beginStage('mesh')`, roll back `'mesh'` on missing canonical column in `World.processCanonicalSectionMeshing`, and add `if (this.disposed) return;` inside `World.beginEditHydration`.
+- [x] T3: Add `if (this.disposed) return;` guards inside `Game`'s `composed.open().then(...)`, `composed.open().catch(...)`, and `savePlayerStateDurable()` `.then(...)` handlers in `src/engine/Game.ts`.
+- [x] T4: Run focused unit tests (`WorldStreamingSaturation.test.ts`, `WorldEditDurability.test.ts`, `WorldDispose.test.ts`, `WorldOwnershipReclamation.test.ts`, `GameLifecycleTeardown.test.ts`) to confirm failures turn green with zero regressions.
+- [x] T5: Run the full verification gate suite (`verify:deps`, `validate-state`, `typecheck`, `lint`, `npm test`, `test:coverage`, `build`, `check-release-bundle`, `verify:file-audit`, `verify:orphans`, `verify:mcp`, `verify:visual-goldens`, `npm run test:e2e`) and isolated `npm run test:perf:multiplayer`.
+- [x] T6: Reconcile `tasks.md`, `verification.md`, `PARITY_MATRIX.md` (`C313`), `PROGRAM_STATE.json`, `PROGRAM_STATE.md`, and `file-audit-manifest.json`, commit cleanly, and push directly to `origin/main`.

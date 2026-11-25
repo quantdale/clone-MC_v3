@@ -10,7 +10,7 @@
     "historical-evidence",
     "third-party-lockfile"
   ],
-  "total": 3123,
+  "total": 3128,
   "rows": [
     {
       "path": ".agent/EXECUTION_PROMPT.md",
@@ -26947,6 +26947,46 @@
       "purpose": "Change 312 verification evidence",
       "reviewLevel": "semantic",
       "reviewNotes": "Baseline verification initialized; full gate pending implementation.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/313-world-meshing-deferral-and-async-dispose-guards/design.md",
+      "category": "spec",
+      "purpose": "Change 313 design for world meshing deferral and async dispose guards",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed pre-stage meshing deferral, canonical missing-column failStage rollback, and World/Game async dispose guards.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/313-world-meshing-deferral-and-async-dispose-guards/proposal.md",
+      "category": "spec",
+      "purpose": "Change 313 proposal for world meshing deferral and async dispose guards",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed narrow scope addressing inFlight stranding and post-dispose async continuations.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/313-world-meshing-deferral-and-async-dispose-guards/specs/world-meshing-and-dispose-guards/spec.md",
+      "category": "spec",
+      "purpose": "Change 313 normative requirements REQ-WMD-1 through REQ-WMD-4",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed normative requirements and verification mapping.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/313-world-meshing-deferral-and-async-dispose-guards/tasks.md",
+      "category": "spec",
+      "purpose": "Change 313 task checkpoint",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Reviewed task breakdown and gate closure.",
+      "status": "audited"
+    },
+    {
+      "path": "openspec/changes/313-world-meshing-deferral-and-async-dispose-guards/verification.md",
+      "category": "spec",
+      "purpose": "Change 313 verification evidence",
+      "reviewLevel": "semantic",
+      "reviewNotes": "Verification record for Change 313.",
       "status": "audited"
     },
     {

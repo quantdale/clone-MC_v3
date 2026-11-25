@@ -534,17 +534,17 @@ Session start `350b557a090b01c2d5d5574fb7ae9aa1e6fc52c3` matches live `origin/ma
 > VERIFIED. No numbered change 251 exists; the autonomous loop is terminal.
 
 <!-- Validator-compatibility bullets (scripts/validate-state.mjs parses these exact keys). -->
-- Active implementation change: **312-autosave-flush-and-dispose-concurrency-integrity — VERIFIED (7/7); 258 BLOCKED, 259–312 VERIFIED**
-- Prior active implementation change: **311-container-screen-and-block-entity-component-lifecycle — VERIFIED (7/7); 258 stays BLOCKED, 259–311 stay VERIFIED**
-- Prior prior active implementation change: **310-container-and-transfer-component-integrity — VERIFIED (7/7); 258 stays BLOCKED, 259–310 stay VERIFIED**
-- Next change: **313 — pending 313; 258 stays BLOCKED**
+- Active implementation change: **313-world-meshing-deferral-and-async-dispose-guards — VERIFIED (6/6); 258 BLOCKED, 259–313 VERIFIED**
+- Prior active implementation change: **312-autosave-flush-and-dispose-concurrency-integrity — VERIFIED (7/7); 258 stays BLOCKED, 259–312 stay VERIFIED**
+- Prior prior active implementation change: **311-container-screen-and-block-entity-component-lifecycle — VERIFIED (7/7); 258 stays BLOCKED, 259–311 stay VERIFIED**
+- Next change: **314 — pending 314; 258 stays BLOCKED**
 - 240 advancement allowed: **yes**
 
-- Program: **ACTIVE — Change 312-autosave-flush-and-dispose-concurrency-integrity VERIFIED 7/7 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–312 VERIFIED**
+- Program: **ACTIVE — Change 313-world-meshing-deferral-and-async-dispose-guards VERIFIED 6/6 (100%); Change 258 BLOCKED 40/100 (headed hardware-GPU certification deferred by owner decision); Changes 001–257 and 259–313 VERIFIED**
 - 284 checkpoint: **VERIFIED 12/12 — implementation + gates complete; enchanting flake + visual SwiftShader drift documented non-blocking; 258 BLOCKED; 285 not started**
-- Last completed change: **312-autosave-flush-and-dispose-concurrency-integrity — VERIFIED (7/7); 258 BLOCKED**
-- Current active change: **312-autosave-flush-and-dispose-concurrency-integrity — VERIFIED (7/7); 258 BLOCKED**
-- Prior last completed change: **311-container-screen-and-block-entity-component-lifecycle — VERIFIED (7/7); 258 BLOCKED**
+- Last completed change: **313-world-meshing-deferral-and-async-dispose-guards — VERIFIED (6/6); 258 BLOCKED**
+- Current active change: **313-world-meshing-deferral-and-async-dispose-guards — VERIFIED (6/6); 258 BLOCKED**
+- Prior last completed change: **312-autosave-flush-and-dispose-concurrency-integrity — VERIFIED (7/7); 258 BLOCKED**
 - Prior prior last completed change: **272-lighting-clock-dt-sync — VERIFIED (10/10) — full gates green (typecheck/lint 0 errors/unit 427 files 5107+1/build 2.73s/e2e 85/85/file-audit 2792); 271 remains VERIFIED (14/14)
 - All changes 001–257 and 259–284: **VERIFIED** — Change 257 is VERIFIED 92/92 at 96b5dc37 with F257-A..L closed; Change 283 is VERIFIED 13/13; Change 284 is VERIFIED 12/12 (this session).
 - Historical Change 250-era bullets (preserved; superseded **for current release authority** by `openspec/evidence/release-readiness-post-hardening.md`): 250 required-test gate PASS at head `502d021` / byte-identical tree `b56529e`; historical release-readiness READY RC-1..RC-9 (`openspec/evidence/release-readiness.md`); final parity audit PASS with DL dispositions later rejected by this interlock (`openspec/evidence/parity/final-parity-audit.md`); evidence archive complete (`openspec/evidence/`)
